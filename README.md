@@ -86,6 +86,6 @@ composer.phar update
 [guzzle-4-repo]: https://github.com/guzzle/guzzle/tree/4.x
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
 [guzzle-6-repo]: https://github.com/guzzle/guzzle
-[guzzle-3-docs]: http://guzzle3.readthedocs.org/en/latest/
+[guzzle-3-docs]: http://guzzle3.readthedocs.org
 [guzzle-5-docs]: http://guzzle.readthedocs.org/en/5.3/
 [guzzle-6-docs]: http://guzzle.readthedocs.org/en/latest/
