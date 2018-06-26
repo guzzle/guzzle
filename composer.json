@@ -21,7 +21,7 @@
         }
     ],
     "require": {
-        "php": ">=5.5",
+        "php": "^7.2",
         "guzzlehttp/promises": "^1.0",
         "guzzlehttp/psr7": "^1.4"
     },
