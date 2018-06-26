@@ -3,8 +3,9 @@ namespace GuzzleHttp\Tests\Exception;
 
 use GuzzleHttp\Exception\SeekException;
 use GuzzleHttp\Psr7;
+use PHPUnit\Framework\TestCase;
 
-class SeekExceptionTest extends \PHPUnit_Framework_TestCase
+class SeekExceptionTest extends TestCase
 {
     public function testHasStream()
     {

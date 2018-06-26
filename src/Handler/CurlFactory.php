@@ -4,7 +4,6 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
@@ -178,7 +177,7 @@ class CurlFactory implements CurlFactoryInterface
             'cURL error %s: %s (%s)',
             $ctx['errno'],
             $ctx['error'],
-            'see http://curl.haxx.se/libcurl/c/libcurl-errors.html'
+            'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
         );
 
         // Create a connection exception if it was a specific error code.
@@ -288,7 +287,14 @@ class CurlFactory implements CurlFactoryInterface
     {
         foreach ($conf['_headers'] as $name => $values) {
             foreach ($values as $value) {
-                $conf[CURLOPT_HTTPHEADER][] = "$name: $value";
+                $value = (string) $value;
+                if ($value === '') {
+                    // cURL requires a special format for empty headers.
+                    // See https://github.com/guzzle/guzzle/issues/1882 for more details.
+                    $conf[CURLOPT_HTTPHEADER][] = "$name;";
+                } else {
+                    $conf[CURLOPT_HTTPHEADER][] = "$name: $value";
+                }
             }
         }
 
@@ -388,7 +394,7 @@ class CurlFactory implements CurlFactoryInterface
         if (isset($options['force_ip_resolve'])) {
             if ('v4' === $options['force_ip_resolve']) {
                 $conf[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V4;
-            } else if ('v6' === $options['force_ip_resolve']) {
+            } elseif ('v6' === $options['force_ip_resolve']) {
                 $conf[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V6;
             }
         }

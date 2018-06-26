@@ -3,11 +3,12 @@ namespace GuzzleHttp\Tests\Event;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Request;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\Exception\ConnectException
  */
-class ConnectExceptionTest extends \PHPUnit_Framework_TestCase
+class ConnectExceptionTest extends TestCase
 {
     public function testHasNoResponse()
     {

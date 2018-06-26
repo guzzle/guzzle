@@ -6,11 +6,12 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\MessageFormatter;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers GuzzleHttp\MessageFormatter
  */
-class MessageFormatterTest extends \PHPUnit_Framework_TestCase
+class MessageFormatterTest extends TestCase
 {
     public function testCreatesWithClfByDefault()
     {
@@ -37,7 +38,7 @@ class MessageFormatterTest extends \PHPUnit_Framework_TestCase
         $f = new MessageFormatter($format);
         $request = new Request('GET', '/');
         $result = $f->format($request);
-        $this->assertEquals(1, preg_match($pattern, $result));
+        $this->assertRegExp($pattern, $result);
     }
 
     public function formatProvider()

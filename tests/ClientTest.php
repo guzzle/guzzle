@@ -11,8 +11,9 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\ResponseInterface;
+use PHPUnit\Framework\TestCase;
 
-class ClientTest extends \PHPUnit_Framework_TestCase
+class ClientTest extends TestCase
 {
     public function testUsesDefaultHandler()
     {
@@ -200,7 +201,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['allow_redirects' => true]);
-        $this->assertInternalType('array',  $mock->getLastOptions()['allow_redirects']);
+        $this->assertInternalType('array', $mock->getLastOptions()['allow_redirects']);
     }
 
     /**
@@ -673,5 +674,4 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         new Client(['handler' => 'not_cllable']);
     }
-
 }

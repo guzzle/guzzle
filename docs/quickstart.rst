@@ -134,6 +134,7 @@ You can also use the `sendAsync()` and `requestAsync()` methods of a client:
     $headers = ['X-Foo' => 'Bar'];
     $body = 'Hello!';
     $request = new Request('HEAD', 'http://httpbin.org/head', $headers, $body);
+    $promise = $client->sendAsync($request);
 
     // Or, if you don't need to pass in a request instance:
     $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
@@ -272,7 +273,7 @@ You can retrieve headers from the response:
     }
 
     // Get a header from the response.
-    echo $response->getHeader('Content-Length');
+    echo $response->getHeader('Content-Length')[0];
 
     // Get all of the response headers.
     foreach ($response->getHeaders() as $name => $values) {
@@ -482,6 +483,23 @@ The following example shows that redirects can be disabled.
 Exceptions
 ==========
 
+**Tree View**
+
+The following tree view describes how the Guzzle Exceptions depend
+on each other.
+
+.. code-block:: none
+
+    . \RuntimeException
+    ├── SeekException (implements GuzzleException)
+    └── TransferException (implements GuzzleException)
+        └── RequestException
+            ├── BadResponseException
+            │   ├── ServerException
+            │   └── ClientException
+            ├── ConnectionException
+            └── TooManyRedirectsException
+ 
 Guzzle throws exceptions for errors that occur during a transfer.
 
 - In the event of a networking error (connection timeout, DNS errors, etc.),

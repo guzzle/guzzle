@@ -7,11 +7,12 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Tests\Server;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \GuzzleHttp\Handler\CurlHandler
  */
-class CurlHandlerTest extends \PHPUnit_Framework_TestCase
+class CurlHandlerTest extends TestCase
 {
     protected function getHandler($options = [])
     {

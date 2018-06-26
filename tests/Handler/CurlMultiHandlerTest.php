@@ -5,8 +5,9 @@ use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Tests\Server;
+use PHPUnit\Framework\TestCase;
 
-class CurlMultiHandlerTest extends \PHPUnit_Framework_TestCase
+class CurlMultiHandlerTest extends TestCase
 {
     public function testSendsRequest()
     {

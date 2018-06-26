@@ -11,11 +11,12 @@ use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\ResponseInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \GuzzleHttp\Handler\StreamHandler
  */
-class StreamHandlerTest extends \PHPUnit_Framework_TestCase
+class StreamHandlerTest extends TestCase
 {
     private function queueRes()
     {
@@ -49,7 +50,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
+     * @expectedException \GuzzleHttp\Exception\RequestException
      */
     public function testAddsErrorToResponse()
     {
@@ -76,7 +77,7 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('8', $response->getHeaderLine('Content-Length'));
         $body = $response->getBody();
         $stream = $body->detach();
-        $this->assertTrue(is_resource($stream));
+        $this->assertInternalType('resource', $stream);
         $this->assertEquals('http', stream_get_meta_data($stream)['wrapper_type']);
         $this->assertEquals('hi there', stream_get_contents($stream));
         fclose($stream);
@@ -323,10 +324,10 @@ class StreamHandlerTest extends \PHPUnit_Framework_TestCase
         $path = $path = \GuzzleHttp\default_ca_bundle();
         $res = $this->getSendResult(['verify' => $path]);
         $opts = stream_context_get_options($res->getBody()->detach());
-        $this->assertEquals(true, $opts['ssl']['verify_peer']);
-        $this->assertEquals(true, $opts['ssl']['verify_peer_name']);
+        $this->assertTrue($opts['ssl']['verify_peer']);
+        $this->assertTrue($opts['ssl']['verify_peer_name']);
         $this->assertEquals($path, $opts['ssl']['cafile']);
-        $this->assertTrue(file_exists($opts['ssl']['cafile']));
+        $this->assertFileExists($opts['ssl']['cafile']);
     }
 
     public function testUsesSystemDefaultBundle()
