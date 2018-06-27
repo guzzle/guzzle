@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Frost Wong <frostwong@gmail.com>
- * Date: 2018/6/26
- * Time: 22:59
- */
-
 namespace GuzzleHttp;
 
 
@@ -15,6 +8,9 @@ use Psr\Http\Message\RequestInterface;
 
 /**
  * Pre-process URIs which contains attributes with values provided by $options['attributes']
+ *
+ * Apply this middleware like other middleware using
+ * {@see GuzzleHttp\Middleware::redirect()}.
  */
 class RestfulApiMiddleware
 {
