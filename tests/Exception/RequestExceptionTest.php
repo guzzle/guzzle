@@ -6,8 +6,6 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
 
 /**
  * @covers GuzzleHttp\Exception\RequestException
