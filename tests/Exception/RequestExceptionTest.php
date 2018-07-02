@@ -180,21 +180,27 @@ class RequestExceptionTest extends TestCase
 
     public function testGetResponseBodySummaryOfNonReadableStream()
     {
-        $stream = fopen('php://memory', 'wb');
-        $stream = new class($stream) extends Stream {
-            public function isSeekable()
-            {
-                return true;
-            }
-
-            public function isReadable()
-            {
-                return false;
-            }
-        };
-
+        $stream = new ReadSeekOnlyStream();
         $stream->detach();
         $response = new Response(500, [], $stream);
         $this->assertNull(RequestException::getResponseBodySummary($response));
+    }
+}
+
+final class ReadSeekOnlyStream extends Stream
+{
+    public function __construct()
+    {
+        parent::__construct(fopen('php://memory', 'wb'));
+    }
+
+    public function isSeekable()
+    {
+        return true;
+    }
+
+    public function isReadable()
+    {
+        return false;
     }
 }
