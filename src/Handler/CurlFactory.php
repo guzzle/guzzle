@@ -174,10 +174,11 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $message = sprintf(
-            'cURL error %s: %s (%s)',
+            'cURL error %s: %s (%s) for %s',
             $ctx['errno'],
             $ctx['error'],
-            'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
+            'see https://curl.haxx.se/libcurl/c/libcurl-errors.html',
+            $easy->request->getUri()
         );
 
         // Create a connection exception if it was a specific error code.
