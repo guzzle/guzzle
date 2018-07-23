@@ -209,9 +209,23 @@ class RedirectMiddleware
         ResponseInterface $response,
         array $protocols
     ): UriInterface {
+        $locationHeaderLine = $response->getHeaderLine('Location');
+
+        // Avoid TooManyRedirectsException when following empty location headers
+        if (empty($locationHeaderLine)) {
+            throw new BadResponseException(
+                sprintf(
+                    'The server responded with a %d status code, but supplied an empty Location header',
+                    $response->getStatusCode()
+                ),
+                $request,
+                $response
+            );
+        }
+
         $location = Psr7\UriResolver::resolve(
             $request->getUri(),
-            new Psr7\Uri($response->getHeaderLine('Location'))
+            new Psr7\Uri($locationHeaderLine)
         );
 
         // Ensure that the redirect URI is allowed based on the protocols.

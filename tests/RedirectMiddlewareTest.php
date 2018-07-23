@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -96,6 +97,22 @@ class RedirectMiddlewareTest extends TestCase
         $promise->wait();
     }
 
+    public function testRedirectsEmptyLocationHeader()
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => '']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com');
+        $promise = $handler($request, ['allow_redirects' => ['max' => 3]]);
+
+        $this->expectException(BadResponseException::class);
+        $this->expectExceptionMessage('The server responded with a 302 status code, but supplied an empty Location header');
+        $promise->wait();
+    }
+
     public function testEnsuresProtocolIsValid()
     {
         $mock = new MockHandler([
@@ -106,7 +123,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
 
-        $this->expectException(\GuzzleHttp\Exception\BadResponseException::class);
+        $this->expectException(BadResponseException::class);
         $this->expectExceptionMessage('Redirect URI,');
         $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
     }
