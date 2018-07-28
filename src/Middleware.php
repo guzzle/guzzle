@@ -3,8 +3,6 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Promise\RejectedPromise;
-use GuzzleHttp\Psr7;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -136,6 +134,18 @@ final class Middleware
                 }
                 return $response;
             };
+        };
+    }
+
+    /**
+     * Middleware that support Restful API with placeholders in uri.
+     *
+     * @return callable Returns a function that accepts the next handler.
+     */
+    public static function restful()
+    {
+        return function (callable $handler) {
+            return new RestfulApiMiddleware($handler);
         };
     }
 
