@@ -178,10 +178,7 @@ class RequestExceptionTest extends TestCase
 
     public function testGetResponseBodySummaryOfNonReadableStream()
     {
-        $stream = new ReadSeekOnlyStream();
-        $stream->detach();
-        $response = new Response(500, [], $stream);
-        $this->assertNull(RequestException::getResponseBodySummary($response));
+        $this->assertNull(RequestException::getResponseBodySummary(new Response(500, [], new ReadSeekOnlyStream())));
     }
 }
 
