@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 5.3.3 - 2018-07-31
+
+* Fix bug parsing 0 epoch expiry times
+* Fix PHP 7.3 compatibility
+
 ## 5.3.2 - 2018-01-15
 
 * Improve tests
