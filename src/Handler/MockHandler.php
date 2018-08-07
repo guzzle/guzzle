@@ -182,7 +182,7 @@ class MockHandler implements \Countable
         $reason = null
     ) {
         if (isset($options['on_stats'])) {
-            $stats = new TransferStats($request, $response, null, $reason);
+            $stats = new TransferStats($request, $response, 0, $reason);
             call_user_func($options['on_stats'], $stats);
         }
     }
