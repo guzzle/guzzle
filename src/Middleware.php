@@ -58,7 +58,7 @@ final class Middleware
                     return $handler($request, $options);
                 }
                 return $handler($request, $options)->then(
-                    function (ResponseInterface $response) use ($request, $handler) {
+                    function (ResponseInterface $response) use ($request) {
                         $code = $response->getStatusCode();
                         if ($code < 400) {
                             return $response;
