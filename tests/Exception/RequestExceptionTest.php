@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests\Event;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Stream;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -173,5 +174,28 @@ class RequestExceptionTest extends TestCase
         $r = new Request('GET', 'http://user:password@www.oo.com');
         $e = RequestException::create($r, new Response(500));
         $this->assertContains('http://user:***@www.oo.com', $e->getMessage());
+    }
+
+    public function testGetResponseBodySummaryOfNonReadableStream()
+    {
+        $this->assertNull(RequestException::getResponseBodySummary(new Response(500, [], new ReadSeekOnlyStream())));
+    }
+}
+
+final class ReadSeekOnlyStream extends Stream
+{
+    public function __construct()
+    {
+        parent::__construct(fopen('php://memory', 'wb'));
+    }
+
+    public function isSeekable()
+    {
+        return true;
+    }
+
+    public function isReadable()
+    {
+        return false;
     }
 }
