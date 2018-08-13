@@ -2,6 +2,7 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\InvalidRequestException;
 use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\UriInterface;
@@ -103,6 +104,15 @@ class Client implements ClientInterface
     public function send(RequestInterface $request, array $options = [])
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
+        return $this->sendAsync($request, $options)->wait();
+    }
+
+    public function sendRequest(RequestInterface $request): ResponseInterface
+    {
+        $options[RequestOptions::SYNCHRONOUS] = true;
+        $options[RequestOptions::ALLOW_REDIRECTS] = false;
+        $options[RequestOptions::HTTP_ERRORS] = false;
+
         return $this->sendAsync($request, $options)->wait();
     }
 
@@ -371,7 +381,7 @@ class Client implements ClientInterface
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
             if (!is_string($value)) {
-                throw new \InvalidArgumentException('query must be a string or array');
+                throw new InvalidRequestException($request, 'query must be a string or array');
             }
             $modify['query'] = $value;
             unset($options['query']);
@@ -381,7 +391,7 @@ class Client implements ClientInterface
         if (isset($options['sink'])) {
             // TODO: Add more sink validation?
             if (is_bool($options['sink'])) {
-                throw new \InvalidArgumentException('sink must not be a boolean');
+                throw new InvalidRequestException($request, 'sink must not be a boolean');
             }
         }
 
