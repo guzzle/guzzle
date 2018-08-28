@@ -51,7 +51,7 @@ class RetryMiddleware
      */
     public static function exponentialDelay($retries)
     {
-        return (int) pow(2, $retries - 1);
+        return (int) (pow(2, $retries - 1) * 1000);
     }
 
     /**
