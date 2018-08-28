@@ -73,9 +73,9 @@ class RetryMiddlewareTest extends TestCase
     public function testBackoffCalculateDelay()
     {
         self::assertSame(0, RetryMiddleware::exponentialDelay(0));
-        self::assertSame(1, RetryMiddleware::exponentialDelay(1));
-        self::assertSame(2, RetryMiddleware::exponentialDelay(2));
-        self::assertSame(4, RetryMiddleware::exponentialDelay(3));
-        self::assertSame(8, RetryMiddleware::exponentialDelay(4));
+        self::assertSame(1000, RetryMiddleware::exponentialDelay(1));
+        self::assertSame(2000, RetryMiddleware::exponentialDelay(2));
+        self::assertSame(4000, RetryMiddleware::exponentialDelay(3));
+        self::assertSame(8000, RetryMiddleware::exponentialDelay(4));
     }
 }
