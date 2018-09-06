@@ -34,7 +34,7 @@ a response or exception by shifting return values off of a queue.
     $mock = new MockHandler([
         new Response(200, ['X-Foo' => 'Bar']),
         new Response(202, ['Content-Length' => 0]),
-        new RequestException("Error Communicating with Server", new Request('GET', 'test'))
+        new RequestException('Error Communicating with Server', new Request('GET', 'test'))
     ]);
 
     $handlerStack = HandlerStack::create($mock);
