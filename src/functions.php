@@ -103,7 +103,7 @@ function debug_resource($value = null)
 function choose_handler()
 {
     $handler = null;
-    $defaultHandler = get_default_handler();
+    $defaultHandler = HandlerStack::getDefaultHandler();
     if(is_string($defaultHandler)) {
         $handler = new $defaultHandler;
     } elseif (is_callable($defaultHandler)) {
@@ -126,33 +126,6 @@ function choose_handler()
     }
 
     return $handler;
-}
-
-/**
- * Set a default handler
- *
- * @param string|callable|null $handler class name or callable. If value is null, that has no default handler
- * @return void
- */
-function set_default_handler($handler)
-{
-    $GLOBALS['guzzle_default_handler'] = $handler;
-}
-
-/**
- * Get default handler
- * 
- * If return null, that has no default handler
- *
- * @return string|callable|null
- */
-function get_default_handler()
-{
-    if(isset($GLOBALS['guzzle_default_handler'])) {
-        return $GLOBALS['guzzle_default_handler'];
-    } else {
-        return null;
-    }
 }
 
 /**
