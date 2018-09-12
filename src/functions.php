@@ -103,7 +103,12 @@ function debug_resource($value = null)
 function choose_handler()
 {
     $handler = null;
-    if (function_exists('curl_multi_exec') && function_exists('curl_exec')) {
+    $defaultHandler = HandlerStack::getDefaultHandler();
+    if(is_string($defaultHandler)) {
+        $handler = new $defaultHandler;
+    } elseif (is_callable($defaultHandler)) {
+        $handler = $defaultHandler();
+    } elseif (function_exists('curl_multi_exec') && function_exists('curl_exec')) {
         $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
     } elseif (function_exists('curl_exec')) {
         $handler = new CurlHandler();
