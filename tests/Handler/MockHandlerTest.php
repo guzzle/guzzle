@@ -235,4 +235,16 @@ class MockHandlerTest extends TestCase
         $mock($request, [ 'on_stats' => $onStats, 'transfer_time' => 0.4 ])->wait(false);
         $this->assertEquals(0.4, $stats->getTransferTime());
     }
+
+    public function testResetQueue()
+    {
+        $mock = new MockHandler([new Response(200), new Response(204)]);
+        $this->assertCount(2, $mock);
+
+        $mock->reset();
+        $this->assertEmpty($mock);
+
+        $mock->append(new Response(500));
+        $this->assertCount(1, $mock);
+    }
 }
