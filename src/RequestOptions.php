@@ -252,4 +252,58 @@ final class RequestOptions
      * force_ip_resolve: (bool) Force client to use only ipv4 or ipv6 protocol
      */
     const FORCE_IP_RESOLVE = 'force_ip_resolve';
+
+    /**
+     * Request method get
+     * @see https://tools.ietf.org/html/rfc7231#section-4.3.1
+     */
+    const METHOD_GET = 'GET';
+
+    /**
+     * Request method post
+     * @see https://tools.ietf.org/html/rfc7231#section-4.3.3
+     */
+    const METHOD_POST = 'POST';
+
+    /**
+     * Request method put
+     * @see https://tools.ietf.org/html/rfc7231#section-4.3.4
+     */
+    const METHOD_PUT = 'PUT';
+
+    /**
+     * Request method patch
+     * @see https://tools.ietf.org/html/rfc5789#section-2
+     */
+    const METHOD_PATCH = 'PATCH';
+
+    /**
+     * Request method delete
+     * @see https://tools.ietf.org/html/rfc7231#section-4.3.5
+     */
+    const METHOD_DELETE = 'DELETE';
+
+    /**
+     * Request method head
+     * @see https://tools.ietf.org/html/rfc7231#section-4.3.2
+     */
+    const METHOD_HEAD = 'HEAD';
+
+    /**
+     * Request method options
+     * @see https://tools.ietf.org/html/rfc7231#section-4.3.7
+     */
+    const METHOD_OPTIONS = 'OPTIONS';
+
+    /**
+     * Request method trace
+     * @see https://tools.ietf.org/html/rfc7231#section-4.3.8
+     */
+    const METHOD_TRACE = 'TRACE';
+
+    /**
+     * Request method connect
+     * @see https://tools.ietf.org/html/rfc7231#section-4.3.6
+     */
+    const METHOD_CONNECT = 'CONNECT';
 }
