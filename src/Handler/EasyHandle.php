@@ -74,7 +74,7 @@ final class EasyHandle
 
         // Attach a response to the easy handle with the parsed headers.
         $this->response = new Response(
-            $startLine[1],
+            isset($startLine[1]) ? $startLine[1] : 0,
             $headers,
             $this->sink,
             substr($startLine[0], 5),
