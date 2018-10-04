@@ -184,10 +184,10 @@ requests.
         'webp'  => $client->getAsync('/image/webp')
     ];
 
-    // Wait on all of the requests to complete. Throws a ConnectException 
+    // Wait on all of the requests to complete. Throws a ConnectException
     // if any of the requests fail
     $results = Promise\unwrap($promises);
-    
+
     // Wait for the requests to complete, even if some of them fail
     $results = Promise\settle($promises)->wait();
 
@@ -229,7 +229,7 @@ amount of requests you wish to send.
 
     // Force the pool of requests to complete.
     $promise->wait();
-    
+
 Or using a closure that will return a promise once the pool calls the closure.
 
 .. code-block:: php
@@ -246,7 +246,7 @@ Or using a closure that will return a promise once the pool calls the closure.
     };
 
     $pool = new Pool($client, $requests(100));
-        
+
 
 Using Responses
 ===============
@@ -447,6 +447,43 @@ to use a shared cookie jar for all requests.
     $client = new \GuzzleHttp\Client(['cookies' => true]);
     $r = $client->request('GET', 'http://httpbin.org/cookies');
 
+Different implementations exist for the ``GuzzleHttp\Cookie\CookieJarInterface``
+:
+
+- The ``GuzzleHttp\Cookie\CookieJar`` class stores cookies as an array.
+- The ``GuzzleHttp\Cookie\FileCookieJar`` class persists non-session cookies
+  using a JSON formatted file.
+- The ``GuzzleHttp\Cookie\SessionCookieJar`` class persists cookies in the
+  client session.
+
+You can manually set cookies into a cookie jar with the named constructor
+``fromArray(array $cookies, $domain)``.
+
+.. code-block:: php
+
+    $jar = \GuzzleHttp\Cookie\CookieJar::fromArray(
+        [
+            'some_cookie' => 'foo',
+            'other_cookie' => 'barbaz1234'
+        ],
+        'example.org'
+    );
+
+You can get a cookie by its name with the ``getCookieByName($name)`` method
+which returns a ``GuzzleHttp\Cookie\SetCookie`` instance.
+
+.. code-block:: php
+
+    $cookie = $jar->getCookieByName('some_cookie');
+
+    $cookie->getValue(); // 'foo'
+    $cookie->getDomain(); // 'example.org'
+    $cookie->getExpires(); // expiration date as a Unix timestamp
+
+The cookies can be also fetched into an array thanks to the `toArray()` method.
+The ``GuzzleHttp\Cookie\CookieJarInterface`` interface extends 
+``Traversable`` so it can be iterated in a foreach loop.
+
 
 Redirects
 =========
@@ -499,7 +536,7 @@ on each other.
             │   └── ClientException
             ├── ConnectionException
             └── TooManyRedirectsException
- 
+
 Guzzle throws exceptions for errors that occur during a transfer.
 
 - In the event of a networking error (connection timeout, DNS errors, etc.),
@@ -568,7 +605,7 @@ behavior of the library.
     the timeout.
 ``HTTP_PROXY``
     Defines the proxy to use when sending requests using the "http" protocol.
-    
+
     Note: because the HTTP_PROXY variable may contain arbitrary user input on some (CGI) environments, the variable is only used on the CLI SAPI. See https://httpoxy.org for more information.
 ``HTTPS_PROXY``
     Defines the proxy to use when sending requests using the "https" protocol.
