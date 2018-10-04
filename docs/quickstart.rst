@@ -529,7 +529,6 @@ on each other.
 .. code-block:: none
 
     . \RuntimeException
-    ├── SeekException (implements GuzzleException)
     └── TransferException (implements GuzzleException)
         └── RequestException
             ├── BadResponseException
