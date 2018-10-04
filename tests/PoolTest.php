@@ -34,6 +34,9 @@ class PoolTest extends TestCase
         $p->promise()->wait();
     }
 
+    /**
+     * @doesNotPerformAssertions
+     */
     public function testSendsAndRealizesFuture()
     {
         $c = $this->getClient();
@@ -41,6 +44,9 @@ class PoolTest extends TestCase
         $p->promise()->wait();
     }
 
+    /**
+     * @doesNotPerformAssertions
+     */
     public function testExecutesPendingWhenWaiting()
     {
         $r1 = new Promise(function () use (&$r1) { $r1->resolve(new Response()); });

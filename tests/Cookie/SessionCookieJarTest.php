@@ -38,7 +38,7 @@ class SessionCookieJarTest extends TestCase
     }
 
     /**
-     * @dataProvider testPersistsToSessionParameters
+     * @dataProvider providerPersistsToSessionParameters
      */
     public function testPersistsToSession($testSaveSessionCookie = false)
     {
@@ -82,7 +82,7 @@ class SessionCookieJarTest extends TestCase
         unset($_SESSION[$this->sessionVar]);
     }
 
-    public function testPersistsToSessionParameters()
+    public function providerPersistsToSessionParameters()
     {
         return array(
             array(false),

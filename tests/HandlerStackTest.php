@@ -18,6 +18,9 @@ class HandlerStackTest extends TestCase
         $this->assertTrue($h->hasHandler());
     }
 
+    /**
+     * @doesNotPerformAssertions
+     */
     public function testCanSetDifferentHandlerAfterConstruction()
     {
         $f = function () {};
