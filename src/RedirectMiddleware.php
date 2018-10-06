@@ -118,6 +118,13 @@ class RedirectMiddleware
         return $promise;
     }
 
+    /**
+     * Enable tracking on promise.
+     * @param  PromiseInterface $promise
+     * @param  string           $uri
+     * @param  string           $statusCode [description]
+     * @return PromiseInterface
+     */
     private function withTracking(PromiseInterface $promise, $uri, $statusCode)
     {
         return $promise->then(
@@ -135,6 +142,13 @@ class RedirectMiddleware
         );
     }
 
+    /**
+     * Check for too many redirects
+     * @param  RequestInterface $request
+     * @param  array            $options
+     * @return void
+     * @throws TooManyRedirectsException Too many redirects.
+     */
     private function guardMax(RequestInterface $request, array &$options)
     {
         $current = isset($options['__redirect_count'])

@@ -69,6 +69,10 @@ class Pool implements PromisorInterface
         $this->each = new EachPromise($requests(), $config);
     }
 
+    /**
+     * Get promise
+     * @return GuzzleHttp\Promise\Promise
+     */
     public function promise()
     {
         return $this->each->promise();
@@ -106,6 +110,13 @@ class Pool implements PromisorInterface
         return $res;
     }
 
+    /**
+     * Execute callback(s)
+     * @param  array  $options
+     * @param  string $name
+     * @param  array  $results
+     * @return void
+     */
     private static function cmpCallback(array &$options, $name, array &$results)
     {
         if (!isset($options[$name])) {

@@ -74,6 +74,12 @@ class RetryMiddleware
             );
     }
 
+    /**
+     * Execute fulfilled closure
+     * @param  RequestInterface $req
+     * @param  array            $options
+     * @return mixed
+     */
     private function onFulfilled(RequestInterface $req, array $options)
     {
         return function ($value) use ($req, $options) {
@@ -90,6 +96,12 @@ class RetryMiddleware
         };
     }
 
+    /**
+     * Execute rejected closure
+     * @param  RequestInterface $req
+     * @param  array            $options
+     * @return mixed
+     */
     private function onRejected(RequestInterface $req, array $options)
     {
         return function ($reason) use ($req, $options) {
@@ -106,6 +118,13 @@ class RetryMiddleware
         };
     }
 
+    /**
+     * Retry
+     * @param  RequestInterface  $req
+     * @param  array             $options
+     * @param  ResponseInterface $response
+     * @return self
+     */
     private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null)
     {
         $options['delay'] = call_user_func($this->delay, ++$options['retries'], $response);

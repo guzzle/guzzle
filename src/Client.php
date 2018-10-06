@@ -75,7 +75,13 @@ class Client implements ClientInterface
         $this->configureDefaults($config);
     }
 
-    public function __call($method, $args)
+    /**
+     * PHP Magic method
+     * @param  string $method
+     * @param  array $args
+     * @return Promise\PromiseInterface
+     */
+    public function __call($method, array $args)
     {
         if (count($args) < 1) {
             throw new \InvalidArgumentException('Magic request methods require a URI and optional options array');
@@ -89,6 +95,15 @@ class Client implements ClientInterface
             : $this->request($method, $uri, $opts);
     }
 
+    /**
+     * Asynchronously send an HTTP request.
+     *
+     * @param RequestInterface $request Request to send
+     * @param array            $options Request options to apply to the given
+     *                                  request and to the transfer.
+     *
+     * @return PromiseInterface
+     */
     public function sendAsync(RequestInterface $request, array $options = [])
     {
         // Merge the base URI into the request URI if needed.
@@ -100,12 +115,36 @@ class Client implements ClientInterface
         );
     }
 
+    /**
+     * Send an HTTP request.
+     *
+     * @param RequestInterface $request Request to send
+     * @param array            $options Request options to apply to the given
+     *                                  request and to the transfer.
+     *
+     * @return ResponseInterface
+     * @throws GuzzleException
+     */
     public function send(RequestInterface $request, array $options = [])
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
         return $this->sendAsync($request, $options)->wait();
     }
 
+    /**
+     * Create and send an asynchronous HTTP request.
+     *
+     * Use an absolute path to override the base path of the client, or a
+     * relative path to append to the base path of the client. The URL can
+     * contain the query string as well. Use an array to provide a URL
+     * template and additional variables to use in the URL template expansion.
+     *
+     * @param string              $method  HTTP method
+     * @param string|UriInterface $uri     URI object or string.
+     * @param array               $options Request options to apply.
+     *
+     * @return PromiseInterface
+     */
     public function requestAsync($method, $uri = '', array $options = [])
     {
         $options = $this->prepareDefaults($options);
@@ -125,12 +164,37 @@ class Client implements ClientInterface
         return $this->transfer($request, $options);
     }
 
+    /**
+     * Create and send an HTTP request.
+     *
+     * Use an absolute path to override the base path of the client, or a
+     * relative path to append to the base path of the client. The URL can
+     * contain the query string as well.
+     *
+     * @param string              $method  HTTP method.
+     * @param string|UriInterface $uri     URI object or string.
+     * @param array               $options Request options to apply.
+     *
+     * @return ResponseInterface
+     * @throws GuzzleException
+     */
     public function request($method, $uri = '', array $options = [])
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
         return $this->requestAsync($method, $uri, $options)->wait();
     }
 
+    /**
+     * Get a client configuration option.
+     *
+     * These options include default request options of the client, a "handler"
+     * (if utilized by the concrete client), and a "base_uri" if utilized by
+     * the concrete client.
+     *
+     * @param string|null $option The config option to retrieve.
+     *
+     * @return mixed
+     */
     public function getConfig($option = null)
     {
         return $option === null
@@ -138,6 +202,12 @@ class Client implements ClientInterface
             : (isset($this->config[$option]) ? $this->config[$option] : null);
     }
 
+    /**
+     * Build URI object.
+     * @param  string|null $uri
+     * @param  array       $config
+     * @return UriInterface
+     */
     private function buildUri($uri, array $config)
     {
         // for BC we accept null which would otherwise fail in uri_for
@@ -154,6 +224,7 @@ class Client implements ClientInterface
      * Configures the default options for a client.
      *
      * @param array $config
+     * @return void
      */
     private function configureDefaults(array $config)
     {
@@ -412,6 +483,11 @@ class Client implements ClientInterface
         return $request;
     }
 
+    /**
+     * Throw Exception with pre-set message.
+     * @return void
+     * @throws InvalidArgumentException Invalid body.
+     */
     private function invalidBody()
     {
         throw new \InvalidArgumentException('Passing in the "body" request '
