@@ -34,7 +34,7 @@ class FileCookieJarTest extends TestCase
     }
 
     /**
-     * @dataProvider testPersistsToFileFileParameters
+     * @dataProvider providerPersistsToFileFileParameters
      */
     public function testPersistsToFile($testSaveSessionCookie = false)
     {
@@ -78,7 +78,7 @@ class FileCookieJarTest extends TestCase
         unlink($this->file);
     }
 
-    public function testPersistsToFileFileParameters()
+    public function providerPersistsToFileFileParameters()
     {
         return array(
             array(false),

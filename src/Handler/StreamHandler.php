@@ -42,7 +42,7 @@ class StreamHandler
             // Append a content-length header if body size is zero to match
             // cURL's behavior.
             if (0 === $request->getBody()->getSize()) {
-                $request = $request->withHeader('Content-Length', 0);
+                $request = $request->withHeader('Content-Length', '0');
             }
 
             return $this->createResponse(
