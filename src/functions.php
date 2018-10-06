@@ -60,7 +60,7 @@ function describe_type($input)
  *                     format: "Name: Value"
  * @return array
  */
-function headers_from_lines($lines)
+function headers_from_lines(array $lines)
 {
     $headers = [];
 
