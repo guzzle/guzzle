@@ -10,4 +10,6 @@ namespace GuzzleHttp\Exception;
  * @method array getTrace()
  * @method string getTraceAsString()
  */
-interface GuzzleException {}
+interface GuzzleException
+{
+}
