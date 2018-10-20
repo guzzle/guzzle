@@ -419,6 +419,8 @@ class CurlFactory implements CurlFactoryInterface
                         !\GuzzleHttp\is_host_in_noproxy($host, $options['proxy']['no'])
                     ) {
                         $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
+                        if (isset($options['proxy']['username']) && isset($options['proxy']['password']))
+                            $conf[CURLOPT_PROXYUSERPWD] = $options['proxy']['username'].':'.$options['proxy']['password'];
                     }
                 }
             }
