@@ -750,6 +750,7 @@ The function accepts the following positional arguments:
         '/',
         [
             'progress' => function(
+                $handle,
                 $downloadTotal,
                 $downloadedBytes,
                 $uploadTotal,

@@ -281,7 +281,7 @@ class CurlFactoryTest extends TestCase
         $response->wait();
         $this->assertNotEmpty($called);
         foreach ($called as $call) {
-            $this->assertCount(4, $call);
+            $this->assertCount(5, $call);
         }
     }
 

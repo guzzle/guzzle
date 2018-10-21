@@ -171,9 +171,10 @@ final class RequestOptions
     /**
      * progress: (callable) Defines a function to invoke when transfer
      * progress is made. The function accepts the following positional
-     * arguments: the total number of bytes expected to be downloaded, the
-     * number of bytes downloaded so far, the number of bytes expected to be
-     * uploaded, the number of bytes uploaded so far.
+     * arguments: the cURL resource, the total number of bytes expected
+     * to be downloaded, the number of bytes downloaded so far, the
+     * number of bytes expected to be uploaded, the number of bytes
+     * uploaded so far.
      */
     const PROGRESS = 'progress';
 
