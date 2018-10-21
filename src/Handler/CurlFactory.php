@@ -46,7 +46,11 @@ class CurlFactory implements CurlFactoryInterface
 
         // Add handler options from the request configuration options
         if (isset($options['curl'])) {
-            $conf = array_replace($conf, $options['curl']);
+            foreach ($options['curl'] as $key => $_) {
+                unset($conf[$key]);
+            }
+
+            $conf += $options['curl'];
         }
 
         $conf[CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
