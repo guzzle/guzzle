@@ -100,7 +100,7 @@ class RetryMiddleware
      * Execute rejected closure
      * @param  RequestInterface $req
      * @param  array            $options
-     * @return mixed
+     * @return callable
      */
     private function onRejected(RequestInterface $req, array $options)
     {
