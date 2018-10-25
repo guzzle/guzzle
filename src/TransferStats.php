@@ -39,6 +39,8 @@ final class TransferStats
     }
 
     /**
+     * Returns the request.
+     *
      * @return RequestInterface
      */
     public function getRequest()
