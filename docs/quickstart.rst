@@ -571,6 +571,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
   .. code-block:: php
 
+      use GuzzleHttp\Psr7;
       use GuzzleHttp\Exception\ClientException;
 
       try {
