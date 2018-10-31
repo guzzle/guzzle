@@ -512,11 +512,11 @@ class CurlFactoryTest extends TestCase
         ], 'test');
         $handler = new Handler\CurlMultiHandler();
         $response = $handler($request, [])->wait();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals('Hello', $response->getHeaderLine('Test'));
-        $this->assertEquals('4', $response->getHeaderLine('Content-Length'));
-        $this->assertEquals('test', (string) $response->getBody());
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('OK', $response->getReasonPhrase());
+        $this->assertSame('Hello', $response->getHeaderLine('Test'));
+        $this->assertSame('4', $response->getHeaderLine('Content-Length'));
+        $this->assertSame('test', (string) $response->getBody());
     }
 
     /**
@@ -545,8 +545,8 @@ class CurlFactoryTest extends TestCase
             'timeout'         => 0.1,
             'connect_timeout' => 0.2
         ]);
-        $this->assertEquals(100, $_SERVER['_curl'][CURLOPT_TIMEOUT_MS]);
-        $this->assertEquals(200, $_SERVER['_curl'][CURLOPT_CONNECTTIMEOUT_MS]);
+        $this->assertSame(100, $_SERVER['_curl'][CURLOPT_TIMEOUT_MS]);
+        $this->assertSame(200, $_SERVER['_curl'][CURLOPT_CONNECTTIMEOUT_MS]);
     }
 
     public function testAddsStreamingBody()
@@ -656,9 +656,9 @@ class CurlFactoryTest extends TestCase
         ]);
 
         $response = $promise->wait();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('bar', $response->getHeaderLine('X-Foo'));
-        $this->assertEquals('abc 123', (string) $response->getBody());
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('bar', $response->getHeaderLine('X-Foo'));
+        $this->assertSame('abc 123', (string) $response->getBody());
     }
 
     public function testInvokesOnStatsOnSuccess()
@@ -674,13 +674,13 @@ class CurlFactoryTest extends TestCase
             }
         ]);
         $response = $promise->wait();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals(200, $gotStats->getResponse()->getStatusCode());
-        $this->assertEquals(
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(200, $gotStats->getResponse()->getStatusCode());
+        $this->assertSame(
             Server::$url,
             (string) $gotStats->getEffectiveUri()
         );
-        $this->assertEquals(
+        $this->assertSame(
             Server::$url,
             (string) $gotStats->getRequest()->getUri()
         );
@@ -701,11 +701,11 @@ class CurlFactoryTest extends TestCase
         ]);
         $promise->wait(false);
         $this->assertFalse($gotStats->hasResponse());
-        $this->assertEquals(
+        $this->assertSame(
             'http://127.0.0.1:123',
             $gotStats->getEffectiveUri()
         );
-        $this->assertEquals(
+        $this->assertSame(
             'http://127.0.0.1:123',
             $gotStats->getRequest()->getUri()
         );

@@ -65,7 +65,7 @@ class MockHandlerTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $mock($request, ['foo' => 'bar']);
         $this->assertSame($request, $mock->getLastRequest());
-        $this->assertEquals(['foo' => 'bar'], $mock->getLastOptions());
+        $this->assertSame(['foo' => 'bar'], $mock->getLastOptions());
     }
 
     public function testSinkFilename()
