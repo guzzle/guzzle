@@ -238,7 +238,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, ['decode_content' => false])->wait();
         $this->assertSame($content, (string) $response->getBody());
         $this->assertSame('gzip', $response->getHeaderLine('content-encoding'));
-        $this->assertSame(strlen($content), $response->getHeaderLine('content-length'));
+        $this->assertEquals(strlen($content), $response->getHeaderLine('content-length'));
     }
 
     public function testProtocolVersion()
