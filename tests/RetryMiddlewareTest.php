@@ -22,7 +22,7 @@ class RetryMiddlewareTest extends TestCase
         };
         $delay = function ($retries, $response) use (&$delayCalls) {
             $delayCalls++;
-            $this->assertEquals($retries, $delayCalls);
+            $this->assertSame($retries, $delayCalls);
             $this->assertInstanceOf(Response::class, $response);
             return 1;
         };
@@ -44,7 +44,7 @@ class RetryMiddlewareTest extends TestCase
         $h = new MockHandler([new Response(200)]);
         $c = new Client(['handler' => $m($h)]);
         $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
-        $this->assertEquals(200, $p->wait()->getStatusCode());
+        $this->assertSame(200, $p->wait()->getStatusCode());
     }
 
     public function testCanRetryExceptions()

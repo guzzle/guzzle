@@ -33,7 +33,7 @@ class PrepareBodyMiddlewareTest extends TestCase
             function (RequestInterface $request) use ($body) {
                 $length = strlen($body);
                 if ($length > 0) {
-                    $this->assertEquals($length, $request->getHeaderLine('Content-Length'));
+                    $this->assertSame($length, $request->getHeaderLine('Content-Length'));
                 } else {
                     $this->assertFalse($request->hasHeader('Content-Length'));
                 }

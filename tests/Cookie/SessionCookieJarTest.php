@@ -33,7 +33,7 @@ class SessionCookieJarTest extends TestCase
     public function testLoadsFromSession()
     {
         $jar = new SessionCookieJar($this->sessionVar);
-        $this->assertEquals([], $jar->getIterator()->getArrayCopy());
+        $this->assertSame([], $jar->getIterator()->getArrayCopy());
         unset($_SESSION[$this->sessionVar]);
     }
 
