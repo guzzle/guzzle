@@ -55,8 +55,8 @@ class CurlFactoryTest extends TestCase
         );
         // Sends via post fields when the request is small enough
         $this->assertSame('testing', $_SERVER['_curl'][CURLOPT_POSTFIELDS]);
-        $this->assertFalse($_SERVER['_curl'][CURLOPT_RETURNTRANSFER]);
-        $this->assertFalse($_SERVER['_curl'][CURLOPT_HEADER]);
+        $this->assertEquals(0, $_SERVER['_curl'][CURLOPT_RETURNTRANSFER]);
+        $this->assertEquals(0, $_SERVER['_curl'][CURLOPT_HEADER]);
         $this->assertSame(150, $_SERVER['_curl'][CURLOPT_CONNECTTIMEOUT]);
         $this->assertInstanceOf('Closure', $_SERVER['_curl'][CURLOPT_HEADERFUNCTION]);
         if (defined('CURLOPT_PROTOCOLS')) {

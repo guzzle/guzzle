@@ -293,7 +293,7 @@ class StreamHandlerTest extends TestCase
     {
         $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);
         $opts = stream_context_get_options($res->getBody()->detach());
-        $this->assertSame(200, $opts['http']['timeout']);
+        $this->assertEquals(200, $opts['http']['timeout']);
     }
 
     /**
