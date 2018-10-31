@@ -20,13 +20,13 @@ class RequestExceptionTest extends TestCase
         $this->assertSame($req, $e->getRequest());
         $this->assertSame($res, $e->getResponse());
         $this->assertTrue($e->hasResponse());
-        $this->assertEquals('foo', $e->getMessage());
+        $this->assertSame('foo', $e->getMessage());
     }
 
     public function testCreatesGenerateException()
     {
         $e = RequestException::create(new Request('GET', '/'));
-        $this->assertEquals('Error completing request', $e->getMessage());
+        $this->assertSame('Error completing request', $e->getMessage());
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
     }
 
@@ -135,7 +135,7 @@ class RequestExceptionTest extends TestCase
     public function testHasStatusCodeAsExceptionCode()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(442));
-        $this->assertEquals(442, $e->getCode());
+        $this->assertSame(442, $e->getCode());
     }
 
     public function testWrapsRequestExceptions()
@@ -159,7 +159,7 @@ class RequestExceptionTest extends TestCase
     {
         $r = new Request('GET', 'http://www.oo.com');
         $e = new RequestException('foo', $r, null, null, ['bar' => 'baz']);
-        $this->assertEquals(['bar' => 'baz'], $e->getHandlerContext());
+        $this->assertSame(['bar' => 'baz'], $e->getHandlerContext());
     }
 
     public function testObfuscateUrlWithUsername()

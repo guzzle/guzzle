@@ -51,9 +51,9 @@ class MiddlewareTest extends TestCase
         $h = new MockHandler([new Response(404)]);
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
-        $this->assertEquals('pending', $p->getState());
+        $this->assertSame('pending', $p->getState());
         $p->wait();
-        $this->assertEquals('rejected', $p->getState());
+        $this->assertSame('rejected', $p->getState());
     }
 
     /**
@@ -65,9 +65,9 @@ class MiddlewareTest extends TestCase
         $h = new MockHandler([new Response(500)]);
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
-        $this->assertEquals('pending', $p->getState());
+        $this->assertSame('pending', $p->getState());
         $p->wait();
-        $this->assertEquals('rejected', $p->getState());
+        $this->assertSame('rejected', $p->getState());
     }
 
     /**
@@ -83,12 +83,12 @@ class MiddlewareTest extends TestCase
         $p1->wait();
         $p2->wait();
         $this->assertCount(2, $container);
-        $this->assertEquals(200, $container[0]['response']->getStatusCode());
-        $this->assertEquals(201, $container[1]['response']->getStatusCode());
-        $this->assertEquals('GET', $container[0]['request']->getMethod());
-        $this->assertEquals('HEAD', $container[1]['request']->getMethod());
-        $this->assertEquals('bar', $container[0]['options']['headers']['foo']);
-        $this->assertEquals('baz', $container[1]['options']['headers']['foo']);
+        $this->assertSame(200, $container[0]['response']->getStatusCode());
+        $this->assertSame(201, $container[1]['response']->getStatusCode());
+        $this->assertSame('GET', $container[0]['request']->getMethod());
+        $this->assertSame('HEAD', $container[1]['request']->getMethod());
+        $this->assertSame('bar', $container[0]['options']['headers']['foo']);
+        $this->assertSame('baz', $container[1]['options']['headers']['foo']);
     }
 
     public function getHistoryUseCases()
@@ -108,7 +108,7 @@ class MiddlewareTest extends TestCase
         $f = $m($h);
         $f($request, [])->wait(false);
         $this->assertCount(1, $container);
-        $this->assertEquals('GET', $container[0]['request']->getMethod());
+        $this->assertSame('GET', $container[0]['request']->getMethod());
         $this->assertInstanceOf(RequestException::class, $container[0]['error']);
     }
 
@@ -137,16 +137,16 @@ class MiddlewareTest extends TestCase
         $b->push($m);
         $comp = $b->resolve();
         $p = $comp(new Request('GET', 'http://foo.com'), []);
-        $this->assertEquals('123', implode('', $calls));
+        $this->assertSame('123', implode('', $calls));
         $this->assertInstanceOf(PromiseInterface::class, $p);
-        $this->assertEquals(200, $p->wait()->getStatusCode());
+        $this->assertSame(200, $p->wait()->getStatusCode());
     }
 
     public function testMapsRequest()
     {
         $h = new MockHandler([
             function (RequestInterface $request, array $options) {
-                $this->assertEquals('foo', $request->getHeaderLine('Bar'));
+                $this->assertSame('foo', $request->getHeaderLine('Bar'));
                 return new Response(200);
             }
         ]);
@@ -169,7 +169,7 @@ class MiddlewareTest extends TestCase
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com'), []);
         $p->wait();
-        $this->assertEquals('foo', $p->wait()->getHeaderLine('Bar'));
+        $this->assertSame('foo', $p->wait()->getHeaderLine('Bar'));
     }
 
     public function testLogsRequestsAndResponses()

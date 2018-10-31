@@ -114,7 +114,7 @@ class ClientTest extends TestCase
             'handler'  => $mock,
             'base_uri' => 'http://bar.com'
         ]);
-        $this->assertEquals('http://bar.com', (string) $client->getConfig('base_uri'));
+        $this->assertSame('http://bar.com', (string) $client->getConfig('base_uri'));
         $request = new Request('GET', '/baz');
         $client->send($request);
         $this->assertSame(
@@ -596,7 +596,7 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response(500)]);
         $client = new Client(['handler' => $mock]);
         $mock2 = new MockHandler([new Response(200)]);
-        $this->assertEquals(
+        $this->assertSame(
             200,
             $client->send(new Request('GET', 'http://foo.com'), [
                 'handler' => $mock2

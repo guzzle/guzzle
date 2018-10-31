@@ -48,19 +48,19 @@ class CurlFactoryTest extends TestCase
         $this->assertInternalType('array', $result->headers);
         $this->assertSame($stream, $result->sink);
         curl_close($result->handle);
-        $this->assertEquals('PUT', $_SERVER['_curl'][CURLOPT_CUSTOMREQUEST]);
-        $this->assertEquals(
+        $this->assertSame('PUT', $_SERVER['_curl'][CURLOPT_CUSTOMREQUEST]);
+        $this->assertSame(
             'http://127.0.0.1:8126/',
             $_SERVER['_curl'][CURLOPT_URL]
         );
         // Sends via post fields when the request is small enough
-        $this->assertEquals('testing', $_SERVER['_curl'][CURLOPT_POSTFIELDS]);
-        $this->assertEquals(0, $_SERVER['_curl'][CURLOPT_RETURNTRANSFER]);
-        $this->assertEquals(0, $_SERVER['_curl'][CURLOPT_HEADER]);
-        $this->assertEquals(150, $_SERVER['_curl'][CURLOPT_CONNECTTIMEOUT]);
+        $this->assertSame('testing', $_SERVER['_curl'][CURLOPT_POSTFIELDS]);
+        $this->assertSame(0, $_SERVER['_curl'][CURLOPT_RETURNTRANSFER]);
+        $this->assertSame(0, $_SERVER['_curl'][CURLOPT_HEADER]);
+        $this->assertSame(150, $_SERVER['_curl'][CURLOPT_CONNECTTIMEOUT]);
         $this->assertInstanceOf('Closure', $_SERVER['_curl'][CURLOPT_HEADERFUNCTION]);
         if (defined('CURLOPT_PROTOCOLS')) {
-            $this->assertEquals(
+            $this->assertSame(
                 CURLPROTO_HTTP | CURLPROTO_HTTPS,
                 $_SERVER['_curl'][CURLOPT_PROTOCOLS]
             );
