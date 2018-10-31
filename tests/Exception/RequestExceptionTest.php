@@ -1,5 +1,5 @@
 <?php
-namespace GuzzleHttp\Tests\Event;
+namespace GuzzleHttp\Tests\Exception;
 
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
@@ -8,7 +8,7 @@ use GuzzleHttp\Psr7\Stream;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\Exception\RequestException
+ * @covers \GuzzleHttp\Exception\RequestException
  */
 class RequestExceptionTest extends TestCase
 {
@@ -20,13 +20,13 @@ class RequestExceptionTest extends TestCase
         $this->assertSame($req, $e->getRequest());
         $this->assertSame($res, $e->getResponse());
         $this->assertTrue($e->hasResponse());
-        $this->assertEquals('foo', $e->getMessage());
+        $this->assertSame('foo', $e->getMessage());
     }
 
     public function testCreatesGenerateException()
     {
         $e = RequestException::create(new Request('GET', '/'));
-        $this->assertEquals('Error completing request', $e->getMessage());
+        $this->assertSame('Error completing request', $e->getMessage());
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
     }
 
