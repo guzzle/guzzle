@@ -707,7 +707,7 @@ class CurlFactoryTest extends TestCase
         );
         $this->assertSame(
             'http://127.0.0.1:123',
-            $gotStats->getRequest()->getUri()
+            (string) $gotStats->getRequest()->getUri()
         );
         $this->assertInternalType('float', $gotStats->getTransferTime());
         $this->assertInternalType('int', $gotStats->getHandlerErrorData());

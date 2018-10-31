@@ -194,7 +194,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['decode_content' => true])->wait();
-        $this->assertEquals('test', (string) $response->getBody());
+        $this->assertSame('test', (string) $response->getBody());
         $this->assertFalse($response->hasHeader('content-encoding'));
         $this->assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }

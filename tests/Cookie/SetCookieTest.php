@@ -196,7 +196,7 @@ class SetCookieTest extends TestCase
             'HttpOnly' => true,
             'Secure' => true
         ]);
-        $this->assertEquals(
+        $this->assertSame(
             'test=123; Domain=foo.com; Path=/abc; Expires=Sun, 27 Oct 2013 23:20:08 GMT; Secure; HttpOnly',
             (string) $cookie
         );
@@ -386,7 +386,7 @@ class SetCookieTest extends TestCase
                     $this->assertEquals($p[$key], $parsed[$key], 'Comparing ' . $key . ' ' . var_export($value, true) . ' : ' . var_export($parsed, true) . ' | ' . var_export($p, true));
                 }
             } else {
-                $this->assertEquals([
+                $this->assertSame([
                     'Name' => null,
                     'Value' => null,
                     'Domain' => null,
@@ -437,7 +437,7 @@ class SetCookieTest extends TestCase
      */
     public function testIsExpired($cookie, $expired)
     {
-        $this->assertEquals(
+        $this->assertSame(
             $expired,
             SetCookie::fromString($cookie)->isExpired()
         );

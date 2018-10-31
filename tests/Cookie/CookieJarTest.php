@@ -238,7 +238,7 @@ class CookieJarTest extends TestCase
         $this->assertCount(1, $this->jar);
 
         $c = $this->jar->getIterator()->getArrayCopy();
-        $this->assertEquals('zoo', $c[0]->getValue());
+        $this->assertSame('zoo', $c[0]->getValue());
     }
 
     public function testAddsCookiesFromResponseWithRequest()
@@ -313,7 +313,7 @@ class CookieJarTest extends TestCase
 
         $request = new Request('GET', $url);
         $request = $this->jar->withCookieHeader($request);
-        $this->assertEquals($cookies, $request->getHeaderLine('Cookie'));
+        $this->assertSame($cookies, $request->getHeaderLine('Cookie'));
     }
 
     /**
@@ -346,7 +346,7 @@ class CookieJarTest extends TestCase
         $names = array_map(function (SetCookie $c) {
             return $c->getName();
         }, $jar->getIterator()->getArrayCopy());
-        $this->assertEquals(['foo', 'test', 'you'], $names);
+        $this->assertSame(['foo', 'test', 'you'], $names);
     }
 
     public function testCanConvertToAndLoadFromArray()
@@ -406,7 +406,7 @@ class CookieJarTest extends TestCase
         $request = (new Request('GET', $uriPath))->withHeader('Host', 'www.example.com');
         $this->jar->extractCookies($request, $response);
 
-        $this->assertEquals($cookiePath, $this->jar->toArray()[0]['Path']);
-        $this->assertEquals($cookiePath, $this->jar->toArray()[1]['Path']);
+        $this->assertSame($cookiePath, $this->jar->toArray()[0]['Path']);
+        $this->assertSame($cookiePath, $this->jar->toArray()[1]['Path']);
     }
 }
