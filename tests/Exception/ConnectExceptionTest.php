@@ -18,8 +18,8 @@ class ConnectExceptionTest extends TestCase
         $this->assertSame($req, $e->getRequest());
         $this->assertNull($e->getResponse());
         $this->assertFalse($e->hasResponse());
-        $this->assertEquals('foo', $e->getMessage());
-        $this->assertEquals('bar', $e->getHandlerContext()['foo']);
+        $this->assertSame('foo', $e->getMessage());
+        $this->assertSame('bar', $e->getHandlerContext()['foo']);
         $this->assertSame($prev, $e->getPrevious());
     }
 }

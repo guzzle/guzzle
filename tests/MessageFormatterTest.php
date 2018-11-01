@@ -88,6 +88,6 @@ class MessageFormatterTest extends TestCase
     public function testFormatsMessages($template, $args, $result)
     {
         $f = new MessageFormatter($template);
-        $this->assertEquals((string) $result, call_user_func_array(array($f, 'format'), $args));
+        $this->assertSame((string) $result, call_user_func_array(array($f, 'format'), $args));
     }
 }

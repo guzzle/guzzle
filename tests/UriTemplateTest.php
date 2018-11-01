@@ -121,7 +121,7 @@ class UriTemplateTest extends TestCase
     public function testExpandsUriTemplates($template, $expansion, $params)
     {
         $uri = new UriTemplate();
-        $this->assertEquals($expansion, $uri->expand($template, $params));
+        $this->assertSame($expansion, $uri->expand($template, $params));
     }
 
     public function expressionProvider()
@@ -131,7 +131,7 @@ class UriTemplateTest extends TestCase
                 '{+var*}', array(
                 'operator' => '+',
                 'values'   => array(
-                    array('value' => 'var', 'modifier' => '*')
+                    array('modifier' => '*', 'value' => 'var')
                 )
             ),
             ),
@@ -171,7 +171,7 @@ class UriTemplateTest extends TestCase
         $method->setAccessible(true);
 
         $exp = substr($exp, 1, -1);
-        $this->assertEquals($data, $method->invokeArgs($template, array($exp)));
+        $this->assertSame($data, $method->invokeArgs($template, array($exp)));
     }
 
     /**
@@ -197,6 +197,6 @@ class UriTemplateTest extends TestCase
             )
         ));
 
-        $this->assertEquals('http://example.com/foo/bar/one,two?query=test&more%5B0%5D=fun&more%5B1%5D=ice%20cream&baz%5Bbar%5D=fizz&baz%5Btest%5D=buzz&bam=boo', $result);
+        $this->assertSame('http://example.com/foo/bar/one,two?query=test&more%5B0%5D=fun&more%5B1%5D=ice%20cream&baz%5Bbar%5D=fizz&baz%5Btest%5D=buzz&bam=boo', $result);
     }
 }

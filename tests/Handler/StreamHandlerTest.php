@@ -37,16 +37,16 @@ class StreamHandlerTest extends TestCase
             new Request('GET', Server::$url, ['Foo' => 'Bar']),
             []
         )->wait();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals('Bar', $response->getHeaderLine('Foo'));
-        $this->assertEquals('8', $response->getHeaderLine('Content-Length'));
-        $this->assertEquals('hi there', (string) $response->getBody());
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('OK', $response->getReasonPhrase());
+        $this->assertSame('Bar', $response->getHeaderLine('Foo'));
+        $this->assertSame('8', $response->getHeaderLine('Content-Length'));
+        $this->assertSame('hi there', (string) $response->getBody());
         $sent = Server::received()[0];
-        $this->assertEquals('GET', $sent->getMethod());
-        $this->assertEquals('/', $sent->getUri()->getPath());
-        $this->assertEquals('127.0.0.1:8126', $sent->getHeaderLine('Host'));
-        $this->assertEquals('Bar', $sent->getHeaderLine('foo'));
+        $this->assertSame('GET', $sent->getMethod());
+        $this->assertSame('/', $sent->getUri()->getPath());
+        $this->assertSame('127.0.0.1:8126', $sent->getHeaderLine('Host'));
+        $this->assertSame('Bar', $sent->getHeaderLine('foo'));
     }
 
     /**
@@ -72,20 +72,20 @@ class StreamHandlerTest extends TestCase
             'test'
         );
         $response = $handler($request, ['stream' => true])->wait();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('OK', $response->getReasonPhrase());
-        $this->assertEquals('8', $response->getHeaderLine('Content-Length'));
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('OK', $response->getReasonPhrase());
+        $this->assertSame('8', $response->getHeaderLine('Content-Length'));
         $body = $response->getBody();
         $stream = $body->detach();
         $this->assertInternalType('resource', $stream);
-        $this->assertEquals('http', stream_get_meta_data($stream)['wrapper_type']);
-        $this->assertEquals('hi there', stream_get_contents($stream));
+        $this->assertSame('http', stream_get_meta_data($stream)['wrapper_type']);
+        $this->assertSame('hi there', stream_get_contents($stream));
         fclose($stream);
         $sent = Server::received()[0];
-        $this->assertEquals('PUT', $sent->getMethod());
-        $this->assertEquals('http://127.0.0.1:8126/foo?baz=bar', (string) $sent->getUri());
-        $this->assertEquals('Bar', $sent->getHeaderLine('Foo'));
-        $this->assertEquals('test', (string) $sent->getBody());
+        $this->assertSame('PUT', $sent->getMethod());
+        $this->assertSame('http://127.0.0.1:8126/foo?baz=bar', (string) $sent->getUri());
+        $this->assertSame('Bar', $sent->getHeaderLine('Foo'));
+        $this->assertSame('test', (string) $sent->getBody());
     }
 
     public function testDrainsResponseIntoTempStream()
@@ -96,8 +96,8 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, [])->wait();
         $body = $response->getBody();
         $stream = $body->detach();
-        $this->assertEquals('php://temp', stream_get_meta_data($stream)['uri']);
-        $this->assertEquals('hi', fread($stream, 2));
+        $this->assertSame('php://temp', stream_get_meta_data($stream)['uri']);
+        $this->assertSame('hi', fread($stream, 2));
         fclose($stream);
     }
 
@@ -109,9 +109,9 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['sink' => $r])->wait();
         $body = $response->getBody()->detach();
-        $this->assertEquals('php://temp', stream_get_meta_data($body)['uri']);
-        $this->assertEquals('hi', fread($body, 2));
-        $this->assertEquals(' there', stream_get_contents($r));
+        $this->assertSame('php://temp', stream_get_meta_data($body)['uri']);
+        $this->assertSame('hi', fread($body, 2));
+        $this->assertSame(' there', stream_get_contents($r));
         fclose($r);
     }
 
@@ -123,8 +123,8 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['sink' => $tmpfname])->wait();
         $body = $response->getBody();
-        $this->assertEquals($tmpfname, $body->getMetadata('uri'));
-        $this->assertEquals('hi', $body->read(2));
+        $this->assertSame($tmpfname, $body->getMetadata('uri'));
+        $this->assertSame('hi', $body->read(2));
         $body->close();
         unlink($tmpfname);
     }
@@ -138,8 +138,8 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['sink' => $tmpfname])->wait();
         $body = $response->getBody();
-        $this->assertEquals($tmpfname, $body->getMetadata('uri'));
-        $this->assertEquals('hi', $body->read(2));
+        $this->assertSame($tmpfname, $body->getMetadata('uri'));
+        $this->assertSame('hi', $body->read(2));
         $body->close();
         unlink($tmpfname);
     }
@@ -158,7 +158,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, [])->wait();
         $body = $response->getBody();
         $stream = $body->detach();
-        $this->assertEquals('hi there', stream_get_contents($stream));
+        $this->assertSame('hi there', stream_get_contents($stream));
         fclose($stream);
     }
 
@@ -177,7 +177,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, [])->wait();
         $body = $response->getBody();
         $stream = $body->detach();
-        $this->assertEquals('', stream_get_contents($stream));
+        $this->assertSame('', stream_get_contents($stream));
         fclose($stream);
     }
 
@@ -194,7 +194,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['decode_content' => true])->wait();
-        $this->assertEquals('test', (string) $response->getBody());
+        $this->assertSame('test', (string) $response->getBody());
         $this->assertFalse($response->hasHeader('content-encoding'));
         $this->assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }
@@ -237,7 +237,7 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['decode_content' => false])->wait();
         $this->assertSame($content, (string) $response->getBody());
-        $this->assertEquals('gzip', $response->getHeaderLine('content-encoding'));
+        $this->assertSame('gzip', $response->getHeaderLine('content-encoding'));
         $this->assertEquals(strlen($content), $response->getHeaderLine('content-length'));
     }
 
@@ -247,7 +247,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url, [], null, '1.0');
         $handler($request, []);
-        $this->assertEquals('1.0', Server::received()[0]->getProtocolVersion());
+        $this->assertSame('1.0', Server::received()[0]->getProtocolVersion());
     }
 
     protected function getSendResult(array $opts)
@@ -275,7 +275,7 @@ class StreamHandlerTest extends TestCase
         $url = rtrim($url, '/');
         $res = $this->getSendResult(['proxy' => ['http' => $url]]);
         $opts = stream_context_get_options($res->getBody()->detach());
-        $this->assertEquals($url, $opts['http']['proxy']);
+        $this->assertSame($url, $opts['http']['proxy']);
     }
 
     public function testAddsProxyButHonorsNoProxy()
@@ -327,7 +327,7 @@ class StreamHandlerTest extends TestCase
         $opts = stream_context_get_options($res->getBody()->detach());
         $this->assertTrue($opts['ssl']['verify_peer']);
         $this->assertTrue($opts['ssl']['verify_peer_name']);
-        $this->assertEquals($path, $opts['ssl']['cafile']);
+        $this->assertSame($path, $opts['ssl']['cafile']);
         $this->assertFileExists($opts['ssl']['cafile']);
     }
 
@@ -337,7 +337,7 @@ class StreamHandlerTest extends TestCase
         $res = $this->getSendResult(['verify' => true]);
         $opts = stream_context_get_options($res->getBody()->detach());
         if (PHP_VERSION_ID < 50600) {
-            $this->assertEquals($path, $opts['ssl']['cafile']);
+            $this->assertSame($path, $opts['ssl']['cafile']);
         } else {
             $this->assertArrayNotHasKey('cafile', $opts['ssl']);
         }
@@ -357,8 +357,8 @@ class StreamHandlerTest extends TestCase
         $path = __FILE__;
         $res = $this->getSendResult(['cert' => [$path, 'foo']]);
         $opts = stream_context_get_options($res->getBody()->detach());
-        $this->assertEquals($path, $opts['ssl']['local_cert']);
-        $this->assertEquals('foo', $opts['ssl']['passphrase']);
+        $this->assertSame($path, $opts['ssl']['local_cert']);
+        $this->assertSame('foo', $opts['ssl']['passphrase']);
     }
 
     public function testDebugAttributeWritesToStream()
@@ -440,9 +440,9 @@ class StreamHandlerTest extends TestCase
             ],
         ]);
         $opts = stream_context_get_options($res->getBody()->detach());
-        $this->assertEquals('HEAD', $opts['http']['method']);
+        $this->assertSame('HEAD', $opts['http']['method']);
         $this->assertTrue($opts['http']['request_fulluri']);
-        $this->assertEquals('127.0.0.1:0', $opts['socket']['bindto']);
+        $this->assertSame('127.0.0.1:0', $opts['socket']['bindto']);
         $this->assertFalse($opts['ssl']['verify_peer']);
     }
 
@@ -494,10 +494,10 @@ class StreamHandlerTest extends TestCase
         $request = new Request('PUT', Server::$url, ['Expect' => '100-Continue'], 'test');
         $handler = new StreamHandler();
         $response = $handler($request, [])->wait();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('Hello', $response->getHeaderLine('Test'));
-        $this->assertEquals('4', $response->getHeaderLine('Content-Length'));
-        $this->assertEquals('test', (string) $response->getBody());
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('Hello', $response->getHeaderLine('Test'));
+        $this->assertSame('4', $response->getHeaderLine('Content-Length'));
+        $this->assertSame('test', (string) $response->getBody());
     }
 
     public function testDoesSleep()
@@ -564,14 +564,14 @@ class StreamHandlerTest extends TestCase
             'sink'       => $stream,
             'on_headers' => function (ResponseInterface $res) use (&$got) {
                 $got = $res;
-                $this->assertEquals('bar', $res->getHeaderLine('X-Foo'));
+                $this->assertSame('bar', $res->getHeaderLine('X-Foo'));
             }
         ]);
 
         $response = $promise->wait();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('bar', $response->getHeaderLine('X-Foo'));
-        $this->assertEquals('abc 123', (string) $response->getBody());
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('bar', $response->getHeaderLine('X-Foo'));
+        $this->assertSame('abc 123', (string) $response->getBody());
     }
 
     public function testInvokesOnStatsOnSuccess()
@@ -587,13 +587,13 @@ class StreamHandlerTest extends TestCase
             }
         ]);
         $response = $promise->wait();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals(200, $gotStats->getResponse()->getStatusCode());
-        $this->assertEquals(
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(200, $gotStats->getResponse()->getStatusCode());
+        $this->assertSame(
             Server::$url,
             (string) $gotStats->getEffectiveUri()
         );
-        $this->assertEquals(
+        $this->assertSame(
             Server::$url,
             (string) $gotStats->getRequest()->getUri()
         );
@@ -614,11 +614,11 @@ class StreamHandlerTest extends TestCase
         ]);
         $promise->wait(false);
         $this->assertFalse($gotStats->hasResponse());
-        $this->assertEquals(
+        $this->assertSame(
             'http://127.0.0.1:123',
             (string) $gotStats->getEffectiveUri()
         );
-        $this->assertEquals(
+        $this->assertSame(
             'http://127.0.0.1:123',
             (string) $gotStats->getRequest()->getUri()
         );
@@ -641,7 +641,7 @@ class StreamHandlerTest extends TestCase
             'timeout' => 0
         ]);
         $response = $promise->wait();
-        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertSame(200, $response->getStatusCode());
     }
 
     public function testDrainsResponseAndReadsAllContentWhenContentLengthIsZero()
@@ -658,7 +658,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, [])->wait();
         $body = $response->getBody();
         $stream = $body->detach();
-        $this->assertEquals('hi there... This has a lot of data!', stream_get_contents($stream));
+        $this->assertSame('hi there... This has a lot of data!', stream_get_contents($stream));
         fclose($stream);
     }
 
@@ -673,11 +673,11 @@ class StreamHandlerTest extends TestCase
                 RequestOptions::STREAM => true,
             ]
         )->wait();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('OK', $response->getReasonPhrase());
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('OK', $response->getReasonPhrase());
         $body = $response->getBody()->detach();
         $line = fgets($body);
-        $this->assertEquals("sleeping 60 seconds ...\n", $line);
+        $this->assertSame("sleeping 60 seconds ...\n", $line);
         $line = fgets($body);
         $this->assertFalse($line);
         $this->assertTrue(stream_get_meta_data($body)['timed_out']);

@@ -29,7 +29,7 @@ class FileCookieJarTest extends TestCase
     public function testLoadsFromFile()
     {
         $jar = new FileCookieJar($this->file);
-        $this->assertEquals([], $jar->getIterator()->getArrayCopy());
+        $this->assertSame([], $jar->getIterator()->getArrayCopy());
         unlink($this->file);
     }
 
