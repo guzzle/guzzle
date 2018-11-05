@@ -799,8 +799,8 @@ host names that should not be proxied to.
             'http'  => 'tcp://localhost:8125', // Use this proxy with "http"
             'https' => 'tcp://localhost:9124', // Use this proxy with "https",
             'no' => ['.mit.edu', 'foo.com'],   // Don't use a proxy with these
-            'username' => 'proxy username',    // Poxy username , optional
-            'password' => 'proxy password',    // Poxy password , optional
+            'username' => 'proxy username',    // Proxy username , optional
+            'password' => 'proxy password',    // Proxy password , optional
         ]
     ]);
 
