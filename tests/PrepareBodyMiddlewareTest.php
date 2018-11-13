@@ -53,7 +53,9 @@ class PrepareBodyMiddlewareTest extends TestCase
     public function testAddsTransferEncodingWhenNoContentLength()
     {
         $body = FnStream::decorate(Psr7\stream_for('foo'), [
-            'getSize' => function () { return null; }
+            'getSize' => function () {
+                return null;
+            }
         ]);
         $h = new MockHandler([
             function (RequestInterface $request) {

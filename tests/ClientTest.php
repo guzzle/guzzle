@@ -458,7 +458,8 @@ class ClientTest extends TestCase
      */
     public function testEnsuresThatFormParamsAndMultipartAreExclusive()
     {
-        $client = new Client(['handler' => function () {}]);
+        $client = new Client(['handler' => function () {
+        }]);
         $client->post('http://foo.com', [
             'form_params' => ['foo' => 'bar bam'],
             'multipart' => []

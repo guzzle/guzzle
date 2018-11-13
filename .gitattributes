@@ -7,4 +7,5 @@
 /docs/            export-ignore
 /Makefile         export-ignore
 /phpunit.xml.dist export-ignore
+/phpcs.xml.dist   export-ignore
 /tests/           export-ignore

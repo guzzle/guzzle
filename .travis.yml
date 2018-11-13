@@ -18,7 +18,9 @@ before_script:
   - ~/.nvm/nvm.sh run v0.6.14
   - if [[ "$TRAVIS_PHP_VERSION" != "7.0" || "$TRAVIS_PHP_VERSION" != "7.1" ]]; then echo "xdebug.overload_var_dump = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini || true; fi
 
-script: make test
+script:
+  - php vendor/bin/phpcs src/ tests/ --extensions=php
+  - make test
 
 matrix:
   allow_failures:

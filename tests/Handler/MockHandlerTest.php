@@ -113,7 +113,9 @@ class MockHandlerTest extends TestCase
     public function testCanEnqueueCallables()
     {
         $r = new Response();
-        $fn = function ($req, $o) use ($r) { return $r; };
+        $fn = function ($req, $o) use ($r) {
+            return $r;
+        };
         $mock = new MockHandler([$fn]);
         $request = new Request('GET', 'http://example.com');
         $p = $mock($request, ['foo' => 'bar']);
@@ -164,7 +166,9 @@ class MockHandlerTest extends TestCase
     {
         $e = new \Exception('a');
         $c = null;
-        $mock = new MockHandler([$e], null, function ($v) use (&$c) { $c = $v; });
+        $mock = new MockHandler([$e], null, function ($v) use (&$c) {
+            $c = $v;
+        });
         $request = new Request('GET', 'http://example.com');
         $mock($request, [])->wait(false);
         $this->assertSame($e, $c);
@@ -210,7 +214,9 @@ class MockHandlerTest extends TestCase
     {
         $e = new \Exception('a');
         $c = null;
-        $mock = new MockHandler([$e], null, function ($v) use (&$c) { $c = $v; });
+        $mock = new MockHandler([$e], null, function ($v) use (&$c) {
+            $c = $v;
+        });
         $request = new Request('GET', 'http://example.com');
         $stats = null;
         $onStats = function (TransferStats $s) use (&$stats) {

@@ -379,7 +379,9 @@ class StreamHandlerTest extends TestCase
         $this->queueRes();
         $buffer = fopen('php://temp', 'r+');
         $this->getSendResult([
-            'progress' => function () use (&$called) { $called = true; },
+            'progress' => function () use (&$called) {
+                $called = true;
+            },
             'debug' => $buffer,
         ]);
         fseek($buffer, 0);

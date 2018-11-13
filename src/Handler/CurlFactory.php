@@ -534,7 +534,10 @@ class CurlFactory implements CurlFactoryInterface
             $onHeaders = null;
         }
 
-        return function ($ch, $h) use (
+        return function (
+            $ch,
+            $h
+        ) use (
             $onHeaders,
             $easy,
             &$startingResponse

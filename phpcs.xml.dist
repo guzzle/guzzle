@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<ruleset name="guzzle">
+    <description>The coding standard of guzzle package</description>
+    <arg value="p" />
+
+    <config name="ignore_warnings_on_exit" value="1" />
+
+    <arg name="colors" />
+    <arg value="s" />
+
+    <!-- Use the PSR2 Standard-->
+    <rule ref="PSR2" />
+    
+    <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+        <exclude-pattern>*/StreamHandler.php</exclude-pattern>
+    </rule>
+    <rule ref="PSR1.Classes.ClassDeclaration.MultipleClasses">
+        <exclude-pattern>*/tests/*</exclude-pattern>
+    </rule>
+</ruleset>
