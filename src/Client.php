@@ -310,7 +310,7 @@ class Client implements ClientInterface
             $options['body'] = http_build_query($options['form_params'], '', '&');
             unset($options['form_params']);
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], is_array($options['_conditional'])?$options['_conditional']:[]);
+            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], (isset($options['_conditional']) && is_array($options['_conditional']))?$options['_conditional']:[]);
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
         }
 
@@ -323,7 +323,7 @@ class Client implements ClientInterface
             $options['body'] = \GuzzleHttp\json_encode($options['json']);
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], is_array($options['_conditional'])?$options['_conditional']:[]);
+            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], (isset($options['_conditional']) && is_array($options['_conditional']))?$options['_conditional']:[]);
             $options['_conditional']['Content-Type'] = 'application/json';
         }
 
@@ -331,7 +331,7 @@ class Client implements ClientInterface
             && $options['decode_content'] !== true
         ) {
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = Psr7\_caseless_remove(['Accept-Encoding'], is_array($options['_conditional'])?$options['_conditional']:[]);
+            $options['_conditional'] = Psr7\_caseless_remove(['Accept-Encoding'], (isset($options['_conditional']) && is_array($options['_conditional']))?$options['_conditional']:[]);
             $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
         }
 
@@ -389,7 +389,7 @@ class Client implements ClientInterface
         if ($request->getBody() instanceof Psr7\MultipartStream) {
             // Use a multipart/form-data POST if a Content-Type is not set.
             // Ensure that we don't have the header in different case and set the new value.
-            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], is_array($options['_conditional'])?$options['_conditional']:[]);
+            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], (isset($options['_conditional']) && is_array($options['_conditional']))?$options['_conditional']:[]);
             $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary='
                 . $request->getBody()->getBoundary();
         }
