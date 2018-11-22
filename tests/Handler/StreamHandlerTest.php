@@ -286,7 +286,7 @@ class StreamHandlerTest extends TestCase
             'no'   => ['*']
         ]]);
         $opts = stream_context_get_options($res->getBody()->detach());
-        $this->assertTrue(empty($opts['http']['proxy']));
+        $this->assertArrayNotHasKey('proxy', $opts['http']);
     }
 
     public function testAddsTimeout()
