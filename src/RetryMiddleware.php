@@ -77,7 +77,7 @@ class RetryMiddleware
     private function onFulfilled(RequestInterface $req, array $options)
     {
         return function ($value) use ($req, $options) {
-            if (!call_user_func(
+            if (!\call_user_func(
                 $this->decider,
                 $options['retries'],
                 $req,
@@ -93,7 +93,7 @@ class RetryMiddleware
     private function onRejected(RequestInterface $req, array $options)
     {
         return function ($reason) use ($req, $options) {
-            if (!call_user_func(
+            if (!\call_user_func(
                 $this->decider,
                 $options['retries'],
                 $req,
@@ -108,7 +108,7 @@ class RetryMiddleware
 
     private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null)
     {
-        $options['delay'] = call_user_func($this->delay, ++$options['retries'], $response);
+        $options['delay'] = \call_user_func($this->delay, ++$options['retries'], $response);
 
         return $this($request, $options);
     }

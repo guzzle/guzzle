@@ -86,7 +86,7 @@ class StreamHandler
                 $error,
                 []
             );
-            call_user_func($options['on_stats'], $stats);
+            \call_user_func($options['on_stats'], $stats);
         }
     }
 
@@ -148,7 +148,7 @@ class StreamHandler
             ? $options['sink']
             : fopen('php://temp', 'r+');
 
-        return is_string($sink)
+        return \is_string($sink)
             ? new Psr7\LazyOpenStream($sink, 'w+')
             : Psr7\stream_for($sink);
     }
@@ -210,7 +210,7 @@ class StreamHandler
         Psr7\copy_to_stream(
             $source,
             $sink,
-            (strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
+            (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
         );
 
         $sink->seek(0);
@@ -292,7 +292,7 @@ class StreamHandler
         }
 
         if (isset($options['stream_context'])) {
-            if (!is_array($options['stream_context'])) {
+            if (!\is_array($options['stream_context'])) {
                 throw new \InvalidArgumentException('stream_context must be an array');
             }
             $context = array_replace_recursive(
@@ -303,7 +303,7 @@ class StreamHandler
 
         // Microsoft NTLM authentication only supported with curl handler
         if (isset($options['auth'])
-            && is_array($options['auth'])
+            && \is_array($options['auth'])
             && isset($options['auth'][2])
             && 'ntlm' == $options['auth'][2]
         ) {
@@ -406,7 +406,7 @@ class StreamHandler
 
     private function add_proxy(RequestInterface $request, &$options, $value, &$params)
     {
-        if (!is_array($value)) {
+        if (!\is_array($value)) {
             $options['http']['proxy'] = $value;
         } else {
             $scheme = $request->getUri()->getScheme();
@@ -438,7 +438,7 @@ class StreamHandler
             if (PHP_VERSION_ID < 50600) {
                 $options['ssl']['cafile'] = \GuzzleHttp\default_ca_bundle();
             }
-        } elseif (is_string($value)) {
+        } elseif (\is_string($value)) {
             $options['ssl']['cafile'] = $value;
             if (!file_exists($value)) {
                 throw new \RuntimeException("SSL CA bundle not found: $value");
@@ -458,7 +458,7 @@ class StreamHandler
 
     private function add_cert(RequestInterface $request, &$options, $value, &$params)
     {
-        if (is_array($value)) {
+        if (\is_array($value)) {
             $options['ssl']['passphrase'] = $value[1];
             $value = $value[0];
         }
@@ -508,7 +508,7 @@ class StreamHandler
         $this->addNotification(
             $params,
             function () use ($ident, $value, $map, $args) {
-                $passed = func_get_args();
+                $passed = \func_get_args();
                 $code = array_shift($passed);
                 fprintf($value, '<%s> [%s] ', $ident, $map[$code]);
                 foreach (array_filter($passed) as $i => $v) {
@@ -535,9 +535,9 @@ class StreamHandler
     private function callArray(array $functions)
     {
         return function () use ($functions) {
-            $args = func_get_args();
+            $args = \func_get_args();
             foreach ($functions as $fn) {
-                call_user_func_array($fn, $args);
+                \call_user_func_array($fn, $args);
             }
         };
     }

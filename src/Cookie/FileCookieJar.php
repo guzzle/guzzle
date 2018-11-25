@@ -79,11 +79,11 @@ class FileCookieJar extends CookieJar
         }
 
         $data = \GuzzleHttp\json_decode($json, true);
-        if (is_array($data)) {
+        if (\is_array($data)) {
             foreach (json_decode($json, true) as $cookie) {
                 $this->setCookie(new SetCookie($cookie));
             }
-        } elseif (strlen($data)) {
+        } elseif (\strlen($data)) {
             throw new \RuntimeException("Invalid cookie file: {$filename}");
         }
     }

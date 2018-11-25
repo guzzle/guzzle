@@ -40,11 +40,11 @@ function uri_template($template, array $variables)
  */
 function describe_type($input)
 {
-    switch (gettype($input)) {
+    switch (\gettype($input)) {
         case 'object':
-            return 'object(' . get_class($input) . ')';
+            return 'object(' . \get_class($input) . ')';
         case 'array':
-            return 'array(' . count($input) . ')';
+            return 'array(' . \count($input) . ')';
         default:
             ob_start();
             var_dump($input);
@@ -83,9 +83,9 @@ function headers_from_lines($lines)
  */
 function debug_resource($value = null)
 {
-    if (is_resource($value)) {
+    if (\is_resource($value)) {
         return $value;
-    } elseif (defined('STDOUT')) {
+    } elseif (\defined('STDOUT')) {
         return STDOUT;
     }
 
@@ -252,7 +252,7 @@ function normalize_header_keys(array $headers)
  */
 function is_host_in_noproxy($host, array $noProxyArray)
 {
-    if (strlen($host) === 0) {
+    if (\strlen($host) === 0) {
         throw new \InvalidArgumentException('Empty host provided');
     }
 
@@ -275,7 +275,7 @@ function is_host_in_noproxy($host, array $noProxyArray)
             // Special match if the area when prefixed with ".". Remove any
             // existing leading "." and add a new leading ".".
             $area = '.' . ltrim($area, '.');
-            if (substr($host, -(strlen($area))) === $area) {
+            if (substr($host, -(\strlen($area))) === $area) {
                 return true;
             }
         }

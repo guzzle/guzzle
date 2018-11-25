@@ -241,7 +241,7 @@ class HandlerStack
                 $replacement = [$tuple, $this->stack[$idx]];
                 array_splice($this->stack, $idx, 1, $replacement);
             }
-        } elseif ($idx === count($this->stack) - 1) {
+        } elseif ($idx === \count($this->stack) - 1) {
             $this->stack[] = $tuple;
         } else {
             $replacement = [$this->stack[$idx], $tuple];
@@ -258,14 +258,14 @@ class HandlerStack
      */
     private function debugCallable($fn)
     {
-        if (is_string($fn)) {
+        if (\is_string($fn)) {
             return "callable({$fn})";
         }
 
-        if (is_array($fn)) {
-            return is_string($fn[0])
+        if (\is_array($fn)) {
+            return \is_string($fn[0])
                 ? "callable({$fn[0]}::{$fn[1]})"
-                : "callable(['" . get_class($fn[0]) . "', '{$fn[1]}'])";
+                : "callable(['" . \get_class($fn[0]) . "', '{$fn[1]}'])";
         }
 
         return 'callable(' . spl_object_hash($fn) . ')';

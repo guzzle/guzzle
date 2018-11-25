@@ -321,7 +321,7 @@ class SetCookie
         }
 
         // Match if the first character not included in cookie path is "/"
-        return substr($requestPath, strlen($cookiePath), 1) === '/';
+        return substr($requestPath, \strlen($cookiePath), 1) === '/';
     }
 
     /**

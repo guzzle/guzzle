@@ -56,7 +56,7 @@ class RedirectMiddleware
 
         if ($options['allow_redirects'] === true) {
             $options['allow_redirects'] = self::$defaultSettings;
-        } elseif (!is_array($options['allow_redirects'])) {
+        } elseif (!\is_array($options['allow_redirects'])) {
             throw new \InvalidArgumentException('allow_redirects must be true, false, or array');
         } else {
             // Merge the default settings with the provided settings
@@ -95,7 +95,7 @@ class RedirectMiddleware
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
         if (isset($options['allow_redirects']['on_redirect'])) {
-            call_user_func(
+            \call_user_func(
                 $options['allow_redirects']['on_redirect'],
                 $request,
                 $response,
@@ -220,7 +220,7 @@ class RedirectMiddleware
         );
 
         // Ensure that the redirect URI is allowed based on the protocols.
-        if (!in_array($location->getScheme(), $protocols)) {
+        if (!\in_array($location->getScheme(), $protocols)) {
             throw new BadResponseException(
                 sprintf(
                     'Redirect URI, %s, does not use one of the allowed redirect protocols: %s',

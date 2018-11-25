@@ -77,7 +77,7 @@ class Client implements ClientInterface
 
     public function __call($method, $args)
     {
-        if (count($args) < 1) {
+        if (\count($args) < 1) {
             throw new \InvalidArgumentException('Magic request methods require a URI and optional options array');
         }
 
@@ -115,7 +115,7 @@ class Client implements ClientInterface
         $version = isset($options['version']) ? $options['version'] : '1.1';
         // Merge the URI into the base URI.
         $uri = $this->buildUri($uri, $options);
-        if (is_array($body)) {
+        if (\is_array($body)) {
             $this->invalidBody();
         }
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
@@ -222,12 +222,12 @@ class Client implements ClientInterface
 
         // Special handling for headers is required as they are added as
         // conditional headers and as headers passed to a request ctor.
-        if (array_key_exists('headers', $options)) {
+        if (\array_key_exists('headers', $options)) {
             // Allows default headers to be unset.
             if ($options['headers'] === null) {
                 $defaults['_conditional'] = null;
                 unset($options['headers']);
-            } elseif (!is_array($options['headers'])) {
+            } elseif (!\is_array($options['headers'])) {
                 throw new \InvalidArgumentException('headers must be an array');
             }
         }
@@ -336,14 +336,14 @@ class Client implements ClientInterface
         }
 
         if (isset($options['body'])) {
-            if (is_array($options['body'])) {
+            if (\is_array($options['body'])) {
                 $this->invalidBody();
             }
             $modify['body'] = Psr7\stream_for($options['body']);
             unset($options['body']);
         }
 
-        if (!empty($options['auth']) && is_array($options['auth'])) {
+        if (!empty($options['auth']) && \is_array($options['auth'])) {
             $value = $options['auth'];
             $type = isset($value[2]) ? strtolower($value[2]) : 'basic';
             switch ($type) {
@@ -367,10 +367,10 @@ class Client implements ClientInterface
 
         if (isset($options['query'])) {
             $value = $options['query'];
-            if (is_array($value)) {
+            if (\is_array($value)) {
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
-            if (!is_string($value)) {
+            if (!\is_string($value)) {
                 throw new \InvalidArgumentException('query must be a string or array');
             }
             $modify['query'] = $value;
@@ -380,7 +380,7 @@ class Client implements ClientInterface
         // Ensure that sink is not an invalid value.
         if (isset($options['sink'])) {
             // TODO: Add more sink validation?
-            if (is_bool($options['sink'])) {
+            if (\is_bool($options['sink'])) {
                 throw new \InvalidArgumentException('sink must not be a boolean');
             }
         }

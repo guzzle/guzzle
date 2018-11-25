@@ -56,7 +56,7 @@ class MockHandler implements \Countable
         $this->onRejected = $onRejected;
 
         if ($queue) {
-            call_user_func_array([$this, 'append'], $queue);
+            \call_user_func_array([$this, 'append'], $queue);
         }
     }
 
@@ -87,7 +87,7 @@ class MockHandler implements \Countable
         }
 
         if (is_callable($response)) {
-            $response = call_user_func($response, $request, $options);
+            $response = \call_user_func($response, $request, $options);
         }
 
         $response = $response instanceof \Exception
@@ -98,15 +98,15 @@ class MockHandler implements \Countable
             function ($value) use ($request, $options) {
                 $this->invokeStats($request, $options, $value);
                 if ($this->onFulfilled) {
-                    call_user_func($this->onFulfilled, $value);
+                    \call_user_func($this->onFulfilled, $value);
                 }
                 if (isset($options['sink'])) {
                     $contents = (string) $value->getBody();
                     $sink = $options['sink'];
 
-                    if (is_resource($sink)) {
+                    if (\is_resource($sink)) {
                         fwrite($sink, $contents);
-                    } elseif (is_string($sink)) {
+                    } elseif (\is_string($sink)) {
                         file_put_contents($sink, $contents);
                     } elseif ($sink instanceof \Psr\Http\Message\StreamInterface) {
                         $sink->write($contents);
@@ -118,7 +118,7 @@ class MockHandler implements \Countable
             function ($reason) use ($request, $options) {
                 $this->invokeStats($request, $options, null, $reason);
                 if ($this->onRejected) {
-                    call_user_func($this->onRejected, $reason);
+                    \call_user_func($this->onRejected, $reason);
                 }
                 return \GuzzleHttp\Promise\rejection_for($reason);
             }
@@ -131,7 +131,7 @@ class MockHandler implements \Countable
      */
     public function append()
     {
-        foreach (func_get_args() as $value) {
+        foreach (\func_get_args() as $value) {
             if ($value instanceof ResponseInterface
                 || $value instanceof \Exception
                 || $value instanceof PromiseInterface
@@ -172,7 +172,7 @@ class MockHandler implements \Countable
      */
     public function count()
     {
-        return count($this->queue);
+        return \count($this->queue);
     }
 
     private function invokeStats(
@@ -183,7 +183,7 @@ class MockHandler implements \Countable
     ) {
         if (isset($options['on_stats'])) {
             $stats = new TransferStats($request, $response, 0, $reason);
-            call_user_func($options['on_stats'], $stats);
+            \call_user_func($options['on_stats'], $stats);
         }
     }
 }

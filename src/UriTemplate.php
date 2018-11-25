@@ -115,13 +115,13 @@ class UriTemplate
             $actuallyUseQuery = $useQuery;
             $expanded = '';
 
-            if (is_array($variable)) {
+            if (\is_array($variable)) {
                 $isAssoc = $this->isAssoc($variable);
                 $kvp = [];
                 foreach ($variable as $key => $var) {
                     if ($isAssoc) {
                         $key = rawurlencode($key);
-                        $isNestedArray = is_array($var);
+                        $isNestedArray = \is_array($var);
                     } else {
                         $isNestedArray = false;
                     }
