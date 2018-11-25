@@ -76,7 +76,7 @@ class RedirectMiddleware
     /**
      * @param RequestInterface  $request
      * @param array             $options
-     * @param ResponseInterface|PromiseInterface $response
+     * @param ResponseInterface $response
      *
      * @return ResponseInterface|PromiseInterface
      */
@@ -172,7 +172,7 @@ class RedirectMiddleware
         // would do.
         $statusCode = $response->getStatusCode();
         if ($statusCode == 303 ||
-            ($statusCode <= 302 && $request->getBody() && !$options['allow_redirects']['strict'])
+            ($statusCode <= 302 && !$options['allow_redirects']['strict'])
         ) {
             $modify['method'] = 'GET';
             $modify['body'] = '';

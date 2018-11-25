@@ -22,7 +22,7 @@ class CookieJar implements CookieJarInterface
      *                           arrays that can be used with the SetCookie
      *                           constructor
      */
-    public function __construct($strictMode = false, $cookieArray = [])
+    public function __construct($strictMode = false, array $cookieArray = [])
     {
         $this->strictMode = $strictMode;
 
@@ -94,8 +94,8 @@ class CookieJar implements CookieJarInterface
      */
     public function getCookieByName($name)
     {
-        // don't allow a null name
-        if ($name === null) {
+        // don't allow a non string name
+        if ($name === null || !is_scalar($name)) {
             return null;
         }
         foreach ($this->cookies as $cookie) {
@@ -103,6 +103,8 @@ class CookieJar implements CookieJarInterface
                 return $cookie;
             }
         }
+
+        return null;
     }
 
     public function toArray()

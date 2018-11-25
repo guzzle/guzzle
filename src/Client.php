@@ -271,6 +271,7 @@ class Client implements ClientInterface
         }
 
         $request = $this->applyOptions($request, $options);
+        /** @var HandlerStack $handler */
         $handler = $options['handler'];
 
         try {
