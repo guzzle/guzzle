@@ -34,6 +34,9 @@
     "suggest": {
         "psr/log": "Required for using the Log middleware"
     },
+    "config": {
+        "sort-packages": true
+    },
     "extra": {
         "branch-alias": {
             "dev-master": "6.3-dev"
