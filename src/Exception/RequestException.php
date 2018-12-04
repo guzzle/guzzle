@@ -104,9 +104,9 @@ class RequestException extends TransferException
             $response->getReasonPhrase()
         );
 
-        $summary = static::getResponseBodySummary($response);
+        $summary = \GuzzleHttp\Psr7\get_message_body_summary($response);
 
-        if ($summary !== null) {
+        if ($summary !== null && $summary !== '') {
             $message .= ":\n{$summary}\n";
         }
 
@@ -124,7 +124,32 @@ class RequestException extends TransferException
      */
     public static function getResponseBodySummary(ResponseInterface $response)
     {
-        return \GuzzleHttp\Psr7\get_message_body_summary($response, 120);
+        $body = $response->getBody();
+
+        if (!$body->isSeekable() || !$body->isReadable()) {
+            return null;
+        }
+
+        $size = $body->getSize();
+
+        if ($size === 0) {
+            return null;
+        }
+
+        $summary = $body->read(120);
+        $body->rewind();
+
+        if ($size > 120) {
+            $summary .= ' (truncated...)';
+        }
+
+        // Matches any printable character, including unicode characters:
+        // letters, marks, numbers, punctuation, spacing, and separators.
+        if (preg_match('/[^\pL\pM\pN\pP\pS\pZ\n\r\t]/', $summary)) {
+            return null;
+        }
+
+        return $summary;
     }
 
     /**
