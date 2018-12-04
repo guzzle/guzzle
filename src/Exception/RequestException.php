@@ -118,10 +118,6 @@ class RequestException extends TransferException
      *
      * Will return `null` if the response is not printable.
      *
-     * If you change this function changes must also be applied to \Guzzlehttp\Psr7\get_message_body_summary
-     * 
-     * @see \Guzzlehttp\Psr7\get_message_body_summary
-     * 
      * @param ResponseInterface $response
      *
      * @return string|null
