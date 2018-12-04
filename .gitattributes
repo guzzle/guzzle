@@ -6,6 +6,6 @@ composer.json     export-ignore
 /.travis.yml      export-ignore
 /build/           export-ignore
 /docs/            export-ignore
-/Makefile         export-ignore
+Makefile          export-ignore
 /phpunit.xml.dist export-ignore
 /tests/           export-ignore
