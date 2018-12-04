@@ -104,7 +104,7 @@ class RequestException extends TransferException
             $response->getReasonPhrase()
         );
 
-        $summary = self::getResponseBodySummary($response);
+        $summary = static::getResponseBodySummary($response);
 
         if ($summary !== null) {
             $message .= ":\n{$summary}\n";
