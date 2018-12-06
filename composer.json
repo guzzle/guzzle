@@ -22,6 +22,7 @@
     ],
     "require": {
         "php": ">=5.5",
+        "ext-json": "*",
         "guzzlehttp/promises": "^1.0",
         "guzzlehttp/psr7": "^1.4"
     },
@@ -32,6 +33,9 @@
     },
     "suggest": {
         "psr/log": "Required for using the Log middleware"
+    },
+    "config": {
+        "sort-packages": true
     },
     "extra": {
         "branch-alias": {
