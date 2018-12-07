@@ -184,17 +184,16 @@ requests.
         'webp'  => $client->getAsync('/image/webp')
     ];
 
-    // Wait on all of the requests to complete. Throws a ConnectException
+    // Wait for the requests to complete; throws a ConnectException
     // if any of the requests fail
-    $results = Promise\unwrap($promises);
+    $responses = Promise\unwrap($promises);
 
     // Wait for the requests to complete, even if some of them fail
-    $results = Promise\settle($promises)->wait();
+    $responses = Promise\settle($promises)->wait();
 
-    // You can access each result using the key provided to the unwrap
-    // function.
-    echo $results['image']['value']->getHeader('Content-Length')[0]
-    echo $results['png']['value']->getHeader('Content-Length')[0]
+    // You can access each response using the key of the promise
+    echo $responses['image']->getHeader('Content-Length')[0]
+    echo $responses['png']->getHeader('Content-Length')[0]
 
 You can use the ``GuzzleHttp\Pool`` object when you have an indeterminate
 amount of requests you wish to send.
