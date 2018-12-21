@@ -256,7 +256,7 @@ class HandlerStack
     /**
      * Provides a debug string for a given callable.
      *
-     * @param array|string|\Closure $fn Function to write as a string.
+     * @param array|callable $fn Function to write as a string.
      *
      * @return string
      */

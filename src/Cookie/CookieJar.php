@@ -22,7 +22,7 @@ class CookieJar implements CookieJarInterface
      *                           arrays that can be used with the SetCookie
      *                           constructor
      */
-    public function __construct($strictMode = false, array $cookieArray = [])
+    public function __construct($strictMode = false, $cookieArray = [])
     {
         $this->strictMode = $strictMode;
 
