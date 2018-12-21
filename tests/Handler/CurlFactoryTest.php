@@ -743,4 +743,13 @@ class CurlFactoryTest extends TestCase
 
         $this->assertSame(1024 * 1024, $body->tell());
     }
+
+    public function testRelease()
+    {
+        $factory = new CurlFactory(1);
+        $easyHandle = new EasyHandle();
+        $easyHandle->handle = curl_init();
+
+        $this->assertEmpty($factory->release($easyHandle));
+    }
 }
