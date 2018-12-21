@@ -175,6 +175,7 @@ class UrlTest extends \PHPUnit_Framework_TestCase
             ['http://api.flickr.com/services/',   'http://www.flickr.com/services/oauth/access_token', 'http://www.flickr.com/services/oauth/access_token'],
             ['https://www.example.com/path',      '//foo.com/abc', 'https://foo.com/abc'],
             ['https://www.example.com/0/',        'relative/foo', 'https://www.example.com/0/relative/foo'],
+            ['https://www.example.com/0',         'relative/foo', 'https://www.example.com/relative/foo'],
             ['',                                  '0', '0'],
             // RFC 3986 test cases
             [self::RFC3986_BASE, 'g:h',           'g:h'],
