@@ -69,7 +69,7 @@ require 'vendor/autoload.php';
 You can then later update Guzzle using composer:
 
  ```bash
-composer.phar update
+php composer.phar update
  ```
 
 

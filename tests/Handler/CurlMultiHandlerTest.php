@@ -74,6 +74,20 @@ class CurlMultiHandlerTest extends TestCase
         $this->assertGreaterThanOrEqual($expected, microtime(true));
     }
 
+    public function testUsesTimeoutEnvironmentVariables()
+    {
+        $a = new CurlMultiHandler();
+
+        //default if no options are given and no environment variable is set
+        $this->assertEquals(1, $this->readAttribute($a, 'selectTimeout'));
+
+        putenv("GUZZLE_CURL_SELECT_TIMEOUT=3");
+        $a = new CurlMultiHandler();
+        $selectTimeout = getenv('GUZZLE_CURL_SELECT_TIMEOUT');
+        //Handler reads from the environment if no options are given
+        $this->assertEquals($selectTimeout, $this->readAttribute($a, 'selectTimeout'));
+    }
+
     /**
      * @expectedException \BadMethodCallException
      */
