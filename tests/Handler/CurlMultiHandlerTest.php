@@ -68,10 +68,10 @@ class CurlMultiHandlerTest extends TestCase
         Server::flush();
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler();
-        $expected = microtime(true) + (100 / 1000);
+        $expected = (function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true)) + (100 / 1000);
         $response = $a(new Request('GET', Server::$url), ['delay' => 100]);
         $response->wait();
-        $this->assertGreaterThanOrEqual($expected, microtime(true));
+        $this->assertGreaterThanOrEqual($expected, function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true));
     }
 
     public function testUsesTimeoutEnvironmentVariables()

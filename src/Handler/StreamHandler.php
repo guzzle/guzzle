@@ -33,7 +33,7 @@ class StreamHandler
             usleep($options['delay'] * 1000);
         }
 
-        $startTime = isset($options['on_stats']) ? microtime(true) : null;
+        $startTime = isset($options['on_stats']) ? (function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true)) : null;
 
         try {
             // Does not support the expect header.
@@ -82,7 +82,7 @@ class StreamHandler
             $stats = new TransferStats(
                 $request,
                 $response,
-                microtime(true) - $startTime,
+                (function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true)) - $startTime,
                 $error,
                 []
             );
