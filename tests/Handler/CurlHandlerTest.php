@@ -47,9 +47,9 @@ class CurlHandlerTest extends TestCase
         Server::enqueue([$response]);
         $a = new CurlHandler();
         $request = new Request('GET', Server::$url);
-        $s = function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true);
+        $s = \GuzzleHttp\current_time();
         $a($request, ['delay' => 0.1])->wait();
-        $this->assertGreaterThan(0.0001, (function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true)) - $s);
+        $this->assertGreaterThan(0.0001, \GuzzleHttp\current_time() - $s);
     }
 
     public function testCreatesCurlErrorsWithContext()
