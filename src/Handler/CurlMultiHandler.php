@@ -50,7 +50,16 @@ class CurlMultiHandler
     public function __get($name)
     {
         if ($name === '_mh') {
-            return $this->_mh = curl_multi_init();
+            $this->_mh = curl_multi_init();
+
+            if (defined('CURLMOPT_MAX_HOST_CONNECTIONS')) { // php 7.0.7 - http://php.net/manual/ru/function.curl-multi-setopt.php#refsect1-function.curl-multi-setopt-changelog
+                $maxHostConnections = getenv('GUZZLE_CURL_MAX_HOST_CONNECTIONS');
+                if ($maxHostConnections) {
+                    curl_multi_setopt($this->_mh, CURLMOPT_MAX_HOST_CONNECTIONS, $maxHostConnections);
+                }
+            }
+
+            return $this->_mh;
         }
 
         throw new \BadMethodCallException();
