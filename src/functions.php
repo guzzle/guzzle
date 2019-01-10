@@ -340,5 +340,5 @@ function json_encode($value, $options = 0, $depth = 512)
  */
 function current_time()
 {
-    return function_exists('hrtime') ? hrtime(true) / 1e7 : microtime(true);
+    return function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true);
 }
