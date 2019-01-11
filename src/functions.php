@@ -337,6 +337,7 @@ function json_encode($value, $options = 0, $depth = 512)
  * (depending on the PHP version, one of the two is used)
  *
  * @return float|mixed UNIX timestamp
+ * @internal
  */
 function current_time()
 {
