@@ -21,11 +21,11 @@ trivial to integrate with web services.
 
 ```php
 $client = new \GuzzleHttp\Client();
-$request = $client->request('GET', 'https://api.github.com/repos/guzzle/guzzle');
+$response = $client->request('GET', 'https://api.github.com/repos/guzzle/guzzle');
 
-echo $request->getStatusCode(); # 200
-echo $request->getHeaderLine('content-type'); # 'application/json; charset=utf8'
-echo $request->getBody(); # '{"id": 1420053, "name": "guzzle", ...}'
+echo $response->getStatusCode(); # 200
+echo $response->getHeaderLine('content-type'); # 'application/json; charset=utf8'
+echo $response->getBody(); # '{"id": 1420053, "name": "guzzle", ...}'
 
 # Send an asynchronous request.
 $request = new \GuzzleHttp\Psr7\Request('GET', 'http://httpbin.org');
