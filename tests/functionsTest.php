@@ -131,7 +131,7 @@ class FunctionsTest extends TestCase
 
     public function testCurrentTime()
     {
-        $this->assertGreaterThan(0, GuzzleHttp\current_time());
+        $this->assertGreaterThan(0, GuzzleHttp\_current_time());
     }
 }
 

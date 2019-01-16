@@ -339,7 +339,7 @@ function json_encode($value, $options = 0, $depth = 512)
  * @return float|mixed UNIX timestamp
  * @internal
  */
-function current_time()
+function _current_time()
 {
     return function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true);
 }

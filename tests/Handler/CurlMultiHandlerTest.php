@@ -68,10 +68,10 @@ class CurlMultiHandlerTest extends TestCase
         Server::flush();
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler();
-        $expected = \GuzzleHttp\current_time() + (100 / 1000);
+        $expected = \GuzzleHttp\_current_time() + (100 / 1000);
         $response = $a(new Request('GET', Server::$url), ['delay' => 100]);
         $response->wait();
-        $this->assertGreaterThanOrEqual($expected, \GuzzleHttp\current_time());
+        $this->assertGreaterThanOrEqual($expected, \GuzzleHttp\_current_time());
     }
 
     public function testUsesTimeoutEnvironmentVariables()

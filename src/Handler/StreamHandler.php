@@ -33,7 +33,7 @@ class StreamHandler
             usleep($options['delay'] * 1000);
         }
 
-        $startTime = isset($options['on_stats']) ? \GuzzleHttp\current_time() : null;
+        $startTime = isset($options['on_stats']) ? \GuzzleHttp\_current_time() : null;
 
         try {
             // Does not support the expect header.
@@ -82,7 +82,7 @@ class StreamHandler
             $stats = new TransferStats(
                 $request,
                 $response,
-                \GuzzleHttp\current_time() - $startTime,
+                \GuzzleHttp\_current_time() - $startTime,
                 $error,
                 []
             );
