@@ -365,7 +365,7 @@ class Client implements ClientInterface
             }
         }
 
-        if (isset($options['query'])) {
+        if (!empty($options['query'])) {
             $value = $options['query'];
             if (is_array($value)) {
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
