@@ -365,13 +365,13 @@ class Client implements ClientInterface
             }
         }
 
-        if (!empty($options['query'])) {
+        if (isset($options['query'])) {
             $value = $options['query'];
-            if (is_array($value)) {
+            if (is_array($value) && !empty($value)) {
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
             if (!is_string($value)) {
-                throw new \InvalidArgumentException('query must be a string or array');
+                throw new \InvalidArgumentException('query must be a string or an noempty array');
             }
             $modify['query'] = $value;
             unset($options['query']);
