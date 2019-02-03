@@ -225,7 +225,7 @@ class Client implements ClientInterface
         if (array_key_exists('headers', $options)) {
             // Allows default headers to be unset.
             if ($options['headers'] === null) {
-                $defaults['_conditional'] = null;
+                $defaults['_conditional'] = [];
                 unset($options['headers']);
             } elseif (!is_array($options['headers'])) {
                 throw new \InvalidArgumentException('headers must be an array');
