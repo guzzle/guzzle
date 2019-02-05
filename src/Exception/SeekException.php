@@ -24,4 +24,10 @@ class SeekException extends \RuntimeException implements GuzzleException
     {
         return $this->stream;
     }
+    
+    
+    public function test()
+    {
+        return 'test';
+    }
 }
