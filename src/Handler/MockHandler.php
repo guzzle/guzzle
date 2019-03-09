@@ -97,7 +97,7 @@ class MockHandler implements \Countable
         $this->lastOptions = $options;
         $response = \array_shift($this->queue);
 
-        if (isset($options['on_headers'])) {
+        if (isset($options['on_headers']) && $response instanceof ResponseInterface) {
             if (!\is_callable($options['on_headers'])) {
                 throw new \InvalidArgumentException('on_headers must be callable');
             }
