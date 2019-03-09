@@ -10,6 +10,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\MockHandler
@@ -152,6 +153,26 @@ class MockHandlerTest extends TestCase
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
+    }
+
+    public function testEnsuresResponseTypeBeforeOnHeaders()
+    {
+        $e = new \Exception('a');
+        $mock = new MockHandler([$e]);
+        $request = new Request('GET', 'http://example.com');
+        $p = $mock($request, [
+            'on_headers' => static function ($response) {
+                if (!$response instanceof ResponseInterface) {
+                    throw new \InvalidArgumentException();
+                }
+            }
+        ]);
+        try {
+            $p->wait();
+            self::fail();
+        } catch (\Exception $e2) {
+            self::assertSame($e, $e2);
+        }
     }
 
     public function testInvokesOnFulfilled()
