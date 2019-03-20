@@ -737,7 +737,7 @@ progress
 
 The function accepts the following positional arguments:
 
-- the total number of bytes expected to be downloaded
+- the total number of bytes expected to be downloaded, zero if unknown
 - the number of bytes downloaded so far
 - the total number of bytes expected to be uploaded
 - the number of bytes uploaded so far
