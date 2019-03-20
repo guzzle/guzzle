@@ -1,6 +1,9 @@
 <?php
 namespace GuzzleHttp\Tests\CookieJar;
 
+use DateInterval;
+use DateTime;
+use DateTimeImmutable;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Psr7\Request;
@@ -366,7 +369,7 @@ class CookieJarTest extends TestCase
     public function testAddsCookiesWithEmptyPathFromResponse()
     {
         $response = new Response(200, array(
-            'Set-Cookie' => "fpc=foobar; expires=Fri, 02-Mar-2019 02:17:40 GMT; path=;"
+            'Set-Cookie' => "fpc=foobar; expires={$this->futureExpirationDate()}; path=;"
         ));
         $request = new Request('GET', 'http://www.example.com');
         $this->jar->extractCookies($request, $response);
@@ -396,11 +399,11 @@ class CookieJarTest extends TestCase
         $response = (new Response(200))
             ->withAddedHeader(
                 'Set-Cookie',
-                "foo=bar; expires=Fri, 02-Mar-2019 02:17:40 GMT; domain=www.example.com; path=;"
+                "foo=bar; expires={$this->futureExpirationDate()}; domain=www.example.com; path=;"
             )
             ->withAddedHeader(
                 'Set-Cookie',
-                "bar=foo; expires=Fri, 02-Mar-2019 02:17:40 GMT; domain=www.example.com; path=foobar;"
+                "bar=foo; expires={$this->futureExpirationDate()}; domain=www.example.com; path=foobar;"
             )
         ;
         $request = (new Request('GET', $uriPath))->withHeader('Host', 'www.example.com');
@@ -408,5 +411,10 @@ class CookieJarTest extends TestCase
 
         $this->assertSame($cookiePath, $this->jar->toArray()[0]['Path']);
         $this->assertSame($cookiePath, $this->jar->toArray()[1]['Path']);
+    }
+
+    private function futureExpirationDate()
+    {
+        return (new DateTimeImmutable)->add(new DateInterval('P1D'))->format(DateTime::COOKIE);
     }
 }
