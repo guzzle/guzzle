@@ -120,6 +120,7 @@ class CurlFactory implements CurlFactoryInterface
     private static function invokeStats(EasyHandle $easy)
     {
         $curlStats = curl_getinfo($easy->handle);
+        $curlStats['appconnect_time'] = curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME);
         $stats = new TransferStats(
             $easy->request,
             $easy->response,
@@ -139,6 +140,7 @@ class CurlFactory implements CurlFactoryInterface
         $ctx = [
             'errno' => $easy->errno,
             'error' => curl_error($easy->handle),
+            'appconnect_time' => curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME),
         ] + curl_getinfo($easy->handle);
         $ctx[self::CURL_VERSION_STR] = curl_version()['version'];
         $factory->release($easy);
