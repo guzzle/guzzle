@@ -553,6 +553,31 @@ http_errors
     default when creating a handler with ``GuzzleHttp\default_handler``.
 
 
+idn_conversion
+---
+
+:Summary: Set to ``false`` to disable Internationalized Domain Name (IDN) to
+    ASCII conversion.
+:Types:
+    - bool
+    - int
+:Default: ``true`` if ``intl`` extension is available, ``false`` otherwise
+:Constant: ``GuzzleHttp\RequestOptions::IDN_CONVERSION``
+
+.. code-block:: php
+
+    $client->request('GET', 'https://яндекс.рф');
+    // яндекс.рф is translated to  internally
+
+    $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' => false]);
+    // The domain part (яндекс.рф) stays unmodified
+
+Also a combination of IDNA_* constants (except IDNA_ERROR_*) also can be used
+for precise control of the IDN support (see ``$options`` parameter in
+`idn_to_ascii() <https://www.php.net/manual/en/function.idn-to-ascii.php>`_
+documentation for more details).
+
+
 json
 ----
 

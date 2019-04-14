@@ -133,6 +133,14 @@ final class RequestOptions
     const HTTP_ERRORS = 'http_errors';
 
     /**
+     * idn: (bool|int, default=true) Set to false to disable exceptions
+     * when a non- successful HTTP response is received. By default,
+     * exceptions will be thrown for 4xx and 5xx responses. This option only
+     * works if your handler has the `httpErrors` middleware.
+     */
+    const IDN_CONVERSION = 'idn_conversion';
+
+    /**
      * json: (mixed) Adds JSON data to a request. The provided value is JSON
      * encoded and a Content-Type header of application/json will be added to
      * the request if no Content-Type header is already present.

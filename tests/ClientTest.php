@@ -711,4 +711,52 @@ class ClientTest extends TestCase
 
         self::assertSame($responseBody, $response->getBody()->getContents());
     }
+
+    public function testIdnSupportIsEnabledByDefaultIfIntlExtensionIsAvailable()
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $config = $client->getConfig();
+
+        $this->assertTrue($config['idn_conversion']);
+    }
+
+    public function testIdnIsTranslatedToAsciiWhenSupportIsEnabled()
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => true]);
+
+        $request = $mockHandler->getLastRequest();
+
+        $this->assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
+        $this->assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
+    }
+
+    public function testIdnStaysTheSameWhenSupportIsDisabled()
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => false]);
+
+        $request = $mockHandler->getLastRequest();
+
+        $this->assertSame('https://яндекс.рф/images', (string) $request->getUri());
+        $this->assertSame('яндекс.рф', (string) $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\InvalidArgumentException
+     * @expectedExceptionMessage IDN conversion failed (errors: IDNA_ERROR_LEADING_HYPHEN)
+     */
+    public function testExceptionOnInvalidIdn()
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $client->request('GET', 'https://-яндекс.рф/images', ['idn_conversion' => true]);
+    }
 }

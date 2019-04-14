@@ -28,11 +28,13 @@
     },
     "require-dev": {
         "ext-curl": "*",
+        "ext-intl": "*",
         "phpunit/phpunit": "^4.8.35 || ^5.7 || ^6.4 || ^7.0",
         "psr/log": "^1.1"
     },
     "suggest": {
-        "psr/log": "Required for using the Log middleware"
+        "psr/log": "Required for using the Log middleware",
+        "ext-intl": "Required for Internationalized Domain Name (IDN) support"
     },
     "config": {
         "sort-packages": true
