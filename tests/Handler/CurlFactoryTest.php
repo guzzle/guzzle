@@ -685,6 +685,7 @@ class CurlFactoryTest extends TestCase
             (string) $gotStats->getRequest()->getUri()
         );
         $this->assertGreaterThan(0, $gotStats->getTransferTime());
+        $this->assertArrayHasKey('appconnect_time', $gotStats->getHandlerStats());
     }
 
     public function testInvokesOnStatsOnError()
@@ -711,6 +712,7 @@ class CurlFactoryTest extends TestCase
         );
         $this->assertInternalType('float', $gotStats->getTransferTime());
         $this->assertInternalType('int', $gotStats->getHandlerErrorData());
+        $this->assertArrayHasKey('appconnect_time', $gotStats->getHandlerStats());
     }
 
     public function testRewindsBodyIfPossible()
