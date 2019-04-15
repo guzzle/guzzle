@@ -14,8 +14,9 @@ use Psr\Http\Message\RequestInterface;
  */
 class CurlFactory implements CurlFactoryInterface
 {
-    private const CURL_VERSION_STR = 'curl_version';
-    private const LOW_CURL_VERSION_NUMBER = '7.21.2';
+    const CURL_VERSION_STR = 'curl_version';
+    const LOW_CURL_VERSION_NUMBER = '7.21.2';
+
     /** @var array */
     private $handles = [];
 
