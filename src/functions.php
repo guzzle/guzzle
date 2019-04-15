@@ -331,3 +331,15 @@ function json_encode($value, $options = 0, $depth = 512)
 
     return $json;
 }
+
+/**
+ * Wrapper for the hrtime() or microtime() functions
+ * (depending on the PHP version, one of the two is used)
+ *
+ * @return float|mixed UNIX timestamp
+ * @internal
+ */
+function _current_time()
+{
+    return function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true);
+}

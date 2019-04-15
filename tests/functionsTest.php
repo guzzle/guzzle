@@ -128,6 +128,11 @@ class FunctionsTest extends TestCase
     {
         \GuzzleHttp\json_decode('{{]]');
     }
+
+    public function testCurrentTime()
+    {
+        $this->assertGreaterThan(0, GuzzleHttp\_current_time());
+    }
 }
 
 final class StrClass
