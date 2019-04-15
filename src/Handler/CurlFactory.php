@@ -14,6 +14,9 @@ use Psr\Http\Message\RequestInterface;
  */
 class CurlFactory implements CurlFactoryInterface
 {
+    const CURL_VERSION_STR = 'curl_version';
+    const LOW_CURL_VERSION_NUMBER = '7.21.2';
+
     /** @var array */
     private $handles = [];
 
@@ -137,6 +140,7 @@ class CurlFactory implements CurlFactoryInterface
             'errno' => $easy->errno,
             'error' => curl_error($easy->handle),
         ] + curl_getinfo($easy->handle);
+        $ctx[self::CURL_VERSION_STR] = curl_version()['version'];
         $factory->release($easy);
 
         // Retry when nothing is present or when curl failed to rewind.
@@ -172,13 +176,22 @@ class CurlFactory implements CurlFactoryInterface
                 )
             );
         }
-
-        $message = sprintf(
-            'cURL error %s: %s (%s)',
-            $ctx['errno'],
-            $ctx['error'],
-            'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
-        );
+        if (version_compare($ctx[self::CURL_VERSION_STR], self::LOW_CURL_VERSION_NUMBER)) {
+            $message = sprintf(
+                'cURL error %s: %s (%s)',
+                $ctx['errno'],
+                $ctx['error'],
+                'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
+            );
+        } else {
+            $message = sprintf(
+                'cURL error %s: %s (%s) for %s',
+                $ctx['errno'],
+                $ctx['error'],
+                'see https://curl.haxx.se/libcurl/c/libcurl-errors.html',
+                $easy->request->getUri()
+            );
+        }
 
         // Create a connection exception if it was a specific error code.
         $error = isset($connectionErrors[$easy->errno])
