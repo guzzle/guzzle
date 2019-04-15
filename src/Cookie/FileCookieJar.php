@@ -50,7 +50,7 @@ class FileCookieJar extends CookieJar
             }
         }
 
-        if (false === file_put_contents($filename, json_encode($json))) {
+        if (false === file_put_contents($filename, json_encode($json), LOCK_EX)) {
             // @codeCoverageIgnoreStart
             throw new \RuntimeException("Unable to save file {$filename}");
             // @codeCoverageIgnoreEnd
