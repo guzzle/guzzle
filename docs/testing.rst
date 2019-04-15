@@ -44,7 +44,7 @@ a response or exception by shifting return values off of a queue.
     $response = $client->request('GET', '/');
     echo $response->getStatusCode();
     //> 200
-    echo $response->getBody()->getContents();
+    echo $response->getBody();
     //> Hello, World
     // The second request is intercepted with the second response.
     echo $client->request('GET', '/')->getStatusCode();
