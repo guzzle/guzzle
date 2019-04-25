@@ -43,6 +43,15 @@ final class RequestOptions
     const AUTH = 'auth';
 
     /**
+     * base_uri: (string|UriInterface)
+     * Base URI of the client that is merged into relative URIs.
+     * When a relative URI is provided to a client, the client will combine
+     * the base URI with the relative URI using the rules described
+     * in RFC 3986, section 2.
+     */
+    const BASE_URI = 'base_uri';
+
+    /**
      * body: (resource|string|null|int|float|StreamInterface|callable|\Iterator)
      * Body to send in the request.
      */
