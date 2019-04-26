@@ -96,4 +96,14 @@ class CurlMultiHandlerTest extends TestCase
         $h = new CurlMultiHandler();
         $h->foo;
     }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\ConnectException
+     * @expectedExceptionMessage Could not resolve host:
+     */
+    public function testCurlErrorMessage()
+    {
+        $a = new CurlMultiHandler();
+        $a(new Request('GET', 'http://'.uniqid().uniqid()), [])->wait();
+    }
 }

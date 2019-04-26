@@ -754,4 +754,41 @@ class CurlFactoryTest extends TestCase
 
         $this->assertEmpty($factory->release($easyHandle));
     }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\ConnectException
+     * @expectedExceptionMessage Could not resolve host:
+     */
+    public function testCurlErrorMessage()
+    {
+        $factory = new Handler\CurlFactory(1);
+        $request = new Psr7\Request('GET', 'http://'.uniqid().uniqid());
+
+        $fn = static function (Psr7\Request $request, array $options) use (&$fn, $factory) {
+            $easy = $factory->create($request, $options);
+            curl_exec($easy->handle);
+            $easy->errno = curl_errno($easy->handle);
+
+            return Handler\CurlFactory::finish($fn, $easy, $factory);
+        };
+        $fn($request, [])->wait();
+    }
+
+    /**
+     * @expectedException \GuzzleHttp\Exception\ConnectException
+     * @expectedExceptionMessage Couldn't resolve host name
+     */
+    public function testCurlFallbackErrorMessage()
+    {
+        $factory = new Handler\CurlFactory(1);
+        $request = new Psr7\Request('GET', 'http://'.uniqid().uniqid());
+
+        $fn = static function (Psr7\Request $request, array $options) use (&$fn, $factory) {
+            $easy = $factory->create($request, $options);
+            $easy->errno = 6;
+
+            return Handler\CurlFactory::finish($fn, $easy, $factory);
+        };
+        $fn($request, [])->wait();
+    }
 }

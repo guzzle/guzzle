@@ -139,7 +139,8 @@ class CurlFactory implements CurlFactoryInterface
         // Get error information and release the handle to the factory.
         $ctx = [
             'errno' => $easy->errno,
-            'error' => curl_error($easy->handle),
+            // @see https://bugs.php.net/bug.php?id=77946
+            'error' => curl_error($easy->handle) ?: curl_strerror($easy->errno),
             'appconnect_time' => curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME),
         ] + curl_getinfo($easy->handle);
         $ctx[self::CURL_VERSION_STR] = curl_version()['version'];
