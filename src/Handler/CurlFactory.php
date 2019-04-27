@@ -106,7 +106,7 @@ class CurlFactory implements CurlFactoryInterface
             self::invokeStats($easy);
         }
 
-        if (!$easy->response || $easy->errno) {
+        if (!$easy->response || \CURLE_OK !== $easy->errno) {
             return self::finishError($handler, $easy, $factory);
         }
 
@@ -151,7 +151,7 @@ class CurlFactory implements CurlFactoryInterface
         $factory->release($easy);
 
         // Retry when nothing is present or when curl failed to rewind.
-        if (empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
+        if (empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == /* \CURLE_SEND_FAIL_REWIND */ 65)) {
             return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
