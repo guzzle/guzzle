@@ -451,5 +451,6 @@ functionality.
 - `InflateStream <https://github.com/guzzle/psr7#inflatestream>`_
 - `LazyOpenStream <https://github.com/guzzle/psr7#lazyopenstream>`_
 - `LimitStream <https://github.com/guzzle/psr7#limitstream>`_
+- `MultipartStream <https://github.com/guzzle/psr7#multipartstream>`_
 - `NoSeekStream <https://github.com/guzzle/psr7#noseekstream>`_
 - `PumpStream <https://github.com/guzzle/psr7#pumpstream>`_
