@@ -34,6 +34,7 @@ class PrepareBodyMiddlewareTest extends TestCase
                 $length = strlen($body);
                 if ($length > 0) {
                     $this->assertEquals($length, $request->getHeaderLine('Content-Length'));
+                    $this->assertTrue(is_string($request->getHeaderLine('Content-Length')));
                 } else {
                     $this->assertFalse($request->hasHeader('Content-Length'));
                 }
