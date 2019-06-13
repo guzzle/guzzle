@@ -197,7 +197,7 @@ final class Middleware
                         $response = $reason instanceof RequestException
                             ? $reason->getResponse()
                             : null;
-                        $message = $formatter->format($request, $response, $reason);
+                        $message = $formatter->format($request, $response, \GuzzleHttp\Promise\exception_for($reason));
                         $logger->notice($message);
                         return \GuzzleHttp\Promise\rejection_for($reason);
                     }
