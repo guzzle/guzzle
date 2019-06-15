@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
@@ -9,21 +10,37 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * @method ResponseInterface get(string|UriInterface $uri, array $options = [])
- * @method ResponseInterface head(string|UriInterface $uri, array $options = [])
- * @method ResponseInterface put(string|UriInterface $uri, array $options = [])
- * @method ResponseInterface post(string|UriInterface $uri, array $options = [])
- * @method ResponseInterface patch(string|UriInterface $uri, array $options = [])
- * @method ResponseInterface delete(string|UriInterface $uri, array $options = [])
- * @method Promise\PromiseInterface getAsync(string|UriInterface $uri, array $options = [])
- * @method Promise\PromiseInterface headAsync(string|UriInterface $uri, array $options = [])
- * @method Promise\PromiseInterface putAsync(string|UriInterface $uri, array $options = [])
- * @method Promise\PromiseInterface postAsync(string|UriInterface $uri, array $options = [])
- * @method Promise\PromiseInterface patchAsync(string|UriInterface $uri, array $options = [])
- * @method Promise\PromiseInterface deleteAsync(string|UriInterface $uri, array $options = [])
+ * @method ResponseInterface get(string | UriInterface $uri, array $options = [])
+ * @method ResponseInterface head(string | UriInterface $uri, array $options = [])
+ * @method ResponseInterface put(string | UriInterface $uri, array $options = [])
+ * @method ResponseInterface post(string | UriInterface $uri, array $options = [])
+ * @method ResponseInterface patch(string | UriInterface $uri, array $options = [])
+ * @method ResponseInterface delete(string | UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface getAsync(string | UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface headAsync(string | UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface putAsync(string | UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface postAsync(string | UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface patchAsync(string | UriInterface $uri, array $options = [])
+ * @method Promise\PromiseInterface deleteAsync(string | UriInterface $uri, array $options = [])
  */
 class Client implements ClientInterface
 {
+    const  GET = 'GET';
+    const  POST = 'POST';
+    const  PUT = 'PUT';
+    const  PATCH = 'PATCH';
+    const  DELETE = 'DELETE';
+    const  COPY = 'COPY';
+    const  HEAD = 'HEAD';
+    const  OPTIONS = 'OPTIONS';
+    const  LINK = 'LINK';
+    const  UNLINK = 'UNLINK';
+    const  PURGE = 'PURGE';
+    const  LOCK = 'LOCK';
+    const  UNLOCK = 'UNLOCK';
+    const  PROPFIND = 'PROPFIND';
+    const  VIEW = 'VIEW';
+
     /** @var array Default request options */
     private $config;
 
@@ -159,10 +176,10 @@ class Client implements ClientInterface
     {
         $defaults = [
             'allow_redirects' => RedirectMiddleware::$defaultSettings,
-            'http_errors'     => true,
-            'decode_content'  => true,
-            'verify'          => true,
-            'cookies'         => false
+            'http_errors' => true,
+            'decode_content' => true,
+            'verify' => true,
+            'cookies' => false
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
@@ -252,7 +269,7 @@ class Client implements ClientInterface
      * as-is without merging in default options.
      *
      * @param RequestInterface $request
-     * @param array            $options
+     * @param array $options
      *
      * @return Promise\PromiseInterface
      */
@@ -284,7 +301,7 @@ class Client implements ClientInterface
      * Applies the array of request options to a request.
      *
      * @param RequestInterface $request
-     * @param array            $options
+     * @param array $options
      *
      * @return RequestInterface
      */
