@@ -33,7 +33,7 @@ class SessionCookieJarTest extends TestCase
     public function testLoadsFromSession()
     {
         $jar = new SessionCookieJar($this->sessionVar);
-        $this->assertSame([], $jar->getIterator()->getArrayCopy());
+        self::assertSame([], $jar->getIterator()->getArrayCopy());
         unset($_SESSION[$this->sessionVar]);
     }
 
@@ -61,21 +61,21 @@ class SessionCookieJarTest extends TestCase
             'Domain'  => 'foo.com',
         ]));
 
-        $this->assertCount(3, $jar);
+        self::assertCount(3, $jar);
         unset($jar);
 
         // Make sure it wrote to the sessionVar in $_SESSION
         $contents = $_SESSION[$this->sessionVar];
-        $this->assertNotEmpty($contents);
+        self::assertNotEmpty($contents);
 
         // Load the cookieJar from the file
         $jar = new SessionCookieJar($this->sessionVar);
 
         if ($testSaveSessionCookie) {
-            $this->assertCount(3, $jar);
+            self::assertCount(3, $jar);
         } else {
             // Weeds out temporary and session cookies
-            $this->assertCount(2, $jar);
+            self::assertCount(2, $jar);
         }
 
         unset($jar);

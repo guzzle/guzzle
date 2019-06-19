@@ -33,9 +33,9 @@ class PrepareBodyMiddlewareTest extends TestCase
             function (RequestInterface $request) use ($body) {
                 $length = strlen($body);
                 if ($length > 0) {
-                    $this->assertEquals($length, $request->getHeaderLine('Content-Length'));
+                    self::assertEquals($length, $request->getHeaderLine('Content-Length'));
                 } else {
-                    $this->assertFalse($request->hasHeader('Content-Length'));
+                    self::assertFalse($request->hasHeader('Content-Length'));
                 }
                 return new Response(200);
             }
@@ -45,9 +45,9 @@ class PrepareBodyMiddlewareTest extends TestCase
         $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request($method, 'http://www.google.com', [], $body), []);
-        $this->assertInstanceOf(PromiseInterface::class, $p);
+        self::assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
-        $this->assertSame(200, $response->getStatusCode());
+        self::assertSame(200, $response->getStatusCode());
     }
 
     public function testAddsTransferEncodingWhenNoContentLength()
@@ -57,8 +57,8 @@ class PrepareBodyMiddlewareTest extends TestCase
         ]);
         $h = new MockHandler([
             function (RequestInterface $request) {
-                $this->assertFalse($request->hasHeader('Content-Length'));
-                $this->assertSame('chunked', $request->getHeaderLine('Transfer-Encoding'));
+                self::assertFalse($request->hasHeader('Content-Length'));
+                self::assertSame('chunked', $request->getHeaderLine('Transfer-Encoding'));
                 return new Response(200);
             }
         ]);
@@ -67,9 +67,9 @@ class PrepareBodyMiddlewareTest extends TestCase
         $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $body), []);
-        $this->assertInstanceOf(PromiseInterface::class, $p);
+        self::assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
-        $this->assertSame(200, $response->getStatusCode());
+        self::assertSame(200, $response->getStatusCode());
     }
 
     public function testAddsContentTypeWhenMissingAndPossible()
@@ -77,8 +77,8 @@ class PrepareBodyMiddlewareTest extends TestCase
         $bd = Psr7\stream_for(fopen(__DIR__ . '/../composer.json', 'r'));
         $h = new MockHandler([
             function (RequestInterface $request) {
-                $this->assertSame('application/json', $request->getHeaderLine('Content-Type'));
-                $this->assertTrue($request->hasHeader('Content-Length'));
+                self::assertSame('application/json', $request->getHeaderLine('Content-Type'));
+                self::assertTrue($request->hasHeader('Content-Length'));
                 return new Response(200);
             }
         ]);
@@ -87,9 +87,9 @@ class PrepareBodyMiddlewareTest extends TestCase
         $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $bd), []);
-        $this->assertInstanceOf(PromiseInterface::class, $p);
+        self::assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
-        $this->assertSame(200, $response->getStatusCode());
+        self::assertSame(200, $response->getStatusCode());
     }
 
     public function expectProvider()
@@ -111,7 +111,7 @@ class PrepareBodyMiddlewareTest extends TestCase
 
         $h = new MockHandler([
             function (RequestInterface $request) use ($result) {
-                $this->assertSame($result, $request->getHeader('Expect'));
+                self::assertSame($result, $request->getHeader('Expect'));
                 return new Response(200);
             }
         ]);
@@ -123,9 +123,9 @@ class PrepareBodyMiddlewareTest extends TestCase
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $bd), [
             'expect' => $value
         ]);
-        $this->assertInstanceOf(PromiseInterface::class, $p);
+        self::assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
-        $this->assertSame(200, $response->getStatusCode());
+        self::assertSame(200, $response->getStatusCode());
     }
 
     public function testIgnoresIfExpectIsPresent()
@@ -133,7 +133,7 @@ class PrepareBodyMiddlewareTest extends TestCase
         $bd = Psr7\stream_for(fopen(__DIR__ . '/../composer.json', 'r'));
         $h = new MockHandler([
             function (RequestInterface $request) {
-                $this->assertSame(['Foo'], $request->getHeader('Expect'));
+                self::assertSame(['Foo'], $request->getHeader('Expect'));
                 return new Response(200);
             }
         ]);
@@ -146,8 +146,8 @@ class PrepareBodyMiddlewareTest extends TestCase
             new Request('PUT', 'http://www.google.com', ['Expect' => 'Foo'], $bd),
             ['expect' => true]
         );
-        $this->assertInstanceOf(PromiseInterface::class, $p);
+        self::assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
-        $this->assertSame(200, $response->getStatusCode());
+        self::assertSame(200, $response->getStatusCode());
     }
 }

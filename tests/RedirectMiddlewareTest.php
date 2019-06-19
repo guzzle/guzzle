@@ -25,7 +25,7 @@ class RedirectMiddlewareTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $promise = $handler($request, []);
         $response = $promise->wait();
-        $this->assertSame(200, $response->getStatusCode());
+        self::assertSame(200, $response->getStatusCode());
     }
 
     public function testIgnoresWhenNoLocation()
@@ -37,7 +37,7 @@ class RedirectMiddlewareTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $promise = $handler($request, []);
         $response = $promise->wait();
-        $this->assertSame(304, $response->getStatusCode());
+        self::assertSame(304, $response->getStatusCode());
     }
 
     public function testRedirectsWithAbsoluteUri()
@@ -54,8 +54,8 @@ class RedirectMiddlewareTest extends TestCase
             'allow_redirects' => ['max' => 2]
         ]);
         $response = $promise->wait();
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame('http://test.com', (string)$mock->getLastRequest()->getUri());
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('http://test.com', (string)$mock->getLastRequest()->getUri());
     }
 
     public function testRedirectsWithRelativeUri()
@@ -72,8 +72,8 @@ class RedirectMiddlewareTest extends TestCase
             'allow_redirects' => ['max' => 2]
         ]);
         $response = $promise->wait();
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame('http://example.com/foo', (string)$mock->getLastRequest()->getUri());
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('http://example.com/foo', (string)$mock->getLastRequest()->getUri());
     }
 
     /**
@@ -126,7 +126,7 @@ class RedirectMiddlewareTest extends TestCase
             'allow_redirects' => ['max' => 2, 'referer' => true]
         ]);
         $promise->wait();
-        $this->assertSame(
+        self::assertSame(
             'http://example.com?a=b',
             $mock->getLastRequest()->getHeaderLine('Referer')
         );
@@ -146,7 +146,7 @@ class RedirectMiddlewareTest extends TestCase
             'allow_redirects' => ['max' => 2, 'referer' => true]
         ]);
         $promise->wait();
-        $this->assertSame(
+        self::assertSame(
             'http://example.com?a=b',
             $mock->getLastRequest()->getHeaderLine('Referer')
         );
@@ -169,7 +169,7 @@ class RedirectMiddlewareTest extends TestCase
             'allow_redirects' => ['track_redirects' => true]
         ]);
         $response = $promise->wait(true);
-        $this->assertSame(
+        self::assertSame(
             [
                 'http://example.com',
                 'http://example.com/foo',
@@ -197,7 +197,7 @@ class RedirectMiddlewareTest extends TestCase
             'allow_redirects' => ['track_redirects' => true]
         ]);
         $response = $promise->wait(true);
-        $this->assertSame(
+        self::assertSame(
             [
                 '301',
                 '302',
@@ -222,7 +222,7 @@ class RedirectMiddlewareTest extends TestCase
             'allow_redirects' => ['max' => 2, 'referer' => true]
         ]);
         $promise->wait();
-        $this->assertFalse($mock->getLastRequest()->hasHeader('Referer'));
+        self::assertFalse($mock->getLastRequest()->hasHeader('Referer'));
     }
 
     public function testInvokesOnRedirectForRedirects()
@@ -240,15 +240,15 @@ class RedirectMiddlewareTest extends TestCase
             'allow_redirects' => [
                 'max' => 2,
                 'on_redirect' => function ($request, $response, $uri) use (&$call) {
-                    $this->assertSame(302, $response->getStatusCode());
-                    $this->assertSame('GET', $request->getMethod());
-                    $this->assertSame('http://test.com', (string) $uri);
+                    self::assertSame(302, $response->getStatusCode());
+                    self::assertSame('GET', $request->getMethod());
+                    self::assertSame('http://test.com', (string) $uri);
                     $call = true;
                 }
             ]
         ]);
         $promise->wait();
-        $this->assertTrue($call);
+        self::assertTrue($call);
     }
 
     public function testRemoveAuthorizationHeaderOnRedirect()
@@ -256,7 +256,7 @@ class RedirectMiddlewareTest extends TestCase
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
             function (RequestInterface $request) {
-                $this->assertFalse($request->hasHeader('Authorization'));
+                self::assertFalse($request->hasHeader('Authorization'));
                 return new Response(200);
             }
         ]);
@@ -270,7 +270,7 @@ class RedirectMiddlewareTest extends TestCase
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://example.com/2']),
             function (RequestInterface $request) {
-                $this->assertTrue($request->hasHeader('Authorization'));
+                self::assertTrue($request->hasHeader('Authorization'));
                 return new Response(200);
             }
         ]);
