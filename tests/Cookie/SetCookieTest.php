@@ -119,6 +119,9 @@ class SetCookieTest extends TestCase
 
         $cookie->setDomain('example.com/'); // malformed domain
         $this->assertFalse($cookie->matchesDomain('example.com'));
+
+        $cookie->setDomain('*');
+        $this->assertTrue($cookie->matchesDomain('example.com'));
     }
 
     public function pathMatchProvider()
