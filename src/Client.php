@@ -188,6 +188,10 @@ class Client implements ClientInterface
         if (!empty($config['cookies']) && $config['cookies'] === true) {
             $this->config['cookies'] = new CookieJar();
         }
+ 
+        if (!empty($config['cookies']) && $config['cookies'] instanceof CookieJar) {
+            $this->config['cookies'] = $config['cookies'];
+        }
 
         // Add the default user-agent header.
         if (!isset($this->config['headers'])) {
