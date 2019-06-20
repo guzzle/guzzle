@@ -43,6 +43,12 @@ final class RequestOptions
     const AUTH = 'auth';
 
     /**
+     * body: (string|UriInterface)
+     * Base URI of the client that is merged into relative URIs.
+     */
+    const BASE_URI = 'base_uri';
+
+    /**
      * body: (resource|string|null|int|float|StreamInterface|callable|\Iterator)
      * Body to send in the request.
      */
