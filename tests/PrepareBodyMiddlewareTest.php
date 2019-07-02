@@ -11,6 +11,7 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 
 class PrepareBodyMiddlewareTest extends TestCase
 {
@@ -147,6 +148,32 @@ class PrepareBodyMiddlewareTest extends TestCase
             ['expect' => true]
         );
         $this->assertInstanceOf(PromiseInterface::class, $p);
+        $response = $p->wait();
+        $this->assertSame(200, $response->getStatusCode());
+    }
+
+    public function testAddsExpectIfStreamIsNotSeekable()
+    {
+        $bd = new Psr7\NoSeekStream(Psr7\stream_for(fopen(__DIR__ . '/../composer.json', 'r'))); // NonSeekableStream
+
+        $h = new MockHandler([
+            function (RequestInterface $request) {
+                $this->assertSame(['100-Continue'], $request->getHeader('Expect'));
+                return new Response(200);
+            }
+        ]);
+
+        $m = Middleware::prepareBody();
+        $stack = new HandlerStack($h);
+        $stack->push($m);
+        $comp = $stack->resolve();
+        /** @var PromiseInterface $p */
+        $p = $comp(
+            new Request('PUT', 'http://www.google.com', [], $bd),
+            ['expect' => true]
+        );
+        $this->assertInstanceOf(PromiseInterface::class, $p);
+        /** @var ResponseInterface $response */
         $response = $p->wait();
         $this->assertSame(200, $response->getStatusCode());
     }

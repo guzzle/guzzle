@@ -97,9 +97,13 @@ class PrepareBodyMiddleware
         // Always add if the body cannot be rewound, the size cannot be
         // determined, or the size is greater than the cutoff threshold
         $body = $request->getBody();
-        $size = $body->getSize();
+        if (!$body->isSeekable()) {
+            $modify['set_headers']['Expect'] = '100-Continue';
+            return;
+        }
 
-        if ($size === null || $size >= (int) $expect || !$body->isSeekable()) {
+        $size = $body->getSize();
+        if ($size === null || $size >= (int) $expect) {
             $modify['set_headers']['Expect'] = '100-Continue';
         }
     }
