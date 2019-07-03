@@ -25,12 +25,14 @@ class MiddlewareTest extends TestCase
         $h = new MockHandler(
             [
                 function (RequestInterface $request) {
+                    $cookie = new SetCookie([
+                        'Name'   => 'name',
+                        'Value'  => 'value',
+                        'Domain' => 'foo.com'
+                    ]);
+
                     return new Response(200, [
-                        'Set-Cookie' => new SetCookie([
-                            'Name'   => 'name',
-                            'Value'  => 'value',
-                            'Domain' => 'foo.com'
-                        ])
+                        'Set-Cookie' => $cookie->__toString()
                     ]);
                 }
             ]

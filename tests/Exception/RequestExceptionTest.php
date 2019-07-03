@@ -67,7 +67,7 @@ class RequestExceptionTest extends TestCase
         );
         $this->assertContains(
             '100 ',
-            $e->getMessage()
+            $e->getMessage()testAddsCookiesToRequests
         );
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
     }
