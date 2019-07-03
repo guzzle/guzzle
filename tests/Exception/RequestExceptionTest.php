@@ -60,13 +60,13 @@ class RequestExceptionTest extends TestCase
 
     public function testCreatesGenericErrorResponseException()
     {
-        $e = RequestException::create(new Request('GET', '/'), new Response(600));
+        $e = RequestException::create(new Request('GET', '/'), new Response(100));
         $this->assertContains(
             'GET /',
             $e->getMessage()
         );
         $this->assertContains(
-            '600 ',
+            '100 ',
             $e->getMessage()
         );
         $this->assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
