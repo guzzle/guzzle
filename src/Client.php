@@ -1,9 +1,9 @@
 <?php
 namespace GuzzleHttp;
 
-use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Cookie\CookieJar;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -26,7 +26,6 @@ class Client implements ClientInterface
 {
     /** @var array Default request options */
     private $config;
-
 
     /**
      * Clients accept an array of constructor parameters.
