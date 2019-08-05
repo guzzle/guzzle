@@ -320,13 +320,11 @@ class Client implements ClientInterface
         }
 
         if (isset($options['json'])) {
-
-            if (! isset($options['json']['_options'])) {
-                $options['body'] = \GuzzleHttp\json_encode(isset($options['json']['body']) ? $options['json']['body'] : $options['json']);
-            } else {
-                $options['body'] = \GuzzleHttp\json_encode($options['json']['body'], $options['json']['_options']);
+            if (! $options['json'] instanceof JsonPayload && is_array($options['json'])) {
+                $options['json'] = new JsonPayload($options['json']);
             }
 
+            $options['body'] = $options['json']->serialize();
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
