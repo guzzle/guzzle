@@ -3,7 +3,7 @@
          backupGlobals="true"
          colors="true">
   <testsuites>
-    <testsuite>
+    <testsuite name="Test Suite">
       <directory>tests</directory>
     </testsuite>
   </testsuites>
