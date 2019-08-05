@@ -27,6 +27,7 @@ class Client implements ClientInterface
     /** @var array Default request options */
     private $config;
 
+
     /**
      * Clients accept an array of constructor parameters.
      *
@@ -321,10 +322,10 @@ class Client implements ClientInterface
 
         if (isset($options['json'])) {
 
-            if (! isset($options['json']['options'])) {
+            if (! isset($options['json']['_options'])) {
                 $options['body'] = \GuzzleHttp\json_encode(isset($options['json']['body']) ? $options['json']['body'] : $options['json']);
             } else {
-                $options['body'] = \GuzzleHttp\json_encode($options['json']['body'], $options['json']['options']);
+                $options['body'] = \GuzzleHttp\json_encode($options['json']['body'], $options['json']['_options']);
             }
 
             unset($options['json']);
