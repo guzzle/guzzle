@@ -7,6 +7,7 @@ use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\TransferStats;
+use PHPUnit\Framework\Error\Notice;
 use Psr\Http\Message\ResponseInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -214,6 +215,14 @@ class CurlFactoryTest extends TestCase
         $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => [__FILE__, 'test']]);
         $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
         $this->assertEquals('test', $_SERVER['_curl'][CURLOPT_SSLKEYPASSWD]);
+    }
+
+    public function testAddsSslKeyWhenUsingArraySyntaxButNoPassword()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => [__FILE__]]);
+
+        $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
     }
 
     /**
