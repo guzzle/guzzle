@@ -26,7 +26,7 @@ class MiddlewareTest extends TestCase
             [
                 function (RequestInterface $request) {
                     return new Response(200, [
-                        'Set-Cookie' => new SetCookie([
+                        'Set-Cookie' => (string) new SetCookie([
                             'Name'   => 'name',
                             'Value'  => 'value',
                             'Domain' => 'foo.com'
