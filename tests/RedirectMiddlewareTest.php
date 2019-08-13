@@ -132,6 +132,26 @@ class RedirectMiddlewareTest extends TestCase
         );
     }
 
+    public function testAddsRefererHeaderButClearsUserInfo()
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com']),
+            new Response(200)
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://foo:bar@example.com?a=b');
+        $promise = $handler($request, [
+            'allow_redirects' => ['max' => 2, 'referer' => true]
+        ]);
+        $promise->wait();
+        $this->assertSame(
+            'http://example.com?a=b',
+            $mock->getLastRequest()->getHeaderLine('Referer')
+        );
+    }
+
     public function testAddsGuzzleRedirectHeader()
     {
         $mock = new MockHandler([
