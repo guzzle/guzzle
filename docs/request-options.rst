@@ -788,7 +788,7 @@ host names that should not be proxied to.
 
     Guzzle will automatically populate this value with your environment's
     ``NO_PROXY`` environment variable. However, when providing a ``proxy``
-    request option, it is up to your to provide the ``no`` value parsed from
+    request option, it is up to you to provide the ``no`` value parsed from
     the ``NO_PROXY`` environment variable
     (e.g., ``explode(',', getenv('NO_PROXY'))``).
 
