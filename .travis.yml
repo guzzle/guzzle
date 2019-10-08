@@ -37,13 +37,12 @@ before_deploy:
 deploy:
   provider: releases
   skip_cleanup: true
-  api_key:
-    secure: UpypqlYgsU68QT/x40YzhHXvzWjFwCNo9d+G8KAdm7U9+blFfcWhV1aMdzugvPMl6woXgvJj7qHq5tAL4v6oswCORhpSBfLgOQVFaica5LiHsvWlAedOhxGmnJqMTwuepjBCxXhs3+I8Kof1n4oUL9gKytXjOVCX/f7XU1HiinU=
+  api_key: $GITHUB_OAUTH_TOKEN
   file:
     - build/artifacts/guzzle.phar
     - build/artifacts/guzzle.zip
   on:
-    repo: guzzle/guzzle
+    repo: SomeBlackMagic/guzzle
     tags: true
     all_branches: true
     php: 5.5
