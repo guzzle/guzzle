@@ -25,14 +25,10 @@ class CurlMultiHandlerTest extends TestCase
         Server::flush();
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler(['options' => [
-            // "1" will raise an error "curl_multi_setopt(): CURLPIPE_HTTP1 is deprecated" on PHP 7.4+, see the docs
-//            CURLMOPT_PIPELINING => 1,
-            CURLMOPT_PIPELINING => CURLPIPE_MULTIPLEX,
             CURLMOPT_MAXCONNECTS => 5,
         ]]);
         $request = new Request('GET', Server::$url);
         $a($request, []);
-        $this->assertEquals(1, $_SERVER['_curl_multi'][CURLMOPT_PIPELINING]);
         $this->assertEquals(5, $_SERVER['_curl_multi'][CURLMOPT_MAXCONNECTS]);
     }
 
