@@ -56,7 +56,7 @@ class FileCookieJar extends CookieJar
         }
 
         $jsonStr = \GuzzleHttp\json_encode($json);
-        if (false === file_put_contents($filename, $jsonStr)) {
+        if (false === file_put_contents($filename, $jsonStr, LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
     }
