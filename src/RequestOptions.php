@@ -133,10 +133,10 @@ final class RequestOptions
     const HTTP_ERRORS = 'http_errors';
 
     /**
-     * idn: (bool|int, default=true) Set to false to disable exceptions
-     * when a non- successful HTTP response is received. By default,
-     * exceptions will be thrown for 4xx and 5xx responses. This option only
-     * works if your handler has the `httpErrors` middleware.
+     * idn: (bool|int, default=true) A combination of IDNA_* constants for
+     * idn_to_ascii() PHP's function (see "options" parameter). Set to false to
+     * disable IDN support completely, or to true to use the default
+     * configuration (IDNA_DEFAULT constant).
      */
     const IDN_CONVERSION = 'idn_conversion';
 

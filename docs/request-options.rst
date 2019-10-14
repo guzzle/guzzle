@@ -556,8 +556,8 @@ http_errors
 idn_conversion
 ---
 
-:Summary: Set to ``false`` to disable Internationalized Domain Name (IDN) to
-    ASCII conversion.
+:Summary: Internationalized Domain Name (IDN) support (enabled by default if
+    ``intl`` extension is available).
 :Types:
     - bool
     - int
@@ -567,15 +567,15 @@ idn_conversion
 .. code-block:: php
 
     $client->request('GET', 'https://яндекс.рф');
-    // яндекс.рф is translated to  internally
+    // яндекс.рф is translated to xn--d1acpjx3f.xn--p1ai before passing it to the handler
 
     $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' => false]);
     // The domain part (яндекс.рф) stays unmodified
 
-Also a combination of IDNA_* constants (except IDNA_ERROR_*) also can be used
-for precise control of the IDN support (see ``$options`` parameter in
+Enables/disables IDN support, can also be used for precise control by combining
+IDNA_* constants (except IDNA_ERROR_*), see ``$options`` parameter in
 `idn_to_ascii() <https://www.php.net/manual/en/function.idn-to-ascii.php>`_
-documentation for more details).
+documentation for more details.
 
 
 json
