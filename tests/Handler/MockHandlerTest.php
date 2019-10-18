@@ -232,7 +232,7 @@ class MockHandlerTest extends TestCase
         $onStats = function (TransferStats $s) use (&$stats) {
             $stats = $s;
         };
-        $mock($request, ['on_stats' => $onStats, 'transfer_time' => 0.4])->wait(false);
-        $this->assertEquals(0.4,$stats->getTransferTime());
+        $mock($request, [ 'on_stats' => $onStats, 'transfer_time' => 0.4 ])->wait(false);
+        $this->assertEquals(0.4, $stats->getTransferTime());
     }
 }
