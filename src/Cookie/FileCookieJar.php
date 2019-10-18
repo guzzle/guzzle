@@ -23,6 +23,7 @@ class FileCookieJar extends CookieJar
      */
     public function __construct($cookieFile, $storeSessionCookies = false)
     {
+        parent::__construct();
         $this->filename = $cookieFile;
         $this->storeSessionCookies = $storeSessionCookies;
 
