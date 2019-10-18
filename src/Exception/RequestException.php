@@ -11,6 +11,9 @@ use Psr\Http\Message\UriInterface;
  */
 class RequestException extends TransferException
 {
+    /** @var int */
+    private static $responseSize = 120;
+
     /** @var RequestInterface */
     private $request;
 
@@ -136,11 +139,14 @@ class RequestException extends TransferException
             return null;
         }
 
-        $summary = $body->read(120);
-        $body->rewind();
+        if (is_null(self::$responseSize)) {
+            $summary = $body->getContents();
+        } else {
+            $summary = $body->read(self::$responseSize);
 
-        if ($size > 120) {
-            $summary .= ' (truncated...)';
+            if ($size > self::$responseSize) {
+                $summary .= ' (truncated...)';
+            }
         }
 
         // Matches any printable character, including unicode characters:
@@ -150,6 +156,36 @@ class RequestException extends TransferException
         }
 
         return $summary;
+    }
+
+    /**
+     * Define the amount of bytes to use when summarizing the response exception.
+     *
+     * @param int|null $size
+     *
+     * @return void
+     */
+    public static function setResponseSize($size)
+    {
+        if (is_null($size) || is_int($size)) {
+            self::$responseSize = $size;
+
+            return;
+        }
+
+        $message = '$size must be an integer with the amount of bytes before truncating or null to avoid truncation altogether';
+
+        throw new InvalidArgumentException($message);
+    }
+
+    /**
+     * Restore the amount of bytes to use when summarizing the response exception to it's default value.
+     *
+     * @return void
+     */
+    public static function restoreDefaultResponseSize()
+    {
+        self::$responseSize = 120;
     }
 
     /**

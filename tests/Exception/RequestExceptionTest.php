@@ -111,6 +111,16 @@ class RequestExceptionTest extends TestCase
         $this->assertContains($expected, $e->getMessage());
     }
 
+    public function testCreatesExceptionWithoutTruncatingResponseBody()
+    {
+        RequestException::setResponseSize(null);
+        $content = '{"message":"The given data was invalid.","errors":{"email":["The email field is required."],"password":["The password field is required."],"first_name":["The first name field is required."],"last_name":["The last name field is required."],"address":["The address field is required."],"zipcode":["The zipcode field is required."]}}';
+        $response = new Response(500, [], $content);
+        $e = RequestException::create(new Request('GET', '/'), $response);
+        $this->assertContains($content, $e->getMessage());
+        RequestException::restoreDefaultResponseSize();
+    }
+
     public function testExceptionMessageIgnoresEmptyBody()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(500));
