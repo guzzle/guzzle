@@ -221,4 +221,18 @@ class MockHandlerTest extends TestCase
         $this->assertNull($stats->getResponse());
         $this->assertSame($request, $stats->getRequest());
     }
+
+    public function testTransferTime()
+    {
+        $e = new \Exception('a');
+        $c = null;
+        $mock = new MockHandler([$e], null, function ($v) use (&$c) { $c = $v; });
+        $request = new Request('GET', 'http://example.com');
+        $stats = null;
+        $onStats = function (TransferStats $s) use (&$stats) {
+            $stats = $s;
+        };
+        $mock($request, [ 'on_stats' => $onStats, 'transfer_time' => 0.4 ])->wait(false);
+        $this->assertEquals(0.4, $stats->getTransferTime());
+    }
 }
