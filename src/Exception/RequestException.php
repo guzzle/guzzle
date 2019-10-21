@@ -179,16 +179,6 @@ class RequestException extends TransferException
     }
 
     /**
-     * Restore the amount of bytes to use when summarizing the response exception to it's default value.
-     *
-     * @return void
-     */
-    public static function restoreDefaultResponseSize()
-    {
-        self::$responseSize = 120;
-    }
-
-    /**
      * Obfuscates URI if there is an username and a password present
      *
      * @param UriInterface $uri

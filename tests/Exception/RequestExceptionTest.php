@@ -118,7 +118,7 @@ class RequestExceptionTest extends TestCase
         $response = new Response(500, [], $content);
         $e = RequestException::create(new Request('GET', '/'), $response);
         $this->assertContains($content, $e->getMessage());
-        RequestException::restoreDefaultResponseSize();
+        RequestException::setResponseSize(120);
     }
 
     public function testExceptionMessageIgnoresEmptyBody()
