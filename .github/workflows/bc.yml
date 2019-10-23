@@ -8,3 +8,5 @@ jobs:
       - uses: actions/checkout@master
       - name: Roave BC Check
         uses: docker://nyholm/roave-bc-check-ga
+        with:
+          entrypoint: ./.github/workflows/bc.entrypoint
