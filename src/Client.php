@@ -76,7 +76,7 @@ class Client implements ClientInterface
     }
 
     /**
-     * @param  string $method
+     * @param string $method
      *
      * @return Promise\PromiseInterface
      */
@@ -97,8 +97,8 @@ class Client implements ClientInterface
     /**
      * Asynchronously send an HTTP request.
      *
-     * @param array            $options Request options to apply to the given
-     *                                  request and to the transfer. See \GuzzleHttp\RequestOptions.
+     * @param array $options Request options to apply to the given
+     *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
      *
      * @return PromiseInterface
      */
@@ -116,8 +116,8 @@ class Client implements ClientInterface
     /**
      * Send an HTTP request.
      *
-     * @param array            $options Request options to apply to the given
-     *                                  request and to the transfer. See \GuzzleHttp\RequestOptions.
+     * @param array $options Request options to apply to the given
+     *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
      *
      * @return ResponseInterface
      * @throws GuzzleException
@@ -318,7 +318,7 @@ class Client implements ClientInterface
      * The URI of the request is not modified and the request options are used
      * as-is without merging in default options.
      *
-     * @param array            $options See \GuzzleHttp\RequestOptions.
+     * @param array $options See \GuzzleHttp\RequestOptions.
      *
      * @return Promise\PromiseInterface
      */
