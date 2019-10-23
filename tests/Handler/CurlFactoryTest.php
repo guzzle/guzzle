@@ -1,14 +1,14 @@
 <?php
 namespace GuzzleHttp\Test\Handler;
 
-use GuzzleHttp\Psr7;
-use GuzzleHttp\Handler;
-use GuzzleHttp\Tests\Server;
-use GuzzleHttp\TransferStats;
-use PHPUnit\Framework\TestCase;
-use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\EasyHandle;
+use GuzzleHttp\Tests\Server;
+use GuzzleHttp\Handler;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\TransferStats;
 use Psr\Http\Message\ResponseInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \GuzzleHttp\Handler\CurlFactory
