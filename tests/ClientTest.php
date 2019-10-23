@@ -360,6 +360,20 @@ class ClientTest extends TestCase
         $this->assertSame('foo', $last->getHeaderLine('Content-Type'));
     }
 
+    public function testCanAddJsonDataWithNullHeader()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('PUT', 'http://foo.com');
+        $client->send($request, [
+            'headers' => null,
+            'json'    => 'a'
+        ]);
+        $last = $mock->getLastRequest();
+        $this->assertSame('"a"', (string) $mock->getLastRequest()->getBody());
+        $this->assertSame('application/json', $last->getHeaderLine('Content-Type'));
+    }
+
     public function testAuthCanBeTrue()
     {
         $mock = new MockHandler([new Response()]);
