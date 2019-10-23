@@ -50,9 +50,18 @@ a response or exception by shifting return values off of a queue.
     echo $client->request('GET', '/')->getStatusCode();
     //> 202
 
+    // Reset the queue and queue up a new response
+    $mock->reset();
+    $mock->append(new Response(201));
+
+    // As the mock was reset, the new response is the 201 CREATED,
+    // instead of the previously queued RequestException
+    echo $client->request('GET', '/')->getStatusCode();
+    //> 201
+
+
 When no more responses are in the queue and a request is sent, an
 ``OutOfBoundsException`` is thrown.
-
 
 History Middleware
 ==================
@@ -71,9 +80,9 @@ history of the requests that were sent by a client.
     $container = [];
     $history = Middleware::history($container);
 
-    $handlerStack = HandlerStack::create(); 
+    $handlerStack = HandlerStack::create();
     // or $handlerStack = HandlerStack::create($mock); if using the Mock handler.
-    
+
     // Add the history middleware to the handler stack.
     $handlerStack->push($history);
 

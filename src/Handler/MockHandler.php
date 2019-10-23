@@ -175,6 +175,11 @@ class MockHandler implements \Countable
         return count($this->queue);
     }
 
+    public function reset()
+    {
+        $this->queue = [];
+    }
+
     private function invokeStats(
         RequestInterface $request,
         array $options,
