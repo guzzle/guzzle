@@ -10,7 +10,7 @@ composer install
 exec 4711>&1
 OUTPUT=$(/composer/vendor/bin/roave-backward-compatibility-check 2>&1 | tee /dev/fd/4711)
 
-# Remove rows we want to supress
+# Remove rows we want to suppress
 OUTPUT=`echo "$OUTPUT" | sed '/GuzzleHttp\\\ClientInterface::VERSION/'d`
 OUTPUT=`echo "$OUTPUT" | sed '/Roave\\\BetterReflection\\\Reflection\\\ReflectionClass "Psr\\\Log\\\LogLevel" could not be found in the located source/'d`
 
@@ -21,7 +21,7 @@ BC_BREAKS=`echo "$OUTPUT" | grep -o '\[BC\]' | wc -l | awk '{ print $1 }'`
 STATED_BREAKS=`echo "$OUTPUT" | tail -n 1 | awk -F' ' '{ print $1 }'`
 
 # If
-#   We found [BC] in the command output after we removed suppressed lines
+#   We found "[BC]" in the command output after we removed suppressed lines
 # OR
 #   We have suppressed X number of BC breaks. If $STATED_BREAKS is larger than X
 # THEN
