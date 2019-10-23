@@ -93,13 +93,13 @@ class ClientTest extends TestCase
             'handler'  => $mock,
             'base_uri' => 'http://foo.com/bar/'
         ]);
-        $client->request('GET', new Uri('baz'));
+        $client->request('GET', Psr7\uri_for('baz'));
         $this->assertSame(
             'http://foo.com/bar/baz',
             (string) $mock->getLastRequest()->getUri()
         );
 
-        $client->request('GET', new Uri('baz'), ['base_uri' => 'http://example.com/foo/']);
+        $client->request('GET', Psr7\uri_for('baz'), ['base_uri' => 'http://example.com/foo/']);
         $this->assertSame(
             'http://example.com/foo/baz',
             (string) $mock->getLastRequest()->getUri(),
