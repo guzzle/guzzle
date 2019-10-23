@@ -77,10 +77,11 @@ class Client implements ClientInterface
 
     /**
      * @param string $method
+     * @param array  $args
      *
      * @return Promise\PromiseInterface
      */
-    public function __call($method, array $args)
+    public function __call($method, $args)
     {
         if (count($args) < 1) {
             throw new \InvalidArgumentException('Magic request methods require a URI and optional options array');
