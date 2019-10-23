@@ -39,7 +39,7 @@ deploy:
   provider: releases
   skip_cleanup: true
   api_key:
-    secure: UpypqlYgsU68QT/x40YzhHXvzWjFwCNo9d+G8KAdm7U9+blFfcWhV1aMdzugvPMl6woXgvJj7qHq5tAL4v6oswCORhpSBfLgOQVFaica5LiHsvWlAedOhxGmnJqMTwuepjBCxXhs3+I8Kof1n4oUL9gKytXjOVCX/f7XU1HiinU=
+    secure: mz9H1B4cPH7dW9hTzgHnbh75+HJ6fJZ9S/1nMWFaqgj5C0wDzTqkJ+BbwiCEiqXGh6VGZbM4EmO1/wnZ7B+Hk8zsB1PP+GKVkq8+7a/261o60W3OS4gQpZQ9R68dyEO1EyZBJvL1Lzc03rkt/0WnKiAjg7nsc1j4aLKhWMDQ6x8=
   file:
     - build/artifacts/guzzle.phar
     - build/artifacts/guzzle.zip
