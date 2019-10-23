@@ -1,13 +1,12 @@
 <?php
 namespace GuzzleHttp;
 
-use ArrayAccess;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\RequestException;
-use InvalidArgumentException;
+use GuzzleHttp\Promise\RejectedPromise;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
-use function GuzzleHttp\Promise\rejection_for;
 
 /**
  * Functions used to create and wrap handlers with handler middleware.
@@ -29,7 +28,7 @@ final class Middleware
                 if (empty($options['cookies'])) {
                     return $handler($request, $options);
                 } elseif (!($options['cookies'] instanceof CookieJarInterface)) {
-                    throw new InvalidArgumentException('cookies must be an instance of GuzzleHttp\Cookie\CookieJarInterface');
+                    throw new \InvalidArgumentException('cookies must be an instance of GuzzleHttp\Cookie\CookieJarInterface');
                 }
                 $cookieJar = $options['cookies'];
                 $request = $cookieJar->withCookieHeader($request);
@@ -73,15 +72,15 @@ final class Middleware
     /**
      * Middleware that pushes history data to an ArrayAccess container.
      *
-     * @param array|ArrayAccess $container Container to hold the history (by reference).
+     * @param array|\ArrayAccess $container Container to hold the history (by reference).
      *
      * @return callable Returns a function that accepts the next handler.
-     * @throws InvalidArgumentException if container is not an array or ArrayAccess.
+     * @throws \InvalidArgumentException if container is not an array or ArrayAccess.
      */
     public static function history(&$container)
     {
-        if (!is_array($container) && !$container instanceof ArrayAccess) {
-            throw new InvalidArgumentException('history container must be an array or object implementing ArrayAccess');
+        if (!is_array($container) && !$container instanceof \ArrayAccess) {
+            throw new \InvalidArgumentException('history container must be an array or object implementing ArrayAccess');
         }
 
         return function (callable $handler) use (&$container) {
@@ -103,7 +102,7 @@ final class Middleware
                             'error'    => $reason,
                             'options'  => $options
                         ];
-                        return rejection_for($reason);
+                        return \GuzzleHttp\Promise\rejection_for($reason);
                     }
                 );
             };
@@ -199,7 +198,7 @@ final class Middleware
                             : null;
                         $message = $formatter->format($request, $response, $reason);
                         $logger->notice($message);
-                        return rejection_for($reason);
+                        return \GuzzleHttp\Promise\rejection_for($reason);
                     }
                 );
             };
