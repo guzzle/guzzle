@@ -1,6 +1,6 @@
 # Change Log
 
-## 6.4.0 - 2018-10-23
+## 6.4.0 - 2019-10-23
 
 * Improvement: Improved error messages when using curl < 7.21.2 [#2108](https://github.com/guzzle/guzzle/pull/2108)
 * Fix: Test if response is readable before returning a summary in `RequestException::getResponseBodySummary()` [#2081](https://github.com/guzzle/guzzle/pull/2081)
