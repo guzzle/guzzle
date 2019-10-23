@@ -39,7 +39,9 @@ class RetryMiddlewareTest extends TestCase
 
     public function testDoesNotRetryWhenDeciderReturnsFalse()
     {
-        $decider = function () { return false; };
+        $decider = function () {
+            return false;
+        };
         $m = Middleware::retry($decider);
         $h = new MockHandler([new Response(200)]);
         $c = new Client(['handler' => $m($h)]);

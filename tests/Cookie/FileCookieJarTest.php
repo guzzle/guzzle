@@ -80,9 +80,9 @@ class FileCookieJarTest extends TestCase
 
     public function providerPersistsToFileFileParameters()
     {
-        return array(
-            array(false),
-            array(true)
-        );
+        return [
+            [false],
+            [true]
+        ];
     }
 }

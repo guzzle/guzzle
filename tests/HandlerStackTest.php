@@ -12,8 +12,10 @@ class HandlerStackTest extends TestCase
 {
     public function testSetsHandlerInCtor()
     {
-        $f = function () {};
-        $m1 = function () {};
+        $f = function () {
+        };
+        $m1 = function () {
+        };
         $h = new HandlerStack($f, [$m1]);
         $this->assertTrue($h->hasHandler());
     }
@@ -23,7 +25,8 @@ class HandlerStackTest extends TestCase
      */
     public function testCanSetDifferentHandlerAfterConstruction()
     {
-        $f = function () {};
+        $f = function () {
+        };
         $h = new HandlerStack();
         $h->setHandler($f);
         $h->resolve();
@@ -128,7 +131,8 @@ class HandlerStackTest extends TestCase
     public function testEnsuresHandlerExistsByName()
     {
         $builder = new HandlerStack();
-        $builder->before('foo', function () {});
+        $builder->before('foo', function () {
+        });
     }
 
     public function testCanAddAfterByName()
@@ -201,6 +205,10 @@ class HandlerStackTest extends TestCase
         return [&$calls, $handler, $a, $b, $c];
     }
 
-    public static function foo() {}
-    public function bar () {}
+    public static function foo()
+    {
+    }
+    public function bar()
+    {
+    }
 }

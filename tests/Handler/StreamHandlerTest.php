@@ -4,14 +4,14 @@ namespace GuzzleHttp\Test\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
-use Psr\Http\Message\ResponseInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\StreamHandler
@@ -379,7 +379,9 @@ class StreamHandlerTest extends TestCase
         $this->queueRes();
         $buffer = fopen('php://temp', 'r+');
         $this->getSendResult([
-            'progress' => function () use (&$called) { $called = true; },
+            'progress' => function () use (&$called) {
+                $called = true;
+            },
             'debug' => $buffer,
         ]);
         fseek($buffer, 0);

@@ -10,8 +10,8 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
-use Psr\Http\Message\ResponseInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 
 class ClientTest extends TestCase
 {
@@ -472,7 +472,8 @@ class ClientTest extends TestCase
      */
     public function testEnsuresThatFormParamsAndMultipartAreExclusive()
     {
-        $client = new Client(['handler' => function () {}]);
+        $client = new Client(['handler' => function () {
+        }]);
         $client->post('http://foo.com', [
             'form_params' => ['foo' => 'bar bam'],
             'multipart' => []

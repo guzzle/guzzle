@@ -1,8 +1,8 @@
 <?php
 namespace GuzzleHttp\Handler;
 
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\LazyOpenStream;
