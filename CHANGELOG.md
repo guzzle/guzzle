@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.4.1 - 2019-10-23
+
+* No `guzzle.phar` was created in 6.4.0 due expired API token. This release will fix that 
+* Added `parent::__construct()` to `FileCookieJar` and `SessionCookieJar`
+
 ## 6.4.0 - 2019-10-23
 
 * Improvement: Improved error messages when using curl < 7.21.2 [#2108](https://github.com/guzzle/guzzle/pull/2108)
