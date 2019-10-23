@@ -9,6 +9,29 @@ use PHPUnit\Framework\TestCase;
 
 class CurlMultiHandlerTest extends TestCase
 {
+    public function setUp()
+    {
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_multi']);
+    }
+
+    public function tearDown()
+    {
+        unset($_SERVER['_curl_multi'], $_SERVER['curl_test']);
+    }
+
+    public function testCanAddCustomCurlOptions()
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler(['options' => [
+            CURLMOPT_MAXCONNECTS => 5,
+        ]]);
+        $request = new Request('GET', Server::$url);
+        $a($request, []);
+        $this->assertEquals(5, $_SERVER['_curl_multi'][CURLMOPT_MAXCONNECTS]);
+    }
+
     public function testSendsRequest()
     {
         Server::enqueue([new Response()]);
