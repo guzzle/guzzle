@@ -196,6 +196,7 @@ class MockHandlerTest extends TestCase
         $res = new Response();
         $mock = new MockHandler([$res]);
         $request = new Request('GET', 'http://example.com');
+        /** @var TransferStats|null $stats */
         $stats = null;
         $onStats = function (TransferStats $s) use (&$stats) {
             $stats = $s;
@@ -212,6 +213,8 @@ class MockHandlerTest extends TestCase
         $c = null;
         $mock = new MockHandler([$e], null, function ($v) use (&$c) { $c = $v; });
         $request = new Request('GET', 'http://example.com');
+
+        /** @var TransferStats|null $stats */
         $stats = null;
         $onStats = function (TransferStats $s) use (&$stats) {
             $stats = $s;
