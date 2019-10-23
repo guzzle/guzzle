@@ -68,9 +68,7 @@ class PrepareBodyMiddleware
 
     /**
      * Add expect header
-     * @param RequestInterface $request
-     * @param array            $options
-     * @param array            $modify
+     *
      * @return void
      */
     private function addExpectHeader(

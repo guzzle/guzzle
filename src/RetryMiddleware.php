@@ -76,8 +76,7 @@ class RetryMiddleware
 
     /**
      * Execute fulfilled closure
-     * @param  RequestInterface $req
-     * @param  array            $options
+     *
      * @return mixed
      */
     private function onFulfilled(RequestInterface $req, array $options)
@@ -98,8 +97,7 @@ class RetryMiddleware
 
     /**
      * Execute rejected closure
-     * @param  RequestInterface $req
-     * @param  array            $options
+     *
      * @return callable
      */
     private function onRejected(RequestInterface $req, array $options)
@@ -119,10 +117,6 @@ class RetryMiddleware
     }
 
     /**
-     * Retry
-     * @param  RequestInterface  $req
-     * @param  array             $options
-     * @param  ResponseInterface $response
      * @return self
      */
     private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null)

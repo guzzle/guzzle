@@ -112,9 +112,7 @@ class Pool implements PromisorInterface
 
     /**
      * Execute callback(s)
-     * @param  array  $options
-     * @param  string $name
-     * @param  array  $results
+     *
      * @return void
      */
     private static function cmpCallback(array &$options, $name, array &$results)
