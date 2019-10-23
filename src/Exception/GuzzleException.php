@@ -4,7 +4,9 @@ namespace GuzzleHttp\Exception;
 use Throwable;
 
 if (interface_exists(Throwable::class)) {
-    interface GuzzleException extends Throwable {}
+    interface GuzzleException extends Throwable
+    {
+    }
 } else {
     /**
      * @method string getMessage()
@@ -15,6 +17,7 @@ if (interface_exists(Throwable::class)) {
      * @method array getTrace()
      * @method string getTraceAsString()
      */
-    interface GuzzleException {}
+    interface GuzzleException
+    {
+    }
 }
-

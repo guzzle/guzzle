@@ -39,7 +39,7 @@ final class Middleware
                             $cookieJar->extractCookies($request, $response);
                             return $response;
                         }
-                );
+                    );
             };
         };
     }
