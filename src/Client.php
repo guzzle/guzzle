@@ -100,7 +100,7 @@ class Client implements ClientInterface
         );
     }
 
-    public function send(RequestInterface $request, array $options = [])
+    public function send(RequestInterface $request, RequestInterface $foo, array $options = [])
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
         return $this->sendAsync($request, $options)->wait();
