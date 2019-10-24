@@ -454,11 +454,16 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (isset($options['ssl_key'])) {
-            $sslKey = $options['ssl_key'];
-            if (is_array($sslKey)) {
-                $conf[CURLOPT_SSLKEYPASSWD] = $sslKey[1];
-                $sslKey = $sslKey[0];
+            if (is_array($options['ssl_key'])) {
+                if (count($options['ssl_key']) === 2) {
+                    list($sslKey, $conf[CURLOPT_SSLKEYPASSWD]) = $options['ssl_key'];
+                } else {
+                    list($sslKey) = $options['ssl_key'];
+                }
             }
+
+            $sslKey = isset($sslKey) ? $sslKey: $options['ssl_key'];
+
             if (!file_exists($sslKey)) {
                 throw new \InvalidArgumentException(
                     "SSL private key not found: {$sslKey}"

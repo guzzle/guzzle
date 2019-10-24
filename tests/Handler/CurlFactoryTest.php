@@ -216,6 +216,14 @@ class CurlFactoryTest extends TestCase
         $this->assertEquals('test', $_SERVER['_curl'][CURLOPT_SSLKEYPASSWD]);
     }
 
+    public function testAddsSslKeyWhenUsingArraySyntaxButNoPassword()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => [__FILE__]]);
+
+        $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
+    }
+
     /**
      * @expectedException \InvalidArgumentException
      * @expectedExceptionMessage SSL certificate not found: /does/not/exist
