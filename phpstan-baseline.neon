@@ -3,12 +3,52 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:__call\\(\\) should return GuzzleHttp\\\\Promise\\\\PromiseInterface but returns GuzzleHttp\\\\PromiseInterface\\|Psr\\\\Http\\\\Message\\\\ResponseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Return typehint of method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) has invalid type GuzzleHttp\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) should return GuzzleHttp\\\\PromiseInterface but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^PHPDoc tag @throws with type GuzzleHttp\\\\GuzzleException is not subtype of Throwable$#"
+			count: 2
+			path: src/Client.php
+
+		-
+			message: "#^Call to method wait\\(\\) on an unknown class GuzzleHttp\\\\PromiseInterface\\.$#"
+			count: 2
+			path: src/Client.php
+
+		-
+			message: "#^Return typehint of method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) has invalid type GuzzleHttp\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) should return GuzzleHttp\\\\PromiseInterface but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
 			message: "#^Parameter \\#1 \\$str of function strtolower expects string, int\\|string given\\.$#"
 			count: 1
 			path: src/Client.php
 
 		-
 			message: "#^Parameter \\#2 \\$prefix of function http_build_query expects string, null given\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^PHPDoc tag @throws with type GuzzleHttp\\\\InvalidArgumentException is not subtype of Throwable$#"
 			count: 1
 			path: src/Client.php
 
@@ -128,6 +168,21 @@ parameters:
 			path: src/Middleware.php
 
 		-
+			message: "#^Return typehint of method GuzzleHttp\\\\Pool\\:\\:promise\\(\\) has invalid type GuzzleHttp\\\\GuzzleHttp\\\\Promise\\\\Promise\\.$#"
+			count: 1
+			path: src/Pool.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Pool\\:\\:promise\\(\\) should return GuzzleHttp\\\\GuzzleHttp\\\\Promise\\\\Promise but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Pool.php
+
+		-
+			message: "#^Call to method wait\\(\\) on an unknown class GuzzleHttp\\\\GuzzleHttp\\\\Promise\\\\Promise\\.$#"
+			count: 1
+			path: src/Pool.php
+
+		-
 			message: "#^Parameter \\#1 \\$str of function substr expects string, int given\\.$#"
 			count: 1
 			path: src/RedirectMiddleware.php
@@ -141,6 +196,11 @@ parameters:
 			message: "#^Parameter \\#2 \\$value of method Psr\\\\Http\\\\Message\\\\MessageInterface\\:\\:withHeader\\(\\) expects array\\<string\\>\\|string, array given\\.$#"
 			count: 2
 			path: src/RedirectMiddleware.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\RetryMiddleware\\:\\:doRetry\\(\\) should return GuzzleHttp\\\\RetryMiddleware but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/RetryMiddleware.php
 
 		-
 			message: "#^Function uri_template not found\\.$#"
