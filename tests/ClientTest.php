@@ -712,17 +712,21 @@ class ClientTest extends TestCase
         self::assertSame($responseBody, $response->getBody()->getContents());
     }
 
-    public function testIdnSupportIsEnabledByDefaultIfIntlExtensionIsAvailable()
+    public function testIdnSupportDefaultValue()
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
         $config = $client->getConfig();
 
-        $this->assertTrue($config['idn_conversion']);
+        if (extension_loaded('intl')) {
+            $this->assertTrue($config['idn_conversion']);
+        } else {
+            $this->assertFalse($config['idn_conversion']);
+        }
     }
 
-    public function testIdnIsTranslatedToAsciiWhenSupportIsEnabled()
+    public function testIdnIsTranslatedToAsciiWhenConversionIsEnabled()
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
@@ -735,7 +739,7 @@ class ClientTest extends TestCase
         $this->assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
     }
 
-    public function testIdnStaysTheSameWhenSupportIsDisabled()
+    public function testIdnStaysTheSameWhenConversionIsDisabled()
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
@@ -758,5 +762,27 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mockHandler]);
 
         $client->request('GET', 'https://-яндекс.рф/images', ['idn_conversion' => true]);
+    }
+
+    /**
+     * @depends testCanUseRelativeUriWithSend
+     * @depends testIdnSupportDefaultValue
+     */
+    public function testIdnBaseUri()
+    {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('intl PHP extension is not loaded');
+        }
+
+        $mock = new MockHandler([new Response()]);
+        $client = new Client([
+            'handler'  => $mock,
+            'base_uri' => 'http://яндекс.рф',
+        ]);
+        $this->assertSame('http://яндекс.рф', (string) $client->getConfig('base_uri'));
+        $request = new Request('GET', '/baz');
+        $client->send($request);
+        $this->assertSame('http://xn--d1acpjx3f.xn--p1ai/baz', (string) $mock->getLastRequest()->getUri());
+        $this->assertSame('xn--d1acpjx3f.xn--p1ai', (string) $mock->getLastRequest()->getHeaderLine('Host'));
     }
 }
