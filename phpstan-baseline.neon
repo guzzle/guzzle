@@ -1,0 +1,230 @@
+
+
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:__call\\(\\) should return GuzzleHttp\\\\Promise\\\\PromiseInterface but returns GuzzleHttp\\\\PromiseInterface\\|Psr\\\\Http\\\\Message\\\\ResponseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Return typehint of method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) has invalid type GuzzleHttp\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) should return GuzzleHttp\\\\PromiseInterface but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^PHPDoc tag @throws with type GuzzleHttp\\\\GuzzleException is not subtype of Throwable$#"
+			count: 2
+			path: src/Client.php
+
+		-
+			message: "#^Call to method wait\\(\\) on an unknown class GuzzleHttp\\\\PromiseInterface\\.$#"
+			count: 2
+			path: src/Client.php
+
+		-
+			message: "#^Return typehint of method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) has invalid type GuzzleHttp\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) should return GuzzleHttp\\\\PromiseInterface but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Parameter \\#1 \\$str of function strtolower expects string, int\\|string given\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Parameter \\#2 \\$prefix of function http_build_query expects string, null given\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^PHPDoc tag @throws with type GuzzleHttp\\\\InvalidArgumentException is not subtype of Throwable$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Result of \\|\\| is always false\\.$#"
+			count: 1
+			path: src/Cookie/CookieJar.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between string and null will always evaluate to false\\.$#"
+			count: 2
+			path: src/Cookie/CookieJar.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Cookie\\\\CookieJar\\:\\:clear\\(\\) should return GuzzleHttp\\\\Cookie\\\\CookieJarInterface but empty return statement found\\.$#"
+			count: 1
+			path: src/Cookie/CookieJar.php
+
+		-
+			message: "#^Parameter \\#3 \\$length of function substr expects int, int\\|false given\\.$#"
+			count: 1
+			path: src/Cookie/CookieJar.php
+
+		-
+			message: "#^Property GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:\\$data \\(array\\) does not accept array\\|null\\.$#"
+			count: 1
+			path: src/Cookie/SetCookie.php
+
+		-
+			message: "#^Else branch is unreachable because ternary operator condition is always true\\.$#"
+			count: 1
+			path: src/Cookie/SetCookie.php
+
+		-
+			message: "#^Parameter \\#1 \\$str of function ltrim expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/Cookie/SetCookie.php
+
+		-
+			message: "#^Negated boolean expression is always false\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^If condition is always true\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$str1 of function strcasecmp expects string, int\\|string given\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:\\$_mh \\(resource\\) does not accept resource\\|false\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$mh of function curl_multi_setopt expects resource, resource\\|false given\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$status of class GuzzleHttp\\\\Psr7\\\\Response constructor expects int, string given\\.$#"
+			count: 1
+			path: src/Handler/EasyHandle.php
+
+		-
+			message: "#^Parameter \\#2 \\$parameters of function call_user_func_array expects array\\<int, mixed\\>, array given\\.$#"
+			count: 1
+			path: src/Handler/MockHandler.php
+
+		-
+			message: "#^Binary operation \"\\*\" between float\\|int\\|string and 1000 results in an error\\.$#"
+			count: 1
+			path: src/Handler/MockHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$status of class GuzzleHttp\\\\Psr7\\\\Response constructor expects int, string given\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: "#^Argument of an invalid type array\\<int, array\\<string, int\\|string\\>\\>\\|null supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: "#^Parameter \\#3 \\$use_include_path of function fopen expects bool, null given\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$stream of function stream_set_timeout expects resource, resource\\|false given\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: "#^Parameter \\#3 \\$microseconds of function stream_set_timeout expects int, float\\|int given\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$obj of function spl_object_hash expects object, callable given\\.$#"
+			count: 1
+			path: src/HandlerStack.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\MessageFormatter\\:\\:format\\(\\) should return string but returns string\\|null\\.$#"
+			count: 1
+			path: src/MessageFormatter.php
+
+		-
+			message: "#^Result of && is always false\\.$#"
+			count: 1
+			path: src/Middleware.php
+
+		-
+			message: "#^Return typehint of method GuzzleHttp\\\\Pool\\:\\:promise\\(\\) has invalid type GuzzleHttp\\\\GuzzleHttp\\\\Promise\\\\Promise\\.$#"
+			count: 1
+			path: src/Pool.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Pool\\:\\:promise\\(\\) should return GuzzleHttp\\\\GuzzleHttp\\\\Promise\\\\Promise but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/Pool.php
+
+		-
+			message: "#^Call to method wait\\(\\) on an unknown class GuzzleHttp\\\\GuzzleHttp\\\\Promise\\\\Promise\\.$#"
+			count: 1
+			path: src/Pool.php
+
+		-
+			message: "#^Parameter \\#1 \\$str of function substr expects string, int given\\.$#"
+			count: 1
+			path: src/RedirectMiddleware.php
+
+		-
+			message: "#^Parameter \\#1 \\$promise of method GuzzleHttp\\\\RedirectMiddleware\\:\\:withTracking\\(\\) expects GuzzleHttp\\\\Promise\\\\PromiseInterface, GuzzleHttp\\\\Promise\\\\PromiseInterface\\|Psr\\\\Http\\\\Message\\\\ResponseInterface given\\.$#"
+			count: 1
+			path: src/RedirectMiddleware.php
+
+		-
+			message: "#^Parameter \\#2 \\$value of method Psr\\\\Http\\\\Message\\\\MessageInterface\\:\\:withHeader\\(\\) expects array\\<string\\>\\|string, array given\\.$#"
+			count: 2
+			path: src/RedirectMiddleware.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\RetryMiddleware\\:\\:doRetry\\(\\) should return GuzzleHttp\\\\RetryMiddleware but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
+			count: 1
+			path: src/RetryMiddleware.php
+
+		-
+			message: "#^Function uri_template not found\\.$#"
+			count: 1
+			path: src/functions.php
+
+		-
+			message: "#^Parameter \\#1 \\$str of function rtrim expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/functions.php
+
+		-
+			message: "#^Function GuzzleHttp\\\\debug_resource\\(\\) should return resource but returns resource\\|false\\.$#"
+			count: 1
+			path: src/functions.php
+
+		-
+			message: "#^Parameter \\#1 \\$str of function substr expects string, string\\|null given\\.$#"
+			count: 1
+			path: src/functions.php
+
+		-
+			message: "#^Function GuzzleHttp\\\\json_encode\\(\\) should return string but returns string\\|false\\.$#"
+			count: 1
+			path: src/functions.php
+
+
