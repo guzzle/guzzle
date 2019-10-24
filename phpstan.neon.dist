@@ -7,3 +7,7 @@ parameters:
         -
             message: '#Function uri_template not found#'
             path: %currentWorkingDirectory%/src/functions.php
+
+
+        # To be removed when we drop support for PHP5
+        - '#Return typehint of method#'
