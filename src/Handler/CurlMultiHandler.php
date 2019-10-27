@@ -117,12 +117,15 @@ class CurlMultiHandler
         // Step through the task queue which may add additional requests.
         P\queue()->run();
 
-        if ($this->active &&
-            curl_multi_select($this->_mh, $this->selectTimeout) === -1
-        ) {
-            // Perform a usleep if a select returns -1.
-            // See: https://bugs.php.net/bug.php?id=61141
-            usleep(250);
+        if ($this->active) {
+            $fd = curl_multi_select($this->_mh, $this->selectTimeout);
+            if ($fd === -1 || $fd === 0) {
+                // Perform a usleep if a select returns -1.
+                // See: https://bugs.php.net/bug.php?id=61141
+                // Select will return 0 instead of -1 since PHP 7.1.23 and 7.2.11
+                // See: https://bugs.php.net/bug.php?id=76480
+                usleep(250);
+            }
         }
 
         while (curl_multi_exec($this->_mh, $this->active) === CURLM_CALL_MULTI_PERFORM);
