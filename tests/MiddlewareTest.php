@@ -11,9 +11,9 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
 
 class MiddlewareTest extends TestCase

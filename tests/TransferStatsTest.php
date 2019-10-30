@@ -1,8 +1,8 @@
 <?php
 namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\TransferStats;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
 
 class TransferStatsTest extends TestCase

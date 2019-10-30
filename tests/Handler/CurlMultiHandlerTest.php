@@ -70,7 +70,7 @@ class CurlMultiHandlerTest extends TestCase
             $responses[] = $response;
         }
 
-        foreach($responses as $r) {
+        foreach ($responses as $r) {
             self::assertSame('rejected', $response->getState());
         }
     }

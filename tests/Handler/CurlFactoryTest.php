@@ -1,14 +1,14 @@
 <?php
 namespace GuzzleHttp\Test\Handler;
 
+use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\EasyHandle;
-use GuzzleHttp\Tests\Server;
-use GuzzleHttp\Handler;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
-use Psr\Http\Message\ResponseInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\CurlFactory
@@ -214,6 +214,14 @@ class CurlFactoryTest extends TestCase
         $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => [__FILE__, 'test']]);
         self::assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
         self::assertEquals('test', $_SERVER['_curl'][CURLOPT_SSLKEYPASSWD]);
+    }
+
+    public function testAddsSslKeyWhenUsingArraySyntaxButNoPassword()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => [__FILE__]]);
+
+        $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
     }
 
     /**
@@ -467,8 +475,12 @@ class CurlFactoryTest extends TestCase
         };
 
         $bd = Psr7\FnStream::decorate(Psr7\stream_for('test'), [
-            'tell'   => function () { return 1; },
-            'rewind' => function () use (&$called) { $called = true; }
+            'tell'   => function () {
+                return 1;
+            },
+            'rewind' => function () use (&$called) {
+                $called = true;
+            }
         ]);
 
         $factory = new Handler\CurlFactory(1);
@@ -531,7 +543,8 @@ class CurlFactoryTest extends TestCase
         $easy->errno = CURLE_COULDNT_CONNECT;
         $response = $m->invoke(
             null,
-            function () {},
+            function () {
+            },
             $easy,
             $factory
         );
