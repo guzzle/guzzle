@@ -37,8 +37,8 @@ class CurlHandlerTest extends TestCase
         Server::enqueue([$response, $response]);
         $a = new CurlHandler();
         $request = new Request('GET', Server::$url);
-        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $a($request, []));
-        $this->assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $a($request, []));
+        self::assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $a($request, []));
+        self::assertInstanceOf('GuzzleHttp\Promise\FulfilledPromise', $a($request, []));
     }
 
     public function testDoesSleep()
@@ -49,7 +49,7 @@ class CurlHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $s = \GuzzleHttp\_current_time();
         $a($request, ['delay' => 0.1])->wait();
-        $this->assertGreaterThan(0.0001, \GuzzleHttp\_current_time() - $s);
+        self::assertGreaterThan(0.0001, \GuzzleHttp\_current_time() - $s);
     }
 
     public function testCreatesCurlErrorsWithContext()
@@ -60,10 +60,10 @@ class CurlHandlerTest extends TestCase
         $p = $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])
             ->otherwise(function (ConnectException $e) use (&$called) {
                 $called = true;
-                $this->assertArrayHasKey('errno', $e->getHandlerContext());
+                self::assertArrayHasKey('errno', $e->getHandlerContext());
             });
         $p->wait();
-        $this->assertTrue($called);
+        self::assertTrue($called);
     }
 
     public function testUsesContentLengthWhenOverInMemorySize()
@@ -80,7 +80,7 @@ class CurlHandlerTest extends TestCase
         );
         $handler($request, [])->wait();
         $received = Server::received()[0];
-        $this->assertEquals(1000000, $received->getHeaderLine('Content-Length'));
-        $this->assertFalse($received->hasHeader('Transfer-Encoding'));
+        self::assertEquals(1000000, $received->getHeaderLine('Content-Length'));
+        self::assertFalse($received->hasHeader('Transfer-Encoding'));
     }
 }

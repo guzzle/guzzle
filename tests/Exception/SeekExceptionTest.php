@@ -11,7 +11,7 @@ class SeekExceptionTest extends TestCase
     {
         $s = Psr7\stream_for('foo');
         $e = new SeekException($s, 10);
-        $this->assertSame($s, $e->getStream());
-        $this->assertContains('10', $e->getMessage());
+        self::assertSame($s, $e->getStream());
+        self::assertContains('10', $e->getMessage());
     }
 }

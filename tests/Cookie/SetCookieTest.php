@@ -12,20 +12,20 @@ class SetCookieTest extends TestCase
     public function testInitializesDefaultValues()
     {
         $cookie = new SetCookie();
-        $this->assertSame('/', $cookie->getPath());
+        self::assertSame('/', $cookie->getPath());
     }
 
     public function testConvertsDateTimeMaxAgeToUnixTimestamp()
     {
         $cookie = new SetCookie(['Expires' => 'November 20, 1984']);
-        $this->assertInternalType('integer', $cookie->getExpires());
+        self::assertInternalType('integer', $cookie->getExpires());
     }
 
     public function testAddsExpiresBasedOnMaxAge()
     {
         $t = time();
         $cookie = new SetCookie(['Max-Age' => 100]);
-        $this->assertEquals($t + 100, $cookie->getExpires());
+        self::assertEquals($t + 100, $cookie->getExpires());
     }
 
     public function testHoldsValues()
@@ -46,19 +46,19 @@ class SetCookieTest extends TestCase
         ];
 
         $cookie = new SetCookie($data);
-        $this->assertEquals($data, $cookie->toArray());
+        self::assertEquals($data, $cookie->toArray());
 
-        $this->assertSame('foo', $cookie->getName());
-        $this->assertSame('baz', $cookie->getValue());
-        $this->assertSame('baz.com', $cookie->getDomain());
-        $this->assertSame('/bar', $cookie->getPath());
-        $this->assertSame($t, $cookie->getExpires());
-        $this->assertSame(100, $cookie->getMaxAge());
-        $this->assertTrue($cookie->getSecure());
-        $this->assertTrue($cookie->getDiscard());
-        $this->assertTrue($cookie->getHttpOnly());
-        $this->assertSame('baz', $cookie->toArray()['foo']);
-        $this->assertSame('bam', $cookie->toArray()['bar']);
+        self::assertSame('foo', $cookie->getName());
+        self::assertSame('baz', $cookie->getValue());
+        self::assertSame('baz.com', $cookie->getDomain());
+        self::assertSame('/bar', $cookie->getPath());
+        self::assertSame($t, $cookie->getExpires());
+        self::assertSame(100, $cookie->getMaxAge());
+        self::assertTrue($cookie->getSecure());
+        self::assertTrue($cookie->getDiscard());
+        self::assertTrue($cookie->getHttpOnly());
+        self::assertSame('baz', $cookie->toArray()['foo']);
+        self::assertSame('bam', $cookie->toArray()['bar']);
 
         $cookie->setName('a');
         $cookie->setValue('b');
@@ -70,55 +70,55 @@ class SetCookieTest extends TestCase
         $cookie->setHttpOnly(false);
         $cookie->setDiscard(false);
 
-        $this->assertSame('a', $cookie->getName());
-        $this->assertSame('b', $cookie->getValue());
-        $this->assertSame('c', $cookie->getPath());
-        $this->assertSame('bar.com', $cookie->getDomain());
-        $this->assertSame(10, $cookie->getExpires());
-        $this->assertSame(200, $cookie->getMaxAge());
-        $this->assertFalse($cookie->getSecure());
-        $this->assertFalse($cookie->getDiscard());
-        $this->assertFalse($cookie->getHttpOnly());
+        self::assertSame('a', $cookie->getName());
+        self::assertSame('b', $cookie->getValue());
+        self::assertSame('c', $cookie->getPath());
+        self::assertSame('bar.com', $cookie->getDomain());
+        self::assertSame(10, $cookie->getExpires());
+        self::assertSame(200, $cookie->getMaxAge());
+        self::assertFalse($cookie->getSecure());
+        self::assertFalse($cookie->getDiscard());
+        self::assertFalse($cookie->getHttpOnly());
     }
 
     public function testDeterminesIfExpired()
     {
         $c = new SetCookie();
         $c->setExpires(10);
-        $this->assertTrue($c->isExpired());
+        self::assertTrue($c->isExpired());
         $c->setExpires(time() + 10000);
-        $this->assertFalse($c->isExpired());
+        self::assertFalse($c->isExpired());
     }
 
     public function testMatchesDomain()
     {
         $cookie = new SetCookie();
-        $this->assertTrue($cookie->matchesDomain('baz.com'));
+        self::assertTrue($cookie->matchesDomain('baz.com'));
 
         $cookie->setDomain('baz.com');
-        $this->assertTrue($cookie->matchesDomain('baz.com'));
-        $this->assertFalse($cookie->matchesDomain('bar.com'));
+        self::assertTrue($cookie->matchesDomain('baz.com'));
+        self::assertFalse($cookie->matchesDomain('bar.com'));
 
         $cookie->setDomain('.baz.com');
-        $this->assertTrue($cookie->matchesDomain('.baz.com'));
-        $this->assertTrue($cookie->matchesDomain('foo.baz.com'));
-        $this->assertFalse($cookie->matchesDomain('baz.bar.com'));
-        $this->assertTrue($cookie->matchesDomain('baz.com'));
+        self::assertTrue($cookie->matchesDomain('.baz.com'));
+        self::assertTrue($cookie->matchesDomain('foo.baz.com'));
+        self::assertFalse($cookie->matchesDomain('baz.bar.com'));
+        self::assertTrue($cookie->matchesDomain('baz.com'));
 
         $cookie->setDomain('.127.0.0.1');
-        $this->assertTrue($cookie->matchesDomain('127.0.0.1'));
+        self::assertTrue($cookie->matchesDomain('127.0.0.1'));
 
         $cookie->setDomain('127.0.0.1');
-        $this->assertTrue($cookie->matchesDomain('127.0.0.1'));
+        self::assertTrue($cookie->matchesDomain('127.0.0.1'));
 
         $cookie->setDomain('.com.');
-        $this->assertFalse($cookie->matchesDomain('baz.com'));
+        self::assertFalse($cookie->matchesDomain('baz.com'));
 
         $cookie->setDomain('.local');
-        $this->assertTrue($cookie->matchesDomain('example.local'));
+        self::assertTrue($cookie->matchesDomain('example.local'));
 
         $cookie->setDomain('example.com/'); // malformed domain
-        $this->assertFalse($cookie->matchesDomain('example.com'));
+        self::assertFalse($cookie->matchesDomain('example.com'));
     }
 
     public function pathMatchProvider()
@@ -149,7 +149,7 @@ class SetCookieTest extends TestCase
     {
         $cookie = new SetCookie();
         $cookie->setPath($cookiePath);
-        $this->assertSame($isMatch, $cookie->matchesPath($requestPath));
+        self::assertSame($isMatch, $cookie->matchesPath($requestPath));
     }
 
     public function cookieValidateProvider()
@@ -173,15 +173,15 @@ class SetCookieTest extends TestCase
         $cookie = new SetCookie([
             'Name'   => $name,
             'Value'  => $value,
-            'Domain' => $domain
+            'Domain' => $domain,
         ]);
-        $this->assertSame($result, $cookie->validate());
+        self::assertSame($result, $cookie->validate());
     }
 
     public function testDoesNotMatchIp()
     {
         $cookie = new SetCookie(['Domain' => '192.168.16.']);
-        $this->assertFalse($cookie->matchesDomain('192.168.16.121'));
+        self::assertFalse($cookie->matchesDomain('192.168.16.121'));
     }
 
     public function testConvertsToString()
@@ -196,7 +196,7 @@ class SetCookieTest extends TestCase
             'HttpOnly' => true,
             'Secure' => true
         ]);
-        $this->assertSame(
+        self::assertSame(
             'test=123; Domain=foo.com; Path=/abc; Expires=Sun, 27 Oct 2013 23:20:08 GMT; Secure; HttpOnly',
             (string) $cookie
         );
@@ -380,13 +380,13 @@ class SetCookieTest extends TestCase
 
             if (!empty($parsed)) {
                 foreach ($parsed as $key => $value) {
-                    $this->assertEquals($parsed[$key], $p[$key], 'Comparing ' . $key . ' ' . var_export($value, true) . ' : ' . var_export($parsed, true) . ' | ' . var_export($p, true));
+                    self::assertEquals($parsed[$key], $p[$key], 'Comparing ' . $key . ' ' . var_export($value, true) . ' : ' . var_export($parsed, true) . ' | ' . var_export($p, true));
                 }
                 foreach ($p as $key => $value) {
-                    $this->assertEquals($p[$key], $parsed[$key], 'Comparing ' . $key . ' ' . var_export($value, true) . ' : ' . var_export($parsed, true) . ' | ' . var_export($p, true));
+                    self::assertEquals($p[$key], $parsed[$key], 'Comparing ' . $key . ' ' . var_export($value, true) . ' : ' . var_export($parsed, true) . ' | ' . var_export($p, true));
                 }
             } else {
-                $this->assertSame([
+                self::assertSame([
                     'Name' => null,
                     'Value' => null,
                     'Domain' => null,
@@ -437,7 +437,7 @@ class SetCookieTest extends TestCase
      */
     public function testIsExpired($cookie, $expired)
     {
-        $this->assertSame(
+        self::assertSame(
             $expired,
             SetCookie::fromString($cookie)->isExpired()
         );

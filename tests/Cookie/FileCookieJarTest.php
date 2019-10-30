@@ -29,7 +29,7 @@ class FileCookieJarTest extends TestCase
     public function testLoadsFromFile()
     {
         $jar = new FileCookieJar($this->file);
-        $this->assertSame([], $jar->getIterator()->getArrayCopy());
+        self::assertSame([], $jar->getIterator()->getArrayCopy());
         unlink($this->file);
     }
 
@@ -57,21 +57,21 @@ class FileCookieJarTest extends TestCase
             'Domain'  => 'foo.com',
         ]));
 
-        $this->assertCount(3, $jar);
+        self::assertCount(3, $jar);
         unset($jar);
 
         // Make sure it wrote to the file
         $contents = file_get_contents($this->file);
-        $this->assertNotEmpty($contents);
+        self::assertNotEmpty($contents);
 
         // Load the cookieJar from the file
         $jar = new FileCookieJar($this->file);
 
         if ($testSaveSessionCookie) {
-            $this->assertCount(3, $jar);
+            self::assertCount(3, $jar);
         } else {
             // Weeds out temporary and session cookies
-            $this->assertCount(2, $jar);
+            self::assertCount(2, $jar);
         }
 
         unset($jar);

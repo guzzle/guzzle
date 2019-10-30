@@ -38,12 +38,12 @@ class CookieJarTest extends TestCase
             'foo' => 'bar',
             'baz' => 'bam'
         ], 'example.com');
-        $this->assertCount(2, $jar);
+        self::assertCount(2, $jar);
     }
 
     public function testEmptyJarIsCountable()
     {
-        $this->assertCount(0, new CookieJar());
+        self::assertCount(0, new CookieJar());
     }
 
     public function testGetsCookiesByName()
@@ -54,9 +54,9 @@ class CookieJarTest extends TestCase
         }
 
         $testCookie = $cookies[0];
-        $this->assertEquals($testCookie, $this->jar->getCookieByName($testCookie->getName()));
-        $this->assertNull($this->jar->getCookieByName("doesnotexist"));
-        $this->assertNull($this->jar->getCookieByName(""));
+        self::assertEquals($testCookie, $this->jar->getCookieByName($testCookie->getName()));
+        self::assertNull($this->jar->getCookieByName("doesnotexist"));
+        self::assertNull($this->jar->getCookieByName(""));
     }
 
     /**
@@ -82,12 +82,12 @@ class CookieJarTest extends TestCase
     {
         $cookies = $this->getTestCookies();
         foreach ($cookies as $cookie) {
-            $this->assertTrue($this->jar->setCookie($cookie));
+            self::assertTrue($this->jar->setCookie($cookie));
         }
 
-        $this->assertCount(3, $this->jar);
-        $this->assertCount(3, $this->jar->getIterator());
-        $this->assertEquals($cookies, $this->jar->getIterator()->getArrayCopy());
+        self::assertCount(3, $this->jar);
+        self::assertCount(3, $this->jar->getIterator());
+        self::assertEquals($cookies, $this->jar->getIterator()->getArrayCopy());
     }
 
     public function testRemovesTemporaryCookies()
@@ -97,7 +97,7 @@ class CookieJarTest extends TestCase
             $this->jar->setCookie($cookie);
         }
         $this->jar->clearSessionCookies();
-        $this->assertEquals(
+        self::assertEquals(
             [$cookies[1], $cookies[2]],
             $this->jar->getIterator()->getArrayCopy()
         );
@@ -111,33 +111,33 @@ class CookieJarTest extends TestCase
 
         // Remove foo.com cookies
         $this->jar->clear('foo.com');
-        $this->assertCount(2, $this->jar);
+        self::assertCount(2, $this->jar);
         // Try again, removing no further cookies
         $this->jar->clear('foo.com');
-        $this->assertCount(2, $this->jar);
+        self::assertCount(2, $this->jar);
 
         // Remove bar.com cookies with path of /boo
         $this->jar->clear('bar.com', '/boo');
-        $this->assertCount(1, $this->jar);
+        self::assertCount(1, $this->jar);
 
         // Remove cookie by name
         $this->jar->clear(null, null, 'test');
-        $this->assertCount(0, $this->jar);
+        self::assertCount(0, $this->jar);
     }
 
     public function testDoesNotAddIncompleteCookies()
     {
-        $this->assertFalse($this->jar->setCookie(new SetCookie()));
-        $this->assertFalse($this->jar->setCookie(new SetCookie([
+        self::assertFalse($this->jar->setCookie(new SetCookie()));
+        self::assertFalse($this->jar->setCookie(new SetCookie([
             'Name' => 'foo'
         ])));
-        $this->assertFalse($this->jar->setCookie(new SetCookie([
+        self::assertFalse($this->jar->setCookie(new SetCookie([
             'Name' => false
         ])));
-        $this->assertFalse($this->jar->setCookie(new SetCookie([
+        self::assertFalse($this->jar->setCookie(new SetCookie([
             'Name' => true
         ])));
-        $this->assertFalse($this->jar->setCookie(new SetCookie([
+        self::assertFalse($this->jar->setCookie(new SetCookie([
             'Name'   => 'foo',
             'Domain' => 'foo.com'
         ])));
@@ -145,7 +145,7 @@ class CookieJarTest extends TestCase
 
     public function testDoesNotAddEmptyCookies()
     {
-        $this->assertFalse($this->jar->setCookie(new SetCookie([
+        self::assertFalse($this->jar->setCookie(new SetCookie([
             'Name'   => '',
             'Domain' => 'foo.com',
             'Value'  => 0
@@ -154,22 +154,22 @@ class CookieJarTest extends TestCase
 
     public function testDoesAddValidCookies()
     {
-        $this->assertTrue($this->jar->setCookie(new SetCookie([
+        self::assertTrue($this->jar->setCookie(new SetCookie([
             'Name'   => '0',
             'Domain' => 'foo.com',
             'Value'  => 0
         ])));
-        $this->assertTrue($this->jar->setCookie(new SetCookie([
+        self::assertTrue($this->jar->setCookie(new SetCookie([
             'Name'   => 'foo',
             'Domain' => 'foo.com',
             'Value'  => 0
         ])));
-        $this->assertTrue($this->jar->setCookie(new SetCookie([
+        self::assertTrue($this->jar->setCookie(new SetCookie([
             'Name'   => 'foo',
             'Domain' => 'foo.com',
             'Value'  => 0.0
         ])));
-        $this->assertTrue($this->jar->setCookie(new SetCookie([
+        self::assertTrue($this->jar->setCookie(new SetCookie([
             'Name'   => 'foo',
             'Domain' => 'foo.com',
             'Value'  => '0'
@@ -191,26 +191,26 @@ class CookieJarTest extends TestCase
         ];
 
         // Make sure that the discard cookie is overridden with the non-discard
-        $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertCount(1, $this->jar);
+        self::assertTrue($this->jar->setCookie(new SetCookie($data)));
+        self::assertCount(1, $this->jar);
 
         $data['Discard'] = false;
-        $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertCount(1, $this->jar);
+        self::assertTrue($this->jar->setCookie(new SetCookie($data)));
+        self::assertCount(1, $this->jar);
 
         $c = $this->jar->getIterator()->getArrayCopy();
-        $this->assertFalse($c[0]->getDiscard());
+        self::assertFalse($c[0]->getDiscard());
 
         // Make sure it doesn't duplicate the cookie
         $this->jar->setCookie(new SetCookie($data));
-        $this->assertCount(1, $this->jar);
+        self::assertCount(1, $this->jar);
 
         // Make sure the more future-ful expiration date supersede the other
         $data['Expires'] = time() + 2000;
-        $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertCount(1, $this->jar);
+        self::assertTrue($this->jar->setCookie(new SetCookie($data)));
+        self::assertCount(1, $this->jar);
         $c = $this->jar->getIterator()->getArrayCopy();
-        $this->assertNotEquals($t, $c[0]->getExpires());
+        self::assertNotEquals($t, $c[0]->getExpires());
     }
 
     public function testOverwritesCookiesThatHaveChanged()
@@ -228,20 +228,20 @@ class CookieJarTest extends TestCase
         ];
 
         // Make sure that the discard cookie is overridden with the non-discard
-        $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
+        self::assertTrue($this->jar->setCookie(new SetCookie($data)));
 
         $data['Value'] = 'boo';
-        $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertCount(1, $this->jar);
+        self::assertTrue($this->jar->setCookie(new SetCookie($data)));
+        self::assertCount(1, $this->jar);
 
         // Changing the value plus a parameter also must overwrite the existing one
         $data['Value'] = 'zoo';
         $data['Secure'] = false;
-        $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
-        $this->assertCount(1, $this->jar);
+        self::assertTrue($this->jar->setCookie(new SetCookie($data)));
+        self::assertCount(1, $this->jar);
 
         $c = $this->jar->getIterator()->getArrayCopy();
-        $this->assertSame('zoo', $c[0]->getValue());
+        self::assertSame('zoo', $c[0]->getValue());
     }
 
     public function testAddsCookiesFromResponseWithRequest()
@@ -251,7 +251,7 @@ class CookieJarTest extends TestCase
         ]);
         $request = new Request('GET', 'http://www.example.com');
         $this->jar->extractCookies($request, $response);
-        $this->assertCount(1, $this->jar);
+        self::assertCount(1, $this->jar);
     }
 
     public function getMatchingCookiesDataProvider()
@@ -316,7 +316,7 @@ class CookieJarTest extends TestCase
 
         $request = new Request('GET', $url);
         $request = $this->jar->withCookieHeader($request);
-        $this->assertSame($cookies, $request->getHeaderLine('Cookie'));
+        self::assertSame($cookies, $request->getHeaderLine('Cookie'));
     }
 
     /**
@@ -343,13 +343,13 @@ class CookieJarTest extends TestCase
         foreach ($cookies as $cookie) {
             $jar->setCookie($cookie);
         }
-        $this->assertCount(4, $jar);
+        self::assertCount(4, $jar);
         $jar->clear('bar.com', '/boo', 'other');
-        $this->assertCount(3, $jar);
+        self::assertCount(3, $jar);
         $names = array_map(function (SetCookie $c) {
             return $c->getName();
         }, $jar->getIterator()->getArrayCopy());
-        $this->assertSame(['foo', 'test', 'you'], $names);
+        self::assertSame(['foo', 'test', 'you'], $names);
     }
 
     public function testCanConvertToAndLoadFromArray()
@@ -358,12 +358,12 @@ class CookieJarTest extends TestCase
         foreach ($this->getTestCookies() as $cookie) {
             $jar->setCookie($cookie);
         }
-        $this->assertCount(3, $jar);
+        self::assertCount(3, $jar);
         $arr = $jar->toArray();
-        $this->assertCount(3, $arr);
+        self::assertCount(3, $arr);
         $newCookieJar = new CookieJar(false, $arr);
-        $this->assertCount(3, $newCookieJar);
-        $this->assertSame($jar->toArray(), $newCookieJar->toArray());
+        self::assertCount(3, $newCookieJar);
+        self::assertSame($jar->toArray(), $newCookieJar->toArray());
     }
 
     public function testAddsCookiesWithEmptyPathFromResponse()
@@ -374,7 +374,7 @@ class CookieJarTest extends TestCase
         $request = new Request('GET', 'http://www.example.com');
         $this->jar->extractCookies($request, $response);
         $newRequest = $this->jar->withCookieHeader(new Request('GET', 'http://www.example.com/foo'));
-        $this->assertTrue($newRequest->hasHeader('Cookie'));
+        self::assertTrue($newRequest->hasHeader('Cookie'));
     }
 
     public function getCookiePathsDataProvider()
@@ -409,8 +409,8 @@ class CookieJarTest extends TestCase
         $request = (new Request('GET', $uriPath))->withHeader('Host', 'www.example.com');
         $this->jar->extractCookies($request, $response);
 
-        $this->assertSame($cookiePath, $this->jar->toArray()[0]['Path']);
-        $this->assertSame($cookiePath, $this->jar->toArray()[1]['Path']);
+        self::assertSame($cookiePath, $this->jar->toArray()[0]['Path']);
+        self::assertSame($cookiePath, $this->jar->toArray()[1]['Path']);
     }
 
     private function futureExpirationDate()

@@ -81,8 +81,8 @@ class PoolTest extends TestCase
         $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
         $p = new Pool($c, [new Request('GET', 'http://example.com')], $opts);
         $p->promise()->wait();
-        $this->assertCount(1, $h);
-        $this->assertTrue($h[0]->hasHeader('x-foo'));
+        self::assertCount(1, $h);
+        self::assertTrue($h[0]->hasHeader('x-foo'));
     }
 
     public function testCanProvideCallablesThatReturnResponses()
@@ -103,8 +103,8 @@ class PoolTest extends TestCase
         $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
         $p = new Pool($c, [$fn], $opts);
         $p->promise()->wait();
-        $this->assertCount(1, $h);
-        $this->assertTrue($h[0]->hasHeader('x-foo'));
+        self::assertCount(1, $h);
+        self::assertTrue($h[0]->hasHeader('x-foo'));
     }
 
     public function testBatchesResults()
@@ -122,12 +122,12 @@ class PoolTest extends TestCase
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $results = Pool::batch($client, $requests);
-        $this->assertCount(4, $results);
-        $this->assertSame([0, 1, 2, 3], array_keys($results));
-        $this->assertSame(200, $results[0]->getStatusCode());
-        $this->assertSame(201, $results[1]->getStatusCode());
-        $this->assertSame(202, $results[2]->getStatusCode());
-        $this->assertInstanceOf(ClientException::class, $results[3]);
+        self::assertCount(4, $results);
+        self::assertSame([0, 1, 2, 3], array_keys($results));
+        self::assertSame(200, $results[0]->getStatusCode());
+        self::assertSame(201, $results[1]->getStatusCode());
+        self::assertSame(202, $results[2]->getStatusCode());
+        self::assertInstanceOf(ClientException::class, $results[3]);
     }
 
     public function testBatchesResultsWithCallbacks()
@@ -147,8 +147,8 @@ class PoolTest extends TestCase
                 $called = true;
             }
         ]);
-        $this->assertCount(2, $results);
-        $this->assertTrue($called);
+        self::assertCount(2, $results);
+        self::assertTrue($called);
     }
 
     public function testUsesYieldedKeyInFulfilledCallback()
@@ -177,8 +177,8 @@ class PoolTest extends TestCase
             }
         ]);
         $p->promise()->wait();
-        $this->assertCount(3, $keys);
-        $this->assertSame($keys, array_keys($requests));
+        self::assertCount(3, $keys);
+        self::assertSame($keys, array_keys($requests));
     }
 
     private function getClient($total = 1)

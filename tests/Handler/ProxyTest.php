@@ -23,8 +23,8 @@ class ProxyTest extends TestCase
         }]);
         $h = Proxy::wrapSync($m1, $m2);
         $h(new Request('GET', 'http://foo.com'), []);
-        $this->assertNotNull($a);
-        $this->assertNull($b);
+        self::assertNotNull($a);
+        self::assertNull($b);
     }
 
     public function testSendsToSync()
@@ -38,8 +38,8 @@ class ProxyTest extends TestCase
         }]);
         $h = Proxy::wrapSync($m1, $m2);
         $h(new Request('GET', 'http://foo.com'), [RequestOptions::SYNCHRONOUS => true]);
-        $this->assertNull($a);
-        $this->assertNotNull($b);
+        self::assertNull($a);
+        self::assertNotNull($b);
     }
 
     public function testSendsToStreaming()
@@ -53,8 +53,8 @@ class ProxyTest extends TestCase
         }]);
         $h = Proxy::wrapStreaming($m1, $m2);
         $h(new Request('GET', 'http://foo.com'), []);
-        $this->assertNotNull($a);
-        $this->assertNull($b);
+        self::assertNotNull($a);
+        self::assertNull($b);
     }
 
     public function testSendsToNonStreaming()
@@ -68,7 +68,7 @@ class ProxyTest extends TestCase
         }]);
         $h = Proxy::wrapStreaming($m1, $m2);
         $h(new Request('GET', 'http://foo.com'), ['stream' => true]);
-        $this->assertNull($a);
-        $this->assertNotNull($b);
+        self::assertNull($a);
+        self::assertNotNull($b);
     }
 }
