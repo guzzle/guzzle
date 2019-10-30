@@ -128,58 +128,58 @@ class CookieJarTest extends TestCase
     public function testDoesNotAddIncompleteCookies()
     {
         $this->assertFalse($this->jar->setCookie(new SetCookie()));
-        $this->assertFalse($this->jar->setCookie(new SetCookie(array(
+        $this->assertFalse($this->jar->setCookie(new SetCookie([
             'Name' => 'foo'
-        ))));
-        $this->assertFalse($this->jar->setCookie(new SetCookie(array(
+        ])));
+        $this->assertFalse($this->jar->setCookie(new SetCookie([
             'Name' => false
-        ))));
-        $this->assertFalse($this->jar->setCookie(new SetCookie(array(
+        ])));
+        $this->assertFalse($this->jar->setCookie(new SetCookie([
             'Name' => true
-        ))));
-        $this->assertFalse($this->jar->setCookie(new SetCookie(array(
+        ])));
+        $this->assertFalse($this->jar->setCookie(new SetCookie([
             'Name'   => 'foo',
             'Domain' => 'foo.com'
-        ))));
+        ])));
     }
 
     public function testDoesNotAddEmptyCookies()
     {
-        $this->assertFalse($this->jar->setCookie(new SetCookie(array(
+        $this->assertFalse($this->jar->setCookie(new SetCookie([
             'Name'   => '',
             'Domain' => 'foo.com',
             'Value'  => 0
-        ))));
+        ])));
     }
 
     public function testDoesAddValidCookies()
     {
-        $this->assertTrue($this->jar->setCookie(new SetCookie(array(
+        $this->assertTrue($this->jar->setCookie(new SetCookie([
             'Name'   => '0',
             'Domain' => 'foo.com',
             'Value'  => 0
-        ))));
-        $this->assertTrue($this->jar->setCookie(new SetCookie(array(
+        ])));
+        $this->assertTrue($this->jar->setCookie(new SetCookie([
             'Name'   => 'foo',
             'Domain' => 'foo.com',
             'Value'  => 0
-        ))));
-        $this->assertTrue($this->jar->setCookie(new SetCookie(array(
+        ])));
+        $this->assertTrue($this->jar->setCookie(new SetCookie([
             'Name'   => 'foo',
             'Domain' => 'foo.com',
             'Value'  => 0.0
-        ))));
-        $this->assertTrue($this->jar->setCookie(new SetCookie(array(
+        ])));
+        $this->assertTrue($this->jar->setCookie(new SetCookie([
             'Name'   => 'foo',
             'Domain' => 'foo.com',
             'Value'  => '0'
-        ))));
+        ])));
     }
 
     public function testOverwritesCookiesThatAreOlderOrDiscardable()
     {
         $t = time() + 1000;
-        $data = array(
+        $data = [
             'Name'    => 'foo',
             'Value'   => 'bar',
             'Domain'  => '.example.com',
@@ -188,7 +188,7 @@ class CookieJarTest extends TestCase
             'Secure'  => true,
             'Discard' => true,
             'Expires' => $t
-        );
+        ];
 
         // Make sure that the discard cookie is overridden with the non-discard
         $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
@@ -216,7 +216,7 @@ class CookieJarTest extends TestCase
     public function testOverwritesCookiesThatHaveChanged()
     {
         $t = time() + 1000;
-        $data = array(
+        $data = [
             'Name'    => 'foo',
             'Value'   => 'bar',
             'Domain'  => '.example.com',
@@ -225,7 +225,7 @@ class CookieJarTest extends TestCase
             'Secure'  => true,
             'Discard' => true,
             'Expires' => $t
-        );
+        ];
 
         // Make sure that the discard cookie is overridden with the non-discard
         $this->assertTrue($this->jar->setCookie(new SetCookie($data)));
@@ -246,9 +246,9 @@ class CookieJarTest extends TestCase
 
     public function testAddsCookiesFromResponseWithRequest()
     {
-        $response = new Response(200, array(
+        $response = new Response(200, [
             'Set-Cookie' => "fpc=d=.Hm.yh4.1XmJWjJfs4orLQzKzPImxklQoxXSHOZATHUSEFciRueW_7704iYUtsXNEXq0M92Px2glMdWypmJ7HIQl6XIUvrZimWjQ3vIdeuRbI.FNQMAfcxu_XN1zSx7l.AcPdKL6guHc2V7hIQFhnjRW0rxm2oHY1P4bGQxFNz7f.tHm12ZD3DbdMDiDy7TBXsuP4DM-&v=2; expires=Fri, 02-Mar-2019 02:17:40 GMT;"
-        ));
+        ]);
         $request = new Request('GET', 'http://www.example.com');
         $this->jar->extractCookies($request, $response);
         $this->assertCount(1, $this->jar);
@@ -256,13 +256,13 @@ class CookieJarTest extends TestCase
 
     public function getMatchingCookiesDataProvider()
     {
-        return array(
-            array('https://example.com', 'foo=bar; baz=foobar'),
-            array('http://example.com', ''),
-            array('https://example.com:8912', 'foo=bar; baz=foobar'),
-            array('https://foo.example.com', 'foo=bar; baz=foobar'),
-            array('http://foo.example.com/test/acme/', 'googoo=gaga')
-        );
+        return [
+            ['https://example.com', 'foo=bar; baz=foobar'],
+            ['http://example.com', ''],
+            ['https://example.com:8912', 'foo=bar; baz=foobar'],
+            ['https://foo.example.com', 'foo=bar; baz=foobar'],
+            ['http://foo.example.com/test/acme/', 'googoo=gaga']
+        ];
     }
 
     /**
@@ -368,9 +368,9 @@ class CookieJarTest extends TestCase
 
     public function testAddsCookiesWithEmptyPathFromResponse()
     {
-        $response = new Response(200, array(
+        $response = new Response(200, [
             'Set-Cookie' => "fpc=foobar; expires={$this->futureExpirationDate()}; path=;"
-        ));
+        ]);
         $request = new Request('GET', 'http://www.example.com');
         $this->jar->extractCookies($request, $response);
         $newRequest = $this->jar->withCookieHeader(new Request('GET', 'http://www.example.com/foo'));

@@ -1,9 +1,9 @@
 <?php
 namespace GuzzleHttp;
 
+use GuzzleHttp\Promise\EachPromise;
 use GuzzleHttp\Promise\PromisorInterface;
 use Psr\Http\Message\RequestInterface;
-use GuzzleHttp\Promise\EachPromise;
 
 /**
  * Sends an iterator of requests concurrently using a capped pool size.

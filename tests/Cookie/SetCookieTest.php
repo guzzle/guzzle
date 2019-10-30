@@ -31,7 +31,7 @@ class SetCookieTest extends TestCase
     public function testHoldsValues()
     {
         $t = time();
-        $data = array(
+        $data = [
             'Name'     => 'foo',
             'Value'    => 'baz',
             'Path'     => '/bar',
@@ -43,7 +43,7 @@ class SetCookieTest extends TestCase
             'HttpOnly' => true,
             'foo'      => 'baz',
             'bar'      => 'bam'
-        );
+        ];
 
         $cookie = new SetCookie($data);
         $this->assertEquals($data, $cookie->toArray());
@@ -154,15 +154,15 @@ class SetCookieTest extends TestCase
 
     public function cookieValidateProvider()
     {
-        return array(
-            array('foo', 'baz', 'bar', true),
-            array('0', '0', '0', true),
-            array('foo[bar]', 'baz', 'bar', true),
-            array('', 'baz', 'bar', 'The cookie name must not be empty'),
-            array('foo', '', 'bar', 'The cookie value must not be empty'),
-            array('foo', 'baz', '', 'The cookie domain must not be empty'),
-            array("foo\r", 'baz', '0', 'Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/?={}'),
-        );
+        return [
+            ['foo', 'baz', 'bar', true],
+            ['0', '0', '0', true],
+            ['foo[bar]', 'baz', 'bar', true],
+            ['', 'baz', 'bar', 'The cookie name must not be empty'],
+            ['foo', '', 'bar', 'The cookie value must not be empty'],
+            ['foo', 'baz', '', 'The cookie domain must not be empty'],
+            ["foo\r", 'baz', '0', 'Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/?={}'],
+        ];
     }
 
     /**
@@ -170,11 +170,11 @@ class SetCookieTest extends TestCase
      */
     public function testValidatesCookies($name, $value, $domain, $result)
     {
-        $cookie = new SetCookie(array(
+        $cookie = new SetCookie([
             'Name'   => $name,
             'Value'  => $value,
             'Domain' => $domain
-        ));
+        ]);
         $this->assertSame($result, $cookie->validate());
     }
 
@@ -209,10 +209,10 @@ class SetCookieTest extends TestCase
      */
     public function cookieParserDataProvider()
     {
-        return array(
-            array(
+        return [
+            [
                 'ASIHTTPRequestTestCookie=This+is+the+value; expires=Sat, 26-Jul-2008 17:00:42 GMT; path=/tests; domain=allseeing-i.com; PHPSESSID=6c951590e7a9359bcedde25cda73e43c; path=/;',
-                array(
+                [
                     'Domain' => 'allseeing-i.com',
                     'Path' => '/',
                     'PHPSESSID' => '6c951590e7a9359bcedde25cda73e43c',
@@ -223,12 +223,12 @@ class SetCookieTest extends TestCase
                     'Name' => 'ASIHTTPRequestTestCookie',
                     'Value' => 'This+is+the+value',
                     'HttpOnly' => false
-                )
-            ),
-            array('', []),
-            array('foo', []),
-            array('; foo', []),
-            array(
+                ]
+            ],
+            ['', []],
+            ['foo', []],
+            ['; foo', []],
+            [
                 'foo="bar"',
                 [
                     'Name' => 'foo',
@@ -241,11 +241,11 @@ class SetCookieTest extends TestCase
                     'Secure' => null,
                     'HttpOnly' => false
                 ]
-            ),
+            ],
             // Test setting a blank value for a cookie
-            array(array(
-                'foo=', 'foo =', 'foo =;', 'foo= ;', 'foo =', 'foo= '),
-                array(
+            [[
+                'foo=', 'foo =', 'foo =;', 'foo= ;', 'foo =', 'foo= '],
+                [
                     'Name' => 'foo',
                     'Value' => '',
                     'Discard' => null,
@@ -255,12 +255,12 @@ class SetCookieTest extends TestCase
                     'Path' => '/',
                     'Secure' => null,
                     'HttpOnly' => false
-                )
-            ),
+                ]
+            ],
             // Test setting a value and removing quotes
-            array(array(
-                'foo=1', 'foo =1', 'foo =1;', 'foo=1 ;', 'foo =1', 'foo= 1', 'foo = 1 ;'),
-                array(
+            [[
+                'foo=1', 'foo =1', 'foo =1;', 'foo=1 ;', 'foo =1', 'foo= 1', 'foo = 1 ;'],
+                [
                     'Name' => 'foo',
                     'Value' => '1',
                     'Discard' => null,
@@ -270,12 +270,12 @@ class SetCookieTest extends TestCase
                     'Path' => '/',
                     'Secure' => null,
                     'HttpOnly' => false
-                )
-            ),
+                ]
+            ],
             // Some of the following tests are based on http://framework.zend.com/svn/framework/standard/trunk/tests/Zend/Http/CookieTest.php
-            array(
+            [
                 'justacookie=foo; domain=example.com',
-                array(
+                [
                     'Name' => 'justacookie',
                     'Value' => 'foo',
                     'Domain' => 'example.com',
@@ -285,11 +285,11 @@ class SetCookieTest extends TestCase
                     'Path' => '/',
                     'Secure' => null,
                     'HttpOnly' => false
-                )
-            ),
-            array(
+                ]
+            ],
+            [
                 'expires=tomorrow; secure; path=/Space Out/; expires=Tue, 21-Nov-2006 08:33:44 GMT; domain=.example.com',
-                array(
+                [
                     'Name' => 'expires',
                     'Value' => 'tomorrow',
                     'Domain' => '.example.com',
@@ -299,11 +299,11 @@ class SetCookieTest extends TestCase
                     'Secure' => true,
                     'Max-Age' => null,
                     'HttpOnly' => false
-                )
-            ),
-            array(
+                ]
+            ],
+            [
                 'domain=unittests; expires=Tue, 21-Nov-2006 08:33:44 GMT; domain=example.com; path=/some value/',
-                array(
+                [
                     'Name' => 'domain',
                     'Value' => 'unittests',
                     'Domain' => 'example.com',
@@ -313,11 +313,11 @@ class SetCookieTest extends TestCase
                     'Discard' => null,
                     'Max-Age' => null,
                     'HttpOnly' => false
-                )
-            ),
-            array(
+                ]
+            ],
+            [
                 'path=indexAction; path=/; domain=.foo.com; expires=Tue, 21-Nov-2006 08:33:44 GMT',
-                array(
+                [
                     'Name' => 'path',
                     'Value' => 'indexAction',
                     'Domain' => '.foo.com',
@@ -327,11 +327,11 @@ class SetCookieTest extends TestCase
                     'Discard' => null,
                     'Max-Age' => null,
                     'HttpOnly' => false
-                )
-            ),
-            array(
+                ]
+            ],
+            [
                 'secure=sha1; secure; SECURE; domain=some.really.deep.domain.com; version=1; Max-Age=86400',
-                array(
+                [
                     'Name' => 'secure',
                     'Value' => 'sha1',
                     'Domain' => 'some.really.deep.domain.com',
@@ -342,11 +342,11 @@ class SetCookieTest extends TestCase
                     'Max-Age' => 86400,
                     'HttpOnly' => false,
                     'version' => '1'
-                )
-            ),
-            array(
+                ]
+            ],
+            [
                 'PHPSESSID=123456789+abcd%2Cef; secure; discard; domain=.localdomain; path=/foo/baz; expires=Tue, 21-Nov-2006 08:33:44 GMT;',
-                array(
+                [
                     'Name' => 'PHPSESSID',
                     'Value' => '123456789+abcd%2Cef',
                     'Domain' => '.localdomain',
@@ -356,9 +356,9 @@ class SetCookieTest extends TestCase
                     'Discard' => true,
                     'Max-Age' => null,
                     'HttpOnly' => false
-                )
-            ),
-        );
+                ]
+            ],
+        ];
     }
 
     /**
@@ -408,28 +408,28 @@ class SetCookieTest extends TestCase
      */
     public function isExpiredProvider()
     {
-        return array(
-            array(
+        return [
+            [
                 'FOO=bar; expires=Thu, 01 Jan 1970 00:00:00 GMT;',
                 true,
-            ),
-            array(
+            ],
+            [
                 'FOO=bar; expires=Thu, 01 Jan 1970 00:00:01 GMT;',
                 true,
-            ),
-            array(
-                'FOO=bar; expires='.date(\DateTime::RFC1123, time()+10).';',
+            ],
+            [
+                'FOO=bar; expires=' . date(\DateTime::RFC1123, time()+10) . ';',
                 false,
-            ),
-            array(
-                'FOO=bar; expires='.date(\DateTime::RFC1123, time()-10).';',
+            ],
+            [
+                'FOO=bar; expires=' . date(\DateTime::RFC1123, time()-10) . ';',
                 true,
-            ),
-            array(
+            ],
+            [
                 'FOO=bar;',
                 false,
-            ),
-        );
+            ],
+        ];
     }
 
     /**

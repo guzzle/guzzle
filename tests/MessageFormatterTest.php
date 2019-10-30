@@ -2,10 +2,10 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\MessageFormatter;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -88,6 +88,6 @@ class MessageFormatterTest extends TestCase
     public function testFormatsMessages($template, $args, $result)
     {
         $f = new MessageFormatter($template);
-        $this->assertSame((string) $result, call_user_func_array(array($f, 'format'), $args));
+        $this->assertSame((string) $result, call_user_func_array([$f, 'format'], $args));
     }
 }

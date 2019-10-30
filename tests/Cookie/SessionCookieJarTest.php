@@ -17,7 +17,7 @@ class SessionCookieJarTest extends TestCase
         $this->sessionVar = 'sessionKey';
 
         if (!isset($_SESSION)) {
-            $_SESSION = array();
+            $_SESSION = [];
         }
     }
 
@@ -84,9 +84,9 @@ class SessionCookieJarTest extends TestCase
 
     public function providerPersistsToSessionParameters()
     {
-        return array(
-            array(false),
-            array(true)
-        );
+        return [
+            [false],
+            [true]
+        ];
     }
 }
