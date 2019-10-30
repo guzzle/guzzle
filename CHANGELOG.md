@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.3.4 - 2019-10-30
+
+* Fix: Prevent concurrent writes in `FileCookieJar`
+
 ## 5.3.3 - 2018-07-31
 
 * Fix bug parsing 0 epoch expiry times
