@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 5.3.4 - 2019-10-28
+## 5.3.4 - 2019-10-30
 
 * Fix: Prevent concurrent writes in `FileCookieJar`
 
