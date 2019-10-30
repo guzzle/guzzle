@@ -52,7 +52,7 @@ class MockHandlerTest extends TestCase
         $p = $mock($request, []);
         try {
             $p->wait();
-            $this->fail();
+            self::fail();
         } catch (\Exception $e2) {
             self::assertSame($e, $e2);
         }

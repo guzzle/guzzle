@@ -221,7 +221,7 @@ class CurlFactoryTest extends TestCase
         $f = new Handler\CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => [__FILE__]]);
 
-        $this->assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
+        self::assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
     }
 
     /**
@@ -595,20 +595,20 @@ class CurlFactoryTest extends TestCase
         $easy = $f->create($req, []);
         $h1 = $easy->handle;
         $f->release($easy);
-        self::assertCount(1, $this->readAttribute($f, 'handles'));
+        self::assertCount(1, self::readAttribute($f, 'handles'));
         $easy = $f->create($req, []);
         self::assertSame($easy->handle, $h1);
         $easy2 = $f->create($req, []);
         $easy3 = $f->create($req, []);
         $easy4 = $f->create($req, []);
         $f->release($easy);
-        self::assertCount(1, $this->readAttribute($f, 'handles'));
+        self::assertCount(1, self::readAttribute($f, 'handles'));
         $f->release($easy2);
-        self::assertCount(2, $this->readAttribute($f, 'handles'));
+        self::assertCount(2, self::readAttribute($f, 'handles'));
         $f->release($easy3);
-        self::assertCount(3, $this->readAttribute($f, 'handles'));
+        self::assertCount(3, self::readAttribute($f, 'handles'));
         $f->release($easy4);
-        self::assertCount(3, $this->readAttribute($f, 'handles'));
+        self::assertCount(3, self::readAttribute($f, 'handles'));
     }
 
     /**

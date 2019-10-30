@@ -54,7 +54,7 @@ class CurlMultiHandlerTest extends TestCase
     public function testCanSetSelectTimeout()
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
-        self::assertEquals(2, $this->readAttribute($a, 'selectTimeout'));
+        self::assertEquals(2, self::readAttribute($a, 'selectTimeout'));
     }
 
     public function testCanCancel()
@@ -102,13 +102,13 @@ class CurlMultiHandlerTest extends TestCase
         $a = new CurlMultiHandler();
 
         //default if no options are given and no environment variable is set
-        self::assertEquals(1, $this->readAttribute($a, 'selectTimeout'));
+        self::assertEquals(1, self::readAttribute($a, 'selectTimeout'));
 
         putenv("GUZZLE_CURL_SELECT_TIMEOUT=3");
         $a = new CurlMultiHandler();
         $selectTimeout = getenv('GUZZLE_CURL_SELECT_TIMEOUT');
         //Handler reads from the environment if no options are given
-        self::assertEquals($selectTimeout, $this->readAttribute($a, 'selectTimeout'));
+        self::assertEquals($selectTimeout, self::readAttribute($a, 'selectTimeout'));
     }
 
     /**
