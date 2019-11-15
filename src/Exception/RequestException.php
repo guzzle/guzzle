@@ -78,7 +78,7 @@ class RequestException extends TransferException
             );
         }
 
-        $level = (int) floor($response->getStatusCode() / 100);
+        $level = (int) \floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
             $className = ClientException::class;
@@ -95,7 +95,7 @@ class RequestException extends TransferException
 
         // Client Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)
-        $message = sprintf(
+        $message = \sprintf(
             '%s: `%s %s` resulted in a `%s %s` response',
             $label,
             $request->getMethod(),
@@ -138,8 +138,8 @@ class RequestException extends TransferException
     {
         $userInfo = $uri->getUserInfo();
 
-        if (false !== ($pos = strpos($userInfo, ':'))) {
-            return $uri->withUserInfo(substr($userInfo, 0, $pos), '***');
+        if (false !== ($pos = \strpos($userInfo, ':'))) {
+            return $uri->withUserInfo(\substr($userInfo, 0, $pos), '***');
         }
 
         return $uri;

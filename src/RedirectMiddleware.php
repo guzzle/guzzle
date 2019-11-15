@@ -56,7 +56,7 @@ class RedirectMiddleware
 
         if ($options['allow_redirects'] === true) {
             $options['allow_redirects'] = self::$defaultSettings;
-        } elseif (!is_array($options['allow_redirects'])) {
+        } elseif (!\is_array($options['allow_redirects'])) {
             throw new \InvalidArgumentException('allow_redirects must be true, false, or array');
         } else {
             // Merge the default settings with the provided settings
@@ -85,7 +85,7 @@ class RedirectMiddleware
         array $options,
         ResponseInterface $response
     ) {
-        if (substr($response->getStatusCode(), 0, 1) != '3'
+        if (\substr($response->getStatusCode(), 0, 1) != '3'
             || !$response->hasHeader('Location')
         ) {
             return $response;
@@ -95,7 +95,7 @@ class RedirectMiddleware
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
         if (isset($options['allow_redirects']['on_redirect'])) {
-            call_user_func(
+            \call_user_func(
                 $options['allow_redirects']['on_redirect'],
                 $request,
                 $response,
@@ -132,8 +132,8 @@ class RedirectMiddleware
                 // in the history header.
                 $historyHeader = $response->getHeader(self::HISTORY_HEADER);
                 $statusHeader = $response->getHeader(self::STATUS_HISTORY_HEADER);
-                array_unshift($historyHeader, $uri);
-                array_unshift($statusHeader, $statusCode);
+                \array_unshift($historyHeader, $uri);
+                \array_unshift($statusHeader, $statusCode);
                 return $response->withHeader(self::HISTORY_HEADER, $historyHeader)
                                 ->withHeader(self::STATUS_HISTORY_HEADER, $statusHeader);
             }
@@ -232,12 +232,12 @@ class RedirectMiddleware
         );
 
         // Ensure that the redirect URI is allowed based on the protocols.
-        if (!in_array($location->getScheme(), $protocols)) {
+        if (!\in_array($location->getScheme(), $protocols)) {
             throw new BadResponseException(
-                sprintf(
+                \sprintf(
                     'Redirect URI, %s, does not use one of the allowed redirect protocols: %s',
                     $location,
-                    implode(', ', $protocols)
+                    \implode(', ', $protocols)
                 ),
                 $request,
                 $response

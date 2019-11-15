@@ -17,7 +17,7 @@ class BadResponseException extends RequestException
         array $handlerContext = []
     ) {
         if (null === $response) {
-            @trigger_error(
+            @\trigger_error(
                 'Instantiating the ' . __CLASS__ . ' class without a Response is deprecated since version 6.3 and will be removed in 7.0.',
                 E_USER_DEPRECATED
             );

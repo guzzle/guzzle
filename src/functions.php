@@ -16,7 +16,7 @@ use GuzzleHttp\Handler\StreamHandler;
  */
 function uri_template($template, array $variables)
 {
-    if (extension_loaded('uri_template')) {
+    if (\extension_loaded('uri_template')) {
         // @codeCoverageIgnoreStart
         return \uri_template($template, $variables);
         // @codeCoverageIgnoreEnd
@@ -40,16 +40,16 @@ function uri_template($template, array $variables)
  */
 function describe_type($input)
 {
-    switch (gettype($input)) {
+    switch (\gettype($input)) {
         case 'object':
-            return 'object(' . get_class($input) . ')';
+            return 'object(' . \get_class($input) . ')';
         case 'array':
-            return 'array(' . count($input) . ')';
+            return 'array(' . \count($input) . ')';
         default:
-            ob_start();
-            var_dump($input);
+            \ob_start();
+            \var_dump($input);
             // normalize float vs double
-            return str_replace('double(', 'float(', rtrim(ob_get_clean()));
+            return \str_replace('double(', 'float(', \rtrim(\ob_get_clean()));
     }
 }
 
@@ -65,9 +65,9 @@ function headers_from_lines($lines)
     $headers = [];
 
     foreach ($lines as $line) {
-        $parts = explode(':', $line, 2);
-        $headers[trim($parts[0])][] = isset($parts[1])
-            ? trim($parts[1])
+        $parts = \explode(':', $line, 2);
+        $headers[\trim($parts[0])][] = isset($parts[1])
+            ? \trim($parts[1])
             : null;
     }
 
@@ -83,13 +83,13 @@ function headers_from_lines($lines)
  */
 function debug_resource($value = null)
 {
-    if (is_resource($value)) {
+    if (\is_resource($value)) {
         return $value;
-    } elseif (defined('STDOUT')) {
+    } elseif (\defined('STDOUT')) {
         return STDOUT;
     }
 
-    return fopen('php://output', 'w');
+    return \fopen('php://output', 'w');
 }
 
 /**
@@ -103,15 +103,15 @@ function debug_resource($value = null)
 function choose_handler()
 {
     $handler = null;
-    if (function_exists('curl_multi_exec') && function_exists('curl_exec')) {
+    if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
         $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
-    } elseif (function_exists('curl_exec')) {
+    } elseif (\function_exists('curl_exec')) {
         $handler = new CurlHandler();
-    } elseif (function_exists('curl_multi_exec')) {
+    } elseif (\function_exists('curl_multi_exec')) {
         $handler = new CurlMultiHandler();
     }
 
-    if (ini_get('allow_url_fopen')) {
+    if (\ini_get('allow_url_fopen')) {
         $handler = $handler
             ? Proxy::wrapStreaming($handler, new StreamHandler())
             : new StreamHandler();
@@ -134,7 +134,7 @@ function default_user_agent()
 
     if (!$defaultAgent) {
         $defaultAgent = 'GuzzleHttp/' . Client::VERSION;
-        if (extension_loaded('curl') && function_exists('curl_version')) {
+        if (\extension_loaded('curl') && \function_exists('curl_version')) {
             $defaultAgent .= ' curl/' . \curl_version()['version'];
         }
         $defaultAgent .= ' PHP/' . PHP_VERSION;
@@ -182,16 +182,16 @@ function default_ca_bundle()
         return $cached;
     }
 
-    if ($ca = ini_get('openssl.cafile')) {
+    if ($ca = \ini_get('openssl.cafile')) {
         return $cached = $ca;
     }
 
-    if ($ca = ini_get('curl.cainfo')) {
+    if ($ca = \ini_get('curl.cainfo')) {
         return $cached = $ca;
     }
 
     foreach ($cafiles as $filename) {
-        if (file_exists($filename)) {
+        if (\file_exists($filename)) {
             return $cached = $filename;
         }
     }
@@ -225,8 +225,8 @@ EOT
 function normalize_header_keys(array $headers)
 {
     $result = [];
-    foreach (array_keys($headers) as $key) {
-        $result[strtolower($key)] = $key;
+    foreach (\array_keys($headers) as $key) {
+        $result[\strtolower($key)] = $key;
     }
 
     return $result;
@@ -253,13 +253,13 @@ function normalize_header_keys(array $headers)
  */
 function is_host_in_noproxy($host, array $noProxyArray)
 {
-    if (strlen($host) === 0) {
+    if (\strlen($host) === 0) {
         throw new \InvalidArgumentException('Empty host provided');
     }
 
     // Strip port if present.
-    if (strpos($host, ':')) {
-        $host = explode($host, ':', 2)[0];
+    if (\strpos($host, ':')) {
+        $host = \explode($host, ':', 2)[0];
     }
 
     foreach ($noProxyArray as $area) {
@@ -275,8 +275,8 @@ function is_host_in_noproxy($host, array $noProxyArray)
         } else {
             // Special match if the area when prefixed with ".". Remove any
             // existing leading "." and add a new leading ".".
-            $area = '.' . ltrim($area, '.');
-            if (substr($host, -(strlen($area))) === $area) {
+            $area = '.' . \ltrim($area, '.');
+            if (\substr($host, -(\strlen($area))) === $area) {
                 return true;
             }
         }
@@ -301,9 +301,9 @@ function is_host_in_noproxy($host, array $noProxyArray)
 function json_decode($json, $assoc = false, $depth = 512, $options = 0)
 {
     $data = \json_decode($json, $assoc, $depth, $options);
-    if (JSON_ERROR_NONE !== json_last_error()) {
+    if (JSON_ERROR_NONE !== \json_last_error()) {
         throw new Exception\InvalidArgumentException(
-            'json_decode error: ' . json_last_error_msg()
+            'json_decode error: ' . \json_last_error_msg()
         );
     }
 
@@ -324,9 +324,9 @@ function json_decode($json, $assoc = false, $depth = 512, $options = 0)
 function json_encode($value, $options = 0, $depth = 512)
 {
     $json = \json_encode($value, $options, $depth);
-    if (JSON_ERROR_NONE !== json_last_error()) {
+    if (JSON_ERROR_NONE !== \json_last_error()) {
         throw new Exception\InvalidArgumentException(
-            'json_encode error: ' . json_last_error_msg()
+            'json_encode error: ' . \json_last_error_msg()
         );
     }
 
@@ -342,5 +342,5 @@ function json_encode($value, $options = 0, $depth = 512)
  */
 function _current_time()
 {
-    return function_exists('hrtime') ? hrtime(true) / 1e9 : microtime(true);
+    return \function_exists('hrtime') ? hrtime(true) / 1e9 : \microtime(true);
 }

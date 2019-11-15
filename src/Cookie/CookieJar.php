@@ -95,11 +95,11 @@ class CookieJar implements CookieJarInterface
     public function getCookieByName($name)
     {
         // don't allow a non string name
-        if ($name === null || !is_scalar($name)) {
+        if ($name === null || !\is_scalar($name)) {
             return null;
         }
         foreach ($this->cookies as $cookie) {
-            if ($cookie->getName() !== null && strcasecmp($cookie->getName(), $name) === 0) {
+            if ($cookie->getName() !== null && \strcasecmp($cookie->getName(), $name) === 0) {
                 return $cookie;
             }
         }
@@ -109,7 +109,7 @@ class CookieJar implements CookieJarInterface
 
     public function toArray()
     {
-        return array_map(function (SetCookie $cookie) {
+        return \array_map(function (SetCookie $cookie) {
             return $cookie->toArray();
         }, $this->getIterator()->getArrayCopy());
     }
@@ -120,14 +120,14 @@ class CookieJar implements CookieJarInterface
             $this->cookies = [];
             return;
         } elseif (!$path) {
-            $this->cookies = array_filter(
+            $this->cookies = \array_filter(
                 $this->cookies,
                 function (SetCookie $cookie) use ($domain) {
                     return !$cookie->matchesDomain($domain);
                 }
             );
         } elseif (!$name) {
-            $this->cookies = array_filter(
+            $this->cookies = \array_filter(
                 $this->cookies,
                 function (SetCookie $cookie) use ($path, $domain) {
                     return !($cookie->matchesPath($path) &&
@@ -135,7 +135,7 @@ class CookieJar implements CookieJarInterface
                 }
             );
         } else {
-            $this->cookies = array_filter(
+            $this->cookies = \array_filter(
                 $this->cookies,
                 function (SetCookie $cookie) use ($path, $domain, $name) {
                     return !($cookie->getName() == $name &&
@@ -148,7 +148,7 @@ class CookieJar implements CookieJarInterface
 
     public function clearSessionCookies()
     {
-        $this->cookies = array_filter(
+        $this->cookies = \array_filter(
             $this->cookies,
             function (SetCookie $cookie) {
                 return !$cookie->getDiscard() && $cookie->getExpires();
@@ -219,12 +219,12 @@ class CookieJar implements CookieJarInterface
 
     public function count()
     {
-        return count($this->cookies);
+        return \count($this->cookies);
     }
 
     public function getIterator()
     {
-        return new \ArrayIterator(array_values($this->cookies));
+        return new \ArrayIterator(\array_values($this->cookies));
     }
 
     public function extractCookies(
@@ -237,7 +237,7 @@ class CookieJar implements CookieJarInterface
                 if (!$sc->getDomain()) {
                     $sc->setDomain($request->getUri()->getHost());
                 }
-                if (0 !== strpos($sc->getPath(), '/')) {
+                if (0 !== \strpos($sc->getPath(), '/')) {
                     $sc->setPath($this->getCookiePathFromRequest($request));
                 }
                 $this->setCookie($sc);
@@ -259,17 +259,17 @@ class CookieJar implements CookieJarInterface
         if (''  === $uriPath) {
             return '/';
         }
-        if (0 !== strpos($uriPath, '/')) {
+        if (0 !== \strpos($uriPath, '/')) {
             return '/';
         }
         if ('/' === $uriPath) {
             return '/';
         }
-        if (0 === $lastSlashPos = strrpos($uriPath, '/')) {
+        if (0 === $lastSlashPos = \strrpos($uriPath, '/')) {
             return '/';
         }
 
-        return substr($uriPath, 0, $lastSlashPos);
+        return \substr($uriPath, 0, $lastSlashPos);
     }
 
     public function withCookieHeader(RequestInterface $request)
@@ -292,7 +292,7 @@ class CookieJar implements CookieJarInterface
         }
 
         return $values
-            ? $request->withHeader('Cookie', implode('; ', $values))
+            ? $request->withHeader('Cookie', \implode('; ', $values))
             : $request;
     }
 
