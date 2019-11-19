@@ -287,7 +287,7 @@ class CookieJar implements CookieJarInterface
 
         foreach ($this->cookies as $cookie) {
             if ($cookie->matchesPath($path) &&
-                 ($cookie->matchesDomain($headerHost) || $cookie->matchesDomain($host)) &&
+                 (($headerHost && $cookie->matchesDomain($headerHost)) || $cookie->matchesDomain($host)) &&
                 !$cookie->isExpired() &&
                 (!$cookie->getSecure() || $scheme === 'https')
             ) {
