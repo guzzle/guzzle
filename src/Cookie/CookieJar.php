@@ -279,10 +279,16 @@ class CookieJar implements CookieJarInterface
         $scheme = $uri->getScheme();
         $host = $uri->getHost();
         $path = $uri->getPath() ?: '/';
+        
+        if (sizeof($request->getHeader('Host')) > 0){
+            $headerHost = $request->getHeader('Host')[0];
+        }
+        
+        $headerHost = $request->getHeader('Host')[0];
 
         foreach ($this->cookies as $cookie) {
             if ($cookie->matchesPath($path) &&
-                $cookie->matchesDomain($host) &&
+                ($cookie->matchesDomain($headerHost) || $cookie->matchesDomain($host)) &&
                 !$cookie->isExpired() &&
                 (!$cookie->getSecure() || $scheme === 'https')
             ) {
