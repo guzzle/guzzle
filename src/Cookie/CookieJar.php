@@ -279,6 +279,7 @@ class CookieJar implements CookieJarInterface
         $scheme = $uri->getScheme();
         $host = $uri->getHost();
         $path = $uri->getPath() ?: '/';
+        $headerHost = null;
         
         if (sizeof($request->getHeader('Host')) > 0){
             $headerHost = $request->getHeader('Host')[0];
