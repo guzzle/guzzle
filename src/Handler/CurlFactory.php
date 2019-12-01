@@ -450,6 +450,10 @@ class CurlFactory implements CurlFactoryInterface
                     "SSL certificate not found: {$cert}"
                 );
             }
+            $ext = pathinfo($cert, PATHINFO_EXTENSION);
+            if (preg_match('#^(der|p12)$#i', $ext)) {
+                $conf[CURLOPT_SSLCERTTYPE] = strtoupper($ext);
+            }
             $conf[CURLOPT_SSLCERT] = $cert;
         }
 
