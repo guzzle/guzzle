@@ -720,14 +720,17 @@ class ClientTest extends TestCase
         $config = $client->getConfig();
 
         if (extension_loaded('intl')) {
-            $this->assertTrue($config['idn_conversion']);
+            self::assertTrue($config['idn_conversion']);
         } else {
-            $this->assertFalse($config['idn_conversion']);
+            self::assertFalse($config['idn_conversion']);
         }
     }
 
     public function testIdnIsTranslatedToAsciiWhenConversionIsEnabled()
     {
+        if (!extension_loaded('intl')) {
+            self::markTestSkipped('intl PHP extension is not loaded');
+        }
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
@@ -735,8 +738,8 @@ class ClientTest extends TestCase
 
         $request = $mockHandler->getLastRequest();
 
-        $this->assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
-        $this->assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
+        self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
+        self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
     }
 
     public function testIdnStaysTheSameWhenConversionIsDisabled()
@@ -748,8 +751,8 @@ class ClientTest extends TestCase
 
         $request = $mockHandler->getLastRequest();
 
-        $this->assertSame('https://яндекс.рф/images', (string) $request->getUri());
-        $this->assertSame('яндекс.рф', (string) $request->getHeaderLine('Host'));
+        self::assertSame('https://яндекс.рф/images', (string) $request->getUri());
+        self::assertSame('яндекс.рф', (string) $request->getHeaderLine('Host'));
     }
 
     /**
@@ -758,6 +761,9 @@ class ClientTest extends TestCase
      */
     public function testExceptionOnInvalidIdn()
     {
+        if (!extension_loaded('intl')) {
+            self::markTestSkipped('intl PHP extension is not loaded');
+        }
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
@@ -771,7 +777,7 @@ class ClientTest extends TestCase
     public function testIdnBaseUri()
     {
         if (!extension_loaded('intl')) {
-            $this->markTestSkipped('intl PHP extension is not loaded');
+            self::markTestSkipped('intl PHP extension is not loaded');
         }
 
         $mock = new MockHandler([new Response()]);
@@ -779,10 +785,10 @@ class ClientTest extends TestCase
             'handler'  => $mock,
             'base_uri' => 'http://яндекс.рф',
         ]);
-        $this->assertSame('http://яндекс.рф', (string) $client->getConfig('base_uri'));
+        self::assertSame('http://яндекс.рф', (string) $client->getConfig('base_uri'));
         $request = new Request('GET', '/baz');
         $client->send($request);
-        $this->assertSame('http://xn--d1acpjx3f.xn--p1ai/baz', (string) $mock->getLastRequest()->getUri());
-        $this->assertSame('xn--d1acpjx3f.xn--p1ai', (string) $mock->getLastRequest()->getHeaderLine('Host'));
+        self::assertSame('http://xn--d1acpjx3f.xn--p1ai/baz', (string) $mock->getLastRequest()->getUri());
+        self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $mock->getLastRequest()->getHeaderLine('Host'));
     }
 }

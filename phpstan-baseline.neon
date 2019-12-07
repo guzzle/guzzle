@@ -111,11 +111,6 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^PHPDoc tag @throws with type GuzzleHttp\\\\InvalidArgumentException is not subtype of Throwable$#"
-			count: 1
-			path: src/Client.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:send\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/ClientInterface.php
@@ -612,11 +607,6 @@ parameters:
 
 		-
 			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:\\$_mh \\(resource\\) does not accept resource\\|false\\.$#"
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: "#^Parameter \\#1 \\$mh of function curl_multi_setopt expects resource, resource\\|false given\\.$#"
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
