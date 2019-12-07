@@ -2,9 +2,11 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\InvalidRequestException;
 use GuzzleHttp\Promise;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -81,7 +83,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string $method
      * @param array  $args
      *
-     * @return Promise\PromiseInterface
+     * @return PromiseInterface|ResponseInterface
      */
     public function __call($method, $args)
     {
@@ -133,6 +135,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
     /**
      * The HttpClient PSR (PSR-18) specify this method.
+     *
+     * @inheritDoc
      */
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
@@ -157,7 +161,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @return PromiseInterface
      */
-    public function requestAsync($method, $uri = '', array $options = [])
+    public function requestAsync($method, $uri = '', array $options = []): PromiseInterface
     {
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
