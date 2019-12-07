@@ -1,6 +1,6 @@
 # Change Log
 
-## 6.5.0 - 2019-11-07
+## 6.5.0 - 2019-12-07
 
 * Improvement: Added support for reset internal queue in MockHandler. [#2143](https://github.com/guzzle/guzzle/pull/2143)
 * Improvement: Added support to pass arbitrary options to `curl_multi_init`. [#2287](https://github.com/guzzle/guzzle/pull/2287)
