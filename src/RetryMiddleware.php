@@ -47,7 +47,7 @@ class RetryMiddleware
      *
      * @param int $retries
      *
-     * @return int
+     * @return int milliseconds.
      */
     public static function exponentialDelay($retries)
     {
