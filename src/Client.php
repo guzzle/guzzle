@@ -3,6 +3,7 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Exception\InvalidRequestException;
 use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
@@ -23,7 +24,7 @@ use Psr\Http\Message\UriInterface;
  * @method Promise\PromiseInterface patchAsync(string|UriInterface $uri, array $options = [])
  * @method Promise\PromiseInterface deleteAsync(string|UriInterface $uri, array $options = [])
  */
-class Client implements ClientInterface
+class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 {
     /** @var array Default request options */
     private $config;
@@ -127,6 +128,18 @@ class Client implements ClientInterface
     public function send(RequestInterface $request, array $options = [])
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
+        return $this->sendAsync($request, $options)->wait();
+    }
+
+    /**
+     * The HttpClient PSR (PSR-18) specify this method.
+     */
+    public function sendRequest(RequestInterface $request): ResponseInterface
+    {
+        $options[RequestOptions::SYNCHRONOUS] = true;
+        $options[RequestOptions::ALLOW_REDIRECTS] = false;
+        $options[RequestOptions::HTTP_ERRORS] = false;
+
         return $this->sendAsync($request, $options)->wait();
     }
 
@@ -475,7 +488,7 @@ class Client implements ClientInterface
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
             if (!is_string($value)) {
-                throw new \InvalidArgumentException('query must be a string or array');
+                throw new InvalidRequestException($request, 'query must be a string or array');
             }
             $modify['query'] = $value;
             unset($options['query']);
@@ -485,7 +498,7 @@ class Client implements ClientInterface
         if (isset($options['sink'])) {
             // TODO: Add more sink validation?
             if (is_bool($options['sink'])) {
-                throw new \InvalidArgumentException('sink must not be a boolean');
+                throw new InvalidRequestException($request, 'sink must not be a boolean');
             }
         }
 

@@ -9,13 +9,13 @@ use PHPUnit\Framework\TestCase;
 
 class CurlMultiHandlerTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $_SERVER['curl_test'] = true;
         unset($_SERVER['_curl_multi']);
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         unset($_SERVER['_curl_multi'], $_SERVER['curl_test']);
     }

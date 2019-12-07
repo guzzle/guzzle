@@ -150,7 +150,7 @@ class RequestException extends TransferException
      *
      * @return RequestInterface
      */
-    public function getRequest()
+    public function getRequest(): RequestInterface
     {
         return $this->request;
     }
