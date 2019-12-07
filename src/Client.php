@@ -2,6 +2,7 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
@@ -214,6 +215,38 @@ class Client implements ClientInterface
             $uri = Psr7\UriResolver::resolve(Psr7\uri_for($config['base_uri']), $uri);
         }
 
+        if ($uri->getHost() && isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
+            $idnOptions = ($config['idn_conversion'] === true) ? IDNA_DEFAULT : $config['idn_conversion'];
+
+            $asciiHost = idn_to_ascii($uri->getHost(), $idnOptions, INTL_IDNA_VARIANT_UTS46, $info);
+            if ($asciiHost === false) {
+                $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
+
+                $errorConstants = array_filter(array_keys(get_defined_constants()), function ($name) {
+                    return substr($name, 0, 11) === 'IDNA_ERROR_';
+                });
+
+                $errors = [];
+                foreach ($errorConstants as $errorConstant) {
+                    if ($errorBitSet & constant($errorConstant)) {
+                        $errors[] = $errorConstant;
+                    }
+                }
+
+                $errorMessage = 'IDN conversion failed';
+                if ($errors) {
+                    $errorMessage .= ' (errors: ' . implode(', ', $errors) . ')';
+                }
+
+                throw new InvalidArgumentException($errorMessage);
+            } else {
+                if ($uri->getHost() !== $asciiHost) {
+                    // Replace URI only if the ASCII version is different
+                    $uri = $uri->withHost($asciiHost);
+                }
+            }
+        }
+
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;
     }
 
@@ -233,12 +266,15 @@ class Client implements ClientInterface
             'cookies'         => false
         ];
 
+        // idn_to_ascii() is a part of ext-intl and might be not available
+        $defaults['idn_conversion'] = function_exists('idn_to_ascii');
+
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
 
         // We can only trust the HTTP_PROXY environment variable in a CLI
         // process due to the fact that PHP has no reliable mechanism to
         // get environment variables that start with "HTTP_".
-        if (php_sapi_name() == 'cli' && getenv('HTTP_PROXY')) {
+        if (php_sapi_name() === 'cli' && getenv('HTTP_PROXY')) {
             $defaults['proxy']['http'] = getenv('HTTP_PROXY');
         }
 
