@@ -611,6 +611,11 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
+			message: "#^Parameter \\#1 \\$mh of function curl_multi_setopt expects resource, resource\\|false given\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
 			message: "#^Method GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:__invoke\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
