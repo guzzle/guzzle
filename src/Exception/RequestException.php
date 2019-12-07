@@ -128,7 +128,7 @@ class RequestException extends TransferException
     }
 
     /**
-     * Obfuscates URI if there is an username and a password present
+     * Obfuscates URI if there is a username and a password present
      *
      * @param UriInterface $uri
      *
