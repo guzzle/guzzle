@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
+use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -76,7 +77,7 @@ class CurlMultiHandler
         }
     }
 
-    public function __invoke(RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $easy = $this->factory->create($request, $options);
         $id = (int) $easy->handle;
@@ -96,7 +97,7 @@ class CurlMultiHandler
     /**
      * Ticks the curl event loop.
      */
-    public function tick()
+    public function tick(): void
     {
         // Add any delayed handles if needed.
         if ($this->delays) {
@@ -131,7 +132,7 @@ class CurlMultiHandler
     /**
      * Runs until all outstanding connections have completed.
      */
-    public function execute()
+    public function execute(): void
     {
         $queue = P\queue();
 
@@ -144,7 +145,7 @@ class CurlMultiHandler
         }
     }
 
-    private function addRequest(array $entry)
+    private function addRequest(array $entry): void
     {
         $easy = $entry['easy'];
         $id = (int) $easy->handle;
@@ -163,7 +164,7 @@ class CurlMultiHandler
      *
      * @return bool True on success, false on failure.
      */
-    private function cancel($id)
+    private function cancel($id): bool
     {
         // Cannot cancel if it has been processed.
         if (!isset($this->handles[$id])) {
@@ -178,7 +179,7 @@ class CurlMultiHandler
         return true;
     }
 
-    private function processMessages()
+    private function processMessages(): void
     {
         while ($done = curl_multi_info_read($this->_mh)) {
             $id = (int) $done['handle'];
@@ -202,7 +203,7 @@ class CurlMultiHandler
         }
     }
 
-    private function timeToNext()
+    private function timeToNext(): int
     {
         $currentTime = \GuzzleHttp\_current_time();
         $nextTime = PHP_INT_MAX;
