@@ -51,10 +51,12 @@ class FunctionsTest extends TestCase
             ini_set('xdebug.overload_var_dump', 0);
         }
 
-        self::assertSame($output, GuzzleHttp\describe_type($input));
-
-        if (extension_loaded('xdebug')) {
-            ini_set('xdebug.overload_var_dump', $originalOverload);
+        try {
+            self::assertSame($output, GuzzleHttp\describe_type($input));
+        } finally {
+            if (extension_loaded('xdebug')) {
+                ini_set('xdebug.overload_var_dump', $originalOverload);
+            }
         }
     }
 
