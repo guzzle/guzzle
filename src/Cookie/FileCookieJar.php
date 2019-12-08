@@ -43,7 +43,8 @@ class FileCookieJar extends CookieJar
     /**
      * Saves the cookies to a file.
      *
-     * @param  string            $filename File to save
+     * @param string $filename File to save
+     *
      * @throws \RuntimeException if the file cannot be found or created
      */
     public function save($filename)
@@ -67,7 +68,8 @@ class FileCookieJar extends CookieJar
      *
      * Old cookies are kept unless overwritten by newly loaded ones.
      *
-     * @param  string            $filename Cookie file to load.
+     * @param string $filename Cookie file to load.
+     *
      * @throws \RuntimeException if the file cannot be loaded.
      */
     public function load($filename)

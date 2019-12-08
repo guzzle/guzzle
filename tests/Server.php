@@ -29,6 +29,7 @@ class Server
 
     /**
      * Flush the received requests from the server
+     *
      * @throws \RuntimeException
      */
     public static function flush()
@@ -42,8 +43,9 @@ class Server
      * Any currently queued responses will be overwritten.  Subsequent requests
      * on the server will return queued responses in FIFO order.
      *
-     * @param  array|ResponseInterface $responses A single or array of Responses
-     *                                            to queue.
+     * @param array|ResponseInterface $responses A single or array of Responses
+     *                                           to queue.
+     *
      * @throws \Exception
      */
     public static function enqueue($responses)
@@ -74,6 +76,7 @@ class Server
      * Get all of the received requests
      *
      * @return ResponseInterface[]
+     *
      * @throws \RuntimeException
      */
     public static function received()

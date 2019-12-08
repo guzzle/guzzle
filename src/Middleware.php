@@ -74,7 +74,8 @@ final class Middleware
      *
      * @param array|\ArrayAccess $container Container to hold the history (by reference).
      *
-     * @return callable                  Returns a function that accepts the next handler.
+     * @return callable Returns a function that accepts the next handler.
+     *
      * @throws \InvalidArgumentException if container is not an array or ArrayAccess.
      */
     public static function history(&$container)
@@ -222,8 +223,9 @@ final class Middleware
      * Middleware that applies a map function to the request before passing to
      * the next handler.
      *
-     * @param  callable $fn Function that accepts a RequestInterface and returns
-     *                      a RequestInterface.
+     * @param callable $fn Function that accepts a RequestInterface and returns
+     *                     a RequestInterface.
+     *
      * @return callable
      */
     public static function mapRequest(callable $fn)
@@ -239,8 +241,9 @@ final class Middleware
      * Middleware that applies a map function to the resolved promise's
      * response.
      *
-     * @param  callable $fn Function that accepts a ResponseInterface and
-     *                      returns a ResponseInterface.
+     * @param callable $fn Function that accepts a ResponseInterface and
+     *                     returns a ResponseInterface.
+     *
      * @return callable
      */
     public static function mapResponse(callable $fn)

@@ -54,8 +54,9 @@ function describe_type($input)
 /**
  * Parses an array of header lines into an associative array of headers.
  *
- * @param  iterable $lines Header lines array of strings in the following
- *                         format: "Name: Value"
+ * @param iterable $lines Header lines array of strings in the following
+ *                        format: "Name: Value"
+ *
  * @return array
  */
 function headers_from_lines($lines)
@@ -96,7 +97,8 @@ function debug_resource($value = null)
  * The returned handler is not wrapped by any default middlewares.
  *
  * @throws \RuntimeException if no viable Handler is available.
- * @return callable          Returns the best handler for the given system.
+ *
+ * @return callable Returns the best handler for the given system.
  */
 function choose_handler()
 {
@@ -153,6 +155,7 @@ function default_user_agent()
  * Note: the result of this function is cached for subsequent calls.
  *
  * @return string
+ *
  * @throws \RuntimeException if no bundle can be found.
  */
 function default_ca_bundle()
@@ -291,6 +294,7 @@ function is_host_in_noproxy($host, array $noProxyArray)
  * @param int    $options Bitmask of JSON decode options.
  *
  * @throws Exception\InvalidArgumentException if the JSON cannot be decoded.
+ *
  * @link http://www.php.net/manual/en/function.json-decode.php
  */
 function json_decode($json, $assoc = false, $depth = 512, $options = 0)
@@ -313,7 +317,9 @@ function json_decode($json, $assoc = false, $depth = 512, $options = 0)
  * @param int   $depth   Set the maximum depth. Must be greater than zero.
  *
  * @return string
+ *
  * @throws Exception\InvalidArgumentException if the JSON cannot be encoded.
+ *
  * @link http://www.php.net/manual/en/function.json-encode.php
  */
 function json_encode($value, $options = 0, $depth = 512)
@@ -333,6 +339,7 @@ function json_encode($value, $options = 0, $depth = 512)
  * (depending on the PHP version, one of the two is used)
  *
  * @return float|mixed UNIX timestamp
+ *
  * @internal
  */
 function _current_time()

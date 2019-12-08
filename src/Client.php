@@ -125,6 +125,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
      *
      * @return ResponseInterface
+     *
      * @throws GuzzleException
      */
     public function send(RequestInterface $request, array $options = [])
@@ -190,6 +191,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
      *
      * @return ResponseInterface
+     *
      * @throws GuzzleException
      */
     public function request($method, $uri = '', array $options = [])
@@ -526,7 +528,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
     /**
      * Throw Exception with pre-set message.
+     *
      * @return void
+     *
      * @throws InvalidArgumentException Invalid body.
      */
     private function invalidBody()

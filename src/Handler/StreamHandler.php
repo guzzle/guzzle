@@ -194,6 +194,7 @@ class StreamHandler
      *                              data to read.
      *
      * @return StreamInterface
+     *
      * @throws \RuntimeException when the sink option is invalid.
      */
     private function drain(
@@ -223,6 +224,7 @@ class StreamHandler
      * @param callable $callback Callable that returns stream resource
      *
      * @return resource
+     *
      * @throws \RuntimeException on error
      */
     private function createResource(callable $callback)

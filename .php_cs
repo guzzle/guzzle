@@ -21,6 +21,7 @@ $config = PhpCsFixer\Config::create()
         'phpdoc_types' => true,
         'phpdoc_var_without_name' => true,
         'phpdoc_single_line_var_spacing' => true,
+        'phpdoc_separation' => true,
         'phpdoc_align' => ['align'=>'vertical'],
         // 'native_function_invocation' => true,
     ])

@@ -12,6 +12,7 @@ interface CurlFactoryInterface
      * @param array            $options Transfer options
      *
      * @return EasyHandle
+     *
      * @throws \RuntimeException when an option cannot be applied
      */
     public function create(RequestInterface $request, array $options);
