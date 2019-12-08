@@ -9,3 +9,8 @@ docs/_build
 docs/*.pyc
 .idea
 .DS_STORE
+
+### PHP-CS-Fixer
+php-cs-fixer.phar
+php-cs-fixer
+.php_cs.cache
