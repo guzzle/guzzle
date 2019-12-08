@@ -55,7 +55,6 @@ class RetryMiddleware
     }
 
     /**
-     *
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
@@ -74,7 +73,6 @@ class RetryMiddleware
 
     /**
      * Execute fulfilled closure
-     *
      */
     private function onFulfilled(RequestInterface $req, array $options)
     {

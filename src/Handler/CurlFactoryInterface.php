@@ -20,7 +20,6 @@ interface CurlFactoryInterface
      * Release an easy handle, allowing it to be reused or closed.
      *
      * This function must call unset on the easy handle's "handle" property.
-     *
      */
     public function release(EasyHandle $easy);
 }

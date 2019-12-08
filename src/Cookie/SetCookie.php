@@ -204,7 +204,6 @@ class SetCookie
 
     /**
      * The UNIX timestamp when the cookie Expires
-     *
      */
     public function getExpires()
     {

@@ -290,7 +290,6 @@ class CookieJar implements CookieJarInterface
     /**
      * If a cookie already exists and the server asks to set it again with a
      * null value, the cookie must be deleted.
-     *
      */
     private function removeCookieIfEmpty(SetCookie $cookie)
     {

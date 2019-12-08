@@ -41,7 +41,6 @@ class RedirectMiddleware
     }
 
     /**
-     *
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
@@ -72,7 +71,6 @@ class RedirectMiddleware
     }
 
     /**
-     *
      * @return ResponseInterface|PromiseInterface
      */
     public function checkRedirect(
@@ -159,7 +157,6 @@ class RedirectMiddleware
     }
 
     /**
-     *
      * @return RequestInterface
      */
     public function modifyRequest(

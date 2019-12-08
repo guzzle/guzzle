@@ -23,7 +23,6 @@ class PrepareBodyMiddleware
     }
 
     /**
-     *
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)

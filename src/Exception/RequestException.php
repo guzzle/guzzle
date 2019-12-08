@@ -126,7 +126,6 @@ class RequestException extends TransferException
 
     /**
      * Get the request that caused the exception
-     *
      */
     public function getRequest(): RequestInterface
     {
