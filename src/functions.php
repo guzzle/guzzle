@@ -56,8 +56,8 @@ function describe_type($input)
 /**
  * Parses an array of header lines into an associative array of headers.
  *
- * @param iterable $lines Header lines array of strings in the following
- *                     format: "Name: Value"
+ * @param  iterable $lines Header lines array of strings in the following
+ *                         format: "Name: Value"
  * @return array
  */
 function headers_from_lines($lines)
@@ -98,7 +98,7 @@ function debug_resource($value = null)
  * The returned handler is not wrapped by any default middlewares.
  *
  * @throws \RuntimeException if no viable Handler is available.
- * @return callable Returns the best handler for the given system.
+ * @return callable          Returns the best handler for the given system.
  */
 function choose_handler()
 {
@@ -289,7 +289,7 @@ function is_host_in_noproxy($host, array $noProxyArray)
  * Wrapper for json_decode that throws when an error occurs.
  *
  * @param string $json    JSON data to parse
- * @param bool $assoc     When true, returned objects will be converted
+ * @param bool   $assoc   When true, returned objects will be converted
  *                        into associative arrays.
  * @param int    $depth   User specified recursion depth.
  * @param int    $options Bitmask of JSON decode options.
@@ -314,8 +314,8 @@ function json_decode($json, $assoc = false, $depth = 512, $options = 0)
  * Wrapper for JSON encoding that throws when an error occurs.
  *
  * @param mixed $value   The value being encoded
- * @param int    $options JSON encode option bitmask
- * @param int    $depth   Set the maximum depth. Must be greater than zero.
+ * @param int   $options JSON encode option bitmask
+ * @param int   $depth   Set the maximum depth. Must be greater than zero.
  *
  * @return string
  * @throws Exception\InvalidArgumentException if the JSON cannot be encoded.

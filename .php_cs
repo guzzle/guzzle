@@ -13,7 +13,7 @@ $config = PhpCsFixer\Config::create()
         'no_empty_phpdoc' => true,
         'no_extra_blank_lines' => true,
         'ordered_imports' => true,
-        // 'phpdoc_align' => ['align'=>'vertical'],
+        'phpdoc_align' => ['align'=>'vertical'],
         // 'native_function_invocation' => true,
     ])
     ->setFinder(

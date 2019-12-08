@@ -42,8 +42,8 @@ class Server
      * Any currently queued responses will be overwritten.  Subsequent requests
      * on the server will return queued responses in FIFO order.
      *
-     * @param array|ResponseInterface $responses A single or array of Responses
-     *                                           to queue.
+     * @param  array|ResponseInterface $responses A single or array of Responses
+     *                                            to queue.
      * @throws \Exception
      */
     public static function enqueue($responses)

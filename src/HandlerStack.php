@@ -210,7 +210,7 @@ class HandlerStack
     }
 
     /**
-     * @param string $name
+     * @param  string $name
      * @return int
      */
     private function findByName($name)

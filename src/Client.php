@@ -219,7 +219,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
-     * @param  string|null $uri
+     * @param string|null $uri
      *
      * @return UriInterface
      */
@@ -270,7 +270,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Configures the default options for a client.
      *
-     * @param array $config
+     * @param  array $config
      * @return void
      */
     private function configureDefaults(array $config)
