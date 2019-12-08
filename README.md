@@ -85,9 +85,9 @@ composer update
 [guzzle-3-repo]: https://github.com/guzzle/guzzle3
 [guzzle-4-repo]: https://github.com/guzzle/guzzle/tree/4.x
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
-[guzzle-6-repo]: https://github.com/guzzle/guzzle
+[guzzle-6-repo]: https://github.com/guzzle/guzzle/tree/6.5
 [guzzle-7-repo]: https://github.com/guzzle/guzzle
 [guzzle-3-docs]: http://guzzle3.readthedocs.org
-[guzzle-5-docs]: http://docs.guzzlephp.org//en/5.3/
-[guzzle-6-docs]: http://docs.guzzlephp.org//en/6.5/
-[guzzle-7-docs]: http://docs.guzzlephp.org//en/latest/
+[guzzle-5-docs]: http://docs.guzzlephp.org/en/5.3/
+[guzzle-6-docs]: http://docs.guzzlephp.org/en/6.5/
+[guzzle-7-docs]: http://docs.guzzlephp.org/en/latest/
