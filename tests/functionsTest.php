@@ -26,13 +26,20 @@ class FunctionsTest extends TestCase
 
     public function typeProvider()
     {
+        $strClass =     new class {
+            public function __toString(): string
+            {
+                return 'foo';
+            }
+        };
+
         return [
             ['foo', 'string(3) "foo"'],
             [true, 'bool(true)'],
             [false, 'bool(false)'],
             [10, 'int(10)'],
             [1.0, 'float(1)'],
-            [new StrClass(), 'object(GuzzleHttp\Test\StrClass)'],
+            [$strClass, 'object(GuzzleHttp\Test\StrClass)'],
             [['foo'], 'array(1)']
         ];
     }
@@ -132,13 +139,5 @@ class FunctionsTest extends TestCase
     public function testCurrentTime()
     {
         self::assertGreaterThan(0, GuzzleHttp\_current_time());
-    }
-}
-
-final class StrClass
-{
-    public function __toString()
-    {
-        return 'foo';
     }
 }
