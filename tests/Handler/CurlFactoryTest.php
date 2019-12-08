@@ -107,13 +107,12 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][CURLOPT_HTTP_VERSION]);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage SSL CA bundle not found: /does/not/exist
-     */
     public function testValidatesVerify()
     {
         $f = new Handler\CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('SSL CA bundle not found: /does/not/exist');
         $f->create(new Psr7\Request('GET', Server::$url), ['verify' => '/does/not/exist']);
     }
 
@@ -190,14 +189,12 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage SSL private key not found: /does/not/exist
-     */
     public function testValidatesSslKey()
     {
         $f = new Handler\CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('SSL private key not found: /does/not/exist');
         $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key' => '/does/not/exist']);
     }
 
@@ -224,13 +221,12 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(__FILE__, $_SERVER['_curl'][CURLOPT_SSLKEY]);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage SSL certificate not found: /does/not/exist
-     */
     public function testValidatesCert()
     {
         $f = new Handler\CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('SSL certificate not found: /does/not/exist');
         $f->create(new Psr7\Request('GET', Server::$url), ['cert' => '/does/not/exist']);
     }
 
@@ -249,13 +245,12 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('test', $_SERVER['_curl'][CURLOPT_SSLCERTPASSWD]);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage progress client option must be callable
-     */
     public function testValidatesProgress()
     {
         $f = new Handler\CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('progress client option must be callable');
         $f->create(new Psr7\Request('GET', Server::$url), ['progress' => 'foo']);
     }
 
@@ -447,10 +442,6 @@ class CurlFactoryTest extends TestCase
         self::assertSame('0', $received->getHeaderLine('content-length'));
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage but attempting to rewind the request body failed
-     */
     public function testFailsWhenCannotRewindRetryAfterNoResponse()
     {
         $factory = new Handler\CurlFactory(1);
@@ -462,6 +453,9 @@ class CurlFactoryTest extends TestCase
             $easy = $factory->create($request, $options);
             return Handler\CurlFactory::finish($fn, $easy, $factory);
         };
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('but attempting to rewind the request body failed');
         $fn($request, [])->wait();
     }
 
@@ -493,10 +487,6 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('200', $res->getStatusCode());
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage The cURL request was retried 3 times
-     */
     public function testFailsWhenRetryMoreThanThreeTimes()
     {
         $factory = new Handler\CurlFactory(1);
@@ -510,6 +500,9 @@ class CurlFactoryTest extends TestCase
         $p = $mock(new Psr7\Request('PUT', Server::$url, [], 'test'), []);
         $p->wait(false);
         self::assertEquals(3, $call);
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('The cURL request was retried 3 times');
         $p->wait(true);
     }
 
@@ -531,9 +524,6 @@ class CurlFactoryTest extends TestCase
         self::assertSame('test', (string) $response->getBody());
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
-     */
     public function testCreatesConnectException()
     {
         $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
@@ -548,6 +538,8 @@ class CurlFactoryTest extends TestCase
             $easy,
             $factory
         );
+
+        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
         $response->wait();
     }
 
@@ -576,13 +568,12 @@ class CurlFactoryTest extends TestCase
         self::assertInternalType('callable', $_SERVER['_curl'][CURLOPT_READFUNCTION]);
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Directory /does/not/exist/so does not exist for sink value of /does/not/exist/so/error.txt
-     */
     public function testEnsuresDirExistsBeforeThrowingWarning()
     {
         $f = new Handler\CurlFactory(3);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Directory /does/not/exist/so does not exist for sink value of /does/not/exist/so/error.txt');
         $f->create(new Psr7\Request('GET', Server::$url), [
             'sink' => '/does/not/exist/so/error.txt'
         ]);
@@ -611,21 +602,15 @@ class CurlFactoryTest extends TestCase
         self::assertCount(3, self::readAttribute($f, 'handles'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEnsuresOnHeadersIsCallable()
     {
         $req = new Psr7\Request('GET', Server::$url);
         $handler = new Handler\CurlHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
         $handler($req, ['on_headers' => 'error!']);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage An error was encountered during the on_headers event
-     * @expectedExceptionMessage test
-     */
     public function testRejectsPromiseWhenOnHeadersFails()
     {
         Server::flush();
@@ -639,6 +624,9 @@ class CurlFactoryTest extends TestCase
                 throw new \Exception('test');
             }
         ]);
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
     }
 

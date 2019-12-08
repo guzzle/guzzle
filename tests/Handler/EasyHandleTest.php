@@ -10,14 +10,13 @@ use PHPUnit\Framework\TestCase;
  */
 class EasyHandleTest extends TestCase
 {
-    /**
-     * @expectedException \BadMethodCallException
-     * @expectedExceptionMessage The EasyHandle has been released
-     */
     public function testEnsuresHandleExists()
     {
         $easy = new EasyHandle;
         unset($easy->handle);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('The EasyHandle has been released');
         $easy->handle;
     }
 }

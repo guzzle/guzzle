@@ -40,9 +40,6 @@ class MiddlewareTest extends TestCase
         self::assertCount(1, $jar);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ClientException
-     */
     public function testThrowsExceptionOnHttpClientError()
     {
         $m = Middleware::httpErrors();
@@ -50,13 +47,11 @@ class MiddlewareTest extends TestCase
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
         self::assertSame('pending', $p->getState());
+
+        $this->expectException(\GuzzleHttp\Exception\ClientException::class);
         $p->wait();
-        self::assertSame('rejected', $p->getState());
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ServerException
-     */
     public function testThrowsExceptionOnHttpServerError()
     {
         $m = Middleware::httpErrors();
@@ -64,8 +59,9 @@ class MiddlewareTest extends TestCase
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
         self::assertSame('pending', $p->getState());
+
+        $this->expectException(\GuzzleHttp\Exception\ServerException::class);
         $p->wait();
-        self::assertSame('rejected', $p->getState());
     }
 
     /**

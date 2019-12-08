@@ -32,11 +32,10 @@ class HandlerStackTest extends TestCase
         $h->resolve();
     }
 
-    /**
-     * @expectedException \LogicException
-     */
     public function testEnsuresHandlerIsSet()
     {
+        $this->expectException(\LogicException::class);
+
         $h = new HandlerStack();
         $h->resolve();
     }
@@ -125,11 +124,10 @@ class HandlerStackTest extends TestCase
         self::assertContains('> 1) Name: \'foo\'', $lines[3]);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEnsuresHandlerExistsByName()
     {
+        $this->expectException(\InvalidArgumentException::class);
+
         $builder = new HandlerStack();
         $builder->before('foo', function () {
         });

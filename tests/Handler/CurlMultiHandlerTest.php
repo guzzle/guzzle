@@ -41,13 +41,12 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
-     * @expectedExceptionMessage cURL error
-     */
     public function testCreatesExceptions()
     {
         $a = new CurlMultiHandler();
+
+        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
+        $this->expectExceptionMessage('cURL error');
         $a(new Request('GET', 'http://localhost:123'), [])->wait();
     }
 
@@ -111,12 +110,11 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals($selectTimeout, self::readAttribute($a, 'selectTimeout'));
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     */
     public function throwsWhenAccessingInvalidProperty()
     {
         $h = new CurlMultiHandler();
+
+        $this->expectException(\BadMethodCallException::class);
         $h->foo;
     }
 }

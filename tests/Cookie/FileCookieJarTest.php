@@ -17,12 +17,11 @@ class FileCookieJarTest extends TestCase
         $this->file = tempnam('/tmp', 'file-cookies');
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testValidatesCookieFile()
     {
         file_put_contents($this->file, 'true');
+
+        $this->expectException(\RuntimeException::class);
         new FileCookieJar($this->file);
     }
 

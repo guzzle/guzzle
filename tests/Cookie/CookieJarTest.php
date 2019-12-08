@@ -319,13 +319,11 @@ class CookieJarTest extends TestCase
         self::assertSame($cookies, $request->getHeaderLine('Cookie'));
     }
 
-    /**
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessage Invalid cookie: Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/?={}
-     */
     public function testThrowsExceptionWithStrictMode()
     {
         $a = new CookieJar(true);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Invalid cookie: Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\\"/?={}');
         $a->setCookie(new SetCookie(['Name' => "abc\n", 'Value' => 'foo', 'Domain' => 'bar']));
     }
 

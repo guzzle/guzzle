@@ -23,13 +23,12 @@ class ClientTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Magic request methods require a URI and optional options array
-     */
     public function testValidatesArgsForMagicMethods()
     {
         $client = new Client();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Magic request methods require a URI and optional options array');
         $client->get();
     }
 
@@ -204,38 +203,35 @@ class ClientTest extends TestCase
         self::assertInternalType('array', $mock->getLastOptions()['allow_redirects']);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage allow_redirects must be true, false, or array
-     */
     public function testValidatesAllowRedirects()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('allow_redirects must be true, false, or array');
         $client->get('http://foo.com', ['allow_redirects' => 'foo']);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ClientException
-     */
     public function testThrowsHttpErrorsByDefault()
     {
         $mock = new MockHandler([new Response(404)]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
+
+        $this->expectException(\GuzzleHttp\Exception\ClientException::class);
         $client->get('http://foo.com');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage cookies must be an instance of GuzzleHttp\Cookie\CookieJarInterface
-     */
     public function testValidatesCookies()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('cookies must be an instance of GuzzleHttp\\Cookie\\CookieJarInterface');
         $client->get('http://foo.com', ['cookies' => 'foo']);
     }
 
@@ -286,13 +282,12 @@ class ClientTest extends TestCase
         self::assertSame('gzip', $mock->getLastOptions()['decode_content']);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesHeaders()
     {
         $mock = new MockHandler();
         $client = new Client(['handler' => $mock]);
+
+        $this->expectException(\InvalidArgumentException::class);
         $client->get('http://foo.com', ['headers' => 'foo']);
     }
 
@@ -306,14 +301,13 @@ class ClientTest extends TestCase
         self::assertSame('foo', (string) $last->getBody());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesQuery()
     {
         $mock = new MockHandler();
         $client = new Client(['handler' => $mock]);
         $request = new Request('PUT', 'http://foo.com');
+
+        $this->expectException(\InvalidArgumentException::class);
         $client->send($request, ['query' => false]);
     }
 
@@ -467,13 +461,12 @@ class ClientTest extends TestCase
         ini_set('arg_separator.output', $separator);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEnsuresThatFormParamsAndMultipartAreExclusive()
     {
         $client = new Client(['handler' => function () {
         }]);
+
+        $this->expectException(\InvalidArgumentException::class);
         $client->post('http://foo.com', [
             'form_params' => ['foo' => 'bar bam'],
             'multipart' => []
@@ -650,13 +643,12 @@ class ClientTest extends TestCase
         self::assertSame('foo.com', $mockHandler->getLastRequest()->getHeader('Host')[0]);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesSink()
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
+
+        $this->expectException(\InvalidArgumentException::class);
         $client->get('http://test.com', ['sink' => true]);
     }
 
@@ -682,11 +674,10 @@ class ClientTest extends TestCase
         );
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testHandlerIsCallable()
     {
+        $this->expectException(\InvalidArgumentException::class);
+
         new Client(['handler' => 'not_cllable']);
     }
 
@@ -755,10 +746,6 @@ class ClientTest extends TestCase
         self::assertSame('яндекс.рф', (string) $request->getHeaderLine('Host'));
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\InvalidArgumentException
-     * @expectedExceptionMessage IDN conversion failed (errors: IDNA_ERROR_LEADING_HYPHEN)
-     */
     public function testExceptionOnInvalidIdn()
     {
         if (!extension_loaded('intl')) {
@@ -767,6 +754,8 @@ class ClientTest extends TestCase
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
+        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectExceptionMessage('IDN conversion failed (errors: IDNA_ERROR_LEADING_HYPHEN)');
         $client->request('GET', 'https://-яндекс.рф/images', ['idn_conversion' => true]);
     }
 

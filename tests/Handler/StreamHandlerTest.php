@@ -49,12 +49,11 @@ class StreamHandlerTest extends TestCase
         self::assertSame('Bar', $sent->getHeaderLine('foo'));
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     */
     public function testAddsErrorToResponse()
     {
         $handler = new StreamHandler();
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
         $handler(
             new Request('GET', 'http://localhost:123'),
             ['timeout' => 0.01]
@@ -259,12 +258,11 @@ class StreamHandlerTest extends TestCase
         return $handler($request, $opts)->wait();
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
-     * @expectedExceptionMessage Connection refused
-     */
     public function testAddsProxy()
     {
+        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
+        $this->expectExceptionMessage('Connection refused');
+
         $this->getSendResult(['proxy' => '127.0.0.1:8125']);
     }
 
@@ -296,12 +294,11 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(200, $opts['http']['timeout']);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage SSL CA bundle not found: /does/not/exist
-     */
     public function testVerifiesVerifyIsValidIfPath()
     {
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('SSL CA bundle not found: /does/not/exist');
+
         $this->getSendResult(['verify' => '/does/not/exist']);
     }
 
@@ -311,12 +308,11 @@ class StreamHandlerTest extends TestCase
         self::assertInstanceOf('GuzzleHttp\Psr7\Response', $handler);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage SSL certificate not found: /does/not/exist
-     */
     public function testVerifiesCertIfValidPath()
     {
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('SSL certificate not found: /does/not/exist');
+
         $this->getSendResult(['cert' => '/does/not/exist']);
     }
 
@@ -343,12 +339,11 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid verify request option
-     */
     public function testEnsuresVerifyOptionIsValid()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid verify request option');
+
         $this->getSendResult(['verify' => 10]);
     }
 
@@ -448,12 +443,11 @@ class StreamHandlerTest extends TestCase
         self::assertFalse($opts['ssl']['verify_peer']);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage stream_context must be an array
-     */
     public function testEnsuresThatStreamContextIsAnArray()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_context must be an array');
+
         $this->getSendResult(['stream_context' => 'foo']);
     }
 
@@ -513,21 +507,15 @@ class StreamHandlerTest extends TestCase
         self::assertGreaterThan(0.0001, \GuzzleHttp\_current_time() - $s);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEnsuresOnHeadersIsCallable()
     {
         $req = new Request('GET', Server::$url);
         $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
         $handler($req, ['on_headers' => 'error!']);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage An error was encountered during the on_headers event
-     * @expectedExceptionMessage test
-     */
     public function testRejectsPromiseWhenOnHeadersFails()
     {
         Server::flush();
@@ -541,6 +529,9 @@ class StreamHandlerTest extends TestCase
                 throw new \Exception('test');
             }
         ]);
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
     }
 

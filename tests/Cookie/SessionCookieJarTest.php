@@ -21,12 +21,11 @@ class SessionCookieJarTest extends TestCase
         }
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testValidatesCookieSession()
     {
         $_SESSION[$this->sessionVar] = 'true';
+
+        $this->expectException(\RuntimeException::class);
         new SessionCookieJar($this->sessionVar);
     }
 

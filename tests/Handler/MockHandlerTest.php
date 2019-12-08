@@ -34,14 +34,17 @@ class MockHandlerTest extends TestCase
         self::assertCount(0, new MockHandler());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
+    public function testEnsuresEachAppendOnCreationIsValid()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new MockHandler(['a']);
+    }
+
     public function testEnsuresEachAppendIsValid()
     {
-        $mock = new MockHandler(['a']);
-        $request = new Request('GET', 'http://example.com');
-        $mock($request, []);
+        $mock = new MockHandler();
+        $this->expectException(\InvalidArgumentException::class);
+        $mock->append(['a']);
     }
 
     public function testCanQueueExceptions()
@@ -122,22 +125,16 @@ class MockHandlerTest extends TestCase
         self::assertSame($r, $p->wait());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEnsuresOnHeadersIsCallable()
     {
         $res = new Response();
         $mock = new MockHandler([$res]);
         $request = new Request('GET', 'http://example.com');
+
+        $this->expectException(\InvalidArgumentException::class);
         $mock($request, ['on_headers' => 'error!']);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage An error was encountered during the on_headers event
-     * @expectedExceptionMessage test
-     */
     public function testRejectsPromiseWhenOnHeadersFails()
     {
         $res = new Response();
@@ -149,8 +146,11 @@ class MockHandlerTest extends TestCase
             }
         ]);
 
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
     }
+
     public function testInvokesOnFulfilled()
     {
         $res = new Response();
@@ -174,24 +174,22 @@ class MockHandlerTest extends TestCase
         self::assertSame($e, $c);
     }
 
-    /**
-     * @expectedException \OutOfBoundsException
-     */
     public function testThrowsWhenNoMoreResponses()
     {
         $mock = new MockHandler();
         $request = new Request('GET', 'http://example.com');
+
+        $this->expectException(\OutOfBoundsException::class);
         $mock($request, []);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\BadResponseException
-     */
     public function testCanCreateWithDefaultMiddleware()
     {
         $r = new Response(500);
         $mock = MockHandler::createWithMiddleware([$r]);
         $request = new Request('GET', 'http://example.com');
+
+        $this->expectException(\GuzzleHttp\Exception\BadResponseException::class);
         $mock($request, ['http_errors' => true])->wait();
     }
 
