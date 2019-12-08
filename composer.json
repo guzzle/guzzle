@@ -25,12 +25,12 @@
         "ext-json": "*",
         "guzzlehttp/promises": "^1.0",
         "guzzlehttp/psr7": "^1.6.1",
-        "php-http/client-integration-tests": "dev-phpunit8",
         "psr/http-client": "^1.0"
     },
     "require-dev": {
         "ext-curl": "*",
         "phpunit/phpunit": "^8.5",
+        "php-http/client-integration-tests": "dev-phpunit8",
         "psr/log": "^1.1"
     },
     "suggest": {
