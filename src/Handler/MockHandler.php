@@ -24,7 +24,7 @@ class MockHandler implements \Countable
      * Creates a new MockHandler that uses the default handler stack list of
      * middlewares.
      *
-     * @param array $queue Array of responses, callables, or exceptions.
+     * @param array    $queue       Array of responses, callables, or exceptions.
      * @param callable $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable $onRejected  Callback to invoke when the return value is rejected.
      *
@@ -43,7 +43,7 @@ class MockHandler implements \Countable
      * {@see Psr7\Http\Message\ResponseInterface} objects, Exceptions,
      * callables, or Promises.
      *
-     * @param array $queue
+     * @param array    $queue
      * @param callable $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable $onRejected  Callback to invoke when the return value is rejected.
      */

@@ -16,7 +16,7 @@ class CookieJar implements CookieJarInterface
     private $strictMode;
 
     /**
-     * @param bool $strictMode   Set to true to throw exceptions when invalid
+     * @param bool  $strictMode  Set to true to throw exceptions when invalid
      *                           cookies are added to the cookie jar.
      * @param array $cookieArray Array of SetCookie objects or a hash of
      *                           arrays that can be used with the SetCookie
@@ -61,8 +61,9 @@ class CookieJar implements CookieJarInterface
      * Evaluate if this cookie should be persisted to storage
      * that survives between requests.
      *
-     * @param SetCookie $cookie Being evaluated.
-     * @param bool $allowSessionCookies If we should persist session cookies
+     * @param SetCookie $cookie              Being evaluated.
+     * @param bool      $allowSessionCookies If we should persist session cookies
+     *
      * @return bool
      */
     public static function shouldPersist(
@@ -82,6 +83,7 @@ class CookieJar implements CookieJarInterface
      * Finds and returns the cookie based on the name
      *
      * @param string $name cookie name to search for
+     *
      * @return SetCookie|null cookie that was found or null if not found
      */
     public function getCookieByName($name)
@@ -242,7 +244,6 @@ class CookieJar implements CookieJarInterface
      *
      * @link https://tools.ietf.org/html/rfc6265#section-5.1.4
      *
-     * @param RequestInterface $request
      * @return string
      */
     private function getCookiePathFromRequest(RequestInterface $request)
@@ -291,8 +292,6 @@ class CookieJar implements CookieJarInterface
     /**
      * If a cookie already exists and the server asks to set it again with a
      * null value, the cookie must be deleted.
-     *
-     * @param SetCookie $cookie
      */
     private function removeCookieIfEmpty(SetCookie $cookie)
     {

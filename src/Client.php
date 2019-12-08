@@ -125,6 +125,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
      *
      * @return ResponseInterface
+     *
      * @throws GuzzleException
      */
     public function send(RequestInterface $request, array $options = [])
@@ -158,8 +159,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string              $method  HTTP method
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
-     *
-     * @return PromiseInterface
      */
     public function requestAsync($method, $uri = '', array $options = []): PromiseInterface
     {
@@ -192,6 +191,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
      *
      * @return ResponseInterface
+     *
      * @throws GuzzleException
      */
     public function request($method, $uri = '', array $options = [])
@@ -208,8 +208,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * the concrete client.
      *
      * @param string|null $option The config option to retrieve.
-     *
-     * @return mixed
      */
     public function getConfig($option = null)
     {
@@ -219,7 +217,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
-     * @param  string|null $uri
+     * @param string|null $uri
      *
      * @return UriInterface
      */
@@ -270,7 +268,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Configures the default options for a client.
      *
-     * @param array $config
      * @return void
      */
     private function configureDefaults(array $config)
@@ -404,9 +401,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Applies the array of request options to a request.
      *
-     * @param RequestInterface $request
-     * @param array            $options
-     *
      * @return RequestInterface
      */
     private function applyOptions(RequestInterface $request, array &$options)
@@ -534,7 +528,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
     /**
      * Throw Exception with pre-set message.
+     *
      * @return void
+     *
      * @throws InvalidArgumentException Invalid body.
      */
     private function invalidBody()

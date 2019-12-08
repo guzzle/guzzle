@@ -36,6 +36,11 @@ parameters:
 			path: src/Client.php
 
 		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:getConfig\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:buildUri\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Client.php
@@ -92,6 +97,11 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:requestAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:getConfig\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/ClientInterface.php
 
@@ -272,6 +282,11 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setMaxAge\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/Cookie/SetCookie.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:getExpires\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
 
@@ -1186,6 +1201,11 @@ parameters:
 			path: src/RetryMiddleware.php
 
 		-
+			message: "#^Method GuzzleHttp\\\\RetryMiddleware\\:\\:onFulfilled\\(\\) has no return typehint specified\\.$#"
+			count: 1
+			path: src/RetryMiddleware.php
+
+		-
 			message: "#^Method GuzzleHttp\\\\RetryMiddleware\\:\\:onFulfilled\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/RetryMiddleware.php
@@ -1232,6 +1252,11 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\TransferStats\\:\\:__construct\\(\\) has parameter \\$handlerStats with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/TransferStats.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\TransferStats\\:\\:getHandlerErrorData\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/TransferStats.php
 
@@ -1301,6 +1326,11 @@ parameters:
 			path: src/functions.php
 
 		-
+			message: "#^Function GuzzleHttp\\\\describe_type\\(\\) has parameter \\$input with no typehint specified\\.$#"
+			count: 1
+			path: src/functions.php
+
+		-
 			message: "#^Parameter \\#1 \\$str of function rtrim expects string, string\\|false given\\.$#"
 			count: 1
 			path: src/functions.php
@@ -1337,6 +1367,11 @@ parameters:
 
 		-
 			message: "#^Cannot access offset 0 on array\\<int, string\\>\\|false\\.$#"
+			count: 1
+			path: src/functions.php
+
+		-
+			message: "#^Function GuzzleHttp\\\\json_decode\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/functions.php
 

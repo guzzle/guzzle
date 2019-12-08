@@ -13,7 +13,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class RetryMiddleware
 {
-    /** @var callable  */
+    /** @var callable */
     private $nextHandler;
 
     /** @var callable */
@@ -55,9 +55,6 @@ class RetryMiddleware
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array            $options
-     *
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
@@ -76,8 +73,6 @@ class RetryMiddleware
 
     /**
      * Execute fulfilled closure
-     *
-     * @return mixed
      */
     private function onFulfilled(RequestInterface $req, array $options)
     {

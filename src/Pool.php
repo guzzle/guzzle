@@ -26,10 +26,10 @@ class Pool implements PromisorInterface
      * @param array|\Iterator $requests Requests or functions that return
      *                                  requests to send concurrently.
      * @param array           $config   Associative array of options
-     *     - concurrency: (int) Maximum number of requests to send concurrently
-     *     - options: Array of request options to apply to each request.
-     *     - fulfilled: (callable) Function to invoke when a request completes.
-     *     - rejected: (callable) Function to invoke when a request is rejected.
+     *                                  - concurrency: (int) Maximum number of requests to send concurrently
+     *                                  - options: Array of request options to apply to each request.
+     *                                  - fulfilled: (callable) Function to invoke when a request completes.
+     *                                  - rejected: (callable) Function to invoke when a request is rejected.
      */
     public function __construct(
         ClientInterface $client,
@@ -71,6 +71,7 @@ class Pool implements PromisorInterface
 
     /**
      * Get promise
+     *
      * @return GuzzleHttp\Promise\Promise
      */
     public function promise()
@@ -93,6 +94,7 @@ class Pool implements PromisorInterface
      *
      * @return array Returns an array containing the response or an exception
      *               in the same order that the requests were sent.
+     *
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
     public static function batch(

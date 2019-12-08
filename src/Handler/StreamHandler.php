@@ -190,12 +190,11 @@ class StreamHandler
     /**
      * Drains the source stream into the "sink" client option.
      *
-     * @param StreamInterface $source
-     * @param StreamInterface $sink
-     * @param string          $contentLength Header specifying the amount of
-     *                                       data to read.
+     * @param string $contentLength Header specifying the amount of
+     *                              data to read.
      *
      * @return StreamInterface
+     *
      * @throws \RuntimeException when the sink option is invalid.
      */
     private function drain(
@@ -225,6 +224,7 @@ class StreamHandler
      * @param callable $callback Callable that returns stream resource
      *
      * @return resource
+     *
      * @throws \RuntimeException on error
      */
     private function createResource(callable $callback)

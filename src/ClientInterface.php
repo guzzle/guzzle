@@ -20,6 +20,7 @@ interface ClientInterface
      *                                  request and to the transfer.
      *
      * @return ResponseInterface
+     *
      * @throws GuzzleException
      */
     public function send(RequestInterface $request, array $options = []);
@@ -47,6 +48,7 @@ interface ClientInterface
      * @param array               $options Request options to apply.
      *
      * @return ResponseInterface
+     *
      * @throws GuzzleException
      */
     public function request($method, $uri, array $options = []);
@@ -75,8 +77,6 @@ interface ClientInterface
      * the concrete client.
      *
      * @param string|null $option The config option to retrieve.
-     *
-     * @return mixed
      */
     public function getConfig($option = null);
 }

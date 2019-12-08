@@ -33,8 +33,6 @@ class CurlMultiHandler
      *   out while selecting curl handles. Defaults to 1 second.
      * - options: An associative array of CURLMOPT_* options and
      *   corresponding values for curl_multi_setopt()
-     *
-     * @param array $options
      */
     public function __construct(array $options = [])
     {

@@ -11,7 +11,7 @@ use Psr\Http\Message\RequestInterface;
  */
 class PrepareBodyMiddleware
 {
-    /** @var callable  */
+    /** @var callable */
     private $nextHandler;
 
     /**
@@ -23,9 +23,6 @@ class PrepareBodyMiddleware
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array            $options
-     *
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)

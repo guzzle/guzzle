@@ -75,6 +75,7 @@ final class Middleware
      * @param array|\ArrayAccess $container Container to hold the history (by reference).
      *
      * @return callable Returns a function that accepts the next handler.
+     *
      * @throws \InvalidArgumentException if container is not an array or ArrayAccess.
      */
     public static function history(&$container)
@@ -176,9 +177,9 @@ final class Middleware
      * Middleware that logs requests, responses, and errors using a message
      * formatter.
      *
-     * @param LoggerInterface  $logger Logs messages.
+     * @param LoggerInterface  $logger    Logs messages.
      * @param MessageFormatter $formatter Formatter used to create message strings.
-     * @param string           $logLevel Level at which to log requests.
+     * @param string           $logLevel  Level at which to log requests.
      *
      * @return callable Returns a function that accepts the next handler.
      */
@@ -224,6 +225,7 @@ final class Middleware
      *
      * @param callable $fn Function that accepts a RequestInterface and returns
      *                     a RequestInterface.
+     *
      * @return callable
      */
     public static function mapRequest(callable $fn)
@@ -241,6 +243,7 @@ final class Middleware
      *
      * @param callable $fn Function that accepts a ResponseInterface and
      *                     returns a ResponseInterface.
+     *
      * @return callable
      */
     public static function mapResponse(callable $fn)

@@ -29,7 +29,7 @@ class RedirectMiddleware
         'track_redirects' => false,
     ];
 
-    /** @var callable  */
+    /** @var callable */
     private $nextHandler;
 
     /**
@@ -41,9 +41,6 @@ class RedirectMiddleware
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array            $options
-     *
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
@@ -74,10 +71,6 @@ class RedirectMiddleware
     }
 
     /**
-     * @param RequestInterface  $request
-     * @param array             $options
-     * @param ResponseInterface $response
-     *
      * @return ResponseInterface|PromiseInterface
      */
     public function checkRedirect(
@@ -164,10 +157,6 @@ class RedirectMiddleware
     }
 
     /**
-     * @param RequestInterface  $request
-     * @param array             $options
-     * @param ResponseInterface $response
-     *
      * @return RequestInterface
      */
     public function modifyRequest(
@@ -214,10 +203,6 @@ class RedirectMiddleware
 
     /**
      * Set the appropriate URL on the request based on the location header
-     *
-     * @param RequestInterface  $request
-     * @param ResponseInterface $response
-     * @param array             $protocols
      *
      * @return UriInterface
      */

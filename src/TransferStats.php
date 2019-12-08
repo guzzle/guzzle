@@ -72,8 +72,6 @@ final class TransferStats
      * This might be an exception, a integer representing an error code, or
      * anything else. Relying on this value assumes that you know what handler
      * you are using.
-     *
-     * @return mixed
      */
     public function getHandlerErrorData()
     {

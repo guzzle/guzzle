@@ -86,8 +86,6 @@ class CurlFactory implements CurlFactoryInterface
      * Completes a cURL transaction, either returning a response promise or a
      * rejected promise.
      *
-     * @param callable             $handler
-     * @param EasyHandle           $easy
      * @param CurlFactoryInterface $factory Dictates how the handle is released
      *
      * @return \GuzzleHttp\Promise\PromiseInterface
