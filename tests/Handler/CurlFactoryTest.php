@@ -264,8 +264,8 @@ class CurlFactoryTest extends TestCase
         $response->wait();
         rewind($res);
         $output = str_replace("\r", '', stream_get_contents($res));
-        self::assertContains("> HEAD / HTTP/1.1", $output);
-        self::assertContains("< HTTP/1.1 200", $output);
+        self::assertStringContainsString("> HEAD / HTTP/1.1", $output);
+        self::assertStringContainsString("< HTTP/1.1 200", $output);
         fclose($res);
     }
 

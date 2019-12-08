@@ -305,7 +305,7 @@ class StreamHandlerTest extends TestCase
     public function testVerifyCanBeDisabled()
     {
         $handler = $this->getSendResult(['verify' => false]);
-        self::assertInstanceOf('GuzzleHttp\Psr7\Response', $handler);
+        self::assertInstanceOf(\GuzzleHttp\Psr7\Response::class, $handler);
     }
 
     public function testVerifiesCertIfValidPath()
@@ -363,9 +363,9 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['debug' => $f]);
         fseek($f, 0);
         $contents = stream_get_contents($f);
-        self::assertContains('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
-        self::assertContains('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS]', $contents);
-        self::assertContains('<GET http://127.0.0.1:8126/> [PROGRESS]', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS]', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [PROGRESS]', $contents);
     }
 
     public function testDebugAttributeWritesStreamInfoToBuffer()
@@ -381,9 +381,9 @@ class StreamHandlerTest extends TestCase
         ]);
         fseek($buffer, 0);
         $contents = stream_get_contents($buffer);
-        self::assertContains('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
-        self::assertContains('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS] message: "Content-Length: 8"', $contents);
-        self::assertContains('<GET http://127.0.0.1:8126/> [PROGRESS] bytes_max: "8"', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS] message: "Content-Length: 8"', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [PROGRESS] bytes_max: "8"', $contents);
         self::assertTrue($called);
     }
 

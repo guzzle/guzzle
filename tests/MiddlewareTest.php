@@ -177,7 +177,7 @@ class MiddlewareTest extends TestCase
         $p = $comp(new Request('PUT', 'http://www.google.com'), []);
         $p->wait();
         self::assertCount(1, $logger->records);
-        self::assertContains('"PUT / HTTP/1.1" 200', $logger->records[0]['message']);
+        self::assertStringContainsString('"PUT / HTTP/1.1" 200', $logger->records[0]['message']);
     }
 
     public function testLogsRequestsAndResponsesCustomLevel()
@@ -191,7 +191,7 @@ class MiddlewareTest extends TestCase
         $p = $comp(new Request('PUT', 'http://www.google.com'), []);
         $p->wait();
         self::assertCount(1, $logger->records);
-        self::assertContains('"PUT / HTTP/1.1" 200', $logger->records[0]['message']);
+        self::assertStringContainsString('"PUT / HTTP/1.1" 200', $logger->records[0]['message']);
         self::assertSame('debug', $logger->records[0]['level']);
     }
 
@@ -207,7 +207,7 @@ class MiddlewareTest extends TestCase
         $p = $comp(new Request('PUT', 'http://www.google.com'), ['http_errors' => true]);
         $p->wait(false);
         self::assertCount(1, $logger->records);
-        self::assertContains('PUT http://www.google.com', $logger->records[0]['message']);
-        self::assertContains('404 Not Found', $logger->records[0]['message']);
+        self::assertStringContainsString('PUT http://www.google.com', $logger->records[0]['message']);
+        self::assertStringContainsString('404 Not Found', $logger->records[0]['message']);
     }
 }

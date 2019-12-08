@@ -97,15 +97,15 @@ class HandlerStackTest extends TestCase
         $builder->push([$this, 'bar']);
         $builder->push(__CLASS__ . '::' . 'foo');
         $lines = explode("\n", (string) $builder);
-        self::assertContains("> 4) Name: 'a', Function: callable(", $lines[0]);
-        self::assertContains("> 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
-        self::assertContains("> 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[2]);
-        self::assertContains("> 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[3]);
-        self::assertContains("< 0) Handler: callable(", $lines[4]);
-        self::assertContains("< 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[5]);
-        self::assertContains("< 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[6]);
-        self::assertContains("< 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[7]);
-        self::assertContains("< 4) Name: 'a', Function: callable(", $lines[8]);
+        self::assertStringContainsString("> 4) Name: 'a', Function: callable(", $lines[0]);
+        self::assertStringContainsString("> 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
+        self::assertStringContainsString("> 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[2]);
+        self::assertStringContainsString("> 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[3]);
+        self::assertStringContainsString("< 0) Handler: callable(", $lines[4]);
+        self::assertStringContainsString("< 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[5]);
+        self::assertStringContainsString("< 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[6]);
+        self::assertStringContainsString("< 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[7]);
+        self::assertStringContainsString("< 4) Name: 'a', Function: callable(", $lines[8]);
     }
 
     public function testCanAddBeforeByName()
@@ -118,10 +118,10 @@ class HandlerStackTest extends TestCase
         $builder->before('baz', $meths[4], 'bar');
         $builder->before('baz', $meths[4], 'qux');
         $lines = explode("\n", (string) $builder);
-        self::assertContains('> 4) Name: \'bar\'', $lines[0]);
-        self::assertContains('> 3) Name: \'qux\'', $lines[1]);
-        self::assertContains('> 2) Name: \'baz\'', $lines[2]);
-        self::assertContains('> 1) Name: \'foo\'', $lines[3]);
+        self::assertStringContainsString('> 4) Name: \'bar\'', $lines[0]);
+        self::assertStringContainsString('> 3) Name: \'qux\'', $lines[1]);
+        self::assertStringContainsString('> 2) Name: \'baz\'', $lines[2]);
+        self::assertStringContainsString('> 1) Name: \'foo\'', $lines[3]);
     }
 
     public function testEnsuresHandlerExistsByName()
@@ -143,10 +143,10 @@ class HandlerStackTest extends TestCase
         $builder->after('a', $meths[4], 'c');
         $builder->after('b', $meths[4], 'd');
         $lines = explode("\n", (string) $builder);
-        self::assertContains('4) Name: \'a\'', $lines[0]);
-        self::assertContains('3) Name: \'c\'', $lines[1]);
-        self::assertContains('2) Name: \'b\'', $lines[2]);
-        self::assertContains('1) Name: \'d\'', $lines[3]);
+        self::assertStringContainsString('4) Name: \'a\'', $lines[0]);
+        self::assertStringContainsString('3) Name: \'c\'', $lines[1]);
+        self::assertStringContainsString('2) Name: \'b\'', $lines[2]);
+        self::assertStringContainsString('1) Name: \'d\'', $lines[3]);
     }
 
     public function testPicksUpCookiesFromRedirects()
