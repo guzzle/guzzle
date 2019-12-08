@@ -21,7 +21,6 @@ interface CurlFactoryInterface
      *
      * This function must call unset on the easy handle's "handle" property.
      *
-     * @param EasyHandle $easy
      */
     public function release(EasyHandle $easy);
 }

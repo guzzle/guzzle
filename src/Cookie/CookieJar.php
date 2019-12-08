@@ -242,7 +242,6 @@ class CookieJar implements CookieJarInterface
      *
      * @link https://tools.ietf.org/html/rfc6265#section-5.1.4
      *
-     * @param  RequestInterface $request
      * @return string
      */
     private function getCookiePathFromRequest(RequestInterface $request)
@@ -292,7 +291,6 @@ class CookieJar implements CookieJarInterface
      * If a cookie already exists and the server asks to set it again with a
      * null value, the cookie must be deleted.
      *
-     * @param SetCookie $cookie
      */
     private function removeCookieIfEmpty(SetCookie $cookie)
     {

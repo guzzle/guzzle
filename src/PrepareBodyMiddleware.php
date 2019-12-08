@@ -23,8 +23,6 @@ class PrepareBodyMiddleware
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array            $options
      *
      * @return PromiseInterface
      */

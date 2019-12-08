@@ -55,8 +55,6 @@ class RetryMiddleware
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array            $options
      *
      * @return PromiseInterface
      */
@@ -77,7 +75,6 @@ class RetryMiddleware
     /**
      * Execute fulfilled closure
      *
-     * @return mixed
      */
     private function onFulfilled(RequestInterface $req, array $options)
     {

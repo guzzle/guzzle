@@ -33,7 +33,6 @@ function uri_template($template, array $variables)
 /**
  * Debug function used to describe the provided value type and class.
  *
- * @param mixed $input
  *
  * @return string Returns a string containing the type of the variable and
  *                if a class is provided, the class name.
@@ -218,7 +217,6 @@ EOT
  * Creates an associative array of lowercase header names to the actual
  * header casing.
  *
- * @param array $headers
  *
  * @return array
  */
@@ -294,7 +292,6 @@ function is_host_in_noproxy($host, array $noProxyArray)
  * @param int    $depth   User specified recursion depth.
  * @param int    $options Bitmask of JSON decode options.
  *
- * @return mixed
  * @throws Exception\InvalidArgumentException if the JSON cannot be decoded.
  * @link http://www.php.net/manual/en/function.json-decode.php
  */

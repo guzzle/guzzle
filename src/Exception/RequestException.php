@@ -38,8 +38,6 @@ class RequestException extends TransferException
     /**
      * Wrap non-RequestExceptions with a RequestException
      *
-     * @param RequestInterface $request
-     * @param \Exception       $e
      *
      * @return RequestException
      */
@@ -114,7 +112,6 @@ class RequestException extends TransferException
     /**
      * Obfuscates URI if there is a username and a password present
      *
-     * @param UriInterface $uri
      *
      * @return UriInterface
      */
@@ -132,7 +129,6 @@ class RequestException extends TransferException
     /**
      * Get the request that caused the exception
      *
-     * @return RequestInterface
      */
     public function getRequest(): RequestInterface
     {

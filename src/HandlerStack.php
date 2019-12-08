@@ -59,8 +59,6 @@ class HandlerStack
     /**
      * Invokes the handler stack as a composed handler
      *
-     * @param RequestInterface $request
-     * @param array            $options
      *
      * @return ResponseInterface|PromiseInterface
      */
@@ -227,10 +225,9 @@ class HandlerStack
     /**
      * Splices a function into the middleware list at a specific position.
      *
-     * @param string   $findName
-     * @param string   $withName
-     * @param callable $middleware
-     * @param bool     $before
+     * @param string $findName
+     * @param string $withName
+     * @param bool   $before
      */
     private function splice($findName, $withName, callable $middleware, $before)
     {

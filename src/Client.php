@@ -159,7 +159,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
      *
-     * @return PromiseInterface
      */
     public function requestAsync($method, $uri = '', array $options = []): PromiseInterface
     {
@@ -209,7 +208,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param string|null $option The config option to retrieve.
      *
-     * @return mixed
      */
     public function getConfig($option = null)
     {
@@ -270,7 +268,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Configures the default options for a client.
      *
-     * @param  array $config
      * @return void
      */
     private function configureDefaults(array $config)
@@ -404,8 +401,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Applies the array of request options to a request.
      *
-     * @param RequestInterface $request
-     * @param array            $options
      *
      * @return RequestInterface
      */

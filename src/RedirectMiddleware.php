@@ -41,8 +41,6 @@ class RedirectMiddleware
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array            $options
      *
      * @return PromiseInterface
      */
@@ -74,9 +72,6 @@ class RedirectMiddleware
     }
 
     /**
-     * @param RequestInterface  $request
-     * @param array             $options
-     * @param ResponseInterface $response
      *
      * @return ResponseInterface|PromiseInterface
      */
@@ -164,9 +159,6 @@ class RedirectMiddleware
     }
 
     /**
-     * @param RequestInterface  $request
-     * @param array             $options
-     * @param ResponseInterface $response
      *
      * @return RequestInterface
      */
@@ -215,9 +207,6 @@ class RedirectMiddleware
     /**
      * Set the appropriate URL on the request based on the location header
      *
-     * @param RequestInterface  $request
-     * @param ResponseInterface $response
-     * @param array             $protocols
      *
      * @return UriInterface
      */
