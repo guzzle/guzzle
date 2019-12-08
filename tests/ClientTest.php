@@ -498,22 +498,22 @@ class ClientTest extends TestCase
         ]);
 
         $last = $mock->getLastRequest();
-        self::assertContains(
+        self::assertStringContainsString(
             'multipart/form-data; boundary=',
             $last->getHeaderLine('Content-Type')
         );
 
-        self::assertContains(
+        self::assertStringContainsString(
             'Content-Disposition: form-data; name="foo"',
             (string) $last->getBody()
         );
 
-        self::assertContains('bar', (string) $last->getBody());
-        self::assertContains(
+        self::assertStringContainsString('bar', (string) $last->getBody());
+        self::assertStringContainsString(
             'Content-Disposition: form-data; name="foo"' . "\r\n",
             (string) $last->getBody()
         );
-        self::assertContains(
+        self::assertStringContainsString(
             'Content-Disposition: form-data; name="test"; filename="ClientTest.php"',
             (string) $last->getBody()
         );
@@ -544,22 +544,22 @@ class ClientTest extends TestCase
         );
 
         $last = $mock->getLastRequest();
-        self::assertContains(
+        self::assertStringContainsString(
             'multipart/form-data; boundary=',
             $last->getHeaderLine('Content-Type')
         );
 
-        self::assertContains(
+        self::assertStringContainsString(
             'Content-Disposition: form-data; name="foo"',
             (string) $last->getBody()
         );
 
-        self::assertContains('bar', (string) $last->getBody());
-        self::assertContains(
+        self::assertStringContainsString('bar', (string) $last->getBody());
+        self::assertStringContainsString(
             'Content-Disposition: form-data; name="foo"' . "\r\n",
             (string) $last->getBody()
         );
-        self::assertContains(
+        self::assertStringContainsString(
             'Content-Disposition: form-data; name="test"; filename="ClientTest.php"',
             (string) $last->getBody()
         );

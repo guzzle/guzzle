@@ -65,11 +65,11 @@ class CurlFactoryTest extends TestCase
                 $_SERVER['_curl'][CURLOPT_PROTOCOLS]
             );
         }
-        self::assertContains('Expect:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
-        self::assertContains('Accept:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
-        self::assertContains('Content-Type:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
-        self::assertContains('Hi: 123', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
-        self::assertContains('Host: 127.0.0.1:8126', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
+        self::assertStringContainsString('Expect:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
+        self::assertStringContainsString('Accept:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
+        self::assertStringContainsString('Content-Type:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
+        self::assertStringContainsString('Hi: 123', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
+        self::assertStringContainsString('Host: 127.0.0.1:8126', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
     }
 
     public function testSendsHeadRequests()
@@ -269,8 +269,8 @@ class CurlFactoryTest extends TestCase
         $response->wait();
         rewind($res);
         $output = str_replace("\r", '', stream_get_contents($res));
-        self::assertContains("> HEAD / HTTP/1.1", $output);
-        self::assertContains("< HTTP/1.1 200", $output);
+        self::assertStringContainsString("> HEAD / HTTP/1.1", $output);
+        self::assertStringContainsString("< HTTP/1.1 200", $output);
         fclose($res);
     }
 

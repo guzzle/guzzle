@@ -27,49 +27,49 @@ class RequestExceptionTest extends TestCase
     {
         $e = RequestException::create(new Request('GET', '/'));
         self::assertSame('Error completing request', $e->getMessage());
-        self::assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
+        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $e);
     }
 
     public function testCreatesClientErrorResponseException()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(400));
-        self::assertContains(
+        self::assertStringContainsString(
             'GET /',
             $e->getMessage()
         );
-        self::assertContains(
+        self::assertStringContainsString(
             '400 Bad Request',
             $e->getMessage()
         );
-        self::assertInstanceOf('GuzzleHttp\Exception\ClientException', $e);
+        self::assertInstanceOf(\GuzzleHttp\Exception\ClientException::class, $e);
     }
 
     public function testCreatesServerErrorResponseException()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(500));
-        self::assertContains(
+        self::assertStringContainsString(
             'GET /',
             $e->getMessage()
         );
-        self::assertContains(
+        self::assertStringContainsString(
             '500 Internal Server Error',
             $e->getMessage()
         );
-        self::assertInstanceOf('GuzzleHttp\Exception\ServerException', $e);
+        self::assertInstanceOf(\GuzzleHttp\Exception\ServerException::class, $e);
     }
 
     public function testCreatesGenericErrorResponseException()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(300));
-        self::assertContains(
+        self::assertStringContainsString(
             'GET /',
             $e->getMessage()
         );
-        self::assertContains(
+        self::assertStringContainsString(
             '300 ',
             $e->getMessage()
         );
-        self::assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
+        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $e);
     }
 
     /**
@@ -104,11 +104,11 @@ class RequestExceptionTest extends TestCase
             $content
         );
         $e = RequestException::create(new Request('GET', '/'), $response);
-        self::assertContains(
+        self::assertStringContainsString(
             $content,
             $e->getMessage()
         );
-        self::assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
+        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $e);
     }
 
     public function testCreatesExceptionWithTruncatedSummary()
@@ -117,7 +117,7 @@ class RequestExceptionTest extends TestCase
         $response = new Response(500, [], $content);
         $e = RequestException::create(new Request('GET', '/'), $response);
         $expected = str_repeat('+', 120) . ' (truncated...)';
-        self::assertContains($expected, $e->getMessage());
+        self::assertStringContainsString($expected, $e->getMessage());
     }
 
     public function testExceptionMessageIgnoresEmptyBody()
@@ -138,7 +138,7 @@ class RequestExceptionTest extends TestCase
             $content,
             $e->getMessage()
         );
-        self::assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
+        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $e);
     }
 
     public function testHasStatusCodeAsExceptionCode()
@@ -152,7 +152,7 @@ class RequestExceptionTest extends TestCase
         $e = new \Exception('foo');
         $r = new Request('GET', 'http://www.oo.com');
         $ex = RequestException::wrapException($r, $e);
-        self::assertInstanceOf('GuzzleHttp\Exception\RequestException', $ex);
+        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $ex);
         self::assertSame($e, $ex->getPrevious());
     }
 
@@ -175,14 +175,14 @@ class RequestExceptionTest extends TestCase
     {
         $r = new Request('GET', 'http://username@www.oo.com');
         $e = RequestException::create($r, new Response(500));
-        self::assertContains('http://username@www.oo.com', $e->getMessage());
+        self::assertStringContainsString('http://username@www.oo.com', $e->getMessage());
     }
 
     public function testObfuscateUrlWithUsernameAndPassword()
     {
         $r = new Request('GET', 'http://user:password@www.oo.com');
         $e = RequestException::create($r, new Response(500));
-        self::assertContains('http://user:***@www.oo.com', $e->getMessage());
+        self::assertStringContainsString('http://user:***@www.oo.com', $e->getMessage());
     }
 }
 
