@@ -6,13 +6,6 @@ use PHPUnit\Framework\TestCase;
 
 class FunctionsTest extends TestCase
 {
-    public function testExpandsTemplate()
-    {
-        self::assertSame(
-            'foo/123',
-            GuzzleHttp\uri_template('foo/{bar}', ['bar' => '123'])
-        );
-    }
     public function noBodyProvider()
     {
         return [['get'], ['head'], ['delete']];
