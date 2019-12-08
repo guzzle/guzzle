@@ -28,9 +28,7 @@ class RequestException extends TransferException
         array $handlerContext = []
     ) {
         // Set the code of the exception if the response is set and not future.
-        $code = $response && !($response instanceof PromiseInterface)
-            ? $response->getStatusCode()
-            : 0;
+        $code = $response ? $response->getStatusCode() : 0;
         parent::__construct($message, $code, $previous);
         $this->request = $request;
         $this->response = $response;
