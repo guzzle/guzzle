@@ -13,7 +13,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class RetryMiddleware
 {
-    /** @var callable  */
+    /** @var callable */
     private $nextHandler;
 
     /** @var callable */

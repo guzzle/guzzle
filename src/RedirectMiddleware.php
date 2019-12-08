@@ -29,7 +29,7 @@ class RedirectMiddleware
         'track_redirects' => false,
     ];
 
-    /** @var callable  */
+    /** @var callable */
     private $nextHandler;
 
     /**
