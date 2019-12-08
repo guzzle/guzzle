@@ -11,7 +11,7 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\Cookie\CookieJar
+ * @covers \GuzzleHttp\Cookie\CookieJar
  */
 class CookieJarTest extends TestCase
 {

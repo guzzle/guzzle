@@ -9,7 +9,7 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\MessageFormatter
+ * @covers \GuzzleHttp\MessageFormatter
  */
 class MessageFormatterTest extends TestCase
 {
