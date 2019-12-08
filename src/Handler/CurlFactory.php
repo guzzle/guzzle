@@ -203,6 +203,9 @@ class CurlFactory implements CurlFactoryInterface
         return \GuzzleHttp\Promise\rejection_for($error);
     }
 
+    /**
+     * @return array<int|string, mixed>
+     */
     private function getDefaultConf(EasyHandle $easy): array
     {
         $conf = [
