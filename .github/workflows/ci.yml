@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build-lowest-version:
+    name: Build lowest version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up PHP
+        uses: shivammathur/setup-php@1.5.8
+        with:
+          php-version: '7.2'
+          coverage: xdebug
+          ini-values-csv: xdebug.overload_var_dump=1
+          extension-csv: mbstring
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Download dependencies
+        run: composer update --no-interaction --prefer-stable --prefer-lowest --prefer-dist
+
+      - name: Run tests
+        run: make test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 10
+      matrix:
+        php: ['7.2', '7.3', '7.4']
+
+    steps:
+      - name: Set up PHP
+        uses: shivammathur/setup-php@1.5.8
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: xdebug
+          ini-values-csv: xdebug.overload_var_dump=1
+          extension-csv: mbstring
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Download dependencies
+        run: composer update --no-interaction --prefer-dist
+
+      - name: Run tests
+        run: make test
