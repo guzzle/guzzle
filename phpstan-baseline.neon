@@ -321,11 +321,6 @@ parameters:
 			path: src/Exception/BadResponseException.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Exception\\\\BadResponseException\\:\\:__construct\\(\\) has parameter \\$message with no typehint specified\\.$#"
-			count: 1
-			path: src/Exception/BadResponseException.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Exception\\\\ConnectException\\:\\:__construct\\(\\) has parameter \\$handlerContext with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Exception/ConnectException.php
