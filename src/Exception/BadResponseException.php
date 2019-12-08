@@ -22,7 +22,7 @@ class BadResponseException extends RequestException
         parent::__construct($message, $request, $response, $previous, $handlerContext);
     }
 
-    public function hasResponse()
+    public function hasResponse(): bool
     {
         return true;
     }
