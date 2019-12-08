@@ -65,6 +65,23 @@ used with a client.
         ]
     ]);
 
+If you use asynchronous requests with cURL multi handler and want to tweak it,
+additional options can be specified as an associative array in the
+**options** key of the ``CurlMultiHandler`` constructor.
+
+.. code-block:: php
+
+    use \GuzzleHttp\Client;
+    use \GuzzleHttp\HandlerStack;
+    use \GuzzleHttp\Handler\CurlMultiHandler;
+
+    $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler([
+        'options' => [
+            CURLMOPT_MAX_TOTAL_CONNECTIONS => 50,
+            CURLMOPT_MAX_HOST_CONNECTIONS => 5,
+        ]
+    ]))]);
+
 
 How can I add custom stream context options?
 ============================================

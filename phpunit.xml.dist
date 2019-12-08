@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="./tests/bootstrap.php"
-         backupGlobals="true"
-         colors="true">
+  <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+           bootstrap="./tests/bootstrap.php"
+           backupGlobals="true"
+           colors="true"
+           executionOrder="random"
+  >
   <testsuites>
-    <testsuite>
+    <testsuite name="Test Suite">
       <directory>tests</directory>
     </testsuite>
   </testsuites>

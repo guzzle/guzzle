@@ -1,0 +1,37 @@
+#!/bin/sh -l
+
+#
+# This file is a hack to suppress warnings from Roave BC check
+#
+
+composer install
+
+# Capture output to variable AND print it
+exec 4711>&1
+OUTPUT=$(/composer/vendor/bin/roave-backward-compatibility-check 2>&1 | tee /dev/fd/4711)
+
+# Remove rows we want to suppress
+OUTPUT=`echo "$OUTPUT" | sed '/GuzzleHttp\\\ClientInterface::VERSION/'d`
+OUTPUT=`echo "$OUTPUT" | sed '/Roave\\\BetterReflection\\\Reflection\\\ReflectionClass "Psr\\\Log\\\LogLevel" could not be found in the located source/'d`
+
+# Number of rows we found with "[BC]" in them
+BC_BREAKS=`echo "$OUTPUT" | grep -o '\[BC\]' | wc -l | awk '{ print $1 }'`
+
+# The last row of the output is "X backwards-incompatible changes detected". Find X.
+STATED_BREAKS=`echo "$OUTPUT" | tail -n 1 | awk -F' ' '{ print $1 }'`
+
+# If
+#   We found "[BC]" in the command output after we removed suppressed lines
+# OR
+#   We have suppressed X number of BC breaks. If $STATED_BREAKS is larger than X
+# THEN
+#   exit 1
+
+if [ $BC_BREAKS -gt 0 ] || [ $STATED_BREAKS -gt 2 ]; then
+    echo "EXIT 1"
+    exit 1
+fi
+
+# No BC breaks found
+echo "EXIT 0"
+exit 0

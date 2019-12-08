@@ -22,7 +22,7 @@ final class RequestOptions
      * - strict: (bool, default=false) Set to true to use strict redirects
      *   meaning redirect POST requests with POST requests vs. doing what most
      *   browsers do which is redirect POST requests with GET requests
-     * - referer: (bool, default=true) Set to false to disable the Referer
+     * - referer: (bool, default=false) Set to true to enable the Referer
      *   header.
      * - protocols: (array, default=['http', 'https']) Allowed redirect
      *   protocols.
@@ -131,6 +131,14 @@ final class RequestOptions
      * works if your handler has the `httpErrors` middleware.
      */
     const HTTP_ERRORS = 'http_errors';
+
+    /**
+     * idn: (bool|int, default=true) A combination of IDNA_* constants for
+     * idn_to_ascii() PHP's function (see "options" parameter). Set to false to
+     * disable IDN support completely, or to true to use the default
+     * configuration (IDNA_DEFAULT constant).
+     */
+    const IDN_CONVERSION = 'idn_conversion';
 
     /**
      * json: (mixed) Adds JSON data to a request. The provided value is JSON

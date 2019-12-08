@@ -1,16 +1,16 @@
 <?php
 namespace GuzzleHttp\Tests;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Pool;
-use GuzzleHttp\Client;
+use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Promise\Promise;
-use Psr\Http\Message\RequestInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 class PoolTest extends TestCase
 {
@@ -49,9 +49,15 @@ class PoolTest extends TestCase
      */
     public function testExecutesPendingWhenWaiting()
     {
-        $r1 = new Promise(function () use (&$r1) { $r1->resolve(new Response()); });
-        $r2 = new Promise(function () use (&$r2) { $r2->resolve(new Response()); });
-        $r3 = new Promise(function () use (&$r3) { $r3->resolve(new Response()); });
+        $r1 = new Promise(function () use (&$r1) {
+            $r1->resolve(new Response());
+        });
+        $r2 = new Promise(function () use (&$r2) {
+            $r2->resolve(new Response());
+        });
+        $r3 = new Promise(function () use (&$r3) {
+            $r3->resolve(new Response());
+        });
         $handler = new MockHandler([$r1, $r2, $r3]);
         $c = new Client(['handler' => $handler]);
         $p = new Pool($c, [
@@ -75,8 +81,8 @@ class PoolTest extends TestCase
         $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
         $p = new Pool($c, [new Request('GET', 'http://example.com')], $opts);
         $p->promise()->wait();
-        $this->assertCount(1, $h);
-        $this->assertTrue($h[0]->hasHeader('x-foo'));
+        self::assertCount(1, $h);
+        self::assertTrue($h[0]->hasHeader('x-foo'));
     }
 
     public function testCanProvideCallablesThatReturnResponses()
@@ -97,8 +103,8 @@ class PoolTest extends TestCase
         $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
         $p = new Pool($c, [$fn], $opts);
         $p->promise()->wait();
-        $this->assertCount(1, $h);
-        $this->assertTrue($h[0]->hasHeader('x-foo'));
+        self::assertCount(1, $h);
+        self::assertTrue($h[0]->hasHeader('x-foo'));
     }
 
     public function testBatchesResults()
@@ -116,12 +122,12 @@ class PoolTest extends TestCase
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $results = Pool::batch($client, $requests);
-        $this->assertCount(4, $results);
-        $this->assertSame([0, 1, 2, 3], array_keys($results));
-        $this->assertSame(200, $results[0]->getStatusCode());
-        $this->assertSame(201, $results[1]->getStatusCode());
-        $this->assertSame(202, $results[2]->getStatusCode());
-        $this->assertInstanceOf(ClientException::class, $results[3]);
+        self::assertCount(4, $results);
+        self::assertSame([0, 1, 2, 3], array_keys($results));
+        self::assertSame(200, $results[0]->getStatusCode());
+        self::assertSame(201, $results[1]->getStatusCode());
+        self::assertSame(202, $results[2]->getStatusCode());
+        self::assertInstanceOf(ClientException::class, $results[3]);
     }
 
     public function testBatchesResultsWithCallbacks()
@@ -137,17 +143,25 @@ class PoolTest extends TestCase
         ]);
         $client = new Client(['handler' => $mock]);
         $results = Pool::batch($client, $requests, [
-            'fulfilled' => function ($value) use (&$called) { $called = true; }
+            'fulfilled' => function ($value) use (&$called) {
+                $called = true;
+            }
         ]);
-        $this->assertCount(2, $results);
-        $this->assertTrue($called);
+        self::assertCount(2, $results);
+        self::assertTrue($called);
     }
 
     public function testUsesYieldedKeyInFulfilledCallback()
     {
-        $r1 = new Promise(function () use (&$r1) { $r1->resolve(new Response()); });
-        $r2 = new Promise(function () use (&$r2) { $r2->resolve(new Response()); });
-        $r3 = new Promise(function () use (&$r3) { $r3->resolve(new Response()); });
+        $r1 = new Promise(function () use (&$r1) {
+            $r1->resolve(new Response());
+        });
+        $r2 = new Promise(function () use (&$r2) {
+            $r2->resolve(new Response());
+        });
+        $r3 = new Promise(function () use (&$r3) {
+            $r3->resolve(new Response());
+        });
         $handler = new MockHandler([$r1, $r2, $r3]);
         $c = new Client(['handler' => $handler]);
         $keys = [];
@@ -158,11 +172,13 @@ class PoolTest extends TestCase
         ];
         $p = new Pool($c, $requests, [
             'pool_size' => 2,
-            'fulfilled' => function($res, $index) use (&$keys) { $keys[] = $index; }
+            'fulfilled' => function ($res, $index) use (&$keys) {
+                $keys[] = $index;
+            }
         ]);
         $p->promise()->wait();
-        $this->assertCount(3, $keys);
-        $this->assertSame($keys, array_keys($requests));
+        self::assertCount(3, $keys);
+        self::assertSame($keys, array_keys($requests));
     }
 
     private function getClient($total = 1)

@@ -76,7 +76,7 @@ class RedirectMiddleware
     /**
      * @param RequestInterface  $request
      * @param array             $options
-     * @param ResponseInterface|PromiseInterface $response
+     * @param ResponseInterface $response
      *
      * @return ResponseInterface|PromiseInterface
      */
@@ -118,6 +118,11 @@ class RedirectMiddleware
         return $promise;
     }
 
+    /**
+     * Enable tracking on promise.
+     *
+     * @return PromiseInterface
+     */
     private function withTracking(PromiseInterface $promise, $uri, $statusCode)
     {
         return $promise->then(
@@ -135,6 +140,13 @@ class RedirectMiddleware
         );
     }
 
+    /**
+     * Check for too many redirects
+     *
+     * @return void
+     *
+     * @throws TooManyRedirectsException Too many redirects.
+     */
     private function guardMax(RequestInterface $request, array &$options)
     {
         $current = isset($options['__redirect_count'])
@@ -172,7 +184,7 @@ class RedirectMiddleware
         // would do.
         $statusCode = $response->getStatusCode();
         if ($statusCode == 303 ||
-            ($statusCode <= 302 && $request->getBody() && !$options['allow_redirects']['strict'])
+            ($statusCode <= 302 && !$options['allow_redirects']['strict'])
         ) {
             $modify['method'] = 'GET';
             $modify['body'] = '';
@@ -186,7 +198,7 @@ class RedirectMiddleware
         if ($options['allow_redirects']['referer']
             && $modify['uri']->getScheme() === $request->getUri()->getScheme()
         ) {
-            $uri = $request->getUri()->withUserInfo('', '');
+            $uri = $request->getUri()->withUserInfo('');
             $modify['set_headers']['Referer'] = (string) $uri;
         } else {
             $modify['remove_headers'][] = 'Referer';

@@ -1,0 +1,12 @@
+on: [push, pull_request]
+name: Roave
+jobs:
+  roave_bc_check:
+    name: BC Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Roave BC Check
+        uses: docker://nyholm/roave-bc-check-ga
+        with:
+          entrypoint: ./.github/workflows/bc.entrypoint

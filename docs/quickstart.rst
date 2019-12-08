@@ -184,26 +184,27 @@ requests.
         'webp'  => $client->getAsync('/image/webp')
     ];
 
-    // Wait on all of the requests to complete. Throws a ConnectException
+    // Wait for the requests to complete; throws a ConnectException
     // if any of the requests fail
-    $results = Promise\unwrap($promises);
+    $responses = Promise\unwrap($promises);
 
     // Wait for the requests to complete, even if some of them fail
-    $results = Promise\settle($promises)->wait();
+    $responses = Promise\settle($promises)->wait();
 
-    // You can access each result using the key provided to the unwrap
-    // function.
-    echo $results['image']['value']->getHeader('Content-Length')[0]
-    echo $results['png']['value']->getHeader('Content-Length')[0]
+    // You can access each response using the key of the promise
+    echo $responses['image']->getHeader('Content-Length')[0];
+    echo $responses['png']->getHeader('Content-Length')[0];
 
 You can use the ``GuzzleHttp\Pool`` object when you have an indeterminate
 amount of requests you wish to send.
 
 .. code-block:: php
 
-    use GuzzleHttp\Pool;
     use GuzzleHttp\Client;
+    use GuzzleHttp\Exception\RequestException;
+    use GuzzleHttp\Pool;
     use GuzzleHttp\Psr7\Request;
+    use GuzzleHttp\Psr7\Response;
 
     $client = new Client();
 
@@ -216,10 +217,10 @@ amount of requests you wish to send.
 
     $pool = new Pool($client, $requests(100), [
         'concurrency' => 5,
-        'fulfilled' => function ($response, $index) {
+        'fulfilled' => function (Response $response, $index) {
             // this is delivered each successful response
         },
-        'rejected' => function ($reason, $index) {
+        'rejected' => function (RequestException $reason, $index) {
             // this is delivered each failed request
         },
     ]);
@@ -481,7 +482,7 @@ which returns a ``GuzzleHttp\Cookie\SetCookie`` instance.
     $cookie->getExpires(); // expiration date as a Unix timestamp
 
 The cookies can be also fetched into an array thanks to the `toArray()` method.
-The ``GuzzleHttp\Cookie\CookieJarInterface`` interface extends 
+The ``GuzzleHttp\Cookie\CookieJarInterface`` interface extends
 ``Traversable`` so it can be iterated in a foreach loop.
 
 
@@ -610,6 +611,8 @@ behavior of the library.
     Note: because the HTTP_PROXY variable may contain arbitrary user input on some (CGI) environments, the variable is only used on the CLI SAPI. See https://httpoxy.org for more information.
 ``HTTPS_PROXY``
     Defines the proxy to use when sending requests using the "https" protocol.
+``NO_PROXY``
+    Defines URLs for which a proxy should not be used. See :ref:`proxy-option` for usage.
 
 
 Relevant ini Settings

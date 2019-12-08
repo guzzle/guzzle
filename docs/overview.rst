@@ -16,6 +16,8 @@ Requirements
     Guzzle no longer requires cURL in order to send HTTP requests. Guzzle will
     use the PHP stream wrapper to send HTTP requests if cURL is not installed.
     Alternatively, you can provide your own HTTP handler used to send requests.
+    Keep in mind that cURL is still required for sending concurrent requests.
+
 
 .. _installation:
 

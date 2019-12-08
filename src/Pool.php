@@ -1,12 +1,12 @@
 <?php
 namespace GuzzleHttp;
 
+use GuzzleHttp\Promise\EachPromise;
 use GuzzleHttp\Promise\PromisorInterface;
 use Psr\Http\Message\RequestInterface;
-use GuzzleHttp\Promise\EachPromise;
 
 /**
- * Sends and iterator of requests concurrently using a capped pool size.
+ * Sends an iterator of requests concurrently using a capped pool size.
  *
  * The pool will read from an iterator until it is cancelled or until the
  * iterator is consumed. When a request is yielded, the request is sent after
@@ -69,6 +69,10 @@ class Pool implements PromisorInterface
         $this->each = new EachPromise($requests(), $config);
     }
 
+    /**
+     * Get promise
+     * @return GuzzleHttp\Promise\Promise
+     */
     public function promise()
     {
         return $this->each->promise();
@@ -106,6 +110,11 @@ class Pool implements PromisorInterface
         return $res;
     }
 
+    /**
+     * Execute callback(s)
+     *
+     * @return void
+     */
     private static function cmpCallback(array &$options, $name, array &$results)
     {
         if (!isset($options[$name])) {
