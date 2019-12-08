@@ -13,7 +13,7 @@ use Psr\Http\Message\ResponseInterface;
 class BadResponseException extends RequestException
 {
     public function __construct(
-        $message,
+        string $message,
         RequestInterface $request,
         ResponseInterface $response,
         \Exception $previous = null,
