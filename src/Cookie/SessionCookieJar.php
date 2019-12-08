@@ -39,7 +39,7 @@ class SessionCookieJar extends CookieJar
     /**
      * Save cookies to the client session
      */
-    public function save()
+    public function save(): void
     {
         $json = [];
         foreach ($this as $cookie) {
@@ -55,7 +55,7 @@ class SessionCookieJar extends CookieJar
     /**
      * Load the contents of the client session into the data array
      */
-    protected function load()
+    protected function load(): void
     {
         if (!isset($_SESSION[$this->sessionKey])) {
             return;
