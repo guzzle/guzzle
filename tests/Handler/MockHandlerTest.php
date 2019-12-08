@@ -73,7 +73,7 @@ class MockHandlerTest extends TestCase
 
     public function testSinkFilename()
     {
-        $filename = sys_get_temp_dir() . '/mock_test_' . uniqid();
+        $filename = \sys_get_temp_dir() . '/mock_test_' . \uniqid();
         $res = new Response(200, [], 'TEST CONTENT');
         $mock = new MockHandler([$res]);
         $request = new Request('GET', '/');
@@ -83,13 +83,13 @@ class MockHandlerTest extends TestCase
         self::assertFileExists($filename);
         self::assertStringEqualsFile($filename, 'TEST CONTENT');
 
-        unlink($filename);
+        \unlink($filename);
     }
 
     public function testSinkResource()
     {
-        $file = tmpfile();
-        $meta = stream_get_meta_data($file);
+        $file = \tmpfile();
+        $meta = \stream_get_meta_data($file);
         $res = new Response(200, [], 'TEST CONTENT');
         $mock = new MockHandler([$res]);
         $request = new Request('GET', '/');
@@ -102,7 +102,7 @@ class MockHandlerTest extends TestCase
 
     public function testSinkStream()
     {
-        $stream = new \GuzzleHttp\Psr7\Stream(tmpfile());
+        $stream = new \GuzzleHttp\Psr7\Stream(\tmpfile());
         $res = new Response(200, [], 'TEST CONTENT');
         $mock = new MockHandler([$res]);
         $request = new Request('GET', '/');

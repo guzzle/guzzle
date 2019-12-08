@@ -47,7 +47,7 @@ class CurlFactoryTest extends TestCase
         self::assertInternalType('resource', $result->handle);
         self::assertInternalType('array', $result->headers);
         self::assertSame($stream, $result->sink);
-        curl_close($result->handle);
+        \curl_close($result->handle);
         self::assertSame('PUT', $_SERVER['_curl'][CURLOPT_CUSTOMREQUEST]);
         self::assertSame(
             'http://127.0.0.1:8126/',
@@ -59,7 +59,7 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(0, $_SERVER['_curl'][CURLOPT_HEADER]);
         self::assertSame(150, $_SERVER['_curl'][CURLOPT_CONNECTTIMEOUT]);
         self::assertInstanceOf('Closure', $_SERVER['_curl'][CURLOPT_HEADERFUNCTION]);
-        if (defined('CURLOPT_PROTOCOLS')) {
+        if (\defined('CURLOPT_PROTOCOLS')) {
             self::assertSame(
                 CURLPROTO_HTTP | CURLPROTO_HTTPS,
                 $_SERVER['_curl'][CURLOPT_PROTOCOLS]
@@ -256,17 +256,17 @@ class CurlFactoryTest extends TestCase
 
     public function testEmitsDebugInfoToStream()
     {
-        $res = fopen('php://memory', 'r+');
+        $res = \fopen('php://memory', 'r+');
         Server::flush();
         Server::enqueue([new Psr7\Response()]);
         $a = new Handler\CurlMultiHandler();
         $response = $a(new Psr7\Request('HEAD', Server::$url), ['debug' => $res]);
         $response->wait();
-        rewind($res);
-        $output = str_replace("\r", '', stream_get_contents($res));
+        \rewind($res);
+        $output = \str_replace("\r", '', \stream_get_contents($res));
         self::assertStringContainsString("> HEAD / HTTP/1.1", $output);
         self::assertStringContainsString("< HTTP/1.1 200", $output);
-        fclose($res);
+        \fclose($res);
     }
 
     public function testEmitsProgressToFunction()
@@ -278,7 +278,7 @@ class CurlFactoryTest extends TestCase
         $request = new Psr7\Request('HEAD', Server::$url);
         $response = $a($request, [
             'progress' => function () use (&$called) {
-                $called[] = func_get_args();
+                $called[] = \func_get_args();
             },
         ]);
         $response->wait();
@@ -290,8 +290,8 @@ class CurlFactoryTest extends TestCase
 
     private function addDecodeResponse($withEncoding = true)
     {
-        $content = gzencode('test');
-        $headers = ['Content-Length' => strlen($content)];
+        $content = \gzencode('test');
+        $headers = ['Content-Length' => \strlen($content)];
         if ($withEncoding) {
             $headers['Content-Encoding'] = 'gzip';
         }
@@ -326,7 +326,7 @@ class CurlFactoryTest extends TestCase
             $response->getHeaderLine('x-encoded-content-encoding')
         );
         self::assertSame(
-            strlen(gzencode('test')),
+            \strlen(\gzencode('test')),
             (int) $response->getHeaderLine('x-encoded-content-length')
         );
     }
@@ -373,7 +373,7 @@ class CurlFactoryTest extends TestCase
 
     public function testSavesToStream()
     {
-        $stream = fopen('php://memory', 'r+');
+        $stream = \fopen('php://memory', 'r+');
         $this->addDecodeResponse();
         $handler = new Handler\CurlMultiHandler();
         $request = new Psr7\Request('GET', Server::$url);
@@ -382,8 +382,8 @@ class CurlFactoryTest extends TestCase
             'sink'           => $stream,
         ]);
         $response->wait();
-        rewind($stream);
-        self::assertEquals('test', stream_get_contents($stream));
+        \rewind($stream);
+        self::assertEquals('test', \stream_get_contents($stream));
     }
 
     public function testSavesToGuzzleStream()
@@ -402,7 +402,7 @@ class CurlFactoryTest extends TestCase
 
     public function testSavesToFileOnDisk()
     {
-        $tmpfile = tempnam(sys_get_temp_dir(), 'testfile');
+        $tmpfile = \tempnam(\sys_get_temp_dir(), 'testfile');
         $this->addDecodeResponse();
         $handler = new Handler\CurlMultiHandler();
         $request = new Psr7\Request('GET', Server::$url);
@@ -412,7 +412,7 @@ class CurlFactoryTest extends TestCase
         ]);
         $response->wait();
         self::assertStringEqualsFile($tmpfile, 'test');
-        unlink($tmpfile);
+        \unlink($tmpfile);
     }
 
     public function testDoesNotAddMultipleContentLengthHeaders()
@@ -718,7 +718,7 @@ class CurlFactoryTest extends TestCase
 
     public function testRewindsBodyIfPossible()
     {
-        $body = Psr7\stream_for(str_repeat('x', 1024 * 1024 * 2));
+        $body = Psr7\stream_for(\str_repeat('x', 1024 * 1024 * 2));
         $body->seek(1024 * 1024);
         self::assertSame(1024 * 1024, $body->tell());
 
@@ -733,7 +733,7 @@ class CurlFactoryTest extends TestCase
 
     public function testDoesNotRewindUnseekableBody()
     {
-        $body = Psr7\stream_for(str_repeat('x', 1024 * 1024 * 2));
+        $body = Psr7\stream_for(\str_repeat('x', 1024 * 1024 * 2));
         $body->seek(1024 * 1024);
         $body = new Psr7\NoSeekStream($body);
         self::assertSame(1024 * 1024, $body->tell());
@@ -751,7 +751,7 @@ class CurlFactoryTest extends TestCase
     {
         $factory = new CurlFactory(1);
         $easyHandle = new EasyHandle();
-        $easyHandle->handle = curl_init();
+        $easyHandle->handle = \curl_init();
 
         self::assertEmpty($factory->release($easyHandle));
     }

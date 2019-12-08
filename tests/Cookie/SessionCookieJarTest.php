@@ -46,13 +46,13 @@ class SessionCookieJarTest extends TestCase
             'Name'    => 'foo',
             'Value'   => 'bar',
             'Domain'  => 'foo.com',
-            'Expires' => time() + 1000
+            'Expires' => \time() + 1000
         ]));
         $jar->setCookie(new SetCookie([
             'Name'    => 'baz',
             'Value'   => 'bar',
             'Domain'  => 'foo.com',
-            'Expires' => time() + 1000
+            'Expires' => \time() + 1000
         ]));
         $jar->setCookie(new SetCookie([
             'Name'    => 'boo',

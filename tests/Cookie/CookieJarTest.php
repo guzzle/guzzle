@@ -28,7 +28,7 @@ class CookieJarTest extends TestCase
         return [
             new SetCookie(['Name' => 'foo',  'Value' => 'bar', 'Domain' => 'foo.com', 'Path' => '/',    'Discard' => true]),
             new SetCookie(['Name' => 'test', 'Value' => '123', 'Domain' => 'baz.com', 'Path' => '/foo', 'Expires' => 2]),
-            new SetCookie(['Name' => 'you',  'Value' => '123', 'Domain' => 'bar.com', 'Path' => '/boo', 'Expires' => time() + 1000])
+            new SetCookie(['Name' => 'you',  'Value' => '123', 'Domain' => 'bar.com', 'Path' => '/boo', 'Expires' => \time() + 1000])
         ];
     }
 
@@ -178,7 +178,7 @@ class CookieJarTest extends TestCase
 
     public function testOverwritesCookiesThatAreOlderOrDiscardable()
     {
-        $t = time() + 1000;
+        $t = \time() + 1000;
         $data = [
             'Name'    => 'foo',
             'Value'   => 'bar',
@@ -206,7 +206,7 @@ class CookieJarTest extends TestCase
         self::assertCount(1, $this->jar);
 
         // Make sure the more future-ful expiration date supersede the other
-        $data['Expires'] = time() + 2000;
+        $data['Expires'] = \time() + 2000;
         self::assertTrue($this->jar->setCookie(new SetCookie($data)));
         self::assertCount(1, $this->jar);
         $c = $this->jar->getIterator()->getArrayCopy();
@@ -215,7 +215,7 @@ class CookieJarTest extends TestCase
 
     public function testOverwritesCookiesThatHaveChanged()
     {
-        $t = time() + 1000;
+        $t = \time() + 1000;
         $data = [
             'Name'    => 'foo',
             'Value'   => 'bar',
@@ -299,7 +299,7 @@ class CookieJarTest extends TestCase
                 'Value'   => 'cookie_monster',
                 'Domain'  => '.y.example.com',
                 'Path'    => '/acme/',
-                'Expires' => time() + 86400
+                'Expires' => \time() + 86400
             ]),
             new SetCookie([
                 'Name'    => 'googoo',
@@ -335,7 +335,7 @@ class CookieJarTest extends TestCase
             'Value' => '123',
             'Domain' => 'bar.com',
             'Path' => '/boo',
-            'Expires' => time() + 1000
+            'Expires' => \time() + 1000
         ]);
         $jar = new CookieJar();
         foreach ($cookies as $cookie) {
@@ -344,7 +344,7 @@ class CookieJarTest extends TestCase
         self::assertCount(4, $jar);
         $jar->clear('bar.com', '/boo', 'other');
         self::assertCount(3, $jar);
-        $names = array_map(function (SetCookie $c) {
+        $names = \array_map(function (SetCookie $c) {
             return $c->getName();
         }, $jar->getIterator()->getArrayCopy());
         self::assertSame(['foo', 'test', 'you'], $names);

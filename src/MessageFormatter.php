@@ -70,7 +70,7 @@ class MessageFormatter
     ): string {
         $cache = [];
 
-        return preg_replace_callback(
+        return \preg_replace_callback(
             '/{\s*([A-Za-z_\-\.0-9]+)\s*}/',
             function (array $matches) use ($request, $response, $error, &$cache) {
                 if (isset($cache[$matches[1]])) {
@@ -86,14 +86,14 @@ class MessageFormatter
                         $result = $response ? Psr7\str($response) : '';
                         break;
                     case 'req_headers':
-                        $result = trim($request->getMethod()
+                        $result = \trim($request->getMethod()
                                 . ' ' . $request->getRequestTarget())
                             . ' HTTP/' . $request->getProtocolVersion() . "\r\n"
                             . $this->headers($request);
                         break;
                     case 'res_headers':
                         $result = $response ?
-                            sprintf(
+                            \sprintf(
                                 'HTTP/%s %d %s',
                                 $response->getProtocolVersion(),
                                 $response->getStatusCode(),
@@ -109,10 +109,10 @@ class MessageFormatter
                         break;
                     case 'ts':
                     case 'date_iso_8601':
-                        $result = gmdate('c');
+                        $result = \gmdate('c');
                         break;
                     case 'date_common_log':
-                        $result = date('d/M/Y:H:i:s O');
+                        $result = \date('d/M/Y:H:i:s O');
                         break;
                     case 'method':
                         $result = $request->getMethod();
@@ -139,7 +139,7 @@ class MessageFormatter
                         $result = $request->getHeaderLine('Host');
                         break;
                     case 'hostname':
-                        $result = gethostname();
+                        $result = \gethostname();
                         break;
                     case 'code':
                         $result = $response ? $response->getStatusCode() : 'NULL';
@@ -152,11 +152,11 @@ class MessageFormatter
                         break;
                     default:
                         // handle prefixed dynamic headers
-                        if (strpos($matches[1], 'req_header_') === 0) {
-                            $result = $request->getHeaderLine(substr($matches[1], 11));
-                        } elseif (strpos($matches[1], 'res_header_') === 0) {
+                        if (\strpos($matches[1], 'req_header_') === 0) {
+                            $result = $request->getHeaderLine(\substr($matches[1], 11));
+                        } elseif (\strpos($matches[1], 'res_header_') === 0) {
                             $result = $response
-                                ? $response->getHeaderLine(substr($matches[1], 11))
+                                ? $response->getHeaderLine(\substr($matches[1], 11))
                                 : 'NULL';
                         }
                 }
@@ -175,9 +175,9 @@ class MessageFormatter
     {
         $result = '';
         foreach ($message->getHeaders() as $name => $values) {
-            $result .= $name . ': ' . implode(', ', $values) . "\r\n";
+            $result .= $name . ': ' . \implode(', ', $values) . "\r\n";
         }
 
-        return trim($result);
+        return \trim($result);
     }
 }

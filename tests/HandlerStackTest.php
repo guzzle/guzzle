@@ -96,7 +96,7 @@ class HandlerStackTest extends TestCase
         $builder->push([__CLASS__, 'foo']);
         $builder->push([$this, 'bar']);
         $builder->push(__CLASS__ . '::' . 'foo');
-        $lines = explode("\n", (string) $builder);
+        $lines = \explode("\n", (string) $builder);
         self::assertStringContainsString("> 4) Name: 'a', Function: callable(", $lines[0]);
         self::assertStringContainsString("> 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
         self::assertStringContainsString("> 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[2]);
@@ -117,7 +117,7 @@ class HandlerStackTest extends TestCase
         $builder->before('foo', $meths[3], 'baz');
         $builder->before('baz', $meths[4], 'bar');
         $builder->before('baz', $meths[4], 'qux');
-        $lines = explode("\n", (string) $builder);
+        $lines = \explode("\n", (string) $builder);
         self::assertStringContainsString('> 4) Name: \'bar\'', $lines[0]);
         self::assertStringContainsString('> 3) Name: \'qux\'', $lines[1]);
         self::assertStringContainsString('> 2) Name: \'baz\'', $lines[2]);
@@ -142,7 +142,7 @@ class HandlerStackTest extends TestCase
         $builder->push($meths[3], 'b');
         $builder->after('a', $meths[4], 'c');
         $builder->after('b', $meths[4], 'd');
-        $lines = explode("\n", (string) $builder);
+        $lines = \explode("\n", (string) $builder);
         self::assertStringContainsString('4) Name: \'a\'', $lines[0]);
         self::assertStringContainsString('3) Name: \'c\'', $lines[1]);
         self::assertStringContainsString('2) Name: \'b\'', $lines[2]);

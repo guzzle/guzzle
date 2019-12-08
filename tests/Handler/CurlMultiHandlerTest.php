@@ -60,7 +60,7 @@ class CurlMultiHandlerTest extends TestCase
     {
         Server::flush();
         $response = new Response(200);
-        Server::enqueue(array_fill_keys(range(0, 10), $response));
+        Server::enqueue(\array_fill_keys(\range(0, 10), $response));
         $a = new CurlMultiHandler();
         $responses = [];
         for ($i = 0; $i < 10; $i++) {
@@ -103,9 +103,9 @@ class CurlMultiHandlerTest extends TestCase
         //default if no options are given and no environment variable is set
         self::assertEquals(1, self::readAttribute($a, 'selectTimeout'));
 
-        putenv("GUZZLE_CURL_SELECT_TIMEOUT=3");
+        \putenv("GUZZLE_CURL_SELECT_TIMEOUT=3");
         $a = new CurlMultiHandler();
-        $selectTimeout = getenv('GUZZLE_CURL_SELECT_TIMEOUT');
+        $selectTimeout = \getenv('GUZZLE_CURL_SELECT_TIMEOUT');
         //Handler reads from the environment if no options are given
         self::assertEquals($selectTimeout, self::readAttribute($a, 'selectTimeout'));
     }

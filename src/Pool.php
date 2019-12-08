@@ -56,7 +56,7 @@ class Pool implements PromisorInterface
             foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
                     yield $key => $client->sendAsync($rfn, $opts);
-                } elseif (is_callable($rfn)) {
+                } elseif (\is_callable($rfn)) {
                     yield $key => $rfn($opts);
                 } else {
                     throw new \InvalidArgumentException('Each value yielded by '
@@ -106,7 +106,7 @@ class Pool implements PromisorInterface
         self::cmpCallback($options, 'rejected', $res);
         $pool = new static($client, $requests, $options);
         $pool->promise()->wait();
-        ksort($res);
+        \ksort($res);
 
         return $res;
     }

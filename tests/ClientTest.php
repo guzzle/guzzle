@@ -187,7 +187,7 @@ class ClientTest extends TestCase
 
     public function testRewriteSaveToToSink()
     {
-        $r = Psr7\stream_for(fopen('php://temp', 'r+'));
+        $r = Psr7\stream_for(\fopen('php://temp', 'r+'));
         $mock = new MockHandler([new Response(200, [], 'foo')]);
         $client = new Client(['handler' => $mock]);
         $client->get('http://foo.com', ['save_to' => $r]);
@@ -442,8 +442,8 @@ class ClientTest extends TestCase
 
     public function testFormParamsEncodedProperly()
     {
-        $separator = ini_get('arg_separator.output');
-        ini_set('arg_separator.output', '&amp;');
+        $separator = \ini_get('arg_separator.output');
+        \ini_set('arg_separator.output', '&amp;');
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $client->post('http://foo.com', [
@@ -458,7 +458,7 @@ class ClientTest extends TestCase
             (string) $last->getBody()
         );
 
-        ini_set('arg_separator.output', $separator);
+        \ini_set('arg_separator.output', $separator);
     }
 
     public function testEnsuresThatFormParamsAndMultipartAreExclusive()
@@ -485,7 +485,7 @@ class ClientTest extends TestCase
                 ],
                 [
                     'name'     => 'test',
-                    'contents' => fopen(__FILE__, 'r')
+                    'contents' => \fopen(__FILE__, 'r')
                 ]
             ]
         ]);
@@ -529,7 +529,7 @@ class ClientTest extends TestCase
                         ],
                         [
                             'name' => 'test',
-                            'contents' => fopen(__FILE__, 'r'),
+                            'contents' => \fopen(__FILE__, 'r'),
                         ],
                     ]
                 )
@@ -560,27 +560,27 @@ class ClientTest extends TestCase
 
     public function testUsesProxyEnvironmentVariables()
     {
-        $http = getenv('HTTP_PROXY');
-        $https = getenv('HTTPS_PROXY');
-        $no = getenv('NO_PROXY');
+        $http = \getenv('HTTP_PROXY');
+        $https = \getenv('HTTPS_PROXY');
+        $no = \getenv('NO_PROXY');
         $client = new Client();
         self::assertNull($client->getConfig('proxy'));
-        putenv('HTTP_PROXY=127.0.0.1');
+        \putenv('HTTP_PROXY=127.0.0.1');
         $client = new Client();
         self::assertSame(
             ['http' => '127.0.0.1'],
             $client->getConfig('proxy')
         );
-        putenv('HTTPS_PROXY=127.0.0.2');
-        putenv('NO_PROXY=127.0.0.3, 127.0.0.4');
+        \putenv('HTTPS_PROXY=127.0.0.2');
+        \putenv('NO_PROXY=127.0.0.3, 127.0.0.4');
         $client = new Client();
         self::assertSame(
             ['http' => '127.0.0.1', 'https' => '127.0.0.2', 'no' => ['127.0.0.3','127.0.0.4']],
             $client->getConfig('proxy')
         );
-        putenv("HTTP_PROXY=$http");
-        putenv("HTTPS_PROXY=$https");
-        putenv("NO_PROXY=$no");
+        \putenv("HTTP_PROXY=$http");
+        \putenv("HTTPS_PROXY=$https");
+        \putenv("NO_PROXY=$no");
     }
 
     public function testRequestSendsWithSync()
@@ -710,7 +710,7 @@ class ClientTest extends TestCase
 
         $config = $client->getConfig();
 
-        if (extension_loaded('intl')) {
+        if (\extension_loaded('intl')) {
             self::assertTrue($config['idn_conversion']);
         } else {
             self::assertFalse($config['idn_conversion']);
@@ -719,7 +719,7 @@ class ClientTest extends TestCase
 
     public function testIdnIsTranslatedToAsciiWhenConversionIsEnabled()
     {
-        if (!extension_loaded('intl')) {
+        if (!\extension_loaded('intl')) {
             self::markTestSkipped('intl PHP extension is not loaded');
         }
         $mockHandler = new MockHandler([new Response()]);
@@ -748,7 +748,7 @@ class ClientTest extends TestCase
 
     public function testExceptionOnInvalidIdn()
     {
-        if (!extension_loaded('intl')) {
+        if (!\extension_loaded('intl')) {
             self::markTestSkipped('intl PHP extension is not loaded');
         }
         $mockHandler = new MockHandler([new Response()]);
@@ -765,7 +765,7 @@ class ClientTest extends TestCase
      */
     public function testIdnBaseUri()
     {
-        if (!extension_loaded('intl')) {
+        if (!\extension_loaded('intl')) {
             self::markTestSkipped('intl PHP extension is not loaded');
         }
 

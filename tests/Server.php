@@ -55,15 +55,15 @@ class Server
             if (!($response instanceof ResponseInterface)) {
                 throw new \Exception('Invalid response given.');
             }
-            $headers = array_map(function ($h) {
-                return implode(' ,', $h);
+            $headers = \array_map(function ($h) {
+                return \implode(' ,', $h);
             }, $response->getHeaders());
 
             $data[] = [
                 'status'  => (string) $response->getStatusCode(),
                 'reason'  => $response->getReasonPhrase(),
                 'headers' => $headers,
-                'body'    => base64_encode((string) $response->getBody())
+                'body'    => \base64_encode((string) $response->getBody())
             ];
         }
 
@@ -86,9 +86,9 @@ class Server
         }
 
         $response = self::getClient()->request('GET', 'guzzle-server/requests');
-        $data = json_decode($response->getBody(), true);
+        $data = \json_decode($response->getBody(), true);
 
-        return array_map(
+        return \array_map(
             function ($message) {
                 $uri = $message['uri'];
                 if (isset($message['query_string'])) {
@@ -127,7 +127,7 @@ class Server
     {
         $tries = 0;
         while (!self::isListening() && ++$tries < $maxTries) {
-            usleep(100000);
+            \usleep(100000);
         }
 
         if (!self::isListening()) {
@@ -142,7 +142,7 @@ class Server
         }
 
         if (!self::isListening()) {
-            exec('node ' . __DIR__ . '/server.js '
+            \exec('node ' . __DIR__ . '/server.js '
                 . self::$port . ' >> /tmp/server.log 2>&1 &');
             self::wait();
         }

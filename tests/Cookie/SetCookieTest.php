@@ -23,14 +23,14 @@ class SetCookieTest extends TestCase
 
     public function testAddsExpiresBasedOnMaxAge()
     {
-        $t = time();
+        $t = \time();
         $cookie = new SetCookie(['Max-Age' => 100]);
         self::assertEquals($t + 100, $cookie->getExpires());
     }
 
     public function testHoldsValues()
     {
-        $t = time();
+        $t = \time();
         $data = [
             'Name'     => 'foo',
             'Value'    => 'baz',
@@ -86,7 +86,7 @@ class SetCookieTest extends TestCase
         $c = new SetCookie();
         $c->setExpires(10);
         self::assertTrue($c->isExpired());
-        $c->setExpires(time() + 10000);
+        $c->setExpires(\time() + 10000);
         self::assertFalse($c->isExpired());
     }
 
@@ -338,7 +338,7 @@ class SetCookieTest extends TestCase
                     'Path' => '/',
                     'Secure' => true,
                     'Discard' => null,
-                    'Expires' => time() + 86400,
+                    'Expires' => \time() + 86400,
                     'Max-Age' => 86400,
                     'HttpOnly' => false,
                     'version' => '1'
@@ -372,7 +372,7 @@ class SetCookieTest extends TestCase
 
             if (isset($p['Expires'])) {
                 // Remove expires values from the assertion if they are relatively equal
-                if (abs($p['Expires'] != strtotime($parsed['Expires'])) < 40) {
+                if (\abs($p['Expires'] != \strtotime($parsed['Expires'])) < 40) {
                     unset($p['Expires']);
                     unset($parsed['Expires']);
                 }
@@ -380,10 +380,10 @@ class SetCookieTest extends TestCase
 
             if (!empty($parsed)) {
                 foreach ($parsed as $key => $value) {
-                    self::assertEquals($parsed[$key], $p[$key], 'Comparing ' . $key . ' ' . var_export($value, true) . ' : ' . var_export($parsed, true) . ' | ' . var_export($p, true));
+                    self::assertEquals($parsed[$key], $p[$key], 'Comparing ' . $key . ' ' . \var_export($value, true) . ' : ' . \var_export($parsed, true) . ' | ' . \var_export($p, true));
                 }
                 foreach ($p as $key => $value) {
-                    self::assertEquals($p[$key], $parsed[$key], 'Comparing ' . $key . ' ' . var_export($value, true) . ' : ' . var_export($parsed, true) . ' | ' . var_export($p, true));
+                    self::assertEquals($p[$key], $parsed[$key], 'Comparing ' . $key . ' ' . \var_export($value, true) . ' : ' . \var_export($parsed, true) . ' | ' . \var_export($p, true));
                 }
             } else {
                 self::assertSame([
@@ -418,11 +418,11 @@ class SetCookieTest extends TestCase
                 true,
             ],
             [
-                'FOO=bar; expires=' . date(\DateTime::RFC1123, time()+10) . ';',
+                'FOO=bar; expires=' . \date(\DateTime::RFC1123, \time()+10) . ';',
                 false,
             ],
             [
-                'FOO=bar; expires=' . date(\DateTime::RFC1123, time()-10) . ';',
+                'FOO=bar; expires=' . \date(\DateTime::RFC1123, \time()-10) . ';',
                 true,
             ],
             [

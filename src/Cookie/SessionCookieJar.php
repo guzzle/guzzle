@@ -49,7 +49,7 @@ class SessionCookieJar extends CookieJar
             }
         }
 
-        $_SESSION[$this->sessionKey] = json_encode($json);
+        $_SESSION[$this->sessionKey] = \json_encode($json);
     }
 
     /**
@@ -60,12 +60,12 @@ class SessionCookieJar extends CookieJar
         if (!isset($_SESSION[$this->sessionKey])) {
             return;
         }
-        $data = json_decode($_SESSION[$this->sessionKey], true);
-        if (is_array($data)) {
+        $data = \json_decode($_SESSION[$this->sessionKey], true);
+        if (\is_array($data)) {
             foreach ($data as $cookie) {
                 $this->setCookie(new SetCookie($cookie));
             }
-        } elseif (strlen($data)) {
+        } elseif (\strlen($data)) {
             throw new \RuntimeException("Invalid cookie data");
         }
     }

@@ -34,18 +34,18 @@ class SetCookie
         // Create the default return array
         $data = self::$defaults;
         // Explode the cookie string using a series of semicolons
-        $pieces = array_filter(array_map('trim', explode(';', $cookie)));
+        $pieces = \array_filter(\array_map('trim', \explode(';', $cookie)));
         // The name of the cookie (first kvp) must exist and include an equal sign.
-        if (empty($pieces[0]) || !strpos($pieces[0], '=')) {
+        if (empty($pieces[0]) || !\strpos($pieces[0], '=')) {
             return new self($data);
         }
 
         // Add the cookie pieces into the parsed data array
         foreach ($pieces as $part) {
-            $cookieParts = explode('=', $part, 2);
-            $key = trim($cookieParts[0]);
+            $cookieParts = \explode('=', $part, 2);
+            $key = \trim($cookieParts[0]);
             $value = isset($cookieParts[1])
-                ? trim($cookieParts[1], " \n\r\t\0\x0B")
+                ? \trim($cookieParts[1], " \n\r\t\0\x0B")
                 : true;
 
             // Only check for non-cookies when cookies have been found
@@ -53,8 +53,8 @@ class SetCookie
                 $data['Name'] = $key;
                 $data['Value'] = $value;
             } else {
-                foreach (array_keys(self::$defaults) as $search) {
-                    if (!strcasecmp($search, $key)) {
+                foreach (\array_keys(self::$defaults) as $search) {
+                    if (!\strcasecmp($search, $key)) {
                         $data[$search] = $value;
                         continue 2;
                     }
@@ -71,12 +71,12 @@ class SetCookie
      */
     public function __construct(array $data = [])
     {
-        $this->data = array_replace(self::$defaults, $data);
+        $this->data = \array_replace(self::$defaults, $data);
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         if (!$this->getExpires() && $this->getMaxAge()) {
             // Calculate the Expires date
-            $this->setExpires(time() + $this->getMaxAge());
-        } elseif ($this->getExpires() && !is_numeric($this->getExpires())) {
+            $this->setExpires(\time() + $this->getMaxAge());
+        } elseif ($this->getExpires() && !\is_numeric($this->getExpires())) {
             $this->setExpires($this->getExpires());
         }
     }
@@ -87,14 +87,14 @@ class SetCookie
         foreach ($this->data as $k => $v) {
             if ($k !== 'Name' && $k !== 'Value' && $v !== null && $v !== false) {
                 if ($k === 'Expires') {
-                    $str .= 'Expires=' . gmdate('D, d M Y H:i:s \G\M\T', $v) . '; ';
+                    $str .= 'Expires=' . \gmdate('D, d M Y H:i:s \G\M\T', $v) . '; ';
                 } else {
                     $str .= ($v === true ? $k : "{$k}={$v}") . '; ';
                 }
             }
         }
 
-        return rtrim($str, '; ');
+        return \rtrim($str, '; ');
     }
 
     public function toArray()
@@ -217,9 +217,9 @@ class SetCookie
      */
     public function setExpires($timestamp)
     {
-        $this->data['Expires'] = is_numeric($timestamp)
+        $this->data['Expires'] = \is_numeric($timestamp)
             ? (int) $timestamp
-            : strtotime($timestamp);
+            : \strtotime($timestamp);
     }
 
     /**
@@ -309,17 +309,17 @@ class SetCookie
         }
 
         // Ensure that the cookie-path is a prefix of the request path.
-        if (0 !== strpos($requestPath, $cookiePath)) {
+        if (0 !== \strpos($requestPath, $cookiePath)) {
             return false;
         }
 
         // Match if the last character of the cookie-path is "/"
-        if (substr($cookiePath, -1, 1) === '/') {
+        if (\substr($cookiePath, -1, 1) === '/') {
             return true;
         }
 
         // Match if the first character not included in cookie path is "/"
-        return substr($requestPath, strlen($cookiePath), 1) === '/';
+        return \substr($requestPath, \strlen($cookiePath), 1) === '/';
     }
 
     /**
@@ -331,20 +331,20 @@ class SetCookie
     {
         // Remove the leading '.' as per spec in RFC 6265.
         // http://tools.ietf.org/html/rfc6265#section-5.2.3
-        $cookieDomain = ltrim($this->getDomain(), '.');
+        $cookieDomain = \ltrim($this->getDomain(), '.');
 
         // Domain not set or exact match.
-        if (!$cookieDomain || !strcasecmp($domain, $cookieDomain)) {
+        if (!$cookieDomain || !\strcasecmp($domain, $cookieDomain)) {
             return true;
         }
 
         // Matching the subdomain according to RFC 6265.
         // http://tools.ietf.org/html/rfc6265#section-5.1.3
-        if (filter_var($domain, FILTER_VALIDATE_IP)) {
+        if (\filter_var($domain, FILTER_VALIDATE_IP)) {
             return false;
         }
 
-        return (bool) preg_match('/\.' . preg_quote($cookieDomain, '/') . '$/', $domain);
+        return (bool) \preg_match('/\.' . \preg_quote($cookieDomain, '/') . '$/', $domain);
     }
 
     /**
@@ -354,7 +354,7 @@ class SetCookie
      */
     public function isExpired()
     {
-        return $this->getExpires() !== null && time() > $this->getExpires();
+        return $this->getExpires() !== null && \time() > $this->getExpires();
     }
 
     /**
@@ -366,12 +366,12 @@ class SetCookie
     {
         // Names must not be empty, but can be 0
         $name = $this->getName();
-        if (empty($name) && !is_numeric($name)) {
+        if (empty($name) && !\is_numeric($name)) {
             return 'The cookie name must not be empty';
         }
 
         // Check if any of the invalid characters are present in the cookie name
-        if (preg_match(
+        if (\preg_match(
             '/[\x00-\x20\x22\x28-\x29\x2c\x2f\x3a-\x40\x5c\x7b\x7d\x7f]/',
             $name
         )) {
@@ -382,7 +382,7 @@ class SetCookie
 
         // Value must not be empty, but can be 0
         $value = $this->getValue();
-        if (empty($value) && !is_numeric($value)) {
+        if (empty($value) && !\is_numeric($value)) {
             return 'The cookie value must not be empty';
         }
 
@@ -390,7 +390,7 @@ class SetCookie
         // A "0" is not a valid internet domain, but may be used as server name
         // in a private network.
         $domain = $this->getDomain();
-        if (empty($domain) && !is_numeric($domain)) {
+        if (empty($domain) && !\is_numeric($domain)) {
             return 'The cookie domain must not be empty';
         }
 
