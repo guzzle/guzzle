@@ -16,22 +16,7 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Client\\:\\:__call\\(\\) should return GuzzleHttp\\\\Promise\\\\PromiseInterface but returns GuzzleHttp\\\\PromiseInterface\\|Psr\\\\Http\\\\Message\\\\ResponseInterface\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
-			message: "#^Return typehint of method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) has invalid type GuzzleHttp\\\\PromiseInterface\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) should return GuzzleHttp\\\\PromiseInterface but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
 			count: 1
 			path: src/Client.php
 
@@ -41,27 +26,7 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^PHPDoc tag @throws with type GuzzleHttp\\\\GuzzleException is not subtype of Throwable$#"
-			count: 2
-			path: src/Client.php
-
-		-
-			message: "#^Call to method wait\\(\\) on an unknown class GuzzleHttp\\\\PromiseInterface\\.$#"
-			count: 2
-			path: src/Client.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
-			message: "#^Return typehint of method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) has invalid type GuzzleHttp\\\\PromiseInterface\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) should return GuzzleHttp\\\\PromiseInterface but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
 			count: 1
 			path: src/Client.php
 

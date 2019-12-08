@@ -12,7 +12,7 @@ class SessionCookieJarTest extends TestCase
 {
     private $sessionVar;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->sessionVar = 'sessionKey';
 

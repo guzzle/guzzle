@@ -79,12 +79,15 @@ composer update
 | 3.x     | EOL        | `guzzle/guzzle`     | `Guzzle`     | [v3][guzzle-3-repo] | [v3][guzzle-3-docs] | No    | >= 5.3.3    |
 | 4.x     | EOL        | `guzzlehttp/guzzle` | `GuzzleHttp` | [v4][guzzle-4-repo] | N/A                 | No    | >= 5.4      |
 | 5.x     | EOL        | `guzzlehttp/guzzle` | `GuzzleHttp` | [v5][guzzle-5-repo] | [v5][guzzle-5-docs] | No    | >= 5.4      |
-| 6.x     | Latest     | `guzzlehttp/guzzle` | `GuzzleHttp` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   | >= 5.5      |
+| 6.x     | Maintained | `guzzlehttp/guzzle` | `GuzzleHttp` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   | >= 5.5      |
+| 7.x     | Latest     | `guzzlehttp/guzzle` | `GuzzleHttp` | [v7][guzzle-7-repo] | [v7][guzzle-7-docs] | Yes   | >= 7.2      |
 
 [guzzle-3-repo]: https://github.com/guzzle/guzzle3
 [guzzle-4-repo]: https://github.com/guzzle/guzzle/tree/4.x
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
 [guzzle-6-repo]: https://github.com/guzzle/guzzle
+[guzzle-7-repo]: https://github.com/guzzle/guzzle
 [guzzle-3-docs]: http://guzzle3.readthedocs.org
-[guzzle-5-docs]: http://guzzle.readthedocs.org/en/5.3/
-[guzzle-6-docs]: http://guzzle.readthedocs.org/en/latest/
+[guzzle-5-docs]: http://docs.guzzlephp.org//en/5.3/
+[guzzle-6-docs]: http://docs.guzzlephp.org//en/6.5/
+[guzzle-7-docs]: http://docs.guzzlephp.org//en/latest/

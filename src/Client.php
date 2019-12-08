@@ -2,8 +2,11 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Exception\InvalidRequestException;
 use GuzzleHttp\Promise;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -23,7 +26,7 @@ use Psr\Http\Message\UriInterface;
  * @method Promise\PromiseInterface patchAsync(string|UriInterface $uri, array $options = [])
  * @method Promise\PromiseInterface deleteAsync(string|UriInterface $uri, array $options = [])
  */
-class Client implements ClientInterface
+class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 {
     /** @var array Default request options */
     private $config;
@@ -80,7 +83,7 @@ class Client implements ClientInterface
      * @param string $method
      * @param array  $args
      *
-     * @return Promise\PromiseInterface
+     * @return PromiseInterface|ResponseInterface
      */
     public function __call($method, $args)
     {
@@ -131,6 +134,20 @@ class Client implements ClientInterface
     }
 
     /**
+     * The HttpClient PSR (PSR-18) specify this method.
+     *
+     * @inheritDoc
+     */
+    public function sendRequest(RequestInterface $request): ResponseInterface
+    {
+        $options[RequestOptions::SYNCHRONOUS] = true;
+        $options[RequestOptions::ALLOW_REDIRECTS] = false;
+        $options[RequestOptions::HTTP_ERRORS] = false;
+
+        return $this->sendAsync($request, $options)->wait();
+    }
+
+    /**
      * Create and send an asynchronous HTTP request.
      *
      * Use an absolute path to override the base path of the client, or a
@@ -144,7 +161,7 @@ class Client implements ClientInterface
      *
      * @return PromiseInterface
      */
-    public function requestAsync($method, $uri = '', array $options = [])
+    public function requestAsync($method, $uri = '', array $options = []): PromiseInterface
     {
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
@@ -475,7 +492,7 @@ class Client implements ClientInterface
                 $value = http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
             if (!is_string($value)) {
-                throw new \InvalidArgumentException('query must be a string or array');
+                throw new InvalidRequestException($request, 'query must be a string or array');
             }
             $modify['query'] = $value;
             unset($options['query']);
@@ -485,7 +502,7 @@ class Client implements ClientInterface
         if (isset($options['sink'])) {
             // TODO: Add more sink validation?
             if (is_bool($options['sink'])) {
-                throw new \InvalidArgumentException('sink must not be a boolean');
+                throw new InvalidRequestException($request, 'sink must not be a boolean');
             }
         }
 
