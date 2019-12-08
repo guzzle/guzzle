@@ -104,10 +104,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param array $options Request options to apply to the given
      *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
-     *
-     * @return PromiseInterface
      */
-    public function sendAsync(RequestInterface $request, array $options = [])
+    public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface
     {
         // Merge the base URI into the request URI if needed.
         $options = $this->prepareDefaults($options);
@@ -124,11 +122,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param array $options Request options to apply to the given
      *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
      *
-     * @return ResponseInterface
-     *
      * @throws GuzzleException
      */
-    public function send(RequestInterface $request, array $options = [])
+    public function send(RequestInterface $request, array $options = []): ResponseInterface
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
         return $this->sendAsync($request, $options)->wait();
@@ -160,7 +156,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
      */
-    public function requestAsync($method, $uri = '', array $options = []): PromiseInterface
+    public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
@@ -190,11 +186,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
      *
-     * @return ResponseInterface
-     *
      * @throws GuzzleException
      */
-    public function request($method, $uri = '', array $options = [])
+    public function request(string $method, $uri = '', array $options = []): ResponseInterface
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
         return $this->requestAsync($method, $uri, $options)->wait();
@@ -209,7 +203,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param string|null $option The config option to retrieve.
      */
-    public function getConfig($option = null)
+    public function getConfig(?string $option = null)
     {
         return $option === null
             ? $this->config
@@ -217,11 +211,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
-     * @param string|null $uri
-     *
-     * @return UriInterface
+     * @param string|UriInterface|null $uri
      */
-    private function buildUri($uri, array $config)
+    private function buildUri($uri, array $config): UriInterface
     {
         // for BC we accept null which would otherwise fail in uri_for
         $uri = Psr7\uri_for($uri === null ? '' : $uri);
@@ -267,10 +259,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
     /**
      * Configures the default options for a client.
-     *
-     * @return void
      */
-    private function configureDefaults(array $config)
+    private function configureDefaults(array $config): void
     {
         $defaults = [
             'allow_redirects' => RedirectMiddleware::$defaultSettings,
@@ -325,10 +315,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * Merges default options into the array.
      *
      * @param array $options Options to modify by reference
-     *
-     * @return array
      */
-    private function prepareDefaults(array $options)
+    private function prepareDefaults(array $options): array
     {
         $defaults = $this->config;
 
@@ -370,10 +358,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * as-is without merging in default options.
      *
      * @param array $options See \GuzzleHttp\RequestOptions.
-     *
-     * @return Promise\PromiseInterface
      */
-    private function transfer(RequestInterface $request, array $options)
+    private function transfer(RequestInterface $request, array $options): PromiseInterface
     {
         // save_to -> sink
         if (isset($options['save_to'])) {
@@ -400,10 +386,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
     /**
      * Applies the array of request options to a request.
-     *
-     * @return RequestInterface
      */
-    private function applyOptions(RequestInterface $request, array &$options)
+    private function applyOptions(RequestInterface $request, array &$options): RequestInterface
     {
         $modify = [
             'set_headers' => [],
@@ -529,11 +513,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Throw Exception with pre-set message.
      *
-     * @return void
-     *
      * @throws InvalidArgumentException Invalid body.
      */
-    private function invalidBody()
+    private function invalidBody(): void
     {
         throw new \InvalidArgumentException('Passing in the "body" request '
             . 'option as an array to send a POST request has been deprecated. '
