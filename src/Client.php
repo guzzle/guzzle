@@ -401,7 +401,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Applies the array of request options to a request.
      *
-     *
      * @return RequestInterface
      */
     private function applyOptions(RequestInterface $request, array &$options)

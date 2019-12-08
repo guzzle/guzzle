@@ -207,7 +207,6 @@ class RedirectMiddleware
     /**
      * Set the appropriate URL on the request based on the location header
      *
-     *
      * @return UriInterface
      */
     private function redirectUri(

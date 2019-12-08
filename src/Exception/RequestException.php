@@ -38,7 +38,6 @@ class RequestException extends TransferException
     /**
      * Wrap non-RequestExceptions with a RequestException
      *
-     *
      * @return RequestException
      */
     public static function wrapException(RequestInterface $request, \Exception $e)
@@ -111,7 +110,6 @@ class RequestException extends TransferException
 
     /**
      * Obfuscates URI if there is a username and a password present
-     *
      *
      * @return UriInterface
      */

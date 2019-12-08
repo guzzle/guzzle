@@ -59,7 +59,6 @@ class HandlerStack
     /**
      * Invokes the handler stack as a composed handler
      *
-     *
      * @return ResponseInterface|PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
