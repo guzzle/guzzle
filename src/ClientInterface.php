@@ -13,11 +13,6 @@ use Psr\Http\Message\UriInterface;
 interface ClientInterface
 {
     /**
-     * @deprecated Will be removed in Guzzle 7.0.0
-     */
-    const VERSION = '6.5.0';
-
-    /**
      * Send an HTTP request.
      *
      * @param RequestInterface $request Request to send

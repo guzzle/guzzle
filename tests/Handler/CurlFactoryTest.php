@@ -15,13 +15,13 @@ use Psr\Http\Message\ResponseInterface;
  */
 class CurlFactoryTest extends TestCase
 {
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         $_SERVER['curl_test'] = true;
         unset($_SERVER['_curl']);
     }
 
-    public static function tearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         unset($_SERVER['_curl'], $_SERVER['curl_test']);
     }

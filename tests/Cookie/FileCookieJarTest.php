@@ -12,7 +12,7 @@ class FileCookieJarTest extends TestCase
 {
     private $file;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->file = tempnam('/tmp', 'file-cookies');
     }
