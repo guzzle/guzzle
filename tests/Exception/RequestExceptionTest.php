@@ -188,8 +188,7 @@ class RequestExceptionTest extends TestCase
 
     public function testGetResponseBodySummaryOfNonReadableStream()
     {
-        self::assertNull(RequestException::getResponseBodySummary(new Response(500, [], new class extends Stream
-        {
+        self::assertNull(RequestException::getResponseBodySummary(new Response(500, [], new class extends Stream {
             public function __construct()
             {
                 parent::__construct(fopen('php://memory', 'wb'));
