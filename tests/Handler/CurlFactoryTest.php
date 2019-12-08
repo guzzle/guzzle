@@ -65,8 +65,8 @@ class CurlFactoryTest extends TestCase
                 $_SERVER['_curl'][CURLOPT_PROTOCOLS]
             );
         }
-        self::assertStringContainsString('Expect:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
-        self::assertStringContainsString('Accept:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
+        self::assertContains('Expect:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
+        self::assertContains('Accept:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
         self::assertStringContainsString('Content-Type:', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
         self::assertStringContainsString('Hi: 123', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
         self::assertStringContainsString('Host: 127.0.0.1:8126', $_SERVER['_curl'][CURLOPT_HTTPHEADER]);
