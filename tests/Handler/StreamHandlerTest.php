@@ -524,15 +524,14 @@ class StreamHandlerTest extends TestCase
         ]);
         $req = new Request('GET', Server::$url);
         $handler = new StreamHandler();
-        $promise = $handler($req, [
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('test');
+        $handler($req, [
             'on_headers' => function () {
                 throw new \Exception('test');
             }
         ]);
-
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
-        $this->expectExceptionMessage('test');
-        $promise->wait();
     }
 
     public function testSuccessfullyCallsOnHeadersBeforeWritingToSink()

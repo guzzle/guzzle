@@ -43,9 +43,8 @@ class MockHandlerTest extends TestCase
     public function testEnsuresEachAppendIsValid()
     {
         $mock = new MockHandler();
-        $request = new Request('GET', 'http://example.com');
         $this->expectException(\InvalidArgumentException::class);
-        $mock($request, []);
+        $mock->append(['a']);
     }
 
     public function testCanQueueExceptions()
@@ -141,16 +140,16 @@ class MockHandlerTest extends TestCase
         $res = new Response();
         $mock = new MockHandler([$res]);
         $request = new Request('GET', 'http://example.com');
-        $promise = $mock($request, [
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('test');
+        $mock($request, [
             'on_headers' => function () {
                 throw new \Exception('test');
             }
         ]);
-
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
-        $this->expectExceptionMessage('test');
-        $promise->wait();
     }
+
     public function testInvokesOnFulfilled()
     {
         $res = new Response();
