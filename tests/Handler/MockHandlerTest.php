@@ -34,11 +34,16 @@ class MockHandlerTest extends TestCase
         self::assertCount(0, new MockHandler());
     }
 
+    public function testEnsuresEachAppendOnCreationIsValid()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new MockHandler(['a']);
+    }
+
     public function testEnsuresEachAppendIsValid()
     {
-        $mock = new MockHandler(['a']);
+        $mock = new MockHandler();
         $request = new Request('GET', 'http://example.com');
-
         $this->expectException(\InvalidArgumentException::class);
         $mock($request, []);
     }
