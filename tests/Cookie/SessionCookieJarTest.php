@@ -6,7 +6,7 @@ use GuzzleHttp\Cookie\SetCookie;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\Cookie\SessionCookieJar
+ * @covers \GuzzleHttp\Cookie\SessionCookieJar
  */
 class SessionCookieJarTest extends TestCase
 {

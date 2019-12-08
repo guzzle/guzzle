@@ -5,7 +5,7 @@ use GuzzleHttp\Cookie\SetCookie;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\Cookie\SetCookie
+ * @covers \GuzzleHttp\Cookie\SetCookie
  */
 class SetCookieTest extends TestCase
 {
