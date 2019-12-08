@@ -25,6 +25,7 @@
         "ext-json": "*",
         "guzzlehttp/promises": "^1.0",
         "guzzlehttp/psr7": "^1.6.1",
+        "php-http/client-integration-tests": "dev-phpunit8",
         "psr/http-client": "^1.0"
     },
     "require-dev": {
