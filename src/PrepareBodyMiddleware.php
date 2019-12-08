@@ -22,10 +22,7 @@ class PrepareBodyMiddleware
         $this->nextHandler = $nextHandler;
     }
 
-    /**
-     * @return PromiseInterface
-     */
-    public function __invoke(RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $fn = $this->nextHandler;
 
@@ -65,14 +62,12 @@ class PrepareBodyMiddleware
 
     /**
      * Add expect header
-     *
-     * @return void
      */
     private function addExpectHeader(
         RequestInterface $request,
         array $options,
         array &$modify
-    ) {
+    ): void {
         // Determine if the Expect header should be used
         if ($request->hasHeader('Expect')) {
             return;
