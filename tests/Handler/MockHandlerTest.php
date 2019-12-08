@@ -140,14 +140,15 @@ class MockHandlerTest extends TestCase
         $res = new Response();
         $mock = new MockHandler([$res]);
         $request = new Request('GET', 'http://example.com');
-
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
-        $this->expectExceptionMessage('test');
-        $mock($request, [
+        $promise = $mock($request, [
             'on_headers' => function () {
                 throw new \Exception('test');
             }
         ]);
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('An error was encountered during the on_headers event');
+        $promise->wait();
     }
 
     public function testInvokesOnFulfilled()

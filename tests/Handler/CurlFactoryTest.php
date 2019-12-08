@@ -619,14 +619,15 @@ class CurlFactoryTest extends TestCase
         ]);
         $req = new Psr7\Request('GET', Server::$url);
         $handler = new Handler\CurlHandler();
-
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
-        $this->expectExceptionMessage('test');
-        $handler($req, [
+        $promise = $handler($req, [
             'on_headers' => function () {
                 throw new \Exception('test');
             }
         ]);
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('An error was encountered during the on_headers event');
+        $promise->wait();
     }
 
     public function testSuccessfullyCallsOnHeadersBeforeWritingToSink()
