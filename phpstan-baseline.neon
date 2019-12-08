@@ -111,16 +111,6 @@ parameters:
 			path: src/Cookie/CookieJar.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\CookieJar\\:\\:getCookieValue\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/CookieJar.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\CookieJar\\:\\:getCookieValue\\(\\) has parameter \\$value with no typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/CookieJar.php
-
-		-
 			message: "#^Result of \\|\\| is always false\\.$#"
 			count: 1
 			path: src/Cookie/CookieJar.php

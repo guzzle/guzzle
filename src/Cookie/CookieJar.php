@@ -58,14 +58,6 @@ class CookieJar implements CookieJarInterface
     }
 
     /**
-     * @deprecated
-     */
-    public static function getCookieValue($value)
-    {
-        return $value;
-    }
-
-    /**
      * Evaluate if this cookie should be persisted to storage
      * that survives between requests.
      *
