@@ -11,8 +11,10 @@ php:
   - 7.4
 
 branches:
-  except:
-    - master
+  only:
+    - "4.x"
+    - "5.3"
+    - "6.5"
 
 before_script:
   - curl --version
