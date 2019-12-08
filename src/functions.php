@@ -37,6 +37,8 @@ function uri_template($template, array $variables)
  *
  * @return string Returns a string containing the type of the variable and
  *                if a class is provided, the class name.
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function describe_type($input)
 {
@@ -59,6 +61,8 @@ function describe_type($input)
  * @param iterable $lines Header lines array of strings in the following
  *                     format: "Name: Value"
  * @return array
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function headers_from_lines($lines)
 {
@@ -80,6 +84,8 @@ function headers_from_lines($lines)
  * @param mixed $value Optional value
  *
  * @return resource
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function debug_resource($value = null)
 {
@@ -99,6 +105,8 @@ function debug_resource($value = null)
  *
  * @throws \RuntimeException if no viable Handler is available.
  * @return callable Returns the best handler for the given system.
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function choose_handler()
 {
@@ -127,6 +135,8 @@ function choose_handler()
  * Get the default User-Agent string to use with Guzzle
  *
  * @return string
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function default_user_agent()
 {
@@ -156,6 +166,8 @@ function default_user_agent()
  *
  * @return string
  * @throws \RuntimeException if no bundle can be found.
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function default_ca_bundle()
 {
@@ -221,6 +233,8 @@ EOT
  * @param array $headers
  *
  * @return array
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function normalize_header_keys(array $headers)
 {
@@ -250,6 +264,8 @@ function normalize_header_keys(array $headers)
  * @param array  $noProxyArray An array of host patterns.
  *
  * @return bool
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function is_host_in_noproxy($host, array $noProxyArray)
 {
@@ -297,6 +313,8 @@ function is_host_in_noproxy($host, array $noProxyArray)
  * @return mixed
  * @throws Exception\InvalidArgumentException if the JSON cannot be decoded.
  * @link http://www.php.net/manual/en/function.json-decode.php
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function json_decode($json, $assoc = false, $depth = 512, $options = 0)
 {
@@ -320,6 +338,8 @@ function json_decode($json, $assoc = false, $depth = 512, $options = 0)
  * @return string
  * @throws Exception\InvalidArgumentException if the JSON cannot be encoded.
  * @link http://www.php.net/manual/en/function.json-encode.php
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function json_encode($value, $options = 0, $depth = 512)
 {
@@ -339,6 +359,8 @@ function json_encode($value, $options = 0, $depth = 512)
  *
  * @return float|mixed UNIX timestamp
  * @internal
+ *
+ * @deprecated Will be removed in 8.0.0
  */
 function _current_time()
 {
