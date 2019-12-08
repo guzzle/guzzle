@@ -72,12 +72,11 @@ class RequestExceptionTest extends TestCase
         self::assertInstanceOf('GuzzleHttp\Exception\RequestException', $e);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage Status code must be an integer value between 1xx and 5xx.
-     */
     public function testThrowsInvalidArgumentExceptionOnOutOfBoundsResponseCode()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Status code must be an integer value between 1xx and 5xx.');
+
         throw RequestException::create(new Request('GET', '/'), new Response(600));
     }
 

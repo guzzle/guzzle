@@ -14,23 +14,21 @@ use Psr\Http\Message\RequestInterface;
 
 class PoolTest extends TestCase
 {
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesIterable()
     {
         $p = new Pool(new Client(), 'foo');
+
+        $this->expectException(\InvalidArgumentException::class);
         $p->promise()->wait();
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testValidatesEachElement()
     {
         $c = new Client();
         $requests = ['foo'];
         $p = new Pool($c, new \ArrayIterator($requests));
+
+        $this->expectException(\InvalidArgumentException::class);
         $p->promise()->wait();
     }
 

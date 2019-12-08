@@ -19,14 +19,13 @@ class CurlHandlerTest extends TestCase
         return new CurlHandler($options);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
-     * @expectedExceptionMessage cURL
-     */
     public function testCreatesCurlErrors()
     {
         $handler = new CurlHandler();
         $request = new Request('GET', 'http://localhost:123');
+
+        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
+        $this->expectExceptionMessage('cURL');
         $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
     }
 
