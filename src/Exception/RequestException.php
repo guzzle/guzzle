@@ -104,27 +104,13 @@ class RequestException extends TransferException
             $response->getReasonPhrase()
         );
 
-        $summary = static::getResponseBodySummary($response);
+        $summary = \GuzzleHttp\Psr7\get_message_body_summary($response);
 
         if ($summary !== null) {
             $message .= ":\n{$summary}\n";
         }
 
         return new $className($message, $request, $response, $previous, $ctx);
-    }
-
-    /**
-     * Get a short summary of the response
-     *
-     * Will return `null` if the response is not printable.
-     *
-     * @param ResponseInterface $response
-     *
-     * @return string|null
-     */
-    public static function getResponseBodySummary(ResponseInterface $response)
-    {
-        return \GuzzleHttp\Psr7\get_message_body_summary($response);
     }
 
     /**

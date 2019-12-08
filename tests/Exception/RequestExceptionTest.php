@@ -184,11 +184,6 @@ class RequestExceptionTest extends TestCase
         $e = RequestException::create($r, new Response(500));
         self::assertContains('http://user:***@www.oo.com', $e->getMessage());
     }
-
-    public function testGetResponseBodySummaryOfNonReadableStream()
-    {
-        self::assertNull(RequestException::getResponseBodySummary(new Response(500, [], new ReadSeekOnlyStream())));
-    }
 }
 
 final class ReadSeekOnlyStream extends Stream
