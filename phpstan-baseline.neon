@@ -346,21 +346,6 @@ parameters:
 			path: src/Exception/RequestException.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Exception\\\\SeekException\\:\\:\\$stream has no typehint specified\\.$#"
-			count: 1
-			path: src/Exception/SeekException.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Exception\\\\SeekException\\:\\:__construct\\(\\) has parameter \\$msg with no typehint specified\\.$#"
-			count: 1
-			path: src/Exception/SeekException.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Exception\\\\SeekException\\:\\:__construct\\(\\) has parameter \\$pos with no typehint specified\\.$#"
-			count: 1
-			path: src/Exception/SeekException.php
-
-		-
 			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlFactory\\:\\:\\$handles type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Handler/CurlFactory.php
