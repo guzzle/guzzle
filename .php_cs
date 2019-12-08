@@ -14,6 +14,7 @@ $config = PhpCsFixer\Config::create()
         'no_extra_blank_lines' => true,
         'ordered_imports' => true,
         'no_superfluous_phpdoc_tags' => true,
+        'no_blank_lines_after_phpdoc' => true,
         'phpdoc_align' => ['align'=>'vertical'],
         // 'native_function_invocation' => true,
     ])
