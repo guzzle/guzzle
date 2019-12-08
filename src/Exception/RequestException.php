@@ -37,10 +37,8 @@ class RequestException extends TransferException
 
     /**
      * Wrap non-RequestExceptions with a RequestException
-     *
-     * @return RequestException
      */
-    public static function wrapException(RequestInterface $request, \Exception $e)
+    public static function wrapException(RequestInterface $request, \Exception $e): RequestException
     {
         return $e instanceof RequestException
             ? $e
@@ -54,15 +52,13 @@ class RequestException extends TransferException
      * @param ResponseInterface $response Response received
      * @param \Exception        $previous Previous exception
      * @param array             $ctx      Optional handler context.
-     *
-     * @return self
      */
     public static function create(
         RequestInterface $request,
         ResponseInterface $response = null,
         \Exception $previous = null,
         array $ctx = []
-    ) {
+    ): self {
         if (!$response) {
             return new self(
                 'Error completing request',
@@ -110,10 +106,8 @@ class RequestException extends TransferException
 
     /**
      * Obfuscates URI if there is a username and a password present
-     *
-     * @return UriInterface
      */
-    private static function obfuscateUri(UriInterface $uri)
+    private static function obfuscateUri(UriInterface $uri): UriInterface
     {
         $userInfo = $uri->getUserInfo();
 
@@ -134,20 +128,16 @@ class RequestException extends TransferException
 
     /**
      * Get the associated response
-     *
-     * @return ResponseInterface|null
      */
-    public function getResponse()
+    public function getResponse(): ?ResponseInterface
     {
         return $this->response;
     }
 
     /**
      * Check if a response was received
-     *
-     * @return bool
      */
-    public function hasResponse()
+    public function hasResponse(): bool
     {
         return $this->response !== null;
     }
@@ -159,10 +149,8 @@ class RequestException extends TransferException
      * using. It may also be just an empty array. Relying on this data will
      * couple you to a specific handler, but can give more debug information
      * when needed.
-     *
-     * @return array
      */
-    public function getHandlerContext()
+    public function getHandlerContext(): array
     {
         return $this->handlerContext;
     }
