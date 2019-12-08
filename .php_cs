@@ -17,6 +17,7 @@ $config = PhpCsFixer\Config::create()
         'no_blank_lines_after_phpdoc' => true,
         'phpdoc_trim_consecutive_blank_line_separation' => true,
         'phpdoc_trim' => true,
+        'phpdoc_var_without_name' => true,
         'phpdoc_align' => ['align'=>'vertical'],
         // 'native_function_invocation' => true,
     ])
