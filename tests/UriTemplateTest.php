@@ -5,7 +5,7 @@ use GuzzleHttp\UriTemplate;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\UriTemplate
+ * @covers \GuzzleHttp\UriTemplate
  */
 class UriTemplateTest extends TestCase
 {

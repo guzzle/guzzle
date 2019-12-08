@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
 /**
- * @covers GuzzleHttp\RedirectMiddleware
+ * @covers \GuzzleHttp\RedirectMiddleware
  */
 class RedirectMiddlewareTest extends TestCase
 {
