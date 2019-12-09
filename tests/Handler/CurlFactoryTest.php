@@ -778,10 +778,10 @@ class CurlFactoryTest extends TestCase
         $response = $promise->wait();
 
         $body = (string) $response->getBody();
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals($length, $response->getHeaderLine('Content-Length'));
-        $this->assertStringStartsWith('0123456789', $body);
-        $this->assertGreaterThanOrEqual($size, strlen($body));
-        $this->assertLessThan($length, strlen($body));
+        self::assertEquals(200, $response->getStatusCode());
+        self::assertEquals($length, $response->getHeaderLine('Content-Length'));
+        self::assertStringStartsWith('0123456789', $body);
+        self::assertGreaterThanOrEqual($size, strlen($body));
+        self::assertLessThan($length, strlen($body));
     }
 }
