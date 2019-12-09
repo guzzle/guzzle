@@ -1,8 +1,8 @@
 <?php
 namespace GuzzleHttp;
 
-use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -12,8 +12,6 @@ use Psr\Http\Message\UriInterface;
  */
 interface ClientInterface
 {
-    const VERSION = '6.2.1';
-
     /**
      * Send an HTTP request.
      *
@@ -22,6 +20,7 @@ interface ClientInterface
      *                                  request and to the transfer.
      *
      * @return ResponseInterface
+     *
      * @throws GuzzleException
      */
     public function send(RequestInterface $request, array $options = []);
@@ -49,6 +48,7 @@ interface ClientInterface
      * @param array               $options Request options to apply.
      *
      * @return ResponseInterface
+     *
      * @throws GuzzleException
      */
     public function request($method, $uri, array $options = []);
@@ -77,8 +77,6 @@ interface ClientInterface
      * the concrete client.
      *
      * @param string|null $option The config option to retrieve.
-     *
-     * @return mixed
      */
     public function getConfig($option = null);
 }

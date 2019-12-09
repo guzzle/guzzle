@@ -11,7 +11,7 @@ use Psr\Http\Message\RequestInterface;
  */
 class PrepareBodyMiddleware
 {
-    /** @var callable  */
+    /** @var callable */
     private $nextHandler;
 
     /**
@@ -23,9 +23,6 @@ class PrepareBodyMiddleware
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array            $options
-     *
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
@@ -66,6 +63,11 @@ class PrepareBodyMiddleware
         return $fn(Psr7\modify_request($request, $modify), $options);
     }
 
+    /**
+     * Add expect header
+     *
+     * @return void
+     */
     private function addExpectHeader(
         RequestInterface $request,
         array $options,

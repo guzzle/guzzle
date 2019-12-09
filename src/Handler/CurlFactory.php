@@ -1,10 +1,9 @@
 <?php
 namespace GuzzleHttp\Handler;
 
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
@@ -15,6 +14,9 @@ use Psr\Http\Message\RequestInterface;
  */
 class CurlFactory implements CurlFactoryInterface
 {
+    const CURL_VERSION_STR = 'curl_version';
+    const LOW_CURL_VERSION_NUMBER = '7.21.2';
+
     /** @var array */
     private $handles = [];
 
@@ -84,8 +86,6 @@ class CurlFactory implements CurlFactoryInterface
      * Completes a cURL transaction, either returning a response promise or a
      * rejected promise.
      *
-     * @param callable             $handler
-     * @param EasyHandle           $easy
      * @param CurlFactoryInterface $factory Dictates how the handle is released
      *
      * @return \GuzzleHttp\Promise\PromiseInterface
@@ -118,6 +118,7 @@ class CurlFactory implements CurlFactoryInterface
     private static function invokeStats(EasyHandle $easy)
     {
         $curlStats = curl_getinfo($easy->handle);
+        $curlStats['appconnect_time'] = curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME);
         $stats = new TransferStats(
             $easy->request,
             $easy->response,
@@ -137,7 +138,9 @@ class CurlFactory implements CurlFactoryInterface
         $ctx = [
             'errno' => $easy->errno,
             'error' => curl_error($easy->handle),
+            'appconnect_time' => curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME),
         ] + curl_getinfo($easy->handle);
+        $ctx[self::CURL_VERSION_STR] = curl_version()['version'];
         $factory->release($easy);
 
         // Retry when nothing is present or when curl failed to rewind.
@@ -173,13 +176,22 @@ class CurlFactory implements CurlFactoryInterface
                 )
             );
         }
-
-        $message = sprintf(
-            'cURL error %s: %s (%s)',
-            $ctx['errno'],
-            $ctx['error'],
-            'see http://curl.haxx.se/libcurl/c/libcurl-errors.html'
-        );
+        if (version_compare($ctx[self::CURL_VERSION_STR], self::LOW_CURL_VERSION_NUMBER)) {
+            $message = sprintf(
+                'cURL error %s: %s (%s)',
+                $ctx['errno'],
+                $ctx['error'],
+                'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
+            );
+        } else {
+            $message = sprintf(
+                'cURL error %s: %s (%s) for %s',
+                $ctx['errno'],
+                $ctx['error'],
+                'see https://curl.haxx.se/libcurl/c/libcurl-errors.html',
+                $easy->request->getUri()
+            );
+        }
 
         // Create a connection exception if it was a specific error code.
         $error = isset($connectionErrors[$easy->errno])
@@ -288,7 +300,14 @@ class CurlFactory implements CurlFactoryInterface
     {
         foreach ($conf['_headers'] as $name => $values) {
             foreach ($values as $value) {
-                $conf[CURLOPT_HTTPHEADER][] = "$name: $value";
+                $value = (string) $value;
+                if ($value === '') {
+                    // cURL requires a special format for empty headers.
+                    // See https://github.com/guzzle/guzzle/issues/1882 for more details.
+                    $conf[CURLOPT_HTTPHEADER][] = "$name;";
+                } else {
+                    $conf[CURLOPT_HTTPHEADER][] = "$name: $value";
+                }
             }
         }
 
@@ -388,7 +407,7 @@ class CurlFactory implements CurlFactoryInterface
         if (isset($options['force_ip_resolve'])) {
             if ('v4' === $options['force_ip_resolve']) {
                 $conf[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V4;
-            } else if ('v6' === $options['force_ip_resolve']) {
+            } elseif ('v6' === $options['force_ip_resolve']) {
                 $conf[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V6;
             }
         }
@@ -433,11 +452,16 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (isset($options['ssl_key'])) {
-            $sslKey = $options['ssl_key'];
-            if (is_array($sslKey)) {
-                $conf[CURLOPT_SSLKEYPASSWD] = $sslKey[1];
-                $sslKey = $sslKey[0];
+            if (is_array($options['ssl_key'])) {
+                if (count($options['ssl_key']) === 2) {
+                    list($sslKey, $conf[CURLOPT_SSLKEYPASSWD]) = $options['ssl_key'];
+                } else {
+                    list($sslKey) = $options['ssl_key'];
+                }
             }
+
+            $sslKey = isset($sslKey) ? $sslKey: $options['ssl_key'];
+
             if (!file_exists($sslKey)) {
                 throw new \InvalidArgumentException(
                     "SSL private key not found: {$sslKey}"

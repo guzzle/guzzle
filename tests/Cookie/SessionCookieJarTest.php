@@ -3,41 +3,41 @@ namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\SessionCookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\Cookie\SessionCookieJar
+ * @covers \GuzzleHttp\Cookie\SessionCookieJar
  */
-class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
+class SessionCookieJarTest extends TestCase
 {
     private $sessionVar;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->sessionVar = 'sessionKey';
 
         if (!isset($_SESSION)) {
-            $_SESSION = array();
+            $_SESSION = [];
         }
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testValidatesCookieSession()
     {
         $_SESSION[$this->sessionVar] = 'true';
+
+        $this->expectException(\RuntimeException::class);
         new SessionCookieJar($this->sessionVar);
     }
 
     public function testLoadsFromSession()
     {
         $jar = new SessionCookieJar($this->sessionVar);
-        $this->assertEquals([], $jar->getIterator()->getArrayCopy());
+        self::assertSame([], $jar->getIterator()->getArrayCopy());
         unset($_SESSION[$this->sessionVar]);
     }
 
     /**
-     * @dataProvider testPersistsToSessionParameters
+     * @dataProvider providerPersistsToSessionParameters
      */
     public function testPersistsToSession($testSaveSessionCookie = false)
     {
@@ -60,32 +60,32 @@ class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
             'Domain'  => 'foo.com',
         ]));
 
-        $this->assertEquals(3, count($jar));
+        self::assertCount(3, $jar);
         unset($jar);
 
         // Make sure it wrote to the sessionVar in $_SESSION
         $contents = $_SESSION[$this->sessionVar];
-        $this->assertNotEmpty($contents);
+        self::assertNotEmpty($contents);
 
         // Load the cookieJar from the file
         $jar = new SessionCookieJar($this->sessionVar);
 
         if ($testSaveSessionCookie) {
-            $this->assertEquals(3, count($jar));
+            self::assertCount(3, $jar);
         } else {
             // Weeds out temporary and session cookies
-            $this->assertEquals(2, count($jar));
+            self::assertCount(2, $jar);
         }
 
         unset($jar);
         unset($_SESSION[$this->sessionVar]);
     }
 
-    public function testPersistsToSessionParameters()
+    public function providerPersistsToSessionParameters()
     {
-        return array(
-            array(false),
-            array(true)
-        );
+        return [
+            [false],
+            [true]
+        ];
     }
 }

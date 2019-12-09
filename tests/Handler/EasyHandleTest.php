@@ -3,20 +3,20 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Psr7;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \GuzzleHttp\Handler\EasyHandle
  */
-class EasyHandleTest extends \PHPUnit_Framework_TestCase
+class EasyHandleTest extends TestCase
 {
-    /**
-     * @expectedException \BadMethodCallException
-     * @expectedExceptionMessage The EasyHandle has been released
-     */
     public function testEnsuresHandleExists()
     {
         $easy = new EasyHandle;
         unset($easy->handle);
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('The EasyHandle has been released');
         $easy->handle;
     }
 }

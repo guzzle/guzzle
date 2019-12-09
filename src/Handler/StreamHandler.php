@@ -1,10 +1,9 @@
 <?php
 namespace GuzzleHttp\Handler;
 
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\TransferStats;
@@ -34,7 +33,7 @@ class StreamHandler
             usleep($options['delay'] * 1000);
         }
 
-        $startTime = isset($options['on_stats']) ? microtime(true) : null;
+        $startTime = isset($options['on_stats']) ? \GuzzleHttp\_current_time() : null;
 
         try {
             // Does not support the expect header.
@@ -43,7 +42,7 @@ class StreamHandler
             // Append a content-length header if body size is zero to match
             // cURL's behavior.
             if (0 === $request->getBody()->getSize()) {
-                $request = $request->withHeader('Content-Length', 0);
+                $request = $request->withHeader('Content-Length', '0');
             }
 
             return $this->createResponse(
@@ -61,6 +60,7 @@ class StreamHandler
             if (strpos($message, 'getaddrinfo') // DNS lookup failed
                 || strpos($message, 'Connection refused')
                 || strpos($message, "couldn't connect to host") // error on HHVM
+                || strpos($message, "connection attempt failed")
             ) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             }
@@ -82,7 +82,7 @@ class StreamHandler
             $stats = new TransferStats(
                 $request,
                 $response,
-                microtime(true) - $startTime,
+                \GuzzleHttp\_current_time() - $startTime,
                 $error,
                 []
             );
@@ -103,7 +103,7 @@ class StreamHandler
         $status = $parts[1];
         $reason = isset($parts[2]) ? $parts[2] : null;
         $headers = \GuzzleHttp\headers_from_lines($hdrs);
-        list ($stream, $headers) = $this->checkDecode($options, $headers, $stream);
+        list($stream, $headers) = $this->checkDecode($options, $headers, $stream);
         $stream = Psr7\stream_for($stream);
         $sink = $stream;
 
@@ -190,12 +190,11 @@ class StreamHandler
     /**
      * Drains the source stream into the "sink" client option.
      *
-     * @param StreamInterface $source
-     * @param StreamInterface $sink
-     * @param string          $contentLength Header specifying the amount of
-     *                                       data to read.
+     * @param string $contentLength Header specifying the amount of
+     *                              data to read.
      *
      * @return StreamInterface
+     *
      * @throws \RuntimeException when the sink option is invalid.
      */
     private function drain(
@@ -225,6 +224,7 @@ class StreamHandler
      * @param callable $callback Callable that returns stream resource
      *
      * @return resource
+     *
      * @throws \RuntimeException on error
      */
     private function createResource(callable $callback)
@@ -276,7 +276,7 @@ class StreamHandler
         }
 
         $params = [];
-        $context = $this->getDefaultContext($request, $options);
+        $context = $this->getDefaultContext($request);
 
         if (isset($options['on_headers']) && !is_callable($options['on_headers'])) {
             throw new \InvalidArgumentException('on_headers must be callable');
@@ -307,7 +307,6 @@ class StreamHandler
             && isset($options['auth'][2])
             && 'ntlm' == $options['auth'][2]
         ) {
-
             throw new \InvalidArgumentException('Microsoft NTLM authentication only supported with curl handler');
         }
 
@@ -344,13 +343,25 @@ class StreamHandler
             if ('v4' === $options['force_ip_resolve']) {
                 $records = dns_get_record($uri->getHost(), DNS_A);
                 if (!isset($records[0]['ip'])) {
-                    throw new ConnectException(sprintf("Could not resolve IPv4 address for host '%s'", $uri->getHost()), $request);
+                    throw new ConnectException(
+                        sprintf(
+                            "Could not resolve IPv4 address for host '%s'",
+                            $uri->getHost()
+                        ),
+                        $request
+                    );
                 }
                 $uri = $uri->withHost($records[0]['ip']);
             } elseif ('v6' === $options['force_ip_resolve']) {
                 $records = dns_get_record($uri->getHost(), DNS_AAAA);
                 if (!isset($records[0]['ipv6'])) {
-                    throw new ConnectException(sprintf("Could not resolve IPv6 address for host '%s'", $uri->getHost()), $request);
+                    throw new ConnectException(
+                        sprintf(
+                            "Could not resolve IPv6 address for host '%s'",
+                            $uri->getHost()
+                        ),
+                        $request
+                    );
                 }
                 $uri = $uri->withHost('[' . $records[0]['ipv6'] . ']');
             }

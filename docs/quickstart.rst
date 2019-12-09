@@ -134,6 +134,7 @@ You can also use the `sendAsync()` and `requestAsync()` methods of a client:
     $headers = ['X-Foo' => 'Bar'];
     $body = 'Hello!';
     $request = new Request('HEAD', 'http://httpbin.org/head', $headers, $body);
+    $promise = $client->sendAsync($request);
 
     // Or, if you don't need to pass in a request instance:
     $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
@@ -183,26 +184,27 @@ requests.
         'webp'  => $client->getAsync('/image/webp')
     ];
 
-    // Wait on all of the requests to complete. Throws a ConnectException 
+    // Wait for the requests to complete; throws a ConnectException
     // if any of the requests fail
-    $results = Promise\unwrap($promises);
-    
-    // Wait for the requests to complete, even if some of them fail
-    $results = Promise\settle($promises)->wait();
+    $responses = Promise\unwrap($promises);
 
-    // You can access each result using the key provided to the unwrap
-    // function.
-    echo $results['image']['value']->getHeader('Content-Length')[0]
-    echo $results['png']['value']->getHeader('Content-Length')[0]
+    // Wait for the requests to complete, even if some of them fail
+    $responses = Promise\settle($promises)->wait();
+
+    // You can access each response using the key of the promise
+    echo $responses['image']->getHeader('Content-Length')[0];
+    echo $responses['png']->getHeader('Content-Length')[0];
 
 You can use the ``GuzzleHttp\Pool`` object when you have an indeterminate
 amount of requests you wish to send.
 
 .. code-block:: php
 
-    use GuzzleHttp\Pool;
     use GuzzleHttp\Client;
+    use GuzzleHttp\Exception\RequestException;
+    use GuzzleHttp\Pool;
     use GuzzleHttp\Psr7\Request;
+    use GuzzleHttp\Psr7\Response;
 
     $client = new Client();
 
@@ -215,10 +217,10 @@ amount of requests you wish to send.
 
     $pool = new Pool($client, $requests(100), [
         'concurrency' => 5,
-        'fulfilled' => function ($response, $index) {
+        'fulfilled' => function (Response $response, $index) {
             // this is delivered each successful response
         },
-        'rejected' => function ($reason, $index) {
+        'rejected' => function (RequestException $reason, $index) {
             // this is delivered each failed request
         },
     ]);
@@ -228,7 +230,7 @@ amount of requests you wish to send.
 
     // Force the pool of requests to complete.
     $promise->wait();
-    
+
 Or using a closure that will return a promise once the pool calls the closure.
 
 .. code-block:: php
@@ -245,7 +247,7 @@ Or using a closure that will return a promise once the pool calls the closure.
     };
 
     $pool = new Pool($client, $requests(100));
-        
+
 
 Using Responses
 ===============
@@ -272,7 +274,7 @@ You can retrieve headers from the response:
     }
 
     // Get a header from the response.
-    echo $response->getHeader('Content-Length');
+    echo $response->getHeader('Content-Length')[0];
 
     // Get all of the response headers.
     foreach ($response->getHeaders() as $name => $values) {
@@ -446,6 +448,43 @@ to use a shared cookie jar for all requests.
     $client = new \GuzzleHttp\Client(['cookies' => true]);
     $r = $client->request('GET', 'http://httpbin.org/cookies');
 
+Different implementations exist for the ``GuzzleHttp\Cookie\CookieJarInterface``
+:
+
+- The ``GuzzleHttp\Cookie\CookieJar`` class stores cookies as an array.
+- The ``GuzzleHttp\Cookie\FileCookieJar`` class persists non-session cookies
+  using a JSON formatted file.
+- The ``GuzzleHttp\Cookie\SessionCookieJar`` class persists cookies in the
+  client session.
+
+You can manually set cookies into a cookie jar with the named constructor
+``fromArray(array $cookies, $domain)``.
+
+.. code-block:: php
+
+    $jar = \GuzzleHttp\Cookie\CookieJar::fromArray(
+        [
+            'some_cookie' => 'foo',
+            'other_cookie' => 'barbaz1234'
+        ],
+        'example.org'
+    );
+
+You can get a cookie by its name with the ``getCookieByName($name)`` method
+which returns a ``GuzzleHttp\Cookie\SetCookie`` instance.
+
+.. code-block:: php
+
+    $cookie = $jar->getCookieByName('some_cookie');
+
+    $cookie->getValue(); // 'foo'
+    $cookie->getDomain(); // 'example.org'
+    $cookie->getExpires(); // expiration date as a Unix timestamp
+
+The cookies can be also fetched into an array thanks to the `toArray()` method.
+The ``GuzzleHttp\Cookie\CookieJarInterface`` interface extends
+``Traversable`` so it can be iterated in a foreach loop.
+
 
 Redirects
 =========
@@ -482,6 +521,22 @@ The following example shows that redirects can be disabled.
 Exceptions
 ==========
 
+**Tree View**
+
+The following tree view describes how the Guzzle Exceptions depend
+on each other.
+
+.. code-block:: none
+
+    . \RuntimeException
+    └── TransferException (implements GuzzleException)
+        └── RequestException
+            ├── BadResponseException
+            │   ├── ServerException
+            │   └── ClientException
+            ├── ConnectException
+            └── TooManyRedirectsException
+
 Guzzle throws exceptions for errors that occur during a transfer.
 
 - In the event of a networking error (connection timeout, DNS errors, etc.),
@@ -516,6 +571,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
   .. code-block:: php
 
+      use GuzzleHttp\Psr7;
       use GuzzleHttp\Exception\ClientException;
 
       try {
@@ -550,10 +606,12 @@ behavior of the library.
     the timeout.
 ``HTTP_PROXY``
     Defines the proxy to use when sending requests using the "http" protocol.
-    
+
     Note: because the HTTP_PROXY variable may contain arbitrary user input on some (CGI) environments, the variable is only used on the CLI SAPI. See https://httpoxy.org for more information.
 ``HTTPS_PROXY``
     Defines the proxy to use when sending requests using the "https" protocol.
+``NO_PROXY``
+    Defines URLs for which a proxy should not be used. See :ref:`proxy-option` for usage.
 
 
 Relevant ini Settings

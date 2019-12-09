@@ -1,4 +1,8 @@
 <?php
 namespace GuzzleHttp\Exception;
 
-interface GuzzleException {}
+use Throwable;
+
+interface GuzzleException extends Throwable
+{
+}

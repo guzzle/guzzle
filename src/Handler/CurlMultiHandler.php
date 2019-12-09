@@ -1,9 +1,9 @@
 <?php
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
-use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -23,6 +23,7 @@ class CurlMultiHandler
     private $active;
     private $handles = [];
     private $delays = [];
+    private $options = [];
 
     /**
      * This handler accepts the following options:
@@ -30,21 +31,38 @@ class CurlMultiHandler
      * - handle_factory: An optional factory  used to create curl handles
      * - select_timeout: Optional timeout (in seconds) to block before timing
      *   out while selecting curl handles. Defaults to 1 second.
-     *
-     * @param array $options
+     * - options: An associative array of CURLMOPT_* options and
+     *   corresponding values for curl_multi_setopt()
      */
     public function __construct(array $options = [])
     {
         $this->factory = isset($options['handle_factory'])
             ? $options['handle_factory'] : new CurlFactory(50);
-        $this->selectTimeout = isset($options['select_timeout'])
-            ? $options['select_timeout'] : 1;
+
+        if (isset($options['select_timeout'])) {
+            $this->selectTimeout = $options['select_timeout'];
+        } elseif ($selectTimeout = getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
+            $this->selectTimeout = $selectTimeout;
+        } else {
+            $this->selectTimeout = 1;
+        }
+
+        $this->options = isset($options['options']) ? $options['options'] : [];
     }
 
     public function __get($name)
     {
         if ($name === '_mh') {
-            return $this->_mh = curl_multi_init();
+            $this->_mh = curl_multi_init();
+
+            foreach ($this->options as $option => $value) {
+                // A warning is raised in case of a wrong option.
+                curl_multi_setopt($this->_mh, $option, $value);
+            }
+
+            // Further calls to _mh will return the value directly, without entering the
+            // __get() method at all.
+            return $this->_mh;
         }
 
         throw new \BadMethodCallException();
@@ -65,7 +83,9 @@ class CurlMultiHandler
 
         $promise = new Promise(
             [$this, 'execute'],
-            function () use ($id) { return $this->cancel($id); }
+            function () use ($id) {
+                return $this->cancel($id);
+            }
         );
 
         $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
@@ -80,7 +100,7 @@ class CurlMultiHandler
     {
         // Add any delayed handles if needed.
         if ($this->delays) {
-            $currentTime = microtime(true);
+            $currentTime = \GuzzleHttp\_current_time();
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
                     unset($this->delays[$id]);
@@ -132,7 +152,7 @@ class CurlMultiHandler
         if (empty($easy->options['delay'])) {
             curl_multi_add_handle($this->_mh, $easy->handle);
         } else {
-            $this->delays[$id] = microtime(true) + ($easy->options['delay'] / 1000);
+            $this->delays[$id] = \GuzzleHttp\_current_time() + ($easy->options['delay'] / 1000);
         }
     }
 
@@ -184,7 +204,7 @@ class CurlMultiHandler
 
     private function timeToNext()
     {
-        $currentTime = microtime(true);
+        $currentTime = \GuzzleHttp\_current_time();
         $nextTime = PHP_INT_MAX;
         foreach ($this->delays as $time) {
             if ($time < $nextTime) {

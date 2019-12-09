@@ -2,16 +2,10 @@
 namespace GuzzleHttp\Test;
 
 use GuzzleHttp;
+use PHPUnit\Framework\TestCase;
 
-class FunctionsTest extends \PHPUnit_Framework_TestCase
+class FunctionsTest extends TestCase
 {
-    public function testExpandsTemplate()
-    {
-        $this->assertEquals(
-            'foo/123',
-            GuzzleHttp\uri_template('foo/{bar}', ['bar' => '123'])
-        );
-    }
     public function noBodyProvider()
     {
         return [['get'], ['head'], ['delete']];
@@ -20,7 +14,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     public function testProvidesDefaultUserAgent()
     {
         $ua = GuzzleHttp\default_user_agent();
-        $this->assertEquals(1, preg_match('#^GuzzleHttp/.+ curl/.+ PHP/.+$#', $ua));
+        self::assertRegExp('#^GuzzleHttp/.+ curl/.+ PHP/.+$#', $ua);
     }
 
     public function typeProvider()
@@ -40,13 +34,29 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
      */
     public function testDescribesType($input, $output)
     {
-        $this->assertEquals($output, GuzzleHttp\describe_type($input));
+        /**
+         * Output may not match if Xdebug is loaded and overloading var_dump().
+         *
+         * @see https://xdebug.org/docs/display#overload_var_dump
+         */
+        if (extension_loaded('xdebug')) {
+            $originalOverload =  ini_get('xdebug.overload_var_dump');
+            ini_set('xdebug.overload_var_dump', 0);
+        }
+
+        try {
+            self::assertSame($output, GuzzleHttp\describe_type($input));
+        } finally {
+            if (extension_loaded('xdebug')) {
+                ini_set('xdebug.overload_var_dump', $originalOverload);
+            }
+        }
     }
 
     public function testParsesHeadersFromLines()
     {
         $lines = ['Foo: bar', 'Foo: baz', 'Abc: 123', 'Def: a, b'];
-        $this->assertEquals([
+        self::assertSame([
             'Foo' => ['bar', 'baz'],
             'Abc' => ['123'],
             'Def' => ['a, b'],
@@ -56,19 +66,19 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     public function testParsesHeadersFromLinesWithMultipleLines()
     {
         $lines = ['Foo: bar', 'Foo: baz', 'Foo: 123'];
-        $this->assertEquals([
+        self::assertSame([
             'Foo' => ['bar', 'baz', '123'],
         ], GuzzleHttp\headers_from_lines($lines));
     }
 
     public function testReturnsDebugResource()
     {
-        $this->assertTrue(is_resource(GuzzleHttp\debug_resource()));
+        self::assertInternalType('resource', GuzzleHttp\debug_resource());
     }
 
     public function testProvidesDefaultCaBundler()
     {
-        $this->assertFileExists(GuzzleHttp\default_ca_bundle());
+        self::assertFileExists(GuzzleHttp\default_ca_bundle());
     }
 
     public function noProxyProvider()
@@ -88,44 +98,46 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
      */
     public function testChecksNoProxyList($host, $list, $result)
     {
-        $this->assertSame(
+        self::assertSame(
             $result,
             \GuzzleHttp\is_host_in_noproxy($host, $list)
         );
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEnsuresNoProxyCheckHostIsSet()
     {
+        $this->expectException(\InvalidArgumentException::class);
+
         \GuzzleHttp\is_host_in_noproxy('', []);
     }
 
     public function testEncodesJson()
     {
-        $this->assertEquals('true', \GuzzleHttp\json_encode(true));
+        self::assertSame('true', \GuzzleHttp\json_encode(true));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEncodesJsonAndThrowsOnError()
     {
+        $this->expectException(\InvalidArgumentException::class);
+
         \GuzzleHttp\json_encode("\x99");
     }
 
     public function testDecodesJson()
     {
-        $this->assertSame(true, \GuzzleHttp\json_decode('true'));
+        self::assertTrue(\GuzzleHttp\json_decode('true'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testDecodesJsonAndThrowsOnError()
     {
+        $this->expectException(\InvalidArgumentException::class);
+
         \GuzzleHttp\json_decode('{{]]');
+    }
+
+    public function testCurrentTime()
+    {
+        self::assertGreaterThan(0, GuzzleHttp\_current_time());
     }
 }
 

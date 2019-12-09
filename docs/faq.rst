@@ -65,6 +65,23 @@ used with a client.
         ]
     ]);
 
+If you use asynchronous requests with cURL multi handler and want to tweak it,
+additional options can be specified as an associative array in the
+**options** key of the ``CurlMultiHandler`` constructor.
+
+.. code-block:: php
+
+    use \GuzzleHttp\Client;
+    use \GuzzleHttp\HandlerStack;
+    use \GuzzleHttp\Handler\CurlMultiHandler;
+
+    $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler([
+        'options' => [
+            CURLMOPT_MAX_TOTAL_CONNECTIONS => 50,
+            CURLMOPT_MAX_HOST_CONNECTIONS => 5,
+        ]
+    ]))]);
+
 
 How can I add custom stream context options?
 ============================================
@@ -130,8 +147,8 @@ setting the ``expect`` request option to ``false``:
     // Disable the expect header on all client requests
     $client = new GuzzleHttp\Client(['expect' => false]);
 
-How can I track a redirected requests?
-======================================
+How can I track redirected requests?
+====================================
 
 You can enable tracking of redirected URIs and status codes via the
 `track_redirects` option. Each redirected URI and status code will be stored in the
@@ -159,8 +176,8 @@ together in a single report:
     $response = $client->request('GET', $initialRequest); // Make your request
 
     // Retrieve both Redirect History headers
-    $redirectUriHistory = $response->getHeader('X-Guzzle-Redirect-History'); // retrieve Redirect URI history
-    $redirectCodeHistory = $response->getHeader('X-Guzzle-Redirect-Status-History'); // retrieve Redirect HTTP Status history
+    $redirectUriHistory = $response->getHeader('X-Guzzle-Redirect-History')[0]; // retrieve Redirect URI history
+    $redirectCodeHistory = $response->getHeader('X-Guzzle-Redirect-Status-History')[0]; // retrieve Redirect HTTP Status history
 
     // Add the initial URI requested to the (beginning of) URI history
     array_unshift($redirectUriHistory, $initialRequest);

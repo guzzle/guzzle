@@ -18,11 +18,11 @@ final class TransferStats
     private $handlerErrorData;
 
     /**
-     * @param RequestInterface  $request          Request that was sent.
-     * @param ResponseInterface $response         Response received (if any)
-     * @param null              $transferTime     Total handler transfer time.
-     * @param mixed             $handlerErrorData Handler error data.
-     * @param array             $handlerStats     Handler specific stats.
+     * @param RequestInterface       $request          Request that was sent.
+     * @param ResponseInterface|null $response         Response received (if any)
+     * @param float|null             $transferTime     Total handler transfer time.
+     * @param mixed                  $handlerErrorData Handler error data.
+     * @param array                  $handlerStats     Handler specific stats.
      */
     public function __construct(
         RequestInterface $request,
@@ -72,8 +72,6 @@ final class TransferStats
      * This might be an exception, a integer representing an error code, or
      * anything else. Relying on this value assumes that you know what handler
      * you are using.
-     *
-     * @return mixed
      */
     public function getHandlerErrorData()
     {
@@ -93,7 +91,7 @@ final class TransferStats
     /**
      * Get the estimated time the request was being transferred by the handler.
      *
-     * @return float Time in seconds.
+     * @return float|null Time in seconds.
      */
     public function getTransferTime()
     {

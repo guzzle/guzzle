@@ -5,32 +5,55 @@ use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Tests\Server;
+use PHPUnit\Framework\TestCase;
 
-class CurlMultiHandlerTest extends \PHPUnit_Framework_TestCase
+class CurlMultiHandlerTest extends TestCase
 {
+    public function setUp(): void
+    {
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_multi']);
+    }
+
+    public function tearDown(): void
+    {
+        unset($_SERVER['_curl_multi'], $_SERVER['curl_test']);
+    }
+
+    public function testCanAddCustomCurlOptions()
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler(['options' => [
+            CURLMOPT_MAXCONNECTS => 5,
+        ]]);
+        $request = new Request('GET', Server::$url);
+        $a($request, []);
+        self::assertEquals(5, $_SERVER['_curl_multi'][CURLMOPT_MAXCONNECTS]);
+    }
+
     public function testSendsRequest()
     {
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler();
         $request = new Request('GET', Server::$url);
         $response = $a($request, [])->wait();
-        $this->assertEquals(200, $response->getStatusCode());
+        self::assertSame(200, $response->getStatusCode());
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
-     * @expectedExceptionMessage cURL error
-     */
     public function testCreatesExceptions()
     {
         $a = new CurlMultiHandler();
+
+        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
+        $this->expectExceptionMessage('cURL error');
         $a(new Request('GET', 'http://localhost:123'), [])->wait();
     }
 
     public function testCanSetSelectTimeout()
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
-        $this->assertEquals(2, $this->readAttribute($a, 'selectTimeout'));
+        self::assertEquals(2, self::readAttribute($a, 'selectTimeout'));
     }
 
     public function testCanCancel()
@@ -45,6 +68,10 @@ class CurlMultiHandlerTest extends \PHPUnit_Framework_TestCase
             $response->cancel();
             $responses[] = $response;
         }
+
+        foreach ($responses as $r) {
+            self::assertSame('rejected', $response->getState());
+        }
     }
 
     public function testCannotCancelFinished()
@@ -55,6 +82,7 @@ class CurlMultiHandlerTest extends \PHPUnit_Framework_TestCase
         $response = $a(new Request('GET', Server::$url), []);
         $response->wait();
         $response->cancel();
+        self::assertSame('fulfilled', $response->getState());
     }
 
     public function testDelaysConcurrently()
@@ -62,18 +90,31 @@ class CurlMultiHandlerTest extends \PHPUnit_Framework_TestCase
         Server::flush();
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler();
-        $expected = microtime(true) + (100 / 1000);
+        $expected = \GuzzleHttp\_current_time() + (100 / 1000);
         $response = $a(new Request('GET', Server::$url), ['delay' => 100]);
         $response->wait();
-        $this->assertGreaterThanOrEqual($expected, microtime(true));
+        self::assertGreaterThanOrEqual($expected, \GuzzleHttp\_current_time());
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     */
+    public function testUsesTimeoutEnvironmentVariables()
+    {
+        $a = new CurlMultiHandler();
+
+        //default if no options are given and no environment variable is set
+        self::assertEquals(1, self::readAttribute($a, 'selectTimeout'));
+
+        putenv("GUZZLE_CURL_SELECT_TIMEOUT=3");
+        $a = new CurlMultiHandler();
+        $selectTimeout = getenv('GUZZLE_CURL_SELECT_TIMEOUT');
+        //Handler reads from the environment if no options are given
+        self::assertEquals($selectTimeout, self::readAttribute($a, 'selectTimeout'));
+    }
+
     public function throwsWhenAccessingInvalidProperty()
     {
         $h = new CurlMultiHandler();
+
+        $this->expectException(\BadMethodCallException::class);
         $h->foo;
     }
 }

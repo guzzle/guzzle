@@ -1,12 +1,12 @@
 <?php
 namespace GuzzleHttp;
 
+use GuzzleHttp\Promise\EachPromise;
 use GuzzleHttp\Promise\PromisorInterface;
 use Psr\Http\Message\RequestInterface;
-use GuzzleHttp\Promise\EachPromise;
 
 /**
- * Sends and iterator of requests concurrently using a capped pool size.
+ * Sends an iterator of requests concurrently using a capped pool size.
  *
  * The pool will read from an iterator until it is cancelled or until the
  * iterator is consumed. When a request is yielded, the request is sent after
@@ -26,10 +26,10 @@ class Pool implements PromisorInterface
      * @param array|\Iterator $requests Requests or functions that return
      *                                  requests to send concurrently.
      * @param array           $config   Associative array of options
-     *     - concurrency: (int) Maximum number of requests to send concurrently
-     *     - options: Array of request options to apply to each request.
-     *     - fulfilled: (callable) Function to invoke when a request completes.
-     *     - rejected: (callable) Function to invoke when a request is rejected.
+     *                                  - concurrency: (int) Maximum number of requests to send concurrently
+     *                                  - options: Array of request options to apply to each request.
+     *                                  - fulfilled: (callable) Function to invoke when a request completes.
+     *                                  - rejected: (callable) Function to invoke when a request is rejected.
      */
     public function __construct(
         ClientInterface $client,
@@ -69,6 +69,11 @@ class Pool implements PromisorInterface
         $this->each = new EachPromise($requests(), $config);
     }
 
+    /**
+     * Get promise
+     *
+     * @return GuzzleHttp\Promise\Promise
+     */
     public function promise()
     {
         return $this->each->promise();
@@ -89,6 +94,7 @@ class Pool implements PromisorInterface
      *
      * @return array Returns an array containing the response or an exception
      *               in the same order that the requests were sent.
+     *
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
     public static function batch(
@@ -106,6 +112,11 @@ class Pool implements PromisorInterface
         return $res;
     }
 
+    /**
+     * Execute callback(s)
+     *
+     * @return void
+     */
     private static function cmpCallback(array &$options, $name, array &$results)
     {
         if (!isset($options[$name])) {

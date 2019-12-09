@@ -1,7 +1,9 @@
 Guzzle, PHP HTTP client
 =======================
 
-[![Build Status](https://travis-ci.org/guzzle/guzzle.svg?branch=master)](https://travis-ci.org/guzzle/guzzle)
+[![Latest Version](https://img.shields.io/github/release/guzzle/guzzle.svg?style=flat-square)](https://github.com/guzzle/guzzle/releases)
+![Build Status](https://github.com/guzzle/guzzle/workflows/CI/badge.svg?style=flat-square)
+[![Total Downloads](https://img.shields.io/packagist/dt/guzzlehttp/guzzle.svg?style=flat-square)](https://packagist.org/packages/guzzlehttp/guzzle)
 
 Guzzle is a PHP HTTP client that makes it easy to send HTTP requests and
 trivial to integrate with web services.
@@ -19,19 +21,18 @@ trivial to integrate with web services.
 
 ```php
 $client = new \GuzzleHttp\Client();
-$res = $client->request('GET', 'https://api.github.com/repos/guzzle/guzzle');
-echo $res->getStatusCode();
-// 200
-echo $res->getHeaderLine('content-type');
-// 'application/json; charset=utf8'
-echo $res->getBody();
-// '{"id": 1420053, "name": "guzzle", ...}'
+$response = $client->request('GET', 'https://api.github.com/repos/guzzle/guzzle');
 
-// Send an asynchronous request.
+echo $response->getStatusCode(); # 200
+echo $response->getHeaderLine('content-type'); # 'application/json; charset=utf8'
+echo $response->getBody(); # '{"id": 1420053, "name": "guzzle", ...}'
+
+# Send an asynchronous request.
 $request = new \GuzzleHttp\Psr7\Request('GET', 'http://httpbin.org');
 $promise = $client->sendAsync($request)->then(function ($response) {
     echo 'I completed! ' . $response->getBody();
 });
+
 $promise->wait();
 ```
 
@@ -55,7 +56,7 @@ curl -sS https://getcomposer.org/installer | php
 Next, run the Composer command to install the latest stable version of Guzzle:
 
 ```bash
-php composer.phar require guzzlehttp/guzzle
+composer require guzzlehttp/guzzle
 ```
 
 After installing, you need to require Composer's autoloader:
@@ -67,7 +68,7 @@ require 'vendor/autoload.php';
 You can then later update Guzzle using composer:
 
  ```bash
-composer.phar update
+composer update
  ```
 
 
@@ -77,13 +78,16 @@ composer.phar update
 |---------|------------|---------------------|--------------|---------------------|---------------------|-------|-------------|
 | 3.x     | EOL        | `guzzle/guzzle`     | `Guzzle`     | [v3][guzzle-3-repo] | [v3][guzzle-3-docs] | No    | >= 5.3.3    |
 | 4.x     | EOL        | `guzzlehttp/guzzle` | `GuzzleHttp` | [v4][guzzle-4-repo] | N/A                 | No    | >= 5.4      |
-| 5.x     | Maintained | `guzzlehttp/guzzle` | `GuzzleHttp` | [v5][guzzle-5-repo] | [v5][guzzle-5-docs] | No    | >= 5.4      |
-| 6.x     | Latest     | `guzzlehttp/guzzle` | `GuzzleHttp` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   | >= 5.5      |
+| 5.x     | EOL        | `guzzlehttp/guzzle` | `GuzzleHttp` | [v5][guzzle-5-repo] | [v5][guzzle-5-docs] | No    | >= 5.4      |
+| 6.x     | Maintained | `guzzlehttp/guzzle` | `GuzzleHttp` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   | >= 5.5      |
+| 7.x     | Latest     | `guzzlehttp/guzzle` | `GuzzleHttp` | [v7][guzzle-7-repo] | [v7][guzzle-7-docs] | Yes   | >= 7.2      |
 
 [guzzle-3-repo]: https://github.com/guzzle/guzzle3
 [guzzle-4-repo]: https://github.com/guzzle/guzzle/tree/4.x
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
-[guzzle-6-repo]: https://github.com/guzzle/guzzle
-[guzzle-3-docs]: http://guzzle3.readthedocs.org/en/latest/
-[guzzle-5-docs]: http://guzzle.readthedocs.org/en/5.3/
-[guzzle-6-docs]: http://guzzle.readthedocs.org/en/latest/
+[guzzle-6-repo]: https://github.com/guzzle/guzzle/tree/6.5
+[guzzle-7-repo]: https://github.com/guzzle/guzzle
+[guzzle-3-docs]: http://guzzle3.readthedocs.org
+[guzzle-5-docs]: http://docs.guzzlephp.org/en/5.3/
+[guzzle-6-docs]: http://docs.guzzlephp.org/en/6.5/
+[guzzle-7-docs]: http://docs.guzzlephp.org/en/latest/

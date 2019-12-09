@@ -7,25 +7,25 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Tests\Server;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \GuzzleHttp\Handler\CurlHandler
  */
-class CurlHandlerTest extends \PHPUnit_Framework_TestCase
+class CurlHandlerTest extends TestCase
 {
     protected function getHandler($options = [])
     {
         return new CurlHandler($options);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
-     * @expectedExceptionMessage cURL
-     */
     public function testCreatesCurlErrors()
     {
         $handler = new CurlHandler();
         $request = new Request('GET', 'http://localhost:123');
+
+        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
+        $this->expectExceptionMessage('cURL');
         $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
     }
 
@@ -36,8 +36,8 @@ class CurlHandlerTest extends \PHPUnit_Framework_TestCase
         Server::enqueue([$response, $response]);
         $a = new CurlHandler();
         $request = new Request('GET', Server::$url);
-        $a($request, []);
-        $a($request, []);
+        self::assertInstanceOf(\GuzzleHttp\Promise\FulfilledPromise::class, $a($request, []));
+        self::assertInstanceOf(\GuzzleHttp\Promise\FulfilledPromise::class, $a($request, []));
     }
 
     public function testDoesSleep()
@@ -46,9 +46,9 @@ class CurlHandlerTest extends \PHPUnit_Framework_TestCase
         Server::enqueue([$response]);
         $a = new CurlHandler();
         $request = new Request('GET', Server::$url);
-        $s = microtime(true);
+        $s = \GuzzleHttp\_current_time();
         $a($request, ['delay' => 0.1])->wait();
-        $this->assertGreaterThan(0.0001, microtime(true) - $s);
+        self::assertGreaterThan(0.0001, \GuzzleHttp\_current_time() - $s);
     }
 
     public function testCreatesCurlErrorsWithContext()
@@ -59,10 +59,10 @@ class CurlHandlerTest extends \PHPUnit_Framework_TestCase
         $p = $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])
             ->otherwise(function (ConnectException $e) use (&$called) {
                 $called = true;
-                $this->assertArrayHasKey('errno', $e->getHandlerContext());
+                self::assertArrayHasKey('errno', $e->getHandlerContext());
             });
         $p->wait();
-        $this->assertTrue($called);
+        self::assertTrue($called);
     }
 
     public function testUsesContentLengthWhenOverInMemorySize()
@@ -79,7 +79,7 @@ class CurlHandlerTest extends \PHPUnit_Framework_TestCase
         );
         $handler($request, [])->wait();
         $received = Server::received()[0];
-        $this->assertEquals(1000000, $received->getHeaderLine('Content-Length'));
-        $this->assertFalse($received->hasHeader('Transfer-Encoding'));
+        self::assertEquals(1000000, $received->getHeaderLine('Content-Length'));
+        self::assertFalse($received->hasHeader('Transfer-Encoding'));
     }
 }

@@ -50,7 +50,7 @@ The ``create`` method adds default handlers to the ``HandlerStack``. When the
   2. ``cookies`` - extracts response cookies into the cookie jar.
   3. ``allow_redirects`` - Follows redirects.
   4. ``http_errors`` - throws exceptions when the response status code ``>=``
-     300.
+     400.
 
 When provided no ``$handler`` argument, ``GuzzleHttp\HandlerStack::create()``
 will choose the most appropriate handler based on the extensions available on
