@@ -11,11 +11,8 @@ use Psr\Http\Message\RequestInterface;
  */
 class PrepareBodyMiddleware
 {
-    /** @var callable  */
+    /** @var callable */
     private $nextHandler;
-
-    /** @var array */
-    private static $skipMethods = ['GET' => true, 'HEAD' => true];
 
     /**
      * @param callable $nextHandler Next handler to invoke.
@@ -26,9 +23,6 @@ class PrepareBodyMiddleware
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array            $options
-     *
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
@@ -36,9 +30,7 @@ class PrepareBodyMiddleware
         $fn = $this->nextHandler;
 
         // Don't do anything if the request has no body.
-        if (isset(self::$skipMethods[$request->getMethod()])
-            || $request->getBody()->getSize() === 0
-        ) {
+        if ($request->getBody()->getSize() === 0) {
             return $fn($request, $options);
         }
 
@@ -54,8 +46,7 @@ class PrepareBodyMiddleware
         }
 
         // Add a default content-length or transfer-encoding header.
-        if (!isset(self::$skipMethods[$request->getMethod()])
-            && !$request->hasHeader('Content-Length')
+        if (!$request->hasHeader('Content-Length')
             && !$request->hasHeader('Transfer-Encoding')
         ) {
             $size = $request->getBody()->getSize();
@@ -72,6 +63,11 @@ class PrepareBodyMiddleware
         return $fn(Psr7\modify_request($request, $modify), $options);
     }
 
+    /**
+     * Add expect header
+     *
+     * @return void
+     */
     private function addExpectHeader(
         RequestInterface $request,
         array $options,

@@ -1,9 +1,9 @@
 <?php
 namespace GuzzleHttp\Exception;
 
+use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -14,7 +14,7 @@ class RequestException extends TransferException
     /** @var RequestInterface */
     private $request;
 
-    /** @var ResponseInterface */
+    /** @var ResponseInterface|null */
     private $response;
 
     /** @var array */
@@ -28,9 +28,7 @@ class RequestException extends TransferException
         array $handlerContext = []
     ) {
         // Set the code of the exception if the response is set and not future.
-        $code = $response && !($response instanceof PromiseInterface)
-            ? $response->getStatusCode()
-            : 0;
+        $code = $response ? $response->getStatusCode() : 0;
         parent::__construct($message, $code, $previous);
         $this->request = $request;
         $this->response = $response;
@@ -39,9 +37,6 @@ class RequestException extends TransferException
 
     /**
      * Wrap non-RequestExceptions with a RequestException
-     *
-     * @param RequestInterface $request
-     * @param \Exception       $e
      *
      * @return RequestException
      */
@@ -104,7 +99,7 @@ class RequestException extends TransferException
             $response->getReasonPhrase()
         );
 
-        $summary = static::getResponseBodySummary($response);
+        $summary = \GuzzleHttp\Psr7\get_message_body_summary($response);
 
         if ($summary !== null) {
             $message .= ":\n{$summary}\n";
@@ -114,52 +109,11 @@ class RequestException extends TransferException
     }
 
     /**
-     * Get a short summary of the response
-     *
-     * Will return `null` if the response is not printable.
-     *
-     * @param ResponseInterface $response
-     *
-     * @return string|null
-     */
-    public static function getResponseBodySummary(ResponseInterface $response)
-    {
-        $body = $response->getBody();
-
-        if (!$body->isSeekable()) {
-            return null;
-        }
-
-        $size = $body->getSize();
-
-        if ($size === 0) {
-            return null;
-        }
-
-        $summary = $body->read(120);
-        $body->rewind();
-
-        if ($size > 120) {
-            $summary .= ' (truncated...)';
-        }
-
-        // Matches any printable character, including unicode characters:
-        // letters, marks, numbers, punctuation, spacing, and separators.
-        if (preg_match('/[^\pL\pM\pN\pP\pS\pZ\n\r\t]/', $summary)) {
-            return null;
-        }
-
-        return $summary;
-    }
-
-    /**
-     * Obfuscates URI if there is an username and a password present
-     *
-     * @param UriInterface $uri
+     * Obfuscates URI if there is a username and a password present
      *
      * @return UriInterface
      */
-    private static function obfuscateUri($uri)
+    private static function obfuscateUri(UriInterface $uri)
     {
         $userInfo = $uri->getUserInfo();
 
@@ -172,10 +126,8 @@ class RequestException extends TransferException
 
     /**
      * Get the request that caused the exception
-     *
-     * @return RequestInterface
      */
-    public function getRequest()
+    public function getRequest(): RequestInterface
     {
         return $this->request;
     }

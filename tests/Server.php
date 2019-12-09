@@ -29,6 +29,7 @@ class Server
 
     /**
      * Flush the received requests from the server
+     *
      * @throws \RuntimeException
      */
     public static function flush()
@@ -44,6 +45,7 @@ class Server
      *
      * @param array|ResponseInterface $responses A single or array of Responses
      *                                           to queue.
+     *
      * @throws \Exception
      */
     public static function enqueue($responses)
@@ -74,6 +76,7 @@ class Server
      * Get all of the received requests
      *
      * @return ResponseInterface[]
+     *
      * @throws \RuntimeException
      */
     public static function received()

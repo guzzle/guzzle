@@ -15,13 +15,14 @@ class SessionCookieJar extends CookieJar
     /**
      * Create a new SessionCookieJar object
      *
-     * @param string $sessionKey        Session key name to store the cookie 
-     *                                  data in session
-     * @param bool $storeSessionCookies Set to true to store session cookies
-     *                                  in the cookie jar.
+     * @param string $sessionKey          Session key name to store the cookie
+     *                                    data in session
+     * @param bool   $storeSessionCookies Set to true to store session cookies
+     *                                    in the cookie jar.
      */
     public function __construct($sessionKey, $storeSessionCookies = false)
     {
+        parent::__construct();
         $this->sessionKey = $sessionKey;
         $this->storeSessionCookies = $storeSessionCookies;
         $this->load();

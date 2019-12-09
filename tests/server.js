@@ -155,6 +155,15 @@ var GuzzleServer = function(port, log) {
         var body = JSON.stringify(that.requests);
         res.writeHead(200, 'OK', { 'Content-Length': body.length });
         res.end(body);
+      } else if (req.url == '/guzzle-server/read-timeout') {
+        if (that.log) {
+          console.log('Sleeping');
+        }
+        res.writeHead(200, 'OK');
+        res.write("sleeping 60 seconds ...\n");
+        setTimeout(function () {
+          res.end("slept 60 seconds\n");
+        }, 60*1000);
       }
     } else if (req.method == 'PUT' && req.url == '/guzzle-server/responses') {
       if (that.log) {
@@ -166,7 +175,7 @@ var GuzzleServer = function(port, log) {
         }
         res.writeHead(400, 'NO RESPONSES IN REQUEST', { 'Content-Length': 0 });
       } else {
-        that.responses = eval('(' + request.body + ')');
+        that.responses = JSON.parse(request.body);
         for (var i = 0; i < that.responses.length; i++) {
           if (that.responses[i].body) {
             that.responses[i].body = new Buffer(that.responses[i].body, 'base64');

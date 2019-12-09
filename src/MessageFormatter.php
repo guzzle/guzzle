@@ -19,7 +19,6 @@ use Psr\Http\Message\ResponseInterface;
  * - {host}:           Host of the request
  * - {method}:         Method of the request
  * - {uri}:            URI of the request
- * - {host}:           Host of the request
  * - {version}:        Protocol version
  * - {target}:         Request target of the request (path + query + fragment)
  * - {hostname}:       Hostname of the machine that sent the request
@@ -37,7 +36,9 @@ class MessageFormatter
 {
     /**
      * Apache Common Log Format.
+     *
      * @link http://httpd.apache.org/docs/2.4/logs.html#common
+     *
      * @var string
      */
     const CLF = "{hostname} {req_header_User-Agent} - [{date_common_log}] \"{method} {target} HTTP/{version}\" {code} {res_header_Content-Length}";
@@ -74,7 +75,6 @@ class MessageFormatter
         return preg_replace_callback(
             '/{\s*([A-Za-z_\-\.0-9]+)\s*}/',
             function (array $matches) use ($request, $response, $error, &$cache) {
-
                 if (isset($cache[$matches[1]])) {
                     return $cache[$matches[1]];
                 }
@@ -170,6 +170,11 @@ class MessageFormatter
         );
     }
 
+    /**
+     * Get headers from message as string
+     *
+     * @return string
+     */
     private function headers(MessageInterface $message)
     {
         $result = '';

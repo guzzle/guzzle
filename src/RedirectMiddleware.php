@@ -29,7 +29,7 @@ class RedirectMiddleware
         'track_redirects' => false,
     ];
 
-    /** @var callable  */
+    /** @var callable */
     private $nextHandler;
 
     /**
@@ -41,9 +41,6 @@ class RedirectMiddleware
     }
 
     /**
-     * @param RequestInterface $request
-     * @param array            $options
-     *
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options)
@@ -74,10 +71,6 @@ class RedirectMiddleware
     }
 
     /**
-     * @param RequestInterface  $request
-     * @param array             $options
-     * @param ResponseInterface|PromiseInterface $response
-     *
      * @return ResponseInterface|PromiseInterface
      */
     public function checkRedirect(
@@ -118,6 +111,11 @@ class RedirectMiddleware
         return $promise;
     }
 
+    /**
+     * Enable tracking on promise.
+     *
+     * @return PromiseInterface
+     */
     private function withTracking(PromiseInterface $promise, $uri, $statusCode)
     {
         return $promise->then(
@@ -135,6 +133,13 @@ class RedirectMiddleware
         );
     }
 
+    /**
+     * Check for too many redirects
+     *
+     * @return void
+     *
+     * @throws TooManyRedirectsException Too many redirects.
+     */
     private function guardMax(RequestInterface $request, array &$options)
     {
         $current = isset($options['__redirect_count'])
@@ -152,10 +157,6 @@ class RedirectMiddleware
     }
 
     /**
-     * @param RequestInterface  $request
-     * @param array             $options
-     * @param ResponseInterface $response
-     *
      * @return RequestInterface
      */
     public function modifyRequest(
@@ -172,7 +173,7 @@ class RedirectMiddleware
         // would do.
         $statusCode = $response->getStatusCode();
         if ($statusCode == 303 ||
-            ($statusCode <= 302 && $request->getBody() && !$options['allow_redirects']['strict'])
+            ($statusCode <= 302 && !$options['allow_redirects']['strict'])
         ) {
             $modify['method'] = 'GET';
             $modify['body'] = '';
@@ -186,7 +187,7 @@ class RedirectMiddleware
         if ($options['allow_redirects']['referer']
             && $modify['uri']->getScheme() === $request->getUri()->getScheme()
         ) {
-            $uri = $request->getUri()->withUserInfo('', '');
+            $uri = $request->getUri()->withUserInfo('');
             $modify['set_headers']['Referer'] = (string) $uri;
         } else {
             $modify['remove_headers'][] = 'Referer';
@@ -203,10 +204,6 @@ class RedirectMiddleware
     /**
      * Set the appropriate URL on the request based on the location header
      *
-     * @param RequestInterface  $request
-     * @param ResponseInterface $response
-     * @param array             $protocols
-     *
      * @return UriInterface
      */
     private function redirectUri(
@@ -214,9 +211,9 @@ class RedirectMiddleware
         ResponseInterface $response,
         array $protocols
     ) {
-        $location = Psr7\Uri::resolve(
+        $location = Psr7\UriResolver::resolve(
             $request->getUri(),
-            $response->getHeaderLine('Location')
+            new Psr7\Uri($response->getHeaderLine('Location'))
         );
 
         // Ensure that the redirect URI is allowed based on the protocols.

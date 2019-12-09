@@ -16,7 +16,7 @@ class CookieJar implements CookieJarInterface
     private $strictMode;
 
     /**
-     * @param bool $strictMode   Set to true to throw exceptions when invalid
+     * @param bool  $strictMode  Set to true to throw exceptions when invalid
      *                           cookies are added to the cookie jar.
      * @param array $cookieArray Array of SetCookie objects or a hash of
      *                           arrays that can be used with the SetCookie
@@ -58,19 +58,12 @@ class CookieJar implements CookieJarInterface
     }
 
     /**
-     * @deprecated
-     */
-    public static function getCookieValue($value)
-    {
-        return $value;
-    }
-
-    /**
      * Evaluate if this cookie should be persisted to storage
      * that survives between requests.
      *
-     * @param SetCookie $cookie Being evaluated.
-     * @param bool $allowSessionCookies If we should persist session cookies
+     * @param SetCookie $cookie              Being evaluated.
+     * @param bool      $allowSessionCookies If we should persist session cookies
+     *
      * @return bool
      */
     public static function shouldPersist(
@@ -84,6 +77,28 @@ class CookieJar implements CookieJarInterface
         }
 
         return false;
+    }
+
+    /**
+     * Finds and returns the cookie based on the name
+     *
+     * @param string $name cookie name to search for
+     *
+     * @return SetCookie|null cookie that was found or null if not found
+     */
+    public function getCookieByName($name)
+    {
+        // don't allow a non string name
+        if ($name === null || !is_scalar($name)) {
+            return null;
+        }
+        foreach ($this->cookies as $cookie) {
+            if ($cookie->getName() !== null && strcasecmp($cookie->getName(), $name) === 0) {
+                return $cookie;
+            }
+        }
+
+        return null;
     }
 
     public function toArray()
@@ -101,7 +116,7 @@ class CookieJar implements CookieJarInterface
         } elseif (!$path) {
             $this->cookies = array_filter(
                 $this->cookies,
-                function (SetCookie $cookie) use ($path, $domain) {
+                function (SetCookie $cookie) use ($domain) {
                     return !$cookie->matchesDomain($domain);
                 }
             );
@@ -216,9 +231,38 @@ class CookieJar implements CookieJarInterface
                 if (!$sc->getDomain()) {
                     $sc->setDomain($request->getUri()->getHost());
                 }
+                if (0 !== strpos($sc->getPath(), '/')) {
+                    $sc->setPath($this->getCookiePathFromRequest($request));
+                }
                 $this->setCookie($sc);
             }
         }
+    }
+
+    /**
+     * Computes cookie path following RFC 6265 section 5.1.4
+     *
+     * @link https://tools.ietf.org/html/rfc6265#section-5.1.4
+     *
+     * @return string
+     */
+    private function getCookiePathFromRequest(RequestInterface $request)
+    {
+        $uriPath = $request->getUri()->getPath();
+        if (''  === $uriPath) {
+            return '/';
+        }
+        if (0 !== strpos($uriPath, '/')) {
+            return '/';
+        }
+        if ('/' === $uriPath) {
+            return '/';
+        }
+        if (0 === $lastSlashPos = strrpos($uriPath, '/')) {
+            return '/';
+        }
+
+        return substr($uriPath, 0, $lastSlashPos);
     }
 
     public function withCookieHeader(RequestInterface $request)
@@ -248,8 +292,6 @@ class CookieJar implements CookieJarInterface
     /**
      * If a cookie already exists and the server asks to set it again with a
      * null value, the cookie must be deleted.
-     *
-     * @param SetCookie $cookie
      */
     private function removeCookieIfEmpty(SetCookie $cookie)
     {

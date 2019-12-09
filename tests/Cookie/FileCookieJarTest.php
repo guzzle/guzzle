@@ -3,37 +3,37 @@ namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\FileCookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\Cookie\FileCookieJar
+ * @covers \GuzzleHttp\Cookie\FileCookieJar
  */
-class FileCookieJarTest extends \PHPUnit_Framework_TestCase
+class FileCookieJarTest extends TestCase
 {
     private $file;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->file = tempnam('/tmp', 'file-cookies');
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testValidatesCookieFile()
     {
         file_put_contents($this->file, 'true');
+
+        $this->expectException(\RuntimeException::class);
         new FileCookieJar($this->file);
     }
 
     public function testLoadsFromFile()
     {
         $jar = new FileCookieJar($this->file);
-        $this->assertEquals([], $jar->getIterator()->getArrayCopy());
+        self::assertSame([], $jar->getIterator()->getArrayCopy());
         unlink($this->file);
     }
 
     /**
-     * @dataProvider testPersistsToFileFileParameters
+     * @dataProvider providerPersistsToFileFileParameters
      */
     public function testPersistsToFile($testSaveSessionCookie = false)
     {
@@ -56,32 +56,32 @@ class FileCookieJarTest extends \PHPUnit_Framework_TestCase
             'Domain'  => 'foo.com',
         ]));
 
-        $this->assertEquals(3, count($jar));
+        self::assertCount(3, $jar);
         unset($jar);
 
         // Make sure it wrote to the file
         $contents = file_get_contents($this->file);
-        $this->assertNotEmpty($contents);
+        self::assertNotEmpty($contents);
 
         // Load the cookieJar from the file
         $jar = new FileCookieJar($this->file);
 
         if ($testSaveSessionCookie) {
-            $this->assertEquals(3, count($jar));
+            self::assertCount(3, $jar);
         } else {
             // Weeds out temporary and session cookies
-            $this->assertEquals(2, count($jar));
+            self::assertCount(2, $jar);
         }
 
         unset($jar);
         unlink($this->file);
     }
 
-    public function testPersistsToFileFileParameters()
+    public function providerPersistsToFileFileParameters()
     {
-        return array(
-            array(false),
-            array(true)
-        );
+        return [
+            [false],
+            [true]
+        ];
     }
 }

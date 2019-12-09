@@ -118,7 +118,7 @@ pairs:
     This option only has an effect if your handler has the
     ``GuzzleHttp\Middleware::redirect`` middleware. This middleware is added
     by default when a client is created with no handler, and is added by
-    default when creating a handler with ``GuzzleHttp\default_handler``.
+    default when creating a handler with ``GuzzleHttp\HandlerStack::create``.
 
 
 auth
@@ -161,6 +161,20 @@ digest
     This is currently only supported when using the cURL handler, but
     creating a replacement that can be used with any HTTP handler is
     planned.
+
+ntlm
+    Use `Microsoft NTLM authentication <https://msdn.microsoft.com/en-us/library/windows/desktop/aa378749(v=vs.85).aspx>`_
+    (must be supported by the HTTP handler).
+
+.. code-block:: php
+
+    $client->request('GET', '/get', [
+        'auth' => ['username', 'password', 'ntlm']
+    ]);
+
+.. note::
+
+    This is currently only supported when using the cURL handler.
 
 
 body
@@ -424,7 +438,7 @@ force_ip_resolve
 
     This setting must be supported by the HTTP handler used to send a request.
     ``force_ip_resolve`` is currently only supported by the built-in cURL
-    handler.
+    and stream handlers.
 
 
 form_params
@@ -480,8 +494,8 @@ headers
 
 Headers may be added as default options when creating a client. When headers
 are used as default options, they are only applied if the request being created
-does not already contain the specific header. This include both requests passed
-to the client in the ``send()`` and ``sendAsync()`` methods and requests
+does not already contain the specific header. This includes both requests passed
+to the client in the ``send()`` and ``sendAsync()`` methods, and requests
 created by the client (e.g., ``request()`` and ``requestAsync()``).
 
 .. code-block:: php
@@ -537,6 +551,31 @@ http_errors
     ``GuzzleHttp\Middleware::httpErrors`` middleware. This middleware is added
     by default when a client is created with no handler, and is added by
     default when creating a handler with ``GuzzleHttp\default_handler``.
+
+
+idn_conversion
+---
+
+:Summary: Internationalized Domain Name (IDN) support (enabled by default if
+    ``intl`` extension is available).
+:Types:
+    - bool
+    - int
+:Default: ``true`` if ``intl`` extension is available, ``false`` otherwise
+:Constant: ``GuzzleHttp\RequestOptions::IDN_CONVERSION``
+
+.. code-block:: php
+
+    $client->request('GET', 'https://яндекс.рф');
+    // яндекс.рф is translated to xn--d1acpjx3f.xn--p1ai before passing it to the handler
+
+    $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' => false]);
+    // The domain part (яндекс.рф) stays unmodified
+
+Enables/disables IDN support, can also be used for precise control by combining
+IDNA_* constants (except IDNA_ERROR_*), see ``$options`` parameter in
+`idn_to_ascii() <https://www.php.net/manual/en/function.idn-to-ascii.php>`_
+documentation for more details.
 
 
 json
@@ -723,7 +762,7 @@ progress
 
 The function accepts the following positional arguments:
 
-- the total number of bytes expected to be downloaded
+- the total number of bytes expected to be downloaded, zero if unknown
 - the number of bytes downloaded so far
 - the total number of bytes expected to be uploaded
 - the number of bytes uploaded so far
@@ -774,7 +813,7 @@ host names that should not be proxied to.
 
     Guzzle will automatically populate this value with your environment's
     ``NO_PROXY`` environment variable. However, when providing a ``proxy``
-    request option, it is up to your to provide the ``no`` value parsed from
+    request option, it is up to you to provide the ``no`` value parsed from
     the ``NO_PROXY`` environment variable
     (e.g., ``explode(',', getenv('NO_PROXY'))``).
 
@@ -818,6 +857,30 @@ values supplied in the URI of a request.
     // Send a GET request to /get?foo=bar
     $client->request('GET', '/get?abc=123', ['query' => ['foo' => 'bar']]);
 
+read_timeout
+------------
+
+:Summary: Float describing the timeout to use when reading a streamed body
+:Types: float
+:Default: Defaults to the value of the ``default_socket_timeout`` PHP ini setting
+:Constant: ``GuzzleHttp\RequestOptions::READ_TIMEOUT``
+
+The timeout applies to individual read operations on a streamed body (when the ``stream`` option is enabled).
+
+.. code-block:: php
+
+    $response = $client->request('GET', '/stream', [
+        'stream' => true,
+        'read_timeout' => 10,
+    ]);
+
+    $body = $response->getBody();
+
+    // Returns false on timeout
+    $data = $body->read(1024);
+
+    // Returns false on timeout
+    $line = fgets($body->detach());
 
 .. _sink-option:
 

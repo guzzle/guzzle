@@ -1,4 +1,78 @@
-# CHANGELOG
+# Change Log
+
+## 6.5.0 - 2019-12-07
+
+* Improvement: Added support for reset internal queue in MockHandler. [#2143](https://github.com/guzzle/guzzle/pull/2143)
+* Improvement: Added support to pass arbitrary options to `curl_multi_init`. [#2287](https://github.com/guzzle/guzzle/pull/2287)
+* Fix: Gracefully handle passing `null` to the `header` option. [#2132](https://github.com/guzzle/guzzle/pull/2132)
+* Fix: `RetryMiddleware` did not do exponential delay between retires due unit mismatch. [#2132](https://github.com/guzzle/guzzle/pull/2132)
+* Fix: Prevent undefined offset when using array for ssl_key options. [#2348](https://github.com/guzzle/guzzle/pull/2348)
+* Deprecated `ClientInterface::VERSION`
+
+## 6.4.1 - 2019-10-23
+
+* No `guzzle.phar` was created in 6.4.0 due expired API token. This release will fix that 
+* Added `parent::__construct()` to `FileCookieJar` and `SessionCookieJar`
+
+## 6.4.0 - 2019-10-23
+
+* Improvement: Improved error messages when using curl < 7.21.2 [#2108](https://github.com/guzzle/guzzle/pull/2108)
+* Fix: Test if response is readable before returning a summary in `RequestException::getResponseBodySummary()` [#2081](https://github.com/guzzle/guzzle/pull/2081)
+* Fix: Add support for GUZZLE_CURL_SELECT_TIMEOUT environment variable [#2161](https://github.com/guzzle/guzzle/pull/2161)
+* Improvement: Added `GuzzleHttp\Exception\InvalidArgumentException` [#2163](https://github.com/guzzle/guzzle/pull/2163)
+* Improvement: Added `GuzzleHttp\_current_time()` to use `hrtime()` if that function exists. [#2242](https://github.com/guzzle/guzzle/pull/2242)
+* Improvement: Added curl's `appconnect_time` in `TransferStats` [#2284](https://github.com/guzzle/guzzle/pull/2284)
+* Improvement: Make GuzzleException extend Throwable wherever it's available [#2273](https://github.com/guzzle/guzzle/pull/2273)
+* Fix: Prevent concurrent writes to file when saving `CookieJar` [#2335](https://github.com/guzzle/guzzle/pull/2335)
+* Improvement: Update `MockHandler` so we can test transfer time [#2362](https://github.com/guzzle/guzzle/pull/2362)
+
+## 6.3.3 - 2018-04-22
+
+* Fix: Default headers when decode_content is specified
+
+
+## 6.3.2 - 2018-03-26
+
+* Fix: Release process
+
+
+## 6.3.1 - 2018-03-26
+
+* Bug fix: Parsing 0 epoch expiry times in cookies [#2014](https://github.com/guzzle/guzzle/pull/2014)
+* Improvement: Better ConnectException detection [#2012](https://github.com/guzzle/guzzle/pull/2012)
+* Bug fix: Malformed domain that contains a "/" [#1999](https://github.com/guzzle/guzzle/pull/1999)
+* Bug fix: Undefined offset when a cookie has no first key-value pair [#1998](https://github.com/guzzle/guzzle/pull/1998)
+* Improvement: Support PHPUnit 6 [#1953](https://github.com/guzzle/guzzle/pull/1953)
+* Bug fix: Support empty headers [#1915](https://github.com/guzzle/guzzle/pull/1915)
+* Bug fix: Ignore case during header modifications [#1916](https://github.com/guzzle/guzzle/pull/1916)
+
++ Minor code cleanups, documentation fixes and clarifications.
+
+
+## 6.3.0 - 2017-06-22
+
+* Feature: force IP resolution (ipv4 or ipv6) [#1608](https://github.com/guzzle/guzzle/pull/1608), [#1659](https://github.com/guzzle/guzzle/pull/1659)
+* Improvement: Don't include summary in exception message when body is empty [#1621](https://github.com/guzzle/guzzle/pull/1621)
+* Improvement: Handle `on_headers` option in MockHandler [#1580](https://github.com/guzzle/guzzle/pull/1580)
+* Improvement: Added SUSE Linux CA path [#1609](https://github.com/guzzle/guzzle/issues/1609)
+* Improvement: Use class reference for getting the name of the class instead of using hardcoded strings [#1641](https://github.com/guzzle/guzzle/pull/1641)
+* Feature: Added `read_timeout` option [#1611](https://github.com/guzzle/guzzle/pull/1611)
+* Bug fix: PHP 7.x fixes [#1685](https://github.com/guzzle/guzzle/pull/1685), [#1686](https://github.com/guzzle/guzzle/pull/1686), [#1811](https://github.com/guzzle/guzzle/pull/1811)
+* Deprecation: BadResponseException instantiation without a response [#1642](https://github.com/guzzle/guzzle/pull/1642)
+* Feature: Added NTLM auth [#1569](https://github.com/guzzle/guzzle/pull/1569)
+* Feature: Track redirect HTTP status codes [#1711](https://github.com/guzzle/guzzle/pull/1711)
+* Improvement: Check handler type during construction [#1745](https://github.com/guzzle/guzzle/pull/1745)
+* Improvement: Always include the Content-Length if there's a body [#1721](https://github.com/guzzle/guzzle/pull/1721)
+* Feature: Added convenience method to access a cookie by name [#1318](https://github.com/guzzle/guzzle/pull/1318)
+* Bug fix: Fill `CURLOPT_CAPATH` and `CURLOPT_CAINFO` properly [#1684](https://github.com/guzzle/guzzle/pull/1684)
+* Improvement:  	Use `\GuzzleHttp\Promise\rejection_for` function instead of object init [#1827](https://github.com/guzzle/guzzle/pull/1827)
+
+
++ Minor code cleanups, documentation fixes and clarifications.
+
+## 6.2.3 - 2017-02-28
+
+* Fix deprecations with guzzle/psr7 version 1.4
 
 ## 6.2.2 - 2016-10-08
 

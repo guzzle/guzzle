@@ -13,10 +13,16 @@ help:
 
 start-server: stop-server
 	node tests/server.js &> /dev/null &
+	./vendor/bin/http_test_server &> /dev/null &
 
 stop-server:
 	@PID=$(shell ps axo pid,command \
 	  | grep 'tests/server.js' \
+	  | grep -v grep \
+	  | cut -f 1 -d " "\
+	) && [ -n "$$PID" ] && kill $$PID || true
+	@PID=$(shell ps axo pid,command \
+	  | grep 'vendor/bin/http_test_server' \
 	  | grep -v grep \
 	  | cut -f 1 -d " "\
 	) && [ -n "$$PID" ] && kill $$PID || true
