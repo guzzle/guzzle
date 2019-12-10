@@ -11,6 +11,7 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Stream;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -184,30 +185,32 @@ class MiddlewareTest extends TestCase
     {
         $h = new MockHandler([new Response(200, [], 'bar')]);
         $stack = new HandlerStack($h);
-        $logger = new Logger();
+        $logger = new TestLogger();
         $formatter = new MessageFormatter(MessageFormatter::DEBUG);
         $stack->push(Middleware::log($logger, $formatter));
         $comp = $stack->resolve();
         $p = $comp(new Request('GET', 'http://www.google.com', [], 'foo=bar'), []);
         $response = $p->wait();
-        $this->assertContains('bar', $logger->output);
-        $this->assertContains('foo', $h->getLastRequest()->getBody()->getContents());
-        $this->assertContains('bar', $response->getBody()->getContents());
+        self::assertCount(1, $logger->records);
+        self::assertStringContainsString('bar', $logger->records[0]['message']);
+        self::assertStringContainsString('foo', $h->getLastRequest()->getBody()->getContents());
+        self::assertStringContainsString('bar', $response->getBody()->getContents());
     }
 
     public function testLogDoesNotRewindStreamWhenRequestsAndResponsesNotUsed()
     {
         $h = new MockHandler([new Response(200)]);
         $stack = new HandlerStack($h);
-        $logger = new Logger();
+        $logger = new TestLogger();
         $formatter = new MessageFormatter();
         $stack->push(Middleware::log($logger, $formatter));
         $comp = $stack->resolve();
         $p = $comp(new Request('GET', 'http://www.google.com'), []);
         $response = $p->wait();
-        $this->assertContains('"GET / HTTP/1.1" 200', $logger->output);
-        $this->assertFalse($h->getLastRequest()->getBody()->eof());
-        $this->assertFalse($response->getBody()->eof());
+        self::assertCount(1, $logger->records);
+        self::assertStringContainsString('"GET / HTTP/1.1" 200', $logger->records[0]['message']);
+        self::assertFalse($h->getLastRequest()->getBody()->eof());
+        self::assertFalse($response->getBody()->eof());
     }
 
     public function testLogUsesEmptyStreamWhenRequestBodyIsNotSeekable()
@@ -216,7 +219,7 @@ class MiddlewareTest extends TestCase
         fwrite($stream, 'foobar');
         fseek($stream, 2);
 
-        $mockBody = $this->getMockBuilder(Psr7\Stream::class)
+        $mockBody = $this->getMockBuilder(Stream::class)
             ->setConstructorArgs([$stream])
             ->setMethods(['isSeekable'])
             ->getMock();
@@ -227,15 +230,16 @@ class MiddlewareTest extends TestCase
 
         $h = new MockHandler([new Response(200, [], 'bar')]);
         $stack = new HandlerStack($h);
-        $logger = new Logger();
+        $logger = new TestLogger();
         $formatter = new MessageFormatter(MessageFormatter::DEBUG);
         $stack->push(Middleware::log($logger, $formatter));
         $comp = $stack->resolve();
         $request = new Request('GET', 'http://www.google.com', [], $mockBody);
         $p = $comp($request, []);
         $p->wait();
-        $this->assertNotContains('foobar', $logger->output);
-        $this->assertEquals(2, $request->getBody()->tell());
+        self::assertCount(1, $logger->records);
+        self::assertStringNotContainsString('foobar', $logger->records[0]['message']);
+        self::assertEquals(2, $request->getBody()->tell());
 
         fclose($stream);
     }
@@ -246,7 +250,7 @@ class MiddlewareTest extends TestCase
         fwrite($stream, 'foobar');
         fseek($stream, 3);
 
-        $mockBody = $this->getMockBuilder(Psr7\Stream::class)
+        $mockBody = $this->getMockBuilder(Stream::class)
             ->setConstructorArgs([$stream])
             ->setMethods(['isSeekable'])
             ->getMock();
@@ -257,14 +261,15 @@ class MiddlewareTest extends TestCase
 
         $h = new MockHandler([new Response(200, [], $mockBody)]);
         $stack = new HandlerStack($h);
-        $logger = new Logger();
+        $logger = new TestLogger();
         $formatter = new MessageFormatter(MessageFormatter::DEBUG);
         $stack->push(Middleware::log($logger, $formatter));
         $comp = $stack->resolve();
         $p = $comp(new Request('GET', 'http://www.google.com'), []);
         $response = $p->wait();
-        $this->assertNotContains('foobar', $logger->output);
-        $this->assertEquals(3, $response->getBody()->tell());
+        self::assertCount(1, $logger->records);
+        self::assertStringNotContainsString('foobar', $logger->records[0]['message']);
+        self::assertEquals(3, $response->getBody()->tell());
 
         fclose($stream);
     }
@@ -273,7 +278,7 @@ class MiddlewareTest extends TestCase
     {
         $h = new MockHandler([new Response(200, [], 'baz')]);
         $stack = new HandlerStack($h);
-        $logger = new Logger();
+        $logger = new TestLogger();
         $formatter = new MessageFormatter(MessageFormatter::DEBUG);
         $stack->push(Middleware::log($logger, $formatter));
         $stack->push(Middleware::mapRequest(function (RequestInterface $request) {
@@ -288,10 +293,11 @@ class MiddlewareTest extends TestCase
         $request = new Request('GET', 'http://www.google.com', [], 'foo=bar');
         $p = $comp($request, []);
         $response = $p->wait();
-        $this->assertContains('foo=bar', $logger->output);
-        $this->assertContains('baz', $logger->output);
-        $this->assertEquals(1, $request->getBody()->tell());
-        $this->assertEquals(2, $response->getBody()->tell());
+        self::assertCount(1, $logger->records);
+        self::assertStringContainsString('foo=bar', $logger->records[0]['message']);
+        self::assertStringContainsString('baz', $logger->records[0]['message']);
+        self::assertEquals(1, $request->getBody()->tell());
+        self::assertEquals(2, $response->getBody()->tell());
     }
 
     public function testLogsRequestsAndResponsesCustomLevel()
