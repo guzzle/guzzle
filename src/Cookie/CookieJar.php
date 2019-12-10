@@ -22,7 +22,7 @@ class CookieJar implements CookieJarInterface
      *                           arrays that can be used with the SetCookie
      *                           constructor
      */
-    public function __construct($strictMode = false, $cookieArray = [])
+    public function __construct(bool $strictMode = false, array $cookieArray = [])
     {
         $this->strictMode = $strictMode;
 
@@ -39,10 +39,8 @@ class CookieJar implements CookieJarInterface
      *
      * @param array  $cookies Cookies to create the jar from
      * @param string $domain  Domain to set the cookies to
-     *
-     * @return self
      */
-    public static function fromArray(array $cookies, $domain)
+    public static function fromArray(array $cookies, string $domain): self
     {
         $cookieJar = new self();
         foreach ($cookies as $name => $value) {
@@ -63,13 +61,9 @@ class CookieJar implements CookieJarInterface
      *
      * @param SetCookie $cookie              Being evaluated.
      * @param bool      $allowSessionCookies If we should persist session cookies
-     *
-     * @return bool
      */
-    public static function shouldPersist(
-        SetCookie $cookie,
-        $allowSessionCookies = false
-    ) {
+    public static function shouldPersist(SetCookie $cookie, bool $allowSessionCookies = false): bool
+    {
         if ($cookie->getExpires() || $allowSessionCookies) {
             if (!$cookie->getDiscard()) {
                 return true;
@@ -86,7 +80,7 @@ class CookieJar implements CookieJarInterface
      *
      * @return SetCookie|null cookie that was found or null if not found
      */
-    public function getCookieByName($name)
+    public function getCookieByName(string $name): ?SetCookie
     {
         // don't allow a non string name
         if ($name === null || !is_scalar($name)) {
@@ -101,14 +95,20 @@ class CookieJar implements CookieJarInterface
         return null;
     }
 
-    public function toArray()
+    /**
+     * @inheritDoc
+     */
+    public function toArray(): array
     {
         return array_map(function (SetCookie $cookie) {
             return $cookie->toArray();
         }, $this->getIterator()->getArrayCopy());
     }
 
-    public function clear($domain = null, $path = null, $name = null)
+    /**
+     * @inheritDoc
+     */
+    public function clear(?string $domain = null, ?string $path = null, ?string $name = null): void
     {
         if (!$domain) {
             $this->cookies = [];
@@ -140,7 +140,10 @@ class CookieJar implements CookieJarInterface
         }
     }
 
-    public function clearSessionCookies()
+    /**
+     * @inheritDoc
+     */
+    public function clearSessionCookies(): void
     {
         $this->cookies = array_filter(
             $this->cookies,
@@ -150,7 +153,10 @@ class CookieJar implements CookieJarInterface
         );
     }
 
-    public function setCookie(SetCookie $cookie)
+    /**
+     * @inheritDoc
+     */
+    public function setCookie(SetCookie $cookie): bool
     {
         // If the name string is empty (but not 0), ignore the set-cookie
         // string entirely.
@@ -221,10 +227,8 @@ class CookieJar implements CookieJarInterface
         return new \ArrayIterator(array_values($this->cookies));
     }
 
-    public function extractCookies(
-        RequestInterface $request,
-        ResponseInterface $response
-    ) {
+    public function extractCookies(RequestInterface $request, ResponseInterface $response): void
+    {
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
             foreach ($cookieHeader as $cookie) {
                 $sc = SetCookie::fromString($cookie);
@@ -243,10 +247,8 @@ class CookieJar implements CookieJarInterface
      * Computes cookie path following RFC 6265 section 5.1.4
      *
      * @link https://tools.ietf.org/html/rfc6265#section-5.1.4
-     *
-     * @return string
      */
-    private function getCookiePathFromRequest(RequestInterface $request)
+    private function getCookiePathFromRequest(RequestInterface $request): string
     {
         $uriPath = $request->getUri()->getPath();
         if (''  === $uriPath) {
@@ -265,7 +267,7 @@ class CookieJar implements CookieJarInterface
         return substr($uriPath, 0, $lastSlashPos);
     }
 
-    public function withCookieHeader(RequestInterface $request)
+    public function withCookieHeader(RequestInterface $request): RequestInterface
     {
         $values = [];
         $uri = $request->getUri();
@@ -293,7 +295,7 @@ class CookieJar implements CookieJarInterface
      * If a cookie already exists and the server asks to set it again with a
      * null value, the cookie must be deleted.
      */
-    private function removeCookieIfEmpty(SetCookie $cookie)
+    private function removeCookieIfEmpty(SetCookie $cookie): void
     {
         $cookieValue = $cookie->getValue();
         if ($cookieValue === null || $cookieValue === '') {

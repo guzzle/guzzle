@@ -42,7 +42,7 @@ final class EasyHandle
      *
      * @throws \RuntimeException if no headers have been received.
      */
-    public function createResponse()
+    public function createResponse(): void
     {
         if (empty($this->headers)) {
             throw new \RuntimeException('No headers have been received');

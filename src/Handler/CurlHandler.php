@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 
@@ -30,7 +31,7 @@ class CurlHandler
             : new CurlFactory(3);
     }
 
-    public function __invoke(RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         if (isset($options['delay'])) {
             usleep($options['delay'] * 1000);

@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\FulfilledPromise;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
@@ -26,12 +27,15 @@ class CurlFactory implements CurlFactoryInterface
     /**
      * @param int $maxHandles Maximum number of idle handles.
      */
-    public function __construct($maxHandles)
+    public function __construct(int $maxHandles)
     {
         $this->maxHandles = $maxHandles;
     }
 
-    public function create(RequestInterface $request, array $options)
+    /**
+     * @inheritDoc
+     */
+    public function create(RequestInterface $request, array $options): EasyHandle
     {
         if (isset($options['curl']['body_as_string'])) {
             $options['_body_as_string'] = $options['curl']['body_as_string'];
@@ -61,7 +65,7 @@ class CurlFactory implements CurlFactoryInterface
         return $easy;
     }
 
-    public function release(EasyHandle $easy)
+    public function release(EasyHandle $easy): void
     {
         $resource = $easy->handle;
         unset($easy->handle);
@@ -87,14 +91,12 @@ class CurlFactory implements CurlFactoryInterface
      * rejected promise.
      *
      * @param CurlFactoryInterface $factory Dictates how the handle is released
-     *
-     * @return \GuzzleHttp\Promise\PromiseInterface
      */
     public static function finish(
         callable $handler,
         EasyHandle $easy,
         CurlFactoryInterface $factory
-    ) {
+    ): PromiseInterface {
         if (isset($easy->options['on_stats'])) {
             self::invokeStats($easy);
         }
@@ -115,7 +117,7 @@ class CurlFactory implements CurlFactoryInterface
         return new FulfilledPromise($easy->response);
     }
 
-    private static function invokeStats(EasyHandle $easy)
+    private static function invokeStats(EasyHandle $easy): void
     {
         $curlStats = curl_getinfo($easy->handle);
         $curlStats['appconnect_time'] = curl_getinfo($easy->handle, CURLINFO_APPCONNECT_TIME);
@@ -133,7 +135,7 @@ class CurlFactory implements CurlFactoryInterface
         callable $handler,
         EasyHandle $easy,
         CurlFactoryInterface $factory
-    ) {
+    ): PromiseInterface {
         // Get error information and release the handle to the factory.
         $ctx = [
             'errno' => $easy->errno,
@@ -153,7 +155,7 @@ class CurlFactory implements CurlFactoryInterface
         return self::createRejection($easy, $ctx);
     }
 
-    private static function createRejection(EasyHandle $easy, array $ctx)
+    private static function createRejection(EasyHandle $easy, array $ctx): PromiseInterface
     {
         static $connectionErrors = [
             CURLE_OPERATION_TIMEOUTED  => true,
@@ -201,7 +203,10 @@ class CurlFactory implements CurlFactoryInterface
         return \GuzzleHttp\Promise\rejection_for($error);
     }
 
-    private function getDefaultConf(EasyHandle $easy)
+    /**
+     * @return array<int|string, mixed>
+     */
+    private function getDefaultConf(EasyHandle $easy): array
     {
         $conf = [
             '_headers'             => $easy->request->getHeaders(),
@@ -228,7 +233,7 @@ class CurlFactory implements CurlFactoryInterface
         return $conf;
     }
 
-    private function applyMethod(EasyHandle $easy, array &$conf)
+    private function applyMethod(EasyHandle $easy, array &$conf): void
     {
         $body = $easy->request->getBody();
         $size = $body->getSize();
@@ -255,7 +260,7 @@ class CurlFactory implements CurlFactoryInterface
         }
     }
 
-    private function applyBody(RequestInterface $request, array $options, array &$conf)
+    private function applyBody(RequestInterface $request, array $options, array &$conf): void
     {
         $size = $request->hasHeader('Content-Length')
             ? (int) $request->getHeaderLine('Content-Length')
@@ -296,7 +301,7 @@ class CurlFactory implements CurlFactoryInterface
         }
     }
 
-    private function applyHeaders(EasyHandle $easy, array &$conf)
+    private function applyHeaders(EasyHandle $easy, array &$conf): void
     {
         foreach ($conf['_headers'] as $name => $values) {
             foreach ($values as $value) {
@@ -323,7 +328,7 @@ class CurlFactory implements CurlFactoryInterface
      * @param string $name    Case-insensitive header to remove
      * @param array  $options Array of options to modify
      */
-    private function removeHeader($name, array &$options)
+    private function removeHeader($name, array &$options): void
     {
         foreach (array_keys($options['_headers']) as $key) {
             if (!strcasecmp($key, $name)) {
@@ -333,7 +338,7 @@ class CurlFactory implements CurlFactoryInterface
         }
     }
 
-    private function applyHandlerOptions(EasyHandle $easy, array &$conf)
+    private function applyHandlerOptions(EasyHandle $easy, array &$conf): void
     {
         $options = $easy->options;
         if (isset($options['verify'])) {
@@ -507,7 +512,7 @@ class CurlFactory implements CurlFactoryInterface
         callable $handler,
         EasyHandle $easy,
         array $ctx
-    ) {
+    ): PromiseInterface {
         try {
             // Only rewind if the body has been read from.
             $body = $easy->request->getBody();
@@ -540,7 +545,7 @@ class CurlFactory implements CurlFactoryInterface
         return $handler($easy->request, $easy->options);
     }
 
-    private function createHeaderFn(EasyHandle $easy)
+    private function createHeaderFn(EasyHandle $easy): callable
     {
         if (isset($easy->options['on_headers'])) {
             $onHeaders = $easy->options['on_headers'];

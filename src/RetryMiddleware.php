@@ -45,19 +45,14 @@ class RetryMiddleware
     /**
      * Default exponential backoff delay function.
      *
-     * @param int $retries
-     *
      * @return int milliseconds.
      */
-    public static function exponentialDelay($retries)
+    public static function exponentialDelay(int $retries)
     {
         return (int) pow(2, $retries - 1) * 1000;
     }
 
-    /**
-     * @return PromiseInterface
-     */
-    public function __invoke(RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         if (!isset($options['retries'])) {
             $options['retries'] = 0;
@@ -74,7 +69,7 @@ class RetryMiddleware
     /**
      * Execute fulfilled closure
      */
-    private function onFulfilled(RequestInterface $req, array $options)
+    private function onFulfilled(RequestInterface $req, array $options): callable
     {
         return function ($value) use ($req, $options) {
             if (!call_user_func(
@@ -92,10 +87,8 @@ class RetryMiddleware
 
     /**
      * Execute rejected closure
-     *
-     * @return callable
      */
-    private function onRejected(RequestInterface $req, array $options)
+    private function onRejected(RequestInterface $req, array $options): callable
     {
         return function ($reason) use ($req, $options) {
             if (!call_user_func(
@@ -111,9 +104,6 @@ class RetryMiddleware
         };
     }
 
-    /**
-     * @return self
-     */
     private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null)
     {
         $options['delay'] = call_user_func($this->delay, ++$options['retries'], $response);

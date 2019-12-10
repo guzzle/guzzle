@@ -60,7 +60,7 @@ class MockHandler implements \Countable
         }
     }
 
-    public function __invoke(RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         if (!$this->queue) {
             throw new \OutOfBoundsException('Mock queue is empty');
@@ -129,7 +129,7 @@ class MockHandler implements \Countable
      * Adds one or more variadic requests, exceptions, callables, or promises
      * to the queue.
      */
-    public function append()
+    public function append(): void
     {
         foreach (func_get_args() as $value) {
             if ($value instanceof ResponseInterface
@@ -150,7 +150,7 @@ class MockHandler implements \Countable
      *
      * @return RequestInterface
      */
-    public function getLastRequest()
+    public function getLastRequest(): ?RequestInterface
     {
         return $this->lastRequest;
     }
@@ -160,22 +160,20 @@ class MockHandler implements \Countable
      *
      * @return array
      */
-    public function getLastOptions()
+    public function getLastOptions(): ?array
     {
         return $this->lastOptions;
     }
 
     /**
      * Returns the number of remaining items in the queue.
-     *
-     * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->queue);
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->queue = [];
     }
@@ -185,7 +183,7 @@ class MockHandler implements \Countable
         array $options,
         ResponseInterface $response = null,
         $reason = null
-    ) {
+    ): void {
         if (isset($options['on_stats'])) {
             $transferTime = isset($options['transfer_time']) ? $options['transfer_time'] : 0;
             $stats = new TransferStats($request, $response, $transferTime, $reason);

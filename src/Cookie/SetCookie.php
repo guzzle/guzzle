@@ -326,10 +326,8 @@ class SetCookie
      * Check if the cookie matches a domain value
      *
      * @param string $domain Domain to check against
-     *
-     * @return bool
      */
-    public function matchesDomain($domain)
+    public function matchesDomain(string $domain): bool
     {
         // Remove the leading '.' as per spec in RFC 6265.
         // http://tools.ietf.org/html/rfc6265#section-5.2.3

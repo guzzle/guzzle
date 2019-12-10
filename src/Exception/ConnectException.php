@@ -3,6 +3,7 @@ namespace GuzzleHttp\Exception;
 
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Exception thrown when a connection cannot be established.
@@ -20,18 +21,12 @@ class ConnectException extends RequestException implements NetworkExceptionInter
         parent::__construct($message, $request, null, $previous, $handlerContext);
     }
 
-    /**
-     * @return null
-     */
-    public function getResponse()
+    public function getResponse(): ?ResponseInterface
     {
         return null;
     }
 
-    /**
-     * @return bool
-     */
-    public function hasResponse()
+    public function hasResponse(): bool
     {
         return false;
     }

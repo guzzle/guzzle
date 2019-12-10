@@ -51,7 +51,7 @@ class MessageFormatter
     /**
      * @param string $template Log message template
      */
-    public function __construct($template = self::CLF)
+    public function __construct(?string $template = self::CLF)
     {
         $this->template = $template ?: self::CLF;
     }
@@ -62,14 +62,12 @@ class MessageFormatter
      * @param RequestInterface  $request  Request that was sent
      * @param ResponseInterface $response Response that was received
      * @param \Exception        $error    Exception that was received
-     *
-     * @return string
      */
     public function format(
         RequestInterface $request,
         ResponseInterface $response = null,
         \Exception $error = null
-    ) {
+    ): string {
         $cache = [];
 
         return preg_replace_callback(
@@ -172,10 +170,8 @@ class MessageFormatter
 
     /**
      * Get headers from message as string
-     *
-     * @return string
      */
-    private function headers(MessageInterface $message)
+    private function headers(MessageInterface $message): string
     {
         $result = '';
         foreach ($message->getHeaders() as $name => $values) {

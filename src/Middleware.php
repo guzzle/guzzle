@@ -21,7 +21,7 @@ final class Middleware
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function cookies()
+    public static function cookies(): callable
     {
         return function (callable $handler) {
             return function ($request, array $options) use ($handler) {
@@ -49,7 +49,7 @@ final class Middleware
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function httpErrors()
+    public static function httpErrors(): callable
     {
         return function (callable $handler) {
             return function ($request, array $options) use ($handler) {
@@ -123,7 +123,7 @@ final class Middleware
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function tap(callable $before = null, callable $after = null)
+    public static function tap(callable $before = null, callable $after = null): callable
     {
         return function (callable $handler) use ($before, $after) {
             return function ($request, array $options) use ($handler, $before, $after) {
@@ -144,7 +144,7 @@ final class Middleware
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function redirect()
+    public static function redirect(): callable
     {
         return function (callable $handler) {
             return new RedirectMiddleware($handler);
@@ -166,7 +166,7 @@ final class Middleware
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function retry(callable $decider, callable $delay = null)
+    public static function retry(callable $decider, callable $delay = null): callable
     {
         return function (callable $handler) use ($decider, $delay) {
             return new RetryMiddleware($decider, $handler, $delay);
@@ -183,7 +183,7 @@ final class Middleware
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function log(LoggerInterface $logger, MessageFormatter $formatter, $logLevel = 'info' /* \Psr\Log\LogLevel::INFO */)
+    public static function log(LoggerInterface $logger, MessageFormatter $formatter, string $logLevel = 'info' /* \Psr\Log\LogLevel::INFO */): callable
     {
         return function (callable $handler) use ($logger, $formatter, $logLevel) {
             return function ($request, array $options) use ($handler, $logger, $formatter, $logLevel) {
@@ -209,10 +209,8 @@ final class Middleware
     /**
      * This middleware adds a default content-type if possible, a default
      * content-length or transfer-encoding header, and the expect header.
-     *
-     * @return callable
      */
-    public static function prepareBody()
+    public static function prepareBody(): callable
     {
         return function (callable $handler) {
             return new PrepareBodyMiddleware($handler);
@@ -225,10 +223,8 @@ final class Middleware
      *
      * @param callable $fn Function that accepts a RequestInterface and returns
      *                     a RequestInterface.
-     *
-     * @return callable
      */
-    public static function mapRequest(callable $fn)
+    public static function mapRequest(callable $fn): callable
     {
         return function (callable $handler) use ($fn) {
             return function ($request, array $options) use ($handler, $fn) {
@@ -243,10 +239,8 @@ final class Middleware
      *
      * @param callable $fn Function that accepts a ResponseInterface and
      *                     returns a ResponseInterface.
-     *
-     * @return callable
      */
-    public static function mapResponse(callable $fn)
+    public static function mapResponse(callable $fn): callable
     {
         return function (callable $handler) use ($fn) {
             return function ($request, array $options) use ($handler, $fn) {

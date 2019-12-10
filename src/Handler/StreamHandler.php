@@ -10,6 +10,7 @@ use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * HTTP handler that uses PHP's HTTP stream wrapper.
@@ -23,10 +24,8 @@ class StreamHandler
      *
      * @param RequestInterface $request Request to send.
      * @param array            $options Request transfer options.
-     *
-     * @return PromiseInterface
      */
-    public function __invoke(RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         // Sleep if there is a delay specified.
         if (isset($options['delay'])) {
@@ -77,7 +76,7 @@ class StreamHandler
         $startTime,
         ResponseInterface $response = null,
         $error = null
-    ) {
+    ): void {
         if (isset($options['on_stats'])) {
             $stats = new TransferStats(
                 $request,
@@ -95,7 +94,7 @@ class StreamHandler
         array $options,
         $stream,
         $startTime
-    ) {
+    ): PromiseInterface {
         $hdrs = $this->lastHeaders;
         $this->lastHeaders = [];
         $parts = explode(' ', array_shift($hdrs), 3);
@@ -138,7 +137,7 @@ class StreamHandler
         return new FulfilledPromise($response);
     }
 
-    private function createSink(StreamInterface $stream, array $options)
+    private function createSink(StreamInterface $stream, array $options): StreamInterface
     {
         if (!empty($options['stream'])) {
             return $stream;
@@ -153,7 +152,7 @@ class StreamHandler
             : Psr7\stream_for($sink);
     }
 
-    private function checkDecode(array $options, array $headers, $stream)
+    private function checkDecode(array $options, array $headers, $stream): array
     {
         // Automatically decode responses when instructed.
         if (!empty($options['decode_content'])) {
@@ -193,15 +192,13 @@ class StreamHandler
      * @param string $contentLength Header specifying the amount of
      *                              data to read.
      *
-     * @return StreamInterface
-     *
      * @throws \RuntimeException when the sink option is invalid.
      */
     private function drain(
         StreamInterface $source,
         StreamInterface $sink,
-        $contentLength
-    ) {
+        string $contentLength
+    ): StreamInterface {
         // If a content-length header is provided, then stop reading once
         // that number of bytes has been read. This can prevent infinitely
         // reading from a stream when dealing with servers that do not honor
@@ -255,6 +252,9 @@ class StreamHandler
         return $resource;
     }
 
+    /**
+     * @return resource
+     */
     private function createStream(RequestInterface $request, array $options)
     {
         static $methods;
@@ -335,7 +335,7 @@ class StreamHandler
         );
     }
 
-    private function resolveHost(RequestInterface $request, array $options)
+    private function resolveHost(RequestInterface $request, array $options): UriInterface
     {
         $uri = $request->getUri();
 
@@ -370,7 +370,7 @@ class StreamHandler
         return $uri;
     }
 
-    private function getDefaultContext(RequestInterface $request)
+    private function getDefaultContext(RequestInterface $request): array
     {
         $headers = '';
         foreach ($request->getHeaders() as $name => $value) {
@@ -404,7 +404,7 @@ class StreamHandler
         return $context;
     }
 
-    private function add_proxy(RequestInterface $request, &$options, $value, &$params)
+    private function add_proxy(RequestInterface $request, array &$options, $value, array &$params): void
     {
         if (!is_array($value)) {
             $options['http']['proxy'] = $value;
@@ -423,14 +423,14 @@ class StreamHandler
         }
     }
 
-    private function add_timeout(RequestInterface $request, &$options, $value, &$params)
+    private function add_timeout(RequestInterface $request, array &$options, $value, array &$params): void
     {
         if ($value > 0) {
             $options['http']['timeout'] = $value;
         }
     }
 
-    private function add_verify(RequestInterface $request, &$options, $value, &$params)
+    private function add_verify(RequestInterface $request, array &$options, $value, array &$params): void
     {
         if ($value === true) {
             // PHP 5.6 or greater will find the system cert by default. When
@@ -456,7 +456,7 @@ class StreamHandler
         $options['ssl']['allow_self_signed'] = false;
     }
 
-    private function add_cert(RequestInterface $request, &$options, $value, &$params)
+    private function add_cert(RequestInterface $request, array &$options, $value, array &$params): void
     {
         if (is_array($value)) {
             $options['ssl']['passphrase'] = $value[1];
@@ -470,7 +470,7 @@ class StreamHandler
         $options['ssl']['local_cert'] = $value;
     }
 
-    private function add_progress(RequestInterface $request, &$options, $value, &$params)
+    private function add_progress(RequestInterface $request, array &$options, $value, array &$params): void
     {
         $this->addNotification(
             $params,
@@ -482,7 +482,7 @@ class StreamHandler
         );
     }
 
-    private function add_debug(RequestInterface $request, &$options, $value, &$params)
+    private function add_debug(RequestInterface $request, array &$options, $value, array &$params): void
     {
         if ($value === false) {
             return;
@@ -519,7 +519,7 @@ class StreamHandler
         );
     }
 
-    private function addNotification(array &$params, callable $notify)
+    private function addNotification(array &$params, callable $notify): void
     {
         // Wrap the existing function if needed.
         if (!isset($params['notification'])) {
@@ -532,7 +532,7 @@ class StreamHandler
         }
     }
 
-    private function callArray(array $functions)
+    private function callArray(array $functions): callable
     {
         return function () use ($functions) {
             $args = func_get_args();

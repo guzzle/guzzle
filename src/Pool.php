@@ -2,6 +2,7 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\EachPromise;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\PromisorInterface;
 use Psr\Http\Message\RequestInterface;
 
@@ -71,10 +72,8 @@ class Pool implements PromisorInterface
 
     /**
      * Get promise
-     *
-     * @return GuzzleHttp\Promise\Promise
      */
-    public function promise()
+    public function promise(): PromiseInterface
     {
         return $this->each->promise();
     }
@@ -101,7 +100,7 @@ class Pool implements PromisorInterface
         ClientInterface $client,
         $requests,
         array $options = []
-    ) {
+    ): array {
         $res = [];
         self::cmpCallback($options, 'fulfilled', $res);
         self::cmpCallback($options, 'rejected', $res);
@@ -114,10 +113,8 @@ class Pool implements PromisorInterface
 
     /**
      * Execute callback(s)
-     *
-     * @return void
      */
-    private static function cmpCallback(array &$options, $name, array &$results)
+    private static function cmpCallback(array &$options, string $name, array &$results): void
     {
         if (!isset($options[$name])) {
             $options[$name] = function ($v, $k) use (&$results) {

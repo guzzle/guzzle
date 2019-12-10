@@ -40,10 +40,7 @@ class RedirectMiddleware
         $this->nextHandler = $nextHandler;
     }
 
-    /**
-     * @return PromiseInterface
-     */
-    public function __invoke(RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $fn = $this->nextHandler;
 
@@ -113,10 +110,8 @@ class RedirectMiddleware
 
     /**
      * Enable tracking on promise.
-     *
-     * @return PromiseInterface
      */
-    private function withTracking(PromiseInterface $promise, $uri, $statusCode)
+    private function withTracking(PromiseInterface $promise, string $uri, int $statusCode): PromiseInterface
     {
         return $promise->then(
             function (ResponseInterface $response) use ($uri, $statusCode) {
@@ -136,11 +131,9 @@ class RedirectMiddleware
     /**
      * Check for too many redirects
      *
-     * @return void
-     *
      * @throws TooManyRedirectsException Too many redirects.
      */
-    private function guardMax(RequestInterface $request, array &$options)
+    private function guardMax(RequestInterface $request, array &$options): void
     {
         $current = isset($options['__redirect_count'])
             ? $options['__redirect_count']
@@ -156,14 +149,11 @@ class RedirectMiddleware
         }
     }
 
-    /**
-     * @return RequestInterface
-     */
     public function modifyRequest(
         RequestInterface $request,
         array $options,
         ResponseInterface $response
-    ) {
+    ): RequestInterface {
         // Request modifications to apply.
         $modify = [];
         $protocols = $options['allow_redirects']['protocols'];
@@ -203,14 +193,12 @@ class RedirectMiddleware
 
     /**
      * Set the appropriate URL on the request based on the location header
-     *
-     * @return UriInterface
      */
     private function redirectUri(
         RequestInterface $request,
         ResponseInterface $response,
         array $protocols
-    ) {
+    ): UriInterface {
         $location = Psr7\UriResolver::resolve(
             $request->getUri(),
             new Psr7\Uri($response->getHeaderLine('Location'))
