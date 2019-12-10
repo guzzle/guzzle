@@ -34,8 +34,6 @@ class HandlerStack
      * @param callable $handler HTTP handler function to use with the stack. If no
      *                          handler is provided, the best handler for your
      *                          system will be utilized.
-     *
-     * @return HandlerStack
      */
     public static function create(callable $handler = null): self
     {

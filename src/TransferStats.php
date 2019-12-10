@@ -11,10 +11,29 @@ use Psr\Http\Message\UriInterface;
  */
 final class TransferStats
 {
+    /**
+     * @var RequestInterface
+     */
     private $request;
+
+    /**
+     * @var ResponseInterface|null
+     */
     private $response;
+
+    /**
+     * @var float|null
+     */
     private $transferTime;
+
+    /**
+     * @var array
+     */
     private $handlerStats;
+
+    /**
+     * @var mixed|null
+     */
     private $handlerErrorData;
 
     /**
