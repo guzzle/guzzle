@@ -946,11 +946,6 @@ parameters:
 			path: src/functions.php
 
 		-
-			message: "#^Function GuzzleHttp\\\\is_host_in_noproxy\\(\\) has parameter \\$noProxyArray with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/functions.php
-
-		-
 			message: "#^Cannot access offset 0 on array\\<int, string\\>\\|false\\.$#"
 			count: 1
 			path: src/functions.php
