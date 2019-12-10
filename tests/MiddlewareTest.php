@@ -224,7 +224,7 @@ class MiddlewareTest extends TestCase
             ->setMethods(['isSeekable'])
             ->getMock();
 
-        $mockBody->expects($this->any())
+        $mockBody->expects(self::any())
             ->method('isSeekable')
             ->willReturn(false);
 
@@ -255,7 +255,7 @@ class MiddlewareTest extends TestCase
             ->setMethods(['isSeekable'])
             ->getMock();
 
-        $mockBody->expects($this->any())
+        $mockBody->expects(self::any())
             ->method('isSeekable')
             ->willReturn(false);
 
