@@ -6,6 +6,7 @@ $config = PhpCsFixer\Config::create()
         '@PSR2' => true,
         'array_syntax' => ['syntax' => 'short'],
         'declare_strict_types' => false,
+        'function_to_constant' => ['functions' => ['php_sapi_name']],
         'concat_space' => ['spacing'=>'one'],
         'php_unit_test_case_static_method_calls' => ['call_type' => 'self'],
         'php_unit_no_expectation_annotation' => ['target' => 'newest'],
