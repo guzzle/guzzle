@@ -101,8 +101,6 @@ function choose_handler()
 
 /**
  * Get the default User-Agent string to use with Guzzle
- *
- * @return string
  */
 function default_user_agent(): string
 {
@@ -194,8 +192,6 @@ EOT
 /**
  * Creates an associative array of lowercase header names to the actual
  * header casing.
- *
- * @return array
  */
 function normalize_header_keys(array $headers): array
 {

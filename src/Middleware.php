@@ -24,7 +24,7 @@ final class Middleware
     public static function cookies(): callable
     {
         return function (callable $handler): callable {
-            return function ($request, array $options) use ($handler): PromiseInterface {
+            return function ($request, array $options) use ($handler) {
                 if (empty($options['cookies'])) {
                     return $handler($request, $options);
                 } elseif (!($options['cookies'] instanceof CookieJarInterface)) {
@@ -52,12 +52,12 @@ final class Middleware
     public static function httpErrors(): callable
     {
         return function (callable $handler): callable {
-            return function ($request, array $options) use ($handler): PromiseInterface {
+            return function ($request, array $options) use ($handler) {
                 if (empty($options['http_errors'])) {
                     return $handler($request, $options);
                 }
                 return $handler($request, $options)->then(
-                    function (ResponseInterface $response) use ($request): PromiseInterface {
+                    function (ResponseInterface $response) use ($request) {
                         $code = $response->getStatusCode();
                         if ($code < 400) {
                             return $response;
@@ -85,7 +85,7 @@ final class Middleware
         }
 
         return function (callable $handler) use (&$container): callable {
-            return function ($request, array $options) use ($handler, &$container): PromiseInterface {
+            return function (RequestInterface $request, array $options) use ($handler, &$container) {
                 return $handler($request, $options)->then(
                     function ($value) use ($request, &$container, $options) {
                         $container[] = [
@@ -96,7 +96,7 @@ final class Middleware
                         ];
                         return $value;
                     },
-                    function ($reason) use ($request, &$container, $options): PromiseInterface {
+                    function ($reason) use ($request, &$container, $options) {
                         $container[] = [
                             'request'  => $request,
                             'response' => null,
@@ -186,7 +186,7 @@ final class Middleware
     public static function log(LoggerInterface $logger, MessageFormatter $formatter, string $logLevel = 'info' /* \Psr\Log\LogLevel::INFO */): callable
     {
         return function (callable $handler) use ($logger, $formatter, $logLevel): callable {
-            return function (RequestInterface $request, array $options) use ($handler, $logger, $formatter, $logLevel): PromiseInterface {
+            return function (RequestInterface $request, array $options) use ($handler, $logger, $formatter, $logLevel) {
                 return $handler($request, $options)->then(
                     function ($response) use ($logger, $request, $formatter, $logLevel): ResponseInterface {
                         $message = $formatter->format($request, $response);
@@ -243,7 +243,7 @@ final class Middleware
     public static function mapResponse(callable $fn): callable
     {
         return function (callable $handler) use ($fn): callable {
-            return function (RequestInterface $request, array $options) use ($handler, $fn): PromiseInterface {
+            return function (RequestInterface $request, array $options) use ($handler, $fn) {
                 return $handler($request, $options)->then($fn);
             };
         };
