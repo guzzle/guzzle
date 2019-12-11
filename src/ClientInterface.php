@@ -69,6 +69,8 @@ interface ClientInterface
      * the concrete client.
      *
      * @param string|null $option The config option to retrieve.
+     *
+     * @return mixed
      */
     public function getConfig(?string $option = null);
 }

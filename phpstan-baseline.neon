@@ -36,11 +36,6 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Client\\:\\:getConfig\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:buildUri\\(\\) has parameter \\$config with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Client.php
@@ -97,11 +92,6 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:requestAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/ClientInterface.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:getConfig\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/ClientInterface.php
 
@@ -906,37 +896,12 @@ parameters:
 			path: src/RetryMiddleware.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\TransferStats\\:\\:\\$request has no typehint specified\\.$#"
-			count: 1
-			path: src/TransferStats.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\TransferStats\\:\\:\\$response has no typehint specified\\.$#"
-			count: 1
-			path: src/TransferStats.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\TransferStats\\:\\:\\$transferTime has no typehint specified\\.$#"
-			count: 1
-			path: src/TransferStats.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\TransferStats\\:\\:\\$handlerStats has no typehint specified\\.$#"
-			count: 1
-			path: src/TransferStats.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\TransferStats\\:\\:\\$handlerErrorData has no typehint specified\\.$#"
+			message: "#^Property GuzzleHttp\\\\TransferStats\\:\\:\\$handlerStats type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/TransferStats.php
 
 		-
 			message: "#^Method GuzzleHttp\\\\TransferStats\\:\\:__construct\\(\\) has parameter \\$handlerStats with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/TransferStats.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\TransferStats\\:\\:getHandlerErrorData\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/TransferStats.php
 
@@ -977,11 +942,6 @@ parameters:
 
 		-
 			message: "#^Function GuzzleHttp\\\\normalize_header_keys\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/functions.php
-
-		-
-			message: "#^Function GuzzleHttp\\\\is_host_in_noproxy\\(\\) has parameter \\$noProxyArray with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/functions.php
 

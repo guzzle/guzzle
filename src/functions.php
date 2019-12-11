@@ -101,10 +101,8 @@ function choose_handler()
 
 /**
  * Get the default User-Agent string to use with Guzzle
- *
- * @return string
  */
-function default_user_agent()
+function default_user_agent(): string
 {
     static $defaultAgent = '';
 
@@ -194,10 +192,8 @@ EOT
 /**
  * Creates an associative array of lowercase header names to the actual
  * header casing.
- *
- * @return array
  */
-function normalize_header_keys(array $headers)
+function normalize_header_keys(array $headers): array
 {
     $result = [];
     foreach (array_keys($headers) as $key) {
@@ -221,12 +217,12 @@ function normalize_header_keys(array $headers)
  * 3. The area starts with "." and the area is the last part of the host. e.g.
  *    '.mit.edu' will match any host that ends with '.mit.edu'.
  *
- * @param string $host         Host to check against the patterns.
- * @param array  $noProxyArray An array of host patterns.
+ * @param string   $host         Host to check against the patterns.
+ * @param string[] $noProxyArray An array of host patterns.
  *
  * @return bool
  */
-function is_host_in_noproxy($host, array $noProxyArray)
+function is_host_in_noproxy(string $host, array $noProxyArray)
 {
     if (strlen($host) === 0) {
         throw new \InvalidArgumentException('Empty host provided');
@@ -273,7 +269,7 @@ function is_host_in_noproxy($host, array $noProxyArray)
  *
  * @link http://www.php.net/manual/en/function.json-decode.php
  */
-function json_decode($json, $assoc = false, $depth = 512, $options = 0)
+function json_decode($json, bool $assoc = false, int $depth = 512, int $options = 0)
 {
     $data = \json_decode($json, $assoc, $depth, $options);
     if (JSON_ERROR_NONE !== json_last_error()) {
@@ -292,13 +288,11 @@ function json_decode($json, $assoc = false, $depth = 512, $options = 0)
  * @param int   $options JSON encode option bitmask
  * @param int   $depth   Set the maximum depth. Must be greater than zero.
  *
- * @return string
- *
  * @throws Exception\InvalidArgumentException if the JSON cannot be encoded.
  *
  * @link http://www.php.net/manual/en/function.json-encode.php
  */
-function json_encode($value, $options = 0, $depth = 512)
+function json_encode($value, int $options = 0, int $depth = 512): string
 {
     $json = \json_encode($value, $options, $depth);
     if (JSON_ERROR_NONE !== json_last_error()) {

@@ -394,7 +394,7 @@ class CurlFactory implements CurlFactoryInterface
                 $sink = new LazyOpenStream($sink, 'w+');
             }
             $easy->sink = $sink;
-            $conf[CURLOPT_WRITEFUNCTION] = function ($ch, $write) use ($sink) {
+            $conf[CURLOPT_WRITEFUNCTION] = function ($ch, $write) use ($sink): int {
                 return $sink->write($write);
             };
         } else {

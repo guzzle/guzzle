@@ -13,7 +13,7 @@ $config = PhpCsFixer\Config::create()
         'no_empty_phpdoc' => true,
         'no_extra_blank_lines' => true,
         'ordered_imports' => true,
-        'no_superfluous_phpdoc_tags' => true,
+        'no_superfluous_phpdoc_tags' => ['allow_mixed' => true],
         'no_blank_lines_after_phpdoc' => true,
         'phpdoc_trim_consecutive_blank_line_separation' => true,
         'phpdoc_trim' => true,

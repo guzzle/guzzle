@@ -31,13 +31,11 @@ class HandlerStack
      * The returned handler stack can be passed to a client in the "handler"
      * option.
      *
-     * @param callable $handler HTTP handler function to use with the stack. If no
-     *                          handler is provided, the best handler for your
-     *                          system will be utilized.
-     *
-     * @return HandlerStack
+     * @param callable|null $handler HTTP handler function to use with the stack. If no
+     *                               handler is provided, the best handler for your
+     *                               system will be utilized.
      */
-    public static function create(callable $handler = null): self
+    public static function create(?callable $handler = null): self
     {
         $stack = new self($handler ?: choose_handler());
         $stack->push(Middleware::httpErrors(), 'http_errors');
