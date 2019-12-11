@@ -5,11 +5,13 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
@@ -790,5 +792,37 @@ class ClientTest extends TestCase
         $client->send($request);
         self::assertSame('http://xn--d1acpjx3f.xn--p1ai/baz', (string) $mock->getLastRequest()->getUri());
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $mock->getLastRequest()->getHeaderLine('Host'));
+    }
+
+    public function testIdnWithRedirect()
+    {
+        if (!extension_loaded('intl')) {
+            self::markTestSkipped('intl PHP extension is not loaded');
+        }
+        $mockHandler = new MockHandler([
+            new Response(302, ['Location' => 'http://www.tést.com/whatever']),
+            new Response()
+        ]);
+        $handler = HandlerStack::create($mockHandler);
+        $requests = [];
+        $handler->push(Middleware::history($requests));
+        $client = new Client(['handler' => $handler]);
+
+        $client->request('GET', 'https://яндекс.рф/images', [
+            RequestOptions::ALLOW_REDIRECTS => [
+                'referer' => true,
+                'track_redirects' => true
+            ],
+            'idn_conversion' => true
+        ]);
+
+        $request = $mockHandler->getLastRequest();
+
+        self::assertSame('http://www.xn--tst-bma.com/whatever', (string) $request->getUri());
+        self::assertSame('www.xn--tst-bma.com', (string) $request->getHeaderLine('Host'));
+
+        $request = $requests[0]['request'];
+        self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
+        self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
     }
 }
