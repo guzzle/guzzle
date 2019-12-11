@@ -112,10 +112,10 @@ class RequestExceptionTest extends TestCase
 
     public function testCreatesExceptionWithTruncatedSummary()
     {
-        $content = str_repeat('+', 121);
+        $content = \str_repeat('+', 121);
         $response = new Response(500, [], $content);
         $e = RequestException::create(new Request('GET', '/'), $response);
-        $expected = str_repeat('+', 120) . ' (truncated...)';
+        $expected = \str_repeat('+', 120) . ' (truncated...)';
         self::assertStringContainsString($expected, $e->getMessage());
     }
 
@@ -130,7 +130,7 @@ class RequestExceptionTest extends TestCase
         $response = new Response(
             500,
             ['Content-Type' => 'image/gif'],
-            $content = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7') // 1x1 gif
+            $content = \base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7') // 1x1 gif
         );
         $e = RequestException::create(new Request('GET', '/'), $response);
         self::assertNotContains(
@@ -189,7 +189,7 @@ final class ReadSeekOnlyStream extends Stream
 {
     public function __construct()
     {
-        parent::__construct(fopen('php://memory', 'wb'));
+        parent::__construct(\fopen('php://memory', 'wb'));
     }
 
     public function isSeekable()

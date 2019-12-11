@@ -14,12 +14,12 @@ class FileCookieJarTest extends TestCase
 
     public function setUp(): void
     {
-        $this->file = tempnam('/tmp', 'file-cookies');
+        $this->file = \tempnam('/tmp', 'file-cookies');
     }
 
     public function testValidatesCookieFile()
     {
-        file_put_contents($this->file, 'true');
+        \file_put_contents($this->file, 'true');
 
         $this->expectException(\RuntimeException::class);
         new FileCookieJar($this->file);
@@ -29,7 +29,7 @@ class FileCookieJarTest extends TestCase
     {
         $jar = new FileCookieJar($this->file);
         self::assertSame([], $jar->getIterator()->getArrayCopy());
-        unlink($this->file);
+        \unlink($this->file);
     }
 
     /**
@@ -42,13 +42,13 @@ class FileCookieJarTest extends TestCase
             'Name'    => 'foo',
             'Value'   => 'bar',
             'Domain'  => 'foo.com',
-            'Expires' => time() + 1000
+            'Expires' => \time() + 1000
         ]));
         $jar->setCookie(new SetCookie([
             'Name'    => 'baz',
             'Value'   => 'bar',
             'Domain'  => 'foo.com',
-            'Expires' => time() + 1000
+            'Expires' => \time() + 1000
         ]));
         $jar->setCookie(new SetCookie([
             'Name'    => 'boo',
@@ -60,7 +60,7 @@ class FileCookieJarTest extends TestCase
         unset($jar);
 
         // Make sure it wrote to the file
-        $contents = file_get_contents($this->file);
+        $contents = \file_get_contents($this->file);
         self::assertNotEmpty($contents);
 
         // Load the cookieJar from the file
@@ -74,7 +74,7 @@ class FileCookieJarTest extends TestCase
         }
 
         unset($jar);
-        unlink($this->file);
+        \unlink($this->file);
     }
 
     public function providerPersistsToFileFileParameters()

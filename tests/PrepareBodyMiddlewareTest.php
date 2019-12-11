@@ -31,7 +31,7 @@ class PrepareBodyMiddlewareTest extends TestCase
     {
         $h = new MockHandler([
             function (RequestInterface $request) use ($body) {
-                $length = strlen($body);
+                $length = \strlen($body);
                 if ($length > 0) {
                     self::assertEquals($length, $request->getHeaderLine('Content-Length'));
                 } else {
@@ -76,7 +76,7 @@ class PrepareBodyMiddlewareTest extends TestCase
 
     public function testAddsContentTypeWhenMissingAndPossible()
     {
-        $bd = Psr7\stream_for(fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7\stream_for(\fopen(__DIR__ . '/../composer.json', 'r'));
         $h = new MockHandler([
             function (RequestInterface $request) {
                 self::assertSame('application/json', $request->getHeaderLine('Content-Type'));
@@ -109,7 +109,7 @@ class PrepareBodyMiddlewareTest extends TestCase
      */
     public function testAddsExpect($value, $result)
     {
-        $bd = Psr7\stream_for(fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7\stream_for(\fopen(__DIR__ . '/../composer.json', 'r'));
 
         $h = new MockHandler([
             function (RequestInterface $request) use ($result) {
@@ -132,7 +132,7 @@ class PrepareBodyMiddlewareTest extends TestCase
 
     public function testIgnoresIfExpectIsPresent()
     {
-        $bd = Psr7\stream_for(fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7\stream_for(\fopen(__DIR__ . '/../composer.json', 'r'));
         $h = new MockHandler([
             function (RequestInterface $request) {
                 self::assertSame(['Foo'], $request->getHeader('Expect'));

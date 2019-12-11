@@ -114,14 +114,14 @@ class PoolTest extends TestCase
             new Request('GET', 'http://foo.com/404'),
         ];
         $fn = function (RequestInterface $request) {
-            return new Response(substr($request->getUri()->getPath(), 1));
+            return new Response(\substr($request->getUri()->getPath(), 1));
         };
         $mock = new MockHandler([$fn, $fn, $fn, $fn]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $results = Pool::batch($client, $requests);
         self::assertCount(4, $results);
-        self::assertSame([0, 1, 2, 3], array_keys($results));
+        self::assertSame([0, 1, 2, 3], \array_keys($results));
         self::assertSame(200, $results[0]->getStatusCode());
         self::assertSame(201, $results[1]->getStatusCode());
         self::assertSame(202, $results[2]->getStatusCode());
@@ -136,7 +136,7 @@ class PoolTest extends TestCase
         ];
         $mock = new MockHandler([
             function (RequestInterface $request) {
-                return new Response(substr($request->getUri()->getPath(), 1));
+                return new Response(\substr($request->getUri()->getPath(), 1));
             }
         ]);
         $client = new Client(['handler' => $mock]);
@@ -176,7 +176,7 @@ class PoolTest extends TestCase
         ]);
         $p->promise()->wait();
         self::assertCount(3, $keys);
-        self::assertSame($keys, array_keys($requests));
+        self::assertSame($keys, \array_keys($requests));
     }
 
     private function getClient($total = 1)

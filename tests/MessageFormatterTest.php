@@ -66,8 +66,8 @@ class MessageFormatterTest extends TestCase
             ['{res_version}', [$request, $response], $response->getProtocolVersion()],
             ['{res_version}', [$request], 'NULL'],
             ['{host}', [$request], $request->getHeaderLine('Host')],
-            ['{hostname}', [$request, $response], gethostname()],
-            ['{hostname}{hostname}', [$request, $response], gethostname() . gethostname()],
+            ['{hostname}', [$request, $response], \gethostname()],
+            ['{hostname}{hostname}', [$request, $response], \gethostname() . \gethostname()],
             ['{code}', [$request, $response], $response->getStatusCode()],
             ['{code}', [$request], 'NULL'],
             ['{phrase}', [$request, $response], $response->getReasonPhrase()],
@@ -88,6 +88,6 @@ class MessageFormatterTest extends TestCase
     public function testFormatsMessages($template, $args, $result)
     {
         $f = new MessageFormatter($template);
-        self::assertSame((string) $result, call_user_func_array([$f, 'format'], $args));
+        self::assertSame((string) $result, \call_user_func_array([$f, 'format'], $args));
     }
 }

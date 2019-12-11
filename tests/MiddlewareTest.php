@@ -131,7 +131,7 @@ class MiddlewareTest extends TestCase
         $b->push($m);
         $comp = $b->resolve();
         $p = $comp(new Request('GET', 'http://foo.com'), []);
-        self::assertSame('123', implode('', $calls));
+        self::assertSame('123', \implode('', $calls));
         self::assertInstanceOf(PromiseInterface::class, $p);
         self::assertSame(200, $p->wait()->getStatusCode());
     }

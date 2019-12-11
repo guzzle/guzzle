@@ -17,8 +17,8 @@ class RetryMiddlewareTest extends TestCase
         $delayCalls = 0;
         $calls = [];
         $decider = function ($retries, $request, $response, $error) use (&$calls) {
-            $calls[] = func_get_args();
-            return count($calls) < 3;
+            $calls[] = \func_get_args();
+            return \count($calls) < 3;
         };
         $delay = function ($retries, $response) use (&$delayCalls) {
             $delayCalls++;
@@ -53,7 +53,7 @@ class RetryMiddlewareTest extends TestCase
     {
         $calls = [];
         $decider = function ($retries, $request, $response, $error) use (&$calls) {
-            $calls[] = func_get_args();
+            $calls[] = \func_get_args();
             return $error instanceof \Exception;
         };
         $m = Middleware::retry($decider);
