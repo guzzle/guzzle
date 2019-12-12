@@ -274,7 +274,7 @@ class Client implements ClientInterface
             && (
                 defined('INTL_IDNA_VARIANT_UTS46')
                 ||
-                version_compare(PHP_VERSION, '7.2.0') < 0
+                PHP_VERSION_ID < 70200
             );
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
