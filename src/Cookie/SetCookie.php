@@ -125,7 +125,7 @@ class SetCookie
     /**
      * Get the cookie value
      *
-     * @return string
+     * @return string|null
      */
     public function getValue()
     {
