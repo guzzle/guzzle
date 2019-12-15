@@ -156,11 +156,6 @@ parameters:
 			path: src/Cookie/CookieJarInterface.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:\\$defaults type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
 			message: "#^Property GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:\\$data type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
@@ -824,11 +819,6 @@ parameters:
 			message: "#^Method GuzzleHttp\\\\PrepareBodyMiddleware\\:\\:addExpectHeader\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/PrepareBodyMiddleware.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\RedirectMiddleware\\:\\:\\$defaultSettings has no typehint specified\\.$#"
-			count: 1
-			path: src/RedirectMiddleware.php
 
 		-
 			message: "#^Method GuzzleHttp\\\\RedirectMiddleware\\:\\:__invoke\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
