@@ -11,6 +11,7 @@ $config = PhpCsFixer\Config::create()
         'php_unit_test_case_static_method_calls' => ['call_type' => 'self'],
         'php_unit_no_expectation_annotation' => ['target' => 'newest'],
         'php_unit_expectation' => ['target' => 'newest'],
+        'php_unit_dedicate_assert_internal_type' => ['target' => 'newest'],
         'no_empty_phpdoc' => true,
         'no_extra_blank_lines' => true,
         'ordered_imports' => true,

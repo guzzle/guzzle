@@ -44,8 +44,8 @@ class CurlFactoryTest extends TestCase
         $f = new Handler\CurlFactory(3);
         $result = $f->create($request, ['sink' => $stream]);
         self::assertInstanceOf(EasyHandle::class, $result);
-        self::assertInternalType('resource', $result->handle);
-        self::assertInternalType('array', $result->headers);
+        self::assertIsResource($result->handle);
+        self::assertIsArray($result->headers);
         self::assertSame($stream, $result->sink);
         \curl_close($result->handle);
         self::assertSame('PUT', $_SERVER['_curl'][CURLOPT_CUSTOMREQUEST]);
@@ -565,7 +565,7 @@ class CurlFactoryTest extends TestCase
         $request = new Psr7\Request('PUT', Server::$url, [], $bd);
         $f->create($request, []);
         self::assertEquals(1, $_SERVER['_curl'][CURLOPT_UPLOAD]);
-        self::assertInternalType('callable', $_SERVER['_curl'][CURLOPT_READFUNCTION]);
+        self::assertIsCallable($_SERVER['_curl'][CURLOPT_READFUNCTION]);
     }
 
     public function testEnsuresDirExistsBeforeThrowingWarning()
@@ -711,8 +711,8 @@ class CurlFactoryTest extends TestCase
             'http://127.0.0.1:123',
             (string) $gotStats->getRequest()->getUri()
         );
-        self::assertInternalType('float', $gotStats->getTransferTime());
-        self::assertInternalType('int', $gotStats->getHandlerErrorData());
+        self::assertIsFloat($gotStats->getTransferTime());
+        self::assertIsInt($gotStats->getHandlerErrorData());
         self::assertArrayHasKey('appconnect_time', $gotStats->getHandlerStats());
     }
 
