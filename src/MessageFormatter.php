@@ -61,7 +61,7 @@ class MessageFormatter
      *
      * @param RequestInterface  $request  Request that was sent
      * @param ResponseInterface $response Response that was received
-     * @param \Exception        $error    Exception that was received
+     * @param \Exception|null   $error    Exception that was received
      */
     public function format(
         RequestInterface $request,
