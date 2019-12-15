@@ -7,7 +7,7 @@ namespace GuzzleHttp\Cookie;
 class SetCookie
 {
     /** @var array */
-    private static $defaults = [
+    private const DEFAULTS = [
         'Name'     => null,
         'Value'    => null,
         'Domain'   => null,
@@ -32,7 +32,7 @@ class SetCookie
     public static function fromString($cookie)
     {
         // Create the default return array
-        $data = self::$defaults;
+        $data = self::DEFAULTS;
         // Explode the cookie string using a series of semicolons
         $pieces = \array_filter(\array_map('trim', \explode(';', $cookie)));
         // The name of the cookie (first kvp) must exist and include an equal sign.
@@ -53,7 +53,7 @@ class SetCookie
                 $data['Name'] = $key;
                 $data['Value'] = $value;
             } else {
-                foreach (\array_keys(self::$defaults) as $search) {
+                foreach (\array_keys(self::DEFAULTS) as $search) {
                     if (!\strcasecmp($search, $key)) {
                         $data[$search] = $value;
                         continue 2;
@@ -71,7 +71,7 @@ class SetCookie
      */
     public function __construct(array $data = [])
     {
-        $this->data = \array_replace(self::$defaults, $data);
+        $this->data = \array_replace(self::DEFAULTS, $data);
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         if (!$this->getExpires() && $this->getMaxAge()) {
             // Calculate the Expires date

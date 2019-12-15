@@ -265,7 +265,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     private function configureDefaults(array $config): void
     {
         $defaults = [
-            'allow_redirects' => RedirectMiddleware::$defaultSettings,
+            'allow_redirects' => RedirectMiddleware::DEFAULT_SETTINGS,
             'http_errors'     => true,
             'decode_content'  => true,
             'verify'          => true,
