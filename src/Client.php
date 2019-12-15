@@ -162,7 +162,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $body = isset($options['body']) ? $options['body'] : null;
         $version = isset($options['version']) ? $options['version'] : '1.1';
         // Merge the URI into the base URI.
-        $uri = $this->buildUri($uri, $options);
+        $uri = $this->buildUri(Psr7\uri_for($uri), $options);
         if (\is_array($body)) {
             $this->invalidBody();
         }
@@ -210,14 +210,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             : (isset($this->config[$option]) ? $this->config[$option] : null);
     }
 
-    /**
-     * @param string|UriInterface|null $uri
-     */
-    private function buildUri($uri, array $config): UriInterface
+    private function buildUri(UriInterface $uri, array $config): UriInterface
     {
-        // for BC we accept null which would otherwise fail in uri_for
-        $uri = Psr7\uri_for($uri === null ? '' : $uri);
-
         if (isset($config['base_uri'])) {
             $uri = Psr7\UriResolver::resolve(Psr7\uri_for($config['base_uri']), $uri);
         }
