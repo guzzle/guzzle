@@ -238,7 +238,7 @@ class HandlerStack
     /**
      * Provides a debug string for a given callable.
      *
-     * @param array|callable $fn Function to write as a string.
+     * @param array|string|callable $fn Function to write as a string.
      */
     private function debugCallable($fn): string
     {
