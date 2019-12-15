@@ -126,7 +126,7 @@ class ClientTest extends TestCase
     {
         $c = new Client(['headers' => ['User-agent' => 'foo']]);
         self::assertSame(['User-agent' => 'foo'], $c->getConfig('headers'));
-        self::assertInternalType('array', $c->getConfig('allow_redirects'));
+        self::assertIsArray($c->getConfig('allow_redirects'));
         self::assertTrue($c->getConfig('http_errors'));
         self::assertTrue($c->getConfig('decode_content'));
         self::assertTrue($c->getConfig('verify'));
@@ -200,7 +200,7 @@ class ClientTest extends TestCase
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://foo.com', ['allow_redirects' => true]);
-        self::assertInternalType('array', $mock->getLastOptions()['allow_redirects']);
+        self::assertIsArray($mock->getLastOptions()['allow_redirects']);
     }
 
     public function testValidatesAllowRedirects()
