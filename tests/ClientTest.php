@@ -191,7 +191,7 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response(200, [], 'foo')]);
         $client = new Client(['handler' => $mock]);
         $client->get('http://foo.com', ['save_to' => $r]);
-        self::assertSame($r, $mock->getLastOptions()['sink']);
+        self::assertSame($r, $mock->getLastOptions()['save_to']);
     }
 
     public function testAllowRedirectsCanBeTrue()
