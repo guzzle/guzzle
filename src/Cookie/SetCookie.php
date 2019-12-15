@@ -294,8 +294,6 @@ class SetCookie
      *   path is a %x2F ("/") character.
      *
      * @param string $requestPath Path to check against
-     *
-     * @return bool
      */
     public function matchesPath(string $requestPath): bool
     {
