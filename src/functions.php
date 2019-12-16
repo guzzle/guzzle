@@ -12,7 +12,7 @@ use GuzzleHttp\Handler\StreamHandler;
  * @return string Returns a string containing the type of the variable and
  *                if a class is provided, the class name.
  */
-function describe_type(string $input)
+function describe_type($input): string
 {
     switch (\gettype($input)) {
         case 'object':
