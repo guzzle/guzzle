@@ -161,6 +161,11 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
+			message: "#^Property GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:\\$data \\(array\\) does not accept array\\|null\\.$#"
+			count: 1
+			path: src/Cookie/SetCookie.php
+
+		-
 			message: "#^Parameter \\#1 \\$timestamp of method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setExpires\\(\\) expects int, mixed given\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
@@ -527,6 +532,11 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Handler\\\\StreamHandler\\:\\:createStream\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$options of function stream_context_create expects array, array\\|null given\\.$#"
 			count: 1
 			path: src/Handler/StreamHandler.php
 
