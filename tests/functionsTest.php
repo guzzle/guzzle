@@ -73,7 +73,7 @@ class FunctionsTest extends TestCase
 
     public function testReturnsDebugResource()
     {
-        self::assertInternalType('resource', GuzzleHttp\debug_resource());
+        self::assertIsResource(GuzzleHttp\debug_resource());
     }
 
     public function testProvidesDefaultCaBundler()

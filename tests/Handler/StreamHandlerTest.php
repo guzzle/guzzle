@@ -76,7 +76,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('8', $response->getHeaderLine('Content-Length'));
         $body = $response->getBody();
         $stream = $body->detach();
-        self::assertInternalType('resource', $stream);
+        self::assertIsResource($stream);
         self::assertSame('http', \stream_get_meta_data($stream)['wrapper_type']);
         self::assertSame('hi there', \stream_get_contents($stream));
         \fclose($stream);
@@ -615,7 +615,7 @@ class StreamHandlerTest extends TestCase
             'http://127.0.0.1:123',
             (string) $gotStats->getRequest()->getUri()
         );
-        self::assertInternalType('float', $gotStats->getTransferTime());
+        self::assertIsFloat($gotStats->getTransferTime());
         self::assertInstanceOf(
             ConnectException::class,
             $gotStats->getHandlerErrorData()
