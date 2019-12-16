@@ -71,7 +71,8 @@ class Pool implements PromisorInterface
 
     /**
      * Get promise
-     * @return GuzzleHttp\Promise\Promise
+     *
+     * @return \GuzzleHttp\Promise\PromiseInterface
      */
     public function promise()
     {
