@@ -104,6 +104,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param array $options Request options to apply to the given
      *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
+<<<<<<< HEAD
+=======
+     *
+     * @return Promise\PromiseInterface
+>>>>>>> guzzle/6.5
      */
     public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface
     {
@@ -155,6 +160,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string              $method  HTTP method
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
+<<<<<<< HEAD
+=======
+     *
+     * @return Promise\PromiseInterface
+>>>>>>> guzzle/6.5
      */
     public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
@@ -227,7 +237,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if ($uri->getHost() && isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
             $idnOptions = ($config['idn_conversion'] === true) ? IDNA_DEFAULT : $config['idn_conversion'];
 
-            $asciiHost = \idn_to_ascii($uri->getHost(), $idnOptions, INTL_IDNA_VARIANT_UTS46, $info);
+            $idnaVariant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : 0;
+            $asciiHost = \idn_to_ascii($uri->getHost(), $idnOptions, $idnaVariant, $info);
             if ($asciiHost === false) {
                 $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
 
@@ -273,7 +284,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         ];
 
         // idn_to_ascii() is a part of ext-intl and might be not available
-        $defaults['idn_conversion'] = \function_exists('idn_to_ascii');
+        // Old ICU versions don't have this constant, so we are basically stuck (see https://github.com/guzzle/guzzle/pull/2424
+        // and https://github.com/guzzle/guzzle/issues/2448 for details)
+        $defaults['idn_conversion'] = \function_exists('idn_to_ascii') && defined('INTL_IDNA_VARIANT_UTS46');
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
 
