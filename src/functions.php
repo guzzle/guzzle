@@ -358,7 +358,8 @@ function _current_time()
 function _idn_uri_convert(UriInterface $uri, $options = 0)
 {
     if ($uri->getHost()) {
-        $asciiHost = idn_to_ascii($uri->getHost(), $options, INTL_IDNA_VARIANT_UTS46, $info);
+        $idnaVariant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : 0;
+        $asciiHost = idn_to_ascii($uri->getHost(), $options, $idnaVariant, $info);
         if ($asciiHost === false) {
             $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
 

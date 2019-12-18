@@ -102,7 +102,7 @@ class Client implements ClientInterface
      * @param array $options Request options to apply to the given
      *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
      *
-     * @return PromiseInterface
+     * @return Promise\PromiseInterface
      */
     public function sendAsync(RequestInterface $request, array $options = [])
     {
@@ -142,7 +142,7 @@ class Client implements ClientInterface
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
      *
-     * @return PromiseInterface
+     * @return Promise\PromiseInterface
      */
     public function requestAsync($method, $uri = '', array $options = [])
     {
@@ -240,7 +240,14 @@ class Client implements ClientInterface
         ];
 
         // idn_to_ascii() is a part of ext-intl and might be not available
-        $defaults['idn_conversion'] = function_exists('idn_to_ascii');
+        $defaults['idn_conversion'] = function_exists('idn_to_ascii')
+            // Old ICU versions don't have this constant, so we are basically stuck (see https://github.com/guzzle/guzzle/pull/2424
+            // and https://github.com/guzzle/guzzle/issues/2448 for details)
+            && (
+                defined('INTL_IDNA_VARIANT_UTS46')
+                ||
+                PHP_VERSION_ID < 70200
+            );
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
 

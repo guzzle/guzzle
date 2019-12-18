@@ -16,22 +16,12 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Client\\:\\:__call\\(\\) should return GuzzleHttp\\\\Promise\\\\PromiseInterface but returns GuzzleHttp\\\\PromiseInterface\\|Psr\\\\Http\\\\Message\\\\ResponseInterface\\.$#"
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:__call\\(\\) should return GuzzleHttp\\\\Promise\\\\PromiseInterface but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\|Psr\\\\Http\\\\Message\\\\ResponseInterface\\.$#"
 			count: 1
 			path: src/Client.php
 
 		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
-			message: "#^Return typehint of method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) has invalid type GuzzleHttp\\\\PromiseInterface\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) should return GuzzleHttp\\\\PromiseInterface but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
 			count: 1
 			path: src/Client.php
 
@@ -46,22 +36,7 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^Call to method wait\\(\\) on an unknown class GuzzleHttp\\\\PromiseInterface\\.$#"
-			count: 2
-			path: src/Client.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
-			message: "#^Return typehint of method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) has invalid type GuzzleHttp\\\\PromiseInterface\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) should return GuzzleHttp\\\\PromiseInterface but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
 			count: 1
 			path: src/Client.php
 
@@ -1126,16 +1101,6 @@ parameters:
 			path: src/Pool.php
 
 		-
-			message: "#^Return typehint of method GuzzleHttp\\\\Pool\\:\\:promise\\(\\) has invalid type GuzzleHttp\\\\GuzzleHttp\\\\Promise\\\\Promise\\.$#"
-			count: 1
-			path: src/Pool.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Pool\\:\\:promise\\(\\) should return GuzzleHttp\\\\GuzzleHttp\\\\Promise\\\\Promise but returns GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
-			count: 1
-			path: src/Pool.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Pool\\:\\:batch\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Pool.php
@@ -1152,11 +1117,6 @@ parameters:
 
 		-
 			message: "#^Unsafe usage of new static\\(\\)\\.$#"
-			count: 1
-			path: src/Pool.php
-
-		-
-			message: "#^Call to method wait\\(\\) on an unknown class GuzzleHttp\\\\GuzzleHttp\\\\Promise\\\\Promise\\.$#"
 			count: 1
 			path: src/Pool.php
 
