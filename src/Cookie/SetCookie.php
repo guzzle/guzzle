@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Cookie;
 
 /**
@@ -8,15 +9,15 @@ class SetCookie
 {
     /** @var array */
     private static $defaults = [
-        'Name'     => null,
-        'Value'    => null,
-        'Domain'   => null,
-        'Path'     => '/',
-        'Max-Age'  => null,
-        'Expires'  => null,
-        'Secure'   => false,
-        'Discard'  => false,
-        'HttpOnly' => false
+        'Name' => null,
+        'Value' => null,
+        'Domain' => null,
+        'Path' => '/',
+        'Max-Age' => null,
+        'Expires' => null,
+        'Secure' => false,
+        'Discard' => false,
+        'HttpOnly' => false,
     ];
 
     /** @var array Cookie data */
@@ -71,7 +72,12 @@ class SetCookie
      */
     public function __construct(array $data = [])
     {
-        $this->data = \array_replace(self::$defaults, $data);
+        $replaced = \array_replace(self::$defaults, $data);
+        if ($replaced === null) {
+            throw new \InvalidArgumentException('Unable to replace the default values for the Cookie.');
+        }
+
+        $this->data = $replaced;
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         if (!$this->getExpires() && $this->getMaxAge()) {
             // Calculate the Expires date
@@ -218,7 +224,7 @@ class SetCookie
     public function setExpires($timestamp)
     {
         $this->data['Expires'] = \is_numeric($timestamp)
-            ? (int) $timestamp
+            ? (int)$timestamp
             : \strtotime($timestamp);
     }
 
@@ -344,7 +350,7 @@ class SetCookie
             return false;
         }
 
-        return (bool) \preg_match('/\.' . \preg_quote($cookieDomain, '/') . '$/', $domain);
+        return (bool)\preg_match('/\.' . \preg_quote($cookieDomain, '/') . '$/', $domain);
     }
 
     /**
