@@ -2,8 +2,7 @@
 namespace GuzzleHttp\Exception;
 
 use Psr\Http\Client\ClientExceptionInterface;
-use Throwable;
 
-interface GuzzleException extends Throwable, ClientExceptionInterface
+interface GuzzleException extends ClientExceptionInterface
 {
 }

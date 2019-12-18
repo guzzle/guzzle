@@ -471,7 +471,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 $value = \http_build_query($value, null, '&', PHP_QUERY_RFC3986);
             }
             if (!\is_string($value)) {
-                throw new InvalidArgumentException($request, 'query must be a string or array');
+                throw new InvalidArgumentException('query must be a string or array');
             }
             $modify['query'] = $value;
             unset($options['query']);
@@ -481,7 +481,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (isset($options['sink'])) {
             // TODO: Add more sink validation?
             if (\is_bool($options['sink'])) {
-                throw new InvalidArgumentException($request, 'sink must not be a boolean');
+                throw new InvalidArgumentException('sink must not be a boolean');
             }
         }
 
