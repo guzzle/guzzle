@@ -104,11 +104,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param array $options Request options to apply to the given
      *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
-<<<<<<< HEAD
-=======
-     *
-     * @return Promise\PromiseInterface
->>>>>>> guzzle/6.5
      */
     public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface
     {
@@ -160,11 +155,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string              $method  HTTP method
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
-<<<<<<< HEAD
-=======
-     *
-     * @return Promise\PromiseInterface
->>>>>>> guzzle/6.5
      */
     public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
