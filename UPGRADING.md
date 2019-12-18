@@ -1,6 +1,37 @@
 Guzzle Upgrade Guide
 ====================
 
+6.0 to 7.0
+----------
+In order Guzzle to take advantage of the new features of PHP, we dropped the support of PHP 5.
+The minimum supported PHP version is now PHP 7.2.
+
+Wherever it was possible type hints and return types for functions and methods are applied. 
+
+Please make sure:
+- If you have enabled strict types that you are calling a function or a method with the correct type.
+- If you extend a class of Guzzle and you are overriding a method make sure you add the return type and type hints of the overriden method.
+
+Moreover:
+- All internal native functions calls of Guzzle are now prefixed with a slash. 
+This change makes it impossible for the users of the library to change the behavior of any of these functions
+
+Before:
+`curl_version()`
+
+After:
+`\curl_version()`
+ 
+- Class `GuzzleHttp\UriTemplate` is removed.
+- Class `GuzzleHttp\Exception\SeekException` is removed.
+- Constant `GuzzleHttp\ClientInterface::VERSION` is removed.
+- Function `GuzzleHttp\Exception\RequestException::getResponseBodySummary` is removed. Use `\GuzzleHttp\Psr7\get_message_body_summary`
+as an alternative
+- Request option `exception` which was an alias of `http_errors` is removed.
+- Request option `save_to` which was an alias of `sink` is removed.
+
+For the full diff you can check [here](https://github.com/guzzle/guzzle/compare/6.5.0..master)
+
 5.0 to 6.0
 ----------
 
