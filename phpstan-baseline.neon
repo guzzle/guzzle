@@ -111,13 +111,8 @@ parameters:
 			path: src/Cookie/CookieJar.php
 
 		-
-			message: "#^Result of \\|\\| is always false\\.$#"
-			count: 1
-			path: src/Cookie/CookieJar.php
-
-		-
 			message: "#^Strict comparison using \\=\\=\\= between string and null will always evaluate to false\\.$#"
-			count: 2
+			count: 1
 			path: src/Cookie/CookieJar.php
 
 		-
