@@ -29,8 +29,9 @@
     },
     "require-dev": {
         "ext-curl": "*",
-        "phpunit/phpunit": "^8.5",
+        "ergebnis/composer-normalize": "^2.0",
         "php-http/client-integration-tests": "dev-phpunit8",
+        "phpunit/phpunit": "^8.5",
         "psr/log": "^1.1"
     },
     "suggest": {
