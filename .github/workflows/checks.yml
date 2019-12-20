@@ -1,0 +1,26 @@
+name: Checks
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  composer-normalize:
+    name: Composer normalize
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Install
+        uses: docker://composer
+        with:
+          args: install
+
+      - name: Normalize
+        uses: docker://composer
+        with:
+          args: composer normalize --dry-run
