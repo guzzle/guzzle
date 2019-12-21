@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.5.1 - 2019-12-21
+
+* Better defaults for PHP installations with old ICU lib [#2454](https://github.com/guzzle/guzzle/pull/2454)
+* IDN support for redirects [#2424](https://github.com/guzzle/guzzle/pull/2424)
+
 ## 6.5.0 - 2019-12-07
 
 * Improvement: Added support for reset internal queue in MockHandler. [#2143](https://github.com/guzzle/guzzle/pull/2143)

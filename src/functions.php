@@ -1,10 +1,12 @@
 <?php
 namespace GuzzleHttp;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
+use Psr\Http\Message\UriInterface;
 
 /**
  * Debug function used to describe the provided value type and class.
@@ -12,7 +14,7 @@ use GuzzleHttp\Handler\StreamHandler;
  * @return string Returns a string containing the type of the variable and
  *                if a class is provided, the class name.
  */
-function describe_type($input)
+function describe_type($input): string
 {
     switch (\gettype($input)) {
         case 'object':
@@ -32,10 +34,8 @@ function describe_type($input)
  *
  * @param iterable $lines Header lines array of strings in the following
  *                        format: "Name: Value"
- *
- * @return array
  */
-function headers_from_lines($lines)
+function headers_from_lines($lines): array
 {
     $headers = [];
 
@@ -76,7 +76,7 @@ function debug_resource($value = null)
  *
  * @return callable Returns the best handler for the given system.
  */
-function choose_handler()
+function choose_handler(): callable
 {
     $handler = null;
     if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
@@ -128,11 +128,9 @@ function default_user_agent(): string
  *
  * Note: the result of this function is cached for subsequent calls.
  *
- * @return string
- *
  * @throws \RuntimeException if no bundle can be found.
  */
-function default_ca_bundle()
+function default_ca_bundle(): string
 {
     static $cached = null;
     static $cafiles = [
@@ -219,10 +217,8 @@ function normalize_header_keys(array $headers): array
  *
  * @param string   $host         Host to check against the patterns.
  * @param string[] $noProxyArray An array of host patterns.
- *
- * @return bool
  */
-function is_host_in_noproxy(string $host, array $noProxyArray)
+function is_host_in_noproxy(string $host, array $noProxyArray): bool
 {
     if (\strlen($host) === 0) {
         throw new \InvalidArgumentException('Empty host provided');
@@ -264,6 +260,8 @@ function is_host_in_noproxy(string $host, array $noProxyArray)
  *                        into associative arrays.
  * @param int    $depth   User specified recursion depth.
  * @param int    $options Bitmask of JSON decode options.
+ *
+ * @return array|string|int|float|bool|null
  *
  * @throws Exception\InvalidArgumentException if the JSON cannot be decoded.
  *
@@ -315,4 +313,47 @@ function json_encode($value, int $options = 0, int $depth = 512): string
 function _current_time()
 {
     return \function_exists('hrtime') ? \hrtime(true) / 1e9 : \microtime(true);
+}
+
+/**
+ * @param int $options
+ *
+ * @return UriInterface
+ *
+ * @internal
+ */
+function _idn_uri_convert(UriInterface $uri, $options = 0)
+{
+    if ($uri->getHost()) {
+        $idnaVariant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : 0;
+        $asciiHost = idn_to_ascii($uri->getHost(), $options, $idnaVariant, $info);
+        if ($asciiHost === false) {
+            $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
+
+            $errorConstants = array_filter(array_keys(get_defined_constants()), function ($name) {
+                return substr($name, 0, 11) === 'IDNA_ERROR_';
+            });
+
+            $errors = [];
+            foreach ($errorConstants as $errorConstant) {
+                if ($errorBitSet & constant($errorConstant)) {
+                    $errors[] = $errorConstant;
+                }
+            }
+
+            $errorMessage = 'IDN conversion failed';
+            if ($errors) {
+                $errorMessage .= ' (errors: ' . implode(', ', $errors) . ')';
+            }
+
+            throw new InvalidArgumentException($errorMessage);
+        } else {
+            if ($uri->getHost() !== $asciiHost) {
+                // Replace URI only if the ASCII version is different
+                $uri = $uri->withHost($asciiHost);
+            }
+        }
+    }
+
+    return $uri;
 }

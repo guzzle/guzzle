@@ -111,16 +111,6 @@ parameters:
 			path: src/Cookie/CookieJar.php
 
 		-
-			message: "#^Result of \\|\\| is always false\\.$#"
-			count: 1
-			path: src/Cookie/CookieJar.php
-
-		-
-			message: "#^Strict comparison using \\=\\=\\= between string and null will always evaluate to false\\.$#"
-			count: 2
-			path: src/Cookie/CookieJar.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Cookie\\\\CookieJar\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Cookie/CookieJar.php
@@ -156,6 +146,11 @@ parameters:
 			path: src/Cookie/CookieJarInterface.php
 
 		-
+			message: "#^Parameter \\#1 \\$string of function strlen expects string, bool\\|float\\|int\\|string\\|null given\\.$#"
+			count: 1
+			path: src/Cookie/FileCookieJar.php
+
+		-
 			message: "#^Property GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:\\$defaults type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
@@ -171,42 +166,12 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:\\$data \\(array\\) does not accept array\\|null\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
 			message: "#^Parameter \\#1 \\$timestamp of method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setExpires\\(\\) expects int, mixed given\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:toArray\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setName\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setValue\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setDomain\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setPath\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setMaxAge\\(\\) has no return typehint specified\\.$#"
+			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:toArray\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
 
@@ -216,27 +181,7 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setExpires\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
 			message: "#^Else branch is unreachable because ternary operator condition is always true\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setSecure\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setDiscard\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setHttpOnly\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
 
@@ -256,22 +201,12 @@ parameters:
 			path: src/Exception/ConnectException.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Exception\\\\ConnectException\\:\\:__construct\\(\\) has parameter \\$message with no typehint specified\\.$#"
-			count: 1
-			path: src/Exception/ConnectException.php
-
-		-
 			message: "#^Property GuzzleHttp\\\\Exception\\\\RequestException\\:\\:\\$handlerContext type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Exception/RequestException.php
 
 		-
 			message: "#^Method GuzzleHttp\\\\Exception\\\\RequestException\\:\\:__construct\\(\\) has parameter \\$handlerContext with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Exception/RequestException.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Exception\\\\RequestException\\:\\:__construct\\(\\) has parameter \\$message with no typehint specified\\.$#"
 			count: 1
 			path: src/Exception/RequestException.php
 
@@ -951,7 +886,7 @@ parameters:
 			path: src/functions.php
 
 		-
-			message: "#^Function GuzzleHttp\\\\json_decode\\(\\) has no return typehint specified\\.$#"
+			message: "#^Function GuzzleHttp\\\\json_decode\\(\\) return type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/functions.php
 

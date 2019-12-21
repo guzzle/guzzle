@@ -4,7 +4,6 @@ namespace GuzzleHttp;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -169,7 +168,13 @@ class RedirectMiddleware
             $modify['body'] = '';
         }
 
-        $modify['uri'] = $this->redirectUri($request, $response, $protocols);
+        $uri = $this->redirectUri($request, $response, $protocols);
+        if (isset($options['idn_conversion']) && ($options['idn_conversion'] !== false)) {
+            $idnOptions = ($options['idn_conversion'] === true) ? IDNA_DEFAULT : $options['idn_conversion'];
+            $uri = _idn_uri_convert($uri, $idnOptions);
+        }
+
+        $modify['uri'] = $uri;
         Psr7\rewind_body($request);
 
         // Add the Referer header if it is told to do so and only
