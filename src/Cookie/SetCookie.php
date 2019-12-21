@@ -69,12 +69,7 @@ class SetCookie
      */
     public function __construct(array $data = [])
     {
-        $replaced = \array_replace(self::$defaults, $data);
-        if ($replaced === null) {
-            throw new \InvalidArgumentException('Unable to replace the default values for the Cookie.');
-        }
-
-        $this->data = $replaced;
+        $this->data = \array_replace(self::$defaults, $data);
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         if (!$this->getExpires() && $this->getMaxAge()) {
             // Calculate the Expires date
