@@ -49,7 +49,7 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: xdebug
           ini-values-csv: xdebug.overload_var_dump=1
-          extension-csv: mbstring
+          extension-csv: 'mbstring, intl'
 
       - name: Set up Node
         uses: actions/setup-node@v1
