@@ -222,37 +222,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $uri = Psr7\UriResolver::resolve(Psr7\uri_for($config['base_uri']), $uri);
         }
 
-        if ($uri->getHost() && isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
+        if (isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
             $idnOptions = ($config['idn_conversion'] === true) ? IDNA_DEFAULT : $config['idn_conversion'];
-
-            $idnaVariant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : 0;
-            $asciiHost = \idn_to_ascii($uri->getHost(), $idnOptions, $idnaVariant, $info);
-            if ($asciiHost === false) {
-                $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
-
-                $errorConstants = \array_filter(\array_keys(\get_defined_constants()), function ($name) {
-                    return \substr($name, 0, 11) === 'IDNA_ERROR_';
-                });
-
-                $errors = [];
-                foreach ($errorConstants as $errorConstant) {
-                    if ($errorBitSet & \constant($errorConstant)) {
-                        $errors[] = $errorConstant;
-                    }
-                }
-
-                $errorMessage = 'IDN conversion failed';
-                if ($errors) {
-                    $errorMessage .= ' (errors: ' . \implode(', ', $errors) . ')';
-                }
-
-                throw new InvalidArgumentException($errorMessage);
-            } else {
-                if ($uri->getHost() !== $asciiHost) {
-                    // Replace URI only if the ASCII version is different
-                    $uri = $uri->withHost($asciiHost);
-                }
-            }
+            $uri = _idn_uri_convert($uri, $idnOptions);
         }
 
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;
