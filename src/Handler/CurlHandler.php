@@ -2,7 +2,6 @@
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 
 /**

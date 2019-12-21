@@ -82,10 +82,6 @@ class CookieJar implements CookieJarInterface
      */
     public function getCookieByName(string $name): ?SetCookie
     {
-        // don't allow a non string name
-        if ($name === null || !\is_scalar($name)) {
-            return null;
-        }
         foreach ($this->cookies as $cookie) {
             if ($cookie->getName() !== null && \strcasecmp($cookie->getName(), $name) === 0) {
                 return $cookie;

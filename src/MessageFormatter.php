@@ -59,14 +59,14 @@ class MessageFormatter
     /**
      * Returns a formatted message string.
      *
-     * @param RequestInterface  $request  Request that was sent
-     * @param ResponseInterface $response Response that was received
-     * @param \Exception        $error    Exception that was received
+     * @param RequestInterface       $request  Request that was sent
+     * @param ResponseInterface|null $response Response that was received
+     * @param \Exception|null        $error    Exception that was received
      */
     public function format(
         RequestInterface $request,
-        ResponseInterface $response = null,
-        \Exception $error = null
+        ?ResponseInterface $response = null,
+        ?\Exception $error = null
     ): string {
         $cache = [];
 

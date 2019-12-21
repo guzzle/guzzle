@@ -2,7 +2,6 @@
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Handler\EasyHandle;
-use GuzzleHttp\Psr7;
 use PHPUnit\Framework\TestCase;
 
 /**

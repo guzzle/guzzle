@@ -554,7 +554,7 @@ http_errors
 
 
 idn_conversion
----
+--------------
 
 :Summary: Internationalized Domain Name (IDN) support (enabled by default if
     ``intl`` extension is available).

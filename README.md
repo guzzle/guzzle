@@ -23,11 +23,11 @@ trivial to integrate with web services.
 $client = new \GuzzleHttp\Client();
 $response = $client->request('GET', 'https://api.github.com/repos/guzzle/guzzle');
 
-echo $response->getStatusCode(); # 200
-echo $response->getHeaderLine('content-type'); # 'application/json; charset=utf8'
-echo $response->getBody(); # '{"id": 1420053, "name": "guzzle", ...}'
+echo $response->getStatusCode(); // 200
+echo $response->getHeaderLine('content-type'); // 'application/json; charset=utf8'
+echo $response->getBody(); // '{"id": 1420053, "name": "guzzle", ...}'
 
-# Send an asynchronous request.
+// Send an asynchronous request.
 $request = new \GuzzleHttp\Psr7\Request('GET', 'http://httpbin.org');
 $promise = $client->sendAsync($request)->then(function ($response) {
     echo 'I completed! ' . $response->getBody();
@@ -49,27 +49,8 @@ The recommended way to install Guzzle is through
 [Composer](http://getcomposer.org).
 
 ```bash
-# Install Composer
-curl -sS https://getcomposer.org/installer | php
-```
-
-Next, run the Composer command to install the latest stable version of Guzzle:
-
-```bash
 composer require guzzlehttp/guzzle
 ```
-
-After installing, you need to require Composer's autoloader:
-
-```php
-require 'vendor/autoload.php';
-```
-
-You can then later update Guzzle using composer:
-
- ```bash
-composer update
- ```
 
 
 ## Version Guidance

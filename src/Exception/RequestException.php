@@ -21,7 +21,7 @@ class RequestException extends TransferException implements RequestExceptionInte
     private $handlerContext;
 
     public function __construct(
-        $message,
+        string $message,
         RequestInterface $request,
         ResponseInterface $response = null,
         \Exception $previous = null,

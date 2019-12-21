@@ -13,7 +13,7 @@ use Psr\Http\Message\ResponseInterface;
 class ConnectException extends RequestException implements NetworkExceptionInterface
 {
     public function __construct(
-        $message,
+        string $message,
         RequestInterface $request,
         \Exception $previous = null,
         array $handlerContext = []
