@@ -315,7 +315,6 @@ function _current_time()
     return \function_exists('hrtime') ? \hrtime(true) / 1e9 : \microtime(true);
 }
 
-
 /**
  * @param int $options
  *
