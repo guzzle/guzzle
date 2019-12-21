@@ -1,7 +1,6 @@
 <?php
 namespace GuzzleHttp\Exception;
 
-use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -21,7 +20,7 @@ class RequestException extends TransferException
     private $handlerContext;
 
     public function __construct(
-        $message,
+        string $message,
         RequestInterface $request,
         ResponseInterface $response = null,
         \Exception $previous = null,

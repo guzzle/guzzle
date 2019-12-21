@@ -26,10 +26,8 @@ class SetCookie
      * Create a new SetCookie object from a string
      *
      * @param string $cookie Set-Cookie header string
-     *
-     * @return self
      */
-    public static function fromString($cookie)
+    public static function fromString(string $cookie): self
     {
         // Create the default return array
         $data = self::$defaults;
@@ -97,7 +95,7 @@ class SetCookie
         return \rtrim($str, '; ');
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return $this->data;
     }
@@ -117,7 +115,7 @@ class SetCookie
      *
      * @param string $name Cookie name
      */
-    public function setName($name)
+    public function setName($name): void
     {
         $this->data['Name'] = $name;
     }
@@ -125,7 +123,7 @@ class SetCookie
     /**
      * Get the cookie value
      *
-     * @return string
+     * @return string|null
      */
     public function getValue()
     {
@@ -137,7 +135,7 @@ class SetCookie
      *
      * @param string $value Cookie value
      */
-    public function setValue($value)
+    public function setValue($value): void
     {
         $this->data['Value'] = $value;
     }
@@ -157,7 +155,7 @@ class SetCookie
      *
      * @param string $domain
      */
-    public function setDomain($domain)
+    public function setDomain($domain): void
     {
         $this->data['Domain'] = $domain;
     }
@@ -177,7 +175,7 @@ class SetCookie
      *
      * @param string $path Path of the cookie
      */
-    public function setPath($path)
+    public function setPath($path): void
     {
         $this->data['Path'] = $path;
     }
@@ -197,7 +195,7 @@ class SetCookie
      *
      * @param int $maxAge Max age of the cookie in seconds
      */
-    public function setMaxAge($maxAge)
+    public function setMaxAge($maxAge): void
     {
         $this->data['Max-Age'] = $maxAge;
     }
@@ -215,7 +213,7 @@ class SetCookie
      *
      * @param int $timestamp Unix timestamp
      */
-    public function setExpires($timestamp)
+    public function setExpires($timestamp): void
     {
         $this->data['Expires'] = \is_numeric($timestamp)
             ? (int) $timestamp
@@ -237,7 +235,7 @@ class SetCookie
      *
      * @param bool $secure Set to true or false if secure
      */
-    public function setSecure($secure)
+    public function setSecure($secure): void
     {
         $this->data['Secure'] = $secure;
     }
@@ -257,7 +255,7 @@ class SetCookie
      *
      * @param bool $discard Set to true or false if this is a session cookie
      */
-    public function setDiscard($discard)
+    public function setDiscard($discard): void
     {
         $this->data['Discard'] = $discard;
     }
@@ -277,7 +275,7 @@ class SetCookie
      *
      * @param bool $httpOnly Set to true or false if this is HTTP only
      */
-    public function setHttpOnly($httpOnly)
+    public function setHttpOnly($httpOnly): void
     {
         $this->data['HttpOnly'] = $httpOnly;
     }
@@ -296,10 +294,8 @@ class SetCookie
      *   path is a %x2F ("/") character.
      *
      * @param string $requestPath Path to check against
-     *
-     * @return bool
      */
-    public function matchesPath($requestPath)
+    public function matchesPath(string $requestPath): bool
     {
         $cookiePath = $this->getPath();
 
@@ -349,10 +345,8 @@ class SetCookie
 
     /**
      * Check if the cookie is expired
-     *
-     * @return bool
      */
-    public function isExpired()
+    public function isExpired(): bool
     {
         return $this->getExpires() !== null && \time() > $this->getExpires();
     }
