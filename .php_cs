@@ -26,6 +26,7 @@ $config = PhpCsFixer\Config::create()
         'phpdoc_single_line_var_spacing' => true,
         'phpdoc_separation' => true,
         'phpdoc_align' => ['align'=>'vertical'],
+        'visibility_required' => true,
         // 'native_function_invocation' => true,
     ])
     ->setFinder(
