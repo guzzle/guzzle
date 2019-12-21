@@ -2,7 +2,6 @@
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\TransferStats;
