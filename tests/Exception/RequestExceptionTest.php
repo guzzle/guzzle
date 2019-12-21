@@ -133,7 +133,7 @@ class RequestExceptionTest extends TestCase
             $content = \base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7') // 1x1 gif
         );
         $e = RequestException::create(new Request('GET', '/'), $response);
-        self::assertNotContains(
+        self::assertStringNotContainsString(
             $content,
             $e->getMessage()
         );
