@@ -166,6 +166,11 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
+			message: "#^Strict comparison using \\=\\=\\= between array and null will always evaluate to false\\.$#"
+			count: 1
+			path: src/Cookie/SetCookie.php
+
+		-
 			message: "#^Parameter \\#1 \\$timestamp of method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setExpires\\(\\) expects int, mixed given\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
