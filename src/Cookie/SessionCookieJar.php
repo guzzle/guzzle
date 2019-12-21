@@ -20,7 +20,7 @@ class SessionCookieJar extends CookieJar
      * @param bool   $storeSessionCookies Set to true to store session cookies
      *                                    in the cookie jar.
      */
-    public function __construct($sessionKey, $storeSessionCookies = false)
+    public function __construct(string $sessionKey, bool $storeSessionCookies = false)
     {
         parent::__construct();
         $this->sessionKey = $sessionKey;
@@ -42,8 +42,8 @@ class SessionCookieJar extends CookieJar
     public function save(): void
     {
         $json = [];
+        /** @var SetCookie $cookie */
         foreach ($this as $cookie) {
-            /** @var SetCookie $cookie */
             if (CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
                 $json[] = $cookie->toArray();
             }

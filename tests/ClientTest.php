@@ -178,22 +178,6 @@ class ClientTest extends TestCase
         self::assertFalse($mock->getLastRequest()->hasHeader('foo'));
     }
 
-    public function testRewriteExceptionsToHttpErrors()
-    {
-        $client = new Client(['handler' => new MockHandler([new Response(404)])]);
-        $res = $client->get('http://foo.com', ['exceptions' => false]);
-        self::assertSame(404, $res->getStatusCode());
-    }
-
-    public function testRewriteSaveToToSink()
-    {
-        $r = Psr7\stream_for(\fopen('php://temp', 'r+'));
-        $mock = new MockHandler([new Response(200, [], 'foo')]);
-        $client = new Client(['handler' => $mock]);
-        $client->get('http://foo.com', ['save_to' => $r]);
-        self::assertSame($r, $mock->getLastOptions()['sink']);
-    }
-
     public function testAllowRedirectsCanBeTrue()
     {
         $mock = new MockHandler([new Response(200, [], 'foo')]);
