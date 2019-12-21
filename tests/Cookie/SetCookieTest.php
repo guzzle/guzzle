@@ -18,7 +18,7 @@ class SetCookieTest extends TestCase
     public function testConvertsDateTimeMaxAgeToUnixTimestamp()
     {
         $cookie = new SetCookie(['Expires' => 'November 20, 1984']);
-        self::assertInternalType('integer', $cookie->getExpires());
+        self::assertIsInt($cookie->getExpires());
     }
 
     public function testAddsExpiresBasedOnMaxAge()
