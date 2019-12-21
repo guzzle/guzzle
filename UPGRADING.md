@@ -30,7 +30,7 @@ as an alternative
 - Request option `exception` which was an alias of `http_errors` is removed.
 - Request option `save_to` which was an alias of `sink` is removed.
 
-For the full diff you can check [here](https://github.com/guzzle/guzzle/compare/6.5.0..master)
+For the full diff you can check [here](https://github.com/guzzle/guzzle/compare/6.5.0..7.0.0)
 
 5.0 to 6.0
 ----------
