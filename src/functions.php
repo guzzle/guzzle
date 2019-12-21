@@ -12,7 +12,7 @@ use GuzzleHttp\Handler\StreamHandler;
  * @return string Returns a string containing the type of the variable and
  *                if a class is provided, the class name.
  */
-function describe_type($input)
+function describe_type($input): string
 {
     switch (\gettype($input)) {
         case 'object':
@@ -32,10 +32,8 @@ function describe_type($input)
  *
  * @param iterable $lines Header lines array of strings in the following
  *                        format: "Name: Value"
- *
- * @return array
  */
-function headers_from_lines($lines)
+function headers_from_lines($lines): array
 {
     $headers = [];
 
@@ -76,7 +74,7 @@ function debug_resource($value = null)
  *
  * @return callable Returns the best handler for the given system.
  */
-function choose_handler()
+function choose_handler(): callable
 {
     $handler = null;
     if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
@@ -128,11 +126,9 @@ function default_user_agent(): string
  *
  * Note: the result of this function is cached for subsequent calls.
  *
- * @return string
- *
  * @throws \RuntimeException if no bundle can be found.
  */
-function default_ca_bundle()
+function default_ca_bundle(): string
 {
     static $cached = null;
     static $cafiles = [
@@ -219,10 +215,8 @@ function normalize_header_keys(array $headers): array
  *
  * @param string   $host         Host to check against the patterns.
  * @param string[] $noProxyArray An array of host patterns.
- *
- * @return bool
  */
-function is_host_in_noproxy(string $host, array $noProxyArray)
+function is_host_in_noproxy(string $host, array $noProxyArray): bool
 {
     if (\strlen($host) === 0) {
         throw new \InvalidArgumentException('Empty host provided');
@@ -264,6 +258,8 @@ function is_host_in_noproxy(string $host, array $noProxyArray)
  *                        into associative arrays.
  * @param int    $depth   User specified recursion depth.
  * @param int    $options Bitmask of JSON decode options.
+ *
+ * @return array|string|int|float|bool|null
  *
  * @throws Exception\InvalidArgumentException if the JSON cannot be decoded.
  *

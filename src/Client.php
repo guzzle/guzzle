@@ -5,9 +5,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\InvalidRequestException;
-use GuzzleHttp\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -366,18 +364,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     private function transfer(RequestInterface $request, array $options): PromiseInterface
     {
-        // save_to -> sink
-        if (isset($options['save_to'])) {
-            $options['sink'] = $options['save_to'];
-            unset($options['save_to']);
-        }
-
-        // exceptions -> http_errors
-        if (isset($options['exceptions'])) {
-            $options['http_errors'] = $options['exceptions'];
-            unset($options['exceptions']);
-        }
-
         $request = $this->applyOptions($request, $options);
         /** @var HandlerStack $handler */
         $handler = $options['handler'];
