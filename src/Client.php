@@ -363,18 +363,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     private function transfer(RequestInterface $request, array $options): PromiseInterface
     {
-        // save_to -> sink
-        if (isset($options['save_to'])) {
-            $options['sink'] = $options['save_to'];
-            unset($options['save_to']);
-        }
-
-        // exceptions -> http_errors
-        if (isset($options['exceptions'])) {
-            $options['http_errors'] = $options['exceptions'];
-            unset($options['exceptions']);
-        }
-
         $request = $this->applyOptions($request, $options);
         /** @var HandlerStack $handler */
         $handler = $options['handler'];
