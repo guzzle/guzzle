@@ -28,7 +28,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Download dependencies
+      - name: Cache composer
+        uses: actions/cache@v1
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ hashFiles('composer.lock') }}
+            composer-
+
+      - name: Installs dependencies
         run: composer update --no-interaction --prefer-stable --prefer-lowest --prefer-dist
 
       - name: Run tests
@@ -59,7 +68,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Download dependencies
+      - name: Cache composer
+        uses: actions/cache@v1
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ hashFiles('composer.lock') }}
+            composer-
+
+      - name: Install dependencies
         run: composer update --no-interaction --prefer-dist
 
       - name: Run tests

@@ -15,7 +15,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Install
+      - name: Cache composer
+        uses: actions/cache@v1
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ hashFiles('composer.lock') }}
+            composer-
+
+      - name: Install dependencies
         uses: docker://composer
         with:
           args: install
