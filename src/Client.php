@@ -84,6 +84,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param array  $args
      *
      * @return PromiseInterface|ResponseInterface
+     *
+     * @deprecated Client::__call() will be removed in guzzlehttp/guzzle:8.0. Use the actual function instead of calling a magic one.
      */
     public function __call($method, $args)
     {
