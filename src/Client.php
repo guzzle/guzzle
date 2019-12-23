@@ -274,7 +274,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         // Add the default user-agent header.
         if (!isset($this->config['headers'])) {
-            $this->config['headers'] = ['User-Agent' => default_user_agent()];
+            $this->config['headers'] = ['User-Agent' => _default_user_agent()];
         } else {
             // Add the User-Agent header if one was not already set.
             foreach (\array_keys($this->config['headers']) as $name) {
@@ -282,7 +282,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     return;
                 }
             }
-            $this->config['headers']['User-Agent'] = default_user_agent();
+            $this->config['headers']['User-Agent'] = _default_user_agent();
         }
     }
 

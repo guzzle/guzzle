@@ -139,7 +139,7 @@ class MockHandler implements \Countable
                 $this->queue[] = $value;
             } else {
                 throw new \InvalidArgumentException('Expected a response or '
-                    . 'exception. Found ' . \GuzzleHttp\describe_type($value));
+                    . 'exception. Found ' . \GuzzleHttp\_describe_type($value));
             }
         }
     }

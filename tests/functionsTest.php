@@ -45,7 +45,7 @@ class FunctionsTest extends TestCase
         }
 
         try {
-            self::assertSame($output, GuzzleHttp\describe_type($input));
+            self::assertSame($output, GuzzleHttp\_describe_type($input));
         } finally {
             if (extension_loaded('xdebug')) {
                 ini_set('xdebug.overload_var_dump', $originalOverload);
@@ -73,7 +73,7 @@ class FunctionsTest extends TestCase
 
     public function testReturnsDebugResource()
     {
-        self::assertIsResource(GuzzleHttp\debug_resource());
+        self::assertIsResource(GuzzleHttp\_debug_resource());
     }
 
     public function testProvidesDefaultCaBundler()

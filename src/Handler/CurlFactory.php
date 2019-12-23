@@ -494,7 +494,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (!empty($options['debug'])) {
-            $conf[CURLOPT_STDERR] = \GuzzleHttp\debug_resource($options['debug']);
+            $conf[CURLOPT_STDERR] = \GuzzleHttp\_debug_resource($options['debug']);
             $conf[CURLOPT_VERBOSE] = true;
         }
     }
