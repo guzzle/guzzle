@@ -7,8 +7,6 @@ use Psr\Http\Message\ResponseInterface;
 
 /**
  * Exception when an HTTP error occurs (4xx or 5xx error)
- *
- * @method ResponseInterface getResponse()
  */
 class BadResponseException extends RequestException
 {
@@ -25,5 +23,10 @@ class BadResponseException extends RequestException
     public function hasResponse(): bool
     {
         return true;
+    }
+
+    public function getResponse(): ResponseInterface
+    {
+        return parent::getResponse();
     }
 }
