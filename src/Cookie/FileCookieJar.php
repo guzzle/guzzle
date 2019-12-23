@@ -21,9 +21,9 @@ class FileCookieJar extends CookieJar
     /**
      * Create a new FileCookieJar object
      *
-     * @param string $cookieFile File to store the cookie data
-     * @param bool $storeSessionCookies Set to true to store session cookies in the cookie jar.
-     * @param JsonEncoderInterface|null $jsonEncoder
+     * @param string                    $cookieFile          File to store the cookie data
+     * @param bool                      $storeSessionCookies Set to true to store session cookies in the cookie jar.
+     * @param JsonEncoderInterface|null $jsonEncoder         Set to override the implementation of json_encode/decode.
      */
     public function __construct(
         string $cookieFile,

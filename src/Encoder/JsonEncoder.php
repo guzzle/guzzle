@@ -13,9 +13,9 @@ class JsonEncoder implements JsonEncoderInterface
     /**
      * Wrapper for JSON encoding that throws when an error occurs.
      *
-     * @param mixed $value The value being encoded
-     * @param int $options JSON encode option bitmask
-     * @param int $depth Set the maximum depth. Must be greater than zero.
+     * @param mixed $value   The value being encoded
+     * @param int   $options JSON encode option bitmask
+     * @param int   $depth   Set the maximum depth. Must be greater than zero.
      *
      * @return string
      * @throws InvalidArgumentException if the JSON cannot be encoded.
@@ -37,10 +37,10 @@ class JsonEncoder implements JsonEncoderInterface
     /**
      * Wrapper for json_decode that throws when an error occurs.
      *
-     * @param string $json JSON data to parse
-     * @param bool $assoc When true, returned objects will be converted into associative arrays.
-     * @param int $depth User specified recursion depth.
-     * @param int $options Bitmask of JSON decode options.
+     * @param string $json    JSON data to parse
+     * @param bool   $assoc   When true, returned objects will be converted into associative arrays.
+     * @param int    $depth   User specified recursion depth.
+     * @param int    $options Bitmask of JSON decode options.
      *
      * @return array|string|int|float|bool|null
      *

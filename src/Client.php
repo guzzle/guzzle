@@ -62,8 +62,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *   into relative URIs. Can be a string or instance of UriInterface.
      * - **: any request option
      *
-     * @param array $config Client configuration settings.
-     * @param JsonEncoderInterface|null $jsonEncoder
+     * @param array                     $config      Client configuration settings.
+     * @param JsonEncoderInterface|null $jsonEncoder Set to override the implementation of json_encode/decode.
      *
      * @see \GuzzleHttp\RequestOptions for a list of available request options.
      */
