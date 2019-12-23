@@ -23,7 +23,7 @@ class RequestException extends TransferException
         string $message,
         RequestInterface $request,
         ResponseInterface $response = null,
-        \Exception $previous = null,
+        \Throwable $previous = null,
         array $handlerContext = []
     ) {
         // Set the code of the exception if the response is set and not future.
