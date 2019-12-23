@@ -569,7 +569,7 @@ class CurlFactory implements CurlFactoryInterface
                 if ($onHeaders !== null) {
                     try {
                         $onHeaders($easy->response);
-                    } catch (\Exception $e) {
+                    } catch (\Throwable $e) {
                         // Associate the exception with the handle and trigger
                         // a curl header write error by returning 0.
                         $easy->onHeadersException = $e;

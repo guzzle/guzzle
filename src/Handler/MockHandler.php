@@ -79,7 +79,7 @@ class MockHandler implements \Countable
             }
             try {
                 $options['on_headers']($response);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $msg = 'An error was encountered during the on_headers event';
                 $response = new RequestException($msg, $request, $response, $e);
             }
@@ -89,7 +89,7 @@ class MockHandler implements \Countable
             $response = \call_user_func($response, $request, $options);
         }
 
-        $response = $response instanceof \Exception
+        $response = $response instanceof \Throwable
             ? \GuzzleHttp\Promise\rejection_for($response)
             : \GuzzleHttp\Promise\promise_for($response);
 
@@ -132,7 +132,7 @@ class MockHandler implements \Countable
     {
         foreach (\func_get_args() as $value) {
             if ($value instanceof ResponseInterface
-                || $value instanceof \Exception
+                || $value instanceof \Throwable
                 || $value instanceof PromiseInterface
                 || \is_callable($value)
             ) {

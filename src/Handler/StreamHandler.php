@@ -115,7 +115,7 @@ class StreamHandler
         if (isset($options['on_headers'])) {
             try {
                 $options['on_headers']($response);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $msg = 'An error was encountered during the on_headers event';
                 $ex = new RequestException($msg, $request, $response, $e);
                 return \GuzzleHttp\Promise\rejection_for($ex);

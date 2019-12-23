@@ -61,12 +61,12 @@ class MessageFormatter
      *
      * @param RequestInterface       $request  Request that was sent
      * @param ResponseInterface|null $response Response that was received
-     * @param \Exception|null        $error    Exception that was received
+     * @param \Throwable|null        $error    Exception that was received
      */
     public function format(
         RequestInterface $request,
         ?ResponseInterface $response = null,
-        ?\Exception $error = null
+        ?\Throwable $error = null
     ): string {
         $cache = [];
 
