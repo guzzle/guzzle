@@ -60,7 +60,6 @@ class MockHandler implements \Countable
      * {@see \Psr\Http\Message\ResponseInterface} objects, Exceptions,
      * callables, or Promises.
      *
-     * @param array|null    $queue
      * @param callable|null $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable|null $onRejected  Callback to invoke when the return value is rejected.
      */
@@ -112,12 +111,13 @@ class MockHandler implements \Countable
             : \GuzzleHttp\Promise\promise_for($response);
 
         return $response->then(
-            function (ResponseInterface $value) use ($request, $options) {
+            function (?ResponseInterface $value) use ($request, $options) {
                 $this->invokeStats($request, $options, $value);
                 if ($this->onFulfilled) {
                     \call_user_func($this->onFulfilled, $value);
                 }
-                if (isset($options['sink'])) {
+
+                if ($value !== null && isset($options['sink'])) {
                     $contents = (string) $value->getBody();
                     $sink = $options['sink'];
 
