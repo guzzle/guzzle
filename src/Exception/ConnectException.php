@@ -15,7 +15,7 @@ class ConnectException extends RequestException implements NetworkExceptionInter
     public function __construct(
         string $message,
         RequestInterface $request,
-        \Exception $previous = null,
+        \Throwable $previous = null,
         array $handlerContext = []
     ) {
         parent::__construct($message, $request, null, $previous, $handlerContext);
