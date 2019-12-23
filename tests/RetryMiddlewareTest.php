@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
@@ -71,10 +72,36 @@ class RetryMiddlewareTest extends TestCase
 
     public function testBackoffCalculateDelay()
     {
-        self::assertSame(0, RetryMiddleware::exponentialDelay(0));
-        self::assertSame(1000, RetryMiddleware::exponentialDelay(1));
-        self::assertSame(2000, RetryMiddleware::exponentialDelay(2));
-        self::assertSame(4000, RetryMiddleware::exponentialDelay(3));
-        self::assertSame(8000, RetryMiddleware::exponentialDelay(4));
+        $calls = [];
+        $decider = function ($retries, $request, $response, $error) use (&$calls) {
+            $calls[] = \func_get_args();
+            return $error instanceof \Exception;
+        };
+        $m = Middleware::retry($decider);
+        $h = new MockHandler();
+        $c = new Client(['handler' => $m($h)]);
+
+        $h->append(new \Exception(), new Response());
+        $p = $c->send(new Request('GET', 'http://test.com'), []);
+
+        self::assertSame(200, $p->getStatusCode());
+        self::assertCount(2, $calls);
+        self::assertSame(1000, $h->getLastOptions()['delay']);
+
+        $calls = [];
+        $h->append(new \Exception(), new \Exception(), new Response());
+        $p = $c->send(new Request('GET', 'http://test.com'), []);
+
+        self::assertSame(200, $p->getStatusCode());
+        self::assertCount(3, $calls);
+        self::assertSame(2000, $h->getLastOptions()['delay']);
+
+        $calls = [];
+        $h->append(new \Exception(), new \Exception(), new \Exception(), new Response());
+        $p = $c->send(new Request('GET', 'http://test.com'), []);
+
+        self::assertSame(200, $p->getStatusCode());
+        self::assertCount(4, $calls);
+        self::assertSame(4000, $h->getLastOptions()['delay']);
     }
 }
