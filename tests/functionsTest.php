@@ -111,30 +111,6 @@ class FunctionsTest extends TestCase
         \GuzzleHttp\is_host_in_noproxy('', []);
     }
 
-    public function testEncodesJson()
-    {
-        self::assertSame('true', \GuzzleHttp\json_encode(true));
-    }
-
-    public function testEncodesJsonAndThrowsOnError()
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        \GuzzleHttp\json_encode("\x99");
-    }
-
-    public function testDecodesJson()
-    {
-        self::assertTrue(\GuzzleHttp\json_decode('true'));
-    }
-
-    public function testDecodesJsonAndThrowsOnError()
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        \GuzzleHttp\json_decode('{{]]');
-    }
-
     public function testCurrentTime()
     {
         self::assertGreaterThan(0, GuzzleHttp\_current_time());

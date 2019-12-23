@@ -2,6 +2,8 @@
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Encoder\JsonEncoder;
+use GuzzleHttp\Encoder\JsonEncoderInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\InvalidRequestException;
@@ -28,6 +30,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 {
     /** @var array Default request options */
     private $config;
+
+    /** @var JsonEncoderInterface */
+    private $jsonEncoder;
 
     /**
      * Clients accept an array of constructor parameters.
@@ -58,10 +63,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * - **: any request option
      *
      * @param array $config Client configuration settings.
+     * @param JsonEncoderInterface|null $jsonEncoder
      *
      * @see \GuzzleHttp\RequestOptions for a list of available request options.
      */
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], JsonEncoderInterface $jsonEncoder = null)
     {
         if (!isset($config['handler'])) {
             $config['handler'] = HandlerStack::create();
@@ -75,6 +81,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         $this->configureDefaults($config);
+        if ($jsonEncoder === null) {
+            $this->jsonEncoder = new JsonEncoder();
+        } else {
+            $this->jsonEncoder = $jsonEncoder;
+        }
     }
 
     /**
@@ -382,7 +393,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (isset($options['json'])) {
-            $options['body'] = \GuzzleHttp\json_encode($options['json']);
+            $options['body'] = $this->jsonEncoder->encode($options['json']);
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);

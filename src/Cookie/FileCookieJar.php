@@ -1,6 +1,9 @@
 <?php
 namespace GuzzleHttp\Cookie;
 
+use GuzzleHttp\Encoder\JsonEncoder;
+use GuzzleHttp\Encoder\JsonEncoderInterface;
+
 /**
  * Persists non-session cookies using a JSON formatted file
  */
@@ -12,20 +15,30 @@ class FileCookieJar extends CookieJar
     /** @var bool Control whether to persist session cookies or not. */
     private $storeSessionCookies;
 
+    /** @var JsonEncoderInterface */
+    private $jsonEncoder;
+
     /**
      * Create a new FileCookieJar object
      *
-     * @param string $cookieFile          File to store the cookie data
-     * @param bool   $storeSessionCookies Set to true to store session cookies
-     *                                    in the cookie jar.
-     *
-     * @throws \RuntimeException if the file cannot be found or created
+     * @param string $cookieFile File to store the cookie data
+     * @param bool $storeSessionCookies Set to true to store session cookies in the cookie jar.
+     * @param JsonEncoderInterface|null $jsonEncoder
      */
-    public function __construct(string $cookieFile, bool $storeSessionCookies = false)
-    {
+    public function __construct(
+        string $cookieFile,
+        bool $storeSessionCookies = false,
+        JsonEncoderInterface $jsonEncoder = null
+    ) {
         parent::__construct();
         $this->filename = $cookieFile;
         $this->storeSessionCookies = $storeSessionCookies;
+
+        if ($jsonEncoder === null) {
+            $this->jsonEncoder = new JsonEncoder();
+        } else {
+            $this->jsonEncoder = $jsonEncoder;
+        }
 
         if (\file_exists($cookieFile)) {
             $this->load($cookieFile);
@@ -57,7 +70,7 @@ class FileCookieJar extends CookieJar
             }
         }
 
-        $jsonStr = \GuzzleHttp\json_encode($json);
+        $jsonStr = $this->jsonEncoder->encode($json);
         if (false === \file_put_contents($filename, $jsonStr, LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
@@ -81,9 +94,9 @@ class FileCookieJar extends CookieJar
             return;
         }
 
-        $data = \GuzzleHttp\json_decode($json, true);
+        $data = $this->jsonEncoder->decode($json, true);
         if (\is_array($data)) {
-            foreach (\json_decode($json, true) as $cookie) {
+            foreach ($this->jsonEncoder->decode($json, true) as $cookie) {
                 $this->setCookie(new SetCookie($cookie));
             }
         } elseif (\strlen($data)) {
