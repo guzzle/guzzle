@@ -7,7 +7,6 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\RetryMiddleware;
 use PHPUnit\Framework\TestCase;
 
 class RetryMiddlewareTest extends TestCase
