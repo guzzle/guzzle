@@ -20,11 +20,17 @@ class BadResponseException extends RequestException
         parent::__construct($message, $request, $response, $previous, $handlerContext);
     }
 
+    /**
+     * Current exception and the ones that extend it will always have a response.
+     */
     public function hasResponse(): bool
     {
         return true;
     }
 
+    /**
+     * This function narrows the return type from the parent class and does not allow it to be nullable.
+     */
     public function getResponse(): ResponseInterface
     {
         return parent::getResponse();
