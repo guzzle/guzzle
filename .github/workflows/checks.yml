@@ -1,11 +1,20 @@
-on: [push, pull_request]
-name: Roave
+name: Checks
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
 jobs:
-  roave_bc_check:
-    name: BC Check
+  roave-bc-check:
+    name: Roave BC Check
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@master
+      - name: Checkout code
+        uses: actions/checkout@v1
+
       - name: Roave BC Check
         uses: docker://nyholm/roave-bc-check-ga
         with:
