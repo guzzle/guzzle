@@ -27,6 +27,7 @@ After:
 - Constant `GuzzleHttp\ClientInterface::VERSION` is removed.
 - Function `GuzzleHttp\Exception\RequestException::getResponseBodySummary` is removed. Use `\GuzzleHttp\Psr7\get_message_body_summary`
 as an alternative
+- Function `GuzzleHttp\Cookie\CookieJar::getCookieValue` is removed.
 - Request option `exception` which was an alias of `http_errors` is removed.
 - Request option `save_to` which was an alias of `sink` is removed.
 
