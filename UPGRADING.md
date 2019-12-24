@@ -24,6 +24,7 @@ After:
  
 - Class `GuzzleHttp\UriTemplate` is removed.
 - Class `GuzzleHttp\Exception\SeekException` is removed.
+- Classes `GuzzleHttp\Exception\BadResponseException`, `GuzzleHttp\Exception\ClientException`, `GuzzleHttp\Exception\ServerException` can no longer be initialized with an empty Response as argument.
 - Constant `GuzzleHttp\ClientInterface::VERSION` is removed.
 - Function `GuzzleHttp\Exception\RequestException::getResponseBodySummary` is removed. Use `\GuzzleHttp\Psr7\get_message_body_summary`
 as an alternative
