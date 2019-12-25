@@ -376,6 +376,21 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
         }
 
+        if (isset($options['form_nested_params'])) {
+            if (isset($options['multipart'])) {
+                throw new \InvalidArgumentException('You cannot use '
+                    . 'form_params and multipart at the same time. Use the '
+                    . 'form_params option if you want to send application/'
+                    . 'x-www-form-urlencoded requests, and the multipart '
+                    . 'option to send multipart/form-data requests.');
+            }
+            $options['body'] = Psr7\build_query($options['form_nested_params'], PHP_QUERY_RFC1738);
+            unset($options['form_nested_params']);
+            // Ensure that we don't have the header in different case and set the new value.
+            $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
+            $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
+        }
+
         if (isset($options['multipart'])) {
             $options['body'] = new Psr7\MultipartStream($options['multipart']);
             unset($options['multipart']);
