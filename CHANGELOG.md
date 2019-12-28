@@ -26,10 +26,11 @@ Please see [the upgrade document][UPGRADING.md] that describes all BC breaking c
 
 ### Removed
 
+* Class `SeekException` [#2162](https://github.com/guzzle/guzzle/pull/2162)
 * `RequestException::getResponseBodySummary()` [#2425](https://github.com/guzzle/guzzle/pull/2425)
 * `CookieJar::getCookieValue()` [#2433](https://github.com/guzzle/guzzle/pull/2433)
 * `uri_template()` and `UriTemplate` [#2440](https://github.com/guzzle/guzzle/pull/2440)
-* Deprecated request options `save_to` and `exceptions` [#2464](https://github.com/guzzle/guzzle/pull/2464)
+* Request options `save_to` and `exceptions` [#2464](https://github.com/guzzle/guzzle/pull/2464)
 
 ## 6.5.2 - 2019-12-23
 
