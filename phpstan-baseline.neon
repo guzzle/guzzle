@@ -401,27 +401,12 @@ parameters:
 			path: src/Handler/EasyHandle.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$queue has no typehint specified\\.$#"
+			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$queue type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Handler/MockHandler.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$lastRequest has no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$lastOptions has no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$onFulfilled has no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$onRejected has no typehint specified\\.$#"
+			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$lastOptions type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Handler/MockHandler.php
 
@@ -447,6 +432,11 @@ parameters:
 
 		-
 			message: "#^Binary operation \"\\*\" between float\\|int\\|string and 1000 results in an error\\.$#"
+			count: 1
+			path: src/Handler/MockHandler.php
+
+		-
+			message: "#^PHPDoc tag @param for parameter \\$values with type mixed is not subtype of native type array\\<int, mixed\\>\\.$#"
 			count: 1
 			path: src/Handler/MockHandler.php
 

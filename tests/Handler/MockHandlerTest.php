@@ -35,14 +35,14 @@ class MockHandlerTest extends TestCase
 
     public function testEnsuresEachAppendOnCreationIsValid()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\TypeError::class);
         new MockHandler(['a']);
     }
 
     public function testEnsuresEachAppendIsValid()
     {
         $mock = new MockHandler();
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\TypeError::class);
         $mock->append(['a']);
     }
 
