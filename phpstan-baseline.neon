@@ -166,6 +166,11 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
+			message: "#^Strict comparison using \\=\\=\\= between array and null will always evaluate to false\\.$#"
+			count: 1
+			path: src/Cookie/SetCookie.php
+
+		-
 			message: "#^Parameter \\#1 \\$timestamp of method GuzzleHttp\\\\Cookie\\\\SetCookie\\:\\:setExpires\\(\\) expects int, mixed given\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
@@ -192,6 +197,11 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Exception\\\\BadResponseException\\:\\:__construct\\(\\) has parameter \\$handlerContext with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Exception/BadResponseException.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Exception\\\\BadResponseException\\:\\:getResponse\\(\\) should return Psr\\\\Http\\\\Message\\\\ResponseInterface but returns Psr\\\\Http\\\\Message\\\\ResponseInterface\\|null\\.$#"
 			count: 1
 			path: src/Exception/BadResponseException.php
 
@@ -391,27 +401,12 @@ parameters:
 			path: src/Handler/EasyHandle.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$queue has no typehint specified\\.$#"
+			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$queue type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Handler/MockHandler.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$lastRequest has no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$lastOptions has no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$onFulfilled has no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$onRejected has no typehint specified\\.$#"
+			message: "#^Property GuzzleHttp\\\\Handler\\\\MockHandler\\:\\:\\$lastOptions type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Handler/MockHandler.php
 
@@ -437,6 +432,11 @@ parameters:
 
 		-
 			message: "#^Binary operation \"\\*\" between float\\|int\\|string and 1000 results in an error\\.$#"
+			count: 1
+			path: src/Handler/MockHandler.php
+
+		-
+			message: "#^PHPDoc tag @param for parameter \\$values with type mixed is not subtype of native type array\\<int, mixed\\>\\.$#"
 			count: 1
 			path: src/Handler/MockHandler.php
 
@@ -532,11 +532,6 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Handler\\\\StreamHandler\\:\\:createStream\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: "#^Parameter \\#1 \\$options of function stream_context_create expects array, array\\|null given\\.$#"
 			count: 1
 			path: src/Handler/StreamHandler.php
 

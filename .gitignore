@@ -1,16 +1,11 @@
-phpunit.xml
-composer.phar
-composer.lock
-vendor/
+.php_cs
+.php_cs.cache
+.phpunit.result.cache
+/composer.lock
+/phpunit.xml
+/vendor/
+
 build/artifacts/
 artifacts/
 docs/_build
 docs/*.pyc
-
-### PHP-CS-Fixer
-php-cs-fixer.phar
-php-cs-fixer
-.php_cs.cache
-
-### PHPUnit
-.phpunit.result.cache

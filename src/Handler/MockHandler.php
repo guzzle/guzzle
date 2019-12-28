@@ -7,44 +7,61 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Handler that returns responses or throw exceptions from a queue.
  */
 class MockHandler implements \Countable
 {
+    /**
+     * @var array
+     */
     private $queue = [];
+
+    /**
+     * @var RequestInterface|null
+     */
     private $lastRequest;
-    private $lastOptions;
+
+    /**
+     * @var array
+     */
+    private $lastOptions = [];
+
+    /**
+     * @var callable|null
+     */
     private $onFulfilled;
+
+    /**
+     * @var callable|null
+     */
     private $onRejected;
 
     /**
      * Creates a new MockHandler that uses the default handler stack list of
      * middlewares.
      *
-     * @param array    $queue       Array of responses, callables, or exceptions.
-     * @param callable $onFulfilled Callback to invoke when the return value is fulfilled.
-     * @param callable $onRejected  Callback to invoke when the return value is rejected.
-     *
-     * @return HandlerStack
+     * @param array|null    $queue       Array of responses, callables, or exceptions.
+     * @param callable|null $onFulfilled Callback to invoke when the return value is fulfilled.
+     * @param callable|null $onRejected  Callback to invoke when the return value is rejected.
      */
     public static function createWithMiddleware(
         array $queue = null,
         callable $onFulfilled = null,
         callable $onRejected = null
-    ) {
+    ): HandlerStack {
         return HandlerStack::create(new self($queue, $onFulfilled, $onRejected));
     }
 
     /**
      * The passed in value must be an array of
-     * {@see Psr7\Http\Message\ResponseInterface} objects, Exceptions,
+     * {@see \Psr\Http\Message\ResponseInterface} objects, Exceptions,
      * callables, or Promises.
      *
-     * @param array    $queue
-     * @param callable $onFulfilled Callback to invoke when the return value is fulfilled.
-     * @param callable $onRejected  Callback to invoke when the return value is rejected.
+     * @param callable|null $onFulfilled Callback to invoke when the return value is fulfilled.
+     * @param callable|null $onRejected  Callback to invoke when the return value is rejected.
      */
     public function __construct(
         array $queue = null,
@@ -89,17 +106,18 @@ class MockHandler implements \Countable
             $response = \call_user_func($response, $request, $options);
         }
 
-        $response = $response instanceof \Exception
+        $response = $response instanceof \Throwable
             ? \GuzzleHttp\Promise\rejection_for($response)
             : \GuzzleHttp\Promise\promise_for($response);
 
         return $response->then(
-            function ($value) use ($request, $options) {
+            function (?ResponseInterface $value) use ($request, $options) {
                 $this->invokeStats($request, $options, $value);
                 if ($this->onFulfilled) {
                     \call_user_func($this->onFulfilled, $value);
                 }
-                if (isset($options['sink'])) {
+
+                if ($value !== null && isset($options['sink'])) {
                     $contents = (string) $value->getBody();
                     $sink = $options['sink'];
 
@@ -107,7 +125,7 @@ class MockHandler implements \Countable
                         \fwrite($sink, $contents);
                     } elseif (\is_string($sink)) {
                         \file_put_contents($sink, $contents);
-                    } elseif ($sink instanceof \Psr\Http\Message\StreamInterface) {
+                    } elseif ($sink instanceof StreamInterface) {
                         $sink->write($contents);
                     }
                 }
@@ -127,10 +145,12 @@ class MockHandler implements \Countable
     /**
      * Adds one or more variadic requests, exceptions, callables, or promises
      * to the queue.
+     *
+     * @param mixed $values
      */
-    public function append(): void
+    public function append(...$values): void
     {
-        foreach (\func_get_args() as $value) {
+        foreach ($values as $value) {
             if ($value instanceof ResponseInterface
                 || $value instanceof \Exception
                 || $value instanceof PromiseInterface
@@ -138,16 +158,13 @@ class MockHandler implements \Countable
             ) {
                 $this->queue[] = $value;
             } else {
-                throw new \InvalidArgumentException('Expected a response or '
-                    . 'exception. Found ' . \GuzzleHttp\describe_type($value));
+                throw new \TypeError('Expected a Response, Promise, Throwable or callable. Found ' . \GuzzleHttp\describe_type($value));
             }
         }
     }
 
     /**
      * Get the last received request.
-     *
-     * @return RequestInterface
      */
     public function getLastRequest(): ?RequestInterface
     {
@@ -156,10 +173,8 @@ class MockHandler implements \Countable
 
     /**
      * Get the last received request options.
-     *
-     * @return array
      */
-    public function getLastOptions(): ?array
+    public function getLastOptions(): array
     {
         return $this->lastOptions;
     }

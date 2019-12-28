@@ -4,5 +4,5 @@ includes:
 parameters:
     level: max
     paths:
-      - src
+        - src
     bootstrap: tests/bootstrap-phpstan.php
