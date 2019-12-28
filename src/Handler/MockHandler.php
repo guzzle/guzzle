@@ -152,7 +152,7 @@ class MockHandler implements \Countable
     {
         foreach ($values as $value) {
             if ($value instanceof ResponseInterface
-                || $value instanceof \Exception
+                || $value instanceof \Throwable
                 || $value instanceof PromiseInterface
                 || \is_callable($value)
             ) {

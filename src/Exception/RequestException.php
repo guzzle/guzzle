@@ -38,7 +38,7 @@ class RequestException extends TransferException implements RequestExceptionInte
     /**
      * Wrap non-RequestExceptions with a RequestException
      */
-    public static function wrapException(RequestInterface $request, \Exception $e): RequestException
+    public static function wrapException(RequestInterface $request, \Throwable $e): RequestException
     {
         return $e instanceof RequestException
             ? $e
@@ -50,13 +50,13 @@ class RequestException extends TransferException implements RequestExceptionInte
      *
      * @param RequestInterface  $request  Request
      * @param ResponseInterface $response Response received
-     * @param \Exception        $previous Previous exception
+     * @param \Throwable        $previous Previous exception
      * @param array             $ctx      Optional handler context.
      */
     public static function create(
         RequestInterface $request,
         ResponseInterface $response = null,
-        \Exception $previous = null,
+        \Throwable $previous = null,
         array $ctx = []
     ): self {
         if (!$response) {

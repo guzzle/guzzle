@@ -34,7 +34,7 @@ final class EasyHandle
     /** @var int cURL error number (if any) */
     public $errno = 0;
 
-    /** @var \Exception Exception during on_headers (if any) */
+    /** @var \Throwable Exception during on_headers (if any) */
     public $onHeadersException;
 
     /**
