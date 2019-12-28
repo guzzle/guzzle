@@ -1,5 +1,37 @@
 # Change Log
 
+## 7.0.0-beta1 - 2019-12-31
+
+The diff might look very big but 95% of Guzzle users will be able to upgrade without modification. 
+Please see [the upgrade document][UPGRADING.md] that describes all BC breaking changes.   
+
+### Added
+
+* Implement PSR-18 [#2421](https://github.com/guzzle/guzzle/pull/2421) [#2474](https://github.com/guzzle/guzzle/pull/2474)
+* PHP 7 types [#2442](https://github.com/guzzle/guzzle/pull/2442) [#2449](https://github.com/guzzle/guzzle/pull/2449) [#2466](https://github.com/guzzle/guzzle/pull/2466) [#2497](https://github.com/guzzle/guzzle/pull/2497) [#2499](https://github.com/guzzle/guzzle/pull/2499)
+* IDN support for redirects [2424](https://github.com/guzzle/guzzle/pull/2424)
+
+### Changed
+
+* Dont allow passing null as third argument to `BadResponseException::__construct()` [#2427](https://github.com/guzzle/guzzle/pull/2427)
+* Use SAPI constant instead of method call [#2450](https://github.com/guzzle/guzzle/pull/2450)
+* Use native function invocation [#2444](https://github.com/guzzle/guzzle/pull/2444)
+* Better defaults for PHP installations with old ICU lib [2454](https://github.com/guzzle/guzzle/pull/2454)
+* Added visibility to all constants [#2462](https://github.com/guzzle/guzzle/pull/2462)
+* Dont allow passing `null` as URI to `Client::request()` and `Client::requestAsync()` [#2461](https://github.com/guzzle/guzzle/pull/2461)
+
+### Fixed 
+
+* Logging when Promise rejected with a string [#2311](https://github.com/guzzle/guzzle/pull/2311)
+
+### Removed
+
+* Class `SeekException` [#2162](https://github.com/guzzle/guzzle/pull/2162)
+* `RequestException::getResponseBodySummary()` [#2425](https://github.com/guzzle/guzzle/pull/2425)
+* `CookieJar::getCookieValue()` [#2433](https://github.com/guzzle/guzzle/pull/2433)
+* `uri_template()` and `UriTemplate` [#2440](https://github.com/guzzle/guzzle/pull/2440)
+* Request options `save_to` and `exceptions` [#2464](https://github.com/guzzle/guzzle/pull/2464)
+
 ## 6.5.2 - 2019-12-23
 
 * idn_to_ascii() fix for old PHP versions [#2489](https://github.com/guzzle/guzzle/pull/2489)
