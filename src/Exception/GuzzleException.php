@@ -1,8 +1,8 @@
 <?php
 namespace GuzzleHttp\Exception;
 
-use Throwable;
+use Psr\Http\Client\ClientExceptionInterface;
 
-interface GuzzleException extends Throwable
+interface GuzzleException extends ClientExceptionInterface
 {
 }

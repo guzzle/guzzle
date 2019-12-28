@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Exception;
 
+use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -8,7 +9,7 @@ use Psr\Http\Message\UriInterface;
 /**
  * HTTP Request exception
  */
-class RequestException extends TransferException
+class RequestException extends TransferException implements RequestExceptionInterface
 {
     /** @var RequestInterface */
     private $request;
