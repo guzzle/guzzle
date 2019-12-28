@@ -13,17 +13,20 @@ jobs:
 
     steps:
       - name: Set up PHP
-        uses: shivammathur/setup-php@1.5.8
+        uses: shivammathur/setup-php@1.6.2
         with:
           php-version: '7.2'
           coverage: xdebug
-          ini-values-csv: xdebug.overload_var_dump=1
-          extension-csv: 'mbstring, intl'
+          ini-values: xdebug.overload_var_dump=1
+          extensions: mbstring, intl
 
       - name: Set up Node
         uses: actions/setup-node@v1
         with:
           node-version: '10.x'
+
+      - name: Setup Problem Matchers for PHPUnit
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
         uses: actions/checkout@v1
@@ -44,17 +47,20 @@ jobs:
 
     steps:
       - name: Set up PHP
-        uses: shivammathur/setup-php@1.5.8
+        uses: shivammathur/setup-php@1.6.2
         with:
           php-version: ${{ matrix.php }}
           coverage: xdebug
-          ini-values-csv: xdebug.overload_var_dump=1
-          extension-csv: 'mbstring, intl'
+          ini-values: xdebug.overload_var_dump=1
+          extensions: mbstring, intl
 
       - name: Set up Node
         uses: actions/setup-node@v1
         with:
           node-version: '10.x'
+
+      - name: Setup Problem Matchers for PHPUnit
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
         uses: actions/checkout@v1
