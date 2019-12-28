@@ -186,7 +186,7 @@ final class Middleware
     public static function log(LoggerInterface $logger, MessageFormatter $formatter, string $logLevel = 'info' /* \Psr\Log\LogLevel::INFO */): callable
     {
         return function (callable $handler) use ($logger, $formatter, $logLevel): callable {
-            return function (RequestInterface $request, array $options) use ($handler, $logger, $formatter, $logLevel) {
+            return function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel) {
                 return $handler($request, $options)->then(
                     function ($response) use ($logger, $request, $formatter, $logLevel): ResponseInterface {
                         $message = $formatter->format($request, $response);
@@ -197,7 +197,7 @@ final class Middleware
                         $response = $reason instanceof RequestException
                             ? $reason->getResponse()
                             : null;
-                        $message = $formatter->format($request, $response, $reason);
+                        $message = $formatter->format($request, $response, \GuzzleHttp\Promise\exception_for($reason));
                         $logger->notice($message);
                         return \GuzzleHttp\Promise\rejection_for($reason);
                     }

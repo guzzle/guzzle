@@ -210,4 +210,18 @@ class MiddlewareTest extends TestCase
         self::assertStringContainsString('PUT http://www.google.com', $logger->records[0]['message']);
         self::assertStringContainsString('404 Not Found', $logger->records[0]['message']);
     }
+
+    public function testLogsWithStringError()
+    {
+        $h = new MockHandler([\GuzzleHttp\Promise\rejection_for('some problem')]);
+        $stack = new HandlerStack($h);
+        $logger = new TestLogger();
+        $formatter = new MessageFormatter('{error}');
+        $stack->push(Middleware::log($logger, $formatter));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('PUT', 'http://www.google.com'), []);
+        $p->wait(false);
+        self::assertCount(1, $logger->records);
+        self::assertContains('some problem', $logger->records[0]['message']);
+    }
 }
