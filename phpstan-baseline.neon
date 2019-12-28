@@ -201,6 +201,11 @@ parameters:
 			path: src/Exception/BadResponseException.php
 
 		-
+			message: "#^Method GuzzleHttp\\\\Exception\\\\BadResponseException\\:\\:getResponse\\(\\) should return Psr\\\\Http\\\\Message\\\\ResponseInterface but returns Psr\\\\Http\\\\Message\\\\ResponseInterface\\|null\\.$#"
+			count: 1
+			path: src/Exception/BadResponseException.php
+
+		-
 			message: "#^Method GuzzleHttp\\\\Exception\\\\ConnectException\\:\\:__construct\\(\\) has parameter \\$handlerContext with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Exception/ConnectException.php
