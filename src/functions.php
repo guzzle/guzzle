@@ -316,17 +316,15 @@ function _current_time()
 }
 
 /**
- * @param int $options
- *
- * @return UriInterface
- *
  * @internal
  */
-function _idn_uri_convert(UriInterface $uri, $options = 0)
+function _idn_uri_convert(UriInterface $uri, int $options = 0): UriInterface
 {
     if ($uri->getHost()) {
         $idnaVariant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : 0;
-        $asciiHost = idn_to_ascii($uri->getHost(), $options, $idnaVariant, $info);
+        $asciiHost = $idnaVariant === 0
+            ? idn_to_ascii($uri->getHost(), $options)
+            : idn_to_ascii($uri->getHost(), $options, $idnaVariant, $info);
         if ($asciiHost === false) {
             $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
 
