@@ -342,7 +342,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         try {
             return Promise\promise_for($handler($request, $options));
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             return Promise\rejection_for($e);
         }
     }

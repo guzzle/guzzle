@@ -79,7 +79,7 @@ class MockHandler implements \Countable
             }
             try {
                 $options['on_headers']($response);
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 $msg = 'An error was encountered during the on_headers event';
                 $response = new RequestException($msg, $request, $response, $e);
             }
