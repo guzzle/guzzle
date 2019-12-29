@@ -11,11 +11,6 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Client\\:\\:__call\\(\\) has parameter \\$args with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:sendAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Client.php
@@ -27,12 +22,12 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
+			count: 2
 			path: src/Client.php
 
 		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:request\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
+			count: 2
 			path: src/Client.php
 
 		-
@@ -76,6 +71,66 @@ parameters:
 			path: src/Client.php
 
 		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:get\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:head\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:put\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:post\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:patch\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:delete\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:getAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:headAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:putAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:postAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:patchAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:deleteAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
 			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:send\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/ClientInterface.php
@@ -91,7 +146,67 @@ parameters:
 			path: src/ClientInterface.php
 
 		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:get\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:head\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:put\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:post\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:patch\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:delete\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
 			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:requestAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:getAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:headAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:putAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:postAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:patchAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/ClientInterface.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:deleteAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/ClientInterface.php
 
