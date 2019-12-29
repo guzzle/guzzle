@@ -16,9 +16,9 @@ class MessageFormatterTest extends TestCase
     public function testCreatesWithClfByDefault()
     {
         $f = new MessageFormatter();
-        self::assertEquals(MessageFormatter::CLF, self::readAttribute($f, 'template'));
+        self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
         $f = new MessageFormatter(null);
-        self::assertEquals(MessageFormatter::CLF, self::readAttribute($f, 'template'));
+        self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
     }
 
     public function dateProvider()

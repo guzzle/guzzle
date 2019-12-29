@@ -5,6 +5,7 @@ use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\Tests\Helpers;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
@@ -586,20 +587,20 @@ class CurlFactoryTest extends TestCase
         $easy = $f->create($req, []);
         $h1 = $easy->handle;
         $f->release($easy);
-        self::assertCount(1, self::readAttribute($f, 'handles'));
+        self::assertCount(1, Helpers::readObjectAttribute($f, 'handles'));
         $easy = $f->create($req, []);
         self::assertSame($easy->handle, $h1);
         $easy2 = $f->create($req, []);
         $easy3 = $f->create($req, []);
         $easy4 = $f->create($req, []);
         $f->release($easy);
-        self::assertCount(1, self::readAttribute($f, 'handles'));
+        self::assertCount(1, Helpers::readObjectAttribute($f, 'handles'));
         $f->release($easy2);
-        self::assertCount(2, self::readAttribute($f, 'handles'));
+        self::assertCount(2, Helpers::readObjectAttribute($f, 'handles'));
         $f->release($easy3);
-        self::assertCount(3, self::readAttribute($f, 'handles'));
+        self::assertCount(3, Helpers::readObjectAttribute($f, 'handles'));
         $f->release($easy4);
-        self::assertCount(3, self::readAttribute($f, 'handles'));
+        self::assertCount(3, Helpers::readObjectAttribute($f, 'handles'));
     }
 
     public function testEnsuresOnHeadersIsCallable()
