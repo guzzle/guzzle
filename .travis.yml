@@ -1,36 +1,42 @@
 language: php
 
-sudo: false
-
-php:
-  - 5.6
-  - 7.0
-  - 7.1
-  - 7.2
-  - 7.3
-  - 7.4
-  - nightly
-
-before_script:
-  - curl --version
-  - composer install --no-interaction --prefer-source --dev
-  - ~/.nvm/nvm.sh install v0.6.14
-  - ~/.nvm/nvm.sh run v0.6.14
-  - if [[ "$TRAVIS_PHP_VERSION" != "7.0" || "$TRAVIS_PHP_VERSION" != "7.1" ]]; then echo "xdebug.overload_var_dump = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini || true; fi
-
-script: make test
-
 matrix:
-  allow_failures:
-    - php: hhvm
-      dist: trusty
-    - php: nightly
   include:
     - php: 5.5
       dist: trusty
-    - php: hhvm
+    - php: 5.6
+      dist: xenial
+    - php: 7.0
+      dist: xenial
+    - php: 7.1
+      dist: bionic
+    - php: 7.2
+      dist: bionic
+    - php: 7.3
+      dist: bionic
+    - php: 7.4
+      dist: bionic
+    - php: nightly
+      dist: bionic
+      env: COMPOSER_ARGS="--ignore-platform-reqs"
+    - php: hhvm-3.24
       dist: trusty
+  allow_failures:
+    - php: hhvm-3.24
+    - php: nightly
   fast_finish: true
+
+install:
+  - if [[ "$TRAVIS_PHP_VERSION" != "hhvm-3.24" || "$TRAVIS_PHP_VERSION" != "nightly" ]]; then echo "xdebug.overload_var_dump = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini || true; fi
+  - composer install --prefer-dist $COMPOSER_ARGS
+  - ~/.nvm/nvm.sh install v10.18.0
+  - ~/.nvm/nvm.sh run v10.18.0
+
+before_script:
+  - curl --version
+
+script:
+  - make test
 
 before_deploy:
   - make package
