@@ -222,6 +222,6 @@ class MiddlewareTest extends TestCase
         $p = $comp(new Request('PUT', 'http://www.google.com'), []);
         $p->wait(false);
         self::assertCount(1, $logger->records);
-        self::assertContains('some problem', $logger->records[0]['message']);
+        self::assertStringContainsString('some problem', $logger->records[0]['message']);
     }
 }
