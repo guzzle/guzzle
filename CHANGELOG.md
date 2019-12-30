@@ -1,13 +1,13 @@
 # Change Log
 
-## 7.0.0-beta1 - 2019-12-31
+## 7.0.0-beta1 - 2019-12-30
 
 The diff might look very big but 95% of Guzzle users will be able to upgrade without modification. 
-Please see [the upgrade document][UPGRADING.md] that describes all BC breaking changes.   
+Please see [the upgrade document](UPGRADING.md) that describes all BC breaking changes.   
 
 ### Added
 
-* Implement PSR-18 [#2421](https://github.com/guzzle/guzzle/pull/2421) [#2474](https://github.com/guzzle/guzzle/pull/2474)
+* Implement PSR-18 and dropped PHP 5 support [#2421](https://github.com/guzzle/guzzle/pull/2421) [#2474](https://github.com/guzzle/guzzle/pull/2474)
 * PHP 7 types [#2442](https://github.com/guzzle/guzzle/pull/2442) [#2449](https://github.com/guzzle/guzzle/pull/2449) [#2466](https://github.com/guzzle/guzzle/pull/2466) [#2497](https://github.com/guzzle/guzzle/pull/2497) [#2499](https://github.com/guzzle/guzzle/pull/2499)
 * IDN support for redirects [2424](https://github.com/guzzle/guzzle/pull/2424)
 
@@ -19,6 +19,7 @@ Please see [the upgrade document][UPGRADING.md] that describes all BC breaking c
 * Better defaults for PHP installations with old ICU lib [2454](https://github.com/guzzle/guzzle/pull/2454)
 * Added visibility to all constants [#2462](https://github.com/guzzle/guzzle/pull/2462)
 * Dont allow passing `null` as URI to `Client::request()` and `Client::requestAsync()` [#2461](https://github.com/guzzle/guzzle/pull/2461)
+* Widen the exception argument to throwable [#2495](https://github.com/guzzle/guzzle/pull/2495)
 
 ### Fixed 
 
