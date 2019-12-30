@@ -44,6 +44,9 @@ jobs:
       max-parallel: 10
       matrix:
         php: ['7.2', '7.3', '7.4']
+        include:
+          - php: '7.2'
+            dependencies: lowest
 
     steps:
       - name: Set up PHP
@@ -65,8 +68,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Download dependencies
+      - name: Install dependencies
+        if: matrix.dependencies != 'lowest'
         run: composer update --no-interaction --prefer-dist
+
+      - name: Install dependencies
+        if: matrix.dependencies == 'lowest'
+        run: composer update --no-interaction --prefer-dist --prefer-lowest
 
       - name: Run tests
         run: make test
