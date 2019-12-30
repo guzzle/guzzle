@@ -5,6 +5,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\HttpFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -66,6 +67,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $config['handler'] = HandlerStack::create();
         } elseif (!\is_callable($config['handler'])) {
             throw new InvalidArgumentException('handler must be a callable');
+        }
+
+        if (!isset($config['http_factory'])) {
+            $config['http_factory'] = new HttpFactory();
+        } elseif (!$config['http_factory'] instanceof HttpFactory) {
+            throw new InvalidArgumentException('http_factory must be an instance of callable');
         }
 
         // Convert the base_uri to a UriInterface
@@ -156,18 +163,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
         $options = $this->prepareDefaults($options);
-        // Remove request modifying parameter because it can be done up-front.
-        $headers = isset($options['headers']) ? $options['headers'] : [];
-        $body = isset($options['body']) ? $options['body'] : null;
-        $version = isset($options['version']) ? $options['version'] : '1.1';
         // Merge the URI into the base URI.
         $uri = $this->buildUri(Psr7\uri_for($uri), $options);
-        if (\is_array($body)) {
-            $this->invalidBody();
-        }
-        $request = new Psr7\Request($method, $uri, $headers, $body, $version);
-        // Remove the option so that they are not doubly-applied.
-        unset($options['headers'], $options['body'], $options['version']);
+
+        /** @var HttpFactory $factory */
+        $factory = $options['http_factory'];
+        $request = $factory->createRequest($method, $uri);
 
         return $this->transfer($request, $options);
     }
@@ -348,6 +349,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $modify = [
             'set_headers' => [],
         ];
+
+        if (isset($options['version'])) {
+            $modify['version'] = $options['version'];
+        }
 
         if (isset($options['headers'])) {
             $modify['set_headers'] = $options['headers'];
