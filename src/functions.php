@@ -369,7 +369,7 @@ function _getenv(string $name): ?string
         return (string) $_SERVER[$name];
     }
 
-    if (PHP_SAPI === 'cli' && ($value = \getenv($name) !== false)) {
+    if (PHP_SAPI === 'cli' && ($value = \getenv($name)) !== false) {
         return (string) $value;
     }
 
