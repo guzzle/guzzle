@@ -357,10 +357,6 @@ function _idn_uri_convert(UriInterface $uri, int $options = 0): UriInterface
 }
 
 /**
- * @param string $name
- *
- * @return string|null
- *
  * @internal
  */
 function _getenv(string $name): ?string
