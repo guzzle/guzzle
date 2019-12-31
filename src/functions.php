@@ -392,3 +392,23 @@ function _idn_uri_convert(UriInterface $uri, $options = 0)
 
     return $uri;
 }
+
+/**
+ * @param string $name
+ *
+ * @return string|null
+ *
+ * @internal
+ */
+function _getenv($name)
+{
+    if (isset($_SERVER[$name])) {
+        return (string) $_SERVER[$name];
+    }
+
+    if (PHP_SAPI === 'cli' && ($value = getenv($name) !== false)) {
+        return (string) $value;
+    }
+
+    return null;
+}
