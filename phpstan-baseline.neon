@@ -27,12 +27,12 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
+			count: 2
 			path: src/Client.php
 
 		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:request\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
-			count: 1
+			count: 2
 			path: src/Client.php
 
 		-
@@ -72,6 +72,66 @@ parameters:
 
 		-
 			message: "#^Parameter \\#2 \\$prefix of function http_build_query expects string, null given\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:get\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:head\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:put\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:post\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:patch\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:delete\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:getAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:headAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:putAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:postAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:patchAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:deleteAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Client.php
 
