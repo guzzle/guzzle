@@ -101,14 +101,13 @@ class CurlMultiHandlerTest extends TestCase
     {
         $a = new CurlMultiHandler();
 
-        //default if no options are given and no environment variable is set
+        // Default if no options are given and no environment variable is set
         self::assertEquals(1, Helpers::readObjectAttribute($a, 'selectTimeout'));
 
         \putenv("GUZZLE_CURL_SELECT_TIMEOUT=3");
         $a = new CurlMultiHandler();
-        $selectTimeout = \getenv('GUZZLE_CURL_SELECT_TIMEOUT');
-        //Handler reads from the environment if no options are given
-        self::assertEquals($selectTimeout, Helpers::readObjectAttribute($a, 'selectTimeout'));
+        // Handler reads from the environment if no options are given
+        self::assertEquals(3, Helpers::readObjectAttribute($a, 'selectTimeout'));
     }
 
     public function throwsWhenAccessingInvalidProperty()

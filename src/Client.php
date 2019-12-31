@@ -246,15 +246,15 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         // We can only trust the HTTP_PROXY environment variable in a CLI
         // process due to the fact that PHP has no reliable mechanism to
         // get environment variables that start with "HTTP_".
-        if (PHP_SAPI === 'cli' && \getenv('HTTP_PROXY')) {
-            $defaults['proxy']['http'] = \getenv('HTTP_PROXY');
+        if (PHP_SAPI === 'cli' && ($proxy = \GuzzleHttp\_getenv('HTTP_PROXY'))) {
+            $defaults['proxy']['http'] = $proxy;
         }
 
-        if ($proxy = \getenv('HTTPS_PROXY')) {
+        if ($proxy = \GuzzleHttp\_getenv('HTTPS_PROXY')) {
             $defaults['proxy']['https'] = $proxy;
         }
 
-        if ($noProxy = \getenv('NO_PROXY')) {
+        if ($noProxy = \GuzzleHttp\_getenv('NO_PROXY')) {
             $cleanedNoProxy = \str_replace(' ', '', $noProxy);
             $defaults['proxy']['no'] = \explode(',', $cleanedNoProxy);
         }
