@@ -146,7 +146,7 @@ parameters:
 			path: src/Cookie/CookieJarInterface.php
 
 		-
-			message: "#^Parameter \\#1 \\$string of function strlen expects string, bool\\|float\\|int\\|string\\|null given\\.$#"
+			message: "#^Parameter \\#1 \\$string of function strlen expects string, bool\\|float\\|int\\|object\\|string\\|null given\\.$#"
 			count: 1
 			path: src/Cookie/FileCookieJar.php
 
