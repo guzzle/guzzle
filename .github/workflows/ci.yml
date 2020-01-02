@@ -22,7 +22,7 @@ jobs:
           tools: prestissimo
 
       - name: Set up Node
-        uses: actions/setup-node@v1.3
+        uses: actions/setup-node@v1
         with:
           node-version: '12.x'
 
@@ -30,7 +30,7 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v2.0
+        uses: actions/checkout@v2
 
       - name: Download dependencies
         run: composer update --no-interaction --prefer-stable --prefer-lowest --prefer-dist
@@ -57,7 +57,7 @@ jobs:
           tools: prestissimo
 
       - name: Set up Node
-        uses: actions/setup-node@v1.3
+        uses: actions/setup-node@v1
         with:
           node-version: '12.x'
 
@@ -65,7 +65,7 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v2.0
+        uses: actions/checkout@v2
 
       - name: Download dependencies
         run: composer update --no-interaction --prefer-dist
