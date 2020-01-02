@@ -355,3 +355,19 @@ function _idn_uri_convert(UriInterface $uri, int $options = 0): UriInterface
 
     return $uri;
 }
+
+/**
+ * @internal
+ */
+function _getenv(string $name): ?string
+{
+    if (isset($_SERVER[$name])) {
+        return (string) $_SERVER[$name];
+    }
+
+    if (PHP_SAPI === 'cli' && ($value = \getenv($name)) !== false && $value !== null) {
+        return (string) $value;
+    }
+
+    return null;
+}

@@ -19,6 +19,7 @@ class CurlMultiHandler
 {
     /** @var CurlFactoryInterface */
     private $factory;
+    /** @var int */
     private $selectTimeout;
     private $active;
     private $handles = [];
@@ -41,8 +42,8 @@ class CurlMultiHandler
 
         if (isset($options['select_timeout'])) {
             $this->selectTimeout = $options['select_timeout'];
-        } elseif ($selectTimeout = \getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
-            $this->selectTimeout = $selectTimeout;
+        } elseif ($selectTimeout = \GuzzleHttp\_getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
+            $this->selectTimeout = (int) $selectTimeout;
         } else {
             $this->selectTimeout = 1;
         }
