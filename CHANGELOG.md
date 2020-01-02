@@ -1,5 +1,11 @@
 # Change Log
 
+## UNRELEASHED
+
+### Changed
+
+* Avoid the getenv function when unsafe [#2531](https://github.com/guzzle/guzzle/pull/2531)
+
 ## 7.0.0-beta1 - 2019-12-30
 
 The diff might look very big but 95% of Guzzle users will be able to upgrade without modification. 
@@ -20,7 +26,6 @@ Please see [the upgrade document](UPGRADING.md) that describes all BC breaking c
 * Added visibility to all constants [#2462](https://github.com/guzzle/guzzle/pull/2462)
 * Dont allow passing `null` as URI to `Client::request()` and `Client::requestAsync()` [#2461](https://github.com/guzzle/guzzle/pull/2461)
 * Widen the exception argument to throwable [#2495](https://github.com/guzzle/guzzle/pull/2495)
-* Avoid the getenv function when unsafe [#2531](https://github.com/guzzle/guzzle/pull/2531)
 
 ### Fixed 
 
