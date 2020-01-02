@@ -20,6 +20,7 @@ Please see [the upgrade document](UPGRADING.md) that describes all BC breaking c
 * Added visibility to all constants [#2462](https://github.com/guzzle/guzzle/pull/2462)
 * Dont allow passing `null` as URI to `Client::request()` and `Client::requestAsync()` [#2461](https://github.com/guzzle/guzzle/pull/2461)
 * Widen the exception argument to throwable [#2495](https://github.com/guzzle/guzzle/pull/2495)
+* Avoid the getenv function when unsafe [#2531](https://github.com/guzzle/guzzle/pull/2531)
 
 ### Fixed 
 
