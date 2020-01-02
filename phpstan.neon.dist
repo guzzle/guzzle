@@ -6,3 +6,4 @@ parameters:
     paths:
         - src
     bootstrap: tests/bootstrap-phpstan.php
+    inferPrivatePropertyTypeFromConstructor: true
