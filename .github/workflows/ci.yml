@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Set up PHP
-        uses: shivammathur/setup-php@v1.7
+        uses: shivammathur/setup-php@1.7.0
         with:
           php-version: '7.2'
           coverage: xdebug
@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Set up PHP
-        uses: shivammathur/setup-php@v1.7
+        uses: shivammathur/setup-php@1.7.0
         with:
           php-version: ${{ matrix.php }}
           coverage: xdebug
