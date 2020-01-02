@@ -261,7 +261,7 @@ function is_host_in_noproxy(string $host, array $noProxyArray): bool
  * @param int    $depth   User specified recursion depth.
  * @param int    $options Bitmask of JSON decode options.
  *
- * @return array|string|int|float|bool|null
+ * @return object|array|string|int|float|bool|null
  *
  * @throws Exception\InvalidArgumentException if the JSON cannot be decoded.
  *
