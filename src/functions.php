@@ -267,7 +267,7 @@ function is_host_in_noproxy(string $host, array $noProxyArray): bool
  *
  * @link http://www.php.net/manual/en/function.json-decode.php
  */
-function json_decode($json, bool $assoc = false, int $depth = 512, int $options = 0)
+function json_decode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
 {
     $data = \json_decode($json, $assoc, $depth, $options);
     if (JSON_ERROR_NONE !== \json_last_error()) {
@@ -354,4 +354,20 @@ function _idn_uri_convert(UriInterface $uri, int $options = 0): UriInterface
     }
 
     return $uri;
+}
+
+/**
+ * @internal
+ */
+function _getenv(string $name): ?string
+{
+    if (isset($_SERVER[$name])) {
+        return (string) $_SERVER[$name];
+    }
+
+    if (PHP_SAPI === 'cli' && ($value = \getenv($name)) !== false && $value !== null) {
+        return (string) $value;
+    }
+
+    return null;
 }

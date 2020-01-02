@@ -2,6 +2,10 @@
 
 ## UNRELEASHED
 
+### Changed
+
+* Avoid the getenv function when unsafe [#2531](https://github.com/guzzle/guzzle/pull/2531)
+
 ### Removed
 
 * Pool option `pool_size` [#2528](https://github.com/guzzle/guzzle/pull/2528)

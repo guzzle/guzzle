@@ -26,6 +26,7 @@ Please make sure:
 - Request option `exception` is removed. Please use `http_errors`.
 - Request option `save_to` is removed. Please use `sink`.
 - Pool option `pool_size` is removed. Please use `concurrency`.
+- We now look for environment variables in the `$_SERVER` super global, due to thread safety issues with `getenv`. We continue to fallback to `getenv` in CLI environments, for maximum compatibility.
 
 #### Native functions calls
 

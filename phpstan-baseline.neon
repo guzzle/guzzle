@@ -316,11 +316,6 @@ parameters:
 			path: src/Handler/CurlHandler.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:\\$selectTimeout has no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
 			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:\\$active has no typehint specified\\.$#"
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
