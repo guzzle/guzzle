@@ -13,23 +13,24 @@ jobs:
 
     steps:
       - name: Set up PHP
-        uses: shivammathur/setup-php@1.6.2
+        uses: shivammathur/setup-php@1.7.0
         with:
           php-version: '7.2'
           coverage: xdebug
           ini-values: xdebug.overload_var_dump=1
           extensions: mbstring, intl
+          tools: prestissimo
 
       - name: Set up Node
         uses: actions/setup-node@v1
         with:
-          node-version: '10.x'
+          node-version: '12.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Download dependencies
         run: composer update --no-interaction --prefer-stable --prefer-lowest --prefer-dist
@@ -47,23 +48,24 @@ jobs:
 
     steps:
       - name: Set up PHP
-        uses: shivammathur/setup-php@1.6.2
+        uses: shivammathur/setup-php@1.7.0
         with:
           php-version: ${{ matrix.php }}
           coverage: xdebug
           ini-values: xdebug.overload_var_dump=1
           extensions: mbstring, intl
+          tools: prestissimo
 
       - name: Set up Node
         uses: actions/setup-node@v1
         with:
-          node-version: '10.x'
+          node-version: '12.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: Download dependencies
         run: composer update --no-interaction --prefer-dist
