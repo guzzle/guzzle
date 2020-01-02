@@ -37,10 +37,7 @@ class Pool implements PromisorInterface
         $requests,
         array $config = []
     ) {
-        // Backwards compatibility.
-        if (isset($config['pool_size'])) {
-            $config['concurrency'] = $config['pool_size'];
-        } elseif (!isset($config['concurrency'])) {
+        if (!isset($config['concurrency'])) {
             $config['concurrency'] = 25;
         }
 

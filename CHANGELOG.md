@@ -6,6 +6,10 @@
 
 * Avoid the getenv function when unsafe [#2531](https://github.com/guzzle/guzzle/pull/2531)
 
+### Removed
+
+* Pool option `pool_size` [#2528](https://github.com/guzzle/guzzle/pull/2528)
+
 ## 7.0.0-beta1 - 2019-12-30
 
 The diff might look very big but 95% of Guzzle users will be able to upgrade without modification. 
