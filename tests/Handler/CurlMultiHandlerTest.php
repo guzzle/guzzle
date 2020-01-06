@@ -1,6 +1,7 @@
 <?php
 namespace GuzzleHttp\Tests\Handler;
 
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -122,5 +123,15 @@ class CurlMultiHandlerTest extends TestCase
 
         $this->expectException(\BadMethodCallException::class);
         $h->foo;
+    }
+
+    public function testCurlErrorMessage(): void
+    {
+        $a = new CurlMultiHandler();
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Could not resolve host: ');
+
+        $a(new Request('GET', 'http://' . uniqid() . uniqid()), [])->wait();
     }
 }

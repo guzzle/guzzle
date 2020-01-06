@@ -1,9 +1,11 @@
 <?php
 namespace GuzzleHttp\Test\Handler;
 
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\EasyHandle;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Tests\Helpers;
 use GuzzleHttp\Tests\Server;
@@ -755,5 +757,23 @@ class CurlFactoryTest extends TestCase
         $easyHandle->handle = \curl_init();
 
         self::assertEmpty($factory->release($easyHandle));
+    }
+
+    public function testCurlErrorMessage(): void
+    {
+        $factory = new Handler\CurlFactory(1);
+        $request = new Psr7\Request('GET', 'http://' . uniqid() . uniqid());
+        $fn = static function (Psr7\Request $request, array $options) use (&$fn, $factory): PromiseInterface {
+            $easy = $factory->create($request, $options);
+            curl_exec($easy->handle);
+            $easy->errno = curl_errno($easy->handle);
+
+            return Handler\CurlFactory::finish($fn, $easy, $factory);
+        };
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Could not resolve host: ');
+
+        $fn($request, [])->wait();
     }
 }
