@@ -25,6 +25,22 @@ class ClientTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+	/**
+	 * @dataProvider dpHeadersContainingSpaces
+	 */
+	public function testContainsWhiteSpaceOnHeaderField( $header )
+	{
+		$client = new Client();
+		$this->expectException( \InvalidArgumentException::class );
+		$this->expectExceptionMessage( sprintf( '"%s" is not a valid HTTP header field name', $header ) );
+		Server::enqueue( [ new Response( 200, [ $header => ' value ' ] ) ] );
+		$response = $client->get( Server::$url );
+	}
+
+	public function dpHeadersContainingSpaces() {
+    	return [ [ ' key ' ], [ 'key ' ], [ ' key' ] ];
+	}
+
     public function testValidatesArgsForMagicMethods()
     {
         $client = new Client();
