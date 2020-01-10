@@ -2,6 +2,7 @@
 .gitattributes         export-ignore
 /.github/              export-ignore
 .gitignore             export-ignore
+.php_cs.dist           export-ignore
 /build/                export-ignore
 /docs/                 export-ignore
 /Makefile              export-ignore
