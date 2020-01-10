@@ -27,17 +27,11 @@ class ConnectException extends TransferException implements NetworkExceptionInte
         $this->setHandlerContext($handlerContext);
     }
 
-    /**
-     * @deprecated 8.0.0
-     */
     public function getResponse(): ?ResponseInterface
     {
         return null;
     }
 
-    /**
-     * @deprecated 8.0.0
-     */
     public function hasResponse(): bool
     {
         return false;
