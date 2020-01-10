@@ -376,6 +376,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         if (isset($options['json'])) {
             $options['body'] = \GuzzleHttp\json_encode($options['json']);
+            //we need to keep forward slash
+            if(strpos($options['body'], '/') !== false)
+                $options['body'] = str_replace("\\", "", $options['body']);
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
