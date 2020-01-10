@@ -1,6 +1,9 @@
 <?php
 namespace GuzzleHttp\Exception;
 
+use GuzzleHttp\Exception\Traits\HandlerContextAwareTrait;
+use GuzzleHttp\Exception\Traits\RequestAwareTrait;
+use GuzzleHttp\Exception\Traits\ResponseAwareTrait;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -11,14 +14,7 @@ use Psr\Http\Message\UriInterface;
  */
 class RequestException extends TransferException implements RequestExceptionInterface
 {
-    /** @var RequestInterface */
-    private $request;
-
-    /** @var ResponseInterface|null */
-    private $response;
-
-    /** @var array */
-    private $handlerContext;
+    use RequestAwareTrait, ResponseAwareTrait, HandlerContextAwareTrait;
 
     public function __construct(
         string $message,
@@ -30,9 +26,11 @@ class RequestException extends TransferException implements RequestExceptionInte
         // Set the code of the exception if the response is set and not future.
         $code = $response ? $response->getStatusCode() : 0;
         parent::__construct($message, $code, $previous);
-        $this->request = $request;
-        $this->response = $response;
-        $this->handlerContext = $handlerContext;
+        $this->setRequest($request);
+        if ($response !== null) {
+            $this->setResponse($response);
+        }
+        $this->setHandlerContext($handlerContext);
     }
 
     /**
@@ -116,42 +114,5 @@ class RequestException extends TransferException implements RequestExceptionInte
         }
 
         return $uri;
-    }
-
-    /**
-     * Get the request that caused the exception
-     */
-    public function getRequest(): RequestInterface
-    {
-        return $this->request;
-    }
-
-    /**
-     * Get the associated response
-     */
-    public function getResponse(): ?ResponseInterface
-    {
-        return $this->response;
-    }
-
-    /**
-     * Check if a response was received
-     */
-    public function hasResponse(): bool
-    {
-        return $this->response !== null;
-    }
-
-    /**
-     * Get contextual information about the error from the underlying handler.
-     *
-     * The contents of this array will vary depending on which handler you are
-     * using. It may also be just an empty array. Relying on this data will
-     * couple you to a specific handler, but can give more debug information
-     * when needed.
-     */
-    public function getHandlerContext(): array
-    {
-        return $this->handlerContext;
     }
 }

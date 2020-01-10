@@ -53,7 +53,7 @@ class StreamHandlerTest extends TestCase
     {
         $handler = new StreamHandler();
 
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
         $handler(
             new Request('GET', 'http://localhost:123'),
             ['timeout' => 0.01]
