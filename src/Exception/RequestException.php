@@ -3,7 +3,6 @@ namespace GuzzleHttp\Exception;
 
 use GuzzleHttp\Exception\Traits\HandlerContextAwareTrait;
 use GuzzleHttp\Exception\Traits\RequestAwareTrait;
-use GuzzleHttp\Exception\Traits\ResponseAwareTrait;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -14,7 +13,10 @@ use Psr\Http\Message\UriInterface;
  */
 class RequestException extends TransferException implements RequestExceptionInterface
 {
-    use RequestAwareTrait, ResponseAwareTrait, HandlerContextAwareTrait;
+    use RequestAwareTrait, HandlerContextAwareTrait;
+
+    /** @var ResponseInterface|null */
+    private $response;
 
     public function __construct(
         string $message,
@@ -27,9 +29,7 @@ class RequestException extends TransferException implements RequestExceptionInte
         $code = $response ? $response->getStatusCode() : 0;
         parent::__construct($message, $code, $previous);
         $this->setRequest($request);
-        if ($response !== null) {
-            $this->setResponse($response);
-        }
+        $this->response = $response;
         $this->setHandlerContext($handlerContext);
     }
 
@@ -114,5 +114,21 @@ class RequestException extends TransferException implements RequestExceptionInte
         }
 
         return $uri;
+    }
+
+    /**
+     * Get the associated response
+     */
+    public function getResponse(): ?ResponseInterface
+    {
+        return $this->response;
+    }
+
+    /**
+     * Check if a response was received
+     */
+    public function hasResponse(): bool
+    {
+        return $this->response !== null;
     }
 }
