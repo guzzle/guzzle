@@ -14,7 +14,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class ConnectException extends TransferException implements NetworkExceptionInterface
 {
-    use RequestAwareTrait, HandlerContextAwareTrait;
+    use RequestAwareTrait;
+    use HandlerContextAwareTrait;
 
     public function __construct(
         string $message,

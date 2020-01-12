@@ -13,7 +13,8 @@ use Psr\Http\Message\UriInterface;
  */
 class RequestException extends TransferException implements RequestExceptionInterface
 {
-    use RequestAwareTrait, HandlerContextAwareTrait;
+    use RequestAwareTrait;
+    use HandlerContextAwareTrait;
 
     /** @var ResponseInterface|null */
     private $response;
