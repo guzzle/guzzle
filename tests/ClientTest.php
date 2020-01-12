@@ -7,7 +7,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\MultipartStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
@@ -507,7 +507,7 @@ class ClientTest extends TestCase
                 'POST',
                 'http://foo.com',
                 [],
-                new Psr7\MultipartStream(
+                new MultipartStream(
                     [
                         [
                             'name' => 'foo',

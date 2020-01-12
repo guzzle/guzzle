@@ -1,9 +1,9 @@
 <?php
 namespace GuzzleHttp\Handler;
 
-use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\Utils as PromiseUtils;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -114,7 +114,7 @@ class CurlMultiHandler
         }
 
         // Step through the task queue which may add additional requests.
-        P\queue()->run();
+        PromiseUtils::queue()->run();
 
         if ($this->active &&
             \curl_multi_select($this->_mh, $this->selectTimeout) === -1
@@ -134,7 +134,7 @@ class CurlMultiHandler
      */
     public function execute(): void
     {
-        $queue = P\queue();
+        $queue = PromiseUtils::queue();
 
         while ($this->handles || !$queue->isEmpty()) {
             // If there are no transfers, then sleep for the next delay

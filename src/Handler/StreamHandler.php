@@ -5,7 +5,11 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
+use GuzzleHttp\Promise\Utils as PromiseUtils;
+use GuzzleHttp\Psr7\InflateStream;
+use GuzzleHttp\Psr7\LazyOpenStream;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Utils as Psr7Utils;
 use GuzzleHttp\TransferStats;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -66,7 +70,7 @@ class StreamHandler
             $e = RequestException::wrapException($request, $e);
             $this->invokeStats($options, $request, $startTime, null, $e);
 
-            return \GuzzleHttp\Promise\rejection_for($e);
+            return PromiseUtils::rejectionFor($e);
         }
     }
 
@@ -103,14 +107,14 @@ class StreamHandler
         $reason = isset($parts[2]) ? $parts[2] : null;
         $headers = \GuzzleHttp\headers_from_lines($hdrs);
         list($stream, $headers) = $this->checkDecode($options, $headers, $stream);
-        $stream = Psr7\stream_for($stream);
+        $stream = Psr7Utils::streamFor($stream);
         $sink = $stream;
 
         if (\strcasecmp('HEAD', $request->getMethod())) {
             $sink = $this->createSink($stream, $options);
         }
 
-        $response = new Psr7\Response($status, $headers, $sink, $ver, $reason);
+        $response = new Response($status, $headers, $sink, $ver, $reason);
 
         if (isset($options['on_headers'])) {
             try {
@@ -118,7 +122,7 @@ class StreamHandler
             } catch (\Exception $e) {
                 $msg = 'An error was encountered during the on_headers event';
                 $ex = new RequestException($msg, $request, $response, $e);
-                return \GuzzleHttp\Promise\rejection_for($ex);
+                return PromiseUtils::rejectionFor($ex);
             }
         }
 
@@ -148,8 +152,8 @@ class StreamHandler
             : \fopen('php://temp', 'r+');
 
         return \is_string($sink)
-            ? new Psr7\LazyOpenStream($sink, 'w+')
-            : Psr7\stream_for($sink);
+            ? new LazyOpenStream($sink, 'w+')
+            : Psr7Utils::streamFor($sink);
     }
 
     private function checkDecode(array $options, array $headers, $stream): array
@@ -160,8 +164,8 @@ class StreamHandler
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
-                    $stream = new Psr7\InflateStream(
-                        Psr7\stream_for($stream)
+                    $stream = new InflateStream(
+                        Psr7Utils::streamFor($stream)
                     );
                     $headers['x-encoded-content-encoding']
                         = $headers[$normalizedKeys['content-encoding']];
@@ -203,7 +207,7 @@ class StreamHandler
         // that number of bytes has been read. This can prevent infinitely
         // reading from a stream when dealing with servers that do not honor
         // Connection: Close headers.
-        Psr7\copy_to_stream(
+        Psr7Utils::copyToStream(
             $source,
             $sink,
             (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1

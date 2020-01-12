@@ -9,6 +9,7 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Utils as Psr7Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
@@ -52,7 +53,7 @@ class PrepareBodyMiddlewareTest extends TestCase
 
     public function testAddsTransferEncodingWhenNoContentLength()
     {
-        $body = FnStream::decorate(Psr7\stream_for('foo'), [
+        $body = FnStream::decorate(Psr7Utils::streamFor('foo'), [
             'getSize' => function () {
                 return null;
             }
@@ -76,7 +77,7 @@ class PrepareBodyMiddlewareTest extends TestCase
 
     public function testAddsContentTypeWhenMissingAndPossible()
     {
-        $bd = Psr7\stream_for(\fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7Utils::streamFor(\fopen(__DIR__ . '/../composer.json', 'r'));
         $h = new MockHandler([
             function (RequestInterface $request) {
                 self::assertSame('application/json', $request->getHeaderLine('Content-Type'));
@@ -109,7 +110,7 @@ class PrepareBodyMiddlewareTest extends TestCase
      */
     public function testAddsExpect($value, $result)
     {
-        $bd = Psr7\stream_for(\fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7Utils::streamFor(\fopen(__DIR__ . '/../composer.json', 'r'));
 
         $h = new MockHandler([
             function (RequestInterface $request) use ($result) {
@@ -132,7 +133,7 @@ class PrepareBodyMiddlewareTest extends TestCase
 
     public function testIgnoresIfExpectIsPresent()
     {
-        $bd = Psr7\stream_for(\fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7Utils::streamFor(\fopen(__DIR__ . '/../composer.json', 'r'));
         $h = new MockHandler([
             function (RequestInterface $request) {
                 self::assertSame(['Foo'], $request->getHeader('Expect'));

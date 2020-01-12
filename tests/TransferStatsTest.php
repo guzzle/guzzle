@@ -1,7 +1,8 @@
 <?php
 namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
 
@@ -9,8 +10,8 @@ class TransferStatsTest extends TestCase
 {
     public function testHasData()
     {
-        $request = new Psr7\Request('GET', 'http://foo.com');
-        $response = new Psr7\Response();
+        $request = new Request('GET', 'http://foo.com');
+        $response = new Response();
         $stats = new TransferStats(
             $request,
             $response,

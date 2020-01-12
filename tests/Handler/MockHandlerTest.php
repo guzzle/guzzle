@@ -4,6 +4,7 @@ namespace GuzzleHttp\Test\Handler;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Stream;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
 
@@ -101,7 +102,7 @@ class MockHandlerTest extends TestCase
 
     public function testSinkStream()
     {
-        $stream = new \GuzzleHttp\Psr7\Stream(\tmpfile());
+        $stream = new Stream(\tmpfile());
         $res = new Response(200, [], 'TEST CONTENT');
         $mock = new MockHandler([$res]);
         $request = new Request('GET', '/');

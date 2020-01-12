@@ -9,6 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\Utils as PromiseUtils;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
@@ -213,7 +214,7 @@ class MiddlewareTest extends TestCase
 
     public function testLogsWithStringError()
     {
-        $h = new MockHandler([\GuzzleHttp\Promise\rejection_for('some problem')]);
+        $h = new MockHandler([PromiseUtils::rejectionFor('some problem')]);
         $stack = new HandlerStack($h);
         $logger = new TestLogger();
         $formatter = new MessageFormatter('{error}');

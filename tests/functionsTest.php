@@ -146,8 +146,8 @@ class FunctionsTest extends TestCase
             self::markTestSkipped('intl PHP extension is not loaded');
         }
 
-        $uri = GuzzleHttp\Psr7\uri_for('https://яндекс.рф/images');
-        $uri = GuzzleHttp\_idn_uri_convert($uri);
+        $uri = \GuzzleHttp\Psr7\Utils::uriFor('https://яндекс.рф/images');
+        $uri = \GuzzleHttp\_idn_uri_convert($uri);
         self::assertSame('xn--d1acpjx3f.xn--p1ai', $uri->getHost());
     }
 }

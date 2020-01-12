@@ -4,6 +4,9 @@ namespace GuzzleHttp;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7\UriResolver;
+use GuzzleHttp\Psr7\Utils as Psr7Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -175,7 +178,7 @@ class RedirectMiddleware
         }
 
         $modify['uri'] = $uri;
-        Psr7\rewind_body($request);
+        Psr7Utils::rewindBody($request);
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
@@ -193,7 +196,7 @@ class RedirectMiddleware
             $modify['remove_headers'][] = 'Authorization';
         }
 
-        return Psr7\modify_request($request, $modify);
+        return Psr7Utils::modifyRequest($request, $modify);
     }
 
     /**
@@ -204,9 +207,9 @@ class RedirectMiddleware
         ResponseInterface $response,
         array $protocols
     ): UriInterface {
-        $location = Psr7\UriResolver::resolve(
+        $location = UriResolver::resolve(
             $request->getUri(),
-            new Psr7\Uri($response->getHeaderLine('Location'))
+            new Uri($response->getHeaderLine('Location'))
         );
 
         // Ensure that the redirect URI is allowed based on the protocols.

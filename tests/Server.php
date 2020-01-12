@@ -2,7 +2,7 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -94,7 +94,7 @@ class Server
                 if (isset($message['query_string'])) {
                     $uri .= '?' . $message['query_string'];
                 }
-                $response = new Psr7\Request(
+                $response = new Request(
                     $message['http_method'],
                     $uri,
                     $message['headers'],

@@ -4,6 +4,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Promise\EachPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\PromisorInterface;
+use GuzzleHttp\Promise\Utils as PromiseUtils;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -48,7 +49,7 @@ class Pool implements PromisorInterface
             $opts = [];
         }
 
-        $iterable = \GuzzleHttp\Promise\iter_for($requests);
+        $iterable = PromiseUtils::iterFor($requests);
         $requests = function () use ($iterable, $client, $opts) {
             foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {

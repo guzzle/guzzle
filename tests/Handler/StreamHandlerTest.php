@@ -3,10 +3,10 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\StreamHandler;
-use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Utils as Psr7Utils;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
@@ -305,7 +305,7 @@ class StreamHandlerTest extends TestCase
     public function testVerifyCanBeDisabled()
     {
         $handler = $this->getSendResult(['verify' => false]);
-        self::assertInstanceOf(\GuzzleHttp\Psr7\Response::class, $handler);
+        self::assertInstanceOf(Response::class, $handler);
     }
 
     public function testVerifiesCertIfValidPath()
@@ -544,7 +544,7 @@ class StreamHandlerTest extends TestCase
         $req = new Request('GET', Server::$url);
         $got = null;
 
-        $stream = Psr7\stream_for();
+        $stream = Psr7Utils::streamFor();
         $stream = FnStream::decorate($stream, [
             'write' => function ($data) use ($stream, &$got) {
                 self::assertNotNull($got);
@@ -570,8 +570,8 @@ class StreamHandlerTest extends TestCase
     public function testInvokesOnStatsOnSuccess()
     {
         Server::flush();
-        Server::enqueue([new Psr7\Response(200)]);
-        $req = new Psr7\Request('GET', Server::$url);
+        Server::enqueue([new Response(200)]);
+        $req = new Request('GET', Server::$url);
         $gotStats = null;
         $handler = new StreamHandler();
         $promise = $handler($req, [
@@ -595,7 +595,7 @@ class StreamHandlerTest extends TestCase
 
     public function testInvokesOnStatsOnError()
     {
-        $req = new Psr7\Request('GET', 'http://127.0.0.1:123');
+        $req = new Request('GET', 'http://127.0.0.1:123');
         $gotStats = null;
         $handler = new StreamHandler();
         $promise = $handler($req, [
@@ -625,8 +625,8 @@ class StreamHandlerTest extends TestCase
     public function testStreamIgnoresZeroTimeout()
     {
         Server::flush();
-        Server::enqueue([new Psr7\Response(200)]);
-        $req = new Psr7\Request('GET', Server::$url);
+        Server::enqueue([new Response(200)]);
+        $req = new Request('GET', Server::$url);
         $gotStats = null;
         $handler = new StreamHandler();
         $promise = $handler($req, [
