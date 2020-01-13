@@ -66,19 +66,4 @@ interface ClientInterface
      * @param array               $options Request options to apply.
      */
     public function requestAsync(string $method, $uri, array $options = []): PromiseInterface;
-
-    /**
-     * Get a client configuration option.
-     *
-     * These options include default request options of the client, a "handler"
-     * (if utilized by the concrete client), and a "base_uri" if utilized by
-     * the concrete client.
-     *
-     * @param string|null $option The config option to retrieve.
-     *
-     * @return mixed
-     *
-     * @deprecated ClientInterface::getConfig will be removed in guzzlehttp/guzzle:8.0.
-     */
-    public function getConfig(?string $option = null);
 }
