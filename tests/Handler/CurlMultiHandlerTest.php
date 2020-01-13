@@ -5,6 +5,7 @@ use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Tests\Server;
+use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 
 class CurlMultiHandlerTest extends TestCase
@@ -91,10 +92,10 @@ class CurlMultiHandlerTest extends TestCase
         Server::flush();
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler();
-        $expected = \GuzzleHttp\_current_time() + (100 / 1000);
+        $expected = Utils::currentTime() + (100 / 1000);
         $response = $a(new Request('GET', Server::$url), ['delay' => 100]);
         $response->wait();
-        self::assertGreaterThanOrEqual($expected, \GuzzleHttp\_current_time());
+        self::assertGreaterThanOrEqual($expected, Utils::currentTime());
     }
 
     public function testUsesTimeoutEnvironmentVariables()
