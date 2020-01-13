@@ -64,13 +64,14 @@ class ClientTest extends TestCase
             'headers'  => ['bar' => 'baz'],
             'handler'  => new MockHandler()
         ]);
-        $base = $client->getConfig('base_uri');
-        self::assertSame('http://foo.com', (string) $base);
-        self::assertInstanceOf(Uri::class, $base);
-        self::assertNotNull($client->getConfig('handler'));
-        self::assertSame(2, $client->getConfig('timeout'));
-        self::assertArrayHasKey('timeout', $client->getConfig());
-        self::assertArrayHasKey('headers', $client->getConfig());
+        $config = Helpers::readObjectAttribute($client, 'config');
+        self::assertArrayHasKey('base_uri', $config);
+        self::assertInstanceOf(Uri::class, $config['base_uri']);
+        self::assertSame('http://foo.com', (string) $config['base_uri']);
+        self::assertArrayHasKey('handler', $config);
+        self::assertNotNull($config['handler']);
+        self::assertArrayHasKey('timeout', $config);
+        self::assertSame(2, $config['timeout']);
     }
 
     public function testCanMergeOnBaseUri()
@@ -115,7 +116,8 @@ class ClientTest extends TestCase
             'handler'  => $mock,
             'base_uri' => 'http://bar.com'
         ]);
-        self::assertSame('http://bar.com', (string) $client->getConfig('base_uri'));
+        $config = Helpers::readObjectAttribute($client, 'config');
+        self::assertSame('http://bar.com', (string) $config['base_uri']);
         $request = new Request('GET', '/baz');
         $client->send($request);
         self::assertSame(
@@ -126,12 +128,13 @@ class ClientTest extends TestCase
 
     public function testMergesDefaultOptionsAndDoesNotOverwriteUa()
     {
-        $c = new Client(['headers' => ['User-agent' => 'foo']]);
-        self::assertSame(['User-agent' => 'foo'], $c->getConfig('headers'));
-        self::assertIsArray($c->getConfig('allow_redirects'));
-        self::assertTrue($c->getConfig('http_errors'));
-        self::assertTrue($c->getConfig('decode_content'));
-        self::assertTrue($c->getConfig('verify'));
+        $client = new Client(['headers' => ['User-agent' => 'foo']]);
+        $config = Helpers::readObjectAttribute($client, 'config');
+        self::assertSame(['User-agent' => 'foo'], $config['headers']);
+        self::assertIsArray($config['allow_redirects']);
+        self::assertTrue($config['http_errors']);
+        self::assertTrue($config['decode_content']);
+        self::assertTrue($config['verify']);
     }
 
     public function testDoesNotOverwriteHeaderWithDefault()
@@ -553,21 +556,23 @@ class ClientTest extends TestCase
 
         try {
             $client = new Client();
-            self::assertNull($client->getConfig('proxy'));
+            $config = Helpers::readObjectAttribute($client, 'config');
+            self::assertArrayNotHasKey('proxy', $config);
 
             \putenv('HTTP_PROXY=127.0.0.1');
             $client = new Client();
-            self::assertSame(
-                ['http' => '127.0.0.1'],
-                $client->getConfig('proxy')
-            );
+            $config = Helpers::readObjectAttribute($client, 'config');
+            self::assertArrayHasKey('proxy', $config);
+            self::assertSame(['http' => '127.0.0.1'], $config['proxy']);
 
             \putenv('HTTPS_PROXY=127.0.0.2');
             \putenv('NO_PROXY=127.0.0.3, 127.0.0.4');
             $client = new Client();
+            $config = Helpers::readObjectAttribute($client, 'config');
+            self::assertArrayHasKey('proxy', $config);
             self::assertSame(
                 ['http' => '127.0.0.1', 'https' => '127.0.0.2', 'no' => ['127.0.0.3','127.0.0.4']],
-                $client->getConfig('proxy')
+                $config['proxy']
             );
         } finally {
             \putenv('HTTP_PROXY=');
@@ -701,7 +706,7 @@ class ClientTest extends TestCase
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $config = $client->getConfig();
+        $config = Helpers::readObjectAttribute($client, 'config');
 
         if (\extension_loaded('intl')) {
             self::assertTrue($config['idn_conversion']);
@@ -767,7 +772,8 @@ class ClientTest extends TestCase
             'handler'  => $mock,
             'base_uri' => 'http://яндекс.рф',
         ]);
-        self::assertSame('http://яндекс.рф', (string) $client->getConfig('base_uri'));
+        $config = Helpers::readObjectAttribute($client, 'config');
+        self::assertSame('http://яндекс.рф', (string) $config['base_uri']);
         $request = new Request('GET', '/baz');
         $client->send($request);
         self::assertSame('http://xn--d1acpjx3f.xn--p1ai/baz', (string) $mock->getLastRequest()->getUri());
