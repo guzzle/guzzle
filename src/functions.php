@@ -328,7 +328,7 @@ function _idn_uri_convert(UriInterface $uri, int $options = 0): UriInterface
         if ($asciiHost === false) {
             $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
 
-            $errorConstants = array_filter(array_keys(get_defined_constants()), function ($name) {
+            $errorConstants = array_filter(array_keys(get_defined_constants()), static function ($name) {
                 return substr($name, 0, 11) === 'IDNA_ERROR_';
             });
 

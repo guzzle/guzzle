@@ -115,7 +115,7 @@ class MockHandlerTest extends TestCase
     public function testCanEnqueueCallables()
     {
         $r = new Response();
-        $fn = function ($req, $o) use ($r) {
+        $fn = static function ($req, $o) use ($r) {
             return $r;
         };
         $mock = new MockHandler([$fn]);
@@ -140,7 +140,7 @@ class MockHandlerTest extends TestCase
         $mock = new MockHandler([$res]);
         $request = new Request('GET', 'http://example.com');
         $promise = $mock($request, [
-            'on_headers' => function () {
+            'on_headers' => static function () {
                 throw new \Exception('test');
             }
         ]);
@@ -153,7 +153,7 @@ class MockHandlerTest extends TestCase
     public function testInvokesOnFulfilled()
     {
         $res = new Response();
-        $mock = new MockHandler([$res], function ($v) use (&$c) {
+        $mock = new MockHandler([$res], static function ($v) use (&$c) {
             $c = $v;
         });
         $request = new Request('GET', 'http://example.com');
@@ -165,7 +165,7 @@ class MockHandlerTest extends TestCase
     {
         $e = new \Exception('a');
         $c = null;
-        $mock = new MockHandler([$e], null, function ($v) use (&$c) {
+        $mock = new MockHandler([$e], null, static function ($v) use (&$c) {
             $c = $v;
         });
         $request = new Request('GET', 'http://example.com');
@@ -199,7 +199,7 @@ class MockHandlerTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         /** @var TransferStats|null $stats */
         $stats = null;
-        $onStats = function (TransferStats $s) use (&$stats) {
+        $onStats = static function (TransferStats $s) use (&$stats) {
             $stats = $s;
         };
         $p = $mock($request, ['on_stats' => $onStats]);
@@ -212,14 +212,14 @@ class MockHandlerTest extends TestCase
     {
         $e = new \Exception('a');
         $c = null;
-        $mock = new MockHandler([$e], null, function ($v) use (&$c) {
+        $mock = new MockHandler([$e], null, static function ($v) use (&$c) {
             $c = $v;
         });
         $request = new Request('GET', 'http://example.com');
 
         /** @var TransferStats|null $stats */
         $stats = null;
-        $onStats = function (TransferStats $s) use (&$stats) {
+        $onStats = static function (TransferStats $s) use (&$stats) {
             $stats = $s;
         };
         $mock($request, ['on_stats' => $onStats])->wait(false);
@@ -232,12 +232,12 @@ class MockHandlerTest extends TestCase
     {
         $e = new \Exception('a');
         $c = null;
-        $mock = new MockHandler([$e], null, function ($v) use (&$c) {
+        $mock = new MockHandler([$e], null, static function ($v) use (&$c) {
             $c = $v;
         });
         $request = new Request('GET', 'http://example.com');
         $stats = null;
-        $onStats = function (TransferStats $s) use (&$stats) {
+        $onStats = static function (TransferStats $s) use (&$stats) {
             $stats = $s;
         };
         $mock($request, [ 'on_stats' => $onStats, 'transfer_time' => 0.4 ])->wait(false);

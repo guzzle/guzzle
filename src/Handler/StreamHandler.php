@@ -227,7 +227,7 @@ class StreamHandler
     private function createResource(callable $callback)
     {
         $errors = null;
-        \set_error_handler(function ($_, $msg, $file, $line) use (&$errors) {
+        \set_error_handler(static function ($_, $msg, $file, $line) use (&$errors) {
             $errors[] = [
                 'message' => $msg,
                 'file'    => $file,
@@ -313,7 +313,7 @@ class StreamHandler
         $uri = $this->resolveHost($request, $options);
 
         $context = $this->createResource(
-            function () use ($context, $params) {
+            static function () use ($context, $params) {
                 return \stream_context_create($context, $params);
             }
         );
@@ -474,7 +474,7 @@ class StreamHandler
     {
         $this->addNotification(
             $params,
-            function ($code, $a, $b, $c, $transferred, $total) use ($value) {
+            static function ($code, $a, $b, $c, $transferred, $total) use ($value) {
                 if ($code == STREAM_NOTIFY_PROGRESS) {
                     $value($total, $transferred, null, null);
                 }
@@ -507,7 +507,7 @@ class StreamHandler
         $ident = $request->getMethod() . ' ' . $request->getUri()->withFragment('');
         $this->addNotification(
             $params,
-            function () use ($ident, $value, $map, $args) {
+            static function () use ($ident, $value, $map, $args) {
                 $passed = \func_get_args();
                 $code = \array_shift($passed);
                 \fprintf($value, '<%s> [%s] ', $ident, $map[$code]);
@@ -534,7 +534,7 @@ class StreamHandler
 
     private function callArray(array $functions): callable
     {
-        return function () use ($functions) {
+        return static function () use ($functions) {
             $args = \func_get_args();
             foreach ($functions as $fn) {
                 \call_user_func_array($fn, $args);

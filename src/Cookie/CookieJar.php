@@ -96,7 +96,7 @@ class CookieJar implements CookieJarInterface
      */
     public function toArray(): array
     {
-        return \array_map(function (SetCookie $cookie): array {
+        return \array_map(static function (SetCookie $cookie): array {
             return $cookie->toArray();
         }, $this->getIterator()->getArrayCopy());
     }
@@ -112,14 +112,14 @@ class CookieJar implements CookieJarInterface
         } elseif (!$path) {
             $this->cookies = \array_filter(
                 $this->cookies,
-                function (SetCookie $cookie) use ($domain): bool {
+                static function (SetCookie $cookie) use ($domain): bool {
                     return !$cookie->matchesDomain($domain);
                 }
             );
         } elseif (!$name) {
             $this->cookies = \array_filter(
                 $this->cookies,
-                function (SetCookie $cookie) use ($path, $domain): bool {
+                static function (SetCookie $cookie) use ($path, $domain): bool {
                     return !($cookie->matchesPath($path) &&
                         $cookie->matchesDomain($domain));
                 }
@@ -127,7 +127,7 @@ class CookieJar implements CookieJarInterface
         } else {
             $this->cookies = \array_filter(
                 $this->cookies,
-                function (SetCookie $cookie) use ($path, $domain, $name) {
+                static function (SetCookie $cookie) use ($path, $domain, $name) {
                     return !($cookie->getName() == $name &&
                         $cookie->matchesPath($path) &&
                         $cookie->matchesDomain($domain));
@@ -143,7 +143,7 @@ class CookieJar implements CookieJarInterface
     {
         $this->cookies = \array_filter(
             $this->cookies,
-            function (SetCookie $cookie): bool {
+            static function (SetCookie $cookie): bool {
                 return !$cookie->getDiscard() && $cookie->getExpires();
             }
         );

@@ -278,7 +278,7 @@ class CurlFactoryTest extends TestCase
         $called = [];
         $request = new Psr7\Request('HEAD', Server::$url);
         $response = $a($request, [
-            'progress' => function () use (&$called) {
+            'progress' => static function () use (&$called) {
                 $called[] = \func_get_args();
             },
         ]);
@@ -450,7 +450,7 @@ class CurlFactoryTest extends TestCase
         $stream->read(1);
         $stream = new Psr7\NoSeekStream($stream);
         $request = new Psr7\Request('PUT', Server::$url, [], $stream);
-        $fn = function ($request, $options) use (&$fn, $factory) {
+        $fn = static function ($request, $options) use (&$fn, $factory) {
             $easy = $factory->create($request, $options);
             return Handler\CurlFactory::finish($fn, $easy, $factory);
         };
@@ -464,16 +464,16 @@ class CurlFactoryTest extends TestCase
     {
         $callHandler = $called = false;
 
-        $fn = function ($r, $options) use (&$callHandler) {
+        $fn = static function ($r, $options) use (&$callHandler) {
             $callHandler = true;
             return \GuzzleHttp\Promise\promise_for(new Psr7\Response());
         };
 
         $bd = Psr7\FnStream::decorate(Psr7\stream_for('test'), [
-            'tell'   => function () {
+            'tell'   => static function () {
                 return 1;
             },
-            'rewind' => function () use (&$called) {
+            'rewind' => static function () use (&$called) {
                 $called = true;
             }
         ]);
@@ -492,7 +492,7 @@ class CurlFactoryTest extends TestCase
     {
         $factory = new Handler\CurlFactory(1);
         $call = 0;
-        $fn = function ($request, $options) use (&$mock, &$call, $factory) {
+        $fn = static function ($request, $options) use (&$mock, &$call, $factory) {
             $call++;
             $easy = $factory->create($request, $options);
             return Handler\CurlFactory::finish($mock, $easy, $factory);
@@ -534,7 +534,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = CURLE_COULDNT_CONNECT;
         $response = $m->invoke(
             null,
-            function () {
+            static function () {
             },
             $easy,
             $factory
@@ -559,7 +559,7 @@ class CurlFactoryTest extends TestCase
     {
         $f = new Handler\CurlFactory(3);
         $bd = Psr7\FnStream::decorate(Psr7\stream_for('foo'), [
-            'getSize' => function () {
+            'getSize' => static function () {
                 return null;
             }
         ]);
@@ -621,7 +621,7 @@ class CurlFactoryTest extends TestCase
         $req = new Psr7\Request('GET', Server::$url);
         $handler = new Handler\CurlHandler();
         $promise = $handler($req, [
-            'on_headers' => function () {
+            'on_headers' => static function () {
                 throw new \Exception('test');
             }
         ]);
@@ -642,7 +642,7 @@ class CurlFactoryTest extends TestCase
 
         $stream = Psr7\stream_for();
         $stream = Psr7\FnStream::decorate($stream, [
-            'write' => function ($data) use ($stream, &$got) {
+            'write' => static function ($data) use ($stream, &$got) {
                 self::assertNotNull($got);
                 return $stream->write($data);
             }
@@ -651,7 +651,7 @@ class CurlFactoryTest extends TestCase
         $handler = new Handler\CurlHandler();
         $promise = $handler($req, [
             'sink'       => $stream,
-            'on_headers' => function (ResponseInterface $res) use (&$got) {
+            'on_headers' => static function (ResponseInterface $res) use (&$got) {
                 $got = $res;
                 self::assertEquals('bar', $res->getHeaderLine('X-Foo'));
             }
@@ -671,7 +671,7 @@ class CurlFactoryTest extends TestCase
         $gotStats = null;
         $handler = new Handler\CurlHandler();
         $promise = $handler($req, [
-            'on_stats' => function (TransferStats $stats) use (&$gotStats) {
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
                 $gotStats = $stats;
             }
         ]);
@@ -698,7 +698,7 @@ class CurlFactoryTest extends TestCase
         $promise = $handler($req, [
             'connect_timeout' => 0.001,
             'timeout' => 0.001,
-            'on_stats' => function (TransferStats $stats) use (&$gotStats) {
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
                 $gotStats = $stats;
             }
         ]);

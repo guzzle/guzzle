@@ -55,7 +55,7 @@ class Server
             if (!($response instanceof ResponseInterface)) {
                 throw new \Exception('Invalid response given.');
             }
-            $headers = \array_map(function ($h) {
+            $headers = \array_map(static function ($h) {
                 return \implode(' ,', $h);
             }, $response->getHeaders());
 
@@ -89,7 +89,7 @@ class Server
         $data = \json_decode($response->getBody(), true);
 
         return \array_map(
-            function ($message) {
+            static function ($message) {
                 $uri = $message['uri'];
                 if (isset($message['query_string'])) {
                     $uri .= '?' . $message['query_string'];

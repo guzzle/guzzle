@@ -285,7 +285,7 @@ class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-            $conf[CURLOPT_READFUNCTION] = function ($ch, $fd, $length) use ($body) {
+            $conf[CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body) {
                 return $body->read($length);
             };
         }
@@ -394,7 +394,7 @@ class CurlFactory implements CurlFactoryInterface
                 $sink = new LazyOpenStream($sink, 'w+');
             }
             $easy->sink = $sink;
-            $conf[CURLOPT_WRITEFUNCTION] = function ($ch, $write) use ($sink): int {
+            $conf[CURLOPT_WRITEFUNCTION] = static function ($ch, $write) use ($sink): int {
                 return $sink->write($write);
             };
         } else {
@@ -483,7 +483,7 @@ class CurlFactory implements CurlFactoryInterface
                 );
             }
             $conf[CURLOPT_NOPROGRESS] = false;
-            $conf[CURLOPT_PROGRESSFUNCTION] = function () use ($progress) {
+            $conf[CURLOPT_PROGRESSFUNCTION] = static function () use ($progress) {
                 $args = \func_get_args();
                 // PHP 5.5 pushed the handle onto the start of the args
                 if (\is_resource($args[0])) {
@@ -557,7 +557,7 @@ class CurlFactory implements CurlFactoryInterface
             $onHeaders = null;
         }
 
-        return function ($ch, $h) use (
+        return static function ($ch, $h) use (
             $onHeaders,
             $easy,
             &$startingResponse

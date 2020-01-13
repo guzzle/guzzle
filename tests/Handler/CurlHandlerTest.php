@@ -57,7 +57,7 @@ class CurlHandlerTest extends TestCase
         $request = new Request('GET', 'http://localhost:123');
         $called = false;
         $p = $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])
-            ->otherwise(function (ConnectException $e) use (&$called) {
+            ->otherwise(static function (ConnectException $e) use (&$called) {
                 $called = true;
                 self::assertArrayHasKey('errno', $e->getHandlerContext());
             });

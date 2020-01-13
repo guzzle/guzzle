@@ -449,7 +449,7 @@ class ClientTest extends TestCase
 
     public function testEnsuresThatFormParamsAndMultipartAreExclusive()
     {
-        $client = new Client(['handler' => function () {
+        $client = new Client(['handler' => static function () {
         }]);
 
         $this->expectException(\InvalidArgumentException::class);

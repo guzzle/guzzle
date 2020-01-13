@@ -7,7 +7,7 @@ $config = PhpCsFixer\Config::create()
         'array_syntax' => ['syntax' => 'short'],
         'declare_strict_types' => false,
         'function_to_constant' => ['functions' => ['php_sapi_name']],
-        'concat_space' => ['spacing'=>'one'],
+        'concat_space' => ['spacing' => 'one'],
         'php_unit_test_case_static_method_calls' => ['call_type' => 'self'],
         'php_unit_no_expectation_annotation' => ['target' => 'newest'],
         'php_unit_expectation' => ['target' => 'newest'],
@@ -25,7 +25,8 @@ $config = PhpCsFixer\Config::create()
         'phpdoc_var_without_name' => true,
         'phpdoc_single_line_var_spacing' => true,
         'phpdoc_separation' => true,
-        'phpdoc_align' => ['align'=>'vertical'],
+        'phpdoc_align' => ['align' => 'vertical'],
+        'static_lambda' => true,
         'visibility_required' => true,
         // 'native_function_invocation' => true,
     ])
