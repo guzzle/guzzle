@@ -183,26 +183,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $this->requestAsync($method, $uri, $options)->wait();
     }
 
-    /**
-     * Get a client configuration option.
-     *
-     * These options include default request options of the client, a "handler"
-     * (if utilized by the concrete client), and a "base_uri" if utilized by
-     * the concrete client.
-     *
-     * @param string|null $option The config option to retrieve.
-     *
-     * @return mixed
-     *
-     * @deprecated Client::getConfig will be removed in guzzlehttp/guzzle:8.0.
-     */
-    public function getConfig(?string $option = null)
-    {
-        return $option === null
-            ? $this->config
-            : (isset($this->config[$option]) ? $this->config[$option] : null);
-    }
-
     private function buildUri(UriInterface $uri, array $config): UriInterface
     {
         if (isset($config['base_uri'])) {
