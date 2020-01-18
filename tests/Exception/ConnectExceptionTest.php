@@ -12,7 +12,7 @@ use Psr\Http\Client\RequestExceptionInterface;
  */
 class ConnectExceptionTest extends TestCase
 {
-    public function testHasNoResponse()
+    public function testHasRequest()
     {
         $req = new Request('GET', '/');
         $prev = new \Exception();
@@ -20,8 +20,6 @@ class ConnectExceptionTest extends TestCase
         self::assertInstanceOf(NetworkExceptionInterface::class, $e);
         self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
-        self::assertNull($e->getResponse());
-        self::assertFalse($e->hasResponse());
         self::assertSame('foo', $e->getMessage());
         self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
