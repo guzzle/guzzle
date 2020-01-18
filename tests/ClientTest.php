@@ -31,10 +31,10 @@ class ClientTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Magic request methods require a URI and optional options array');
-        $client->get();
+        $client->options();
     }
 
-    public function testCanSendMagicAsyncRequests()
+    public function testCanSendAsyncGetRequests()
     {
         $client = new Client();
         Server::flush();
