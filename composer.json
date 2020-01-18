@@ -33,7 +33,7 @@
         "psr/http-client": "^1.0"
     },
     "require-dev": {
-        "ext-curl": "*",
+        "ext-curl": ">=7.21.2",
         "ergebnis/composer-normalize": "^2.0",
         "php-http/client-integration-tests": "dev-phpunit8",
         "phpunit/phpunit": "^8.5",
@@ -41,6 +41,7 @@
     },
     "suggest": {
         "ext-intl": "Required for Internationalized Domain Name (IDN) support",
+        "ext-curl": "Required for CURL handler support",
         "psr/log": "Required for using the Log middleware"
     },
     "config": {
