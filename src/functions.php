@@ -84,7 +84,7 @@ function default_user_agent(): string
  *
  * @throws \RuntimeException if no bundle can be found.
  *
- * @deprecated default_ca_bundle will be removed in guzzlehttp/guzzle:8.0. Use Utils::defaultCaBundle instead.
+ * @deprecated default_ca_bundle will be removed in guzzlehttp/guzzle:8.0. This function is not needed in PHP 5.6+.
  */
 function default_ca_bundle(): string
 {
