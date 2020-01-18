@@ -600,8 +600,6 @@ over the wire.
 
     use GuzzleHttp\Middleware;
 
-    // Grab the client's handler instance.
-    $clientHandler = $client->getConfig('handler');
     // Create a middleware that echoes parts of the request.
     $tapMiddleware = Middleware::tap(function ($request) {
         echo $request->getHeaderLine('Content-Type');
@@ -610,9 +608,11 @@ over the wire.
         // {"foo":"bar"}
     });
 
+    // The $handler variable is the handler passed in the
+    // options to the client constructor.
     $response = $client->request('PUT', '/put', [
         'json'    => ['foo' => 'bar'],
-        'handler' => $tapMiddleware($clientHandler)
+        'handler' => $tapMiddleware($handler)
     ]);
 
 .. note::
