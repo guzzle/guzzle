@@ -40,8 +40,8 @@
         "psr/log": "^1.1"
     },
     "suggest": {
-        "ext-intl": "Required for Internationalized Domain Name (IDN) support",
         "ext-curl": "Required for CURL handler support",
+        "ext-intl": "Required for Internationalized Domain Name (IDN) support",
         "psr/log": "Required for using the Log middleware"
     },
     "config": {
