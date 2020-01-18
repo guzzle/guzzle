@@ -10,6 +10,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
+use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
@@ -318,7 +319,7 @@ class StreamHandlerTest extends TestCase
 
     public function testVerifyCanBeSetToPath()
     {
-        $path = $path = \GuzzleHttp\default_ca_bundle();
+        $path = $path = Utils::defaultCaBundle();
         $res = $this->getSendResult(['verify' => $path]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertTrue($opts['ssl']['verify_peer']);
@@ -329,7 +330,7 @@ class StreamHandlerTest extends TestCase
 
     public function testUsesSystemDefaultBundle()
     {
-        $path = $path = \GuzzleHttp\default_ca_bundle();
+        $path = $path = Utils::defaultCaBundle();
         $res = $this->getSendResult(['verify' => true]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         if (PHP_VERSION_ID < 50600) {
@@ -502,9 +503,9 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([$response]);
         $a = new StreamHandler();
         $request = new Request('GET', Server::$url);
-        $s = \GuzzleHttp\_current_time();
+        $s = Utils::currentTime();
         $a($request, ['delay' => 0.1])->wait();
-        self::assertGreaterThan(0.0001, \GuzzleHttp\_current_time() - $s);
+        self::assertGreaterThan(0.0001, Utils::currentTime() - $s);
     }
 
     public function testEnsuresOnHeadersIsCallable()

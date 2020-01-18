@@ -214,13 +214,14 @@ stack.
 
 .. code-block:: php
 
-    use Psr\Http\Message\RequestInterface;
+    use GuzzleHttp\Client;
     use GuzzleHttp\HandlerStack;
     use GuzzleHttp\Middleware;
-    use GuzzleHttp\Client;
+    use GuzzleHttp\Utils;
+    use Psr\Http\Message\RequestInterface;
 
     $stack = new HandlerStack();
-    $stack->setHandler(\GuzzleHttp\choose_handler());
+    $stack->setHandler(Utils::chooseHandler());
 
     $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
         echo 'A';

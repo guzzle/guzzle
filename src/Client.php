@@ -205,7 +205,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         if (isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
             $idnOptions = ($config['idn_conversion'] === true) ? IDNA_DEFAULT : $config['idn_conversion'];
-            $uri = _idn_uri_convert($uri, $idnOptions);
+            $uri = Utils::idnUriConvert($uri, $idnOptions);
         }
 
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;
@@ -234,15 +234,15 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         // We can only trust the HTTP_PROXY environment variable in a CLI
         // process due to the fact that PHP has no reliable mechanism to
         // get environment variables that start with "HTTP_".
-        if (PHP_SAPI === 'cli' && ($proxy = \GuzzleHttp\_getenv('HTTP_PROXY'))) {
+        if (PHP_SAPI === 'cli' && ($proxy = Utils::getenv('HTTP_PROXY'))) {
             $defaults['proxy']['http'] = $proxy;
         }
 
-        if ($proxy = \GuzzleHttp\_getenv('HTTPS_PROXY')) {
+        if ($proxy = Utils::getenv('HTTPS_PROXY')) {
             $defaults['proxy']['https'] = $proxy;
         }
 
-        if ($noProxy = \GuzzleHttp\_getenv('NO_PROXY')) {
+        if ($noProxy = Utils::getenv('NO_PROXY')) {
             $cleanedNoProxy = \str_replace(' ', '', $noProxy);
             $defaults['proxy']['no'] = \explode(',', $cleanedNoProxy);
         }
@@ -255,7 +255,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         // Add the default user-agent header.
         if (!isset($this->config['headers'])) {
-            $this->config['headers'] = ['User-Agent' => default_user_agent()];
+            $this->config['headers'] = ['User-Agent' => Utils::defaultUserAgent()];
         } else {
             // Add the User-Agent header if one was not already set.
             foreach (\array_keys($this->config['headers']) as $name) {
@@ -263,7 +263,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     return;
                 }
             }
-            $this->config['headers']['User-Agent'] = default_user_agent();
+            $this->config['headers']['User-Agent'] = Utils::defaultUserAgent();
         }
     }
 
@@ -363,7 +363,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (isset($options['json'])) {
-            $options['body'] = \GuzzleHttp\json_encode($options['json']);
+            $options['body'] = Utils::jsonEncode($options['json']);
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
