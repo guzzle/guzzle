@@ -67,7 +67,7 @@ final class RequestOptions
     public const COOKIES = 'cookies';
 
     /**
-     * connect_timeout: (float, default=0) Float describing the number of
+     * connect_timeout: (float, default=300) Float describing the number of
      * seconds to wait while trying to connect to a server. Use 0 to wait
      * indefinitely (the default behavior).
      */

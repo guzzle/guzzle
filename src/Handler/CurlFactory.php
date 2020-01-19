@@ -418,9 +418,16 @@ class CurlFactory implements CurlFactoryInterface
             }
         }
 
+        // treat 0 or less as "no timeout" and default to 300 seconds
         if (isset($options['connect_timeout'])) {
-            $timeoutRequiresNoSignal |= $options['connect_timeout'] < 1;
-            $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
+            if ($options['connect_timeout'] <= 0) {
+                $timeoutRequiresNoSignal = true;
+                $conf[CURLOPT_CONNECTTIMEOUT_MS] = 0;
+            } else {
+                $conf[CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
+            }
+        } else {
+            $conf[CURLOPT_CONNECTTIMEOUT_MS] = 300000;
         }
 
         if ($timeoutRequiresNoSignal && \strtoupper(\substr(PHP_OS, 0, 3)) !== 'WIN') {
