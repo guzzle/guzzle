@@ -433,22 +433,19 @@ class StreamHandler
 
     private function add_verify(RequestInterface $request, array &$options, $value, array &$params): void
     {
-        if ($value === true) {
-            // PHP 5.6 or greater will find the system cert by default. When
-            // < 5.6, use the Guzzle bundled cacert.
-            if (PHP_VERSION_ID < 50600) {
-                $options['ssl']['cafile'] = Utils::defaultCaBundle();
-            }
-        } elseif (\is_string($value)) {
+        if ($value === false) {
+            $options['ssl']['verify_peer'] = false;
+            $options['ssl']['verify_peer_name'] = false;
+
+            return;
+        }
+
+        if (\is_string($value)) {
             $options['ssl']['cafile'] = $value;
             if (!\file_exists($value)) {
                 throw new \RuntimeException("SSL CA bundle not found: $value");
             }
-        } elseif ($value === false) {
-            $options['ssl']['verify_peer'] = false;
-            $options['ssl']['verify_peer_name'] = false;
-            return;
-        } else {
+        } elseif ($value !== true) {
             throw new \InvalidArgumentException('Invalid verify request option');
         }
 
