@@ -6,6 +6,8 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\NetworkExceptionInterface;
+use Psr\Http\Client\RequestExceptionInterface;
 
 /**
  * @covers \GuzzleHttp\Exception\RequestException
@@ -17,6 +19,8 @@ class RequestExceptionTest extends TestCase
         $req = new Request('GET', '/');
         $res = new Response(200);
         $e = new RequestException('foo', $req, $res);
+        self::assertInstanceOf(RequestExceptionInterface::class, $e);
+        self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
         self::assertSame($res, $e->getResponse());
         self::assertTrue($e->hasResponse());

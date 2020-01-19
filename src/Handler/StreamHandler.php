@@ -63,8 +63,9 @@ class StreamHandler
                 || \strpos($message, "connection attempt failed")
             ) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
+            } else {
+                $e = RequestException::wrapException($request, $e);
             }
-            $e = RequestException::wrapException($request, $e);
             $this->invokeStats($options, $request, $startTime, null, $e);
 
             return \GuzzleHttp\Promise\rejection_for($e);

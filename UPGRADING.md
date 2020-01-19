@@ -19,6 +19,10 @@ Please make sure:
 - Classes `GuzzleHttp\Exception\BadResponseException`, `GuzzleHttp\Exception\ClientException`, 
   `GuzzleHttp\Exception\ServerException` can no longer be initialized with an empty
   Response as argument.
+- Class `GuzzleHttp\Exception\ConnectException` now extends `GuzzleHttp\Exception\TransferException`
+  instead of `GuzzleHttp\Exception\RequestException`.
+- Function `GuzzleHttp\Exception\ConnectException::getResponse()` is removed.
+- Function `GuzzleHttp\Exception\ConnectException::hasResponse()` is removed.
 - Constant `GuzzleHttp\ClientInterface::VERSION` is removed.
 - Function `GuzzleHttp\Exception\RequestException::getResponseBodySummary` is removed.
   Use `\GuzzleHttp\Psr7\get_message_body_summary` as an alternative.
