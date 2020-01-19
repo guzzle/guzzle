@@ -151,7 +151,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         // Merge the URI into the base URI.
         $uri = $this->buildUri(Psr7\uri_for($uri), $options);
         if (\is_array($body)) {
-            $this->invalidBody();
+            throw $this->invalidBody();
         }
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
@@ -380,7 +380,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         if (isset($options['body'])) {
             if (\is_array($options['body'])) {
-                $this->invalidBody();
+                throw $this->invalidBody();
             }
             $modify['body'] = Psr7\stream_for($options['body']);
             unset($options['body']);
@@ -455,14 +455,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
-     * Throw Exception with pre-set message.
-     *
-     * @throws InvalidArgumentException Invalid body.
+     * Return an InvalidArgumentException with pre-set message.
      */
-    private function invalidBody(): void
+    private function invalidBody(): InvalidArgumentException
     {
-        throw new InvalidArgumentException('Passing in the "body" request '
-            . 'option as an array to send a POST request has been deprecated. '
+        return new InvalidArgumentException('Passing in the "body" request '
+            . 'option as an array to send a request is not supported. '
             . 'Please use the "form_params" request option to send a '
             . 'application/x-www-form-urlencoded request, or the "multipart" '
             . 'request option to send a multipart/form-data request.');
