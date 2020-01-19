@@ -210,12 +210,12 @@ class CurlFactory implements CurlFactoryInterface
     private function getDefaultConf(EasyHandle $easy): array
     {
         $conf = [
-            '_headers'             => $easy->request->getHeaders(),
-            CURLOPT_CUSTOMREQUEST  => $easy->request->getMethod(),
-            CURLOPT_URL            => (string) $easy->request->getUri()->withFragment(''),
-            CURLOPT_RETURNTRANSFER => false,
-            CURLOPT_HEADER         => false,
-            CURLOPT_CONNECTTIMEOUT => 150,
+            '_headers'                => $easy->request->getHeaders(),
+            CURLOPT_CUSTOMREQUEST     => $easy->request->getMethod(),
+            CURLOPT_URL               => (string) $easy->request->getUri()->withFragment(''),
+            CURLOPT_RETURNTRANSFER    => false,
+            CURLOPT_HEADER            => false,
+            CURLOPT_CONNECTTIMEOUT_MS => 300000,
         ];
 
         if (\defined('CURLOPT_PROTOCOLS')) {

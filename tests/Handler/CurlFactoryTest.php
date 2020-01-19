@@ -58,7 +58,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame('testing', $_SERVER['_curl'][CURLOPT_POSTFIELDS]);
         self::assertEquals(0, $_SERVER['_curl'][CURLOPT_RETURNTRANSFER]);
         self::assertEquals(0, $_SERVER['_curl'][CURLOPT_HEADER]);
-        self::assertSame(150, $_SERVER['_curl'][CURLOPT_CONNECTTIMEOUT]);
+        self::assertSame(300000, $_SERVER['_curl'][CURLOPT_CONNECTTIMEOUT_MS]);
         self::assertInstanceOf('Closure', $_SERVER['_curl'][CURLOPT_HEADERFUNCTION]);
         if (\defined('CURLOPT_PROTOCOLS')) {
             self::assertSame(
