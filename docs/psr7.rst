@@ -226,7 +226,7 @@ When creating a request, you can provide the URI as a string or an instance of
 Scheme
 ------
 
-The `scheme <http://tools.ietf.org/html/rfc3986#section-3.1>`_ of a request
+The `scheme <https://tools.ietf.org/html/rfc3986#section-3.1>`_ of a request
 specifies the protocol to use when sending the request. When using Guzzle, the
 scheme can be set to "http" or "https".
 
@@ -417,7 +417,7 @@ Metadata
 
 Streams expose stream metadata through the ``getMetadata()`` method. This
 method provides the data you would retrieve when calling PHP's
-`stream_get_meta_data() function <http://php.net/manual/en/function.stream-get-meta-data.php>`_,
+`stream_get_meta_data() function <https://www.php.net/manual/en/function.stream-get-meta-data.php>`_,
 and can optionally expose other custom data.
 
 .. code-block:: php

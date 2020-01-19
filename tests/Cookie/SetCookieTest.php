@@ -272,7 +272,7 @@ class SetCookieTest extends TestCase
                     'HttpOnly' => false
                 ]
             ],
-            // Some of the following tests are based on http://framework.zend.com/svn/framework/standard/trunk/tests/Zend/Http/CookieTest.php
+            // Some of the following tests are based on https://github.com/zendframework/zf1/blob/master/tests/Zend/Http/CookieTest.php
             [
                 'justacookie=foo; domain=example.com',
                 [

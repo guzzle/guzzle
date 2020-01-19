@@ -7,7 +7,7 @@ Does Guzzle require cURL?
 
 No. Guzzle can use any HTTP handler to send requests. This means that Guzzle
 can be used with cURL, PHP's stream wrapper, sockets, and non-blocking libraries
-like `React <http://reactphp.org/>`_. You just need to configure an HTTP handler
+like `React <https://reactphp.org/>`_. You just need to configure an HTTP handler
 to use a different method of sending requests.
 
 .. note::
@@ -48,7 +48,7 @@ of the returned promise.
 How can I add custom cURL options?
 ==================================
 
-cURL offers a huge number of `customizable options <http://us1.php.net/curl_setopt>`_.
+cURL offers a huge number of `customizable options <https://www.php.net/curl_setopt>`_.
 While Guzzle normalizes many of these options across different handlers, there
 are times when you need to set custom cURL options. This can be accomplished
 by passing an associative array of cURL settings in the **curl** key of a
@@ -86,7 +86,7 @@ additional options can be specified as an associative array in the
 How can I add custom stream context options?
 ============================================
 
-You can pass custom `stream context options <http://www.php.net/manual/en/context.php>`_
+You can pass custom `stream context options <https://www.php.net/manual/en/context.php>`_
 using the **stream_context** key of the request option. The **stream_context**
 array is an associative array where each key is a PHP transport, and each value
 is an associative array of transport options.
