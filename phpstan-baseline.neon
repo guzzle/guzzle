@@ -206,6 +206,11 @@ parameters:
 			path: src/Cookie/CookieJarInterface.php
 
 		-
+			message: "#^Argument of an invalid type array\\|bool\\|float\\|int\\|object\\|string\\|null supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Cookie/FileCookieJar.php
+
+		-
 			message: "#^Parameter \\#1 \\$string of function strlen expects string, bool\\|float\\|int\\|object\\|string\\|null given\\.$#"
 			count: 1
 			path: src/Cookie/FileCookieJar.php
@@ -896,12 +901,57 @@ parameters:
 			path: src/TransferStats.php
 
 		-
-			message: "#^Function GuzzleHttp\\\\describe_type\\(\\) has parameter \\$input with no typehint specified\\.$#"
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:describeType\\(\\) has parameter \\$input with no typehint specified\\.$#"
 			count: 1
-			path: src/functions.php
+			path: src/Utils.php
 
 		-
 			message: "#^Parameter \\#1 \\$str of function rtrim expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:headersFromLines\\(\\) has parameter \\$lines with no value type specified in iterable type iterable\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:headersFromLines\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:debugResource\\(\\) should return resource but returns resource\\|false\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:normalizeHeaderKeys\\(\\) has parameter \\$headers with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:normalizeHeaderKeys\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Cannot access offset 0 on array\\<int, string\\>\\|false\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:jsonDecode\\(\\) return type has no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:jsonEncode\\(\\) should return string but returns string\\|false\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Function GuzzleHttp\\\\describe_type\\(\\) has parameter \\$input with no typehint specified\\.$#"
 			count: 1
 			path: src/functions.php
 
@@ -916,11 +966,6 @@ parameters:
 			path: src/functions.php
 
 		-
-			message: "#^Function GuzzleHttp\\\\debug_resource\\(\\) should return resource but returns resource\\|false\\.$#"
-			count: 1
-			path: src/functions.php
-
-		-
 			message: "#^Function GuzzleHttp\\\\normalize_header_keys\\(\\) has parameter \\$headers with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/functions.php
@@ -931,17 +976,7 @@ parameters:
 			path: src/functions.php
 
 		-
-			message: "#^Cannot access offset 0 on array\\<int, string\\>\\|false\\.$#"
-			count: 1
-			path: src/functions.php
-
-		-
 			message: "#^Function GuzzleHttp\\\\json_decode\\(\\) return type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/functions.php
-
-		-
-			message: "#^Function GuzzleHttp\\\\json_encode\\(\\) should return string but returns string\\|false\\.$#"
 			count: 1
 			path: src/functions.php
 

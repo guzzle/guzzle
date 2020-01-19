@@ -8,6 +8,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
+use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -434,7 +435,7 @@ class CurlFactory implements CurlFactoryInterface
                 if (isset($options['proxy'][$scheme])) {
                     $host = $easy->request->getUri()->getHost();
                     if (!isset($options['proxy']['no']) ||
-                        !\GuzzleHttp\is_host_in_noproxy($host, $options['proxy']['no'])
+                        !Utils::isHostInNoProxy($host, $options['proxy']['no'])
                     ) {
                         $conf[CURLOPT_PROXY] = $options['proxy'][$scheme];
                     }
@@ -494,7 +495,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (!empty($options['debug'])) {
-            $conf[CURLOPT_STDERR] = \GuzzleHttp\debug_resource($options['debug']);
+            $conf[CURLOPT_STDERR] = Utils::debugResource($options['debug']);
             $conf[CURLOPT_VERBOSE] = true;
         }
     }
