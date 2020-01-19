@@ -183,7 +183,7 @@ bundle which can be downloaded here (provided by the maintainer of cURL):
 https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt. Once
 you have a CA bundle available on disk, you can set the 'openssl.cafile' PHP
 ini setting to point to the path to the file, allowing you to omit the 'verify'
-request option. See http://curl.haxx.se/docs/sslcerts.html for more
+request option. See https://curl.haxx.se/docs/sslcerts.html for more
 information.
 EOT
         );
@@ -269,7 +269,7 @@ EOT
      *
      * @throws InvalidArgumentException if the JSON cannot be decoded.
      *
-     * @link http://www.php.net/manual/en/function.json-decode.php
+     * @link https://www.php.net/manual/en/function.json-decode.php
      */
     public static function jsonDecode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
     {
@@ -292,7 +292,7 @@ EOT
      *
      * @throws InvalidArgumentException if the JSON cannot be encoded.
      *
-     * @link http://www.php.net/manual/en/function.json-encode.php
+     * @link https://www.php.net/manual/en/function.json-encode.php
      */
     public static function jsonEncode($value, int $options = 0, int $depth = 512): string
     {

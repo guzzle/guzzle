@@ -37,7 +37,7 @@ class MessageFormatter
     /**
      * Apache Common Log Format.
      *
-     * @link http://httpd.apache.org/docs/2.4/logs.html#common
+     * @link https://httpd.apache.org/docs/2.4/logs.html#common
      *
      * @var string
      */

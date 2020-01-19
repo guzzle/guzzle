@@ -121,7 +121,7 @@ function is_host_in_noproxy(string $host, array $noProxyArray): bool
  *
  * @throws Exception\InvalidArgumentException if the JSON cannot be decoded.
  *
- * @link http://www.php.net/manual/en/function.json-decode.php
+ * @link https://www.php.net/manual/en/function.json-decode.php
  */
 function json_decode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
 {
@@ -137,7 +137,7 @@ function json_decode(string $json, bool $assoc = false, int $depth = 512, int $o
  *
  * @throws Exception\InvalidArgumentException if the JSON cannot be encoded.
  *
- * @link http://www.php.net/manual/en/function.json-encode.php
+ * @link https://www.php.net/manual/en/function.json-encode.php
  */
 function json_encode($value, int $options = 0, int $depth = 512): string
 {
