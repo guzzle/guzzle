@@ -405,6 +405,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_NTLM;
                     $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
+                case 'bearer':
+                    // Ensure that we don't have the Authorization header in
+                    // different case and set the new value wih the token
+                    $modify['set_headers'] = Psr7\_caseless_remove(['Authorization'], $modify['set_headers']);
+                    $modify['set_headers']['Authorization'] = 'Bearer ' . $value[0];
             }
         }
 

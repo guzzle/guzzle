@@ -399,6 +399,29 @@ class ClientTest extends TestCase
         ], $last['curl']);
     }
 
+    public function testAuthCanBeArrayForBearerAuth()
+    {
+        /**
+         * For Providing Bearer as Auth Option,
+         * Supply token as first argument and
+         * set type to 'bearer' (ignoring-case)
+         * $client->get($uri, ['auth' => ['<token>', null, 'bearer']])
+         */
+        $bearerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
+            . 'eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.'
+            . 'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+        $expectedAuthorizationHeader = 'Bearer ' . $bearerToken;
+
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', [
+            RequestOptions::AUTH => [$bearerToken, null, 'bearer']
+        ]);
+
+        $last = $mock->getLastRequest();
+        self::assertSame($expectedAuthorizationHeader, $last->getHeaderLine('Authorization'));
+    }
+
     public function testAuthCanBeCustomType()
     {
         $mock = new MockHandler([new Response()]);
