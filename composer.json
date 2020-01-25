@@ -32,6 +32,9 @@
         "guzzlehttp/psr7": "^1.6.1",
         "psr/http-client": "^1.0"
     },
+    "provide": {
+        "psr/http-client-implementation": "1.0"
+    },
     "require-dev": {
         "ext-curl": "*",
         "ergebnis/composer-normalize": "^2.0",
