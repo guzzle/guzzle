@@ -562,16 +562,16 @@ class CurlFactory implements CurlFactoryInterface
             $value = trim($h);
             if ($value === '') {
                 $startingResponse = true;
-                $easy->createResponse();
-                if ($onHeaders !== null) {
-                    try {
+                try {
+                    $easy->createResponse();
+                    if ($onHeaders !== null) {
                         $onHeaders($easy->response);
-                    } catch (\Exception $e) {
-                        // Associate the exception with the handle and trigger
-                        // a curl header write error by returning 0.
-                        $easy->onHeadersException = $e;
-                        return -1;
                     }
+                } catch (\Exception $e) {
+                    // Associate the exception with the handle and trigger
+                    // a curl header write error by returning 0.
+                    $easy->onHeadersException = $e;
+                    return -1;
                 }
             } elseif ($startingResponse) {
                 $startingResponse = false;
