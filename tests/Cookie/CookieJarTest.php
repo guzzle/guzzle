@@ -15,7 +15,7 @@ class CookieJarTest extends \PHPUnit\Framework\TestCase
     /** @var CookieJar */
     private $jar;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->jar = new CookieJar();
     }

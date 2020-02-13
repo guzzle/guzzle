@@ -20,13 +20,13 @@ class EmitterTest extends \PHPUnit\Framework\TestCase
     private $emitter;
     private $listener;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->emitter = new Emitter();
         $this->listener = new TestEventListener();
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->emitter = null;
         $this->listener = null;

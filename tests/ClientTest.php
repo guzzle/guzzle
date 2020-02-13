@@ -24,7 +24,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
     /** @callable */
     private $ma;
 
-    public function setup()
+    public function setup(): void
     {
         $this->ma = function () {
             throw new \RuntimeException('Should not have been called.');

@@ -23,7 +23,7 @@ class RequestFsmTest extends \PHPUnit\Framework\TestCase
 {
     private $mf;
 
-    public function setup()
+    public function setup(): void
     {
         $this->mf = new MessageFactory();
     }

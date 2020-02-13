@@ -9,7 +9,7 @@ class CollectionTest extends \PHPUnit\Framework\TestCase
     /** @var Collection */
     protected $coll;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->coll = new Collection();
     }
