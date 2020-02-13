@@ -10,7 +10,7 @@ use GuzzleHttp\Message\Response;
 /**
  * @covers GuzzleHttp\Cookie\CookieJar
  */
-class CookieJarTest extends \PHPUnit_Framework_TestCase
+class CookieJarTest extends \PHPUnit\Framework\TestCase
 {
     /** @var CookieJar */
     private $jar;

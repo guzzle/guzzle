@@ -8,7 +8,7 @@ use GuzzleHttp\Message\Response;
 /**
  * @covers GuzzleHttp\Exception\ParseException
  */
-class ParseExceptionTest extends \PHPUnit_Framework_TestCase
+class ParseExceptionTest extends \PHPUnit\Framework\TestCase
 {
     public function testHasResponse()
     {

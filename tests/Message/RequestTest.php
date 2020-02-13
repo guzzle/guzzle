@@ -10,7 +10,7 @@ use GuzzleHttp\Stream\Stream;
 /**
  * @covers GuzzleHttp\Message\Request
  */
-class RequestTest extends \PHPUnit_Framework_TestCase
+class RequestTest extends \PHPUnit\Framework\TestCase
 {
     public function testConstructorInitializesMessage()
     {

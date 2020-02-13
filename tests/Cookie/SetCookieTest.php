@@ -7,7 +7,7 @@ use GuzzleHttp\Cookie\SetCookie;
 /**
  * @covers GuzzleHttp\Cookie\SetCookie
  */
-class SetCookieTest extends \PHPUnit_Framework_TestCase
+class SetCookieTest extends \PHPUnit\Framework\TestCase
 {
     public function testInitializesDefaultValues()
     {

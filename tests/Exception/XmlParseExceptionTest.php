@@ -7,7 +7,7 @@ use GuzzleHttp\Exception\XmlParseException;
 /**
  * @covers GuzzleHttp\Exception\XmlParseException
  */
-class XmlParseExceptionTest extends \PHPUnit_Framework_TestCase
+class XmlParseExceptionTest extends \PHPUnit\Framework\TestCase
 {
     public function testHasError()
     {

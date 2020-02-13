@@ -12,7 +12,7 @@ use GuzzleHttp\Subscriber\Mock;
 /**
  * @covers GuzzleHttp\Subscriber\HttpError
  */
-class HttpErrorTest extends \PHPUnit_Framework_TestCase
+class HttpErrorTest extends \PHPUnit\Framework\TestCase
 {
     public function testIgnoreSuccessfulRequests()
     {

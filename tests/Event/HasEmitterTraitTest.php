@@ -12,7 +12,7 @@ class AbstractHasEmitter implements HasEmitterInterface
 /**
  * @covers GuzzleHttp\Event\HasEmitterTrait
  */
-class HasEmitterTraitTest extends \PHPUnit_Framework_TestCase
+class HasEmitterTraitTest extends \PHPUnit\Framework\TestCase
 {
     public function testHelperAttachesSubscribers()
     {

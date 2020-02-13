@@ -6,7 +6,7 @@ use GuzzleHttp\BatchResults;
 /**
  * @covers \GuzzleHttp\BatchResults
  */
-class BatchResultsTest extends \PHPUnit_Framework_TestCase
+class BatchResultsTest extends \PHPUnit\Framework\TestCase
 {
     public function testExposesResults()
     {

@@ -10,7 +10,7 @@ use GuzzleHttp\Message\Response;
 /**
  * @covers GuzzleHttp\Event\BeforeEvent
  */
-class BeforeEventTest extends \PHPUnit_Framework_TestCase
+class BeforeEventTest extends \PHPUnit\Framework\TestCase
 {
     public function testInterceptsWithEvent()
     {

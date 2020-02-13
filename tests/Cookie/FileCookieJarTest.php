@@ -7,7 +7,7 @@ use GuzzleHttp\Cookie\SetCookie;
 /**
  * @covers GuzzleHttp\Cookie\FileCookieJar
  */
-class FileCookieJarTest extends \PHPUnit_Framework_TestCase
+class FileCookieJarTest extends \PHPUnit\Framework\TestCase
 {
     private $file;
 

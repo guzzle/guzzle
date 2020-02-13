@@ -6,7 +6,7 @@ use GuzzleHttp\Event\RequestEvents;
 /**
  * @covers GuzzleHttp\Event\RequestEvents
  */
-class RequestEventsTest extends \PHPUnit_Framework_TestCase
+class RequestEventsTest extends \PHPUnit\Framework\TestCase
 {
     public function prepareEventProvider()
     {

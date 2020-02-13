@@ -9,7 +9,7 @@ use GuzzleHttp\Stream\Stream;
 /**
  * @covers \GuzzleHttp\Message\AbstractMessage
  */
-class AbstractMessageTest extends \PHPUnit_Framework_TestCase
+class AbstractMessageTest extends \PHPUnit\Framework\TestCase
 {
     public function testHasProtocolVersion()
     {

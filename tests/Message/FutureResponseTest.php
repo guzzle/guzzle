@@ -7,7 +7,7 @@ use GuzzleHttp\Stream\Stream;
 use React\Promise\Deferred;
 use GuzzleHttp\Tests\Subscriber\MockTest;
 
-class FutureResponseTest extends \PHPUnit_Framework_TestCase
+class FutureResponseTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @expectedException \RuntimeException

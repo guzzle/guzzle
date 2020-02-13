@@ -8,7 +8,7 @@ use GuzzleHttp\Subscriber\Mock;
 /**
  * @covers GuzzleHttp\Subscriber\Redirect
  */
-class RedirectTest extends \PHPUnit_Framework_TestCase
+class RedirectTest extends \PHPUnit\Framework\TestCase
 {
     public function testRedirectsRequests()
     {

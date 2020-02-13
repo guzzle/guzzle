@@ -9,7 +9,7 @@ use GuzzleHttp\Message\Request;
 /**
  * @covers GuzzleHttp\Event\AbstractTransferEvent
  */
-class AbstractTransferEventTest extends \PHPUnit_Framework_TestCase
+class AbstractTransferEventTest extends \PHPUnit\Framework\TestCase
 {
     public function testHasStats()
     {

@@ -8,7 +8,7 @@ use GuzzleHttp\Message\Request;
 /**
  * @covers GuzzleHttp\Event\AbstractRequestEvent
  */
-class AbstractRequestEventTest extends \PHPUnit_Framework_TestCase
+class AbstractRequestEventTest extends \PHPUnit\Framework\TestCase
 {
     public function testHasTransactionMethods()
     {

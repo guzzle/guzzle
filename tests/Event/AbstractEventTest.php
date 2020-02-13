@@ -1,7 +1,7 @@
 <?php
 namespace GuzzleHttp\Tests\Event;
 
-class AbstractEventTest extends \PHPUnit_Framework_TestCase
+class AbstractEventTest extends \PHPUnit\Framework\TestCase
 {
     public function testStopsPropagation()
     {

@@ -9,7 +9,7 @@ use GuzzleHttp\Ring\Exception\ConnectException;
 /**
  * @covers GuzzleHttp\Exception\RequestException
  */
-class RequestExceptionTest extends \PHPUnit_Framework_TestCase
+class RequestExceptionTest extends \PHPUnit\Framework\TestCase
 {
     public function testHasRequestAndResponse()
     {

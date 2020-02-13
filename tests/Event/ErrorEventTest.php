@@ -10,7 +10,7 @@ use GuzzleHttp\Message\Request;
 /**
  * @covers GuzzleHttp\Event\ErrorEvent
  */
-class ErrorEventTest extends \PHPUnit_Framework_TestCase
+class ErrorEventTest extends \PHPUnit\Framework\TestCase
 {
     public function testInterceptsWithEvent()
     {

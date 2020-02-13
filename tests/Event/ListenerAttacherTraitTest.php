@@ -18,7 +18,7 @@ class ObjectWithEvents implements HasEmitterInterface
     }
 }
 
-class ListenerAttacherTraitTest extends \PHPUnit_Framework_TestCase
+class ListenerAttacherTraitTest extends \PHPUnit\Framework\TestCase
 {
     public function testRegistersEvents()
     {

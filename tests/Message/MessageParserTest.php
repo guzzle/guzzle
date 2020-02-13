@@ -7,7 +7,7 @@ use GuzzleHttp\Message\MessageParser;
 /**
  * @covers \GuzzleHttp\Message\MessageParser
  */
-class MessageParserTest extends \PHPUnit_Framework_TestCase
+class MessageParserTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @dataProvider requestProvider

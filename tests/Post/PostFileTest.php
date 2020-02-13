@@ -8,7 +8,7 @@ use GuzzleHttp\Stream\Stream;
 /**
  * @covers GuzzleHttp\Post\PostFile
  */
-class PostFileTest extends \PHPUnit_Framework_TestCase
+class PostFileTest extends \PHPUnit\Framework\TestCase
 {
     public function testCreatesFromString()
     {

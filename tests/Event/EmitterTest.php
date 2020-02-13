@@ -8,7 +8,7 @@ use GuzzleHttp\Event\SubscriberInterface;
 /**
  * @link https://github.com/symfony/symfony/blob/master/src/Symfony/Component/EventDispatcher/Tests/EventDispatcherTest.php Based on this test.
  */
-class EmitterTest extends \PHPUnit_Framework_TestCase
+class EmitterTest extends \PHPUnit\Framework\TestCase
 {
     /* Some pseudo events */
     const preFoo = 'pre.foo';

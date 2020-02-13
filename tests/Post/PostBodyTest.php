@@ -9,7 +9,7 @@ use GuzzleHttp\Query;
 /**
  * @covers GuzzleHttp\Post\PostBody
  */
-class PostBodyTest extends \PHPUnit_Framework_TestCase
+class PostBodyTest extends \PHPUnit\Framework\TestCase
 {
     public function testWrapsBasicStreamFunctionality()
     {

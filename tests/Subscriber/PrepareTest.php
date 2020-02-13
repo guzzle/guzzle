@@ -14,7 +14,7 @@ use GuzzleHttp\Subscriber\Prepare;
 /**
  * @covers GuzzleHttp\Subscriber\Prepare
  */
-class PrepareTest extends \PHPUnit_Framework_TestCase
+class PrepareTest extends \PHPUnit\Framework\TestCase
 {
     public function testIgnoresRequestsWithNoBody()
     {

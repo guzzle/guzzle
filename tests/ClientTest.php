@@ -19,7 +19,7 @@ use React\Promise\Deferred;
 /**
  * @covers GuzzleHttp\Client
  */
-class ClientTest extends \PHPUnit_Framework_TestCase
+class ClientTest extends \PHPUnit\Framework\TestCase
 {
     /** @callable */
     private $ma;

@@ -16,7 +16,7 @@ use GuzzleHttp\Subscriber\Mock;
 /**
  * @covers GuzzleHttp\Message\MessageFactory
  */
-class MessageFactoryTest extends \PHPUnit_Framework_TestCase
+class MessageFactoryTest extends \PHPUnit\Framework\TestCase
 {
     public function testCreatesResponses()
     {

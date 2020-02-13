@@ -15,7 +15,7 @@ use GuzzleHttp\Message\Response;
 use GuzzleHttp\Subscriber\Mock;
 use React\Promise\Deferred;
 
-class PoolTest extends \PHPUnit_Framework_TestCase
+class PoolTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @expectedException \InvalidArgumentException

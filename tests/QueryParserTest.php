@@ -5,7 +5,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\Query;
 use GuzzleHttp\QueryParser;
 
-class QueryParserTest extends \PHPUnit_Framework_TestCase
+class QueryParserTest extends \PHPUnit\Framework\TestCase
 {
     public function parseQueryProvider()
     {

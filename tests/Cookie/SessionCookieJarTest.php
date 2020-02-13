@@ -8,7 +8,7 @@ use GuzzleHttp\Cookie\SetCookie;
 /**
  * @covers GuzzleHttp\Cookie\SessionCookieJar
  */
-class SessionCookieJarTest extends \PHPUnit_Framework_TestCase
+class SessionCookieJarTest extends \PHPUnit\Framework\TestCase
 {
     private $sessionVar;
 

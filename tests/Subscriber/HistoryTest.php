@@ -15,7 +15,7 @@ use GuzzleHttp\Subscriber\Mock;
 /**
  * @covers GuzzleHttp\Subscriber\History
  */
-class HistoryTest extends \PHPUnit_Framework_TestCase
+class HistoryTest extends \PHPUnit\Framework\TestCase
 {
     public function testAddsForErrorEvent()
     {

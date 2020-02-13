@@ -16,7 +16,7 @@ use React\Promise\Deferred;
 /**
  * @covers GuzzleHttp\Subscriber\Mock
  */
-class MockTest extends \PHPUnit_Framework_TestCase
+class MockTest extends \PHPUnit\Framework\TestCase
 {
     public static function createFuture(
         callable $wait,

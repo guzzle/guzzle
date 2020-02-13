@@ -19,7 +19,7 @@ use GuzzleHttp\Message\RequestInterface;
 use GuzzleHttp\Event\RequestEvents;
 use React\Promise\Deferred;
 
-class RequestFsmTest extends \PHPUnit_Framework_TestCase
+class RequestFsmTest extends \PHPUnit\Framework\TestCase
 {
     private $mf;
 

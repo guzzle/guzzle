@@ -14,7 +14,7 @@ use GuzzleHttp\Subscriber\Mock;
 /**
  * @covers GuzzleHttp\Subscriber\Cookie
  */
-class CookieTest extends \PHPUnit_Framework_TestCase
+class CookieTest extends \PHPUnit\Framework\TestCase
 {
     public function testExtractsAndStoresCookies()
     {

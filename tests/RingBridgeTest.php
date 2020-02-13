@@ -14,7 +14,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Event\ErrorEvent;
 use GuzzleHttp\RequestFsm;
 
-class RingBridgeTest extends \PHPUnit_Framework_TestCase
+class RingBridgeTest extends \PHPUnit\Framework\TestCase
 {
     public function testCreatesRingRequests()
     {

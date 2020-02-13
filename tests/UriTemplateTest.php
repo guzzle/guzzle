@@ -7,7 +7,7 @@ use GuzzleHttp\UriTemplate;
 /**
  * @covers GuzzleHttp\UriTemplate
  */
-class UriTemplateTest extends \PHPUnit_Framework_TestCase
+class UriTemplateTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @return array

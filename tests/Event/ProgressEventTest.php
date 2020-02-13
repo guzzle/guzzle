@@ -9,7 +9,7 @@ use GuzzleHttp\Transaction;
 /**
  * @covers GuzzleHttp\Event\ProgressEvent
  */
-class ProgressEventTest extends \PHPUnit_Framework_TestCase
+class ProgressEventTest extends \PHPUnit\Framework\TestCase
 {
     public function testContainsNumbers()
     {

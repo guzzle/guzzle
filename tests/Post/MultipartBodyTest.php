@@ -7,7 +7,7 @@ use GuzzleHttp\Post\PostFile;
 /**
  * @covers GuzzleHttp\Post\MultipartBody
  */
-class MultipartBodyTest extends \PHPUnit_Framework_TestCase
+class MultipartBodyTest extends \PHPUnit\Framework\TestCase
 {
     protected function getTestBody()
     {

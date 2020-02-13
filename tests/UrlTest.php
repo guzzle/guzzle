@@ -7,7 +7,7 @@ use GuzzleHttp\Url;
 /**
  * @covers GuzzleHttp\Url
  */
-class UrlTest extends \PHPUnit_Framework_TestCase
+class UrlTest extends \PHPUnit\Framework\TestCase
 {
     const RFC3986_BASE = "http://a/b/c/d;p?q";
 
