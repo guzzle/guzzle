@@ -203,7 +203,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         // Create a connection exception if it was a specific error code.
-        $error = isset($connectionErrors[$easy->errno])
+        $error = isset($connectionErrors[$easy->errno]) || $easy->response === null
             ? new ConnectException($message, $easy->request, null, $ctx)
             : new RequestException($message, $easy->request, $easy->response, null, $ctx);
 

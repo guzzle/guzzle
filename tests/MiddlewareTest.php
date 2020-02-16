@@ -110,7 +110,8 @@ class MiddlewareTest extends TestCase
         $container = [];
         $m = Middleware::history($container);
         $request = new Request('GET', 'http://foo.com');
-        $h = new MockHandler([new RequestException('error', $request)]);
+        $response = new Response(200);
+        $h = new MockHandler([new RequestException('error', $request, $response)]);
         $f = $m($h);
         $f($request, [])->wait(false);
         self::assertCount(1, $container);

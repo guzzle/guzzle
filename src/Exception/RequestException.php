@@ -18,7 +18,7 @@ class RequestException extends TransferException implements RequestExceptionInte
     private $request;
 
     /**
-     * @var ResponseInterface|null
+     * @var ResponseInterface
      */
     private $response;
 
@@ -30,13 +30,12 @@ class RequestException extends TransferException implements RequestExceptionInte
     public function __construct(
         string $message,
         RequestInterface $request,
-        ResponseInterface $response = null,
+        ResponseInterface $response,
         \Throwable $previous = null,
         array $handlerContext = []
     ) {
         // Set the code of the exception if the response is set and not future.
-        $code = $response ? $response->getStatusCode() : 0;
-        parent::__construct($message, $code, $previous);
+        parent::__construct($message, $response->getStatusCode(), $previous);
         $this->request = $request;
         $this->response = $response;
         $this->handlerContext = $handlerContext;
@@ -45,11 +44,14 @@ class RequestException extends TransferException implements RequestExceptionInte
     /**
      * Wrap non-RequestExceptions with a RequestException
      */
-    public static function wrapException(RequestInterface $request, \Throwable $e): RequestException
-    {
+    public static function wrapException(
+        RequestInterface $request,
+        ResponseInterface $response,
+        \Throwable $e
+    ): RequestException {
         return $e instanceof RequestException
             ? $e
-            : new RequestException($e->getMessage(), $request, null, $e);
+            : new RequestException($e->getMessage(), $request, $response, $e);
     }
 
     /**
@@ -62,20 +64,10 @@ class RequestException extends TransferException implements RequestExceptionInte
      */
     public static function create(
         RequestInterface $request,
-        ResponseInterface $response = null,
+        ResponseInterface $response,
         \Throwable $previous = null,
         array $ctx = []
     ): self {
-        if (!$response) {
-            return new self(
-                'Error completing request',
-                $request,
-                null,
-                $previous,
-                $ctx
-            );
-        }
-
         $level = (int) \floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
@@ -136,7 +128,7 @@ class RequestException extends TransferException implements RequestExceptionInte
     /**
      * Get the associated response
      */
-    public function getResponse(): ?ResponseInterface
+    public function getResponse(): ResponseInterface
     {
         return $this->response;
     }

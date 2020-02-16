@@ -28,13 +28,6 @@ class RequestExceptionTest extends TestCase
         self::assertSame('foo', $e->getMessage());
     }
 
-    public function testCreatesGenerateException()
-    {
-        $e = RequestException::create(new Request('GET', '/'));
-        self::assertSame('Error completing request', $e->getMessage());
-        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $e);
-    }
-
     public function testCreatesClientErrorResponseException()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(400));
@@ -154,24 +147,27 @@ class RequestExceptionTest extends TestCase
     public function testWrapsRequestExceptions()
     {
         $e = new \Exception('foo');
-        $r = new Request('GET', 'http://www.oo.com');
-        $ex = RequestException::wrapException($r, $e);
+        $req = new Request('GET', 'http://www.oo.com');
+        $res = new Response(200);
+        $ex = RequestException::wrapException($req, $res, $e);
         self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $ex);
         self::assertSame($e, $ex->getPrevious());
     }
 
     public function testDoesNotWrapExistingRequestExceptions()
     {
-        $r = new Request('GET', 'http://www.oo.com');
-        $e = new RequestException('foo', $r);
-        $e2 = RequestException::wrapException($r, $e);
+        $req = new Request('GET', 'http://www.oo.com');
+        $res = new Response(200);
+        $e = new RequestException('foo', $req, $res);
+        $e2 = RequestException::wrapException($req, $res, $e);
         self::assertSame($e, $e2);
     }
 
     public function testCanProvideHandlerContext()
     {
-        $r = new Request('GET', 'http://www.oo.com');
-        $e = new RequestException('foo', $r, null, null, ['bar' => 'baz']);
+        $req = new Request('GET', 'http://www.oo.com');
+        $res = new Response(200);
+        $e = new RequestException('foo', $req, $res, null, ['bar' => 'baz']);
         self::assertSame(['bar' => 'baz'], $e->getHandlerContext());
     }
 

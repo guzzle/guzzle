@@ -456,7 +456,7 @@ class CurlFactoryTest extends TestCase
             return Handler\CurlFactory::finish($fn, $easy, $factory);
         };
 
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
         $this->expectExceptionMessage('but attempting to rewind the request body failed');
         $fn($request, [])->wait();
     }
@@ -503,7 +503,7 @@ class CurlFactoryTest extends TestCase
         $p->wait(false);
         self::assertEquals(3, $call);
 
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
         $this->expectExceptionMessage('The cURL request was retried 3 times');
         $p->wait(true);
     }
