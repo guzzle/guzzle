@@ -58,18 +58,8 @@ class StreamHandler
         } catch (\InvalidArgumentException $e) {
             throw $e;
         } catch (\Exception $e) {
-            // Determine if the error was a networking error.
-            $message = $e->getMessage();
-            // This list can probably get more comprehensive.
-            if (false !== \strpos($message, 'getaddrinfo') // DNS lookup failed
-                || false !== \strpos($message, 'Connection refused')
-                || false !== \strpos($message, "couldn't connect to host") // error on HHVM
-                || false !== \strpos($message, "connection attempt failed")
-            ) {
-                $e = new ConnectException($e->getMessage(), $request, $e);
-            }
+            $e = new ConnectException($e->getMessage(), $request, $e);
             $this->invokeStats($options, $request, $startTime, null, $e);
-
             return \GuzzleHttp\Promise\rejection_for($e);
         }
     }
@@ -466,7 +456,7 @@ class StreamHandler
         if (\is_string($value)) {
             $options['ssl']['cafile'] = $value;
             if (!\file_exists($value)) {
-                throw new \RuntimeException("SSL CA bundle not found: $value");
+                throw new \InvalidArgumentException("SSL CA bundle not found: $value");
             }
         } elseif ($value !== true) {
             throw new \InvalidArgumentException('Invalid verify request option');
@@ -488,7 +478,7 @@ class StreamHandler
         }
 
         if (!\file_exists($value)) {
-            throw new \RuntimeException("SSL certificate not found: {$value}");
+            throw new \InvalidArgumentException("SSL certificate not found: {$value}");
         }
 
         $options['ssl']['local_cert'] = $value;
