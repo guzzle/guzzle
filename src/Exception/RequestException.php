@@ -34,7 +34,6 @@ class RequestException extends TransferException implements RequestExceptionInte
         \Throwable $previous = null,
         array $handlerContext = []
     ) {
-        // Set the code of the exception if the response is set and not future.
         parent::__construct($message, $response->getStatusCode(), $previous);
         $this->request = $request;
         $this->response = $response;
