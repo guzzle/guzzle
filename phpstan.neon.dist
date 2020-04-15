@@ -5,4 +5,3 @@ parameters:
     level: max
     paths:
       - src
-    bootstrap: tests/bootstrap-phpstan.php
