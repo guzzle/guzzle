@@ -756,9 +756,6 @@ class ClientTest extends TestCase
      */
     public function testExceptionOnInvalidIdn()
     {
-        if (!extension_loaded('intl')) {
-            self::markTestSkipped('intl PHP extension is not loaded');
-        }
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
