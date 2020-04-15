@@ -7,6 +7,7 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Tests\Server;
+use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -47,9 +48,9 @@ class CurlHandlerTest extends TestCase
         Server::enqueue([$response]);
         $a = new CurlHandler();
         $request = new Request('GET', Server::$url);
-        $s = \GuzzleHttp\_current_time();
+        $s = Utils::currentTime();
         $a($request, ['delay' => 0.1])->wait();
-        self::assertGreaterThan(0.0001, \GuzzleHttp\_current_time() - $s);
+        self::assertGreaterThan(0.0001, Utils::currentTime() - $s);
     }
 
     public function testCreatesCurlErrorsWithContext()

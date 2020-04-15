@@ -217,7 +217,7 @@ class Client implements ClientInterface
 
         if (isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
             $idnOptions = ($config['idn_conversion'] === true) ? IDNA_DEFAULT : $config['idn_conversion'];
-            $uri = _idn_uri_convert($uri, $idnOptions);
+            $uri = Utils::idnUriConvert($uri, $idnOptions);
         }
 
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;
