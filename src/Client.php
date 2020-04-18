@@ -221,13 +221,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             'http_errors'     => true,
             'decode_content'  => true,
             'verify'          => true,
-            'cookies'         => false
+            'cookies'         => false,
+            'idn_conversion'  => true,
         ];
-
-        // idn_to_ascii() is a part of ext-intl and might be not available
-        // Old ICU versions don't have this constant, so we are basically stuck (see https://github.com/guzzle/guzzle/pull/2424
-        // and https://github.com/guzzle/guzzle/issues/2448 for details)
-        $defaults['idn_conversion'] = \function_exists('idn_to_ascii') && defined('INTL_IDNA_VARIANT_UTS46');
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
 
