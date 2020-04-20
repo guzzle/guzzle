@@ -3,7 +3,6 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Promise;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
