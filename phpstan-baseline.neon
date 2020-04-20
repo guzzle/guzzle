@@ -31,11 +31,6 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^PHPDoc tag @throws with type GuzzleHttp\\\\GuzzleException is not subtype of Throwable$#"
-			count: 2
-			path: src/Client.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Client\\:\\:requestAsync\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Client.php
