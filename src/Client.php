@@ -122,7 +122,7 @@ class Client implements ClientInterface
      *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
      *
      * @return ResponseInterface
-     * @throws GuzzleException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function send(RequestInterface $request, array $options = [])
     {
@@ -175,7 +175,7 @@ class Client implements ClientInterface
      * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
      *
      * @return ResponseInterface
-     * @throws GuzzleException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function request($method, $uri = '', array $options = [])
     {
