@@ -886,11 +886,6 @@ parameters:
 			path: src/RetryMiddleware.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\RetryMiddleware\\:\\:doRetry\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/RetryMiddleware.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\RetryMiddleware\\:\\:doRetry\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/RetryMiddleware.php
