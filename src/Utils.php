@@ -3,7 +3,7 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
-use Symfony\Polyfill\Intl\Idn;
+use Symfony\Polyfill\Intl\Idn\Idn;
 
 final class Utils
 {
@@ -63,6 +63,13 @@ final class Utils
         return $uri;
     }
 
+    /**
+     * @param string $domain
+     * @param int    $options
+     * @param array  $info
+     *
+     * @return string|false
+     */
     private static function idnToAsci($domain, $options, &$info = [])
     {
         if (\extension_loaded('intl') && defined('INTL_IDNA_VARIANT_UTS46')) {
