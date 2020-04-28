@@ -198,7 +198,7 @@ final class Middleware
                             ? $reason->getResponse()
                             : null;
                         $message = $formatter->format($request, $response, \GuzzleHttp\Promise\exception_for($reason));
-                        $logger->notice($message);
+                        $logger->log($logLevel, $message);
                         return \GuzzleHttp\Promise\rejection_for($reason);
                     }
                 );
