@@ -42,7 +42,7 @@ class MessageFormatter
      * @var string
      */
     public const CLF = "{hostname} {req_header_User-Agent} - [{date_common_log}] \"{method} {target} HTTP/{version}\" {code} {res_header_Content-Length}";
-    public const DEBUG = ">>>>>>>>\n{request}\n<<<<<<<<\n{response}\n--------\n{error}";
+    public const DEBUG = ">#>#>#>#>#>#>#\n{request}\n<#<#<#<#<#<#<#\n{response}\n--------\n{error}";
     public const SHORT = '[{ts}] "{method} {target} HTTP/{version}" {code}';
 
     /** @var string Template used to format log messages */
