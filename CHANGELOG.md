@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASHED
+## UNRELEASED
 
 ### Changed
 
