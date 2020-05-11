@@ -171,6 +171,12 @@ class HandlerStackTest extends TestCase
         self::assertSame('foo=bar', $lastRequest->getHeaderLine('Cookie'));
     }
 
+    public function testCreate()
+    {
+        $extended = ExtendedHandler::create();
+        self::assertInstanceOf(ExtendedHandler::class, $extended);
+    }
+
     private function getFunctions()
     {
         $calls = [];
@@ -209,4 +215,8 @@ class HandlerStackTest extends TestCase
     public function bar()
     {
     }
+}
+
+class ExtendedHandler extends HandlerStack {
+
 }
