@@ -49,7 +49,7 @@ class HandlerStack
     /**
      * @param callable $handler Underlying HTTP handler.
      */
-    public function __construct(callable $handler = null)
+    public final function __construct(callable $handler = null)
     {
         $this->handler = $handler;
     }
