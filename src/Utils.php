@@ -113,7 +113,7 @@ final class Utils
         if (!$defaultAgent) {
             try {
                 $version = Versions::getVersion("guzzlehttp/guzzle");
-                $version = substr($version, 0, strpos($version,"@"));
+                $version = substr($version, 0, \strpos($version, "@") ?: \strlen($version));
             } catch (OutOfBoundsException $e) {
                 $version = 'Guzzle';
             }

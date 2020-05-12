@@ -28,11 +28,11 @@
     "require": {
         "php": "^7.2.5",
         "ext-json": "*",
+        "composer/package-versions-deprecated": "^1.8",
         "guzzlehttp/promises": "^1.0",
         "guzzlehttp/psr7": "^1.6.1",
         "psr/http-client": "^1.0",
-        "symfony/polyfill-intl-idn": "^1.11",
-        "composer/package-versions-deprecated": "^1.8"
+        "symfony/polyfill-intl-idn": "^1.11"
     },
     "provide": {
         "psr/http-client-implementation": "1.0"
