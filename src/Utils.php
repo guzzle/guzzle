@@ -6,6 +6,8 @@ use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
+use OutOfBoundsException;
+use PackageVersions\Versions;
 use Psr\Http\Message\UriInterface;
 
 final class Utils
@@ -109,7 +111,13 @@ final class Utils
         static $defaultAgent = '';
 
         if (!$defaultAgent) {
-            $defaultAgent = 'GuzzleHttp/Guzzle';
+            try {
+                $version = Versions::getVersion("guzzlehttp/guzzle");
+                $version = substr($version, 0, strpos($version,"@"));
+            } catch (OutOfBoundsException $e) {
+                $version = 'Guzzle';
+            }
+            $defaultAgent = 'GuzzleHttp/' . $version;
             if (\extension_loaded('curl') && \function_exists('curl_version')) {
                 $defaultAgent .= ' curl/' . \curl_version()['version'];
             }
