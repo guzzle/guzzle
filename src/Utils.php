@@ -72,6 +72,10 @@ final class Utils
      */
     private static function idnToAsci($domain, $options, &$info = [])
     {
+        if (\preg_match('%^[ -~]+$%', $domain) === 1) {
+            return $domain;
+        }
+
         if (\extension_loaded('intl') && defined('INTL_IDNA_VARIANT_UTS46')) {
             return \idn_to_ascii($domain, $options, INTL_IDNA_VARIANT_UTS46, $info);
         }
