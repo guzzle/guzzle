@@ -25,11 +25,12 @@ class RedirectMiddleware
      * @var array
      */
     public static $defaultSettings = [
-        'max'             => 5,
-        'protocols'       => ['http', 'https'],
-        'strict'          => false,
-        'referer'         => false,
-        'track_redirects' => false,
+        'max'                      => 5,
+        'protocols'                => ['http', 'https'],
+        'strict'                   => false,
+        'referer'                  => false,
+        'track_redirects'          => false,
+        'force_pass_authorization' => false,
     ];
 
     /**
@@ -194,7 +195,9 @@ class RedirectMiddleware
         }
 
         // Remove Authorization header if host is different.
-        if ($request->getUri()->getHost() !== $modify['uri']->getHost()) {
+        if (!$options['allow_redirects']['force_pass_authorization'] &&
+            $request->getUri()->getHost() !== $modify['uri']->getHost()
+        ) {
             $modify['remove_headers'][] = 'Authorization';
         }
 

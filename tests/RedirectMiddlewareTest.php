@@ -277,4 +277,26 @@ class RedirectMiddlewareTest extends TestCase
         $client = new Client(['handler' => $handler]);
         $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass']]);
     }
+
+    public function testNotRemoveAuthorizationHeaderOnRedirectWhenForced()
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com']),
+            static function (RequestInterface $request) {
+                self::assertTrue($request->hasHeader('Authorization'));
+                return new Response(200);
+            }
+        ]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $client->get(
+            'http://example.com?a=b',
+            [
+                'auth' => ['testuser', 'testpass'],
+                'allow_redirects' => [
+                    'force_pass_authorization' => true,
+                ],
+            ]
+        );
+    }
 }
