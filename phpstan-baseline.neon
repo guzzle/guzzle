@@ -496,6 +496,11 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
+			message: "#^Parameter \\#1 \\$filename of function is_dir expects string, string\\|false given\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
 			message: "#^Method GuzzleHttp\\\\Handler\\\\CurlFactory\\:\\:retryFailedRewind\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/Handler/CurlFactory.php
