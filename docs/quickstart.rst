@@ -187,11 +187,16 @@ requests.
     // Wait for the requests to complete; throws a ConnectException
     // if any of the requests fail
     $responses = Promise\unwrap($promises);
+    
+    // You can access each response using the key of the promise
+    echo $responses['image']->getHeader('Content-Length')[0];
+    echo $responses['png']->getHeader('Content-Length')[0];
 
     // Wait for the requests to complete, even if some of them fail
     $responses = Promise\settle($promises)->wait();
 
-    // You can access each response using the key of the promise
+    // Values returned above are wrapped in an array with 2 keys: "state" (either fulfilled or rejected) and "value" (contains the response)
+    echo $responses['image']['state']; // returns "fulfilled"
     echo $responses['image']['value']->getHeader('Content-Length')[0];
     echo $responses['png']['value']->getHeader('Content-Length')[0];
 
