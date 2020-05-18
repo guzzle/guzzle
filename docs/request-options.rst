@@ -1030,7 +1030,7 @@ SSL certificates can be found on the
 timeout
 -------
 
-:Summary: Float describing the timeout of the request in seconds. Use ``0``
+:Summary: Float describing the total timeout of the request in seconds. Use ``0``
         to wait indefinitely (the default behavior).
 :Types: float
 :Default: ``0``
