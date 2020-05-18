@@ -30,7 +30,8 @@
         "ext-json": "*",
         "guzzlehttp/promises": "^1.0",
         "guzzlehttp/psr7": "^1.6.1",
-        "psr/http-client": "^1.0"
+        "psr/http-client": "^1.0",
+        "symfony/polyfill-intl-idn": "^1.11"
     },
     "provide": {
         "psr/http-client-implementation": "1.0"
@@ -44,7 +45,6 @@
     },
     "suggest": {
         "ext-curl": "Required for CURL handler support",
-        "ext-intl": "Required for Internationalized Domain Name (IDN) support",
         "psr/log": "Required for using the Log middleware"
     },
     "config": {

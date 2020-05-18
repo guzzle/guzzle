@@ -1,5 +1,6 @@
-Guzzle, PHP HTTP client
-=======================
+![Guzzle](.github/logo.png?raw=true)
+
+# Guzzle, PHP HTTP client
 
 [![Latest Version](https://img.shields.io/github/release/guzzle/guzzle.svg?style=flat-square)](https://github.com/guzzle/guzzle/releases)
 ![Build Status](https://github.com/guzzle/guzzle/workflows/CI/badge.svg?style=flat-square)
