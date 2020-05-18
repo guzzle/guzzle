@@ -28,11 +28,11 @@ class RedirectMiddleware
         'track_redirects' => false,
     ];
 
-    /** @var callable */
+    /** @var callable(RequestInterface, array): PromiseInterface */
     private $nextHandler;
 
     /**
-     * @param callable $nextHandler Next handler to invoke.
+     * @param callable(RequestInterface, array): PromiseInterface $nextHandler Next handler to invoke.
      */
     public function __construct(callable $nextHandler)
     {

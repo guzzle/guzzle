@@ -11,7 +11,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class RetryMiddleware
 {
-    /** @var callable */
+    /** @var callable(RequestInterface, array): PromiseInterface */
     private $nextHandler;
 
     /** @var callable */
@@ -21,14 +21,14 @@ class RetryMiddleware
     private $delay;
 
     /**
-     * @param callable $decider     Function that accepts the number of retries,
-     *                              a request, [response], and [exception] and
-     *                              returns true if the request is to be
-     *                              retried.
-     * @param callable $nextHandler Next handler to invoke.
-     * @param callable $delay       Function that accepts the number of retries
-     *                              and [response] and returns the number of
-     *                              milliseconds to delay.
+     * @param callable $decider                                                Function that accepts the number of retries,
+     *                                                                         a request, [response], and [exception] and
+     *                                                                         returns true if the request is to be
+     *                                                                         retried.
+     * @param callable(RequestInterface, array): PromiseInterface $nextHandler Next handler to invoke.
+     * @param callable $delay                                                  Function that accepts the number of retries
+     *                                                                         and [response] and returns the number of
+     *                                                                         milliseconds to delay.
      */
     public function __construct(
         callable $decider,

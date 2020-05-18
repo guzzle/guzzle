@@ -14,7 +14,7 @@ class PrepareBodyMiddleware
     private $nextHandler;
 
     /**
-     * @param callable $nextHandler Next handler to invoke.
+     * @param callable(RequestInterface, array): PromiseInterface $nextHandler Next handler to invoke.
      */
     public function __construct(callable $nextHandler)
     {

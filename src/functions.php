@@ -42,7 +42,7 @@ function debug_resource($value = null)
  *
  * @throws \RuntimeException if no viable Handler is available.
  *
- * @return callable Returns the best handler for the given system.
+ * @return callable(RequestInterface, array): PromiseInterface Returns the best handler for the given system.
  */
 function choose_handler(): callable
 {

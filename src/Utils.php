@@ -76,7 +76,7 @@ final class Utils
      *
      * @throws \RuntimeException if no viable Handler is available.
      *
-     * @return callable Returns the best handler for the given system.
+     * @return callable(RequestInterface, array): PromiseInterface Returns the best handler for the given system.
      */
     public static function chooseHandler(): callable
     {
