@@ -19,7 +19,10 @@
 * Improvement: Added support for reset internal queue in MockHandler. [#2143](https://github.com/guzzle/guzzle/pull/2143)
 * Improvement: Added support to pass arbitrary options to `curl_multi_init`. [#2287](https://github.com/guzzle/guzzle/pull/2287)
 * Fix: Gracefully handle passing `null` to the `header` option. [#2132](https://github.com/guzzle/guzzle/pull/2132)
-* Fix: `RetryMiddleware` did not do exponential delay between retires due unit mismatch. [#2132](https://github.com/guzzle/guzzle/pull/2132)
+* Fix: `RetryMiddleware` did not do exponential delay between retries due unit mismatch. [#2132](https://github.com/guzzle/guzzle/pull/2132)
+  Previously, `RetryMiddleware` would sleep for 1 millisecond, then 2 milliseconds, then 4 milliseconds.
+  **After this change, `RetryMiddleware` will sleep for 1 second, then 2 seconds, then 4 seconds.**
+  `Middleware::retry()` accepts a second callback parameter to override the default timeouts if needed.
 * Fix: Prevent undefined offset when using array for ssl_key options. [#2348](https://github.com/guzzle/guzzle/pull/2348)
 * Deprecated `ClientInterface::VERSION`
 
