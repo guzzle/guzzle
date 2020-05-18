@@ -192,8 +192,8 @@ requests.
     $responses = Promise\settle($promises)->wait();
 
     // You can access each response using the key of the promise
-    echo $responses['image']->getHeader('Content-Length')[0];
-    echo $responses['png']->getHeader('Content-Length')[0];
+    echo $responses['image']['value']->getHeader('Content-Length')[0];
+    echo $responses['png']['value']->getHeader('Content-Length')[0];
 
 You can use the ``GuzzleHttp\Pool`` object when you have an indeterminate
 amount of requests you wish to send.
