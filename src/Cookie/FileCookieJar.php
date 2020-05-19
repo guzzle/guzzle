@@ -85,7 +85,7 @@ class FileCookieJar extends CookieJar
 
         $data = Utils::jsonDecode($json, true);
         if (\is_array($data)) {
-            foreach (Utils::jsonDecode($json, true) as $cookie) {
+            foreach ($data as $cookie) {
                 $this->setCookie(new SetCookie($cookie));
             }
         } elseif (\strlen($data)) {

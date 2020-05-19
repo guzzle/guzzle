@@ -102,7 +102,7 @@ class RetryMiddleware
         };
     }
 
-    private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null)
+    private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null): PromiseInterface
     {
         $options['delay'] = \call_user_func($this->delay, ++$options['retries'], $response);
 

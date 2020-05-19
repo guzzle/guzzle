@@ -20,6 +20,9 @@ class RedirectMiddleware
 
     public const STATUS_HISTORY_HEADER = 'X-Guzzle-Redirect-Status-History';
 
+    /**
+     * @var array
+     */
     public static $defaultSettings = [
         'max'             => 5,
         'protocols'       => ['http', 'https'],
