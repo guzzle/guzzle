@@ -13,10 +13,10 @@ class Proxy
      * Sends synchronous requests to a specific handler while sending all other
      * requests to another handler.
      *
-     * @param callable $default Handler used for normal responses
-     * @param callable $sync    Handler used for synchronous responses.
+     * @param callable(RequestInterface, array): PromiseInterface $default Handler used for normal responses
+     * @param callable(RequestInterface, array): PromiseInterface $sync    Handler used for synchronous responses.
      *
-     * @return callable Returns the composed handler.
+     * @return callable(RequestInterface, array): PromiseInterface Returns the composed handler.
      */
     public static function wrapSync(
         callable $default,
@@ -37,10 +37,10 @@ class Proxy
      * performance benefits of curl while still supporting true streaming
      * through the StreamHandler.
      *
-     * @param callable $default   Handler used for non-streaming responses
-     * @param callable $streaming Handler used for streaming responses
+     * @param callable(RequestInterface, array): PromiseInterface $default   Handler used for non-streaming responses
+     * @param callable(RequestInterface, array): PromiseInterface $streaming Handler used for streaming responses
      *
-     * @return callable Returns the composed handler.
+     * @return callable(RequestInterface, array): PromiseInterface Returns the composed handler.
      */
     public static function wrapStreaming(
         callable $default,

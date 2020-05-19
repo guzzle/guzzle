@@ -89,7 +89,7 @@ class CurlFactory implements CurlFactoryInterface
      * rejected promise.
      *
      * @param callable(RequestInterface, array): PromiseInterface $handler
-     * @param CurlFactoryInterface $factory Dictates how the handle is released
+     * @param CurlFactoryInterface                                $factory Dictates how the handle is released
      */
     public static function finish(
         callable $handler,
