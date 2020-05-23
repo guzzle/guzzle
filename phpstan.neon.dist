@@ -3,6 +3,7 @@ includes:
 
 parameters:
     level: max
+    checkMissingIterableValueType: false
     paths:
         - src
     bootstrap: tests/bootstrap-phpstan.php
