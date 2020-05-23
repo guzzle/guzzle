@@ -103,24 +103,6 @@ final class Utils
     }
 
     /**
-     * Get the default User-Agent string to use with Guzzle.
-     */
-    public static function defaultUserAgent(): string
-    {
-        static $defaultAgent = '';
-
-        if (!$defaultAgent) {
-            $defaultAgent = 'GuzzleHttp/Guzzle';
-            if (\extension_loaded('curl') && \function_exists('curl_version')) {
-                $defaultAgent .= ' curl/' . \curl_version()['version'];
-            }
-            $defaultAgent .= ' PHP/' . PHP_VERSION;
-        }
-
-        return $defaultAgent;
-    }
-
-    /**
      * Returns the default cacert bundle for the current system.
      *
      * First, the openssl.cafile and curl.cainfo php.ini settings are checked.
