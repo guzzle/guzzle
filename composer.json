@@ -31,7 +31,7 @@
         "guzzlehttp/promises": "^1.0",
         "guzzlehttp/psr7": "^1.6.1",
         "psr/http-client": "^1.0",
-        "symfony/polyfill-intl-idn": "^1.11"
+        "symfony/polyfill-intl-idn": "1.17.0"
     },
     "provide": {
         "psr/http-client-implementation": "1.0"

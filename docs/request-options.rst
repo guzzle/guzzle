@@ -1017,7 +1017,7 @@ verify
 
 If you do not need a specific certificate bundle, then Mozilla provides a
 commonly used CA bundle which can be downloaded
-`here <https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt>`_
+`here <https://curl.haxx.se/ca/cacert.pem>`_
 (provided by the maintainer of cURL). Once you have a CA bundle available on
 disk, you can set the "openssl.cafile" PHP ini setting to point to the path to
 the file, allowing you to omit the "verify" request option. Much more detail on
@@ -1030,7 +1030,7 @@ SSL certificates can be found on the
 timeout
 -------
 
-:Summary: Float describing the timeout of the request in seconds. Use ``0``
+:Summary: Float describing the total timeout of the request in seconds. Use ``0``
         to wait indefinitely (the default behavior).
 :Types: float
 :Default: ``0``

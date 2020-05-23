@@ -7,6 +7,7 @@ use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use Psr\Http\Message\UriInterface;
+use Symfony\Polyfill\Intl\Idn\Idn;
 
 final class Utils
 {
@@ -180,7 +181,7 @@ supply the path on disk to a certificate bundle to the 'verify' request
 option: http://docs.guzzlephp.org/en/latest/clients.html#verify. If you do not
 need a specific certificate bundle, then Mozilla provides a commonly used CA
 bundle which can be downloaded here (provided by the maintainer of cURL):
-https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt. Once
+https://curl.haxx.se/ca/cacert.pem. Once
 you have a CA bundle available on disk, you can set the 'openssl.cafile' PHP
 ini setting to point to the path to the file, allowing you to omit the 'verify'
 request option. See https://curl.haxx.se/docs/sslcerts.html for more
@@ -327,10 +328,7 @@ EOT
     public static function idnUriConvert(UriInterface $uri, int $options = 0): UriInterface
     {
         if ($uri->getHost()) {
-            $idnaVariant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : 0;
-            $asciiHost = $idnaVariant === 0
-                ? idn_to_ascii($uri->getHost(), $options)
-                : idn_to_ascii($uri->getHost(), $options, $idnaVariant, $info);
+            $asciiHost = self::idnToAsci($uri->getHost(), $options, $info);
             if ($asciiHost === false) {
                 $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
 
@@ -376,5 +374,25 @@ EOT
         }
 
         return null;
+    }
+
+    /**
+     * @return string|false
+     */
+    private static function idnToAsci(string $domain, int $options, ?array &$info = [])
+    {
+        if (\preg_match('%^[ -~]+$%', $domain) === 1) {
+            return $domain;
+        }
+
+        if (\extension_loaded('intl') && \defined('INTL_IDNA_VARIANT_UTS46')) {
+            return \idn_to_ascii($domain, $options, INTL_IDNA_VARIANT_UTS46, $info);
+        }
+
+        /*
+         * The Idn class is marked as @internal. We've locked the version to
+         * symfony/polyfill-intl-idn to avoid issues in the future.
+         */
+        return Idn::idn_to_ascii($domain, $options, Idn::INTL_IDNA_VARIANT_UTS46, $info);
     }
 }

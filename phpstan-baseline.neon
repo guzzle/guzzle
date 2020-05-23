@@ -81,11 +81,6 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: "#^Parameter \\#1 \\$filename of function is_dir expects string, string\\|false given\\.$#"
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:\\$active has no typehint specified\\.$#"
 			count: 1
 			path: src/Handler/CurlMultiHandler.php

@@ -13,6 +13,11 @@ use Psr\Http\Message\UriInterface;
 interface ClientInterface
 {
     /**
+     * The Guzzle major version.
+     */
+    const MAJOR_VERSION = 7;
+
+    /**
      * Send an HTTP request.
      *
      * @param RequestInterface $request Request to send
