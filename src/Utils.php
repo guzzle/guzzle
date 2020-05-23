@@ -377,13 +377,9 @@ EOT
     }
 
     /**
-     * @param string $domain
-     * @param int    $options
-     * @param array  $info
-     *
      * @return string|false
      */
-    private static function idnToAsci($domain, $options, &$info = [])
+    private static function idnToAsci(string $domain, int $options, ?array &$info = [])
     {
         if (\preg_match('%^[ -~]+$%', $domain) === 1) {
             return $domain;
