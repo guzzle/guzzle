@@ -7,6 +7,7 @@ use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use Psr\Http\Message\UriInterface;
+use Symfony\Polyfill\Intl\Idn\Idn;
 
 final class Utils
 {
@@ -327,10 +328,7 @@ EOT
     public static function idnUriConvert(UriInterface $uri, int $options = 0): UriInterface
     {
         if ($uri->getHost()) {
-            $idnaVariant = defined('INTL_IDNA_VARIANT_UTS46') ? INTL_IDNA_VARIANT_UTS46 : 0;
-            $asciiHost = $idnaVariant === 0
-                ? idn_to_ascii($uri->getHost(), $options)
-                : idn_to_ascii($uri->getHost(), $options, $idnaVariant, $info);
+            $asciiHost = self::idnToAsci($uri->getHost(), $options, $info);
             if ($asciiHost === false) {
                 $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
 
@@ -376,5 +374,29 @@ EOT
         }
 
         return null;
+    }
+
+    /**
+     * @param string $domain
+     * @param int    $options
+     * @param array  $info
+     *
+     * @return string|false
+     */
+    private static function idnToAsci($domain, $options, &$info = [])
+    {
+        if (\preg_match('%^[ -~]+$%', $domain) === 1) {
+            return $domain;
+        }
+
+        if (\extension_loaded('intl') && \defined('INTL_IDNA_VARIANT_UTS46')) {
+            return \idn_to_ascii($domain, $options, INTL_IDNA_VARIANT_UTS46, $info);
+        }
+
+        /*
+         * The Idn class is marked as @internal. We've locked the version to
+         * symfony/polyfill-intl-idn to avoid issues in the future.
+         */
+        return Idn::idn_to_ascii($domain, $options, Idn::INTL_IDNA_VARIANT_UTS46, $info);
     }
 }
