@@ -271,12 +271,12 @@ parameters:
 			path: src/Exception/BadResponseException.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Exception\\\\ConnectException\\:\\:__construct\\(\\) has parameter \\$handlerContext with no value type specified in iterable type array\\.$#"
+			message: "#^Property GuzzleHttp\\\\Exception\\\\ConnectException\\:\\:\\$handlerContext type has no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Exception/ConnectException.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Exception\\\\ConnectException\\:\\:\\$handlerContext type has no value type specified in iterable type array\\.$#"
+			message: "#^Method GuzzleHttp\\\\Exception\\\\ConnectException\\:\\:__construct\\(\\) has parameter \\$handlerContext with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Exception/ConnectException.php
 
@@ -957,6 +957,11 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Utils\\:\\:jsonEncode\\(\\) should return string but returns string\\|false\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:idnToAsci\\(\\) has parameter \\$info with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/Utils.php
 
