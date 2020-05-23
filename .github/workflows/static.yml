@@ -20,7 +20,6 @@ jobs:
         env:
           REQUIRE_DEV: true
         with:
-          entrypoint: /composer/vendor/bin/phpstan
           args: analyze --no-progress
 
   php-cs-fixer:
