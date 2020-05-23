@@ -31,7 +31,7 @@ class HandlerStack
      * The returned handler stack can be passed to a client in the "handler"
      * option.
      *
-     * @param callable(RequestInterface, array): PromiseInterface|null $handler HTTP handler function to use with the stack. If no
+     * @param null|callable(RequestInterface, array): PromiseInterface $handler HTTP handler function to use with the stack. If no
      *                                                                          handler is provided, the best handler for your
      *                                                                          system will be utilized.
      */
@@ -47,7 +47,7 @@ class HandlerStack
     }
 
     /**
-     * @param callable(RequestInterface, array): PromiseInterface|null $handler Underlying HTTP handler.
+     * @param null|callable(RequestInterface, array): PromiseInterface $handler Underlying HTTP handler.
      */
     public function __construct(callable $handler = null)
     {
@@ -183,7 +183,7 @@ class HandlerStack
     /**
      * Compose the middleware and handler into a single callable function.
      *
-     * @return callable(RequestInterface, array): ResponseInterface|PromiseInterface
+     * @return callable(RequestInterface, array): (ResponseInterface|PromiseInterface)
      */
     public function resolve(): callable
     {
