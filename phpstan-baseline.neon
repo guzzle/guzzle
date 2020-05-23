@@ -1311,6 +1311,11 @@ parameters:
 			path: src/UriTemplate.php
 
 		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:idnToAsci\\(\\) has parameter \\$info with no value type specified in iterable type array\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
 			message: "#^Function GuzzleHttp\\\\uri_template\\(\\) has parameter \\$variables with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/functions.php
