@@ -11,7 +11,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class HandlerStack
 {
-    /** @var callable|null */
+    /** @var callable(RequestInterface, array): PromiseInterface|null */
     private $handler;
 
     /** @var array */
@@ -31,9 +31,9 @@ class HandlerStack
      * The returned handler stack can be passed to a client in the "handler"
      * option.
      *
-     * @param callable|null $handler HTTP handler function to use with the stack. If no
-     *                               handler is provided, the best handler for your
-     *                               system will be utilized.
+     * @param null|callable(RequestInterface, array): PromiseInterface $handler HTTP handler function to use with the stack. If no
+     *                                                                          handler is provided, the best handler for your
+     *                                                                          system will be utilized.
      */
     public static function create(?callable $handler = null): self
     {
@@ -47,7 +47,7 @@ class HandlerStack
     }
 
     /**
-     * @param callable $handler Underlying HTTP handler.
+     * @param null|callable(RequestInterface, array): PromiseInterface $handler Underlying HTTP handler.
      */
     public function __construct(callable $handler = null)
     {
@@ -98,8 +98,8 @@ class HandlerStack
     /**
      * Set the HTTP handler that actually returns a promise.
      *
-     * @param callable $handler Accepts a request and array of options and
-     *                          returns a Promise.
+     * @param callable(RequestInterface, array): PromiseInterface $handler Accepts a request and array of options and
+     *                                                                     returns a Promise.
      */
     public function setHandler(callable $handler): void
     {
@@ -118,8 +118,8 @@ class HandlerStack
     /**
      * Unshift a middleware to the bottom of the stack.
      *
-     * @param callable $middleware Middleware function
-     * @param string   $name       Name to register for this middleware.
+     * @param callable(RequestInterface, array): PromiseInterface $middleware Middleware function
+     * @param string                                              $name       Name to register for this middleware.
      */
     public function unshift(callable $middleware, ?string $name = null): void
     {
@@ -130,8 +130,8 @@ class HandlerStack
     /**
      * Push a middleware to the top of the stack.
      *
-     * @param callable $middleware Middleware function
-     * @param string   $name       Name to register for this middleware.
+     * @param callable(RequestInterface, array): PromiseInterface $middleware Middleware function
+     * @param string                                              $name       Name to register for this middleware.
      */
     public function push(callable $middleware, string $name = ''): void
     {
@@ -182,6 +182,8 @@ class HandlerStack
 
     /**
      * Compose the middleware and handler into a single callable function.
+     *
+     * @return callable(RequestInterface, array): (ResponseInterface|PromiseInterface)
      */
     public function resolve(): callable
     {

@@ -33,9 +33,6 @@ class CurlFactory implements CurlFactoryInterface
         $this->maxHandles = $maxHandles;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function create(RequestInterface $request, array $options): EasyHandle
     {
         if (isset($options['curl']['body_as_string'])) {
@@ -91,7 +88,8 @@ class CurlFactory implements CurlFactoryInterface
      * Completes a cURL transaction, either returning a response promise or a
      * rejected promise.
      *
-     * @param CurlFactoryInterface $factory Dictates how the handle is released
+     * @param callable(RequestInterface, array): PromiseInterface $handler
+     * @param CurlFactoryInterface                                $factory Dictates how the handle is released
      */
     public static function finish(
         callable $handler,
@@ -132,6 +130,9 @@ class CurlFactory implements CurlFactoryInterface
         \call_user_func($easy->options['on_stats'], $stats);
     }
 
+    /**
+     * @param callable(RequestInterface, array): PromiseInterface $handler
+     */
     private static function finishError(
         callable $handler,
         EasyHandle $easy,
@@ -514,6 +515,8 @@ class CurlFactory implements CurlFactoryInterface
      * stream, and then encountered a "necessary data rewind wasn't possible"
      * error, causing the request to be sent through curl_multi_info_read()
      * without an error status.
+     *
+     * @param callable(RequestInterface, array): PromiseInterface $handler
      */
     private static function retryFailedRewind(
         callable $handler,

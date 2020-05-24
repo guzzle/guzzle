@@ -147,7 +147,7 @@ class MockHandler implements \Countable
      * Adds one or more variadic requests, exceptions, callables, or promises
      * to the queue.
      *
-     * @param mixed $values
+     * @param array $values
      */
     public function append(...$values): void
     {

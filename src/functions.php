@@ -18,7 +18,7 @@ function describe_type($input): string
  * @param iterable $lines Header lines array of strings in the following
  *                        format: "Name: Value"
  */
-function headers_from_lines($lines): array
+function headers_from_lines(iterable $lines): array
 {
     return Utils::headersFromLines($lines);
 }
@@ -42,7 +42,7 @@ function debug_resource($value = null)
  *
  * @throws \RuntimeException if no viable Handler is available.
  *
- * @return callable Returns the best handler for the given system.
+ * @return callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface Returns the best handler for the given system.
  */
 function choose_handler(): callable
 {

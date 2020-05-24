@@ -11,12 +11,7 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^Call to an undefined method Traversable\\<mixed, mixed\\>\\:\\:getArrayCopy\\(\\)\\.$#"
-			count: 1
-			path: src/Cookie/CookieJar.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\CookieJar\\:\\:count\\(\\) has no return typehint specified\\.$#"
+			message: "#^Method GuzzleHttp\\\\Cookie\\\\CookieJar\\:\\:getIterator\\(\\) return type with generic class ArrayIterator does not specify its types\\: TKey, TValue$#"
 			count: 1
 			path: src/Cookie/CookieJar.php
 
@@ -29,11 +24,6 @@ parameters:
 			message: "#^Interface GuzzleHttp\\\\Cookie\\\\CookieJarInterface extends generic interface IteratorAggregate but does not specify its types\\: TKey, TValue$#"
 			count: 1
 			path: src/Cookie/CookieJarInterface.php
-
-		-
-			message: "#^Argument of an invalid type array\\|bool\\|float\\|int\\|object\\|string\\|null supplied for foreach, only iterables are supported\\.$#"
-			count: 1
-			path: src/Cookie/FileCookieJar.php
 
 		-
 			message: "#^Parameter \\#1 \\$string of function strlen expects string, bool\\|float\\|int\\|object\\|string\\|null given\\.$#"
@@ -156,7 +146,7 @@ parameters:
 			path: src/Handler/MockHandler.php
 
 		-
-			message: "#^PHPDoc tag @param for parameter \\$values with type mixed is not subtype of native type array\\<int, mixed\\>\\.$#"
+			message: "#^PHPDoc tag @param for parameter \\$values with type array is not subtype of native type array\\<int, mixed\\>\\.$#"
 			count: 1
 			path: src/Handler/MockHandler.php
 
@@ -197,11 +187,6 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Handler\\\\StreamHandler\\:\\:checkDecode\\(\\) has parameter \\$stream with no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: "#^Argument of an invalid type array\\<int, array\\<string, int\\|string\\>\\>\\|null supplied for foreach, only iterables are supported\\.$#"
 			count: 1
 			path: src/Handler/StreamHandler.php
 
@@ -276,11 +261,6 @@ parameters:
 			path: src/Pool.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\RedirectMiddleware\\:\\:\\$defaultSettings has no typehint specified\\.$#"
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
 			message: "#^Parameter \\#1 \\$str of function substr expects string, int given\\.$#"
 			count: 1
 			path: src/RedirectMiddleware.php
@@ -294,11 +274,6 @@ parameters:
 			message: "#^Parameter \\#2 \\$value of method Psr\\\\Http\\\\Message\\\\MessageInterface\\:\\:withHeader\\(\\) expects array\\<string\\>\\|string, array\\<int\\|string\\> given\\.$#"
 			count: 1
 			path: src/RedirectMiddleware.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\RetryMiddleware\\:\\:doRetry\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/RetryMiddleware.php
 
 		-
 			message: "#^Method GuzzleHttp\\\\Utils\\:\\:describeType\\(\\) has parameter \\$input with no typehint specified\\.$#"
