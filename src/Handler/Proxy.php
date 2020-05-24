@@ -37,10 +37,10 @@ class Proxy
      * performance benefits of curl while still supporting true streaming
      * through the StreamHandler.
      *
-     * @param callable(RequestInterface, array): PromiseInterface $default   Handler used for non-streaming responses
-     * @param callable(RequestInterface, array): PromiseInterface $streaming Handler used for streaming responses
+     * @param callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface $default   Handler used for non-streaming responses
+     * @param callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface $streaming Handler used for streaming responses
      *
-     * @return callable(RequestInterface, array): PromiseInterface Returns the composed handler.
+     * @return callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface Returns the composed handler.
      */
     public static function wrapStreaming(
         callable $default,

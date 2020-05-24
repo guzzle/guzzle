@@ -291,21 +291,6 @@ parameters:
 			path: src/Utils.php
 
 		-
-			message: "#^Parameter \\#1 \\$default of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapStreaming\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Promise\\\\PromiseInterface given\\.$#"
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: "#^Parameter \\#2 \\$streaming of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapStreaming\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, GuzzleHttp\\\\Handler\\\\StreamHandler given\\.$#"
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Utils\\:\\:chooseHandler\\(\\) should return callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Promise\\\\PromiseInterface but returns \\(callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Promise\\\\PromiseInterface\\)\\|\\(callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface\\)\\.$#"
-			count: 1
-			path: src/Utils.php
-
-		-
 			message: "#^Cannot access offset 0 on array\\<int, string\\>\\|false\\.$#"
 			count: 1
 			path: src/Utils.php
