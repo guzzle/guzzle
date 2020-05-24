@@ -23,7 +23,7 @@ Please make sure:
   instead of `GuzzleHttp\Exception\RequestException`.
 - Function `GuzzleHttp\Exception\ConnectException::getResponse()` is removed.
 - Function `GuzzleHttp\Exception\ConnectException::hasResponse()` is removed.
-- Constant `GuzzleHttp\ClientInterface::VERSION` is removed.
+- Constant `GuzzleHttp\ClientInterface::VERSION` is removed. Added `GuzzleHttp\ClientInterface::MAJOR_VERSION` instead.
 - Function `GuzzleHttp\Exception\RequestException::getResponseBodySummary` is removed.
   Use `\GuzzleHttp\Psr7\get_message_body_summary` as an alternative.
 - Function `GuzzleHttp\Cookie\CookieJar::getCookieValue` is removed.
