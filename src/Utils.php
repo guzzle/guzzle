@@ -38,7 +38,7 @@ final class Utils
      * @param iterable $lines Header lines array of strings in the following
      *                        format: "Name: Value"
      */
-    public static function headersFromLines($lines): array
+    public static function headersFromLines(iterable $lines): array
     {
         $headers = [];
 

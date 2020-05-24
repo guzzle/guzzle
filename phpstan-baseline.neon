@@ -156,21 +156,6 @@ parameters:
 			path: src/Handler/MockHandler.php
 
 		-
-			message: "#^Parameter \\$default of method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapSync\\(\\) has invalid typehint type GuzzleHttp\\\\Handler\\\\PromiseInterface\\.$#"
-			count: 1
-			path: src/Handler/Proxy.php
-
-		-
-			message: "#^Parameter \\$sync of method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapSync\\(\\) has invalid typehint type GuzzleHttp\\\\Handler\\\\PromiseInterface\\.$#"
-			count: 1
-			path: src/Handler/Proxy.php
-
-		-
-			message: "#^Return typehint of method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapSync\\(\\) has invalid type GuzzleHttp\\\\Handler\\\\PromiseInterface\\.$#"
-			count: 1
-			path: src/Handler/Proxy.php
-
-		-
 			message: "#^Property GuzzleHttp\\\\Handler\\\\StreamHandler\\:\\:\\$lastHeaders has no typehint specified\\.$#"
 			count: 1
 			path: src/Handler/StreamHandler.php
@@ -306,17 +291,17 @@ parameters:
 			path: src/Utils.php
 
 		-
-			message: "#^Parameter \\#1 \\$default of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapSync\\(\\) expects Closure\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, GuzzleHttp\\\\Handler\\\\CurlMultiHandler given\\.$#"
+			message: "#^Parameter \\#1 \\$default of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapSync\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, GuzzleHttp\\\\Handler\\\\CurlMultiHandler given\\.$#"
 			count: 1
 			path: src/Utils.php
 
 		-
-			message: "#^Parameter \\#2 \\$sync of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapSync\\(\\) expects Closure\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, GuzzleHttp\\\\Handler\\\\CurlHandler given\\.$#"
+			message: "#^Parameter \\#2 \\$sync of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapSync\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, GuzzleHttp\\\\Handler\\\\CurlHandler given\\.$#"
 			count: 1
 			path: src/Utils.php
 
 		-
-			message: "#^Parameter \\#1 \\$default of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapStreaming\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, \\(Closure\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface\\)\\|GuzzleHttp\\\\Handler\\\\CurlHandler\\|GuzzleHttp\\\\Handler\\\\CurlMultiHandler given\\.$#"
+			message: "#^Parameter \\#1 \\$default of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapStreaming\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, \\(callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface\\)\\|GuzzleHttp\\\\Handler\\\\CurlHandler\\|GuzzleHttp\\\\Handler\\\\CurlMultiHandler given\\.$#"
 			count: 1
 			path: src/Utils.php
 
@@ -342,11 +327,6 @@ parameters:
 
 		-
 			message: "#^Function GuzzleHttp\\\\describe_type\\(\\) has parameter \\$input with no typehint specified\\.$#"
-			count: 1
-			path: src/functions.php
-
-		-
-			message: "#^Function GuzzleHttp\\\\choose_handler\\(\\) should return callable\\(GuzzleHttp\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\PromiseInterface but returns callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Promise\\\\PromiseInterface\\.$#"
 			count: 1
 			path: src/functions.php
 
