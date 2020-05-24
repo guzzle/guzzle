@@ -291,17 +291,7 @@ parameters:
 			path: src/Utils.php
 
 		-
-			message: "#^Parameter \\#1 \\$default of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapSync\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, GuzzleHttp\\\\Handler\\\\CurlMultiHandler given\\.$#"
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: "#^Parameter \\#2 \\$sync of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapSync\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, GuzzleHttp\\\\Handler\\\\CurlHandler given\\.$#"
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: "#^Parameter \\#1 \\$default of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapStreaming\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, \\(callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface\\)\\|GuzzleHttp\\\\Handler\\\\CurlHandler\\|GuzzleHttp\\\\Handler\\\\CurlMultiHandler given\\.$#"
+			message: "#^Parameter \\#1 \\$default of static method GuzzleHttp\\\\Handler\\\\Proxy\\:\\:wrapStreaming\\(\\) expects callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface, callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Promise\\\\PromiseInterface given\\.$#"
 			count: 1
 			path: src/Utils.php
 
@@ -311,7 +301,7 @@ parameters:
 			path: src/Utils.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Utils\\:\\:chooseHandler\\(\\) should return callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Promise\\\\PromiseInterface but returns \\(callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface\\)\\|GuzzleHttp\\\\Handler\\\\CurlHandler\\|GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\|GuzzleHttp\\\\Handler\\\\StreamHandler\\.$#"
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:chooseHandler\\(\\) should return callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Promise\\\\PromiseInterface but returns \\(callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Promise\\\\PromiseInterface\\)\\|\\(callable\\(Psr\\\\Http\\\\Message\\\\RequestInterface, array\\)\\: GuzzleHttp\\\\Handler\\\\PromiseInterface\\)\\.$#"
 			count: 1
 			path: src/Utils.php
 

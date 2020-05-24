@@ -13,10 +13,10 @@ class Proxy
      * Sends synchronous requests to a specific handler while sending all other
      * requests to another handler.
      *
-     * @param callable(RequestInterface, array): PromiseInterface $default Handler used for normal responses
-     * @param callable(RequestInterface, array): PromiseInterface $sync    Handler used for synchronous responses.
+     * @param callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface $default Handler used for normal responses
+     * @param callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface $sync    Handler used for synchronous responses.
      *
-     * @return callable(RequestInterface, array): PromiseInterface Returns the composed handler.
+     * @return callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface Returns the composed handler.
      */
     public static function wrapSync(
         callable $default,
