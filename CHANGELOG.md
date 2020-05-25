@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.5.4 - 2020-05-25
+
+* Fix various intl icu issues [#2626](https://github.com/guzzle/guzzle/pull/2626)
+
 ## 6.5.3 - 2020-04-18
 
 * Use Symfony intl-idn polyfill [#2550](https://github.com/guzzle/guzzle/pull/2550)
