@@ -2,12 +2,24 @@
 
 ## UNRELEASED
 
+### Added
+
+* Using `Utils` class instead of functions in the `GuzzleHttp` namespace. [#2546](https://github.com/guzzle/guzzle/pull/2546)
+* `ClientInterface::MAJOR_VERSION` [#2583](https://github.com/guzzle/guzzle/pull/2583)
+
 ### Changed
 
 * Avoid the getenv function when unsafe [#2531](https://github.com/guzzle/guzzle/pull/2531)
 * Added real client methods [#2529](https://github.com/guzzle/guzzle/pull/2529)
 * Avoid functions due to global install conflicts [#2546](https://github.com/guzzle/guzzle/pull/2546)
 * Use Symfony intl-idn polyfill [#2550](https://github.com/guzzle/guzzle/pull/2550)
+* Adding methods for HTTP verbs like `Client::get()`, `Client::head()`, `Client::patch()` etc [#2529](https://github.com/guzzle/guzzle/pull/2529)
+* `ConnectException` extends `TransferException` [#2541](https://github.com/guzzle/guzzle/pull/2541)
+* Updated the default User Agent to "GuzzleHttp/7" [#2654](https://github.com/guzzle/guzzle/pull/2654)
+
+### Fixed
+
+* Various intl icu issues [#2626](https://github.com/guzzle/guzzle/pull/2626)
 
 ### Removed
 
