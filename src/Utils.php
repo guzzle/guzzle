@@ -107,17 +107,7 @@ final class Utils
      */
     public static function defaultUserAgent(): string
     {
-        static $defaultAgent = '';
-
-        if (!$defaultAgent) {
-            $defaultAgent = 'GuzzleHttp/Guzzle';
-            if (\extension_loaded('curl') && \function_exists('curl_version')) {
-                $defaultAgent .= ' curl/' . \curl_version()['version'];
-            }
-            $defaultAgent .= ' PHP/' . PHP_VERSION;
-        }
-
-        return $defaultAgent;
+        return sprintf('GuzzleHttp/%d', ClientInterface::MAJOR_VERSION);
     }
 
     /**
