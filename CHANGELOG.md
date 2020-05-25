@@ -15,7 +15,7 @@
 * Use Symfony intl-idn polyfill [#2550](https://github.com/guzzle/guzzle/pull/2550)
 * Adding methods for HTTP verbs like `Client::get()`, `Client::head()`, `Client::patch()` etc [#2529](https://github.com/guzzle/guzzle/pull/2529)
 * `ConnectException` extends `TransferException` [#2541](https://github.com/guzzle/guzzle/pull/2541)
-* Updated the default User Agent to "GuzzleHttp/Guzzle" [#2654](https://github.com/guzzle/guzzle/pull/2654)
+* Updated the default User Agent to "GuzzleHttp/7" [#2654](https://github.com/guzzle/guzzle/pull/2654)
 
 ### Fixed
 
