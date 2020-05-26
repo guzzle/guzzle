@@ -185,7 +185,7 @@ class CurlFactory implements CurlFactoryInterface
                 )
             );
         }
-        if (\version_compare($ctx[self::CURL_VERSION_STR], self::LOW_CURL_VERSION_NUMBER)) {
+        if (\version_compare($ctx[self::CURL_VERSION_STR], self::LOW_CURL_VERSION_NUMBER) > 0) {
             $message = \sprintf(
                 'cURL error %s: %s (%s)',
                 $ctx['errno'],
