@@ -193,7 +193,7 @@ final class Middleware
                         $logger->log($logLevel, $message);
                         return $response;
                     },
-                    function ($reason) use ($logger, $request, $formatter, $logLevel): PromiseInterface {
+                    function ($reason) use ($logger, $request, $formatter): PromiseInterface {
                         $response = $reason instanceof RequestException
                             ? $reason->getResponse()
                             : null;
