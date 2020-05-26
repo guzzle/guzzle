@@ -3,7 +3,6 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
-use Symfony\Polyfill\Intl\Idn\Idn;
 
 final class Utils
 {
@@ -80,10 +79,6 @@ final class Utils
             return \idn_to_ascii($domain, $options, INTL_IDNA_VARIANT_UTS46, $info);
         }
 
-        /*
-         * The Idn class is marked as @internal. We've locked the version to
-         * symfony/polyfill-intl-idn to avoid issues in the future.
-         */
         return Idn::idn_to_ascii($domain, $options, Idn::INTL_IDNA_VARIANT_UTS46, $info);
     }
 }
