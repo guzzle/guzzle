@@ -13,6 +13,7 @@ final class Utils
     /**
      * Debug function used to describe the provided value type and class.
      *
+     * @param mixed $input
      * @return string Returns a string containing the type of the variable and
      *                if a class is provided, the class name.
      */
@@ -27,7 +28,10 @@ final class Utils
                 \ob_start();
                 \var_dump($input);
                 // normalize float vs double
-                return \str_replace('double(', 'float(', \rtrim(\ob_get_clean()));
+                /** @var string $varDumpContent */
+                $varDumpContent = \ob_get_clean();
+
+                return \str_replace('double(', 'float(', \rtrim($varDumpContent));
         }
     }
 
@@ -62,11 +66,15 @@ final class Utils
     {
         if (\is_resource($value)) {
             return $value;
-        } elseif (\defined('STDOUT')) {
+        }
+        if (\defined('STDOUT')) {
             return STDOUT;
         }
 
-        return \fopen('php://output', 'w');
+        /** @var resource $resource */
+        $resource = \fopen('php://output', 'w');
+
+        return $resource;
     }
 
     /**
@@ -220,7 +228,10 @@ EOT
 
         // Strip port if present.
         if (\strpos($host, ':')) {
-            $host = \explode($host, ':', 2)[0];
+            $hostParts = \explode($host, ':', 2);
+            if (false !== $hostParts) {
+                $host = $hostParts[0];
+            }
         }
 
         foreach ($noProxyArray as $area) {
@@ -287,7 +298,7 @@ EOT
     public static function jsonEncode($value, int $options = 0, int $depth = 512): string
     {
         $json = \json_encode($value, $options, $depth);
-        if (JSON_ERROR_NONE !== \json_last_error()) {
+        if (JSON_ERROR_NONE !== \json_last_error() || false === $json) {
             throw new InvalidArgumentException(
                 'json_encode error: ' . \json_last_error_msg()
             );
