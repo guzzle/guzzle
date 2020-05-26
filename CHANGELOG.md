@@ -1,6 +1,6 @@
 # Change Log
 
-## UNRELEASED
+## 7.0.0-beta1 - 2020-05-25
 
 ### Added
 
@@ -10,7 +10,6 @@
 ### Changed
 
 * Avoid the getenv function when unsafe [#2531](https://github.com/guzzle/guzzle/pull/2531)
-* Added real client methods [#2529](https://github.com/guzzle/guzzle/pull/2529)
 * Avoid functions due to global install conflicts [#2546](https://github.com/guzzle/guzzle/pull/2546)
 * Use Symfony intl-idn polyfill [#2550](https://github.com/guzzle/guzzle/pull/2550)
 * Adding methods for HTTP verbs like `Client::get()`, `Client::head()`, `Client::patch()` etc [#2529](https://github.com/guzzle/guzzle/pull/2529)

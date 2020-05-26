@@ -47,7 +47,7 @@ curl_version();
 \curl_version();
 ```
 
-For the full diff you can check [here](https://github.com/guzzle/guzzle/compare/6.5.0..master).
+For the full diff you can check [here](https://github.com/guzzle/guzzle/compare/6.5.4..master).
 
 5.0 to 6.0
 ----------
