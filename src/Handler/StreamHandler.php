@@ -335,7 +335,8 @@ class StreamHandler
 
         return $this->createResource(
             function () use ($uri, &$http_response_header, $context, $options) {
-                $resource = \fopen((string) $uri, 'r', null, $context);
+                /** @var resource $resource */
+                $resource = \fopen((string) $uri, 'r', false, $context);
                 $this->lastHeaders = $http_response_header;
 
                 if (isset($options['read_timeout'])) {
