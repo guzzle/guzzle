@@ -62,4 +62,12 @@ tag:
 package:
 	php build/packager.php
 
+static: static-phpstan static-cs-fixer
+
+static-phpstan:
+	docker run --rm -it -e REQUIRE_DEV=true -v ${PWD}:/app -w /app oskarstark/phpstan-ga:0.12.23 analyze
+
+static-cs-fixer:
+	docker run --rm -it -v ${PWD}:/app -w /app oskarstark/php-cs-fixer-ga:2.16.3.1 --dry-run --diff-format udiff
+
 .PHONY: docs burgomaster coverage-show view-coverage
