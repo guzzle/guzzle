@@ -146,7 +146,7 @@ final class Idn
             ++$n;
         }
 
-        $output = 'xn--'.$output;
+        $output = 'xn--' . $output;
 
         return \strlen($output) < 1 || 63 < \strlen($output) ? false : strtolower($output);
     }
@@ -235,7 +235,7 @@ final class Idn
             $bias = self::adapt($i - $oldi, ++$outputLength, 0 === $oldi);
             $n = $n + (int) ($i / $outputLength);
             $i = $i % $outputLength;
-            $output = mb_substr($output, 0, $i, 'utf-8').mb_chr($n, 'utf-8').mb_substr($output, $i, $outputLength - 1, 'utf-8');
+            $output = mb_substr($output, 0, $i, 'utf-8') . mb_chr($n, 'utf-8') . mb_substr($output, $i, $outputLength - 1, 'utf-8');
 
             ++$i;
         }
