@@ -4,6 +4,8 @@ includes:
 parameters:
     level: max
     checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    treatPhpDocTypesAsCertain: false
     paths:
         - src
     bootstrap: tests/bootstrap-phpstan.php

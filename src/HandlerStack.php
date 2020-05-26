@@ -252,6 +252,6 @@ class HandlerStack
                 : "callable(['" . \get_class($fn[0]) . "', '{$fn[1]}'])";
         }
 
-        return 'callable(' . \spl_object_hash($fn) . ')';
+        return 'callable(' . \spl_object_hash((object) $fn) . ')';
     }
 }
