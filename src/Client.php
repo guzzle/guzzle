@@ -72,7 +72,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     public function __call($method, $args)
     {
         if (\count($args) < 1) {
-            throw new InvalidArgumentException('Magic request methods require a URI and optional options array');
+            throw new \ArgumentCountError(
+                \sprintf('Magic request method %s require a URI and optional options array', $method)
+            );
         }
 
         $uri = $args[0];

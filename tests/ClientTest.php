@@ -29,8 +29,8 @@ class ClientTest extends TestCase
     {
         $client = new Client();
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Magic request methods require a URI and optional options array');
+        $this->expectException(\ArgumentCountError::class);
+        $this->expectExceptionMessage('Magic request method options require a URI and optional options array');
         $client->options();
     }
 
