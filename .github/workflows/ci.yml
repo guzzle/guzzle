@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download dependencies
-        run: composer update --no-interaction --prefer-stable --prefer-lowest --prefer-dist
+        run: composer update --no-interaction --prefer-stable --prefer-lowest --prefer-dist --ignore-platform-reqs
 
       - name: Run tests
         run: make test
@@ -68,7 +68,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download dependencies
-        run: composer update --no-interaction --prefer-dist
+        run: composer update --no-interaction --prefer-dist --ignore-platform-reqs
 
       - name: Run tests
         run: make test
