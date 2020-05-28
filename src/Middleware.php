@@ -7,6 +7,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Functions used to create and wrap handlers with handler middleware.
@@ -177,13 +178,15 @@ final class Middleware
      * Middleware that logs requests, responses, and errors using a message
      * formatter.
      *
+     * @phpstan-param \Psr\Log\LogLevel::* $logLevel  Level at which to log requests.
+     *
      * @param LoggerInterface  $logger    Logs messages.
      * @param MessageFormatter $formatter Formatter used to create message strings.
      * @param string           $logLevel  Level at which to log requests.
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function log(LoggerInterface $logger, MessageFormatter $formatter, string $logLevel = 'info' /* \Psr\Log\LogLevel::INFO */): callable
+    public static function log(LoggerInterface $logger, MessageFormatter $formatter, string $logLevel = 'info'): callable
     {
         return function (callable $handler) use ($logger, $formatter, $logLevel): callable {
             return function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel) {

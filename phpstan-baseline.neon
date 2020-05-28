@@ -156,16 +156,6 @@ parameters:
 			path: src/Handler/MockHandler.php
 
 		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\StreamHandler\\:\\:\\$lastHeaders has no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Handler\\\\StreamHandler\\:\\:invokeStats\\(\\) has parameter \\$error with no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Handler\\\\StreamHandler\\:\\:invokeStats\\(\\) has parameter \\$startTime with no typehint specified\\.$#"
 			count: 1
 			path: src/Handler/StreamHandler.php
@@ -282,11 +272,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$str of function rtrim expects string, string\\|false given\\.$#"
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Utils\\:\\:debugResource\\(\\) should return resource but returns resource\\|false\\.$#"
 			count: 1
 			path: src/Utils.php
 

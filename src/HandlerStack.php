@@ -142,9 +142,9 @@ class HandlerStack
     /**
      * Add a middleware before another middleware by name.
      *
-     * @param string   $findName   Middleware to find
-     * @param callable $middleware Middleware function
-     * @param string   $withName   Name to register for this middleware.
+     * @param string                                              $findName   Middleware to find
+     * @param callable(RequestInterface, array): PromiseInterface $middleware Middleware function
+     * @param string                                              $withName   Name to register for this middleware.
      */
     public function before(string $findName, callable $middleware, string $withName = ''): void
     {
@@ -154,9 +154,9 @@ class HandlerStack
     /**
      * Add a middleware after another middleware by name.
      *
-     * @param string   $findName   Middleware to find
-     * @param callable $middleware Middleware function
-     * @param string   $withName   Name to register for this middleware.
+     * @param string                                              $findName   Middleware to find
+     * @param callable(RequestInterface, array): PromiseInterface $middleware Middleware function
+     * @param string                                              $withName   Name to register for this middleware.
      */
     public function after(string $findName, callable $middleware, string $withName = ''): void
     {
