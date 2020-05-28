@@ -1,5 +1,10 @@
 # Change Log
 
+## UNRELEASED
+
+### Changed
+* Use error level for logging errors in Middleware [#2629](https://github.com/guzzle/guzzle/pull/2629)
+
 ## 7.0.0-beta2 - 2020-05-25
 
 ### Added
