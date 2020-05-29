@@ -1050,10 +1050,10 @@ version
 
 :Summary: Protocol version to use with the request.
 :Types: string, float
-:Default: ``1.1``
+:Default: ``1.0``
 :Constant: ``GuzzleHttp\RequestOptions::VERSION``
 
 .. code-block:: php
 
-    // Force HTTP/1.0
-    $request = $client->request('GET', '/get', ['version' => 1.0]);
+    // Force HTTP/1.1
+    $request = $client->request('GET', '/get', ['version' => 1.1]);
