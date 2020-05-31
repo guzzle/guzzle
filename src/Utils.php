@@ -370,10 +370,6 @@ EOT
      */
     private static function idnToAsci(string $domain, int $options, ?array &$info = [])
     {
-        if (\preg_match('%^[ -~]+$%', $domain) === 1) {
-            return $domain;
-        }
-
         if (\function_exists('idn_to_ascii') && \defined('INTL_IDNA_VARIANT_UTS46')) {
             return \idn_to_ascii($domain, $options, INTL_IDNA_VARIANT_UTS46, $info);
         }
