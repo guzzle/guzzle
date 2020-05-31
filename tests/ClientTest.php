@@ -708,7 +708,7 @@ class ClientTest extends TestCase
 
         $config = Helpers::readObjectAttribute($client, 'config');
 
-        self::assertTrue($config['idn_conversion']);
+        self::assertFalse($config['idn_conversion']);
     }
 
     public function testIdnIsTranslatedToAsciiWhenConversionIsEnabled()
