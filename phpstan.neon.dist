@@ -5,3 +5,5 @@ parameters:
     level: max
     paths:
       - src
+    excludes_analyse:
+      - src/Idn.php
