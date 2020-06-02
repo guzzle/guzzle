@@ -161,11 +161,6 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Handler\\\\StreamHandler\\:\\:checkDecode\\(\\) has parameter \\$stream with no typehint specified\\.$#"
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: "#^Parameter \\#3 \\$use_include_path of function fopen expects bool, null given\\.$#"
 			count: 1
 			path: src/Handler/StreamHandler.php

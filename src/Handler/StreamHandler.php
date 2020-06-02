@@ -164,6 +164,9 @@ class StreamHandler
             : Psr7\stream_for($sink);
     }
 
+    /**
+     * @param resource $stream
+     */
     private function checkDecode(array $options, array $headers, $stream): array
     {
         // Automatically decode responses when instructed.
