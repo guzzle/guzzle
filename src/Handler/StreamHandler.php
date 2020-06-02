@@ -96,7 +96,7 @@ class StreamHandler
 
     /**
      * @param resource $stream
-     * @param mixed $startTime
+     * @param mixed    $startTime
      */
     private function createResponse(
         RequestInterface $request,
