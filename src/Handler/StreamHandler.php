@@ -94,6 +94,10 @@ class StreamHandler
         }
     }
 
+    /**
+     * @param resource $stream
+     * @param mixed $startTime
+     */
     private function createResponse(
         RequestInterface $request,
         array $options,
@@ -107,7 +111,7 @@ class StreamHandler
         $status = $parts[1];
         $reason = isset($parts[2]) ? $parts[2] : null;
         $headers = Utils::headersFromLines($hdrs);
-        list($stream, $headers) = $this->checkDecode($options, $headers, $stream);
+        [$stream, $headers] = $this->checkDecode($options, $headers, $stream);
         $stream = Psr7\stream_for($stream);
         $sink = $stream;
 
