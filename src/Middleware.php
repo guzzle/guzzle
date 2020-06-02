@@ -47,7 +47,7 @@ final class Middleware
      * Middleware that throws exceptions for 4xx or 5xx responses when the
      * "http_error" request option is set to true.
      *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable(callable): callable Returns a function that accepts the next handler.
      */
     public static function httpErrors(): callable
     {
@@ -74,7 +74,7 @@ final class Middleware
      *
      * @param array|\ArrayAccess $container Container to hold the history (by reference).
      *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable(callable): callable Returns a function that accepts the next handler.
      *
      * @throws \InvalidArgumentException if container is not an array or ArrayAccess.
      */
