@@ -70,7 +70,8 @@ class MessageFormatter
     ): string {
         $cache = [];
 
-        return \preg_replace_callback(
+        /** @var string $message */
+        $message = \preg_replace_callback(
             '/{\s*([A-Za-z_\-\.0-9]+)\s*}/',
             function (array $matches) use ($request, $response, $error, &$cache) {
                 if (isset($cache[$matches[1]])) {
@@ -166,6 +167,8 @@ class MessageFormatter
             },
             $this->template
         );
+
+        return $message;
     }
 
     /**
