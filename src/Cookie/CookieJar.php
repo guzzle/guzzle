@@ -256,7 +256,7 @@ class CookieJar implements CookieJarInterface
         if ('/' === $uriPath) {
             return '/';
         }
-        if (0 === $lastSlashPos = \strrpos($uriPath, '/')) {
+        if (0 === ($lastSlashPos = \strrpos($uriPath, '/')) || false === $lastSlashPos) {
             return '/';
         }
 
