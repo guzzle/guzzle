@@ -73,9 +73,11 @@ final class EasyHandle
             }
         }
 
+        $statusCode = (int) $startLine[1];
+
         // Attach a response to the easy handle with the parsed headers.
         $this->response = new Response(
-            $startLine[1],
+            $statusCode,
             $headers,
             $this->sink,
             \substr($startLine[0], 5),
@@ -83,6 +85,11 @@ final class EasyHandle
         );
     }
 
+    /**
+     * @param string $name
+     * @return void
+     * @throws \BadMethodCallException
+     */
     public function __get($name)
     {
         $msg = $name === 'handle'
