@@ -311,13 +311,13 @@ EOT
      * Wrapper for the hrtime() or microtime() functions
      * (depending on the PHP version, one of the two is used)
      *
-     * @return float|mixed UNIX timestamp
+     * @return float UNIX timestamp
      *
      * @internal
      */
     public static function currentTime()
     {
-        return \function_exists('hrtime') ? \hrtime(true) / 1e9 : \microtime(true);
+        return (float) \function_exists('hrtime') ? \hrtime(true) / 1e9 : \microtime(true);
     }
 
     /**

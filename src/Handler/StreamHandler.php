@@ -81,7 +81,7 @@ class StreamHandler
     private function invokeStats(
         array $options,
         RequestInterface $request,
-        $startTime,
+        ?float $startTime,
         ResponseInterface $response = null,
         \Throwable $error = null
     ): void {
@@ -105,14 +105,14 @@ class StreamHandler
         RequestInterface $request,
         array $options,
         $stream,
-        $startTime
+        ?float $startTime
     ): PromiseInterface {
         $hdrs = $this->lastHeaders;
         $this->lastHeaders = [];
         $parts = \explode(' ', \array_shift($hdrs), 3);
         $ver = \explode('/', $parts[0])[1];
-        $status = $parts[1];
-        $reason = isset($parts[2]) ? $parts[2] : null;
+        $status = (int) $parts[1];
+        $reason = $parts[2] ?? null;
         $headers = Utils::headersFromLines($hdrs);
         [$stream, $headers] = $this->checkDecode($options, $headers, $stream);
         $stream = Psr7\stream_for($stream);
