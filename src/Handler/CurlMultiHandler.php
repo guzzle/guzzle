@@ -29,12 +29,14 @@ class CurlMultiHandler
 
     /**
      * @var array Request entry handles, indexed by handle id in `addRequest`.
+     *
      * @see CurlMultiHandler::addRequest
      */
     private $handles = [];
 
     /**
      * @var array<int, float> An array of delay times, indexed by handle id in `addRequest`.
+     *
      * @see CurlMultiHandler::addRequest
      */
     private $delays = [];
@@ -71,6 +73,7 @@ class CurlMultiHandler
 
     /**
      * @param string $name
+     *
      * @return resource
      */
     public function __get($name)

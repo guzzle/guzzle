@@ -87,7 +87,9 @@ final class EasyHandle
 
     /**
      * @param string $name
+     *
      * @return void
+     *
      * @throws \BadMethodCallException
      */
     public function __get($name)

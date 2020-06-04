@@ -5,7 +5,7 @@ namespace GuzzleHttp;
  * Debug function used to describe the provided value type and class.
  *
  * @param mixed $input Any type of variable to describe the type of. This
- *                parameter misses a typehint because of that.
+ *                     parameter misses a typehint because of that.
  *
  * @return string Returns a string containing the type of the variable and
  *                if a class is provided, the class name.

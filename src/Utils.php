@@ -14,6 +14,7 @@ final class Utils
      * Debug function used to describe the provided value type and class.
      *
      * @param mixed $input
+     *
      * @return string Returns a string containing the type of the variable and
      *                if a class is provided, the class name.
      */
