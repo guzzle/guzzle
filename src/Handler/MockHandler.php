@@ -61,6 +61,7 @@ class MockHandler implements \Countable
      * {@see \Psr\Http\Message\ResponseInterface} objects, Exceptions,
      * callables, or Promises.
      *
+     * @param array<int, mixed> $queue The parameters to be passed to the append function, as an indexed array.
      * @param callable|null $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable|null $onRejected  Callback to invoke when the return value is rejected.
      */
@@ -83,8 +84,10 @@ class MockHandler implements \Countable
             throw new \OutOfBoundsException('Mock queue is empty');
         }
 
-        if (isset($options['delay']) && \is_numeric($options['delay'])) {
-            \usleep($options['delay'] * 1000);
+        /** @var ?int $delay */
+        $delay = $options['delay'] ?? null;
+        if (\is_numeric($delay)) {
+            \usleep($delay * 1000);
         }
 
         $this->lastRequest = $request;
@@ -147,7 +150,7 @@ class MockHandler implements \Countable
      * Adds one or more variadic requests, exceptions, callables, or promises
      * to the queue.
      *
-     * @param array $values
+     * @param mixed ...$values
      */
     public function append(...$values): void
     {
@@ -193,6 +196,9 @@ class MockHandler implements \Countable
         $this->queue = [];
     }
 
+    /**
+     * @param mixed $reason Promise or reason.
+     */
     private function invokeStats(
         RequestInterface $request,
         array $options,
