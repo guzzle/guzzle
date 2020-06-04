@@ -4,10 +4,13 @@ namespace GuzzleHttp;
 /**
  * Debug function used to describe the provided value type and class.
  *
+ * @param mixed $input Any type of variable to describe the type of. This
+ *                parameter misses a typehint because of that.
+ *
  * @return string Returns a string containing the type of the variable and
  *                if a class is provided, the class name.
  */
-function describe_type(string $input): string
+function describe_type(/* mixed */ $input): string
 {
     return Utils::describeType($input);
 }
