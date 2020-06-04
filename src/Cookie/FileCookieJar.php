@@ -79,7 +79,8 @@ class FileCookieJar extends CookieJar
         $json = \file_get_contents($filename);
         if (false === $json) {
             throw new \RuntimeException("Unable to load file {$filename}");
-        } elseif ($json === '') {
+        }
+        if ($json === '') {
             return;
         }
 
@@ -88,7 +89,7 @@ class FileCookieJar extends CookieJar
             foreach ($data as $cookie) {
                 $this->setCookie(new SetCookie($cookie));
             }
-        } elseif (\strlen($data)) {
+        } elseif (is_string($data) && \strlen($data)) {
             throw new \RuntimeException("Invalid cookie file: {$filename}");
         }
     }
