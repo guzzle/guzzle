@@ -23,7 +23,7 @@ final class EasyHandle
     /** @var array Received HTTP headers so far */
     public $headers = [];
 
-    /** @var ResponseInterface Received response (if any) */
+    /** @var ?ResponseInterface Received response (if any) */
     public $response;
 
     /** @var RequestInterface Request being sent */
@@ -35,7 +35,7 @@ final class EasyHandle
     /** @var int cURL error number (if any) */
     public $errno = 0;
 
-    /** @var \Throwable Exception during on_headers (if any) */
+    /** @var ?\Throwable Exception during on_headers (if any) */
     public $onHeadersException;
 
     /**
