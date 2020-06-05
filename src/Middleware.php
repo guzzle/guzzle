@@ -72,7 +72,7 @@ final class Middleware
     /**
      * Middleware that pushes history data to an ArrayAccess container.
      *
-     * @param array|\ArrayAccess $container Container to hold the history (by reference).
+     * @param null|array|\ArrayAccess<int, array> $container Container to hold the history (by reference).
      *
      * @return callable(callable): callable Returns a function that accepts the next handler.
      *

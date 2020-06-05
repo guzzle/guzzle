@@ -218,6 +218,9 @@ class CookieJar implements CookieJarInterface
         return \count($this->cookies);
     }
 
+    /**
+     * @return \ArrayIterator<int, SetCookie>
+     */
     public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator(\array_values($this->cookies));

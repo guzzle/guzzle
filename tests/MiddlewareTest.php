@@ -85,6 +85,17 @@ class MiddlewareTest extends TestCase
         self::assertSame('baz', $container[1]['options']['headers']['foo']);
     }
 
+    /**
+     * As documented in Middleware::history parameter phpdoc.
+     */
+    public function testNullContainerException()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $nullContainer = null;
+        Middleware::history($nullContainer);
+    }
+
     public function getHistoryUseCases()
     {
         return [
