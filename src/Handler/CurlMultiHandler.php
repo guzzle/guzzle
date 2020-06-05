@@ -24,7 +24,7 @@ class CurlMultiHandler
     /** @var int */
     private $selectTimeout;
 
-    /** @var ?resource the currently executing resource in `curl_multi_exec`. */
+    /** @var resource|null the currently executing resource in `curl_multi_exec`. */
     private $active = null;
 
     /**
