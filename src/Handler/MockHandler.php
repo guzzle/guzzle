@@ -61,7 +61,7 @@ class MockHandler implements \Countable
      * {@see \Psr\Http\Message\ResponseInterface} objects, Exceptions,
      * callables, or Promises.
      *
-     * @param array<int, mixed> $queue       The parameters to be passed to the append function, as an indexed array.
+     * @param array<int, mixed>|null $queue  The parameters to be passed to the append function, as an indexed array.
      * @param callable|null     $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable|null     $onRejected  Callback to invoke when the return value is rejected.
      */
