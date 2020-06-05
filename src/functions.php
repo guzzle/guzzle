@@ -10,7 +10,7 @@ namespace GuzzleHttp;
  * @return string Returns a string containing the type of the variable and
  *                if a class is provided, the class name.
  */
-function describe_type(/* mixed */ $input): string
+function describe_type($input): string
 {
     return Utils::describeType($input);
 }
