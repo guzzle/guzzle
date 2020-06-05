@@ -332,9 +332,12 @@ class StreamHandler
 
         return $this->createResource(
             function () use ($uri, &$http_response_header, $context, $options) {
-                /** @var resource $resource */
                 $resource = \fopen((string) $uri, 'r', false, $context);
                 $this->lastHeaders = $http_response_header;
+
+                if (false === $resource) {
+                    throw new \RuntimeException('Can not open resource for URI ' . $uri);
+                }
 
                 if (isset($options['read_timeout'])) {
                     $readTimeout = $options['read_timeout'];
