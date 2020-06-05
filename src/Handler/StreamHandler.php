@@ -61,9 +61,9 @@ class StreamHandler
             $message = $e->getMessage();
             // This list can probably get more comprehensive.
             if (\strpos($message, 'getaddrinfo') // DNS lookup failed
-                || \strpos($message, 'Connection refused')
-                || \strpos($message, "couldn't connect to host") // error on HHVM
-                || \strpos($message, "connection attempt failed")
+                || false !== \strpos($message, 'Connection refused')
+                || false !== \strpos($message, "couldn't connect to host") // error on HHVM
+                || false !== \strpos($message, "connection attempt failed")
             ) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             } else {
@@ -324,19 +324,19 @@ class StreamHandler
 
         $uri = $this->resolveHost($request, $options);
 
-        $context = $this->createResource(
+        $contextResource = $this->createResource(
             static function () use ($context, $params) {
                 return \stream_context_create($context, $params);
             }
         );
 
         return $this->createResource(
-            function () use ($uri, &$http_response_header, $context, $options) {
-                $resource = \fopen((string) $uri, 'r', false, $context);
+            function () use ($uri, &$http_response_header, $contextResource, $context, $options, $request) {
+                $resource = \fopen((string) $uri, 'r', false, $contextResource);
                 $this->lastHeaders = $http_response_header;
 
                 if (false === $resource) {
-                    throw new \RuntimeException('Can not open resource for URI ' . $uri);
+                    throw new ConnectException('Connection refused for URI ' . $uri, $request, null, $context);
                 }
 
                 if (isset($options['read_timeout'])) {
