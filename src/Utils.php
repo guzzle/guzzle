@@ -296,8 +296,9 @@ EOT
      */
     public static function jsonEncode($value, int $options = 0, int $depth = 512): string
     {
+        /** @var string $json */
         $json = \json_encode($value, $options, $depth);
-        if (JSON_ERROR_NONE !== \json_last_error() || false === $json) {
+        if (JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException(
                 'json_encode error: ' . \json_last_error_msg()
             );
