@@ -72,10 +72,8 @@ final class Utils
             return STDOUT;
         }
 
-        /** @var resource $resource */
-        $resource = \fopen('php://output', 'w');
-
-        return $resource;
+        /** @var resource */
+        return \fopen('php://output', 'w');
     }
 
     /**

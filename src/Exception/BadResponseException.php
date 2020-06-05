@@ -33,9 +33,7 @@ class BadResponseException extends RequestException
      */
     public function getResponse(): ResponseInterface
     {
-        /** @var ResponseInterface $response */
-        $response = parent::getResponse();
-
-        return $response;
+        /** @var ResponseInterface */
+        return parent::getResponse();
     }
 }
