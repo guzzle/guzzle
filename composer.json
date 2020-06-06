@@ -34,6 +34,7 @@
         "psr/log": "^1.1"
     },
     "suggest": {
+        "ext-intl": "Required for native Internationalized Domain Name (IDN) support",
         "psr/log": "Required for using the Log middleware"
     },
     "config": {
