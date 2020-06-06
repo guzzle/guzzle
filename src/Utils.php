@@ -87,6 +87,6 @@ final class Utils
             return Idn::idn_to_ascii($domain, $options, Idn::INTL_IDNA_VARIANT_UTS46, $info);
         }
 
-        throw new \RuntimeException('ext-idn or symfony/polyfill-intl-idn not loaded or too old');
+        throw new \RuntimeException('ext-intl or symfony/polyfill-intl-idn not loaded or too old');
     }
 }
