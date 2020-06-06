@@ -66,11 +66,7 @@ final class Utils
             return STDOUT;
         }
 
-        $resource = \fopen('php://output', 'w');
-        if ($resource === false) {
-            throw new \RuntimeException('There was an error while executing fopen to php://output');
-        }
-        return $resource;
+        return \fopen('php://output', 'w');
     }
 
     /**

@@ -256,6 +256,11 @@ parameters:
 			path: src/Utils.php
 
 		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:debugResource\\(\\) should return resource but returns resource\\|false\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
 			message: "#^Cannot access offset 0 on array\\<int, string\\>\\|false\\.$#"
 			count: 1
 			path: src/Utils.php
