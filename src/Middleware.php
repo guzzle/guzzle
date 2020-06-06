@@ -47,7 +47,7 @@ final class Middleware
      * Middleware that throws exceptions for 4xx or 5xx responses when the
      * "http_error" request option is set to true.
      *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable(callable): callable Returns a function that accepts the next handler.
      */
     public static function httpErrors(): callable
     {
@@ -74,7 +74,7 @@ final class Middleware
      *
      * @param array|\ArrayAccess $container Container to hold the history (by reference).
      *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable(callable): callable Returns a function that accepts the next handler.
      *
      * @throws \InvalidArgumentException if container is not an array or ArrayAccess.
      */
@@ -177,13 +177,15 @@ final class Middleware
      * Middleware that logs requests, responses, and errors using a message
      * formatter.
      *
+     * @phpstan-param \Psr\Log\LogLevel::* $logLevel  Level at which to log requests.
+     *
      * @param LoggerInterface  $logger    Logs messages.
      * @param MessageFormatter $formatter Formatter used to create message strings.
      * @param string           $logLevel  Level at which to log requests.
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function log(LoggerInterface $logger, MessageFormatter $formatter, string $logLevel = 'info' /* \Psr\Log\LogLevel::INFO */): callable
+    public static function log(LoggerInterface $logger, MessageFormatter $formatter, string $logLevel = 'info'): callable
     {
         return function (callable $handler) use ($logger, $formatter, $logLevel): callable {
             return function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel) {

@@ -19,7 +19,7 @@ class CurlFactory implements CurlFactoryInterface
     public const CURL_VERSION_STR = 'curl_version';
     public const LOW_CURL_VERSION_NUMBER = '7.21.2';
 
-    /** @var array */
+    /** @var resource[] */
     private $handles = [];
 
     /** @var int Total number of idle handles to keep in cache */
@@ -330,7 +330,7 @@ class CurlFactory implements CurlFactoryInterface
      * @param string $name    Case-insensitive header to remove
      * @param array  $options Array of options to modify
      */
-    private function removeHeader($name, array &$options): void
+    private function removeHeader(string $name, array &$options): void
     {
         foreach (\array_keys($options['_headers']) as $key) {
             if (!\strcasecmp($key, $name)) {
