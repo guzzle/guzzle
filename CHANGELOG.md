@@ -4,7 +4,7 @@
 
 ### Changed
 
-* Disabled IDN support by default and require ext-idn to use it [#2529](https://github.com/guzzle/guzzle/pull/2529)
+* Disabled IDN support by default and require ext-idn to use it [#2675](https://github.com/guzzle/guzzle/pull/2675)
 
 ## 7.0.0-beta2 - 2012-05-25
 
