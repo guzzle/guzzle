@@ -83,7 +83,7 @@ final class Utils
         /*
          * The Idn class is marked as @internal. Verify that class and method exists.
          */
-        if (class_exists(Idn::class) && method_exists(Idn::class, 'idn_to_ascii')) {
+        if (method_exists(Idn::class, 'idn_to_ascii')) {
             return Idn::idn_to_ascii($domain, $options, Idn::INTL_IDNA_VARIANT_UTS46, $info);
         }
 
