@@ -7,7 +7,6 @@ use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use Psr\Http\Message\UriInterface;
-use Symfony\Polyfill\Intl\Idn\Idn;
 
 final class Utils
 {
@@ -371,18 +370,10 @@ EOT
      */
     private static function idnToAsci(string $domain, int $options, ?array &$info = [])
     {
-        if (\preg_match('%^[ -~]+$%', $domain) === 1) {
-            return $domain;
-        }
-
-        if (\extension_loaded('intl') && \defined('INTL_IDNA_VARIANT_UTS46')) {
+        if (\function_exists('idn_to_ascii') && \defined('INTL_IDNA_VARIANT_UTS46')) {
             return \idn_to_ascii($domain, $options, INTL_IDNA_VARIANT_UTS46, $info);
         }
 
-        /*
-         * The Idn class is marked as @internal. We've locked the version to
-         * symfony/polyfill-intl-idn to avoid issues in the future.
-         */
-        return Idn::idn_to_ascii($domain, $options, Idn::INTL_IDNA_VARIANT_UTS46, $info);
+        throw new \Error('ext-idn or symfony/polyfill-intl-idn not loaded or too old');
     }
 }

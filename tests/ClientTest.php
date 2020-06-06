@@ -708,9 +708,12 @@ class ClientTest extends TestCase
 
         $config = Helpers::readObjectAttribute($client, 'config');
 
-        self::assertTrue($config['idn_conversion']);
+        self::assertFalse($config['idn_conversion']);
     }
 
+    /**
+     * @requires extension idn
+     */
     public function testIdnIsTranslatedToAsciiWhenConversionIsEnabled()
     {
         $mockHandler = new MockHandler([new Response()]);
@@ -737,6 +740,9 @@ class ClientTest extends TestCase
         self::assertSame('яндекс.рф', (string) $request->getHeaderLine('Host'));
     }
 
+    /**
+     * @requires extension idn
+     */
     public function testExceptionOnInvalidIdn()
     {
         $mockHandler = new MockHandler([new Response()]);
@@ -749,7 +755,7 @@ class ClientTest extends TestCase
 
     /**
      * @depends testCanUseRelativeUriWithSend
-     * @depends testIdnSupportDefaultValue
+     * @requires extension idn
      */
     public function testIdnBaseUri()
     {
@@ -757,6 +763,7 @@ class ClientTest extends TestCase
         $client = new Client([
             'handler'  => $mock,
             'base_uri' => 'http://яндекс.рф',
+            'idn_conversion' => true,
         ]);
         $config = Helpers::readObjectAttribute($client, 'config');
         self::assertSame('http://яндекс.рф', (string) $config['base_uri']);
@@ -766,6 +773,9 @@ class ClientTest extends TestCase
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $mock->getLastRequest()->getHeaderLine('Host'));
     }
 
+    /**
+     * @requires extension idn
+     */
     public function testIdnWithRedirect()
     {
         $mockHandler = new MockHandler([

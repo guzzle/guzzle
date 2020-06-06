@@ -221,7 +221,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             'decode_content'  => true,
             'verify'          => true,
             'cookies'         => false,
-            'idn_conversion'  => true,
+            'idn_conversion'  => false,
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
