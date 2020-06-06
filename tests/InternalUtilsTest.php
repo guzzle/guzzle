@@ -12,6 +12,9 @@ class InternalUtilsTest extends TestCase
         self::assertGreaterThan(0, Utils::currentTime());
     }
 
+    /**
+     * @requires extension idn
+     */
     public function testIdnConvert()
     {
         $uri = Psr7\uri_for('https://яндекс.рф/images');
