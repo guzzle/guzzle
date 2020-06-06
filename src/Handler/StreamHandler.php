@@ -18,6 +18,9 @@ use Psr\Http\Message\UriInterface;
  */
 class StreamHandler
 {
+    /**
+     * @var array
+     */
     private $lastHeaders = [];
 
     /**
@@ -72,12 +75,15 @@ class StreamHandler
         }
     }
 
+    /**
+     * @param mixed $startTime
+     */
     private function invokeStats(
         array $options,
         RequestInterface $request,
         $startTime,
         ResponseInterface $response = null,
-        $error = null
+        \Throwable $error = null
     ): void {
         if (isset($options['on_stats'])) {
             $stats = new TransferStats(
@@ -91,6 +97,10 @@ class StreamHandler
         }
     }
 
+    /**
+     * @param resource $stream
+     * @param mixed    $startTime
+     */
     private function createResponse(
         RequestInterface $request,
         array $options,
@@ -104,7 +114,7 @@ class StreamHandler
         $status = $parts[1];
         $reason = isset($parts[2]) ? $parts[2] : null;
         $headers = Utils::headersFromLines($hdrs);
-        list($stream, $headers) = $this->checkDecode($options, $headers, $stream);
+        [$stream, $headers] = $this->checkDecode($options, $headers, $stream);
         $stream = Psr7\stream_for($stream);
         $sink = $stream;
 
@@ -154,6 +164,9 @@ class StreamHandler
             : Psr7\stream_for($sink);
     }
 
+    /**
+     * @param resource $stream
+     */
     private function checkDecode(array $options, array $headers, $stream): array
     {
         // Automatically decode responses when instructed.
@@ -229,7 +242,7 @@ class StreamHandler
     private function createResource(callable $callback)
     {
         $errors = [];
-        \set_error_handler(function ($_, $msg, $file, $line) use (&$errors) {
+        \set_error_handler(function ($_, $msg, $file, $line) use (&$errors): bool {
             $errors[] = [
                 'message' => $msg,
                 'file'    => $file,
@@ -506,7 +519,7 @@ class StreamHandler
         $ident = $request->getMethod() . ' ' . $request->getUri()->withFragment('');
         $this->addNotification(
             $params,
-            function () use ($ident, $value, $map, $args) {
+            function () use ($ident, $value, $map, $args): void {
                 $passed = \func_get_args();
                 $code = \array_shift($passed);
                 \fprintf($value, '<%s> [%s] ', $ident, $map[$code]);

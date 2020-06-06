@@ -10,7 +10,7 @@ use Psr\Http\Message\RequestInterface;
  */
 class PrepareBodyMiddleware
 {
-    /** @var callable */
+    /** @var callable(RequestInterface, array): PromiseInterface */
     private $nextHandler;
 
     /**
