@@ -5,6 +5,7 @@
 .php_cs.dist           export-ignore
 /build/                export-ignore
 /docs/                 export-ignore
+/Dockerfile            export-ignore
 /Makefile              export-ignore
 /phpstan-baseline.neon export-ignore
 /phpstan.neon.dist     export-ignore
