@@ -1,5 +1,9 @@
 # Change Log
 
+## UNRELEASED
+
+* Removed reliance on internal polyfill code [#2663](https://github.com/guzzle/guzzle/pull/2663)
+
 ## 6.5.4 - 2020-05-25
 
 * Fix various intl icu issues [#2626](https://github.com/guzzle/guzzle/pull/2626)
