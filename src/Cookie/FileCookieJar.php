@@ -89,7 +89,7 @@ class FileCookieJar extends CookieJar
             foreach ($data as $cookie) {
                 $this->setCookie(new SetCookie($cookie));
             }
-        } elseif (is_scalar($data) && $data != '') {
+        } elseif (is_scalar($data) && !empty($data)) {
             throw new \RuntimeException("Invalid cookie file: {$filename}");
         }
     }
