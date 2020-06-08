@@ -60,7 +60,7 @@ class StreamHandler
             // Determine if the error was a networking error.
             $message = $e->getMessage();
             // This list can probably get more comprehensive.
-            if (\strpos($message, 'getaddrinfo') // DNS lookup failed
+            if (false !== \strpos($message, 'getaddrinfo') // DNS lookup failed
                 || false !== \strpos($message, 'Connection refused')
                 || false !== \strpos($message, "couldn't connect to host") // error on HHVM
                 || false !== \strpos($message, "connection attempt failed")
