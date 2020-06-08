@@ -231,10 +231,9 @@ EOT
 
         // Strip port if present.
         if (\strpos($host, ':')) {
+            /** @var string[] $hostParts will never be false because of the checks above */
             $hostParts = \explode($host, ':', 2);
-            if (false !== $hostParts) {
-                $host = $hostParts[0];
-            }
+            $host = $hostParts[0];
         }
 
         foreach ($noProxyArray as $area) {
