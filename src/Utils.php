@@ -72,8 +72,12 @@ final class Utils
             return STDOUT;
         }
 
-        /** @var resource */
-        return \fopen('php://output', 'w');
+        $resource = \fopen('php://output', 'w');
+        if (false === $resource) {
+            throw new \RuntimeException('Can not open php output for writing to debug the resource.');
+        }
+
+        return $resource;
     }
 
     /**
