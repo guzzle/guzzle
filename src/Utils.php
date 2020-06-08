@@ -319,7 +319,7 @@ EOT
      *
      * @internal
      */
-    public static function currentTime()
+    public static function currentTime(): float
     {
         return (float) \function_exists('hrtime') ? \hrtime(true) / 1e9 : \microtime(true);
     }
