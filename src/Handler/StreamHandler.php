@@ -317,8 +317,7 @@ class StreamHandler
         }
 
         // Microsoft NTLM authentication only supported with curl handler
-        if (isset($options['auth'][2]) && 'ntlm' === $options['auth'][2]
-        ) {
+        if (isset($options['auth'][2]) && 'ntlm' === $options['auth'][2]) {
             throw new \InvalidArgumentException('Microsoft NTLM authentication only supported with curl handler');
         }
 
