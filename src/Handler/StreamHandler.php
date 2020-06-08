@@ -75,9 +75,6 @@ class StreamHandler
         }
     }
 
-    /**
-     * @param mixed $startTime
-     */
     private function invokeStats(
         array $options,
         RequestInterface $request,
@@ -99,7 +96,6 @@ class StreamHandler
 
     /**
      * @param resource $stream
-     * @param mixed    $startTime
      */
     private function createResponse(
         RequestInterface $request,
