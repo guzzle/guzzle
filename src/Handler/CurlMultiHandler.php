@@ -77,7 +77,7 @@ class CurlMultiHandler
      * @return resource
      *
      * @throws \BadMethodCallException when another field as `_mh` will be gotten
-     * @throws \RuntimeException when curl can not initialize a multi handle
+     * @throws \RuntimeException       when curl can not initialize a multi handle
      */
     public function __get($name)
     {
