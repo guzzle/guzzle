@@ -2,6 +2,10 @@
 
 ## UNRELEASED
 
+## 7.0.0-rc1 - 2012-06-11
+
+### Changed
+
 * Use error level for logging errors in Middleware [#2629](https://github.com/guzzle/guzzle/pull/2629)
 * Disabled IDN support by default and require ext-intl to use it [#2675](https://github.com/guzzle/guzzle/pull/2675)
 
@@ -32,8 +36,8 @@
 
 ## 7.0.0-beta1 - 2019-12-30
 
-The diff might look very big but 95% of Guzzle users will be able to upgrade without modification. 
-Please see [the upgrade document](UPGRADING.md) that describes all BC breaking changes.   
+The diff might look very big but 95% of Guzzle users will be able to upgrade without modification.
+Please see [the upgrade document](UPGRADING.md) that describes all BC breaking changes.
 
 ### Added
 
@@ -51,7 +55,7 @@ Please see [the upgrade document](UPGRADING.md) that describes all BC breaking c
 * Dont allow passing `null` as URI to `Client::request()` and `Client::requestAsync()` [#2461](https://github.com/guzzle/guzzle/pull/2461)
 * Widen the exception argument to throwable [#2495](https://github.com/guzzle/guzzle/pull/2495)
 
-### Fixed 
+### Fixed
 
 * Logging when Promise rejected with a string [#2311](https://github.com/guzzle/guzzle/pull/2311)
 
@@ -83,7 +87,7 @@ Please see [the upgrade document](UPGRADING.md) that describes all BC breaking c
 
 ## 6.4.1 - 2019-10-23
 
-* No `guzzle.phar` was created in 6.4.0 due expired API token. This release will fix that 
+* No `guzzle.phar` was created in 6.4.0 due expired API token. This release will fix that
 * Added `parent::__construct()` to `FileCookieJar` and `SessionCookieJar`
 
 ## 6.4.0 - 2019-10-23
