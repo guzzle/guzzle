@@ -95,7 +95,7 @@ class CurlMultiHandler
 
         foreach ($this->options as $option => $value) {
             // A warning is raised in case of a wrong option.
-            curl_multi_setopt($this->_mh, $option, $value);
+            \curl_multi_setopt($this->_mh, $option, $value);
         }
 
         return $this->_mh;
