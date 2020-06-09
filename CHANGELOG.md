@@ -2,14 +2,14 @@
 
 ## UNRELEASED
 
-## 7.0.0-rc1 - 2012-06-11
+## 7.0.0-rc1 - 2020-06-11
 
 ### Changed
 
 * Use error level for logging errors in Middleware [#2629](https://github.com/guzzle/guzzle/pull/2629)
 * Disabled IDN support by default and require ext-intl to use it [#2675](https://github.com/guzzle/guzzle/pull/2675)
 
-## 7.0.0-beta2 - 2012-05-25
+## 7.0.0-beta2 - 2020-05-25
 
 ### Added
 
