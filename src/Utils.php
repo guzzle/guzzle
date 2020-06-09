@@ -13,6 +13,8 @@ final class Utils
     /**
      * Debug function used to describe the provided value type and class.
      *
+     * @param mixed $input
+     *
      * @return string Returns a string containing the type of the variable and
      *                if a class is provided, the class name.
      */
@@ -27,7 +29,10 @@ final class Utils
                 \ob_start();
                 \var_dump($input);
                 // normalize float vs double
-                return \str_replace('double(', 'float(', \rtrim(\ob_get_clean()));
+                /** @var string $varDumpContent */
+                $varDumpContent = \ob_get_clean();
+
+                return \str_replace('double(', 'float(', \rtrim($varDumpContent));
         }
     }
 
@@ -62,11 +67,17 @@ final class Utils
     {
         if (\is_resource($value)) {
             return $value;
-        } elseif (\defined('STDOUT')) {
+        }
+        if (\defined('STDOUT')) {
             return STDOUT;
         }
 
-        return \fopen('php://output', 'w');
+        $resource = \fopen('php://output', 'w');
+        if (false === $resource) {
+            throw new \RuntimeException('Can not open php output for writing to debug the resource.');
+        }
+
+        return $resource;
     }
 
     /**
@@ -220,7 +231,9 @@ EOT
 
         // Strip port if present.
         if (\strpos($host, ':')) {
-            $host = \explode($host, ':', 2)[0];
+            /** @var string[] $hostParts will never be false because of the checks above */
+            $hostParts = \explode($host, ':', 2);
+            $host = $hostParts[0];
         }
 
         foreach ($noProxyArray as $area) {
@@ -293,6 +306,7 @@ EOT
             );
         }
 
+        /** @var string */
         return $json;
     }
 
@@ -300,13 +314,13 @@ EOT
      * Wrapper for the hrtime() or microtime() functions
      * (depending on the PHP version, one of the two is used)
      *
-     * @return float|mixed UNIX timestamp
+     * @return float UNIX timestamp
      *
      * @internal
      */
-    public static function currentTime()
+    public static function currentTime(): float
     {
-        return \function_exists('hrtime') ? \hrtime(true) / 1e9 : \microtime(true);
+        return (float) \function_exists('hrtime') ? \hrtime(true) / 1e9 : \microtime(true);
     }
 
     /**

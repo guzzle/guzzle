@@ -218,6 +218,9 @@ class CookieJar implements CookieJarInterface
         return \count($this->cookies);
     }
 
+    /**
+     * @return \ArrayIterator<int, SetCookie>
+     */
     public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator(\array_values($this->cookies));
@@ -256,7 +259,8 @@ class CookieJar implements CookieJarInterface
         if ('/' === $uriPath) {
             return '/';
         }
-        if (0 === $lastSlashPos = \strrpos($uriPath, '/')) {
+        $lastSlashPos = \strrpos($uriPath, '/');
+        if (0 === $lastSlashPos || false === $lastSlashPos) {
             return '/';
         }
 

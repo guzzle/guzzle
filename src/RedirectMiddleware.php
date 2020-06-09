@@ -77,7 +77,7 @@ class RedirectMiddleware
         array $options,
         ResponseInterface $response
     ) {
-        if (\substr($response->getStatusCode(), 0, 1) != '3'
+        if (\strpos((string) $response->getStatusCode(), '3') !== 0
             || !$response->hasHeader('Location')
         ) {
             return $response;
@@ -95,7 +95,6 @@ class RedirectMiddleware
             );
         }
 
-        /** @var PromiseInterface|ResponseInterface $promise */
         $promise = $this($nextRequest, $options);
 
         // Add headers to be able to track history of redirects.
@@ -116,14 +115,15 @@ class RedirectMiddleware
     private function withTracking(PromiseInterface $promise, string $uri, int $statusCode): PromiseInterface
     {
         return $promise->then(
-            function (ResponseInterface $response) use ($uri, $statusCode) {
+            static function (ResponseInterface $response) use ($uri, $statusCode) {
                 // Note that we are pushing to the front of the list as this
                 // would be an earlier response than what is currently present
                 // in the history header.
                 $historyHeader = $response->getHeader(self::HISTORY_HEADER);
                 $statusHeader = $response->getHeader(self::STATUS_HISTORY_HEADER);
                 \array_unshift($historyHeader, $uri);
-                \array_unshift($statusHeader, $statusCode);
+                \array_unshift($statusHeader, (string) $statusCode);
+
                 return $response->withHeader(self::HISTORY_HEADER, $historyHeader)
                                 ->withHeader(self::STATUS_HISTORY_HEADER, $statusHeader);
             }

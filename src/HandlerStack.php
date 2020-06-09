@@ -11,13 +11,13 @@ use Psr\Http\Message\ResponseInterface;
  */
 class HandlerStack
 {
-    /** @var callable(RequestInterface, array): PromiseInterface|null */
+    /** @var null|callable(RequestInterface, array): PromiseInterface */
     private $handler;
 
-    /** @var array */
+    /** @var array{(callable(callable(RequestInterface, array): PromiseInterface): callable), (string|null)}[] */
     private $stack = [];
 
-    /** @var callable|null */
+    /** @var null|callable(RequestInterface, array): PromiseInterface */
     private $cached;
 
     /**
@@ -75,7 +75,8 @@ class HandlerStack
     {
         $depth = 0;
         $stack = [];
-        if ($this->handler) {
+
+        if ($this->handler !== null) {
             $stack[] = "0) Handler: " . $this->debugCallable($this->handler);
         }
 
@@ -112,7 +113,7 @@ class HandlerStack
      */
     public function hasHandler(): bool
     {
-        return (bool) $this->handler;
+        return $this->handler !== null ;
     }
 
     /**
@@ -182,15 +183,18 @@ class HandlerStack
 
     /**
      * Compose the middleware and handler into a single callable function.
+     *
+     * @return callable(RequestInterface, array): PromiseInterface
      */
     public function resolve(): callable
     {
-        if (!$this->cached) {
-            if (!($prev = $this->handler)) {
+        if ($this->cached === null) {
+            if (($prev = $this->handler) === null) {
                 throw new \LogicException('No handler has been specified');
             }
 
             foreach (\array_reverse($this->stack) as $fn) {
+                /** @var callable(RequestInterface, array): PromiseInterface $prev */
                 $prev = $fn[0]($prev);
             }
 
@@ -238,7 +242,7 @@ class HandlerStack
     /**
      * Provides a debug string for a given callable.
      *
-     * @param array|string|callable $fn Function to write as a string.
+     * @param callable $fn Function to write as a string.
      */
     private function debugCallable($fn): string
     {
@@ -252,6 +256,7 @@ class HandlerStack
                 : "callable(['" . \get_class($fn[0]) . "', '{$fn[1]}'])";
         }
 
+        /** @var object $fn */
         return 'callable(' . \spl_object_hash($fn) . ')';
     }
 }

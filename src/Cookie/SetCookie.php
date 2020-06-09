@@ -69,6 +69,7 @@ class SetCookie
      */
     public function __construct(array $data = [])
     {
+        /** @var null|array $replaced will be null in case of replace error */
         $replaced = \array_replace(self::$defaults, $data);
         if ($replaced === null) {
             throw new \InvalidArgumentException('Unable to replace the default values for the Cookie.');
@@ -79,8 +80,8 @@ class SetCookie
         if (!$this->getExpires() && $this->getMaxAge()) {
             // Calculate the Expires date
             $this->setExpires(\time() + $this->getMaxAge());
-        } elseif ($this->getExpires() && !\is_numeric($this->getExpires())) {
-            $this->setExpires($this->getExpires());
+        } elseif (null !== ($expires = $this->getExpires()) && !\is_numeric($expires)) {
+            $this->setExpires($expires);
         }
     }
 
@@ -207,6 +208,8 @@ class SetCookie
 
     /**
      * The UNIX timestamp when the cookie Expires
+     *
+     * @return null|string|int
      */
     public function getExpires()
     {
@@ -216,7 +219,7 @@ class SetCookie
     /**
      * Set the unix timestamp for which the cookie will expire
      *
-     * @param int $timestamp Unix timestamp
+     * @param int|string $timestamp Unix timestamp or any English textual datetime description.
      */
     public function setExpires($timestamp): void
     {
@@ -330,9 +333,14 @@ class SetCookie
      */
     public function matchesDomain(string $domain): bool
     {
+        $cookieDomain = $this->getDomain();
+        if (null === $cookieDomain) {
+            return true;
+        }
+
         // Remove the leading '.' as per spec in RFC 6265.
         // https://tools.ietf.org/html/rfc6265#section-5.2.3
-        $cookieDomain = \ltrim($this->getDomain(), '.');
+        $cookieDomain = \ltrim($cookieDomain, '.');
 
         // Domain not set or exact match.
         if (!$cookieDomain || !\strcasecmp($domain, $cookieDomain)) {

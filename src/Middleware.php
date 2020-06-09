@@ -72,7 +72,7 @@ final class Middleware
     /**
      * Middleware that pushes history data to an ArrayAccess container.
      *
-     * @param array|\ArrayAccess $container Container to hold the history (by reference).
+     * @param array|\ArrayAccess<int, array> $container Container to hold the history (by reference).
      *
      * @return callable(callable): callable Returns a function that accepts the next handler.
      *
@@ -84,10 +84,10 @@ final class Middleware
             throw new \InvalidArgumentException('history container must be an array or object implementing ArrayAccess');
         }
 
-        return function (callable $handler) use (&$container): callable {
-            return function (RequestInterface $request, array $options) use ($handler, &$container) {
+        return static function (callable $handler) use (&$container): callable {
+            return static function (RequestInterface $request, array $options) use ($handler, &$container) {
                 return $handler($request, $options)->then(
-                    function ($value) use ($request, &$container, $options) {
+                    static function ($value) use ($request, &$container, $options) {
                         $container[] = [
                             'request'  => $request,
                             'response' => $value,
@@ -96,7 +96,7 @@ final class Middleware
                         ];
                         return $value;
                     },
-                    function ($reason) use ($request, &$container, $options) {
+                    static function ($reason) use ($request, &$container, $options) {
                         $container[] = [
                             'request'  => $request,
                             'response' => null,

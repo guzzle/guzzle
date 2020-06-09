@@ -20,11 +20,30 @@ class CurlMultiHandler
 {
     /** @var CurlFactoryInterface */
     private $factory;
+
     /** @var int */
     private $selectTimeout;
+
+    /** @var resource|null the currently executing resource in `curl_multi_exec`. */
     private $active;
+
+    /**
+     * @var array Request entry handles, indexed by handle id in `addRequest`.
+     *
+     * @see CurlMultiHandler::addRequest
+     */
     private $handles = [];
+
+    /**
+     * @var array<int, float> An array of delay times, indexed by handle id in `addRequest`.
+     *
+     * @see CurlMultiHandler::addRequest
+     */
     private $delays = [];
+
+    /**
+     * @var array<mixed> An associative array of CURLMOPT_* options and corresponding values for curl_multi_setopt()
+     */
     private $options = [];
 
     /**
@@ -49,25 +68,37 @@ class CurlMultiHandler
             $this->selectTimeout = 1;
         }
 
-        $this->options = isset($options['options']) ? $options['options'] : [];
+        $this->options = $options['options'] ?? [];
     }
 
+    /**
+     * @param string $name
+     *
+     * @return resource
+     *
+     * @throws \BadMethodCallException when another field as `_mh` will be gotten
+     * @throws \RuntimeException       when curl can not initialize a multi handle
+     */
     public function __get($name)
     {
-        if ($name === '_mh') {
-            $this->_mh = \curl_multi_init();
-
-            foreach ($this->options as $option => $value) {
-                // A warning is raised in case of a wrong option.
-                curl_multi_setopt($this->_mh, $option, $value);
-            }
-
-            // Further calls to _mh will return the value directly, without entering the
-            // __get() method at all.
-            return $this->_mh;
+        if ($name !== '_mh') {
+            throw new \BadMethodCallException("Can not get other property as '_mh'.");
         }
 
-        throw new \BadMethodCallException();
+        $multiHandle = \curl_multi_init();
+
+        if (false === $multiHandle) {
+            throw new \RuntimeException('Can not initialize curl multi handle.');
+        }
+
+        $this->_mh = $multiHandle;
+
+        foreach ($this->options as $option => $value) {
+            // A warning is raised in case of a wrong option.
+            curl_multi_setopt($this->_mh, $option, $value);
+        }
+
+        return $this->_mh;
     }
 
     public function __destruct()
@@ -214,6 +245,6 @@ class CurlMultiHandler
             }
         }
 
-        return \max(0, $nextTime - $currentTime) * 1000000;
+        return ((int) \max(0, $nextTime - $currentTime)) * 1000000;
     }
 }

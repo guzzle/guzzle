@@ -17,9 +17,12 @@ class FileCookieJarTest extends TestCase
         $this->file = \tempnam('/tmp', 'file-cookies');
     }
 
-    public function testValidatesCookieFile()
+    /**
+     * @dataProvider invalidCookieJarContent
+     */
+    public function testValidatesCookieFile($invalidCookieJarContent)
     {
-        \file_put_contents($this->file, 'true');
+        \file_put_contents($this->file, json_encode($invalidCookieJarContent));
 
         $this->expectException(\RuntimeException::class);
         new FileCookieJar($this->file);
@@ -82,6 +85,14 @@ class FileCookieJarTest extends TestCase
         return [
             [false],
             [true]
+        ];
+    }
+
+    public function invalidCookieJarContent(): array
+    {
+        return [
+            [true],
+            ['invalid-data']
         ];
     }
 }
