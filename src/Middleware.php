@@ -80,7 +80,6 @@ final class Middleware
      */
     public static function history(&$container): callable
     {
-        /** @var null|array|\ArrayAccess<int, array> $container */
         if (!\is_array($container) && !$container instanceof \ArrayAccess) {
             throw new \InvalidArgumentException('history container must be an array or object implementing ArrayAccess');
         }
