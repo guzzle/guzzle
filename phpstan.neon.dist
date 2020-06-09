@@ -6,4 +6,5 @@ parameters:
     checkMissingIterableValueType: false
     paths:
         - src
-    bootstrap: tests/bootstrap-phpstan.php
+    bootstrapFiles:
+      - tests/bootstrap-phpstan.php
