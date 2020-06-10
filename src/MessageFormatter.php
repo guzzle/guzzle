@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use Psr\Http\Message\MessageInterface;
@@ -45,7 +46,9 @@ class MessageFormatter
     public const DEBUG = ">>>>>>>>\n{request}\n<<<<<<<<\n{response}\n--------\n{error}";
     public const SHORT = '[{ts}] "{method} {target} HTTP/{version}" {code}';
 
-    /** @var string Template used to format log messages */
+    /**
+     * @var string Template used to format log messages
+     */
     private $template;
 
     /**

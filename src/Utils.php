@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
@@ -69,7 +70,7 @@ final class Utils
             return $value;
         }
         if (\defined('STDOUT')) {
-            return STDOUT;
+            return \STDOUT;
         }
 
         $resource = \fopen('php://output', 'w');
@@ -246,13 +247,12 @@ EOT
             } elseif ($area === $host) {
                 // Exact matches.
                 return true;
-            } else {
-                // Special match if the area when prefixed with ".". Remove any
-                // existing leading "." and add a new leading ".".
-                $area = '.' . \ltrim($area, '.');
-                if (\substr($host, -(\strlen($area))) === $area) {
-                    return true;
-                }
+            }
+            // Special match if the area when prefixed with ".". Remove any
+            // existing leading "." and add a new leading ".".
+            $area = '.' . \ltrim($area, '.');
+            if (\substr($host, -(\strlen($area))) === $area) {
+                return true;
             }
         }
 
@@ -277,7 +277,7 @@ EOT
     public static function jsonDecode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
     {
         $data = \json_decode($json, $assoc, $depth, $options);
-        if (JSON_ERROR_NONE !== \json_last_error()) {
+        if (\JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException(
                 'json_decode error: ' . \json_last_error_msg()
             );
@@ -300,7 +300,7 @@ EOT
     public static function jsonEncode($value, int $options = 0, int $depth = 512): string
     {
         $json = \json_encode($value, $options, $depth);
-        if (JSON_ERROR_NONE !== \json_last_error()) {
+        if (\JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException(
                 'json_encode error: ' . \json_last_error_msg()
             );
@@ -333,9 +333,9 @@ EOT
         if ($uri->getHost()) {
             $asciiHost = self::idnToAsci($uri->getHost(), $options, $info);
             if ($asciiHost === false) {
-                $errorBitSet = isset($info['errors']) ? $info['errors'] : 0;
+                $errorBitSet = $info['errors'] ?? 0;
 
-                $errorConstants = array_filter(array_keys(get_defined_constants()), function ($name) {
+                $errorConstants = array_filter(array_keys(get_defined_constants()), static function ($name) {
                     return substr($name, 0, 11) === 'IDNA_ERROR_';
                 });
 
@@ -352,11 +352,10 @@ EOT
                 }
 
                 throw new InvalidArgumentException($errorMessage);
-            } else {
-                if ($uri->getHost() !== $asciiHost) {
-                    // Replace URI only if the ASCII version is different
-                    $uri = $uri->withHost($asciiHost);
-                }
+            }
+            if ($uri->getHost() !== $asciiHost) {
+                // Replace URI only if the ASCII version is different
+                $uri = $uri->withHost($asciiHost);
             }
         }
 
@@ -372,7 +371,7 @@ EOT
             return (string) $_SERVER[$name];
         }
 
-        if (PHP_SAPI === 'cli' && ($value = \getenv($name)) !== false && $value !== null) {
+        if (\PHP_SAPI === 'cli' && ($value = \getenv($name)) !== false && $value !== null) {
             return (string) $value;
         }
 
@@ -385,7 +384,7 @@ EOT
     private static function idnToAsci(string $domain, int $options, ?array &$info = [])
     {
         if (\function_exists('idn_to_ascii') && \defined('INTL_IDNA_VARIANT_UTS46')) {
-            return \idn_to_ascii($domain, $options, INTL_IDNA_VARIANT_UTS46, $info);
+            return \idn_to_ascii($domain, $options, \INTL_IDNA_VARIANT_UTS46, $info);
         }
 
         throw new \Error('ext-idn or symfony/polyfill-intl-idn not loaded or too old');

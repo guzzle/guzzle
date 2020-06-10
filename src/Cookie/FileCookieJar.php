@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\Utils;
@@ -8,10 +9,14 @@ use GuzzleHttp\Utils;
  */
 class FileCookieJar extends CookieJar
 {
-    /** @var string filename */
+    /**
+     * @var string filename
+     */
     private $filename;
 
-    /** @var bool Control whether to persist session cookies or not. */
+    /**
+     * @var bool Control whether to persist session cookies or not.
+     */
     private $storeSessionCookies;
 
     /**
@@ -60,7 +65,7 @@ class FileCookieJar extends CookieJar
         }
 
         $jsonStr = Utils::jsonEncode($json);
-        if (false === \file_put_contents($filename, $jsonStr, LOCK_EX)) {
+        if (false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
     }

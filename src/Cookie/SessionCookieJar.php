@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Cookie;
 
 /**
@@ -6,10 +7,14 @@ namespace GuzzleHttp\Cookie;
  */
 class SessionCookieJar extends CookieJar
 {
-    /** @var string session key */
+    /**
+     * @var string session key
+     */
     private $sessionKey;
-    
-    /** @var bool Control whether to persist session cookies or not. */
+
+    /**
+     * @var bool Control whether to persist session cookies or not.
+     */
     private $storeSessionCookies;
 
     /**

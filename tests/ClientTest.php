@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
@@ -382,8 +383,8 @@ class ClientTest extends TestCase
         $client->get('http://foo.com', ['auth' => ['a', 'b', 'digest']]);
         $last = $mock->getLastOptions();
         self::assertSame([
-            CURLOPT_HTTPAUTH => 2,
-            CURLOPT_USERPWD  => 'a:b'
+            \CURLOPT_HTTPAUTH => 2,
+            \CURLOPT_USERPWD  => 'a:b'
         ], $last['curl']);
     }
 
@@ -394,8 +395,8 @@ class ClientTest extends TestCase
         $client->get('http://foo.com', ['auth' => ['a', 'b', 'ntlm']]);
         $last = $mock->getLastOptions();
         self::assertSame([
-            CURLOPT_HTTPAUTH => 8,
-            CURLOPT_USERPWD  => 'a:b'
+            \CURLOPT_HTTPAUTH => 8,
+            \CURLOPT_USERPWD  => 'a:b'
         ], $last['curl']);
     }
 
@@ -452,7 +453,7 @@ class ClientTest extends TestCase
 
     public function testEnsuresThatFormParamsAndMultipartAreExclusive()
     {
-        $client = new Client(['handler' => function () {
+        $client = new Client(['handler' => static function () {
         }]);
 
         $this->expectException(\InvalidArgumentException::class);

@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\BadResponseException;
@@ -31,7 +32,9 @@ class RedirectMiddleware
         'track_redirects' => false,
     ];
 
-    /** @var callable(RequestInterface, array): PromiseInterface */
+    /**
+     * @var callable(RequestInterface, array): PromiseInterface
+     */
     private $nextHandler;
 
     /**
@@ -137,9 +140,8 @@ class RedirectMiddleware
      */
     private function guardMax(RequestInterface $request, array &$options): void
     {
-        $current = isset($options['__redirect_count'])
-            ? $options['__redirect_count']
-            : 0;
+        $current = $options['__redirect_count']
+            ?? 0;
         $options['__redirect_count'] = $current + 1;
         $max = $options['allow_redirects']['max'];
 
@@ -173,7 +175,7 @@ class RedirectMiddleware
 
         $uri = $this->redirectUri($request, $response, $protocols);
         if (isset($options['idn_conversion']) && ($options['idn_conversion'] !== false)) {
-            $idnOptions = ($options['idn_conversion'] === true) ? IDNA_DEFAULT : $options['idn_conversion'];
+            $idnOptions = ($options['idn_conversion'] === true) ? \IDNA_DEFAULT : $options['idn_conversion'];
             $uri = Utils::idnUriConvert($uri, $idnOptions);
         }
 

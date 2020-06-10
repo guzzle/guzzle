@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests\CookieJar;
 
 use DateInterval;
@@ -15,7 +16,9 @@ use PHPUnit\Framework\TestCase;
  */
 class CookieJarTest extends TestCase
 {
-    /** @var CookieJar */
+    /**
+     * @var CookieJar
+     */
     private $jar;
 
     public function setUp(): void
@@ -344,7 +347,7 @@ class CookieJarTest extends TestCase
         self::assertCount(4, $jar);
         $jar->clear('bar.com', '/boo', 'other');
         self::assertCount(3, $jar);
-        $names = \array_map(function (SetCookie $c) {
+        $names = \array_map(static function (SetCookie $c) {
             return $c->getName();
         }, $jar->getIterator()->getArrayCopy());
         self::assertSame(['foo', 'test', 'you'], $names);

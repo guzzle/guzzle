@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
@@ -47,13 +48,13 @@ class PoolTest extends TestCase
      */
     public function testExecutesPendingWhenWaiting()
     {
-        $r1 = new Promise(function () use (&$r1) {
+        $r1 = new Promise(static function () use (&$r1) {
             $r1->resolve(new Response());
         });
-        $r2 = new Promise(function () use (&$r2) {
+        $r2 = new Promise(static function () use (&$r2) {
             $r2->resolve(new Response());
         });
-        $r3 = new Promise(function () use (&$r3) {
+        $r3 = new Promise(static function () use (&$r3) {
             $r3->resolve(new Response());
         });
         $handler = new MockHandler([$r1, $r2, $r3]);
@@ -70,7 +71,7 @@ class PoolTest extends TestCase
     {
         $h = [];
         $handler = new MockHandler([
-            function (RequestInterface $request) use (&$h) {
+            static function (RequestInterface $request) use (&$h) {
                 $h[] = $request;
                 return new Response();
             }
@@ -87,14 +88,14 @@ class PoolTest extends TestCase
     {
         $h = [];
         $handler = new MockHandler([
-            function (RequestInterface $request) use (&$h) {
+            static function (RequestInterface $request) use (&$h) {
                 $h[] = $request;
                 return new Response();
             }
         ]);
         $c = new Client(['handler' => $handler]);
         $optHistory = [];
-        $fn = function (array $opts) use (&$optHistory, $c) {
+        $fn = static function (array $opts) use (&$optHistory, $c) {
             $optHistory = $opts;
             return $c->request('GET', 'http://example.com', $opts);
         };
@@ -113,7 +114,7 @@ class PoolTest extends TestCase
             new Request('GET', 'http://foo.com/202'),
             new Request('GET', 'http://foo.com/404'),
         ];
-        $fn = function (RequestInterface $request) {
+        $fn = static function (RequestInterface $request) {
             return new Response(\substr($request->getUri()->getPath(), 1));
         };
         $mock = new MockHandler([$fn, $fn, $fn, $fn]);
@@ -135,13 +136,13 @@ class PoolTest extends TestCase
             new Request('GET', 'http://foo.com/201')
         ];
         $mock = new MockHandler([
-            function (RequestInterface $request) {
+            static function (RequestInterface $request) {
                 return new Response(\substr($request->getUri()->getPath(), 1));
             }
         ]);
         $client = new Client(['handler' => $mock]);
         $results = Pool::batch($client, $requests, [
-            'fulfilled' => function ($value) use (&$called) {
+            'fulfilled' => static function ($value) use (&$called) {
                 $called = true;
             }
         ]);
@@ -151,13 +152,13 @@ class PoolTest extends TestCase
 
     public function testUsesYieldedKeyInFulfilledCallback()
     {
-        $r1 = new Promise(function () use (&$r1) {
+        $r1 = new Promise(static function () use (&$r1) {
             $r1->resolve(new Response());
         });
-        $r2 = new Promise(function () use (&$r2) {
+        $r2 = new Promise(static function () use (&$r2) {
             $r2->resolve(new Response());
         });
-        $r3 = new Promise(function () use (&$r3) {
+        $r3 = new Promise(static function () use (&$r3) {
             $r3->resolve(new Response());
         });
         $handler = new MockHandler([$r1, $r2, $r3]);
@@ -170,7 +171,7 @@ class PoolTest extends TestCase
         ];
         $p = new Pool($c, $requests, [
             'pool_size' => 2,
-            'fulfilled' => function ($res, $index) use (&$keys) {
+            'fulfilled' => static function ($res, $index) use (&$keys) {
                 $keys[] = $index;
             }
         ]);

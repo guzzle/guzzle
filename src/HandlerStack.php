@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
@@ -11,13 +12,19 @@ use Psr\Http\Message\ResponseInterface;
  */
 class HandlerStack
 {
-    /** @var null|callable(RequestInterface, array): PromiseInterface */
+    /**
+     * @var null|callable(RequestInterface, array): PromiseInterface
+     */
     private $handler;
 
-    /** @var array{(callable(callable(RequestInterface, array): PromiseInterface): callable), (string|null)}[] */
+    /**
+     * @var array{(callable(callable(RequestInterface, array): PromiseInterface): callable), (string|null)}[]
+     */
     private $stack = [];
 
-    /** @var null|callable(RequestInterface, array): PromiseInterface */
+    /**
+     * @var null|callable(RequestInterface, array): PromiseInterface
+     */
     private $cached;
 
     /**
@@ -175,7 +182,7 @@ class HandlerStack
         $idx = \is_callable($remove) ? 0 : 1;
         $this->stack = \array_values(\array_filter(
             $this->stack,
-            function ($tuple) use ($idx, $remove) {
+            static function ($tuple) use ($idx, $remove) {
                 return $tuple[$idx] !== $remove;
             }
         ));

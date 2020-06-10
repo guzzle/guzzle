@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
@@ -13,7 +14,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 {
     use ClientTrait;
 
-    /** @var array Default request options */
+    /**
+     * @var array Default request options
+     */
     private $config;
 
     /**
@@ -76,7 +79,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         $uri = $args[0];
-        $opts = isset($args[1]) ? $args[1] : [];
+        $opts = $args[1] ?? [];
 
         return \substr($method, -5) === 'Async'
             ? $this->requestAsync(\substr($method, 0, -5), $uri, $opts)
@@ -144,9 +147,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
-        $headers = isset($options['headers']) ? $options['headers'] : [];
-        $body = isset($options['body']) ? $options['body'] : null;
-        $version = isset($options['version']) ? $options['version'] : '1.1';
+        $headers = $options['headers'] ?? [];
+        $body = $options['body'] ?? null;
+        $version = $options['version'] ?? '1.1';
         // Merge the URI into the base URI.
         $uri = $this->buildUri(Psr7\uri_for($uri), $options);
         if (\is_array($body)) {
@@ -203,7 +206,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
-            $idnOptions = ($config['idn_conversion'] === true) ? IDNA_DEFAULT : $config['idn_conversion'];
+            $idnOptions = ($config['idn_conversion'] === true) ? \IDNA_DEFAULT : $config['idn_conversion'];
             $uri = Utils::idnUriConvert($uri, $idnOptions);
         }
 
@@ -229,7 +232,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         // We can only trust the HTTP_PROXY environment variable in a CLI
         // process due to the fact that PHP has no reliable mechanism to
         // get environment variables that start with "HTTP_".
-        if (PHP_SAPI === 'cli' && ($proxy = Utils::getenv('HTTP_PROXY'))) {
+        if (\PHP_SAPI === 'cli' && ($proxy = Utils::getenv('HTTP_PROXY'))) {
             $defaults['proxy']['http'] = $proxy;
         }
 
@@ -393,12 +396,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     break;
                 case 'digest':
                     // @todo: Do not rely on curl
-                    $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_DIGEST;
-                    $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    $options['curl'][\CURLOPT_HTTPAUTH] = \CURLAUTH_DIGEST;
+                    $options['curl'][\CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
                 case 'ntlm':
-                    $options['curl'][CURLOPT_HTTPAUTH] = CURLAUTH_NTLM;
-                    $options['curl'][CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    $options['curl'][\CURLOPT_HTTPAUTH] = \CURLAUTH_NTLM;
+                    $options['curl'][\CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
             }
         }
@@ -406,7 +409,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (isset($options['query'])) {
             $value = $options['query'];
             if (\is_array($value)) {
-                $value = \http_build_query($value, null, '&', PHP_QUERY_RFC3986);
+                $value = \http_build_query($value, null, '&', \PHP_QUERY_RFC3986);
             }
             if (!\is_string($value)) {
                 throw new InvalidArgumentException('query must be a string or array');

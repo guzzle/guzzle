@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
@@ -333,7 +334,7 @@ class StreamHandlerTest extends TestCase
         $path = $path = Utils::defaultCaBundle();
         $res = $this->getSendResult(['verify' => true]);
         $opts = \stream_context_get_options($res->getBody()->detach());
-        if (PHP_VERSION_ID < 50600) {
+        if (\PHP_VERSION_ID < 50600) {
             self::assertSame($path, $opts['ssl']['cafile']);
         } else {
             self::assertArrayNotHasKey('cafile', $opts['ssl']);
@@ -375,7 +376,7 @@ class StreamHandlerTest extends TestCase
         $this->queueRes();
         $buffer = \fopen('php://temp', 'r+');
         $this->getSendResult([
-            'progress' => function () use (&$called) {
+            'progress' => static function () use (&$called) {
                 $called = true;
             },
             'debug' => $buffer,
@@ -393,7 +394,7 @@ class StreamHandlerTest extends TestCase
         $called = [];
         $this->queueRes();
         $this->getSendResult([
-            'progress' => function () use (&$called) {
+            'progress' => static function () use (&$called) {
                 $called[] = \func_get_args();
             },
         ]);
@@ -409,7 +410,7 @@ class StreamHandlerTest extends TestCase
         $buffer = \fopen('php://memory', 'w+');
         $this->getSendResult([
             'debug'    => $buffer,
-            'progress' => function () use (&$called) {
+            'progress' => static function () use (&$called) {
                 $called[] = \func_get_args();
             },
         ]);
@@ -526,7 +527,7 @@ class StreamHandlerTest extends TestCase
         $req = new Request('GET', Server::$url);
         $handler = new StreamHandler();
         $promise = $handler($req, [
-            'on_headers' => function () {
+            'on_headers' => static function () {
                 throw new \Exception('test');
             }
         ]);
@@ -547,7 +548,7 @@ class StreamHandlerTest extends TestCase
 
         $stream = Psr7\stream_for();
         $stream = FnStream::decorate($stream, [
-            'write' => function ($data) use ($stream, &$got) {
+            'write' => static function ($data) use ($stream, &$got) {
                 self::assertNotNull($got);
                 return $stream->write($data);
             }
@@ -556,7 +557,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $promise = $handler($req, [
             'sink'       => $stream,
-            'on_headers' => function (ResponseInterface $res) use (&$got) {
+            'on_headers' => static function (ResponseInterface $res) use (&$got) {
                 $got = $res;
                 self::assertSame('bar', $res->getHeaderLine('X-Foo'));
             }
@@ -576,7 +577,7 @@ class StreamHandlerTest extends TestCase
         $gotStats = null;
         $handler = new StreamHandler();
         $promise = $handler($req, [
-            'on_stats' => function (TransferStats $stats) use (&$gotStats) {
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
                 $gotStats = $stats;
             }
         ]);
@@ -602,7 +603,7 @@ class StreamHandlerTest extends TestCase
         $promise = $handler($req, [
             'connect_timeout' => 0.001,
             'timeout' => 0.001,
-            'on_stats' => function (TransferStats $stats) use (&$gotStats) {
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
                 $gotStats = $stats;
             }
         ]);

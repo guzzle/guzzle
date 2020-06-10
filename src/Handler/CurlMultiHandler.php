@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Promise as P;
@@ -18,13 +19,19 @@ use Psr\Http\Message\RequestInterface;
  */
 class CurlMultiHandler
 {
-    /** @var CurlFactoryInterface */
+    /**
+     * @var CurlFactoryInterface
+     */
     private $factory;
 
-    /** @var int */
+    /**
+     * @var int
+     */
     private $selectTimeout;
 
-    /** @var resource|null the currently executing resource in `curl_multi_exec`. */
+    /**
+     * @var resource|null the currently executing resource in `curl_multi_exec`.
+     */
     private $active;
 
     /**
@@ -57,8 +64,7 @@ class CurlMultiHandler
      */
     public function __construct(array $options = [])
     {
-        $this->factory = isset($options['handle_factory'])
-            ? $options['handle_factory'] : new CurlFactory(50);
+        $this->factory = $options['handle_factory'] ?? new CurlFactory(50);
 
         if (isset($options['select_timeout'])) {
             $this->selectTimeout = $options['select_timeout'];
@@ -156,7 +162,7 @@ class CurlMultiHandler
             \usleep(250);
         }
 
-        while (\curl_multi_exec($this->_mh, $this->active) === CURLM_CALL_MULTI_PERFORM);
+        while (\curl_multi_exec($this->_mh, $this->active) === \CURLM_CALL_MULTI_PERFORM);
 
         $this->processMessages();
     }
@@ -238,7 +244,7 @@ class CurlMultiHandler
     private function timeToNext(): int
     {
         $currentTime = Utils::currentTime();
-        $nextTime = PHP_INT_MAX;
+        $nextTime = \PHP_INT_MAX;
         foreach ($this->delays as $time) {
             if ($time < $nextTime) {
                 $nextTime = $time;

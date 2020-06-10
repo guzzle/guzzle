@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Handler\CurlMultiHandler;
@@ -27,11 +28,11 @@ class CurlMultiHandlerTest extends TestCase
         Server::flush();
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler(['options' => [
-            CURLMOPT_MAXCONNECTS => 5,
+            \CURLMOPT_MAXCONNECTS => 5,
         ]]);
         $request = new Request('GET', Server::$url);
         $a($request, []);
-        self::assertEquals(5, $_SERVER['_curl_multi'][CURLMOPT_MAXCONNECTS]);
+        self::assertEquals(5, $_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]);
     }
 
     public function testSendsRequest()

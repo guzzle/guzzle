@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
@@ -237,7 +238,7 @@ class RedirectMiddlewareTest extends TestCase
         $promise = $handler($request, [
             'allow_redirects' => [
                 'max' => 2,
-                'on_redirect' => function ($request, $response, $uri) use (&$call) {
+                'on_redirect' => static function ($request, $response, $uri) use (&$call) {
                     self::assertSame(302, $response->getStatusCode());
                     self::assertSame('GET', $request->getMethod());
                     self::assertSame('http://test.com', (string) $uri);
@@ -253,7 +254,7 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
-            function (RequestInterface $request) {
+            static function (RequestInterface $request) {
                 self::assertFalse($request->hasHeader('Authorization'));
                 return new Response(200);
             }
@@ -267,7 +268,7 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://example.com/2']),
-            function (RequestInterface $request) {
+            static function (RequestInterface $request) {
                 self::assertTrue($request->hasHeader('Authorization'));
                 return new Response(200);
             }

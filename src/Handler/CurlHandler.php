@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Promise\PromiseInterface;
@@ -13,7 +14,9 @@ use Psr\Http\Message\RequestInterface;
  */
 class CurlHandler
 {
-    /** @var CurlFactoryInterface */
+    /**
+     * @var CurlFactoryInterface
+     */
     private $factory;
 
     /**
@@ -25,9 +28,8 @@ class CurlHandler
      */
     public function __construct(array $options = [])
     {
-        $this->factory = isset($options['handle_factory'])
-            ? $options['handle_factory']
-            : new CurlFactory(3);
+        $this->factory = $options['handle_factory']
+            ?? new CurlFactory(3);
     }
 
     public function __invoke(RequestInterface $request, array $options): PromiseInterface

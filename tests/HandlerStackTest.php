@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Cookie\CookieJar;
@@ -12,9 +13,9 @@ class HandlerStackTest extends TestCase
 {
     public function testSetsHandlerInCtor()
     {
-        $f = function () {
+        $f = static function () {
         };
-        $m1 = function () {
+        $m1 = static function () {
         };
         $h = new HandlerStack($f, [$m1]);
         self::assertTrue($h->hasHandler());
@@ -25,7 +26,7 @@ class HandlerStackTest extends TestCase
      */
     public function testCanSetDifferentHandlerAfterConstruction()
     {
-        $f = function () {
+        $f = static function () {
         };
         $h = new HandlerStack();
         $h->setHandler($f);
@@ -129,7 +130,7 @@ class HandlerStackTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         $builder = new HandlerStack();
-        $builder->before('foo', function () {
+        $builder->before('foo', static function () {
         });
     }
 
@@ -175,28 +176,28 @@ class HandlerStackTest extends TestCase
     {
         $calls = [];
 
-        $a = function (callable $next) use (&$calls) {
-            return function ($v) use ($next, &$calls) {
+        $a = static function (callable $next) use (&$calls) {
+            return static function ($v) use ($next, &$calls) {
                 $calls[] = ['a', $v];
                 return $next($v . '1');
             };
         };
 
-        $b = function (callable $next) use (&$calls) {
-            return function ($v) use ($next, &$calls) {
+        $b = static function (callable $next) use (&$calls) {
+            return static function ($v) use ($next, &$calls) {
                 $calls[] = ['b', $v];
                 return $next($v . '2');
             };
         };
 
-        $c = function (callable $next) use (&$calls) {
-            return function ($v) use ($next, &$calls) {
+        $c = static function (callable $next) use (&$calls) {
+            return static function ($v) use ($next, &$calls) {
                 $calls[] = ['c', $v];
                 return $next($v . '3');
             };
         };
 
-        $handler = function ($v) {
+        $handler = static function ($v) {
             return 'Hello - ' . $v;
         };
 

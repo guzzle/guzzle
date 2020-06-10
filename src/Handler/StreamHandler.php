@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
@@ -151,9 +152,8 @@ class StreamHandler
             return $stream;
         }
 
-        $sink = isset($options['sink'])
-            ? $options['sink']
-            : \fopen('php://temp', 'r+');
+        $sink = $options['sink']
+            ?? \fopen('php://temp', 'r+');
 
         return \is_string($sink)
             ? new Psr7\LazyOpenStream($sink, 'w+')
@@ -238,7 +238,7 @@ class StreamHandler
     private function createResource(callable $callback)
     {
         $errors = [];
-        \set_error_handler(function ($_, $msg, $file, $line) use (&$errors): bool {
+        \set_error_handler(static function ($_, $msg, $file, $line) use (&$errors): bool {
             $errors[] = [
                 'message' => $msg,
                 'file'    => $file,
@@ -254,7 +254,7 @@ class StreamHandler
             $message = 'Error creating resource: ';
             foreach ($errors as $err) {
                 foreach ($err as $key => $value) {
-                    $message .= "[$key] $value" . PHP_EOL;
+                    $message .= "[$key] $value" . \PHP_EOL;
                 }
             }
             throw new \RuntimeException(\trim($message));
@@ -355,9 +355,9 @@ class StreamHandler
     {
         $uri = $request->getUri();
 
-        if (isset($options['force_ip_resolve']) && !\filter_var($uri->getHost(), FILTER_VALIDATE_IP)) {
+        if (isset($options['force_ip_resolve']) && !\filter_var($uri->getHost(), \FILTER_VALIDATE_IP)) {
             if ('v4' === $options['force_ip_resolve']) {
-                $records = \dns_get_record($uri->getHost(), DNS_A);
+                $records = \dns_get_record($uri->getHost(), \DNS_A);
                 if (false === $records || !isset($records[0]['ip'])) {
                     throw new ConnectException(
                         \sprintf(
@@ -370,7 +370,7 @@ class StreamHandler
                 return $uri->withHost($records[0]['ip']);
             }
             if ('v6' === $options['force_ip_resolve']) {
-                $records = \dns_get_record($uri->getHost(), DNS_AAAA);
+                $records = \dns_get_record($uri->getHost(), \DNS_AAAA);
                 if (false === $records || !isset($records[0]['ipv6'])) {
                     throw new ConnectException(
                         \sprintf(
@@ -504,7 +504,7 @@ class StreamHandler
         $this->addNotification(
             $params,
             static function ($code, $a, $b, $c, $transferred, $total) use ($value) {
-                if ($code == STREAM_NOTIFY_PROGRESS) {
+                if ($code == \STREAM_NOTIFY_PROGRESS) {
                     $value($total, $transferred, null, null);
                 }
             }
@@ -521,16 +521,16 @@ class StreamHandler
         }
 
         static $map = [
-            STREAM_NOTIFY_CONNECT       => 'CONNECT',
-            STREAM_NOTIFY_AUTH_REQUIRED => 'AUTH_REQUIRED',
-            STREAM_NOTIFY_AUTH_RESULT   => 'AUTH_RESULT',
-            STREAM_NOTIFY_MIME_TYPE_IS  => 'MIME_TYPE_IS',
-            STREAM_NOTIFY_FILE_SIZE_IS  => 'FILE_SIZE_IS',
-            STREAM_NOTIFY_REDIRECTED    => 'REDIRECTED',
-            STREAM_NOTIFY_PROGRESS      => 'PROGRESS',
-            STREAM_NOTIFY_FAILURE       => 'FAILURE',
-            STREAM_NOTIFY_COMPLETED     => 'COMPLETED',
-            STREAM_NOTIFY_RESOLVE       => 'RESOLVE',
+            \STREAM_NOTIFY_CONNECT       => 'CONNECT',
+            \STREAM_NOTIFY_AUTH_REQUIRED => 'AUTH_REQUIRED',
+            \STREAM_NOTIFY_AUTH_RESULT   => 'AUTH_RESULT',
+            \STREAM_NOTIFY_MIME_TYPE_IS  => 'MIME_TYPE_IS',
+            \STREAM_NOTIFY_FILE_SIZE_IS  => 'FILE_SIZE_IS',
+            \STREAM_NOTIFY_REDIRECTED    => 'REDIRECTED',
+            \STREAM_NOTIFY_PROGRESS      => 'PROGRESS',
+            \STREAM_NOTIFY_FAILURE       => 'FAILURE',
+            \STREAM_NOTIFY_COMPLETED     => 'COMPLETED',
+            \STREAM_NOTIFY_RESOLVE       => 'RESOLVE',
         ];
         static $args = ['severity', 'message', 'message_code',
             'bytes_transferred', 'bytes_max'];
