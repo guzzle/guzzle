@@ -65,7 +65,7 @@ package:
 static: static-phpstan static-codestyle-check
 
 static-phpstan:
-	docker run --rm -it -e REQUIRE_DEV=true -v ${PWD}:/app -w /app oskarstark/phpstan-ga:0.12.27 analyze $(PHPSTAN_PARAMS)
+	docker run --rm -it -e REQUIRE_DEV=true -v ${PWD}:/app -w /app oskarstark/phpstan-ga:0.12.28 analyze $(PHPSTAN_PARAMS)
 
 static-phpstan-update-baseline:
 	$(MAKE) static-phpstan PHPSTAN_PARAMS="--generate-baseline"

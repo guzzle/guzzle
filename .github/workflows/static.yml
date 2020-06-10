@@ -10,13 +10,13 @@ jobs:
   phpstan:
     name: PHPStan
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
       - name: PHPStan
-        uses: OskarStark/phpstan-ga@0.12.27
+        uses: OskarStark/phpstan-ga@0.12.28
         env:
           REQUIRE_DEV: true
         with:
