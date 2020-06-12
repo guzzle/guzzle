@@ -8,6 +8,7 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RedirectMiddleware;
+use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
@@ -51,7 +52,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2]
+            RequestOptions::ALLOW_REDIRECTS => ['max' => 2]
         ]);
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
@@ -69,7 +70,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2]
+            RequestOptions::ALLOW_REDIRECTS => ['max' => 2]
         ]);
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
@@ -88,7 +89,7 @@ class RedirectMiddlewareTest extends TestCase
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
-        $promise = $handler($request, ['allow_redirects' => ['max' => 3]]);
+        $promise = $handler($request, [RequestOptions::ALLOW_REDIRECTS => ['max' => 3]]);
 
         $this->expectException(\GuzzleHttp\Exception\TooManyRedirectsException::class);
         $this->expectExceptionMessage('Will not follow more than 3 redirects');
@@ -107,7 +108,7 @@ class RedirectMiddlewareTest extends TestCase
 
         $this->expectException(\GuzzleHttp\Exception\BadResponseException::class);
         $this->expectExceptionMessage('Redirect URI,');
-        $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
+        $handler($request, [RequestOptions::ALLOW_REDIRECTS => ['max' => 3]])->wait();
     }
 
     public function testAddsRefererHeader()
@@ -121,7 +122,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2, 'referer' => true]
+            RequestOptions::ALLOW_REDIRECTS => ['max' => 2, 'referer' => true]
         ]);
         $promise->wait();
         self::assertSame(
@@ -141,7 +142,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://foo:bar@example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2, 'referer' => true]
+            RequestOptions::ALLOW_REDIRECTS => ['max' => 2, 'referer' => true]
         ]);
         $promise->wait();
         self::assertSame(
@@ -164,7 +165,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['track_redirects' => true]
+            RequestOptions::ALLOW_REDIRECTS => ['track_redirects' => true]
         ]);
         $response = $promise->wait(true);
         self::assertSame(
@@ -192,7 +193,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['track_redirects' => true]
+            RequestOptions::ALLOW_REDIRECTS => ['track_redirects' => true]
         ]);
         $response = $promise->wait(true);
         self::assertSame(
@@ -217,7 +218,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'https://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2, 'referer' => true]
+            RequestOptions::ALLOW_REDIRECTS => ['max' => 2, 'referer' => true]
         ]);
         $promise->wait();
         self::assertFalse($mock->getLastRequest()->hasHeader('Referer'));
@@ -235,7 +236,7 @@ class RedirectMiddlewareTest extends TestCase
         $request = new Request('GET', 'http://example.com?a=b');
         $call = false;
         $promise = $handler($request, [
-            'allow_redirects' => [
+            RequestOptions::ALLOW_REDIRECTS => [
                 'max' => 2,
                 'on_redirect' => function ($request, $response, $uri) use (&$call) {
                     self::assertSame(302, $response->getStatusCode());

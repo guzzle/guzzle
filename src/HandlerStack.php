@@ -39,7 +39,7 @@ class HandlerStack
     {
         $stack = new self($handler ?: Utils::chooseHandler());
         $stack->push(Middleware::httpErrors(), 'http_errors');
-        $stack->push(Middleware::redirect(), 'allow_redirects');
+        $stack->push(Middleware::redirect(), RequestOptions::ALLOW_REDIRECTS);
         $stack->push(Middleware::cookies(), 'cookies');
         $stack->push(Middleware::prepareBody(), 'prepare_body');
 

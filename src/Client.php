@@ -25,7 +25,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     $client = new Client([
      *         'base_uri'        => 'http://www.foo.com/1.0/',
      *         'timeout'         => 0,
-     *         'allow_redirects' => false,
+     *         \GuzzleHttp\RequestOptions::ALLOW_REDIRECTS => false,
      *         'proxy'           => '192.168.16.1:10'
      *     ]);
      *
@@ -216,7 +216,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     private function configureDefaults(array $config): void
     {
         $defaults = [
-            'allow_redirects' => RedirectMiddleware::$defaultSettings,
+            RequestOptions::ALLOW_REDIRECTS => RedirectMiddleware::$defaultSettings,
             'http_errors'     => true,
             'decode_content'  => true,
             'verify'          => true,

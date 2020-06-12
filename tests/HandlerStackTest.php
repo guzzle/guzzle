@@ -6,6 +6,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
 
 class HandlerStackTest extends TestCase
@@ -162,7 +163,7 @@ class HandlerStackTest extends TestCase
         $request = new Request('GET', 'http://foo.com/bar');
         $jar = new CookieJar();
         $response = $handler($request, [
-            'allow_redirects' => true,
+            RequestOptions::ALLOW_REDIRECTS => true,
             'cookies' => $jar
         ])->wait();
         self::assertSame(200, $response->getStatusCode());

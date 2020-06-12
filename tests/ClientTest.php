@@ -131,7 +131,7 @@ class ClientTest extends TestCase
         $client = new Client(['headers' => ['User-agent' => 'foo']]);
         $config = Helpers::readObjectAttribute($client, 'config');
         self::assertSame(['User-agent' => 'foo'], $config['headers']);
-        self::assertIsArray($config['allow_redirects']);
+        self::assertIsArray($config[RequestOptions::ALLOW_REDIRECTS]);
         self::assertTrue($config['http_errors']);
         self::assertTrue($config['decode_content']);
         self::assertTrue($config['verify']);
@@ -188,8 +188,8 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response(200, [], 'foo')]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $client->get('http://foo.com', ['allow_redirects' => true]);
-        self::assertIsArray($mock->getLastOptions()['allow_redirects']);
+        $client->get('http://foo.com', [RequestOptions::ALLOW_REDIRECTS => true]);
+        self::assertIsArray($mock->getLastOptions()[RequestOptions::ALLOW_REDIRECTS]);
     }
 
     public function testValidatesAllowRedirects()
@@ -200,7 +200,7 @@ class ClientTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('allow_redirects must be true, false, or array');
-        $client->get('http://foo.com', ['allow_redirects' => 'foo']);
+        $client->get('http://foo.com', [RequestOptions::ALLOW_REDIRECTS => 'foo']);
     }
 
     public function testThrowsHttpErrorsByDefault()
