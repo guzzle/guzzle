@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Cookie;
 
 /**
@@ -6,7 +7,9 @@ namespace GuzzleHttp\Cookie;
  */
 class SetCookie
 {
-    /** @var array */
+    /**
+     * @var array
+     */
     private static $defaults = [
         'Name'     => null,
         'Value'    => null,
@@ -19,7 +22,9 @@ class SetCookie
         'HttpOnly' => false
     ];
 
-    /** @var array Cookie data */
+    /**
+     * @var array Cookie data
+     */
     private $data;
 
     /**
@@ -69,7 +74,7 @@ class SetCookie
      */
     public function __construct(array $data = [])
     {
-        /** @var null|array $replaced will be null in case of replace error */
+        /** @var array|null $replaced will be null in case of replace error */
         $replaced = \array_replace(self::$defaults, $data);
         if ($replaced === null) {
             throw new \InvalidArgumentException('Unable to replace the default values for the Cookie.');
@@ -209,7 +214,7 @@ class SetCookie
     /**
      * The UNIX timestamp when the cookie Expires
      *
-     * @return null|string|int
+     * @return string|int|null
      */
     public function getExpires()
     {
@@ -349,7 +354,7 @@ class SetCookie
 
         // Matching the subdomain according to RFC 6265.
         // https://tools.ietf.org/html/rfc6265#section-5.1.3
-        if (\filter_var($domain, FILTER_VALIDATE_IP)) {
+        if (\filter_var($domain, \FILTER_VALIDATE_IP)) {
             return false;
         }
 

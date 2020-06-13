@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
@@ -11,13 +12,19 @@ use Psr\Http\Message\ResponseInterface;
  */
 class RetryMiddleware
 {
-    /** @var callable(RequestInterface, array): PromiseInterface */
+    /**
+     * @var callable(RequestInterface, array): PromiseInterface
+     */
     private $nextHandler;
 
-    /** @var callable */
+    /**
+     * @var callable
+     */
     private $decider;
 
-    /** @var callable(int) */
+    /**
+     * @var callable(int)
+     */
     private $delay;
 
     /**

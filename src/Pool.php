@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\EachPromise;
@@ -19,7 +20,9 @@ use Psr\Http\Message\RequestInterface;
  */
 class Pool implements PromisorInterface
 {
-    /** @var EachPromise */
+    /**
+     * @var EachPromise
+     */
     private $each;
 
     /**
@@ -49,7 +52,7 @@ class Pool implements PromisorInterface
         }
 
         $iterable = \GuzzleHttp\Promise\iter_for($requests);
-        $requests = function () use ($iterable, $client, $opts) {
+        $requests = static function () use ($iterable, $client, $opts) {
             foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
                     yield $key => $client->sendAsync($rfn, $opts);
@@ -114,12 +117,12 @@ class Pool implements PromisorInterface
     private static function cmpCallback(array &$options, string $name, array &$results): void
     {
         if (!isset($options[$name])) {
-            $options[$name] = function ($v, $k) use (&$results) {
+            $options[$name] = static function ($v, $k) use (&$results) {
                 $results[$k] = $v;
             };
         } else {
             $currentFn = $options[$name];
-            $options[$name] = function ($v, $k) use (&$results, $currentFn) {
+            $options[$name] = static function ($v, $k) use (&$results, $currentFn) {
                 $currentFn($v, $k);
                 $results[$k] = $v;
             };

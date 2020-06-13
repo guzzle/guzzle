@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests\Exception;
 
 use GuzzleHttp\Exception\ConnectException;

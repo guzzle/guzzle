@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
@@ -21,7 +22,9 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Server
 {
-    /** @var Client */
+    /**
+     * @var Client
+     */
     private static $client;
     private static $started = false;
     public static $url = 'http://127.0.0.1:8126/';
@@ -55,7 +58,7 @@ class Server
             if (!($response instanceof ResponseInterface)) {
                 throw new \Exception('Invalid response given.');
             }
-            $headers = \array_map(function ($h) {
+            $headers = \array_map(static function ($h) {
                 return \implode(' ,', $h);
             }, $response->getHeaders());
 
@@ -89,7 +92,7 @@ class Server
         $data = \json_decode($response->getBody(), true);
 
         return \array_map(
-            function ($message) {
+            static function ($message) {
                 $uri = $message['uri'];
                 if (isset($message['query_string'])) {
                     $uri .= '?' . $message['query_string'];

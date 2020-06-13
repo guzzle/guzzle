@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Exception;
 
 use Psr\Http\Client\NetworkExceptionInterface;
@@ -11,10 +12,14 @@ use Psr\Http\Message\RequestInterface;
  */
 class ConnectException extends TransferException implements NetworkExceptionInterface
 {
-    /** @var RequestInterface */
+    /**
+     * @var RequestInterface
+     */
     private $request;
 
-    /** @var array */
+    /**
+     * @var array
+     */
     private $handlerContext;
 
     public function __construct(

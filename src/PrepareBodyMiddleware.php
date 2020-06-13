@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
@@ -10,7 +11,9 @@ use Psr\Http\Message\RequestInterface;
  */
 class PrepareBodyMiddleware
 {
-    /** @var callable(RequestInterface, array): PromiseInterface */
+    /**
+     * @var callable(RequestInterface, array): PromiseInterface
+     */
     private $nextHandler;
 
     /**
@@ -72,7 +75,7 @@ class PrepareBodyMiddleware
             return;
         }
 
-        $expect = isset($options['expect']) ? $options['expect'] : null;
+        $expect = $options['expect'] ?? null;
 
         // Return if disabled or if you're not using HTTP/1.1 or HTTP/2.0
         if ($expect === false || $request->getProtocolVersion() < 1.1) {

@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Handler\EasyHandle;

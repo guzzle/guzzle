@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\RequestException;
@@ -204,7 +205,7 @@ class MockHandler implements \Countable
         $reason = null
     ): void {
         if (isset($options['on_stats'])) {
-            $transferTime = isset($options['transfer_time']) ? $options['transfer_time'] : 0;
+            $transferTime = $options['transfer_time'] ?? 0;
             $stats = new TransferStats($request, $response, $transferTime, $reason);
             \call_user_func($options['on_stats'], $stats);
         }

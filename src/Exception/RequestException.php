@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Exception;
 
 use Psr\Http\Client\RequestExceptionInterface;
@@ -11,13 +12,19 @@ use Psr\Http\Message\UriInterface;
  */
 class RequestException extends TransferException implements RequestExceptionInterface
 {
-    /** @var RequestInterface */
+    /**
+     * @var RequestInterface
+     */
     private $request;
 
-    /** @var ResponseInterface|null */
+    /**
+     * @var ResponseInterface|null
+     */
     private $response;
 
-    /** @var array */
+    /**
+     * @var array
+     */
     private $handlerContext;
 
     public function __construct(

@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Cookie\CookieJar;
@@ -24,7 +25,7 @@ class MiddlewareTest extends TestCase
         $m = Middleware::cookies($jar);
         $h = new MockHandler(
             [
-                function (RequestInterface $request) {
+                static function (RequestInterface $request) {
                     return new Response(200, [
                         'Set-Cookie' => (string) new SetCookie([
                             'Name'   => 'name',
@@ -120,18 +121,18 @@ class MiddlewareTest extends TestCase
     public function testTapsBeforeAndAfter()
     {
         $calls = [];
-        $m = function ($handler) use (&$calls) {
-            return function ($request, $options) use ($handler, &$calls) {
+        $m = static function ($handler) use (&$calls) {
+            return static function ($request, $options) use ($handler, &$calls) {
                 $calls[] = '2';
                 return $handler($request, $options);
             };
         };
 
         $m2 = Middleware::tap(
-            function (RequestInterface $request, array $options) use (&$calls) {
+            static function (RequestInterface $request, array $options) use (&$calls) {
                 $calls[] = '1';
             },
-            function (RequestInterface $request, array $options, PromiseInterface $p) use (&$calls) {
+            static function (RequestInterface $request, array $options, PromiseInterface $p) use (&$calls) {
                 $calls[] = '3';
             }
         );
@@ -150,13 +151,13 @@ class MiddlewareTest extends TestCase
     public function testMapsRequest()
     {
         $h = new MockHandler([
-            function (RequestInterface $request, array $options) {
+            static function (RequestInterface $request, array $options) {
                 self::assertSame('foo', $request->getHeaderLine('Bar'));
                 return new Response(200);
             }
         ]);
         $stack = new HandlerStack($h);
-        $stack->push(Middleware::mapRequest(function (RequestInterface $request) {
+        $stack->push(Middleware::mapRequest(static function (RequestInterface $request) {
             return $request->withHeader('Bar', 'foo');
         }));
         $comp = $stack->resolve();
@@ -168,7 +169,7 @@ class MiddlewareTest extends TestCase
     {
         $h = new MockHandler([new Response(200)]);
         $stack = new HandlerStack($h);
-        $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
+        $stack->push(Middleware::mapResponse(static function (ResponseInterface $response) {
             return $response->withHeader('Bar', 'foo');
         }));
         $comp = $stack->resolve();
