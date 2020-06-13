@@ -624,7 +624,7 @@ class ClientTest extends TestCase
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['base_uri' => 'http://127.0.0.1:8585', 'handler' => $mockHandler]);
-        $request = new Request('GET', '/test', ['Host'=>'foo.com']);
+        $request = new Request('GET', '/test', ['Host' => 'foo.com']);
 
         $client->send($request);
 
@@ -635,7 +635,7 @@ class ClientTest extends TestCase
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['base_uri' => 'http://foo2.com', 'handler' => $mockHandler]);
-        $request = new Request('GET', '/test', ['Host'=>'foo.com']);
+        $request = new Request('GET', '/test', ['Host' => 'foo.com']);
 
         $client->send($request);
 
@@ -664,7 +664,7 @@ class ClientTest extends TestCase
     public function testOnlyAddSchemeWhenHostIsPresent()
     {
         $mockHandler = new MockHandler([new Response()]);
-        $client = new Client(['handler'  => $mockHandler]);
+        $client = new Client(['handler' => $mockHandler]);
 
         $client->request('GET', 'baz');
         self::assertSame(

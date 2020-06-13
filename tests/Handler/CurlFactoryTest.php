@@ -297,7 +297,7 @@ class CurlFactoryTest extends TestCase
         if ($withEncoding) {
             $headers['Content-Encoding'] = 'gzip';
         }
-        $response  = new Psr7\Response(200, $headers, $content);
+        $response = new Psr7\Response(200, $headers, $content);
         Server::flush();
         Server::enqueue([$response]);
         return $content;

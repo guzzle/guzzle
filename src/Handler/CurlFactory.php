@@ -216,7 +216,7 @@ class CurlFactory implements CurlFactoryInterface
     private function getDefaultConf(EasyHandle $easy): array
     {
         $conf = [
-            '_headers'             => $easy->request->getHeaders(),
+            '_headers'              => $easy->request->getHeaders(),
             \CURLOPT_CUSTOMREQUEST  => $easy->request->getMethod(),
             \CURLOPT_URL            => (string) $easy->request->getUri()->withFragment(''),
             \CURLOPT_RETURNTRANSFER => false,
@@ -478,7 +478,7 @@ class CurlFactory implements CurlFactoryInterface
                 }
             }
 
-            $sslKey = $sslKey?? $options['ssl_key'];
+            $sslKey = $sslKey ?? $options['ssl_key'];
 
             if (!\file_exists($sslKey)) {
                 throw new \InvalidArgumentException(
