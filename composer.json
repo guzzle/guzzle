@@ -10,8 +10,8 @@
         "curl",
         "client",
         "HTTP client",
-        "psr7",
-        "psr18"
+        "PSR-7",
+        "PSR-18"
     ],
     "homepage": "http://guzzlephp.org/",
     "license": "MIT",
