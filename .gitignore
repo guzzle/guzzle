@@ -6,7 +6,7 @@
 /phpunit.xml
 /vendor/
 
-build/artifacts/
+build/
 artifacts/
 docs/_build
 docs/*.pyc
