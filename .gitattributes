@@ -3,7 +3,6 @@
 /.github/              export-ignore
 .gitignore             export-ignore
 .php_cs.dist           export-ignore
-/build/                export-ignore
 /docs/                 export-ignore
 /Dockerfile            export-ignore
 /Makefile              export-ignore
