@@ -35,7 +35,7 @@ class FunctionsTest extends TestCase
          * @see https://xdebug.org/docs/display#overload_var_dump
          */
         if (extension_loaded('xdebug')) {
-            $originalOverload =  ini_get('xdebug.overload_var_dump');
+            $originalOverload = ini_get('xdebug.overload_var_dump');
             ini_set('xdebug.overload_var_dump', 0);
         }
 

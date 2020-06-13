@@ -5,6 +5,7 @@ $config = PhpCsFixer\Config::create()
     ->setRules([
         '@PSR2' => true,
         'array_syntax' => ['syntax' => 'short'],
+        'binary_operator_spaces' => ['operators' => ['=>' => null]],
         'blank_line_after_opening_tag' => true,
         'compact_nullable_typehint' => true,
         'concat_space' => ['spacing' => 'one'],

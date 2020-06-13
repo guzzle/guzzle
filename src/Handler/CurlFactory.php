@@ -478,7 +478,7 @@ class CurlFactory implements CurlFactoryInterface
                 }
             }
 
-            $sslKey = $sslKey?? $options['ssl_key'];
+            $sslKey = $sslKey ?? $options['ssl_key'];
 
             if (!\file_exists($sslKey)) {
                 throw new \InvalidArgumentException(
