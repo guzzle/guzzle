@@ -9,6 +9,8 @@ use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use Psr\Http\Message\UriInterface;
 
+use function GuzzleHttp\Psr7\try_fopen;
+
 final class Utils
 {
     /**
@@ -73,12 +75,7 @@ final class Utils
             return \STDOUT;
         }
 
-        $resource = \fopen('php://output', 'w');
-        if (false === $resource) {
-            throw new \RuntimeException('Can not open php output for writing to debug the resource.');
-        }
-
-        return $resource;
+        return try_fopen('php://output', 'w');
     }
 
     /**

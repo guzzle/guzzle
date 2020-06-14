@@ -152,8 +152,7 @@ class StreamHandler
             return $stream;
         }
 
-        $sink = $options['sink']
-            ?? \fopen('php://temp', 'r+');
+        $sink = $options['sink'] ?? Psr7\try_fopen('php://temp', 'r+');
 
         return \is_string($sink)
             ? new Psr7\LazyOpenStream($sink, 'w+')
@@ -327,7 +326,7 @@ class StreamHandler
 
         return $this->createResource(
             function () use ($uri, &$http_response_header, $contextResource, $context, $options, $request) {
-                $resource = \fopen((string) $uri, 'r', false, $contextResource);
+                $resource = @\fopen((string) $uri, 'r', false, $contextResource);
                 $this->lastHeaders = $http_response_header;
 
                 if (false === $resource) {

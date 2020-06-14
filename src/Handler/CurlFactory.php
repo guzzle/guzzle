@@ -412,7 +412,7 @@ class CurlFactory implements CurlFactoryInterface
             };
         } else {
             // Use a default temp stream if no sink was set.
-            $conf[\CURLOPT_FILE] = \fopen('php://temp', 'w+');
+            $conf[\CURLOPT_FILE] = Psr7\try_fopen('php://temp', 'w+');
             $easy->sink = Psr7\stream_for($conf[\CURLOPT_FILE]);
         }
         $timeoutRequiresNoSignal = false;

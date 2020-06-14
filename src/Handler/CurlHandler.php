@@ -28,8 +28,7 @@ class CurlHandler
      */
     public function __construct(array $options = [])
     {
-        $this->factory = $options['handle_factory']
-            ?? new CurlFactory(3);
+        $this->factory = $options['handle_factory'] ?? new CurlFactory(3);
     }
 
     public function __invoke(RequestInterface $request, array $options): PromiseInterface

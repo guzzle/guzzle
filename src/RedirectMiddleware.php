@@ -140,8 +140,7 @@ class RedirectMiddleware
      */
     private function guardMax(RequestInterface $request, array &$options): void
     {
-        $current = $options['__redirect_count']
-            ?? 0;
+        $current = $options['__redirect_count'] ?? 0;
         $options['__redirect_count'] = $current + 1;
         $max = $options['allow_redirects']['max'];
 
