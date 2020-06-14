@@ -75,7 +75,7 @@ class MockHandler implements \Countable
         $this->onRejected = $onRejected;
 
         if ($queue) {
-            $this->append(...$queue);
+            \call_user_func_array([$this, 'append'], $queue);
         }
     }
 

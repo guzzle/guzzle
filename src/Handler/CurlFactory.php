@@ -502,7 +502,7 @@ class CurlFactory implements CurlFactoryInterface
                 if (\is_resource($args[0])) {
                     \array_shift($args);
                 }
-                $progress(...$args);
+                \call_user_func_array($progress, $args);
             };
         }
 

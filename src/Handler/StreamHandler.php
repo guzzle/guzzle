@@ -569,7 +569,7 @@ class StreamHandler
         return static function () use ($functions) {
             $args = \func_get_args();
             foreach ($functions as $fn) {
-                $fn(...$args);
+                \call_user_func_array($fn, $args);
             }
         };
     }
