@@ -9,8 +9,6 @@ use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use Psr\Http\Message\UriInterface;
 
-use function GuzzleHttp\Psr7\try_fopen;
-
 final class Utils
 {
     /**
@@ -75,7 +73,7 @@ final class Utils
             return \STDOUT;
         }
 
-        return try_fopen('php://output', 'w');
+        return \GuzzleHttp\Psr7\try_fopen('php://output', 'w');
     }
 
     /**
