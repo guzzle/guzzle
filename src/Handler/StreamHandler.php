@@ -91,7 +91,7 @@ class StreamHandler
                 $error,
                 []
             );
-            \call_user_func($options['on_stats'], $stats);
+            ($options['on_stats'])($stats);
         }
     }
 
@@ -569,7 +569,7 @@ class StreamHandler
         return static function () use ($functions) {
             $args = \func_get_args();
             foreach ($functions as $fn) {
-                \call_user_func_array($fn, $args);
+                $fn(...$args);
             }
         };
     }

@@ -90,8 +90,7 @@ class RedirectMiddleware
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
         if (isset($options['allow_redirects']['on_redirect'])) {
-            \call_user_func(
-                $options['allow_redirects']['on_redirect'],
+            ($options['allow_redirects']['on_redirect'])(
                 $request,
                 $response,
                 $nextRequest->getUri()

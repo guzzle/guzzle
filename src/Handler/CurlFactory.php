@@ -132,7 +132,7 @@ class CurlFactory implements CurlFactoryInterface
             $easy->errno,
             $curlStats
         );
-        \call_user_func($easy->options['on_stats'], $stats);
+        ($easy->options['on_stats'])($stats);
     }
 
     /**
@@ -502,7 +502,7 @@ class CurlFactory implements CurlFactoryInterface
                 if (\is_resource($args[0])) {
                     \array_shift($args);
                 }
-                \call_user_func_array($progress, $args);
+                $progress(...$args);
             };
         }
 
