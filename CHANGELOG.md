@@ -1,6 +1,6 @@
 # Change Log
 
-## 6.5.5 - UNRELEASED
+## 6.5.5 - 2020-06-16
 
 * Unpin version constraint for `symfony/polyfill-intl-idn` [#2678](https://github.com/guzzle/guzzle/pull/2678)
 
