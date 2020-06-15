@@ -11,7 +11,6 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RedirectMiddleware;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * @covers \GuzzleHttp\RedirectMiddleware
@@ -285,14 +284,13 @@ class RedirectMiddlewareTest extends TestCase
      *
      * @dataProvider modifyRequestFollowRequyestMethodAndBodyProvider
      *
-     * @param RequestInterface $request
      * @param string $expectedFollowRequestMethod
      */
     public function testModifyRequestFollowRequestMethodAndBody(
         RequestInterface $request,
         $expectedFollowRequestMethod
     ) {
-        $redirectMiddleware = new RedirectMiddleware(function () {
+        $redirectMiddleware = new RedirectMiddleware(static function () {
         });
 
         $options = [
@@ -305,8 +303,8 @@ class RedirectMiddlewareTest extends TestCase
 
         $modifiedRequest = $redirectMiddleware->modifyRequest($request, $options, new Response());
 
-        $this->assertEquals($expectedFollowRequestMethod, $modifiedRequest->getMethod());
-        $this->assertEquals(0, $modifiedRequest->getBody()->getSize());
+        self::assertEquals($expectedFollowRequestMethod, $modifiedRequest->getMethod());
+        self::assertEquals(0, $modifiedRequest->getBody()->getSize());
     }
 
     /**
