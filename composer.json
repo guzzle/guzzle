@@ -9,7 +9,9 @@
         "web service",
         "curl",
         "client",
-        "HTTP client"
+        "HTTP client",
+        "PSR-7",
+        "PSR-18"
     ],
     "homepage": "http://guzzlephp.org/",
     "license": "MIT",
@@ -39,7 +41,7 @@
         "ext-curl": "*",
         "ergebnis/composer-normalize": "^2.0",
         "php-http/client-integration-tests": "dev-phpunit8",
-        "phpunit/phpunit": "^8.5",
+        "phpunit/phpunit": "^8.5.5",
         "psr/log": "^1.1"
     },
     "suggest": {
