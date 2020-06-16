@@ -1,15 +1,19 @@
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
-	@echo "  start-server   to start the test server"
-	@echo "  stop-server    to stop the test server"
-	@echo "  test           to perform unit tests.  Provide TEST to perform a specific test."
-	@echo "  coverage       to perform unit tests with code coverage. Provide TEST to perform a specific test."
-	@echo "  coverage-show  to show the code coverage report"
-	@echo "  clean          to remove build artifacts"
-	@echo "  docs           to build the Sphinx docs"
-	@echo "  docs-show      to view the Sphinx docs"
-	@echo "  tag            to modify the version, update changelog, and chag tag"
-	@echo "  package        to build the phar and zip files"
+	@echo "  start-server                   to start the test server"
+	@echo "  stop-server                    to stop the test server"
+	@echo "  test                           to perform unit tests.  Provide TEST to perform a specific test."
+	@echo "  coverage                       to perform unit tests with code coverage. Provide TEST to perform a specific test."
+	@echo "  coverage-show                  to show the code coverage report"
+	@echo "  clean                          to remove build artifacts"
+	@echo "  docs                           to build the Sphinx docs"
+	@echo "  docs-show                      to view the Sphinx docs"
+	@echo "  tag                            to modify the version, update changelog, and chag tag"
+	@echo "  static                         to run phpstan and php-cs-fixer on the codebase"
+	@echo "  static-phpstan                 to run phpstan on the codebase"
+	@echo "  static-phpstan-update-baseline to regenerate the phpstan baseline file"
+	@echo "  static-codestyle-fix           to run php-cs-fixer on the codebase, writing the changes"
+	@echo "  static-codestyle-check         to run php-cs-fixer on the codebase"
 
 start-server: stop-server
 	node tests/server.js &> /dev/null &
@@ -59,9 +63,6 @@ tag:
 	git commit -m '$(TAG) release'
 	chag tag
 
-package:
-	php build/packager.php
-
 static: static-phpstan static-codestyle-check
 
 static-phpstan:
@@ -76,4 +77,4 @@ static-codestyle-fix:
 static-codestyle-check:
 	$(MAKE) static-codestyle-fix CS_PARAMS="--dry-run"
 
-.PHONY: docs burgomaster coverage-show view-coverage
+.PHONY: docs coverage-show view-coverage
