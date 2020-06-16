@@ -10,6 +10,11 @@ help:
 	@echo "  docs-show      to view the Sphinx docs"
 	@echo "  tag            to modify the version, update changelog, and chag tag"
 	@echo "  package        to build the phar and zip files"
+	@echo "  static                         to run phpstan and php-cs-fixer on the codebase"
+	@echo "  static-phpstan                 to run phpstan on the codebase"
+	@echo "  static-phpstan-update-baseline to regenerate the phpstan baseline file"
+	@echo "  static-codestyle-fix           to run php-cs-fixer on the codebase, writing the changes"
+	@echo "  static-codestyle-check         to run php-cs-fixer on the codebase"
 
 start-server: stop-server
 	node tests/server.js &> /dev/null &
@@ -55,5 +60,19 @@ tag:
 
 package:
 	php build/packager.php
+
+static: static-phpstan static-codestyle-check
+
+static-phpstan:
+	docker run --rm -it -e REQUIRE_DEV=true -v ${PWD}:/app -w /app oskarstark/phpstan-ga:0.12.28 analyze $(PHPSTAN_PARAMS)
+
+static-phpstan-update-baseline:
+	$(MAKE) static-phpstan PHPSTAN_PARAMS="--generate-baseline"
+
+static-codestyle-fix:
+	docker run --rm -it -v ${PWD}:/app -w /app oskarstark/php-cs-fixer-ga:2.16.3.1 --diff-format udiff $(CS_PARAMS)
+
+static-codestyle-check:
+	$(MAKE) static-codestyle-fix CS_PARAMS="--dry-run"
 
 .PHONY: docs burgomaster coverage-show view-coverage
