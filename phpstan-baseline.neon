@@ -166,11 +166,6 @@ parameters:
 			path: src/Cookie/CookieJar.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Cookie\\\\CookieJar\\:\\:count\\(\\) has no return typehint specified\\.$#"
-			count: 1
-			path: src/Cookie/CookieJar.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Cookie\\\\CookieJar\\:\\:getIterator\\(\\) return type has no value type specified in iterable type Traversable\\<mixed, mixed\\>\\.$#"
 			count: 1
 			path: src/Cookie/CookieJar.php
@@ -321,17 +316,7 @@ parameters:
 			path: src/Exception/BadResponseException.php
 
 		-
-			message: "#^Method GuzzleHttp\\\\Exception\\\\BadResponseException\\:\\:__construct\\(\\) has parameter \\$message with no typehint specified\\.$#"
-			count: 1
-			path: src/Exception/BadResponseException.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\Exception\\\\ConnectException\\:\\:__construct\\(\\) has parameter \\$handlerContext with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Exception/ConnectException.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Exception\\\\ConnectException\\:\\:__construct\\(\\) has parameter \\$message with no typehint specified\\.$#"
 			count: 1
 			path: src/Exception/ConnectException.php
 
@@ -342,11 +327,6 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Exception\\\\RequestException\\:\\:__construct\\(\\) has parameter \\$handlerContext with no value type specified in iterable type array\\.$#"
-			count: 1
-			path: src/Exception/RequestException.php
-
-		-
-			message: "#^Method GuzzleHttp\\\\Exception\\\\RequestException\\:\\:__construct\\(\\) has parameter \\$message with no typehint specified\\.$#"
 			count: 1
 			path: src/Exception/RequestException.php
 

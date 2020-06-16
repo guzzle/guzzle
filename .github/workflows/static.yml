@@ -10,13 +10,13 @@ jobs:
   phpstan:
     name: PHPStan
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: PHPStan
-        uses: docker://oskarstark/phpstan-ga
+        uses: OskarStark/phpstan-ga@0.12.28
         env:
           REQUIRE_DEV: true
         with:
@@ -28,9 +28,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
 
       - name: PHP-CS-Fixer
-        uses: docker://oskarstark/php-cs-fixer-ga
+        uses: OskarStark/php-cs-fixer-ga@2.16.3.1
         with:
           args: --dry-run --diff-format udiff
