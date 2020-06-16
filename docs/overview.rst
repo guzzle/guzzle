@@ -26,7 +26,7 @@ Installation
 ============
 
 The recommended way to install Guzzle is with
-`Composer <http://getcomposer.org>`_. Composer is a dependency management tool
+`Composer <https://getcomposer.org>`_. Composer is a dependency management tool
 for PHP that allows you to declare the dependencies your project needs and
 installs them into your project.
 
@@ -35,11 +35,11 @@ installs them into your project.
     # Install Composer
     curl -sS https://getcomposer.org/installer | php
 
-You can add Guzzle as a dependency using the composer.phar CLI:
+You can add Guzzle as a dependency using Composer:
 
 .. code-block:: bash
 
-    php composer.phar require guzzlehttp/guzzle:~6.0
+    composer require guzzlehttp/guzzle:^7.0
 
 Alternatively, you can specify Guzzle as a dependency in your project's
 existing composer.json file:
@@ -48,7 +48,7 @@ existing composer.json file:
 
     {
       "require": {
-         "guzzlehttp/guzzle": "~6.0"
+         "guzzlehttp/guzzle": "^7.0"
       }
    }
 
@@ -59,20 +59,20 @@ After installing, you need to require Composer's autoloader:
     require 'vendor/autoload.php';
 
 You can find out more on how to install Composer, configure autoloading, and
-other best-practices for defining dependencies at `getcomposer.org <http://getcomposer.org>`_.
+other best-practices for defining dependencies at `getcomposer.org <https://getcomposer.org>`_.
 
 
 Bleeding edge
 -------------
 
 During your development, you can keep up with the latest changes on the master
-branch by setting the version requirement for Guzzle to ``~6.0@dev``.
+branch by setting the version requirement for Guzzle to ``^7.0@dev``.
 
 .. code-block:: js
 
    {
       "require": {
-         "guzzlehttp/guzzle": "~6.0@dev"
+         "guzzlehttp/guzzle": "^7.0@dev"
       }
    }
 
@@ -80,7 +80,7 @@ branch by setting the version requirement for Guzzle to ``~6.0@dev``.
 License
 =======
 
-Licensed using the `MIT license <http://opensource.org/licenses/MIT>`_.
+Licensed using the `MIT license <https://opensource.org/licenses/MIT>`_.
 
     Copyright (c) 2015 Michael Dowling <https://github.com/mtdowling>
 
@@ -113,9 +113,9 @@ Guidelines
 1. Guzzle utilizes PSR-1, PSR-2, PSR-4, and PSR-7.
 2. Guzzle is meant to be lean and fast with very few dependencies. This means
    that not every feature request will be accepted.
-3. Guzzle has a minimum PHP version requirement of PHP 5.5. Pull requests must
-   not require a PHP version greater than PHP 5.5 unless the feature is only
-   utilized conditionally.
+3. Guzzle has a minimum PHP version requirement of PHP 7.2. Pull requests must
+   not require a PHP version greater than PHP 7.2 unless the feature is only
+   utilized conditionally and the file can be parsed by PHP 7.2.
 4. All pull requests must include unit tests to ensure the change works as
    expected and to prevent regressions.
 
@@ -129,7 +129,7 @@ install Guzzle's dependencies using Composer:
 .. code-block:: bash
 
     git clone https://github.com/guzzle/guzzle.git
-    cd guzzle && curl -s http://getcomposer.org/installer | php && ./composer.phar install --dev
+    cd guzzle && composer install
 
 Guzzle is unit tested with PHPUnit. Run the tests using the Makefile:
 
@@ -139,8 +139,8 @@ Guzzle is unit tested with PHPUnit. Run the tests using the Makefile:
 
 .. note::
 
-    You'll need to install node.js v0.5.0 or newer in order to perform
-    integration tests on Guzzle's HTTP handlers.
+    You'll need to install node.js v8 or newer in order to perform integration
+    tests on Guzzle's HTTP handlers.
 
 
 Reporting a security vulnerability
@@ -148,7 +148,7 @@ Reporting a security vulnerability
 
 We want to ensure that Guzzle is a secure HTTP client library for everyone. If
 you've discovered a security vulnerability in Guzzle, we appreciate your help
-in disclosing it to us in a `responsible manner <http://en.wikipedia.org/wiki/Responsible_disclosure>`_.
+in disclosing it to us in a `responsible manner <https://en.wikipedia.org/wiki/Responsible_disclosure>`_.
 
 Publicly disclosing a vulnerability can put the entire community at risk. If
 you've discovered a security concern, please email us at
