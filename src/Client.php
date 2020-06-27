@@ -193,6 +193,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string|null $option The config option to retrieve.
      *
      * @return mixed
+     *
+     * @deprecated Client::getConfig will be removed in guzzlehttp/guzzle:8.0.
      */
     public function getConfig(?string $option = null)
     {
