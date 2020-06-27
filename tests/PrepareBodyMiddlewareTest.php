@@ -25,6 +25,7 @@ class PrepareBodyMiddlewareTest extends TestCase
             }
         }
     }
+
     /**
      * @dataProvider methodProvider
      */
