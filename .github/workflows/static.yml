@@ -39,8 +39,18 @@ jobs:
     name: Psalm
     runs-on: ubuntu-latest
     steps:
+      - name: Set up PHP
+        uses: shivammathur/setup-php@2.3.1
+        with:
+          php-version: '7.4'
+          extensions: mbstring, intl
+          tools: composer:v2
+
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Download dependencies
+        run: composer update --no-interaction --prefer-dist
 
       - name: Psalm
         uses: psalm/psalm-github-actions@master
