@@ -3,9 +3,10 @@
 namespace GuzzleHttp\Test;
 
 use GuzzleHttp;
+use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 
-class FunctionsTest extends TestCase
+class UtilsTest extends TestCase
 {
     public function noBodyProvider()
     {
@@ -41,6 +42,7 @@ class FunctionsTest extends TestCase
         }
 
         try {
+            self::assertSame($output, Utils::describeType($input));
             self::assertSame($output, GuzzleHttp\describe_type($input));
         } finally {
             if (extension_loaded('xdebug')) {
@@ -51,30 +53,63 @@ class FunctionsTest extends TestCase
 
     public function testParsesHeadersFromLines()
     {
-        $lines = ['Foo: bar', 'Foo: baz', 'Abc: 123', 'Def: a, b'];
-        self::assertSame([
+        $lines = [
+            'Foo: bar',
+            'Foo: baz',
+            'Abc: 123',
+            'Def: a, b',
+        ];
+
+        $expected = [
             'Foo' => ['bar', 'baz'],
             'Abc' => ['123'],
             'Def' => ['a, b'],
-        ], GuzzleHttp\headers_from_lines($lines));
+        ];
+
+        self::assertSame($expected, Utils::headersFromLines($lines));
+        self::assertSame($expected, GuzzleHttp\headers_from_lines($lines));
     }
 
     public function testParsesHeadersFromLinesWithMultipleLines()
     {
         $lines = ['Foo: bar', 'Foo: baz', 'Foo: 123'];
-        self::assertSame([
-            'Foo' => ['bar', 'baz', '123'],
-        ], GuzzleHttp\headers_from_lines($lines));
+        $expected = ['Foo' => ['bar', 'baz', '123']];
+
+        self::assertSame($expected, Utils::headersFromLines($lines));
+        self::assertSame($expected, GuzzleHttp\headers_from_lines($lines));
+    }
+
+    public function testChooseHandler()
+    {
+        self::assertIsCallable(Utils::chooseHandler());
+        self::assertIsCallable(GuzzleHttp\choose_handler());
+    }
+
+    public function testDefaultUserAgent()
+    {
+        self::assertIsString(Utils::defaultUserAgent());
+        self::assertIsString(GuzzleHttp\default_user_agent());
     }
 
     public function testReturnsDebugResource()
     {
+        self::assertIsResource(Utils::debugResource());
         self::assertIsResource(GuzzleHttp\debug_resource());
     }
 
     public function testProvidesDefaultCaBundler()
     {
+        self::assertFileExists(Utils::defaultCaBundle());
         self::assertFileExists(GuzzleHttp\default_ca_bundle());
+    }
+
+    public function testNormalizeHeaderKeys()
+    {
+        $input = ['HelLo' => 'foo', 'WORld' => 'bar'];
+        $expected = ['hello' => 'HelLo', 'world' => 'WORld'];
+
+        self::assertSame($expected, Utils::normalizeHeaderKeys($input));
+        self::assertSame($expected, GuzzleHttp\normalize_header_keys($input));
     }
 
     public function noProxyProvider()
@@ -94,13 +129,18 @@ class FunctionsTest extends TestCase
      */
     public function testChecksNoProxyList($host, $list, $result)
     {
-        self::assertSame(
-            $result,
-            \GuzzleHttp\is_host_in_noproxy($host, $list)
-        );
+        self::assertSame($result, Utils::isHostInNoProxy($host, $list));
+        self::assertSame($result, \GuzzleHttp\is_host_in_noproxy($host, $list));
     }
 
     public function testEnsuresNoProxyCheckHostIsSet()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Utils::isHostInNoProxy('', []);
+    }
+
+    public function testEnsuresNoProxyCheckHostIsSetLegacy()
     {
         $this->expectException(\InvalidArgumentException::class);
 
@@ -109,10 +149,18 @@ class FunctionsTest extends TestCase
 
     public function testEncodesJson()
     {
+        self::assertSame('true', Utils::jsonEncode(true));
         self::assertSame('true', \GuzzleHttp\json_encode(true));
     }
 
     public function testEncodesJsonAndThrowsOnError()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Utils::jsonEncode("\x99");
+    }
+
+    public function testEncodesJsonAndThrowsOnErrorLegacy()
     {
         $this->expectException(\InvalidArgumentException::class);
 
@@ -121,10 +169,18 @@ class FunctionsTest extends TestCase
 
     public function testDecodesJson()
     {
+        self::assertTrue(Utils::jsonDecode('true'));
         self::assertTrue(\GuzzleHttp\json_decode('true'));
     }
 
     public function testDecodesJsonAndThrowsOnError()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Utils::jsonDecode('{{]]');
+    }
+
+    public function testDecodesJsonAndThrowsOnErrorLegacy()
     {
         $this->expectException(\InvalidArgumentException::class);
 
