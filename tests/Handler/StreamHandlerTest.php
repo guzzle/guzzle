@@ -320,7 +320,7 @@ class StreamHandlerTest extends TestCase
 
     public function testVerifyCanBeSetToPath()
     {
-        $path = $path = Utils::defaultCaBundle();
+        $path = Utils::defaultCaBundle();
         $res = $this->getSendResult(['verify' => $path]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertTrue($opts['ssl']['verify_peer']);
@@ -331,14 +331,9 @@ class StreamHandlerTest extends TestCase
 
     public function testUsesSystemDefaultBundle()
     {
-        $path = $path = Utils::defaultCaBundle();
         $res = $this->getSendResult(['verify' => true]);
         $opts = \stream_context_get_options($res->getBody()->detach());
-        if (\PHP_VERSION_ID < 50600) {
-            self::assertSame($path, $opts['ssl']['cafile']);
-        } else {
-            self::assertArrayNotHasKey('cafile', $opts['ssl']);
-        }
+        self::assertArrayNotHasKey('cafile', $opts['ssl']);
     }
 
     public function testEnsuresVerifyOptionIsValid()
