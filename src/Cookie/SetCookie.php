@@ -28,7 +28,7 @@ class SetCookie
     private $data;
 
     /**
-     * Create a new SetCookie object from a string
+     * Create a new SetCookie object from a string.
      *
      * @param string $cookie Set-Cookie header string
      */
@@ -39,7 +39,7 @@ class SetCookie
         // Explode the cookie string using a series of semicolons
         $pieces = \array_filter(\array_map('trim', \explode(';', $cookie)));
         // The name of the cookie (first kvp) must exist and include an equal sign.
-        if (empty($pieces[0]) || !\strpos($pieces[0], '=')) {
+        if (!isset($pieces[0]) || \strpos($pieces[0], '=') === false) {
             return new self($data);
         }
 
@@ -52,7 +52,7 @@ class SetCookie
                 : true;
 
             // Only check for non-cookies when cookies have been found
-            if (empty($data['Name'])) {
+            if (!isset($data['Name'])) {
                 $data['Name'] = $key;
                 $data['Value'] = $value;
             } else {
@@ -112,7 +112,7 @@ class SetCookie
     }
 
     /**
-     * Get the cookie name
+     * Get the cookie name.
      *
      * @return string
      */
@@ -122,7 +122,7 @@ class SetCookie
     }
 
     /**
-     * Set the cookie name
+     * Set the cookie name.
      *
      * @param string $name Cookie name
      */
@@ -132,7 +132,7 @@ class SetCookie
     }
 
     /**
-     * Get the cookie value
+     * Get the cookie value.
      *
      * @return string|null
      */
@@ -142,7 +142,7 @@ class SetCookie
     }
 
     /**
-     * Set the cookie value
+     * Set the cookie value.
      *
      * @param string $value Cookie value
      */
@@ -152,7 +152,7 @@ class SetCookie
     }
 
     /**
-     * Get the domain
+     * Get the domain.
      *
      * @return string|null
      */
@@ -162,7 +162,7 @@ class SetCookie
     }
 
     /**
-     * Set the domain of the cookie
+     * Set the domain of the cookie.
      *
      * @param string $domain
      */
@@ -172,7 +172,7 @@ class SetCookie
     }
 
     /**
-     * Get the path
+     * Get the path.
      *
      * @return string
      */
@@ -182,7 +182,7 @@ class SetCookie
     }
 
     /**
-     * Set the path of the cookie
+     * Set the path of the cookie.
      *
      * @param string $path Path of the cookie
      */
@@ -192,7 +192,7 @@ class SetCookie
     }
 
     /**
-     * Maximum lifetime of the cookie in seconds
+     * Maximum lifetime of the cookie in seconds.
      *
      * @return int|null
      */
@@ -202,7 +202,7 @@ class SetCookie
     }
 
     /**
-     * Set the max-age of the cookie
+     * Set the max-age of the cookie.
      *
      * @param int $maxAge Max age of the cookie in seconds
      */
@@ -212,7 +212,7 @@ class SetCookie
     }
 
     /**
-     * The UNIX timestamp when the cookie Expires
+     * The UNIX timestamp when the cookie Expires.
      *
      * @return string|int|null
      */
@@ -222,7 +222,7 @@ class SetCookie
     }
 
     /**
-     * Set the unix timestamp for which the cookie will expire
+     * Set the unix timestamp for which the cookie will expire.
      *
      * @param int|string $timestamp Unix timestamp or any English textual datetime description.
      */
@@ -234,7 +234,7 @@ class SetCookie
     }
 
     /**
-     * Get whether or not this is a secure cookie
+     * Get whether or not this is a secure cookie.
      *
      * @return bool|null
      */
@@ -244,7 +244,7 @@ class SetCookie
     }
 
     /**
-     * Set whether or not the cookie is secure
+     * Set whether or not the cookie is secure.
      *
      * @param bool $secure Set to true or false if secure
      */
@@ -254,7 +254,7 @@ class SetCookie
     }
 
     /**
-     * Get whether or not this is a session cookie
+     * Get whether or not this is a session cookie.
      *
      * @return bool|null
      */
@@ -264,7 +264,7 @@ class SetCookie
     }
 
     /**
-     * Set whether or not this is a session cookie
+     * Set whether or not this is a session cookie.
      *
      * @param bool $discard Set to true or false if this is a session cookie
      */
@@ -274,7 +274,7 @@ class SetCookie
     }
 
     /**
-     * Get whether or not this is an HTTP only cookie
+     * Get whether or not this is an HTTP only cookie.
      *
      * @return bool
      */
@@ -284,7 +284,7 @@ class SetCookie
     }
 
     /**
-     * Set whether or not this is an HTTP only cookie
+     * Set whether or not this is an HTTP only cookie.
      *
      * @param bool $httpOnly Set to true or false if this is HTTP only
      */
@@ -332,7 +332,7 @@ class SetCookie
     }
 
     /**
-     * Check if the cookie matches a domain value
+     * Check if the cookie matches a domain value.
      *
      * @param string $domain Domain to check against
      */
@@ -362,7 +362,7 @@ class SetCookie
     }
 
     /**
-     * Check if the cookie is expired
+     * Check if the cookie is expired.
      */
     public function isExpired(): bool
     {
@@ -370,15 +370,14 @@ class SetCookie
     }
 
     /**
-     * Check if the cookie is valid according to RFC 6265
+     * Check if the cookie is valid according to RFC 6265.
      *
      * @return bool|string Returns true if valid or an error message if invalid
      */
     public function validate()
     {
-        // Names must not be empty, but can be 0
         $name = $this->getName();
-        if (empty($name) && !\is_numeric($name)) {
+        if ($name === '') {
             return 'The cookie name must not be empty';
         }
 
@@ -399,11 +398,10 @@ class SetCookie
             return 'The cookie value must not be empty';
         }
 
-        // Domains must not be empty, but can be 0
-        // A "0" is not a valid internet domain, but may be used as server name
-        // in a private network.
+        // Domains must not be empty, but can be 0. "0" is not a valid internet
+        // domain, but may be used as server name in a private network.
         $domain = $this->getDomain();
-        if (empty($domain) && !\is_numeric($domain)) {
+        if ($domain === null || $domain === '') {
             return 'The cookie domain must not be empty';
         }
 
