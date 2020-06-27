@@ -90,11 +90,6 @@ class UtilsTest extends TestCase
         self::assertIsResource(Utils::debugResource());
     }
 
-    public function testProvidesDefaultCaBundler()
-    {
-        self::assertFileExists(Utils::defaultCaBundle());
-    }
-
     public function testNormalizeHeaderKeys()
     {
         $input = ['HelLo' => 'foo', 'WORld' => 'bar'];

@@ -353,17 +353,6 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['cert' => '/does/not/exist']);
     }
 
-    public function testVerifyCanBeSetToPath()
-    {
-        $path = Utils::defaultCaBundle();
-        $res = $this->getSendResult(['verify' => $path]);
-        $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertTrue($opts['ssl']['verify_peer']);
-        self::assertTrue($opts['ssl']['verify_peer_name']);
-        self::assertSame($path, $opts['ssl']['cafile']);
-        self::assertFileExists($opts['ssl']['cafile']);
-    }
-
     public function testUsesSystemDefaultBundle()
     {
         $res = $this->getSendResult(['verify' => true]);
