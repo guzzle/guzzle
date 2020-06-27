@@ -4,6 +4,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## UNRELEASED
 
+## 7.0.0 - 2020-06-27
+
+No changes since 7.0.0-rc1.
+
 ## 7.0.0-rc1 - 2020-06-15
 
 ### Changed
