@@ -333,7 +333,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Applies the array of request options to a request.
      */
-    private function applyOptions(RequestInterface $request, array &$options): RequestInterface
+    private function applyOptions(RequestInterface $request, RequestInterface &$options): RequestInterface
     {
         $modify = [
             'set_headers' => [],
