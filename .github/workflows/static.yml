@@ -50,9 +50,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download dependencies
-        run: composer update --no-interaction --prefer-dist
+        run: |
+          composer require --dev --no-updatepsalm/phar:3.12.1
+          composer update --no-interaction --prefer-dist
 
       - name: Psalm
-        uses: psalm/psalm-github-actions@master
-        with:
-          args: --no-progress --show-info=false --stats
+        run: |
+          ./vendor/bin/psalm --version
+          ./vendor/bin/psalm --output-format=github --no-progress --show-info=false --stats

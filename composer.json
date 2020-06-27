@@ -42,6 +42,7 @@
         "ergebnis/composer-normalize": "^2.0",
         "php-http/client-integration-tests": "dev-phpunit8",
         "phpunit/phpunit": "^8.5.5",
+        "psalm/phar": "3.12.1",
         "psr/log": "^1.1"
     },
     "suggest": {
