@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: PHPStan
-        uses: OskarStark/phpstan-ga@0.12.28
+        uses: OskarStark/phpstan-ga@0.12.31
         env:
           REQUIRE_DEV: true
         with:
