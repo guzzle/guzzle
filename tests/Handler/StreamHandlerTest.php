@@ -318,29 +318,6 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['cert' => '/does/not/exist']);
     }
 
-    public function testVerifyCanBeSetToPath()
-    {
-        $path = $path = Utils::defaultCaBundle();
-        $res = $this->getSendResult(['verify' => $path]);
-        $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertTrue($opts['ssl']['verify_peer']);
-        self::assertTrue($opts['ssl']['verify_peer_name']);
-        self::assertSame($path, $opts['ssl']['cafile']);
-        self::assertFileExists($opts['ssl']['cafile']);
-    }
-
-    public function testUsesSystemDefaultBundle()
-    {
-        $path = $path = Utils::defaultCaBundle();
-        $res = $this->getSendResult(['verify' => true]);
-        $opts = \stream_context_get_options($res->getBody()->detach());
-        if (\PHP_VERSION_ID < 50600) {
-            self::assertSame($path, $opts['ssl']['cafile']);
-        } else {
-            self::assertArrayNotHasKey('cafile', $opts['ssl']);
-        }
-    }
-
     public function testEnsuresVerifyOptionIsValid()
     {
         $this->expectException(\InvalidArgumentException::class);
