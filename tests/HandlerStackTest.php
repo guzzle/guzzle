@@ -207,6 +207,7 @@ class HandlerStackTest extends TestCase
     public static function foo()
     {
     }
+
     public function bar()
     {
     }

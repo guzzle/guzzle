@@ -24,6 +24,7 @@ class FunctionsTest extends TestCase
             [['foo'], 'array(1)']
         ];
     }
+
     /**
      * @dataProvider typeProvider
      */
