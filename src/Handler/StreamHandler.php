@@ -91,7 +91,7 @@ class StreamHandler
                 $error,
                 []
             );
-            \call_user_func($options['on_stats'], $stats);
+            ($options['on_stats'])($stats);
         }
     }
 

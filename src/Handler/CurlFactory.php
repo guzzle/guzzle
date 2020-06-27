@@ -132,7 +132,7 @@ class CurlFactory implements CurlFactoryInterface
             $easy->errno,
             $curlStats
         );
-        \call_user_func($easy->options['on_stats'], $stats);
+        ($easy->options['on_stats'])($stats);
     }
 
     /**
