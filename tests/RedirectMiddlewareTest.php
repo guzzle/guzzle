@@ -277,4 +277,70 @@ class RedirectMiddlewareTest extends TestCase
         $client = new Client(['handler' => $handler]);
         $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass']]);
     }
+
+    /**
+     * Verifies how RedirectMiddleware::modifyRequest() modifies the method and body of a request issued when
+     * encountering a redirect response.
+     *
+     * @dataProvider modifyRequestFollowRequyestMethodAndBodyProvider
+     *
+     * @param string $expectedFollowRequestMethod
+     */
+    public function testModifyRequestFollowRequestMethodAndBody(
+        RequestInterface $request,
+        $expectedFollowRequestMethod
+    ) {
+        $redirectMiddleware = new RedirectMiddleware(static function () {
+        });
+
+        $options = [
+            'allow_redirects' => [
+                'protocols' => ['http', 'https'],
+                'strict' => false,
+                'referer' => null,
+            ],
+        ];
+
+        $modifiedRequest = $redirectMiddleware->modifyRequest($request, $options, new Response());
+
+        self::assertEquals($expectedFollowRequestMethod, $modifiedRequest->getMethod());
+        self::assertEquals(0, $modifiedRequest->getBody()->getSize());
+    }
+
+    /**
+     * @return array
+     */
+    public function modifyRequestFollowRequyestMethodAndBodyProvider()
+    {
+        return [
+            'DELETE' => [
+                'request' => new Request('DELETE', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'GET' => [
+                'request' => new Request('GET', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'HEAD' => [
+                'request' => new Request('HEAD', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'HEAD',
+            ],
+            'OPTIONS' => [
+                'request' => new Request('OPTIONS', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'OPTIONS',
+            ],
+            'PATCH' => [
+                'request' => new Request('PATCH', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'POST' => [
+                'request' => new Request('POST', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'PUT' => [
+                'request' => new Request('PUT', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+        ];
+    }
 }
