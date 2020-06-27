@@ -159,8 +159,9 @@ class SetCookieTest extends TestCase
             ['foo', 'baz', 'bar', true],
             ['0', '0', '0', true],
             ['foo[bar]', 'baz', 'bar', true],
+            ['foo', '', 'bar', true],
             ['', 'baz', 'bar', 'The cookie name must not be empty'],
-            ['foo', '', 'bar', 'The cookie value must not be empty'],
+            ['foo', null, 'bar', 'The cookie value must not be empty'],
             ['foo', 'baz', '', 'The cookie domain must not be empty'],
             ["foo\r", 'baz', '0', 'Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/?={}'],
         ];

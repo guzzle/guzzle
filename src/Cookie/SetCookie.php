@@ -392,9 +392,10 @@ class SetCookie
                 . 'following characters: ()<>@,;:\"/?={}';
         }
 
-        // Value must not be empty, but can be 0
+        // Value must not be null. 0 and empty string are valid. Empty strings
+        // are technically against RFC 6265, but known to happen in the wild.
         $value = $this->getValue();
-        if (empty($value) && !\is_numeric($value)) {
+        if ($value === null) {
             return 'The cookie value must not be empty';
         }
 
