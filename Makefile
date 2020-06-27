@@ -63,7 +63,7 @@ tag:
 	git commit -m '$(TAG) release'
 	chag tag
 
-static: static-codestyle-check static-phpstan static-psalm
+static: static-phpstan static-psalm static-codestyle-check
 
 static-psalm:
 	docker run --rm -it -v ${PWD}:/app -w /app vimeo/psalm-github-actions
