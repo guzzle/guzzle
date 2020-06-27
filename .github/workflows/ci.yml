@@ -18,7 +18,7 @@ jobs:
           php-version: '7.2'
           coverage: none
           extensions: mbstring, intl
-          tools: flex
+          tools: composer:v2
 
       - name: Set up Node
         uses: actions/setup-node@v1
@@ -52,7 +52,7 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
           extensions: mbstring, intl
-          tools: flex
+          tools: composer:v2
 
       - name: Set up Node
         uses: actions/setup-node@v1
