@@ -4,6 +4,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## UNRELEASED
 
+## 7.0.1 - 2020-06-27
+
+* Fix multiply defined functions fatal error [#2699](https://github.com/guzzle/guzzle/pull/2699)
+
 ## 7.0.0 - 2020-06-27
 
 No changes since 7.0.0-rc1.
