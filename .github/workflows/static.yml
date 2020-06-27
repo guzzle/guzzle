@@ -51,7 +51,7 @@ jobs:
 
       - name: Download dependencies
         run: |
-          composer require --dev --no-updatepsalm/phar:3.12.1
+          composer require --dev --no-update psalm/phar:3.12.1
           composer update --no-interaction --prefer-dist
 
       - name: Psalm
