@@ -26,15 +26,6 @@ class ClientTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testValidatesArgsForMagicMethods()
-    {
-        $client = new Client();
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Magic request methods require a URI and optional options array');
-        $client->options();
-    }
-
     public function testCanSendAsyncGetRequests()
     {
         $client = new Client();
