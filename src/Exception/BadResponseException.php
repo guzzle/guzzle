@@ -6,7 +6,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * Exception when an HTTP error occurs (4xx or 5xx error)
+ * Exception when an HTTP error occurs (ie 4xx or 5xx error and 3xx redirects without Location header)
  */
 class BadResponseException extends RequestException
 {
