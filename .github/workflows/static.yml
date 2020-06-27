@@ -34,3 +34,15 @@ jobs:
         uses: OskarStark/php-cs-fixer-ga@2.16.3.1
         with:
           args: --dry-run --diff-format udiff
+
+  psalm:
+    name: Psalm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Psalm
+        uses: psalm/psalm-github-actions@master
+        with:
+          args: --no-progress --show-info=false --stats
