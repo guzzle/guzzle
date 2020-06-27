@@ -71,28 +71,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
-     * @param string $method
-     * @param array  $args
-     *
-     * @return PromiseInterface|ResponseInterface
-     *
-     * @deprecated Client::__call will be removed in guzzlehttp/guzzle:8.0.
-     */
-    public function __call($method, $args)
-    {
-        if (\count($args) < 1) {
-            throw new InvalidArgumentException('Magic request methods require a URI and optional options array');
-        }
-
-        $uri = $args[0];
-        $opts = $args[1] ?? [];
-
-        return \substr($method, -5) === 'Async'
-            ? $this->requestAsync(\substr($method, 0, -5), $uri, $opts)
-            : $this->request($method, $uri, $opts);
-    }
-
-    /**
      * Asynchronously send an HTTP request.
      *
      * @param array $options Request options to apply to the given
