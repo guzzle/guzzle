@@ -40,10 +40,15 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       max-parallel: 10
       matrix:
         php: ['7.2', '7.3', '7.4']
+        experimental: [false]
+        include:
+          - php: 8.0
+            experimental: true
 
     steps:
       - name: Set up PHP
@@ -66,7 +71,12 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download dependencies
+        if: matrix.php != '8.0'
         run: composer update --no-interaction --prefer-dist
+
+      - name: Download dependencies (ignore-platform-req)
+        if: matrix.php == '8.0'
+        run: composer update --no-interaction --prefer-dist --ignore-platform-req=php
 
       - name: Run tests
         run: make test
