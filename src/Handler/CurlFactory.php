@@ -497,13 +497,8 @@ class CurlFactory implements CurlFactoryInterface
                 );
             }
             $conf[\CURLOPT_NOPROGRESS] = false;
-            $conf[\CURLOPT_PROGRESSFUNCTION] = static function () use ($progress) {
-                $args = \func_get_args();
-                // PHP 5.5 pushed the handle onto the start of the args
-                if (\is_resource($args[0])) {
-                    \array_shift($args);
-                }
-                \call_user_func_array($progress, $args);
+            $conf[\CURLOPT_PROGRESSFUNCTION] = static function ($resource, int $downloadSize, int $downloaded, int $uploadSize, int $uploaded) use ($progress) {
+                $progress($downloadSize, $downloaded, $uploadSize, $uploaded);
             };
         }
 

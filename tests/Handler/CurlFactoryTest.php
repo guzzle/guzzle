@@ -279,8 +279,8 @@ class CurlFactoryTest extends TestCase
         $called = [];
         $request = new Psr7\Request('HEAD', Server::$url);
         $response = $a($request, [
-            'progress' => static function () use (&$called) {
-                $called[] = \func_get_args();
+            'progress' => static function (...$args) use (&$called) {
+                $called[] = $args;
             },
         ]);
         $response->wait();
