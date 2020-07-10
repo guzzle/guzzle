@@ -109,7 +109,7 @@ class MessageFormatter
                         $result = $request->getBody();
                         break;
                     case 'res_body':
-                        if(!isset($response)){
+                        if(!$response instanceof ResponseInterface){
                             $result = 'NULL';
                             break;
                         }
@@ -122,7 +122,6 @@ class MessageFormatter
                         }
 
                         $result = $response->getBody()->__toString();
-                        $response->getBody()->rewind();
                         break;
                     case 'ts':
                     case 'date_iso_8601':
