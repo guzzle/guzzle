@@ -106,7 +106,7 @@ class MessageFormatter
                             : 'NULL';
                         break;
                     case 'req_body':
-                        $result = $request->getBody();
+                        $result = $request->getBody()->__toString();
                         break;
                     case 'res_body':
                         if (!$response instanceof ResponseInterface) {
