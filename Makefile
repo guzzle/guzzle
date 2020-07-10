@@ -63,7 +63,10 @@ tag:
 	git commit -m '$(TAG) release'
 	chag tag
 
-static: static-phpstan static-codestyle-check
+static: static-phpstan static-psalm static-codestyle-check
+
+static-psalm:
+	docker run --rm -it -v ${PWD}:/app -w /app vimeo/psalm-github-actions
 
 static-phpstan:
 	docker run --rm -it -e REQUIRE_DEV=true -v ${PWD}:/app -w /app oskarstark/phpstan-ga:0.12.31 analyze $(PHPSTAN_PARAMS)

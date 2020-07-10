@@ -34,3 +34,27 @@ jobs:
         uses: OskarStark/php-cs-fixer-ga@2.16.3.1
         with:
           args: --dry-run --diff-format udiff
+
+  psalm:
+    name: Psalm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, intl
+          tools: composer:v2
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download dependencies
+        run: |
+          composer require --dev --no-update psalm/phar:3.12.1
+          composer update --no-interaction --prefer-dist
+
+      - name: Psalm
+        run: |
+          ./vendor/bin/psalm.phar --version
+          ./vendor/bin/psalm.phar --output-format=github --no-progress --show-info=false --stats
