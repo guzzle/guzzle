@@ -109,14 +109,14 @@ class MessageFormatter
                         $result = $request->getBody();
                         break;
                     case 'res_body':
-                        if(!$response instanceof ResponseInterface){
+                        if (!$response instanceof ResponseInterface) {
                             $result = 'NULL';
                             break;
                         }
 
                         $body = $response->getBody();
 
-                        if(!$body->isSeekable()){
+                        if (!$body->isSeekable()) {
                             $result = 'RESPONSE_NOT_LOGGEABLE';
                             break;
                         }
