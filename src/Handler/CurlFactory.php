@@ -18,6 +18,10 @@ use Psr\Http\Message\RequestInterface;
 class CurlFactory implements CurlFactoryInterface
 {
     public const CURL_VERSION_STR = 'curl_version';
+
+    /**
+     * @deprecated
+     */
     public const LOW_CURL_VERSION_NUMBER = '7.21.2';
 
     /**
@@ -185,21 +189,16 @@ class CurlFactory implements CurlFactoryInterface
                 )
             );
         }
-        if (\version_compare($ctx[self::CURL_VERSION_STR], self::LOW_CURL_VERSION_NUMBER)) {
-            $message = \sprintf(
-                'cURL error %s: %s (%s)',
-                $ctx['errno'],
-                $ctx['error'],
-                'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
-            );
-        } else {
-            $message = \sprintf(
-                'cURL error %s: %s (%s) for %s',
-                $ctx['errno'],
-                $ctx['error'],
-                'see https://curl.haxx.se/libcurl/c/libcurl-errors.html',
-                $easy->request->getUri()
-            );
+
+        $message = \sprintf(
+            'cURL error %s: %s (%s)',
+            $ctx['errno'],
+            $ctx['error'],
+            'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
+        );
+        $uriString = (string) $easy->request->getUri();
+        if ($uriString !== '' && false === \strpos($ctx['error'], $uriString)) {
+            $message .= \sprintf(' for %s', $uriString);
         }
 
         // Create a connection exception if it was a specific error code.
