@@ -18,7 +18,7 @@ use Psr\Http\Message\RequestInterface;
  * "request_options" array that should be merged on top of any existing
  * options, and the function MUST then return a wait-able promise.
  */
-class Pool implements PromisorInterface
+final class Pool implements PromisorInterface
 {
     /**
      * @var EachPromise
@@ -104,7 +104,7 @@ class Pool implements PromisorInterface
         $res = [];
         self::cmpCallback($options, 'fulfilled', $res);
         self::cmpCallback($options, 'rejected', $res);
-        $pool = new static($client, $requests, $options);
+        $pool = new self($client, $requests, $options);
         $pool->promise()->wait();
         \ksort($res);
 
