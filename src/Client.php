@@ -10,6 +10,9 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 
+/**
+ * @final
+ */
 class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 {
     use ClientTrait;

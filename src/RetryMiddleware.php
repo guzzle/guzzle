@@ -9,6 +9,8 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Middleware that retries requests based on the boolean result of
  * invoking the provided "decider" function.
+ *
+ * @final
  */
 class RetryMiddleware
 {

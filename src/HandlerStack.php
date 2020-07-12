@@ -9,6 +9,8 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Creates a composed Guzzle handler function by stacking middlewares on top of
  * an HTTP handler function.
+ *
+ * @final
  */
 class HandlerStack
 {
