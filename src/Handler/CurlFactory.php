@@ -14,6 +14,8 @@ use Psr\Http\Message\RequestInterface;
 
 /**
  * Creates curl resources from a request
+ *
+ * @final
  */
 class CurlFactory implements CurlFactoryInterface
 {

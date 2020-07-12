@@ -8,6 +8,8 @@ use Psr\Http\Message\RequestInterface;
 
 /**
  * Provides basic proxies for handlers.
+ *
+ * @final
  */
 class Proxy
 {
