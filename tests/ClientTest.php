@@ -85,7 +85,7 @@ class ClientTest extends TestCase
         $client->get('baz');
         self::assertSame(
             'http://foo.com/bar/baz',
-            (string)$mock->getLastRequest()->getUri()
+            $mock->getLastRequest()->getUri()->__toString()
         );
     }
 

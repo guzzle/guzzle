@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -58,7 +59,7 @@ class Server
             if (!($response instanceof ResponseInterface)) {
                 throw new \Exception('Invalid response given.');
             }
-            $headers = \array_map(static function ($h) {
+            $headers = \array_map(static function ($h): string {
                 return \implode(' ,', $h);
             }, $response->getHeaders());
 
@@ -66,7 +67,7 @@ class Server
                 'status'  => (string) $response->getStatusCode(),
                 'reason'  => $response->getReasonPhrase(),
                 'headers' => $headers,
-                'body'    => \base64_encode((string) $response->getBody())
+                'body'    => \base64_encode($response->getBody()->__toString())
             ];
         }
 
@@ -78,7 +79,7 @@ class Server
     /**
      * Get all of the received requests
      *
-     * @return ResponseInterface[]
+     * @return RequestInterface[]
      *
      * @throws \RuntimeException
      */

@@ -121,7 +121,7 @@ class MockHandler implements \Countable
                 }
 
                 if ($value !== null && isset($options['sink'])) {
-                    $contents = (string) $value->getBody();
+                    $contents = $value->getBody()->__toString();
                     $sink = $options['sink'];
 
                     if (\is_resource($sink)) {

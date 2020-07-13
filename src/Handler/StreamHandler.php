@@ -327,12 +327,12 @@ class StreamHandler
 
         return $this->createResource(
             function () use ($uri, &$http_response_header, $contextResource, $context, $options, $request) {
-                $resource = \fopen((string) $uri, 'r', false, $contextResource);
+                $resource = \fopen($uri->__toString(), 'r', false, $contextResource);
                 $this->lastHeaders = $http_response_header;
 
                 if (false === $resource) {
                     throw new ConnectException(
-                        sprintf('Connection refused for URI %s', $uri),
+                        sprintf('Connection refused for URI %s', $uri->__toString()),
                         $request,
                         null,
                         $context
@@ -406,7 +406,7 @@ class StreamHandler
             ],
         ];
 
-        $body = (string) $request->getBody();
+        $body = $request->getBody()->__toString();
 
         if (!empty($body)) {
             $context['http']['content'] = $body;

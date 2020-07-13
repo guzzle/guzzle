@@ -13,6 +13,7 @@ use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -43,7 +44,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('OK', $response->getReasonPhrase());
         self::assertSame('Bar', $response->getHeaderLine('Foo'));
         self::assertSame('8', $response->getHeaderLine('Content-Length'));
-        self::assertSame('hi there', (string) $response->getBody());
+        self::assertSame('hi there', $response->getBody()->__toString());
         $sent = Server::received()[0];
         self::assertSame('GET', $sent->getMethod());
         self::assertSame('/', $sent->getUri()->getPath());
@@ -82,11 +83,12 @@ class StreamHandlerTest extends TestCase
         self::assertSame('http', \stream_get_meta_data($stream)['wrapper_type']);
         self::assertSame('hi there', \stream_get_contents($stream));
         \fclose($stream);
+
         $sent = Server::received()[0];
         self::assertSame('PUT', $sent->getMethod());
-        self::assertSame('http://127.0.0.1:8126/foo?baz=bar', (string) $sent->getUri());
+        self::assertSame('http://127.0.0.1:8126/foo?baz=bar', $sent->getUri()->__toString());
         self::assertSame('Bar', $sent->getHeaderLine('Foo'));
-        self::assertSame('test', (string) $sent->getBody());
+        self::assertSame('test', $sent->getBody()->__toString());
     }
 
     public function testDrainsResponseIntoTempStream()
@@ -195,7 +197,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['decode_content' => true])->wait();
-        self::assertSame('test', (string) $response->getBody());
+        self::assertSame('test', $response->getBody()->__toString());
         self::assertFalse($response->hasHeader('content-encoding'));
         self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }
@@ -237,7 +239,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['decode_content' => false])->wait();
-        self::assertSame($content, (string) $response->getBody());
+        self::assertSame($content, $response->getBody()->__toString());
         self::assertSame('gzip', $response->getHeaderLine('content-encoding'));
         self::assertEquals(\strlen($content), $response->getHeaderLine('content-length'));
     }
@@ -490,7 +492,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('Hello', $response->getHeaderLine('Test'));
         self::assertSame('4', $response->getHeaderLine('Content-Length'));
-        self::assertSame('test', (string) $response->getBody());
+        self::assertSame('test', $response->getBody()->__toString());
     }
 
     public function testDoesSleep()
@@ -561,7 +563,7 @@ class StreamHandlerTest extends TestCase
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('bar', $response->getHeaderLine('X-Foo'));
-        self::assertSame('abc 123', (string) $response->getBody());
+        self::assertSame('abc 123', $response->getBody()->__toString());
     }
 
     public function testInvokesOnStatsOnSuccess()
@@ -569,6 +571,7 @@ class StreamHandlerTest extends TestCase
         Server::flush();
         Server::enqueue([new Psr7\Response(200)]);
         $req = new Psr7\Request('GET', Server::$url);
+        /** @var TransferStats|null $gotStats */
         $gotStats = null;
         $handler = new StreamHandler();
         $promise = $handler($req, [
@@ -579,20 +582,16 @@ class StreamHandlerTest extends TestCase
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
         self::assertSame(200, $gotStats->getResponse()->getStatusCode());
-        self::assertSame(
-            Server::$url,
-            (string) $gotStats->getEffectiveUri()
-        );
-        self::assertSame(
-            Server::$url,
-            (string) $gotStats->getRequest()->getUri()
-        );
+        self::assertInstanceOf(TransferStats::class, $gotStats);
+        self::assertSame(Server::$url, $gotStats->getEffectiveUri()->__toString());
+        self::assertSame(Server::$url, $gotStats->getRequest()->getUri()->__toString());
         self::assertGreaterThan(0, $gotStats->getTransferTime());
     }
 
     public function testInvokesOnStatsOnError()
     {
         $req = new Psr7\Request('GET', 'http://127.0.0.1:123');
+        /** @var TransferStats|null $gotStats */
         $gotStats = null;
         $handler = new StreamHandler();
         $promise = $handler($req, [
@@ -604,19 +603,11 @@ class StreamHandlerTest extends TestCase
         ]);
         $promise->wait(false);
         self::assertFalse($gotStats->hasResponse());
-        self::assertSame(
-            'http://127.0.0.1:123',
-            (string) $gotStats->getEffectiveUri()
-        );
-        self::assertSame(
-            'http://127.0.0.1:123',
-            (string) $gotStats->getRequest()->getUri()
-        );
+        self::assertInstanceOf(TransferStats::class, $gotStats);
+        self::assertSame('http://127.0.0.1:123', $gotStats->getEffectiveUri()->__toString());
+        self::assertSame('http://127.0.0.1:123', $gotStats->getRequest()->getUri()->__toString());
         self::assertIsFloat($gotStats->getTransferTime());
-        self::assertInstanceOf(
-            ConnectException::class,
-            $gotStats->getHandlerErrorData()
-        );
+        self::assertInstanceOf(ConnectException::class, $gotStats->getHandlerErrorData());
     }
 
     public function testStreamIgnoresZeroTimeout()

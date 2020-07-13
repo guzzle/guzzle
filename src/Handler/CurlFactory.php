@@ -196,7 +196,7 @@ class CurlFactory implements CurlFactoryInterface
             $ctx['error'],
             'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
         );
-        $uriString = (string) $easy->request->getUri();
+        $uriString = $easy->request->getUri()->__toString();
         if ($uriString !== '' && false === \strpos($ctx['error'], $uriString)) {
             $message .= \sprintf(' for %s', $uriString);
         }
@@ -217,7 +217,7 @@ class CurlFactory implements CurlFactoryInterface
         $conf = [
             '_headers'              => $easy->request->getHeaders(),
             \CURLOPT_CUSTOMREQUEST  => $easy->request->getMethod(),
-            \CURLOPT_URL            => (string) $easy->request->getUri()->withFragment(''),
+            \CURLOPT_URL            => $easy->request->getUri()->withFragment('')->__toString(),
             \CURLOPT_RETURNTRANSFER => false,
             \CURLOPT_HEADER         => false,
             \CURLOPT_CONNECTTIMEOUT => 150,
@@ -277,7 +277,7 @@ class CurlFactory implements CurlFactoryInterface
         if (($size !== null && $size < 1000000) ||
             !empty($options['_body_as_string'])
         ) {
-            $conf[\CURLOPT_POSTFIELDS] = (string) $request->getBody();
+            $conf[\CURLOPT_POSTFIELDS] = $request->getBody()->__toString();
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $conf);
             $this->removeHeader('Transfer-Encoding', $conf);

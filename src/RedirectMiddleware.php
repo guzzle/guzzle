@@ -103,7 +103,7 @@ class RedirectMiddleware
         if (!empty($options['allow_redirects']['track_redirects'])) {
             return $this->withTracking(
                 $promise,
-                (string) $nextRequest->getUri(),
+                $nextRequest->getUri()->__toString(),
                 $response->getStatusCode()
             );
         }
@@ -190,7 +190,7 @@ class RedirectMiddleware
             && $modify['uri']->getScheme() === $request->getUri()->getScheme()
         ) {
             $uri = $request->getUri()->withUserInfo('');
-            $modify['set_headers']['Referer'] = (string) $uri;
+            $modify['set_headers']['Referer'] = $uri->__toString();
         } else {
             $modify['remove_headers'][] = 'Referer';
         }

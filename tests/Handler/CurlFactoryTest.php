@@ -310,8 +310,8 @@ class CurlFactoryTest extends TestCase
         $request = new Psr7\Request('GET', Server::$url);
         $response = $handler($request, ['decode_content' => true]);
         $response = $response->wait();
-        self::assertEquals('test', (string) $response->getBody());
-        self::assertEquals('', $_SERVER['_curl'][\CURLOPT_ENCODING]);
+        self::assertSame('test', $response->getBody()->__toString());
+        self::assertSame('', $_SERVER['_curl'][\CURLOPT_ENCODING]);
         $sent = Server::received()[0];
         self::assertFalse($sent->hasHeader('Accept-Encoding'));
     }
@@ -343,7 +343,7 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('gzip', $_SERVER['_curl'][\CURLOPT_ENCODING]);
         $sent = Server::received()[0];
         self::assertEquals('gzip', $sent->getHeaderLine('Accept-Encoding'));
-        self::assertEquals('test', (string) $response->getBody());
+        self::assertEquals('test', $response->getBody()->__toString());
         self::assertFalse($response->hasHeader('content-encoding'));
         self::assertTrue(
             !$response->hasHeader('content-length') ||
@@ -360,7 +360,7 @@ class CurlFactoryTest extends TestCase
         $response = $response->wait();
         $sent = Server::received()[0];
         self::assertFalse($sent->hasHeader('Accept-Encoding'));
-        self::assertEquals($content, (string) $response->getBody());
+        self::assertEquals($content, $response->getBody()->__toString());
     }
 
     public function testProtocolVersion()
@@ -523,7 +523,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame('OK', $response->getReasonPhrase());
         self::assertSame('Hello', $response->getHeaderLine('Test'));
         self::assertSame('4', $response->getHeaderLine('Content-Length'));
-        self::assertSame('test', (string) $response->getBody());
+        self::assertSame('test', $response->getBody()->__toString());
     }
 
     public function testCreatesConnectException()
@@ -661,7 +661,7 @@ class CurlFactoryTest extends TestCase
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('bar', $response->getHeaderLine('X-Foo'));
-        self::assertSame('abc 123', (string) $response->getBody());
+        self::assertSame('abc 123', $response->getBody()->__toString());
     }
 
     public function testInvokesOnStatsOnSuccess()

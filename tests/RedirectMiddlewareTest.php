@@ -56,7 +56,7 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
-        self::assertSame('http://test.com', (string)$mock->getLastRequest()->getUri());
+        self::assertSame('http://test.com', $mock->getLastRequest()->getUri()->__toString());
     }
 
     public function testRedirectsWithRelativeUri()
@@ -74,7 +74,7 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
-        self::assertSame('http://example.com/foo', (string)$mock->getLastRequest()->getUri());
+        self::assertSame('http://example.com/foo', $mock->getLastRequest()->getUri()->__toString());
     }
 
     public function testLimitsToMaxRedirects()
