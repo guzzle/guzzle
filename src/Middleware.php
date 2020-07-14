@@ -180,13 +180,13 @@ final class Middleware
      *
      * @phpstan-param \Psr\Log\LogLevel::* $logLevel  Level at which to log requests.
      *
-     * @param LoggerInterface  $logger    Logs messages.
-     * @param MessageFormatter $formatter Formatter used to create message strings.
-     * @param string           $logLevel  Level at which to log requests.
+     * @param LoggerInterface           $logger    Logs messages.
+     * @param MessageFormatterInterface $formatter Formatter used to create message strings.
+     * @param string                    $logLevel  Level at which to log requests.
      *
      * @return callable Returns a function that accepts the next handler.
      */
-    public static function log(LoggerInterface $logger, MessageFormatter $formatter, string $logLevel = 'info'): callable
+    public static function log(LoggerInterface $logger, MessageFormatterInterface $formatter, string $logLevel = 'info'): callable
     {
         return static function (callable $handler) use ($logger, $formatter, $logLevel): callable {
             return static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel) {
