@@ -24,9 +24,3 @@ parameters:
 			message: "#^Result of && is always false\\.$#"
 			count: 1
 			path: src/Middleware.php
-
-		-
-			message: "#^Unsafe usage of new static\\(\\)\\.$#"
-			count: 1
-			path: src/Pool.php
-
