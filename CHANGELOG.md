@@ -4,6 +4,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## UNRELEASED
 
+## 7.0.2 - 2020-07-23
+
+* Fix type error when providing query parameters [#2724](https://github.com/guzzle/guzzle/pull/2724)
+
 ## 7.0.1 - 2020-06-27
 
 * Fix multiply defined functions fatal error [#2699](https://github.com/guzzle/guzzle/pull/2699)
