@@ -6,11 +6,6 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^Parameter \\#2 \\$prefix of function http_build_query expects string, null given\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
 			message: "#^Binary operation \"\\*\" between float\\|int\\|string and 1000 results in an error\\.$#"
 			count: 1
 			path: src/Handler/MockHandler.php
