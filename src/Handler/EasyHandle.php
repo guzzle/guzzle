@@ -36,6 +36,9 @@ final class EasyHandle
 
     /** @var \Exception Exception during on_headers (if any) */
     public $onHeadersException;
+    
+    /** @var \Exception Exception during createResponse (if any) */
+    public $createResponseException;
 
     /**
      * Attach a response to the easy handle based on the received headers.
