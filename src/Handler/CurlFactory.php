@@ -6,7 +6,6 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
@@ -395,29 +394,27 @@ class CurlFactory implements CurlFactoryInterface
 
         // Do not connect a sink for HEAD requests.
         if ($easy->request->getMethod() !== 'HEAD') {
-            if (isset($options['sink'])) {
-                $sink = $options['sink'];
-                if (!\is_string($sink)) {
-                    $sink = \GuzzleHttp\Psr7\stream_for($sink);
-                } elseif (!\is_dir(\dirname($sink))) {
-                    // Ensure that the directory exists before failing in curl.
-                    throw new \RuntimeException(\sprintf(
-                        'Directory %s does not exist for sink value of %s',
-                        \dirname($sink),
-                        $sink
-                    ));
-                } else {
-                    $sink = new LazyOpenStream($sink, 'w+');
-                }
-                $easy->sink = $sink;
-                $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, $write) use ($sink): int {
-                    return $sink->write($write);
-                };
-            } else {
+            if (!isset($options['sink'])) {
                 // Use a default temp stream if no sink was set.
-                $conf[\CURLOPT_FILE] = \fopen('php://temp', 'w+');
-                $easy->sink = Psr7\stream_for($conf[\CURLOPT_FILE]);
+                $options['sink'] = \fopen('php://temp', 'w+');
             }
+            $sink = $options['sink'];
+            if (!\is_string($sink)) {
+                $sink = \GuzzleHttp\Psr7\stream_for($sink);
+            } elseif (!\is_dir(\dirname($sink))) {
+                // Ensure that the directory exists before failing in curl.
+                throw new \RuntimeException(\sprintf(
+                    'Directory %s does not exist for sink value of %s',
+                    \dirname($sink),
+                    $sink
+                ));
+            } else {
+                $sink = new LazyOpenStream($sink, 'w+');
+            }
+            $easy->sink = $sink;
+            $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, $write) use ($sink): int {
+                return $sink->write($write);
+            };
         }
 
         $timeoutRequiresNoSignal = false;
