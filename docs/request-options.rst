@@ -684,7 +684,7 @@ on_headers
 :Types: - callable
 :Constant: ``GuzzleHttp\RequestOptions::ON_HEADERS``
 
-The callable accepts a ``Psr\Http\ResponseInterface`` object. If an exception
+The callable accepts a ``Psr\Http\Message\ResponseInterface`` object. If an exception
 is thrown by the callable, then the promise associated with the response will
 be rejected with a ``GuzzleHttp\Exception\RequestException`` that wraps the
 exception that was thrown.
