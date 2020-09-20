@@ -8,7 +8,6 @@ help:
 	@echo "  clean                          to remove build artifacts"
 	@echo "  docs                           to build the Sphinx docs"
 	@echo "  docs-show                      to view the Sphinx docs"
-	@echo "  tag                            to modify the version, update changelog, and chag tag"
 	@echo "  static                         to run phpstan and php-cs-fixer on the codebase"
 	@echo "  static-phpstan                 to run phpstan on the codebase"
 	@echo "  static-phpstan-update-baseline to regenerate the phpstan baseline file"
@@ -52,16 +51,6 @@ docs:
 
 docs-show:
 	open docs/_build/html/index.html
-
-tag:
-	$(if $(TAG),,$(error TAG is not defined. Pass via "make tag TAG=4.2.1"))
-	@echo Tagging $(TAG)
-	chag update $(TAG)
-	sed -i '' -e "s/VERSION = '.*'/VERSION = '$(TAG)'/" src/ClientInterface.php
-	php -l src/ClientInterface.php
-	git add -A
-	git commit -m '$(TAG) release'
-	chag tag
 
 static: static-phpstan static-psalm static-codestyle-check
 
