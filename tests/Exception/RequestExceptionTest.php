@@ -130,21 +130,6 @@ class RequestExceptionTest extends TestCase
         self::assertStringEndsWith('response', $e->getMessage());
     }
 
-    public function testCreatesExceptionWithoutPrintableBody()
-    {
-        $response = new Response(
-            500,
-            ['Content-Type' => 'image/gif'],
-            $content = \base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7') // 1x1 gif
-        );
-        $e = RequestException::create(new Request('GET', '/'), $response);
-        self::assertStringNotContainsString(
-            $content,
-            $e->getMessage()
-        );
-        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $e);
-    }
-
     public function testHasStatusCodeAsExceptionCode()
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(442));

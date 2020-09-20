@@ -750,7 +750,7 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mockHandler]);
 
         $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
-        $this->expectExceptionMessage('IDN conversion failed (errors: IDNA_ERROR_LEADING_HYPHEN)');
+        $this->expectExceptionMessage('IDN conversion failed');
         $client->request('GET', 'https://-яндекс.рф/images', ['idn_conversion' => true]);
     }
 
