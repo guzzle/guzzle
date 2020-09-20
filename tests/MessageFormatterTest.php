@@ -44,16 +44,16 @@ class MessageFormatterTest extends TestCase
 
     public function formatProvider()
     {
-        $request = new Request('PUT', '/', ['x-test' => 'abc'], Psr7\stream_for('foo'));
-        $response = new Response(200, ['X-Baz' => 'Bar'], Psr7\stream_for('baz'));
+        $request = new Request('PUT', '/', ['x-test' => 'abc'], Psr7\Utils::streamFor('foo'));
+        $response = new Response(200, ['X-Baz' => 'Bar'], Psr7\Utils::streamFor('baz'));
         $err = new RequestException('Test', $request, $response);
 
         return [
-            ['{request}', [$request], Psr7\str($request)],
-            ['{response}', [$request, $response], Psr7\str($response)],
-            ['{request} {response}', [$request, $response], Psr7\str($request) . ' ' . Psr7\str($response)],
+            ['{request}', [$request], Psr7\Message::toString($request)],
+            ['{response}', [$request, $response], Psr7\Message::toString($response)],
+            ['{request} {response}', [$request, $response], Psr7\Message::toString($request) . ' ' . Psr7\Message::toString($response)],
             // Empty response yields no value
-            ['{request} {response}', [$request], Psr7\str($request) . ' '],
+            ['{request} {response}', [$request], Psr7\Message::toString($request) . ' '],
             ['{req_headers}', [$request], "PUT / HTTP/1.1\r\nx-test: abc"],
             ['{res_headers}', [$request, $response], "HTTP/1.1 200 OK\r\nX-Baz: Bar"],
             ['{res_headers}', [$request], 'NULL'],

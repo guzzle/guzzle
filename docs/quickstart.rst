@@ -185,14 +185,14 @@ requests.
 
     // Wait for the requests to complete; throws a ConnectException
     // if any of the requests fail
-    $responses = Promise\unwrap($promises);
+    $responses = Promise\Utils::unwrap($promises);
     
     // You can access each response using the key of the promise
     echo $responses['image']->getHeader('Content-Length')[0];
     echo $responses['png']->getHeader('Content-Length')[0];
 
     // Wait for the requests to complete, even if some of them fail
-    $responses = Promise\settle($promises)->wait();
+    $responses = Promise\Utils::settle($promises)->wait();
 
     // Values returned above are wrapped in an array with 2 keys: "state" (either fulfilled or rejected) and "value" (contains the response)
     echo $responses['image']['state']; // returns "fulfilled"
@@ -351,8 +351,8 @@ resource returned from ``fopen``, or an instance of a
     $body = fopen('/path/to/file', 'r');
     $r = $client->request('POST', 'http://httpbin.org/post', ['body' => $body]);
 
-    // Use the stream_for() function to create a PSR-7 stream.
-    $body = \GuzzleHttp\Psr7\stream_for('hello!');
+    // Use the Utils::streamFor method to create a PSR-7 stream.
+    $body = \GuzzleHttp\Psr7\Utils::streamFor('hello!');
     $r = $client->request('POST', 'http://httpbin.org/post', ['body' => $body]);
 
 An easy way to upload JSON data and set the appropriate header is using the
@@ -557,9 +557,9 @@ Guzzle throws exceptions for errors that occur during a transfer.
       try {
           $client->request('GET', 'https://github.com/_abc_123_404');
       } catch (RequestException $e) {
-          echo Psr7\str($e->getRequest());
+          echo Psr7\Message::toString($e->getRequest());
           if ($e->hasResponse()) {
-              echo Psr7\str($e->getResponse());
+              echo Psr7\Message::toString($e->getResponse());
           }
       }
 
@@ -581,8 +581,8 @@ Guzzle throws exceptions for errors that occur during a transfer.
       try {
           $client->request('GET', 'https://github.com/_abc_123_404');
       } catch (ClientException $e) {
-          echo Psr7\str($e->getRequest());
-          echo Psr7\str($e->getResponse());
+          echo Psr7\Message::toString($e->getRequest());
+          echo Psr7\Message::toString($e->getResponse());
       }
 
 - A ``GuzzleHttp\Exception\ServerException`` is thrown for 500 level

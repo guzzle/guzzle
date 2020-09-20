@@ -211,7 +211,7 @@ This setting can be set to any of the following types:
   .. code-block:: php
 
       // You can send requests that use a Guzzle stream object as the body
-      $stream = GuzzleHttp\Psr7\stream_for('contents...');
+      $stream = GuzzleHttp\Psr7\Utils::streamFor('contents...');
       $client->request('POST', '/post', ['body' => $stream]);
 
 .. note::
@@ -916,7 +916,7 @@ body to an open PSR-7 stream.
 .. code-block:: php
 
     $resource = fopen('/path/to/file', 'w');
-    $stream = GuzzleHttp\Psr7\stream_for($resource);
+    $stream = GuzzleHttp\Psr7\Utils::streamFor($resource);
     $client->request('GET', '/stream/20', ['save_to' => $stream]);
 
 .. note::

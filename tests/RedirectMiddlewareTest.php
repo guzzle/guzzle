@@ -3,6 +3,8 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -91,7 +93,7 @@ class RedirectMiddlewareTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $promise = $handler($request, ['allow_redirects' => ['max' => 3]]);
 
-        $this->expectException(\GuzzleHttp\Exception\TooManyRedirectsException::class);
+        $this->expectException(TooManyRedirectsException::class);
         $this->expectExceptionMessage('Will not follow more than 3 redirects');
         $promise->wait();
     }
@@ -106,7 +108,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
 
-        $this->expectException(\GuzzleHttp\Exception\BadResponseException::class);
+        $this->expectException(BadResponseException::class);
         $this->expectExceptionMessage('Redirect URI,');
         $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
     }

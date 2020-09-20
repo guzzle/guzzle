@@ -4,6 +4,7 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -104,7 +105,7 @@ final class Middleware
                             'error'    => $reason,
                             'options'  => $options
                         ];
-                        return \GuzzleHttp\Promise\rejection_for($reason);
+                        return P\Create::rejectionFor($reason);
                     }
                 );
             };
@@ -205,9 +206,9 @@ final class Middleware
                         $response = $reason instanceof RequestException
                             ? $reason->getResponse()
                             : null;
-                        $message = $formatter->format($request, $response, \GuzzleHttp\Promise\exception_for($reason));
+                        $message = $formatter->format($request, $response, P\Create::exceptionFor($reason));
                         $logger->error($message);
-                        return \GuzzleHttp\Promise\rejection_for($reason);
+                        return P\Create::rejectionFor($reason);
                     }
                 );
             };

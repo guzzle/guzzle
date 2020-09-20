@@ -154,7 +154,7 @@ class CurlMultiHandler
         }
 
         // Step through the task queue which may add additional requests.
-        P\queue()->run();
+        P\Utils::queue()->run();
 
         if ($this->active &&
             \curl_multi_select($this->_mh, $this->selectTimeout) === -1
@@ -174,7 +174,7 @@ class CurlMultiHandler
      */
     public function execute(): void
     {
-        $queue = P\queue();
+        $queue = P\Utils::queue();
 
         while ($this->handles || !$queue->isEmpty()) {
             // If there are no transfers, then sleep for the next delay
