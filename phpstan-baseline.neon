@@ -6,14 +6,14 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^Binary operation \"\\*\" between float\\|int\\|string and 1000 results in an error\\.$#"
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
 			message: "#^Parameter \\#1 \\$str1 of function strcasecmp expects string, int\\|string given\\.$#"
 			count: 1
 			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$micro_seconds of function usleep expects int, float\\|int given\\.$#"
+			count: 1
+			path: src/Handler/MockHandler.php
 
 		-
 			message: "#^Result of && is always false\\.$#"
