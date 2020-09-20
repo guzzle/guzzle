@@ -11,6 +11,11 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
+			message: "#^Argument of an invalid type \\(array\\|null\\) supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
 			message: "#^Result of && is always false\\.$#"
 			count: 2
 			path: src/Middleware.php
