@@ -613,7 +613,7 @@ class CurlFactoryTest extends TestCase
         $handler = new Handler\CurlHandler();
         $promise = $handler($req, []);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
         $this->expectExceptionMessage('An error was encountered while creating the response');
         $promise->wait();
     }
