@@ -55,7 +55,7 @@ final class EasyHandle
      */
     public $onHeadersException;
 
-    /** @var \Exception Exception during createResponse (if any) */
+    /** @var \Exception|null Exception during createResponse (if any) */
     public $createResponseException;
 
     /**
