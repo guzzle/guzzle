@@ -1,5 +1,82 @@
 # Change Log
 
+Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
+
+## UNRELEASED
+
+## 7.0.1 - 2020-06-27
+
+* Fix multiply defined functions fatal error [#2699](https://github.com/guzzle/guzzle/pull/2699)
+
+## 7.0.0 - 2020-06-27
+
+No changes since 7.0.0-rc1.
+
+## 7.0.0-rc1 - 2020-06-15
+
+### Changed
+
+* Use error level for logging errors in Middleware [#2629](https://github.com/guzzle/guzzle/pull/2629)
+* Disabled IDN support by default and require ext-intl to use it [#2675](https://github.com/guzzle/guzzle/pull/2675)
+
+## 7.0.0-beta2 - 2020-05-25
+
+### Added
+
+* Using `Utils` class instead of functions in the `GuzzleHttp` namespace. [#2546](https://github.com/guzzle/guzzle/pull/2546)
+* `ClientInterface::MAJOR_VERSION` [#2583](https://github.com/guzzle/guzzle/pull/2583)
+
+### Changed
+
+* Avoid the `getenv` function when unsafe [#2531](https://github.com/guzzle/guzzle/pull/2531)
+* Added real client methods [#2529](https://github.com/guzzle/guzzle/pull/2529)
+* Avoid functions due to global install conflicts [#2546](https://github.com/guzzle/guzzle/pull/2546)
+* Use Symfony intl-idn polyfill [#2550](https://github.com/guzzle/guzzle/pull/2550)
+* Adding methods for HTTP verbs like `Client::get()`, `Client::head()`, `Client::patch()` etc [#2529](https://github.com/guzzle/guzzle/pull/2529)
+* `ConnectException` extends `TransferException` [#2541](https://github.com/guzzle/guzzle/pull/2541)
+* Updated the default User Agent to "GuzzleHttp/7" [#2654](https://github.com/guzzle/guzzle/pull/2654)
+
+### Fixed
+
+* Various intl icu issues [#2626](https://github.com/guzzle/guzzle/pull/2626)
+
+### Removed
+
+* Pool option `pool_size` [#2528](https://github.com/guzzle/guzzle/pull/2528)
+
+## 7.0.0-beta1 - 2019-12-30
+
+The diff might look very big but 95% of Guzzle users will be able to upgrade without modification.
+Please see [the upgrade document](UPGRADING.md) that describes all BC breaking changes.
+
+### Added
+
+* Implement PSR-18 and dropped PHP 5 support [#2421](https://github.com/guzzle/guzzle/pull/2421) [#2474](https://github.com/guzzle/guzzle/pull/2474)
+* PHP 7 types [#2442](https://github.com/guzzle/guzzle/pull/2442) [#2449](https://github.com/guzzle/guzzle/pull/2449) [#2466](https://github.com/guzzle/guzzle/pull/2466) [#2497](https://github.com/guzzle/guzzle/pull/2497) [#2499](https://github.com/guzzle/guzzle/pull/2499)
+* IDN support for redirects [2424](https://github.com/guzzle/guzzle/pull/2424)
+
+### Changed
+
+* Dont allow passing null as third argument to `BadResponseException::__construct()` [#2427](https://github.com/guzzle/guzzle/pull/2427)
+* Use SAPI constant instead of method call [#2450](https://github.com/guzzle/guzzle/pull/2450)
+* Use native function invocation [#2444](https://github.com/guzzle/guzzle/pull/2444)
+* Better defaults for PHP installations with old ICU lib [2454](https://github.com/guzzle/guzzle/pull/2454)
+* Added visibility to all constants [#2462](https://github.com/guzzle/guzzle/pull/2462)
+* Dont allow passing `null` as URI to `Client::request()` and `Client::requestAsync()` [#2461](https://github.com/guzzle/guzzle/pull/2461)
+* Widen the exception argument to throwable [#2495](https://github.com/guzzle/guzzle/pull/2495)
+
+### Fixed
+
+* Logging when Promise rejected with a string [#2311](https://github.com/guzzle/guzzle/pull/2311)
+
+### Removed
+
+* Class `SeekException` [#2162](https://github.com/guzzle/guzzle/pull/2162)
+* `RequestException::getResponseBodySummary()` [#2425](https://github.com/guzzle/guzzle/pull/2425)
+* `CookieJar::getCookieValue()` [#2433](https://github.com/guzzle/guzzle/pull/2433)
+* `uri_template()` and `UriTemplate` [#2440](https://github.com/guzzle/guzzle/pull/2440)
+* Request options `save_to` and `exceptions` [#2464](https://github.com/guzzle/guzzle/pull/2464)
+
 ## 6.5.2 - 2019-12-23
 
 * idn_to_ascii() fix for old PHP versions [#2489](https://github.com/guzzle/guzzle/pull/2489)
@@ -20,7 +97,7 @@
 
 ## 6.4.1 - 2019-10-23
 
-* No `guzzle.phar` was created in 6.4.0 due expired API token. This release will fix that 
+* No `guzzle.phar` was created in 6.4.0 due expired API token. This release will fix that
 * Added `parent::__construct()` to `FileCookieJar` and `SessionCookieJar`
 
 ## 6.4.0 - 2019-10-23
@@ -342,7 +419,7 @@ object).
   * Note: This has been changed in 5.0.3 to now encode query string values by
     default unless the `rawString` argument is provided when setting the query
     string on a URL: Now allowing many more characters to be present in the
-    query string without being percent encoded. See http://tools.ietf.org/html/rfc3986#appendix-A
+    query string without being percent encoded. See https://tools.ietf.org/html/rfc3986#appendix-A
 
 ## 5.0.1 - 2014-10-16
 
@@ -384,7 +461,7 @@ interfaces.
   responses, `GuzzleHttp\Collection`, `GuzzleHttp\Url`,
   `GuzzleHttp\Query`, `GuzzleHttp\Post\PostBody`, and
   `GuzzleHttp\Cookie\SetCookie`. This blog post provides a good outline of
-  why I did this: http://ocramius.github.io/blog/fluent-interfaces-are-evil/.
+  why I did this: https://ocramius.github.io/blog/fluent-interfaces-are-evil/.
   This also makes the Guzzle message interfaces compatible with the current
   PSR-7 message proposal.
 * Removed "functions.php", so that Guzzle is truly PSR-4 compliant. Except
@@ -570,8 +647,6 @@ interfaces.
 
 ## 4.0.0 - 2014-03-29
 
-* For more information on the 4.0 transition, see:
-  http://mtdowling.com/blog/2014/03/15/guzzle-4-rc/
 * For information on changes and upgrading, see:
   https://github.com/guzzle/guzzle/blob/master/UPGRADING.md#3x-to-40
 * Added `GuzzleHttp\batch()` as a convenience function for sending requests in
@@ -880,7 +955,7 @@ interfaces.
 
 ## 3.4.0 - 2013-04-11
 
-* Bug fix: URLs are now resolved correctly based on http://tools.ietf.org/html/rfc3986#section-5.2. #289
+* Bug fix: URLs are now resolved correctly based on https://tools.ietf.org/html/rfc3986#section-5.2. #289
 * Bug fix: Absolute URLs with a path in a service description will now properly override the base URL. #289
 * Bug fix: Parsing a query string with a single PHP array value will now result in an array. #263
 * Bug fix: Better normalization of the User-Agent header to prevent duplicate headers. #264.

@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
@@ -12,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
 /**
- * @covers GuzzleHttp\RedirectMiddleware
+ * @covers \GuzzleHttp\RedirectMiddleware
  */
 class RedirectMiddlewareTest extends TestCase
 {
@@ -76,10 +77,6 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame('http://example.com/foo', (string)$mock->getLastRequest()->getUri());
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\TooManyRedirectsException
-     * @expectedExceptionMessage Will not follow more than 3 redirects
-     */
     public function testLimitsToMaxRedirects()
     {
         $mock = new MockHandler([
@@ -93,13 +90,12 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
         $promise = $handler($request, ['allow_redirects' => ['max' => 3]]);
+
+        $this->expectException(\GuzzleHttp\Exception\TooManyRedirectsException::class);
+        $this->expectExceptionMessage('Will not follow more than 3 redirects');
         $promise->wait();
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\BadResponseException
-     * @expectedExceptionMessage Redirect URI,
-     */
     public function testEnsuresProtocolIsValid()
     {
         $mock = new MockHandler([
@@ -109,6 +105,9 @@ class RedirectMiddlewareTest extends TestCase
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
+
+        $this->expectException(\GuzzleHttp\Exception\BadResponseException::class);
+        $this->expectExceptionMessage('Redirect URI,');
         $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
     }
 
@@ -239,7 +238,7 @@ class RedirectMiddlewareTest extends TestCase
         $promise = $handler($request, [
             'allow_redirects' => [
                 'max' => 2,
-                'on_redirect' => function ($request, $response, $uri) use (&$call) {
+                'on_redirect' => static function ($request, $response, $uri) use (&$call) {
                     self::assertSame(302, $response->getStatusCode());
                     self::assertSame('GET', $request->getMethod());
                     self::assertSame('http://test.com', (string) $uri);
@@ -255,7 +254,7 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
-            function (RequestInterface $request) {
+            static function (RequestInterface $request) {
                 self::assertFalse($request->hasHeader('Authorization'));
                 return new Response(200);
             }
@@ -269,7 +268,7 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://example.com/2']),
-            function (RequestInterface $request) {
+            static function (RequestInterface $request) {
                 self::assertTrue($request->hasHeader('Authorization'));
                 return new Response(200);
             }
@@ -277,5 +276,71 @@ class RedirectMiddlewareTest extends TestCase
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
         $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass']]);
+    }
+
+    /**
+     * Verifies how RedirectMiddleware::modifyRequest() modifies the method and body of a request issued when
+     * encountering a redirect response.
+     *
+     * @dataProvider modifyRequestFollowRequyestMethodAndBodyProvider
+     *
+     * @param string $expectedFollowRequestMethod
+     */
+    public function testModifyRequestFollowRequestMethodAndBody(
+        RequestInterface $request,
+        $expectedFollowRequestMethod
+    ) {
+        $redirectMiddleware = new RedirectMiddleware(static function () {
+        });
+
+        $options = [
+            'allow_redirects' => [
+                'protocols' => ['http', 'https'],
+                'strict' => false,
+                'referer' => null,
+            ],
+        ];
+
+        $modifiedRequest = $redirectMiddleware->modifyRequest($request, $options, new Response());
+
+        self::assertEquals($expectedFollowRequestMethod, $modifiedRequest->getMethod());
+        self::assertEquals(0, $modifiedRequest->getBody()->getSize());
+    }
+
+    /**
+     * @return array
+     */
+    public function modifyRequestFollowRequyestMethodAndBodyProvider()
+    {
+        return [
+            'DELETE' => [
+                'request' => new Request('DELETE', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'GET' => [
+                'request' => new Request('GET', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'HEAD' => [
+                'request' => new Request('HEAD', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'HEAD',
+            ],
+            'OPTIONS' => [
+                'request' => new Request('OPTIONS', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'OPTIONS',
+            ],
+            'PATCH' => [
+                'request' => new Request('PATCH', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'POST' => [
+                'request' => new Request('POST', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'PUT' => [
+                'request' => new Request('PUT', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+        ];
     }
 }

@@ -1,10 +1,10 @@
-.editorconfig         export-ignore
-.gitattributes        export-ignore
+.editorconfig          export-ignore
+.gitattributes         export-ignore
 /.github/              export-ignore
-.gitignore            export-ignore
-/.travis.yml           export-ignore
-/build/                export-ignore
+.gitignore             export-ignore
+.php_cs.dist           export-ignore
 /docs/                 export-ignore
+/Dockerfile            export-ignore
 /Makefile              export-ignore
 /phpstan-baseline.neon export-ignore
 /phpstan.neon.dist     export-ignore

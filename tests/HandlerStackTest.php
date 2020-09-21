@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Cookie\CookieJar;
@@ -12,9 +13,9 @@ class HandlerStackTest extends TestCase
 {
     public function testSetsHandlerInCtor()
     {
-        $f = function () {
+        $f = static function () {
         };
-        $m1 = function () {
+        $m1 = static function () {
         };
         $h = new HandlerStack($f, [$m1]);
         self::assertTrue($h->hasHandler());
@@ -25,18 +26,17 @@ class HandlerStackTest extends TestCase
      */
     public function testCanSetDifferentHandlerAfterConstruction()
     {
-        $f = function () {
+        $f = static function () {
         };
         $h = new HandlerStack();
         $h->setHandler($f);
         $h->resolve();
     }
 
-    /**
-     * @expectedException \LogicException
-     */
     public function testEnsuresHandlerIsSet()
     {
+        $this->expectException(\LogicException::class);
+
         $h = new HandlerStack();
         $h->resolve();
     }
@@ -97,16 +97,16 @@ class HandlerStackTest extends TestCase
         $builder->push([__CLASS__, 'foo']);
         $builder->push([$this, 'bar']);
         $builder->push(__CLASS__ . '::' . 'foo');
-        $lines = explode("\n", (string) $builder);
-        self::assertContains("> 4) Name: 'a', Function: callable(", $lines[0]);
-        self::assertContains("> 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
-        self::assertContains("> 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[2]);
-        self::assertContains("> 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[3]);
-        self::assertContains("< 0) Handler: callable(", $lines[4]);
-        self::assertContains("< 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[5]);
-        self::assertContains("< 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[6]);
-        self::assertContains("< 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[7]);
-        self::assertContains("< 4) Name: 'a', Function: callable(", $lines[8]);
+        $lines = \explode("\n", (string) $builder);
+        self::assertStringContainsString("> 4) Name: 'a', Function: callable(", $lines[0]);
+        self::assertStringContainsString("> 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
+        self::assertStringContainsString("> 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[2]);
+        self::assertStringContainsString("> 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[3]);
+        self::assertStringContainsString("< 0) Handler: callable(", $lines[4]);
+        self::assertStringContainsString("< 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[5]);
+        self::assertStringContainsString("< 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[6]);
+        self::assertStringContainsString("< 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[7]);
+        self::assertStringContainsString("< 4) Name: 'a', Function: callable(", $lines[8]);
     }
 
     public function testCanAddBeforeByName()
@@ -118,20 +118,19 @@ class HandlerStackTest extends TestCase
         $builder->before('foo', $meths[3], 'baz');
         $builder->before('baz', $meths[4], 'bar');
         $builder->before('baz', $meths[4], 'qux');
-        $lines = explode("\n", (string) $builder);
-        self::assertContains('> 4) Name: \'bar\'', $lines[0]);
-        self::assertContains('> 3) Name: \'qux\'', $lines[1]);
-        self::assertContains('> 2) Name: \'baz\'', $lines[2]);
-        self::assertContains('> 1) Name: \'foo\'', $lines[3]);
+        $lines = \explode("\n", (string) $builder);
+        self::assertStringContainsString('> 4) Name: \'bar\'', $lines[0]);
+        self::assertStringContainsString('> 3) Name: \'qux\'', $lines[1]);
+        self::assertStringContainsString('> 2) Name: \'baz\'', $lines[2]);
+        self::assertStringContainsString('> 1) Name: \'foo\'', $lines[3]);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEnsuresHandlerExistsByName()
     {
+        $this->expectException(\InvalidArgumentException::class);
+
         $builder = new HandlerStack();
-        $builder->before('foo', function () {
+        $builder->before('foo', static function () {
         });
     }
 
@@ -144,11 +143,11 @@ class HandlerStackTest extends TestCase
         $builder->push($meths[3], 'b');
         $builder->after('a', $meths[4], 'c');
         $builder->after('b', $meths[4], 'd');
-        $lines = explode("\n", (string) $builder);
-        self::assertContains('4) Name: \'a\'', $lines[0]);
-        self::assertContains('3) Name: \'c\'', $lines[1]);
-        self::assertContains('2) Name: \'b\'', $lines[2]);
-        self::assertContains('1) Name: \'d\'', $lines[3]);
+        $lines = \explode("\n", (string) $builder);
+        self::assertStringContainsString('4) Name: \'a\'', $lines[0]);
+        self::assertStringContainsString('3) Name: \'c\'', $lines[1]);
+        self::assertStringContainsString('2) Name: \'b\'', $lines[2]);
+        self::assertStringContainsString('1) Name: \'d\'', $lines[3]);
     }
 
     public function testPicksUpCookiesFromRedirects()
@@ -177,28 +176,28 @@ class HandlerStackTest extends TestCase
     {
         $calls = [];
 
-        $a = function (callable $next) use (&$calls) {
-            return function ($v) use ($next, &$calls) {
+        $a = static function (callable $next) use (&$calls) {
+            return static function ($v) use ($next, &$calls) {
                 $calls[] = ['a', $v];
                 return $next($v . '1');
             };
         };
 
-        $b = function (callable $next) use (&$calls) {
-            return function ($v) use ($next, &$calls) {
+        $b = static function (callable $next) use (&$calls) {
+            return static function ($v) use ($next, &$calls) {
                 $calls[] = ['b', $v];
                 return $next($v . '2');
             };
         };
 
-        $c = function (callable $next) use (&$calls) {
-            return function ($v) use ($next, &$calls) {
+        $c = static function (callable $next) use (&$calls) {
+            return static function ($v) use ($next, &$calls) {
                 $calls[] = ['c', $v];
                 return $next($v . '3');
             };
         };
 
-        $handler = function ($v) {
+        $handler = static function ($v) {
             return 'Hello - ' . $v;
         };
 
@@ -208,6 +207,7 @@ class HandlerStackTest extends TestCase
     public static function foo()
     {
     }
+
     public function bar()
     {
     }

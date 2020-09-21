@@ -9,7 +9,9 @@
         "web service",
         "curl",
         "client",
-        "HTTP client"
+        "HTTP client",
+        "PSR-7",
+        "PSR-18"
     ],
     "homepage": "http://guzzlephp.org/",
     "license": "MIT",
@@ -18,29 +20,41 @@
             "name": "Michael Dowling",
             "email": "mtdowling@gmail.com",
             "homepage": "https://github.com/mtdowling"
+        },
+        {
+            "name": "Márk Sági-Kazár",
+            "email": "mark.sagikazar@gmail.com",
+            "homepage": "https://sagikazarmark.hu"
         }
     ],
     "require": {
-        "php": ">=5.5",
+        "php": "^7.2.5",
         "ext-json": "*",
         "guzzlehttp/promises": "^1.0",
-        "guzzlehttp/psr7": "^1.6.1"
+        "guzzlehttp/psr7": "^1.6.1",
+        "psr/http-client": "^1.0"
+    },
+    "provide": {
+        "psr/http-client-implementation": "1.0"
     },
     "require-dev": {
         "ext-curl": "*",
-        "phpunit/phpunit": "^4.8.35 || ^5.7 || ^6.4 || ^7.0",
+        "ergebnis/composer-normalize": "^2.0",
+        "php-http/client-integration-tests": "dev-phpunit8",
+        "phpunit/phpunit": "^8.5.5",
         "psr/log": "^1.1"
     },
     "suggest": {
-        "psr/log": "Required for using the Log middleware",
-        "ext-intl": "Required for Internationalized Domain Name (IDN) support"
+        "ext-curl": "Required for CURL handler support",
+        "ext-intl": "Required for Internationalized Domain Name (IDN) support",
+        "psr/log": "Required for using the Log middleware"
     },
     "config": {
         "sort-packages": true
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "6.5-dev"
+            "dev-master": "7.1-dev"
         }
     },
     "autoload": {

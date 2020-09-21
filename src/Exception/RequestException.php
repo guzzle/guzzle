@@ -1,7 +1,8 @@
 <?php
+
 namespace GuzzleHttp\Exception;
 
-use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -9,28 +10,32 @@ use Psr\Http\Message\UriInterface;
 /**
  * HTTP Request exception
  */
-class RequestException extends TransferException
+class RequestException extends TransferException implements RequestExceptionInterface
 {
-    /** @var RequestInterface */
+    /**
+     * @var RequestInterface
+     */
     private $request;
 
-    /** @var ResponseInterface|null */
+    /**
+     * @var ResponseInterface|null
+     */
     private $response;
 
-    /** @var array */
+    /**
+     * @var array
+     */
     private $handlerContext;
 
     public function __construct(
-        $message,
+        string $message,
         RequestInterface $request,
         ResponseInterface $response = null,
-        \Exception $previous = null,
+        \Throwable $previous = null,
         array $handlerContext = []
     ) {
         // Set the code of the exception if the response is set and not future.
-        $code = $response && !($response instanceof PromiseInterface)
-            ? $response->getStatusCode()
-            : 0;
+        $code = $response ? $response->getStatusCode() : 0;
         parent::__construct($message, $code, $previous);
         $this->request = $request;
         $this->response = $response;
@@ -39,13 +44,8 @@ class RequestException extends TransferException
 
     /**
      * Wrap non-RequestExceptions with a RequestException
-     *
-     * @param RequestInterface $request
-     * @param \Exception       $e
-     *
-     * @return RequestException
      */
-    public static function wrapException(RequestInterface $request, \Exception $e)
+    public static function wrapException(RequestInterface $request, \Throwable $e): RequestException
     {
         return $e instanceof RequestException
             ? $e
@@ -57,17 +57,15 @@ class RequestException extends TransferException
      *
      * @param RequestInterface  $request  Request
      * @param ResponseInterface $response Response received
-     * @param \Exception        $previous Previous exception
+     * @param \Throwable        $previous Previous exception
      * @param array             $ctx      Optional handler context.
-     *
-     * @return self
      */
     public static function create(
         RequestInterface $request,
         ResponseInterface $response = null,
-        \Exception $previous = null,
+        \Throwable $previous = null,
         array $ctx = []
-    ) {
+    ): self {
         if (!$response) {
             return new self(
                 'Error completing request',
@@ -78,7 +76,7 @@ class RequestException extends TransferException
             );
         }
 
-        $level = (int) floor($response->getStatusCode() / 100);
+        $level = (int) \floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
             $className = ClientException::class;
@@ -95,7 +93,7 @@ class RequestException extends TransferException
 
         // Client Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)
-        $message = sprintf(
+        $message = \sprintf(
             '%s: `%s %s` resulted in a `%s %s` response',
             $label,
             $request->getMethod(),
@@ -104,7 +102,7 @@ class RequestException extends TransferException
             $response->getReasonPhrase()
         );
 
-        $summary = static::getResponseBodySummary($response);
+        $summary = \GuzzleHttp\Psr7\get_message_body_summary($response);
 
         if ($summary !== null) {
             $message .= ":\n{$summary}\n";
@@ -114,32 +112,14 @@ class RequestException extends TransferException
     }
 
     /**
-     * Get a short summary of the response
-     *
-     * Will return `null` if the response is not printable.
-     *
-     * @param ResponseInterface $response
-     *
-     * @return string|null
-     */
-    public static function getResponseBodySummary(ResponseInterface $response)
-    {
-        return \GuzzleHttp\Psr7\get_message_body_summary($response);
-    }
-
-    /**
      * Obfuscates URI if there is a username and a password present
-     *
-     * @param UriInterface $uri
-     *
-     * @return UriInterface
      */
-    private static function obfuscateUri(UriInterface $uri)
+    private static function obfuscateUri(UriInterface $uri): UriInterface
     {
         $userInfo = $uri->getUserInfo();
 
-        if (false !== ($pos = strpos($userInfo, ':'))) {
-            return $uri->withUserInfo(substr($userInfo, 0, $pos), '***');
+        if (false !== ($pos = \strpos($userInfo, ':'))) {
+            return $uri->withUserInfo(\substr($userInfo, 0, $pos), '***');
         }
 
         return $uri;
@@ -147,30 +127,24 @@ class RequestException extends TransferException
 
     /**
      * Get the request that caused the exception
-     *
-     * @return RequestInterface
      */
-    public function getRequest()
+    public function getRequest(): RequestInterface
     {
         return $this->request;
     }
 
     /**
      * Get the associated response
-     *
-     * @return ResponseInterface|null
      */
-    public function getResponse()
+    public function getResponse(): ?ResponseInterface
     {
         return $this->response;
     }
 
     /**
      * Check if a response was received
-     *
-     * @return bool
      */
-    public function hasResponse()
+    public function hasResponse(): bool
     {
         return $this->response !== null;
     }
@@ -182,10 +156,8 @@ class RequestException extends TransferException
      * using. It may also be just an empty array. Relying on this data will
      * couple you to a specific handler, but can give more debug information
      * when needed.
-     *
-     * @return array
      */
-    public function getHandlerContext()
+    public function getHandlerContext(): array
     {
         return $this->handlerContext;
     }

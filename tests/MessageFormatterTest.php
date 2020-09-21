@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\RequestException;
@@ -9,16 +10,16 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\MessageFormatter
+ * @covers \GuzzleHttp\MessageFormatter
  */
 class MessageFormatterTest extends TestCase
 {
     public function testCreatesWithClfByDefault()
     {
         $f = new MessageFormatter();
-        self::assertEquals(MessageFormatter::CLF, self::readAttribute($f, 'template'));
+        self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
         $f = new MessageFormatter(null);
-        self::assertEquals(MessageFormatter::CLF, self::readAttribute($f, 'template'));
+        self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
     }
 
     public function dateProvider()
@@ -66,8 +67,8 @@ class MessageFormatterTest extends TestCase
             ['{res_version}', [$request, $response], $response->getProtocolVersion()],
             ['{res_version}', [$request], 'NULL'],
             ['{host}', [$request], $request->getHeaderLine('Host')],
-            ['{hostname}', [$request, $response], gethostname()],
-            ['{hostname}{hostname}', [$request, $response], gethostname() . gethostname()],
+            ['{hostname}', [$request, $response], \gethostname()],
+            ['{hostname}{hostname}', [$request, $response], \gethostname() . \gethostname()],
             ['{code}', [$request, $response], $response->getStatusCode()],
             ['{code}', [$request], 'NULL'],
             ['{phrase}', [$request, $response], $response->getReasonPhrase()],
@@ -88,6 +89,6 @@ class MessageFormatterTest extends TestCase
     public function testFormatsMessages($template, $args, $result)
     {
         $f = new MessageFormatter($template);
-        self::assertSame((string) $result, call_user_func_array([$f, 'format'], $args));
+        self::assertSame((string) $result, \call_user_func_array([$f, 'format'], $args));
     }
 }

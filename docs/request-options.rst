@@ -600,8 +600,6 @@ over the wire.
 
     use GuzzleHttp\Middleware;
 
-    // Grab the client's handler instance.
-    $clientHandler = $client->getConfig('handler');
     // Create a middleware that echoes parts of the request.
     $tapMiddleware = Middleware::tap(function ($request) {
         echo $request->getHeaderLine('Content-Type');
@@ -610,9 +608,11 @@ over the wire.
         // {"foo":"bar"}
     });
 
+    // The $handler variable is the handler passed in the
+    // options to the client constructor.
     $response = $client->request('PUT', '/put', [
         'json'    => ['foo' => 'bar'],
-        'handler' => $tapMiddleware($clientHandler)
+        'handler' => $tapMiddleware($handler)
     ]);
 
 .. note::
@@ -684,7 +684,7 @@ on_headers
 :Types: - callable
 :Constant: ``GuzzleHttp\RequestOptions::ON_HEADERS``
 
-The callable accepts a ``Psr\Http\ResponseInterface`` object. If an exception
+The callable accepts a ``Psr\Http\Message\ResponseInterface`` object. If an exception
 is thrown by the callable, then the promise associated with the response will
 be rejected with a ``GuzzleHttp\Exception\RequestException`` that wraps the
 exception that was thrown.
@@ -1015,35 +1015,9 @@ verify
     // Disable validation entirely (don't do this!).
     $client->request('GET', '/', ['verify' => false]);
 
-Not all system's have a known CA bundle on disk. For example, Windows and
-OS X do not have a single common location for CA bundles. When setting
-"verify" to ``true``, Guzzle will do its best to find the most appropriate
-CA bundle on your system. When using cURL or the PHP stream wrapper on PHP
-versions >= 5.6, this happens by default. When using the PHP stream
-wrapper on versions < 5.6, Guzzle tries to find your CA bundle in the
-following order:
-
-1. Check if ``openssl.cafile`` is set in your php.ini file.
-2. Check if ``curl.cainfo`` is set in your php.ini file.
-3. Check if ``/etc/pki/tls/certs/ca-bundle.crt`` exists (Red Hat, CentOS,
-   Fedora; provided by the ca-certificates package)
-4. Check if ``/etc/ssl/certs/ca-certificates.crt`` exists (Ubuntu, Debian;
-   provided by the ca-certificates package)
-5. Check if ``/usr/local/share/certs/ca-root-nss.crt`` exists (FreeBSD;
-   provided by the ca_root_nss package)
-6. Check if ``/usr/local/etc/openssl/cert.pem`` (OS X; provided by homebrew)
-7. Check if ``C:\windows\system32\curl-ca-bundle.crt`` exists (Windows)
-8. Check if ``C:\windows\curl-ca-bundle.crt`` exists (Windows)
-
-The result of this lookup is cached in memory so that subsequent calls
-in the same process will return very quickly. However, when sending only
-a single request per-process in something like Apache, you should consider
-setting the ``openssl.cafile`` environment variable to the path on disk
-to the file so that this entire process is skipped.
-
 If you do not need a specific certificate bundle, then Mozilla provides a
 commonly used CA bundle which can be downloaded
-`here <https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt>`_
+`here <https://curl.haxx.se/ca/cacert.pem>`_
 (provided by the maintainer of cURL). Once you have a CA bundle available on
 disk, you can set the "openssl.cafile" PHP ini setting to point to the path to
 the file, allowing you to omit the "verify" request option. Much more detail on
@@ -1056,7 +1030,7 @@ SSL certificates can be found on the
 timeout
 -------
 
-:Summary: Float describing the timeout of the request in seconds. Use ``0``
+:Summary: Float describing the total timeout of the request in seconds. Use ``0``
         to wait indefinitely (the default behavior).
 :Types: float
 :Default: ``0``

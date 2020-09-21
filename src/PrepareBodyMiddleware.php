@@ -1,34 +1,32 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 
 /**
  * Prepares requests that contain a body, adding the Content-Length,
  * Content-Type, and Expect headers.
+ *
+ * @final
  */
 class PrepareBodyMiddleware
 {
-    /** @var callable  */
+    /**
+     * @var callable(RequestInterface, array): PromiseInterface
+     */
     private $nextHandler;
 
     /**
-     * @param callable $nextHandler Next handler to invoke.
+     * @param callable(RequestInterface, array): PromiseInterface $nextHandler Next handler to invoke.
      */
     public function __construct(callable $nextHandler)
     {
         $this->nextHandler = $nextHandler;
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param array            $options
-     *
-     * @return PromiseInterface
-     */
-    public function __invoke(RequestInterface $request, array $options)
+    public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $fn = $this->nextHandler;
 
@@ -42,7 +40,7 @@ class PrepareBodyMiddleware
         // Add a default content-type if possible.
         if (!$request->hasHeader('Content-Type')) {
             if ($uri = $request->getBody()->getMetadata('uri')) {
-                if ($type = Psr7\mimetype_from_filename($uri)) {
+                if (is_string($uri) && $type = Psr7\mimetype_from_filename($uri)) {
                     $modify['set_headers']['Content-Type'] = $type;
                 }
             }
@@ -68,20 +66,18 @@ class PrepareBodyMiddleware
 
     /**
      * Add expect header
-     *
-     * @return void
      */
     private function addExpectHeader(
         RequestInterface $request,
         array $options,
         array &$modify
-    ) {
+    ): void {
         // Determine if the Expect header should be used
         if ($request->hasHeader('Expect')) {
             return;
         }
 
-        $expect = isset($options['expect']) ? $options['expect'] : null;
+        $expect = $options['expect'] ?? null;
 
         // Return if disabled or if you're not using HTTP/1.1 or HTTP/2.0
         if ($expect === false || $request->getProtocolVersion() < 1.1) {

@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
@@ -21,7 +22,9 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Server
 {
-    /** @var Client */
+    /**
+     * @var Client
+     */
     private static $client;
     private static $started = false;
     public static $url = 'http://127.0.0.1:8126/';
@@ -29,6 +32,7 @@ class Server
 
     /**
      * Flush the received requests from the server
+     *
      * @throws \RuntimeException
      */
     public static function flush()
@@ -44,6 +48,7 @@ class Server
      *
      * @param array|ResponseInterface $responses A single or array of Responses
      *                                           to queue.
+     *
      * @throws \Exception
      */
     public static function enqueue($responses)
@@ -53,15 +58,15 @@ class Server
             if (!($response instanceof ResponseInterface)) {
                 throw new \Exception('Invalid response given.');
             }
-            $headers = array_map(function ($h) {
-                return implode(' ,', $h);
+            $headers = \array_map(static function ($h) {
+                return \implode(' ,', $h);
             }, $response->getHeaders());
 
             $data[] = [
                 'status'  => (string) $response->getStatusCode(),
                 'reason'  => $response->getReasonPhrase(),
                 'headers' => $headers,
-                'body'    => base64_encode((string) $response->getBody())
+                'body'    => \base64_encode((string) $response->getBody())
             ];
         }
 
@@ -74,6 +79,7 @@ class Server
      * Get all of the received requests
      *
      * @return ResponseInterface[]
+     *
      * @throws \RuntimeException
      */
     public static function received()
@@ -83,10 +89,10 @@ class Server
         }
 
         $response = self::getClient()->request('GET', 'guzzle-server/requests');
-        $data = json_decode($response->getBody(), true);
+        $data = \json_decode($response->getBody(), true);
 
-        return array_map(
-            function ($message) {
+        return \array_map(
+            static function ($message) {
                 $uri = $message['uri'];
                 if (isset($message['query_string'])) {
                     $uri .= '?' . $message['query_string'];
@@ -124,7 +130,7 @@ class Server
     {
         $tries = 0;
         while (!self::isListening() && ++$tries < $maxTries) {
-            usleep(100000);
+            \usleep(100000);
         }
 
         if (!self::isListening()) {
@@ -139,7 +145,7 @@ class Server
         }
 
         if (!self::isListening()) {
-            exec('node ' . __DIR__ . '/server.js '
+            \exec('node ' . __DIR__ . '/server.js '
                 . self::$port . ' >> /tmp/server.log 2>&1 &');
             self::wait();
         }

@@ -37,7 +37,7 @@ The client constructor accepts an associative array of options:
     URIs. Can be a string or instance of UriInterface. When a relative URI
     is provided to a client, the client will combine the base URI with the
     relative URI using the rules described in
-    `RFC 3986, section 2 <http://tools.ietf.org/html/rfc3986#section-5.2>`_.
+    `RFC 3986, section 5.2 <https://tools.ietf.org/html/rfc3986#section-5.2>`_.
 
     .. code-block:: php
 
@@ -67,8 +67,7 @@ The client constructor accepts an associative array of options:
     function is called with a ``Psr7\Http\Message\RequestInterface`` and array
     of transfer options, and must return a
     ``GuzzleHttp\Promise\PromiseInterface`` that is fulfilled with a
-    ``Psr7\Http\Message\ResponseInterface`` on success. ``handler`` is a
-    constructor only option that cannot be overridden in per/request options.
+    ``Psr7\Http\Message\ResponseInterface`` on success.
 
 ``...``
     (mixed) All other options passed to the constructor are used as default
@@ -187,13 +186,18 @@ requests.
     // Wait for the requests to complete; throws a ConnectException
     // if any of the requests fail
     $responses = Promise\unwrap($promises);
+    
+    // You can access each response using the key of the promise
+    echo $responses['image']->getHeader('Content-Length')[0];
+    echo $responses['png']->getHeader('Content-Length')[0];
 
     // Wait for the requests to complete, even if some of them fail
     $responses = Promise\settle($promises)->wait();
 
-    // You can access each response using the key of the promise
-    echo $responses['image']->getHeader('Content-Length')[0];
-    echo $responses['png']->getHeader('Content-Length')[0];
+    // Values returned above are wrapped in an array with 2 keys: "state" (either fulfilled or rejected) and "value" (contains the response)
+    echo $responses['image']['state']; // returns "fulfilled"
+    echo $responses['image']['value']->getHeader('Content-Length')[0];
+    echo $responses['png']['value']->getHeader('Content-Length')[0];
 
 You can use the ``GuzzleHttp\Pool`` object when you have an indeterminate
 amount of requests you wish to send.
@@ -529,7 +533,6 @@ on each other.
 .. code-block:: none
 
     . \RuntimeException
-    ├── SeekException (implements GuzzleException)
     └── TransferException (implements GuzzleException)
         └── RequestException
             ├── BadResponseException

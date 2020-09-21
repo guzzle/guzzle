@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="3.11.5@3c60609c218d4d4b3b257728b8089094e5c6c6c2">
+  <file src="src/Client.php">
+    <NullArgument occurrences="1">
+      <code>null</code>
+    </NullArgument>
+    <PossiblyUndefinedVariable occurrences="1">
+      <code>$options</code>
+    </PossiblyUndefinedVariable>
+    <UndefinedInterfaceMethod occurrences="1">
+      <code>getBoundary</code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="src/Cookie/CookieJar.php">
+    <PossiblyFalseOperand occurrences="1">
+      <code>$result</code>
+    </PossiblyFalseOperand>
+  </file>
+  <file src="src/Exception/RequestException.php">
+    <ImplicitToStringCast occurrences="1">
+      <code>$uri</code>
+    </ImplicitToStringCast>
+  </file>
+  <file src="src/Handler/CurlFactory.php">
+    <ImplicitToStringCast occurrences="1">
+      <code>$easy-&gt;request-&gt;getUri()</code>
+    </ImplicitToStringCast>
+    <TypeDoesNotContainType occurrences="1">
+      <code>$timeoutRequiresNoSignal &amp;&amp; \strtoupper(\substr(\PHP_OS, 0, 3)) !== 'WIN'</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="src/Handler/CurlMultiHandler.php">
+    <InvalidArgument occurrences="1">
+      <code>$this-&gt;active</code>
+    </InvalidArgument>
+    <InvalidPropertyAssignmentValue occurrences="1">
+      <code>$this-&gt;active</code>
+    </InvalidPropertyAssignmentValue>
+    <UndefinedThisPropertyAssignment occurrences="1">
+      <code>$this-&gt;_mh</code>
+    </UndefinedThisPropertyAssignment>
+  </file>
+  <file src="src/Handler/MockHandler.php">
+    <InvalidScalarArgument occurrences="1">
+      <code>$options['delay'] * 1000</code>
+    </InvalidScalarArgument>
+  </file>
+  <file src="src/Handler/StreamHandler.php">
+    <ImplicitToStringCast occurrences="1">
+      <code>$uri</code>
+    </ImplicitToStringCast>
+  </file>
+  <file src="src/HandlerStack.php">
+    <PropertyTypeCoercion occurrences="4">
+      <code>$this-&gt;stack</code>
+      <code>$this-&gt;stack</code>
+      <code>$this-&gt;stack</code>
+      <code>$this-&gt;stack</code>
+    </PropertyTypeCoercion>
+  </file>
+  <file src="src/MessageFormatter.php">
+    <InvalidScalarArgument occurrences="1"/>
+  </file>
+  <file src="src/Middleware.php">
+    <InvalidArgument occurrences="1">
+      <code>$request</code>
+    </InvalidArgument>
+  </file>
+  <file src="src/RedirectMiddleware.php">
+    <ImplicitToStringCast occurrences="1">
+      <code>$location</code>
+    </ImplicitToStringCast>
+  </file>
+  <file src="src/RetryMiddleware.php">
+    <TooManyArguments occurrences="1">
+      <code>($this-&gt;delay)(++$options['retries'], $response)</code>
+    </TooManyArguments>
+  </file>
+  <file src="src/Utils.php">
+    <ForbiddenCode occurrences="1">
+      <code>\var_dump($input)</code>
+    </ForbiddenCode>
+    <PossiblyNullArgument occurrences="1">
+      <code>$info</code>
+    </PossiblyNullArgument>
+  </file>
+</files>
