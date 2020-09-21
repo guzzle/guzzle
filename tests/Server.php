@@ -82,7 +82,7 @@ class Server
      * @param string      $reasonPhrase Status reason response e.g "OK"
      * @param array       $headers      Array of headers to send in response
      * @param string|null $body         Body to send in response
-     * 
+     *
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public static function enqueueRaw($statusCode, $reasonPhrase, $headers, $body)
