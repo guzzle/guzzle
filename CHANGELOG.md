@@ -19,7 +19,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Deprecated
 
-- All functions in `GuzzleHttp` has been depracated. Use static methods on `Utils` instead.
+- All functions in `GuzzleHttp` has been deprecated. Use static methods on `Utils` instead.
 - `ClientInterface::getConfig()`
 - `Client::getConfig()`
 - `Client::__call()`
