@@ -78,10 +78,10 @@ class Server
     /**
      * Queue a single raw response manually, to handle cases where PSR7 response is not suitable.
      *
-     * @param integer|string $statusCode Status code for the response, e.g. 200
-     * @param string $reasonPhrase Status reason response e.g "OK"
-     * @param array $headers Array of headers to send in response
-     * @param string|null $body Body to send in response
+     * @param int|string  $statusCode   Status code for the response, e.g. 200
+     * @param string      $reasonPhrase Status reason response e.g "OK"
+     * @param array       $headers      Array of headers to send in response
+     * @param string|null $body         Body to send in response
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public static function enqueueRaw($statusCode, $reasonPhrase, $headers, $body)
