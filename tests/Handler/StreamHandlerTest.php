@@ -389,8 +389,8 @@ class StreamHandlerTest extends TestCase
         $called = [];
         $this->queueRes();
         $this->getSendResult([
-            'progress' => static function () use (&$called) {
-                $called[] = \func_get_args();
+            'progress' => static function (...$args) use (&$called) {
+                $called[] = $args;
             },
         ]);
         self::assertNotEmpty($called);
@@ -405,8 +405,8 @@ class StreamHandlerTest extends TestCase
         $buffer = \fopen('php://memory', 'w+');
         $this->getSendResult([
             'debug'    => $buffer,
-            'progress' => static function () use (&$called) {
-                $called[] = \func_get_args();
+            'progress' => static function (...$args) use (&$called) {
+                $called[] = $args;
             },
         ]);
         self::assertNotEmpty($called);

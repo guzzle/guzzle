@@ -34,7 +34,7 @@ class MessageFormatterTest extends TestCase
     /**
      * @dataProvider dateProvider
      */
-    public function testFormatsTimestamps($format, $pattern)
+    public function testFormatsTimestamps(string $format, string $pattern)
     {
         $f = new MessageFormatter($format);
         $request = new Request('GET', '/');
@@ -86,9 +86,9 @@ class MessageFormatterTest extends TestCase
     /**
      * @dataProvider formatProvider
      */
-    public function testFormatsMessages($template, $args, $result)
+    public function testFormatsMessages(string $template, array $args, $result)
     {
         $f = new MessageFormatter($template);
-        self::assertSame((string) $result, \call_user_func_array([$f, 'format'], $args));
+        self::assertSame((string) $result, $f->format(...$args));
     }
 }

@@ -503,7 +503,7 @@ class StreamHandler
      */
     private function add_progress(RequestInterface $request, array &$options, $value, array &$params): void
     {
-        $this->addNotification(
+        self::addNotification(
             $params,
             static function ($code, $a, $b, $c, $transferred, $total) use ($value) {
                 if ($code == \STREAM_NOTIFY_PROGRESS) {
@@ -539,11 +539,9 @@ class StreamHandler
 
         $value = Utils::debugResource($value);
         $ident = $request->getMethod() . ' ' . $request->getUri()->withFragment('');
-        $this->addNotification(
+        self::addNotification(
             $params,
-            static function () use ($ident, $value, $map, $args): void {
-                $passed = \func_get_args();
-                $code = \array_shift($passed);
+            static function (int $code, ...$passed) use ($ident, $value, $map, $args): void {
                 \fprintf($value, '<%s> [%s] ', $ident, $map[$code]);
                 foreach (\array_filter($passed) as $i => $v) {
                     \fwrite($value, $args[$i] . ': "' . $v . '" ');
@@ -553,25 +551,24 @@ class StreamHandler
         );
     }
 
-    private function addNotification(array &$params, callable $notify): void
+    private static function addNotification(array &$params, callable $notify): void
     {
         // Wrap the existing function if needed.
         if (!isset($params['notification'])) {
             $params['notification'] = $notify;
         } else {
-            $params['notification'] = $this->callArray([
+            $params['notification'] = self::callArray([
                 $params['notification'],
                 $notify
             ]);
         }
     }
 
-    private function callArray(array $functions): callable
+    private static function callArray(array $functions): callable
     {
-        return static function () use ($functions) {
-            $args = \func_get_args();
+        return static function (...$args) use ($functions) {
             foreach ($functions as $fn) {
-                \call_user_func_array($fn, $args);
+                $fn(...$args);
             }
         };
     }

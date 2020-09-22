@@ -16,8 +16,8 @@ class RetryMiddlewareTest extends TestCase
     {
         $delayCalls = 0;
         $calls = [];
-        $decider = static function ($retries, $request, $response, $error) use (&$calls) {
-            $calls[] = \func_get_args();
+        $decider = static function (...$args) use (&$calls) {
+            $calls[] = $args;
             return \count($calls) < 3;
         };
         $delay = static function ($retries, $response) use (&$delayCalls) {
@@ -52,9 +52,9 @@ class RetryMiddlewareTest extends TestCase
     public function testCanRetryExceptions()
     {
         $calls = [];
-        $decider = static function ($retries, $request, $response, $error) use (&$calls) {
-            $calls[] = \func_get_args();
-            return $error instanceof \Exception;
+        $decider = static function (...$args) use (&$calls) {
+            $calls[] = $args;
+            return $args[3] instanceof \Exception;
         };
         $m = Middleware::retry($decider);
         $h = new MockHandler([new \Exception(), new Response(201)]);
