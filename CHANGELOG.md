@@ -4,7 +4,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## UNRELEASED
 
-## 7.1.0 - 2020-09-21
+## 7.1.0 - 2020-09-22
 
 ### Added
 
