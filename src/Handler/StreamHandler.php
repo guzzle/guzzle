@@ -341,7 +341,7 @@ class StreamHandler
                     );
                 }
 
-                if (isset($options['read_timeout'])) {
+                if (false !== $resource && isset($options['read_timeout'])) {
                     $readTimeout = $options['read_timeout'];
                     $sec = (int) $readTimeout;
                     $usec = ($readTimeout - $sec) * 100000;
