@@ -258,7 +258,7 @@ class CurlFactoryTest extends TestCase
 
     public function testEmitsDebugInfoToStream()
     {
-        $res = \fopen('php://memory', 'r+');
+        $res = \fopen('php://temp', 'r+');
         Server::flush();
         Server::enqueue([new Psr7\Response()]);
         $a = new Handler\CurlMultiHandler();

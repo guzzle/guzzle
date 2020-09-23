@@ -15,7 +15,7 @@ class FileCookieJarTest extends TestCase
 
     public function setUp(): void
     {
-        $this->file = \tempnam('/tmp', 'file-cookies');
+        $this->file = \tempnam(\sys_get_temp_dir(), 'file-cookies');
     }
 
     /**
