@@ -118,7 +118,7 @@ class StreamHandlerTest extends TestCase
 
     public function testDrainsResponseIntoSaveToBodyAtPath()
     {
-        $tmpfname = \tempnam('/tmp', 'save_to_path');
+        $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
         $this->queueRes();
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -132,7 +132,7 @@ class StreamHandlerTest extends TestCase
 
     public function testDrainsResponseIntoSaveToBodyAtNonExistentPath()
     {
-        $tmpfname = \tempnam('/tmp', 'save_to_path');
+        $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
         \unlink($tmpfname);
         $this->queueRes();
         $handler = new StreamHandler();
