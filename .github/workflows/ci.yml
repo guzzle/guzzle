@@ -70,3 +70,44 @@ jobs:
 
       - name: Run tests
         run: make test
+
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+    strategy:
+      max-parallel: 10
+      matrix:
+        php: ['7.2', '7.3', '7.4']
+
+    steps:
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: mbstring, intl
+          tools: composer:v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+
+      - name: Setup Problem Matchers for PHPUnit
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download dependencies
+        run: composer update --no-interaction --prefer-dist
+
+      - name: Start test servers
+        shell: bash
+        run: |
+          node tests/server.js &
+          # See https://github.com/php-http/client-integration-tests/issues/46 for the background of the line below.
+          php -S 127.0.0.1:10000 -t "vendor/php-http/client-integration-tests/fixture" &
+
+      - name: Run tests
+        run: vendor/bin/phpunit.bat
