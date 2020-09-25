@@ -39,22 +39,11 @@ jobs:
     name: Psalm
     runs-on: ubuntu-latest
     steps:
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '7.4'
-          extensions: mbstring, intl
-          tools: composer:v2
-
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Download dependencies
-        run: |
-          composer require --dev --no-update psalm/phar:3.16
-          composer update --no-interaction --prefer-dist
-
       - name: Psalm
-        run: |
-          ./vendor/bin/psalm.phar --version
-          ./vendor/bin/psalm.phar --output-format=github --no-progress --show-info=false --stats
+        uses: docker://vimeo/psalm-github-actions:3.14.2
+        with:
+          args: --no-progress --show-info=false --stats
+

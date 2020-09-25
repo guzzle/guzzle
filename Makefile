@@ -55,7 +55,7 @@ docs-show:
 static: static-phpstan static-psalm static-codestyle-check
 
 static-psalm:
-	docker run --rm -it -v ${PWD}:/app -w /app vimeo/psalm-github-actions
+	docker run --rm -it -v ${PWD}:/app -w /app vimeo/psalm-github-actions:3.14.2
 
 static-phpstan:
 	docker run --rm -it -e REQUIRE_DEV=true -v ${PWD}:/app -w /app oskarstark/phpstan-ga:0.12.41 analyze $(PHPSTAN_PARAMS)
