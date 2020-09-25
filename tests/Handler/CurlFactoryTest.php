@@ -757,4 +757,32 @@ class CurlFactoryTest extends TestCase
 
         self::assertEmpty($factory->release($easyHandle));
     }
+
+    /**
+     * https://github.com/guzzle/guzzle/issues/2735
+     */
+    public function testBodyEofOnWindows()
+    {
+        $expectedLength = 4097;
+
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [
+                'Content-Length' => $expectedLength,
+            ], \str_repeat('x', $expectedLength))
+        ]);
+
+        $handler = new Handler\CurlMultiHandler();
+        $request = new Psr7\Request('GET', Server::$url);
+        $promise = $handler($request, []);
+        $response = $promise->wait();
+        $body = $response->getBody();
+
+        $actualLength = 0;
+        while (!$body->eof()) {
+            $chunk = $body->read(4096);
+            $actualLength += \strlen($chunk);
+        }
+        self::assertSame($expectedLength, $actualLength);
+    }
 }
