@@ -414,7 +414,7 @@ class CurlFactoryTest extends TestCase
         ]);
         $response->wait();
         self::assertStringEqualsFile($tmpfile, 'test');
-        \unlink($tmpfile);
+        @\unlink($tmpfile);
     }
 
     public function testDoesNotAddMultipleContentLengthHeaders()
