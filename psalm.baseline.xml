@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="3.11.5@3c60609c218d4d4b3b257728b8089094e5c6c6c2">
+<files psalm-version="3.14.2@3538fe1955d47f6ee926c0769d71af6db08aa488">
   <file src="src/Client.php">
-    <NullArgument occurrences="1">
-      <code>null</code>
-    </NullArgument>
     <PossiblyUndefinedVariable occurrences="1">
       <code>$options</code>
     </PossiblyUndefinedVariable>
+    <UndefinedConstant occurrences="1">
+      <code>\IDNA_DEFAULT</code>
+    </UndefinedConstant>
     <UndefinedInterfaceMethod occurrences="1">
       <code>getBoundary</code>
     </UndefinedInterfaceMethod>
@@ -22,28 +22,17 @@
     </ImplicitToStringCast>
   </file>
   <file src="src/Handler/CurlFactory.php">
-    <ImplicitToStringCast occurrences="1">
-      <code>$easy-&gt;request-&gt;getUri()</code>
-    </ImplicitToStringCast>
     <TypeDoesNotContainType occurrences="1">
       <code>$timeoutRequiresNoSignal &amp;&amp; \strtoupper(\substr(\PHP_OS, 0, 3)) !== 'WIN'</code>
     </TypeDoesNotContainType>
   </file>
   <file src="src/Handler/CurlMultiHandler.php">
-    <InvalidArgument occurrences="1">
-      <code>$this-&gt;active</code>
-    </InvalidArgument>
     <InvalidPropertyAssignmentValue occurrences="1">
       <code>$this-&gt;active</code>
     </InvalidPropertyAssignmentValue>
     <UndefinedThisPropertyAssignment occurrences="1">
       <code>$this-&gt;_mh</code>
     </UndefinedThisPropertyAssignment>
-  </file>
-  <file src="src/Handler/MockHandler.php">
-    <InvalidScalarArgument occurrences="1">
-      <code>$options['delay'] * 1000</code>
-    </InvalidScalarArgument>
   </file>
   <file src="src/Handler/StreamHandler.php">
     <ImplicitToStringCast occurrences="1">
@@ -70,6 +59,9 @@
     <ImplicitToStringCast occurrences="1">
       <code>$location</code>
     </ImplicitToStringCast>
+    <UndefinedConstant occurrences="1">
+      <code>\IDNA_DEFAULT</code>
+    </UndefinedConstant>
   </file>
   <file src="src/RetryMiddleware.php">
     <TooManyArguments occurrences="1">
@@ -80,8 +72,5 @@
     <ForbiddenCode occurrences="1">
       <code>\var_dump($input)</code>
     </ForbiddenCode>
-    <PossiblyNullArgument occurrences="1">
-      <code>$info</code>
-    </PossiblyNullArgument>
   </file>
 </files>
