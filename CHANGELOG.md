@@ -4,6 +4,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## UNRELEASED
 
+### Changed
+
+* Avoid "functions" from dependencies [#2712](https://github.com/guzzle/guzzle/pull/2712)
+
 ## 7.1.1 - 2020-09-30
 
 ### Fixed
