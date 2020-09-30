@@ -76,6 +76,32 @@ class Server
     }
 
     /**
+     * Queue a single raw response manually, to handle cases where PSR7 response is not suitable.
+     *
+     * @param int|string  $statusCode   Status code for the response, e.g. 200
+     * @param string      $reasonPhrase Status reason response e.g "OK"
+     * @param array       $headers      Array of headers to send in response
+     * @param string|null $body         Body to send in response
+     *
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public static function enqueueRaw($statusCode, $reasonPhrase, $headers, $body)
+    {
+        $data = [
+            [
+                'status'  => (string) $statusCode,
+                'reason'  => $reasonPhrase,
+                'headers' => $headers,
+                'body'    => \base64_encode((string) $body)
+            ]
+        ];
+
+        self::getClient()->request('PUT', 'guzzle-server/responses', [
+            'json' => $data
+        ]);
+    }
+
+    /**
      * Get all of the received requests
      *
      * @return ResponseInterface[]

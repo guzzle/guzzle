@@ -56,6 +56,11 @@ final class EasyHandle
     public $onHeadersException;
 
     /**
+     * @var \Exception|null Exception during createResponse (if any)
+     */
+    public $createResponseException;
+
+    /**
      * Attach a response to the easy handle based on the received headers.
      *
      * @throws \RuntimeException if no headers have been received.

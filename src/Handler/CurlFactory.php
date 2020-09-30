@@ -178,6 +178,18 @@ class CurlFactory implements CurlFactoryInterface
             \CURLE_GOT_NOTHING          => true,
         ];
 
+        if ($easy->createResponseException) {
+            return P\Create::rejectionFor(
+                new RequestException(
+                    'An error was encountered while creating the response',
+                    $easy->request,
+                    $easy->response,
+                    $easy->createResponseException,
+                    $ctx
+                )
+            );
+        }
+
         // If an exception was encountered during the onHeaders event, then
         // return a rejected promise that wraps that exception.
         if ($easy->onHeadersException) {
@@ -578,7 +590,12 @@ class CurlFactory implements CurlFactoryInterface
             $value = \trim($h);
             if ($value === '') {
                 $startingResponse = true;
-                $easy->createResponse();
+                try {
+                    $easy->createResponse();
+                } catch (\Exception $e) {
+                    $easy->createResponseException = $e;
+                    return -1;
+                }
                 if ($onHeaders !== null) {
                     try {
                         $onHeaders($easy->response);

@@ -607,6 +607,20 @@ class CurlFactoryTest extends TestCase
         self::assertCount(3, Helpers::readObjectAttribute($f, 'handles'));
     }
 
+    public function testRejectsPromiseWhenCreateResponseFails()
+    {
+        Server::flush();
+        Server::enqueueRaw(999, "Incorrect", ['X-Foo' => 'bar'], 'abc 123');
+
+        $req = new Psr7\Request('GET', Server::$url);
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, []);
+
+        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectExceptionMessage('An error was encountered while creating the response');
+        $promise->wait();
+    }
+
     public function testEnsuresOnHeadersIsCallable()
     {
         $req = new Psr7\Request('GET', Server::$url);
