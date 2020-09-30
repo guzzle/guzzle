@@ -28,7 +28,7 @@
         }
     ],
     "require": {
-        "php": "^7.2.5",
+        "php": "^7.2.5 || ^8.0",
         "ext-json": "*",
         "guzzlehttp/promises": "^1.4",
         "guzzlehttp/psr7": "^1.7",
@@ -40,7 +40,7 @@
     "require-dev": {
         "ext-curl": "*",
         "php-http/client-integration-tests": "^3.0",
-        "phpunit/phpunit": "^8.5.5",
+        "phpunit/phpunit": "^8.5.5 || ^9.3.5",
         "psr/log": "^1.1"
     },
     "suggest": {
