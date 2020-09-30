@@ -179,7 +179,7 @@ class CurlFactory implements CurlFactoryInterface
         ];
 
         if ($easy->createResponseException) {
-            return \GuzzleHttp\Promise\rejection_for(
+            return P\Create::rejectionFor(
                 new RequestException(
                     'An error was encountered while creating the response',
                     $easy->request,
