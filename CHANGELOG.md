@@ -4,6 +4,17 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## UNRELEASED
 
+## 7.1.1 - 2020-09-30
+
+### Fixed
+
+- Incorrect EOF detection for response body streams on Windows.
+
+### Changed
+
+- We dont connect curl `sink` on HEAD requests.
+- Removed some PHP 5 workarounds
+
 ## 7.1.0 - 2020-09-22
 
 ### Added
