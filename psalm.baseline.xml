@@ -4,9 +4,6 @@
     <PossiblyUndefinedVariable occurrences="1">
       <code>$options</code>
     </PossiblyUndefinedVariable>
-    <UndefinedConstant occurrences="1">
-      <code>\IDNA_DEFAULT</code>
-    </UndefinedConstant>
     <UndefinedInterfaceMethod occurrences="1">
       <code>getBoundary</code>
     </UndefinedInterfaceMethod>
@@ -59,9 +56,6 @@
     <ImplicitToStringCast occurrences="1">
       <code>$location</code>
     </ImplicitToStringCast>
-    <UndefinedConstant occurrences="1">
-      <code>\IDNA_DEFAULT</code>
-    </UndefinedConstant>
   </file>
   <file src="src/RetryMiddleware.php">
     <TooManyArguments occurrences="1">

@@ -42,6 +42,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, intl
+          tools: composer:v2
+
       - name: Psalm
         uses: docker://vimeo/psalm-github-actions:3.14.2
         with:
