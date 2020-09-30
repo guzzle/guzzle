@@ -98,6 +98,26 @@ class RedirectMiddlewareTest extends TestCase
         $promise->wait();
     }
 
+    public function testTooManyRedirectsExceptionHasResponse()
+    {
+        $mock = new MockHandler([
+            new Response(301, ['Location' => 'http://test.com']),
+            new Response(302, ['Location' => 'http://test.com'])
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com');
+        $promise = $handler($request, ['allow_redirects' => ['max' => 1]]);
+
+        try {
+            $promise->wait();
+            self::fail();
+        } catch (\GuzzleHttp\Exception\TooManyRedirectsException $e) {
+            self::assertSame(302, $e->getResponse()->getStatusCode());
+        }
+    }
+
     public function testEnsuresProtocolIsValid()
     {
         $mock = new MockHandler([
