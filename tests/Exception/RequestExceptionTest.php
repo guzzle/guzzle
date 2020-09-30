@@ -2,7 +2,9 @@
 
 namespace GuzzleHttp\Tests\Exception;
 
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
@@ -32,7 +34,7 @@ class RequestExceptionTest extends TestCase
     {
         $e = RequestException::create(new Request('GET', '/'));
         self::assertSame('Error completing request', $e->getMessage());
-        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $e);
+        self::assertInstanceOf(RequestException::class, $e);
     }
 
     public function testCreatesClientErrorResponseException()
@@ -46,7 +48,7 @@ class RequestExceptionTest extends TestCase
             '400 Bad Request',
             $e->getMessage()
         );
-        self::assertInstanceOf(\GuzzleHttp\Exception\ClientException::class, $e);
+        self::assertInstanceOf(ClientException::class, $e);
     }
 
     public function testCreatesServerErrorResponseException()
@@ -60,7 +62,7 @@ class RequestExceptionTest extends TestCase
             '500 Internal Server Error',
             $e->getMessage()
         );
-        self::assertInstanceOf(\GuzzleHttp\Exception\ServerException::class, $e);
+        self::assertInstanceOf(ServerException::class, $e);
     }
 
     public function testCreatesGenericErrorResponseException()
@@ -74,7 +76,7 @@ class RequestExceptionTest extends TestCase
             '300 ',
             $e->getMessage()
         );
-        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $e);
+        self::assertInstanceOf(RequestException::class, $e);
     }
 
     public function testThrowsInvalidArgumentExceptionOnOutOfBoundsResponseCode()
@@ -112,7 +114,7 @@ class RequestExceptionTest extends TestCase
             $content,
             $e->getMessage()
         );
-        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $e);
+        self::assertInstanceOf(RequestException::class, $e);
     }
 
     public function testCreatesExceptionWithTruncatedSummary()
@@ -141,7 +143,7 @@ class RequestExceptionTest extends TestCase
         $e = new \Exception('foo');
         $r = new Request('GET', 'http://www.oo.com');
         $ex = RequestException::wrapException($r, $e);
-        self::assertInstanceOf(\GuzzleHttp\Exception\RequestException::class, $ex);
+        self::assertInstanceOf(RequestException::class, $ex);
         self::assertSame($e, $ex->getPrevious());
     }
 

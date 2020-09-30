@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
@@ -74,7 +75,7 @@ class StreamHandler
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
 
-            return \GuzzleHttp\Promise\rejection_for($e);
+            return P\Create::rejectionFor($e);
         }
     }
 
@@ -114,7 +115,7 @@ class StreamHandler
         $reason = $parts[2] ?? null;
         $headers = Utils::headersFromLines($hdrs);
         [$stream, $headers] = $this->checkDecode($options, $headers, $stream);
-        $stream = Psr7\stream_for($stream);
+        $stream = Psr7\Utils::streamFor($stream);
         $sink = $stream;
 
         if (\strcasecmp('HEAD', $request->getMethod())) {
@@ -129,7 +130,7 @@ class StreamHandler
             } catch (\Exception $e) {
                 $msg = 'An error was encountered during the on_headers event';
                 $ex = new RequestException($msg, $request, $response, $e);
-                return \GuzzleHttp\Promise\rejection_for($ex);
+                return P\Create::rejectionFor($ex);
             }
         }
 
@@ -159,7 +160,7 @@ class StreamHandler
 
         return \is_string($sink)
             ? new Psr7\LazyOpenStream($sink, 'w+')
-            : Psr7\stream_for($sink);
+            : Psr7\Utils::streamFor($sink);
     }
 
     /**
@@ -174,7 +175,7 @@ class StreamHandler
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
                     $stream = new Psr7\InflateStream(
-                        Psr7\stream_for($stream)
+                        Psr7\Utils::streamFor($stream)
                     );
                     $headers['x-encoded-content-encoding']
                         = $headers[$normalizedKeys['content-encoding']];
@@ -216,7 +217,7 @@ class StreamHandler
         // that number of bytes has been read. This can prevent infinitely
         // reading from a stream when dealing with servers that do not honor
         // Connection: Close headers.
-        Psr7\copy_to_stream(
+        Psr7\Utils::copyToStream(
             $source,
             $sink,
             (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
@@ -503,7 +504,7 @@ class StreamHandler
      */
     private function add_progress(RequestInterface $request, array &$options, $value, array &$params): void
     {
-        $this->addNotification(
+        self::addNotification(
             $params,
             static function ($code, $a, $b, $c, $transferred, $total) use ($value) {
                 if ($code == \STREAM_NOTIFY_PROGRESS) {
@@ -539,11 +540,9 @@ class StreamHandler
 
         $value = Utils::debugResource($value);
         $ident = $request->getMethod() . ' ' . $request->getUri()->withFragment('');
-        $this->addNotification(
+        self::addNotification(
             $params,
-            static function () use ($ident, $value, $map, $args): void {
-                $passed = \func_get_args();
-                $code = \array_shift($passed);
+            static function (int $code, ...$passed) use ($ident, $value, $map, $args): void {
                 \fprintf($value, '<%s> [%s] ', $ident, $map[$code]);
                 foreach (\array_filter($passed) as $i => $v) {
                     \fwrite($value, $args[$i] . ': "' . $v . '" ');
@@ -553,25 +552,24 @@ class StreamHandler
         );
     }
 
-    private function addNotification(array &$params, callable $notify): void
+    private static function addNotification(array &$params, callable $notify): void
     {
         // Wrap the existing function if needed.
         if (!isset($params['notification'])) {
             $params['notification'] = $notify;
         } else {
-            $params['notification'] = $this->callArray([
+            $params['notification'] = self::callArray([
                 $params['notification'],
                 $notify
             ]);
         }
     }
 
-    private function callArray(array $functions): callable
+    private static function callArray(array $functions): callable
     {
-        return static function () use ($functions) {
-            $args = \func_get_args();
+        return static function (...$args) use ($functions) {
             foreach ($functions as $fn) {
-                \call_user_func_array($fn, $args);
+                $fn(...$args);
             }
         };
     }

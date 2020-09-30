@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
@@ -77,7 +78,8 @@ class MockHandler implements \Countable
         $this->onRejected = $onRejected;
 
         if ($queue) {
-            \call_user_func_array([$this, 'append'], $queue);
+            // array_values included for BC
+            $this->append(...array_values($queue));
         }
     }
 
@@ -112,8 +114,8 @@ class MockHandler implements \Countable
         }
 
         $response = $response instanceof \Throwable
-            ? \GuzzleHttp\Promise\rejection_for($response)
-            : \GuzzleHttp\Promise\promise_for($response);
+            ? P\Create::rejectionFor($response)
+            : P\Create::promiseFor($response);
 
         return $response->then(
             function (?ResponseInterface $value) use ($request, $options) {
@@ -142,7 +144,7 @@ class MockHandler implements \Countable
                 if ($this->onRejected) {
                     ($this->onRejected)($reason);
                 }
-                return \GuzzleHttp\Promise\rejection_for($reason);
+                return P\Create::rejectionFor($reason);
             }
         );
     }

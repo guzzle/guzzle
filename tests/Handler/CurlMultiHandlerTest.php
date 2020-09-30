@@ -2,7 +2,9 @@
 
 namespace GuzzleHttp\Tests\Handler;
 
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Tests\Helpers;
@@ -48,7 +50,7 @@ class CurlMultiHandlerTest extends TestCase
     {
         $a = new CurlMultiHandler();
 
-        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
+        $this->expectException(ConnectException::class);
         $this->expectExceptionMessage('cURL error');
         $a(new Request('GET', 'http://localhost:123'), [])->wait();
     }
@@ -73,7 +75,7 @@ class CurlMultiHandlerTest extends TestCase
         }
 
         foreach ($responses as $r) {
-            self::assertSame('rejected', $r->getState());
+            self::assertTrue(P\Is::rejected($r));
         }
     }
 
@@ -85,7 +87,7 @@ class CurlMultiHandlerTest extends TestCase
         $response = $a(new Request('GET', Server::$url), []);
         $response->wait();
         $response->cancel();
-        self::assertSame('fulfilled', $response->getState());
+        self::assertTrue(P\Is::fulfilled($response));
     }
 
     public function testDelaysConcurrently()

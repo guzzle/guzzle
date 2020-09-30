@@ -71,9 +71,9 @@ additional options can be specified as an associative array in the
 
 .. code-block:: php
 
-    use \GuzzleHttp\Client;
-    use \GuzzleHttp\HandlerStack;
-    use \GuzzleHttp\Handler\CurlMultiHandler;
+    use GuzzleHttp\Client;
+    use GuzzleHttp\HandlerStack;
+    use GuzzleHttp\Handler\CurlMultiHandler;
 
     $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler([
         'options' => [

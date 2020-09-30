@@ -3,6 +3,8 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -91,9 +93,29 @@ class RedirectMiddlewareTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $promise = $handler($request, ['allow_redirects' => ['max' => 3]]);
 
-        $this->expectException(\GuzzleHttp\Exception\TooManyRedirectsException::class);
+        $this->expectException(TooManyRedirectsException::class);
         $this->expectExceptionMessage('Will not follow more than 3 redirects');
         $promise->wait();
+    }
+
+    public function testTooManyRedirectsExceptionHasResponse()
+    {
+        $mock = new MockHandler([
+            new Response(301, ['Location' => 'http://test.com']),
+            new Response(302, ['Location' => 'http://test.com'])
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com');
+        $promise = $handler($request, ['allow_redirects' => ['max' => 1]]);
+
+        try {
+            $promise->wait();
+            self::fail();
+        } catch (\GuzzleHttp\Exception\TooManyRedirectsException $e) {
+            self::assertSame(302, $e->getResponse()->getStatusCode());
+        }
     }
 
     public function testEnsuresProtocolIsValid()
@@ -106,7 +128,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
 
-        $this->expectException(\GuzzleHttp\Exception\BadResponseException::class);
+        $this->expectException(BadResponseException::class);
         $this->expectExceptionMessage('Redirect URI,');
         $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
     }

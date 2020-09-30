@@ -4,6 +4,47 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## UNRELEASED
 
+### Changed
+
+* Avoid "functions" from dependencies [#2712](https://github.com/guzzle/guzzle/pull/2712)
+
+### Deprecated
+
+- Using environment variable GUZZLE_CURL_SELECT_TIMEOUT.
+
+## 7.1.1 - 2020-09-30
+
+### Fixed
+
+- Incorrect EOF detection for response body streams on Windows.
+
+### Changed
+
+- We dont connect curl `sink` on HEAD requests.
+- Removed some PHP 5 workarounds
+
+## 7.1.0 - 2020-09-22
+
+### Added
+
+- `GuzzleHttp\MessageFormatterInterface`
+
+### Fixed
+
+- Fixed issue that caused cookies with no value not to be stored.
+- On redirects, we allow all safe methods like GET, HEAD and OPTIONS.
+- Fixed logging on empty responses.
+- Make sure MessageFormatter::format returns string
+
+### Deprecated
+
+- All functions in `GuzzleHttp` has been deprecated. Use static methods on `Utils` instead.
+- `ClientInterface::getConfig()`
+- `Client::getConfig()`
+- `Client::__call()`
+- `Utils::defaultCaBundle()`
+- `CurlFactory::LOW_CURL_VERSION_NUMBER`
+
 ## 7.0.1 - 2020-06-27
 
 * Fix multiply defined functions fatal error [#2699](https://github.com/guzzle/guzzle/pull/2699)

@@ -88,7 +88,7 @@ class RedirectMiddleware
             return $response;
         }
 
-        $this->guardMax($request, $options);
+        $this->guardMax($request, $response, $options);
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
         if (isset($options['allow_redirects']['on_redirect'])) {
@@ -139,7 +139,7 @@ class RedirectMiddleware
      *
      * @throws TooManyRedirectsException Too many redirects.
      */
-    private function guardMax(RequestInterface $request, array &$options): void
+    private function guardMax(RequestInterface $request, ResponseInterface $response, array &$options): void
     {
         $current = $options['__redirect_count']
             ?? 0;
@@ -149,7 +149,8 @@ class RedirectMiddleware
         if ($options['__redirect_count'] > $max) {
             throw new TooManyRedirectsException(
                 "Will not follow more than {$max} redirects",
-                $request
+                $request,
+                $response
             );
         }
     }
@@ -184,7 +185,7 @@ class RedirectMiddleware
         }
 
         $modify['uri'] = $uri;
-        Psr7\rewind_body($request);
+        Psr7\Message::rewindBody($request);
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.
@@ -202,7 +203,7 @@ class RedirectMiddleware
             $modify['remove_headers'][] = 'Authorization';
         }
 
-        return Psr7\modify_request($request, $modify);
+        return Psr7\Utils::modifyRequest($request, $modify);
     }
 
     /**

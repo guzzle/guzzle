@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp;
 
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -103,7 +104,7 @@ class RetryMiddleware
                 null,
                 $reason
             )) {
-                return \GuzzleHttp\Promise\rejection_for($reason);
+                return P\Create::rejectionFor($reason);
             }
             return $this->doRetry($req, $options);
         };

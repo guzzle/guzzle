@@ -4,11 +4,14 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -47,9 +50,9 @@ class MiddlewareTest extends TestCase
         $h = new MockHandler([new Response(404)]);
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
-        self::assertSame('pending', $p->getState());
+        self::assertTrue(P\Is::pending($p));
 
-        $this->expectException(\GuzzleHttp\Exception\ClientException::class);
+        $this->expectException(ClientException::class);
         $p->wait();
     }
 
@@ -59,9 +62,9 @@ class MiddlewareTest extends TestCase
         $h = new MockHandler([new Response(500)]);
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
-        self::assertSame('pending', $p->getState());
+        self::assertTrue(P\Is::pending($p));
 
-        $this->expectException(\GuzzleHttp\Exception\ServerException::class);
+        $this->expectException(ServerException::class);
         $p->wait();
     }
 
@@ -225,7 +228,7 @@ class MiddlewareTest extends TestCase
 
     public function testLogsWithStringError()
     {
-        $h = new MockHandler([\GuzzleHttp\Promise\rejection_for('some problem')]);
+        $h = new MockHandler([P\Create::rejectionFor('some problem')]);
         $stack = new HandlerStack($h);
         $logger = new TestLogger();
         $formatter = new MessageFormatter('{error}');
