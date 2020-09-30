@@ -30,8 +30,8 @@
     "require": {
         "php": "^7.2.5",
         "ext-json": "*",
-        "guzzlehttp/promises": "^1.0",
-        "guzzlehttp/psr7": "^1.6.1",
+        "guzzlehttp/promises": "^1.4",
+        "guzzlehttp/psr7": "^1.7",
         "psr/http-client": "^1.0"
     },
     "provide": {

@@ -4,6 +4,7 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlHandler;
+use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -26,7 +27,7 @@ class CurlHandlerTest extends TestCase
         $handler = new CurlHandler();
         $request = new Request('GET', 'http://localhost:123');
 
-        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
+        $this->expectException(ConnectException::class);
         $this->expectExceptionMessage('cURL');
         $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
     }
@@ -38,8 +39,8 @@ class CurlHandlerTest extends TestCase
         Server::enqueue([$response, $response]);
         $a = new CurlHandler();
         $request = new Request('GET', Server::$url);
-        self::assertInstanceOf(\GuzzleHttp\Promise\FulfilledPromise::class, $a($request, []));
-        self::assertInstanceOf(\GuzzleHttp\Promise\FulfilledPromise::class, $a($request, []));
+        self::assertInstanceOf(FulfilledPromise::class, $a($request, []));
+        self::assertInstanceOf(FulfilledPromise::class, $a($request, []));
     }
 
     public function testDoesSleep()
@@ -71,7 +72,7 @@ class CurlHandlerTest extends TestCase
     {
         Server::flush();
         Server::enqueue([new Response()]);
-        $stream = Psr7\stream_for(\str_repeat('.', 1000000));
+        $stream = Psr7\Utils::streamFor(\str_repeat('.', 1000000));
         $handler = new CurlHandler();
         $request = new Request(
             'PUT',

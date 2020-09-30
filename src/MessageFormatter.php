@@ -86,10 +86,10 @@ class MessageFormatter implements MessageFormatterInterface
                 $result = '';
                 switch ($matches[1]) {
                     case 'request':
-                        $result = Psr7\str($request);
+                        $result = Psr7\Message::toString($request);
                         break;
                     case 'response':
-                        $result = $response ? Psr7\str($response) : '';
+                        $result = $response ? Psr7\Message::toString($response) : '';
                         break;
                     case 'req_headers':
                         $result = \trim($request->getMethod()

@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
@@ -55,7 +56,7 @@ class StreamHandlerTest extends TestCase
     {
         $handler = new StreamHandler();
 
-        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
+        $this->expectException(ConnectException::class);
         $handler(
             new Request('GET', 'http://localhost:123'),
             ['timeout' => 0.01]
@@ -262,7 +263,7 @@ class StreamHandlerTest extends TestCase
 
     public function testAddsProxy()
     {
-        $this->expectException(\GuzzleHttp\Exception\ConnectException::class);
+        $this->expectException(ConnectException::class);
         $this->expectExceptionMessage('Connection refused');
 
         $this->getSendResult(['proxy' => '127.0.0.1:8125']);
@@ -298,7 +299,7 @@ class StreamHandlerTest extends TestCase
 
     public function testVerifiesVerifyIsValidIfPath()
     {
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectException(RequestException::class);
         $this->expectExceptionMessage('SSL CA bundle not found: /does/not/exist');
 
         $this->getSendResult(['verify' => '/does/not/exist']);
@@ -307,12 +308,12 @@ class StreamHandlerTest extends TestCase
     public function testVerifyCanBeDisabled()
     {
         $handler = $this->getSendResult(['verify' => false]);
-        self::assertInstanceOf(\GuzzleHttp\Psr7\Response::class, $handler);
+        self::assertInstanceOf(Response::class, $handler);
     }
 
     public function testVerifiesCertIfValidPath()
     {
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectException(RequestException::class);
         $this->expectExceptionMessage('SSL certificate not found: /does/not/exist');
 
         $this->getSendResult(['cert' => '/does/not/exist']);
@@ -527,7 +528,7 @@ class StreamHandlerTest extends TestCase
             }
         ]);
 
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectException(RequestException::class);
         $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
     }
@@ -541,7 +542,7 @@ class StreamHandlerTest extends TestCase
         $req = new Request('GET', Server::$url);
         $got = null;
 
-        $stream = Psr7\stream_for();
+        $stream = Psr7\Utils::streamFor();
         $stream = FnStream::decorate($stream, [
             'write' => static function ($data) use ($stream, &$got) {
                 self::assertNotNull($got);

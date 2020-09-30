@@ -2,9 +2,12 @@
 
 namespace GuzzleHttp\Test\Handler;
 
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Stream;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
 
@@ -102,7 +105,7 @@ class MockHandlerTest extends TestCase
 
     public function testSinkStream()
     {
-        $stream = new \GuzzleHttp\Psr7\Stream(\tmpfile());
+        $stream = new Stream(\tmpfile());
         $res = new Response(200, [], 'TEST CONTENT');
         $mock = new MockHandler([$res]);
         $request = new Request('GET', '/');
@@ -146,7 +149,7 @@ class MockHandlerTest extends TestCase
             }
         ]);
 
-        $this->expectException(\GuzzleHttp\Exception\RequestException::class);
+        $this->expectException(RequestException::class);
         $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
     }
@@ -189,7 +192,7 @@ class MockHandlerTest extends TestCase
         $mock = MockHandler::createWithMiddleware([$r]);
         $request = new Request('GET', 'http://example.com');
 
-        $this->expectException(\GuzzleHttp\Exception\BadResponseException::class);
+        $this->expectException(BadResponseException::class);
         $mock($request, ['http_errors' => true])->wait();
     }
 
