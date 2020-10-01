@@ -6,9 +6,99 @@ parameters:
 			path: src/Client.php
 
 		-
+			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlFactory\\:\\:\\$handles has unknown class CurlHandle as its type\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$ch of function curl_setopt_array expects resource, CurlHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$ch of function curl_close expects resource, CurlHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$ch of function curl_setopt expects resource, CurlHandle\\|resource given\\.$#"
+			count: 4
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$ch of function curl_reset expects resource, CurlHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$ch of function curl_getinfo expects resource, CurlHandle\\|resource given\\.$#"
+			count: 4
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$ch of function curl_error expects resource, CurlHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
 			message: "#^Parameter \\#1 \\$str1 of function strcasecmp expects string, int\\|string given\\.$#"
 			count: 1
 			path: src/Handler/CurlFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$ch of function curl_exec expects resource, CurlHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$ch of function curl_errno expects resource, CurlHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlHandler.php
+
+		-
+			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:\\$active has unknown class CurlMultiHandle as its type\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Return typehint of method GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:__get\\(\\) has invalid type CurlMultiHandle\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$mh of function curl_multi_close expects resource, CurlMultiHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$mh of function curl_multi_add_handle expects resource, CurlMultiHandle\\|resource given\\.$#"
+			count: 2
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$mh of function curl_multi_select expects resource, CurlMultiHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$mh of function curl_multi_exec expects resource, CurlMultiHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$mh of function curl_multi_remove_handle expects resource, CurlMultiHandle\\|resource given\\.$#"
+			count: 2
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Parameter \\#1 \\$mh of function curl_multi_info_read expects resource, CurlMultiHandle\\|resource given\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Property GuzzleHttp\\\\Handler\\\\EasyHandle\\:\\:\\$handle has unknown class CurlHandle as its type\\.$#"
+			count: 1
+			path: src/Handler/EasyHandle.php
 
 		-
 			message: "#^Argument of an invalid type \\(array\\|null\\) supplied for foreach, only iterables are supported\\.$#"
@@ -19,3 +109,4 @@ parameters:
 			message: "#^Result of && is always false\\.$#"
 			count: 2
 			path: src/Middleware.php
+
