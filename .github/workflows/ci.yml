@@ -106,8 +106,7 @@ jobs:
         shell: bash
         run: |
           node tests/server.js &
-          # See https://github.com/php-http/client-integration-tests/issues/46 for the background of the line below.
-          php -S 127.0.0.1:10000 -t "vendor/php-http/client-integration-tests/fixture" &
+          ./vendor/bin/http_test_server &
 
       - name: Run tests
         run: vendor/bin/phpunit.bat
