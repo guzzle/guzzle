@@ -106,7 +106,7 @@ jobs:
         shell: bash
         run: |
           node tests/server.js &
-          php ./vendor/bin/http_test_server &
+          ./vendor/bin/http_test_server &
 
       - name: Run tests
         run: vendor/bin/phpunit.bat
