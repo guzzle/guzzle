@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="3.11.5@3c60609c218d4d4b3b257728b8089094e5c6c6c2">
+<files psalm-version="3.16@d03e5ef057d6adc656c0ff7e166c50b73b4f48f3">
   <file src="src/Client.php">
-    <NullArgument occurrences="1">
-      <code>null</code>
-    </NullArgument>
     <PossiblyUndefinedVariable occurrences="1">
       <code>$options</code>
     </PossiblyUndefinedVariable>
@@ -22,28 +19,59 @@
     </ImplicitToStringCast>
   </file>
   <file src="src/Handler/CurlFactory.php">
-    <ImplicitToStringCast occurrences="1">
-      <code>$easy-&gt;request-&gt;getUri()</code>
-    </ImplicitToStringCast>
+    <PossiblyInvalidArgument occurrences="12">
+      <code>$easy-&gt;handle</code>
+      <code>$easy-&gt;handle</code>
+      <code>$easy-&gt;handle</code>
+      <code>$easy-&gt;handle</code>
+      <code>$easy-&gt;handle</code>
+      <code>$easy-&gt;handle</code>
+      <code>$resource</code>
+      <code>$resource</code>
+      <code>$resource</code>
+      <code>$resource</code>
+      <code>$resource</code>
+      <code>$resource</code>
+    </PossiblyInvalidArgument>
     <TypeDoesNotContainType occurrences="1">
       <code>$timeoutRequiresNoSignal &amp;&amp; \strtoupper(\substr(\PHP_OS, 0, 3)) !== 'WIN'</code>
     </TypeDoesNotContainType>
+    <UndefinedDocblockClass occurrences="2">
+      <code>private $handles = [];</code>
+      <code>resource[]|\CurlHandle[]</code>
+    </UndefinedDocblockClass>
+  </file>
+  <file src="src/Handler/CurlHandler.php">
+    <PossiblyInvalidArgument occurrences="2">
+      <code>$easy-&gt;handle</code>
+      <code>$easy-&gt;handle</code>
+    </PossiblyInvalidArgument>
   </file>
   <file src="src/Handler/CurlMultiHandler.php">
-    <InvalidArgument occurrences="1">
-      <code>$this-&gt;active</code>
-    </InvalidArgument>
     <InvalidPropertyAssignmentValue occurrences="1">
       <code>$this-&gt;active</code>
     </InvalidPropertyAssignmentValue>
+    <PossiblyInvalidArgument occurrences="7">
+      <code>$this-&gt;_mh</code>
+      <code>$this-&gt;_mh</code>
+      <code>$this-&gt;_mh</code>
+      <code>$this-&gt;_mh</code>
+      <code>$this-&gt;_mh</code>
+      <code>$this-&gt;_mh</code>
+      <code>$this-&gt;_mh</code>
+    </PossiblyInvalidArgument>
+    <UndefinedDocblockClass occurrences="2">
+      <code>resource|\CurlMultiHandle</code>
+      <code>resource|\CurlMultiHandle|null</code>
+    </UndefinedDocblockClass>
     <UndefinedThisPropertyAssignment occurrences="1">
       <code>$this-&gt;_mh</code>
     </UndefinedThisPropertyAssignment>
   </file>
-  <file src="src/Handler/MockHandler.php">
-    <InvalidScalarArgument occurrences="1">
-      <code>$options['delay'] * 1000</code>
-    </InvalidScalarArgument>
+  <file src="src/Handler/EasyHandle.php">
+    <UndefinedDocblockClass occurrences="1">
+      <code>resource|\CurlHandle</code>
+    </UndefinedDocblockClass>
   </file>
   <file src="src/Handler/StreamHandler.php">
     <ImplicitToStringCast occurrences="1">
@@ -80,8 +108,5 @@
     <ForbiddenCode occurrences="1">
       <code>\var_dump($input)</code>
     </ForbiddenCode>
-    <PossiblyNullArgument occurrences="1">
-      <code>$info</code>
-    </PossiblyNullArgument>
   </file>
 </files>
