@@ -6,6 +6,7 @@ use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -49,22 +50,28 @@ final class Middleware
      * Middleware that throws exceptions for 4xx or 5xx responses when the
      * "http_error" request option is set to true.
      *
+     * @param int|null $truncateBodyAt The length of the body to include in an exception message before truncation.
+     *
      * @return callable(callable): callable Returns a function that accepts the next handler.
      */
-    public static function httpErrors(): callable
+    public static function httpErrors(int $truncateBodyAt = null): callable
     {
-        return static function (callable $handler): callable {
-            return static function ($request, array $options) use ($handler) {
+        return static function (callable $handler) use ($truncateBodyAt): callable {
+            return static function ($request, array $options) use ($handler, $truncateBodyAt) {
                 if (empty($options['http_errors'])) {
                     return $handler($request, $options);
                 }
                 return $handler($request, $options)->then(
-                    static function (ResponseInterface $response) use ($request) {
+                    static function (ResponseInterface $response) use ($request, $truncateBodyAt) {
                         $code = $response->getStatusCode();
                         if ($code < 400) {
                             return $response;
                         }
-                        throw RequestException::create($request, $response);
+                        throw RequestException::create($request, $response, null, [], static function (MessageInterface $message) use ($truncateBodyAt): ?string {
+                            return $truncateBodyAt === null
+                                ? \GuzzleHttp\Psr7\Message::bodySummary($message)
+                                : \GuzzleHttp\Psr7\Message::bodySummary($message, $truncateBodyAt);
+                        });
                     }
                 );
             };
