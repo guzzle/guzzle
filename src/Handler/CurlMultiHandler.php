@@ -15,7 +15,7 @@ use Psr\Http\Message\RequestInterface;
  * associative array of curl option constants mapping to values in the
  * **curl** key of the provided request options.
  *
- * @property resource $_mh Internal use only. Lazy loaded multi-handle.
+ * @property resource|\CurlMultiHandle $_mh Internal use only. Lazy loaded multi-handle.
  *
  * @final
  */
@@ -32,7 +32,7 @@ class CurlMultiHandler
     private $selectTimeout;
 
     /**
-     * @var resource|null the currently executing resource in `curl_multi_exec`.
+     * @var resource|\CurlMultiHandle|null the currently executing resource in `curl_multi_exec`.
      */
     private $active;
 
@@ -83,7 +83,7 @@ class CurlMultiHandler
     /**
      * @param string $name
      *
-     * @return resource
+     * @return resource|\CurlMultiHandle
      *
      * @throws \BadMethodCallException when another field as `_mh` will be gotten
      * @throws \RuntimeException       when curl can not initialize a multi handle

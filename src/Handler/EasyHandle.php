@@ -16,7 +16,7 @@ use Psr\Http\Message\StreamInterface;
 final class EasyHandle
 {
     /**
-     * @var resource cURL resource
+     * @var resource|\CurlHandle cURL resource
      */
     public $handle;
 

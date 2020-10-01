@@ -49,7 +49,11 @@ class CurlFactoryTest extends TestCase
         $f = new Handler\CurlFactory(3);
         $result = $f->create($request, ['sink' => $stream]);
         self::assertInstanceOf(EasyHandle::class, $result);
-        self::assertIsResource($result->handle);
+        if (\PHP_VERSION_ID >= 80000) {
+            self::assertInstanceOf(\CurlHandle::class, $result->handle);
+        } else {
+            self::assertIsResource($result->handle);
+        }
         self::assertIsArray($result->headers);
         self::assertSame($stream, $result->sink);
         \curl_close($result->handle);
