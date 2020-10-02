@@ -398,7 +398,7 @@ class MessageFormatter implements MessageFormatterInterface
     /**
      * Get headers from message as string
      */
-    private function headers(MessageInterface $message): string
+    protected function headers(MessageInterface $message): string
     {
         $result = '';
         foreach ($message->getHeaders() as $name => $values) {
