@@ -100,6 +100,7 @@ class MessageFormatter implements MessageFormatterInterface
      * @param RequestInterface       $request  Request that was sent
      * @param ResponseInterface|null $response Response that was received
      * @param \Throwable|null        $error    Exception that was received
+     *
      * @return string
      */
     protected function handleFormatMatch(
@@ -157,7 +158,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a request object.
      *
      * @param RequestInterface $request Request that was sent
-     * @return string
      */
     protected function formatRequest(RequestInterface $request): string
     {
@@ -168,7 +168,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a response object.
      *
      * @param ResponseInterface|null $response Response that was received
-     * @return string
      */
     protected function formatResponse(?ResponseInterface $response = null): string
     {
@@ -179,7 +178,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a request object's headers.
      *
      * @param RequestInterface $request Request that was sent
-     * @return string
      */
     protected function formatRequestHeaders(RequestInterface $request): string
     {
@@ -193,7 +191,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a response object's headers.
      *
      * @param ResponseInterface|null $response Response that was received
-     * @return string
      */
     protected function formatResponseHeaders(?ResponseInterface $response = null): string
     {
@@ -211,7 +208,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a request body.
      *
      * @param RequestInterface $request Request that was sent
-     * @return string
      */
     protected function formatRequestBody(RequestInterface $request): string
     {
@@ -222,7 +218,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a response body.
      *
      * @param ResponseInterface|null $response Response that was received
-     * @return string
      */
     protected function formatResponseBody(?ResponseInterface $response = null): string
     {
@@ -241,8 +236,6 @@ class MessageFormatter implements MessageFormatterInterface
 
     /**
      * Formats a timestamp.
-     *
-     * @return string
      */
     protected function formatTimestamp(): string
     {
@@ -251,8 +244,6 @@ class MessageFormatter implements MessageFormatterInterface
 
     /**
      * Formats a date common log.
-     *
-     * @return string
      */
     protected function formatDateCommonLog(): string
     {
@@ -263,7 +254,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a request method.
      *
      * @param RequestInterface $request Request that was sent
-     * @return string
      */
     protected function formatMethod(RequestInterface $request): string
     {
@@ -274,7 +264,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a request uri.
      *
      * @param RequestInterface $request Request that was sent
-     * @return string
      */
     protected function formatUri(RequestInterface $request): string
     {
@@ -285,7 +274,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a request's target.
      *
      * @param RequestInterface $request Request that was sent
-     * @return string
      */
     protected function formatTarget(RequestInterface $request): string
     {
@@ -296,7 +284,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a request's protocol version.
      *
      * @param RequestInterface|null $request Request that was sent
-     * @return string
      */
     protected function formatRequestVersion(RequestInterface $request = null): string
     {
@@ -307,7 +294,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a response's protocol version.
      *
      * @param ResponseInterface|null $response Response that was received
-     * @return string
      */
     protected function formatResponseVersion(?ResponseInterface $response = null): string
     {
@@ -320,7 +306,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a request's Host header.
      *
      * @param RequestInterface $request Request that was sent
-     * @return string
      */
     protected function formatHost(RequestInterface $request): string
     {
@@ -329,8 +314,6 @@ class MessageFormatter implements MessageFormatterInterface
 
     /**
      * Formats a hostname.
-     *
-     * @return string
      */
     protected function formatHostname(): string
     {
@@ -341,7 +324,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a response's status code.
      *
      * @param ResponseInterface|null $response Response that was received
-     * @return string
      */
     protected function formatCode(?ResponseInterface $response = null): string
     {
@@ -352,7 +334,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats a response's reason phrase.
      *
      * @param ResponseInterface|null $response Response that was received
-     * @return string
      */
     protected function formatPhrase(?ResponseInterface $response = null): string
     {
@@ -363,7 +344,6 @@ class MessageFormatter implements MessageFormatterInterface
      * Formats an error.
      *
      * @param \Throwable|null $error Exception that was received
-     * @return string
      */
     protected function formatError(?\Throwable $error = null): string
     {
@@ -376,14 +356,12 @@ class MessageFormatter implements MessageFormatterInterface
      * @param string                 $match    Match string
      * @param RequestInterface       $request  Request that was sent
      * @param ResponseInterface|null $response Response that was received
-     * @return string
      */
     protected function formatUnexpectedMatch(
         string $match,
         RequestInterface $request,
         ?ResponseInterface $response = null
-    ): string
-    {
+    ): string {
         // handle prefixed dynamic headers
         if (\strpos($match, 'req_header_') === 0) {
             return $request->getHeaderLine(\substr($match, 11));
