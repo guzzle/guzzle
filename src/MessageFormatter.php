@@ -283,7 +283,7 @@ class MessageFormatter implements MessageFormatterInterface
     /**
      * Formats a request's protocol version.
      *
-     * @param RequestInterface|null $request Request that was sent
+     * @param RequestInterface $request Request that was sent
      */
     protected function formatRequestVersion(RequestInterface $request): string
     {
