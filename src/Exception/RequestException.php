@@ -56,18 +56,18 @@ class RequestException extends TransferException implements RequestExceptionInte
     /**
      * Factory method to create a new exception with a normalized error message
      *
-     * @param RequestInterface                         $request               Request sent
-     * @param ResponseInterface                        $response              Response received
-     * @param \Throwable|null                          $previous              Previous exception
-     * @param array                                    $handlerContext        Optional handler context
-     * @param null|callable(MessageInterface): ?string $bodySummarySummarizer Optional body summarizer
+     * @param RequestInterface                         $request        Request sent
+     * @param ResponseInterface                        $response       Response received
+     * @param \Throwable|null                          $previous       Previous exception
+     * @param array                                    $handlerContext Optional handler context
+     * @param null|callable(MessageInterface): ?string $bodySummarizer Optional body summarizer
      */
     public static function create(
         RequestInterface $request,
         ResponseInterface $response = null,
         \Throwable $previous = null,
         array $handlerContext = [],
-        callable $bodySummarySummarizer = null
+        ?callable $bodySummarizer = null
     ): self {
         if (!$response) {
             return new self(
@@ -105,9 +105,9 @@ class RequestException extends TransferException implements RequestExceptionInte
             $response->getReasonPhrase()
         );
 
-        $summary = $bodySummarySummarizer === null
+        $summary = $bodySummarizer === null
             ? \GuzzleHttp\Psr7\Message::bodySummary($response)
-            : $bodySummarySummarizer($response);
+            : $bodySummarizer($response);
 
         if ($summary !== null) {
             $message .= ":\n{$summary}\n";
