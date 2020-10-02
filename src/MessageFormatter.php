@@ -285,7 +285,7 @@ class MessageFormatter implements MessageFormatterInterface
      *
      * @param RequestInterface|null $request Request that was sent
      */
-    protected function formatRequestVersion(RequestInterface $request = null): string
+    protected function formatRequestVersion(RequestInterface $request): string
     {
         return $request->getProtocolVersion();
     }
@@ -327,7 +327,7 @@ class MessageFormatter implements MessageFormatterInterface
      */
     protected function formatCode(?ResponseInterface $response = null): string
     {
-        return $response ? $response->getStatusCode() : 'NULL';
+        return $response ? strval($response->getStatusCode()) : 'NULL';
     }
 
     /**
