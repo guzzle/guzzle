@@ -381,7 +381,8 @@ class MessageFormatter implements MessageFormatterInterface
     protected function formatUnexpectedMatch(
         string $match,
         RequestInterface $request,
-        ?ResponseInterface $response = null): string
+        ?ResponseInterface $response = null
+    ): string
     {
         // handle prefixed dynamic headers
         if (\strpos($match, 'req_header_') === 0) {
