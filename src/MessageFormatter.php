@@ -317,7 +317,7 @@ class MessageFormatter implements MessageFormatterInterface
      */
     protected function formatHostname(): string
     {
-        return \gethostname();
+        return (string) \gethostname();
     }
 
     /**
@@ -327,7 +327,7 @@ class MessageFormatter implements MessageFormatterInterface
      */
     protected function formatCode(?ResponseInterface $response = null): string
     {
-        return $response ? strval($response->getStatusCode()) : 'NULL';
+        return $response ? (string) ($response->getStatusCode()) : 'NULL';
     }
 
     /**
