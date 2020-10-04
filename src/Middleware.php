@@ -203,9 +203,7 @@ final class Middleware
                         return $response;
                     },
                     static function ($reason) use ($logger, $request, $formatter): PromiseInterface {
-                        $response = $reason instanceof RequestException
-                            ? $reason->getResponse()
-                            : null;
+                        $response = $reason instanceof RequestException ? $reason->getResponse() : null;
                         $message = $formatter->format($request, $response, P\Create::exceptionFor($reason));
                         $logger->error($message);
                         return P\Create::rejectionFor($reason);

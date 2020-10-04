@@ -157,9 +157,7 @@ class CurlMultiHandler
         // Step through the task queue which may add additional requests.
         P\Utils::queue()->run();
 
-        if ($this->active &&
-            \curl_multi_select($this->_mh, $this->selectTimeout) === -1
-        ) {
+        if ($this->active && \curl_multi_select($this->_mh, $this->selectTimeout) === -1) {
             // Perform a usleep if a select returns -1.
             // See: https://bugs.php.net/bug.php?id=61141
             \usleep(250);
@@ -235,11 +233,7 @@ class CurlMultiHandler
             unset($this->handles[$id], $this->delays[$id]);
             $entry['easy']->errno = $done['result'];
             $entry['deferred']->resolve(
-                CurlFactory::finish(
-                    $this,
-                    $entry['easy'],
-                    $this->factory
-                )
+                CurlFactory::finish($this, $entry['easy'], $this->factory)
             );
         }
     }

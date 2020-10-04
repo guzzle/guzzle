@@ -67,11 +67,8 @@ class PrepareBodyMiddleware
     /**
      * Add expect header
      */
-    private function addExpectHeader(
-        RequestInterface $request,
-        array $options,
-        array &$modify
-    ): void {
+    private function addExpectHeader(RequestInterface $request, array $options, array &$modify): void
+    {
         // Determine if the Expect header should be used
         if ($request->hasHeader('Expect')) {
             return;
