@@ -272,6 +272,21 @@ class ClientTest extends TestCase
         self::assertSame('gzip', $mock->getLastOptions()['decode_content']);
     }
 
+    public function testAddsAcceptEncodingbyCurl()
+    {
+        $client = new Client(['curl' => [\CURLOPT_ENCODING => '']]);
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $client->get(Server::$url);
+        $sent = Server::received()[0];
+        self::assertTrue($sent->hasHeader('Accept-Encoding'));
+
+        $mock = new MockHandler([new Response()]);
+        $client->get('http://foo.com', ['handler' => $mock]);
+        self::assertSame([\CURLOPT_ENCODING => ''], $mock->getLastOptions()['curl']);
+    }
+
     public function testValidatesHeaders()
     {
         $mock = new MockHandler();
