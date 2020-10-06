@@ -67,11 +67,7 @@ final class Middleware
                         if ($code < 400) {
                             return $response;
                         }
-                        throw RequestException::create($request, $response, null, [], static function (MessageInterface $message) use ($truncateBodyAt): ?string {
-                            return $truncateBodyAt === null
-                                ? \GuzzleHttp\Psr7\Message::bodySummary($message)
-                                : \GuzzleHttp\Psr7\Message::bodySummary($message, $truncateBodyAt);
-                        });
+                        throw RequestException::create($request, $response, null, [], new BodySummarizer($truncateBodyAt));
                     }
                 );
             };

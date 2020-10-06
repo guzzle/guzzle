@@ -2,6 +2,8 @@
 
 namespace GuzzleHttp\Exception;
 
+use GuzzleHttp\BodySummarizer;
+use GuzzleHttp\BodySummarizerInterface;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
@@ -56,18 +58,18 @@ class RequestException extends TransferException implements RequestExceptionInte
     /**
      * Factory method to create a new exception with a normalized error message
      *
-     * @param RequestInterface                         $request        Request sent
-     * @param ResponseInterface                        $response       Response received
-     * @param \Throwable|null                          $previous       Previous exception
-     * @param array                                    $handlerContext Optional handler context
-     * @param null|callable(MessageInterface): ?string $bodySummarizer Optional body summarizer
+     * @param RequestInterface             $request        Request sent
+     * @param ResponseInterface            $response       Response received
+     * @param \Throwable|null              $previous       Previous exception
+     * @param array                        $handlerContext Optional handler context
+     * @param BodySummarizerInterface|null $bodySummarizer Optional body summarizer
      */
     public static function create(
         RequestInterface $request,
         ResponseInterface $response = null,
         \Throwable $previous = null,
         array $handlerContext = [],
-        ?callable $bodySummarizer = null
+        BodySummarizerInterface $bodySummarizer = null
     ): self {
         if (!$response) {
             return new self(
@@ -105,9 +107,7 @@ class RequestException extends TransferException implements RequestExceptionInte
             $response->getReasonPhrase()
         );
 
-        $summary = $bodySummarizer === null
-            ? \GuzzleHttp\Psr7\Message::bodySummary($response)
-            : $bodySummarizer($response);
+        $summary = ($bodySummarizer ?? new BodySummarizer())->summarize($response);
 
         if ($summary !== null) {
             $message .= ":\n{$summary}\n";
