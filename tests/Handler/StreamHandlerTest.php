@@ -201,6 +201,28 @@ class StreamHandlerTest extends TestCase
         self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }
 
+    public function testAutomaticallyDecompressGzipHead()
+    {
+        Server::flush();
+        $content = \gzencode('test');
+        Server::enqueue([
+            new Response(200, [
+                'Content-Encoding' => 'gzip',
+                'Content-Length'   => \strlen($content),
+            ], $content)
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('HEAD', Server::$url);
+        $response = $handler($request, ['decode_content' => true])->wait();
+
+        // We do not receive the body for a HEAD request, thus we can't decode it
+        // and the content-encoding must be preserved.
+        self::assertTrue($response->hasHeader('content-encoding'));
+
+        // Verify that the content-length matches the encoded size.
+        self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == \strlen($content));
+    }
+
     public function testReportsOriginalSizeAndContentEncodingAfterDecoding()
     {
         Server::flush();
