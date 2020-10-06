@@ -4,9 +4,18 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## UNRELEASED
 
+### Added
+
+- Support for PHP 8
+
+### Fixed
+
+- Handle exceptions during response creation.
+
 ### Changed
 
-* Avoid "functions" from dependencies [#2712](https://github.com/guzzle/guzzle/pull/2712)
+- The `TooManyRedirectsException` has a response.
+- Avoid "functions" from dependencies [#2712](https://github.com/guzzle/guzzle/pull/2712)
 
 ### Deprecated
 
