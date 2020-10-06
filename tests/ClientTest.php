@@ -805,4 +805,16 @@ class ClientTest extends TestCase
         self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
     }
+
+    /**
+     * https://github.com/guzzle/guzzle/issues/2799
+     */
+    public function testGuzzleHeadRequestWithAcceptEncodingHeader(): void
+    {
+        $client = new Client(['headers' => ['accept-encoding' => 'gzip, deflate, br']]);
+
+        $response = $client->head('https://www.youtube.com/watch?v=kiHojsMTBeA');
+
+        self::assertSame(200, $response->getStatusCode());
+    }
 }
