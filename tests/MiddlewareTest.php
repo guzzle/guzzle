@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Tests;
 
+use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Exception\ClientException;
@@ -59,7 +60,7 @@ class MiddlewareTest extends TestCase
 
     public function testThrowsExceptionOnHttpClientErrorLongBody()
     {
-        $m = Middleware::httpErrors(200);
+        $m = Middleware::httpErrors(new BodySummarizer(200));
         $h = new MockHandler([new Response(404, [], str_repeat('b', 1000))]);
         $f = $m($h);
         $p = $f(new Request('GET', 'http://foo.com'), ['http_errors' => true]);
