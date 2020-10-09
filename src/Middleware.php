@@ -49,22 +49,24 @@ final class Middleware
      * Middleware that throws exceptions for 4xx or 5xx responses when the
      * "http_error" request option is set to true.
      *
+     * @param BodySummarizerInterface|null $bodySummarizer The body summarizer to use in exception messages.
+     *
      * @return callable(callable): callable Returns a function that accepts the next handler.
      */
-    public static function httpErrors(): callable
+    public static function httpErrors(BodySummarizerInterface $bodySummarizer = null): callable
     {
-        return static function (callable $handler): callable {
-            return static function ($request, array $options) use ($handler) {
+        return static function (callable $handler) use ($bodySummarizer): callable {
+            return static function ($request, array $options) use ($handler, $bodySummarizer) {
                 if (empty($options['http_errors'])) {
                     return $handler($request, $options);
                 }
                 return $handler($request, $options)->then(
-                    static function (ResponseInterface $response) use ($request) {
+                    static function (ResponseInterface $response) use ($request, $bodySummarizer) {
                         $code = $response->getStatusCode();
                         if ($code < 400) {
                             return $response;
                         }
-                        throw RequestException::create($request, $response);
+                        throw RequestException::create($request, $response, null, [], $bodySummarizer);
                     }
                 );
             };
