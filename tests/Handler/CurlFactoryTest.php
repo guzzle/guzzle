@@ -89,7 +89,7 @@ class CurlFactoryTest extends TestCase
         $response = $a(new Psr7\Request('HEAD', Server::$url), []);
         $response->wait();
         self::assertTrue($_SERVER['_curl'][\CURLOPT_NOBODY]);
-        $checks = [\CURLOPT_WRITEFUNCTION, \CURLOPT_READFUNCTION, \CURLOPT_FILE, \CURLOPT_INFILE];
+        $checks = [\CURLOPT_READFUNCTION, \CURLOPT_FILE, \CURLOPT_INFILE];
         foreach ($checks as $check) {
             self::assertArrayNotHasKey($check, $_SERVER['_curl']);
         }
@@ -371,10 +371,6 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('gzip', $_SERVER['_curl'][\CURLOPT_ENCODING]);
         $sent = Server::received()[0];
         self::assertEquals('gzip', $sent->getHeaderLine('Accept-Encoding'));
-
-        // We do not receive the body for a HEAD request, thus we can't decode it
-        // and the content-encoding must be preserved.
-        self::assertTrue($response->hasHeader('content-encoding'));
 
         // Verify that the content-length matches the encoded size.
         self::assertTrue(
