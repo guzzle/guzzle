@@ -38,11 +38,8 @@ class Pool implements PromisorInterface
      *                                  - fulfilled: (callable) Function to invoke when a request completes.
      *                                  - rejected: (callable) Function to invoke when a request is rejected.
      */
-    public function __construct(
-        ClientInterface $client,
-        $requests,
-        array $config = []
-    ) {
+    public function __construct(ClientInterface $client, $requests, array $config = [])
+    {
         if (!isset($config['concurrency'])) {
             $config['concurrency'] = 25;
         }
@@ -62,10 +59,7 @@ class Pool implements PromisorInterface
                 } elseif (\is_callable($rfn)) {
                     yield $key => $rfn($opts);
                 } else {
-                    throw new \InvalidArgumentException('Each value yielded by '
-                        . 'the iterator must be a Psr7\Http\Message\RequestInterface '
-                        . 'or a callable that returns a promise that fulfills '
-                        . 'with a Psr7\Message\Http\ResponseInterface object.');
+                    throw new \InvalidArgumentException('Each value yielded by the iterator must be a Psr7\Http\Message\RequestInterface or a callable that returns a promise that fulfills with a Psr7\Message\Http\ResponseInterface object.');
                 }
             }
         };
@@ -99,11 +93,8 @@ class Pool implements PromisorInterface
      *
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
-    public static function batch(
-        ClientInterface $client,
-        $requests,
-        array $options = []
-    ): array {
+    public static function batch(ClientInterface $client, $requests, array $options = []): array
+    {
         $res = [];
         self::cmpCallback($options, 'fulfilled', $res);
         self::cmpCallback($options, 'rejected', $res);

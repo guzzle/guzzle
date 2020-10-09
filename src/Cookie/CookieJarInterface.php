@@ -36,10 +36,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      * @param RequestInterface  $request  Request that was sent
      * @param ResponseInterface $response Response that was received
      */
-    public function extractCookies(
-        RequestInterface $request,
-        ResponseInterface $response
-    ): void;
+    public function extractCookies(RequestInterface $request, ResponseInterface $response): void;
 
     /**
      * Sets a cookie in the cookie jar.

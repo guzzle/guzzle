@@ -77,11 +77,8 @@ class RedirectMiddleware
     /**
      * @return ResponseInterface|PromiseInterface
      */
-    public function checkRedirect(
-        RequestInterface $request,
-        array $options,
-        ResponseInterface $response
-    ) {
+    public function checkRedirect(RequestInterface $request, array $options, ResponseInterface $response)
+    {
         if (\strpos((string) $response->getStatusCode(), '3') !== 0
             || !$response->hasHeader('Location')
         ) {
@@ -147,19 +144,12 @@ class RedirectMiddleware
         $max = $options['allow_redirects']['max'];
 
         if ($options['__redirect_count'] > $max) {
-            throw new TooManyRedirectsException(
-                "Will not follow more than {$max} redirects",
-                $request,
-                $response
-            );
+            throw new TooManyRedirectsException("Will not follow more than {$max} redirects", $request, $response);
         }
     }
 
-    public function modifyRequest(
-        RequestInterface $request,
-        array $options,
-        ResponseInterface $response
-    ): RequestInterface {
+    public function modifyRequest(RequestInterface $request, array $options, ResponseInterface $response): RequestInterface
+    {
         // Request modifications to apply.
         $modify = [];
         $protocols = $options['allow_redirects']['protocols'];
@@ -209,11 +199,8 @@ class RedirectMiddleware
     /**
      * Set the appropriate URL on the request based on the location header
      */
-    private function redirectUri(
-        RequestInterface $request,
-        ResponseInterface $response,
-        array $protocols
-    ): UriInterface {
+    private function redirectUri(RequestInterface $request, ResponseInterface $response, array $protocols): UriInterface
+    {
         $location = Psr7\UriResolver::resolve(
             $request->getUri(),
             new Psr7\Uri($response->getHeaderLine('Location'))
@@ -221,15 +208,7 @@ class RedirectMiddleware
 
         // Ensure that the redirect URI is allowed based on the protocols.
         if (!\in_array($location->getScheme(), $protocols)) {
-            throw new BadResponseException(
-                \sprintf(
-                    'Redirect URI, %s, does not use one of the allowed redirect protocols: %s',
-                    $location,
-                    \implode(', ', $protocols)
-                ),
-                $request,
-                $response
-            );
+            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', $location, \implode(', ', $protocols)), $request, $response);
         }
 
         return $location;

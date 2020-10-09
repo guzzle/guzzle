@@ -52,11 +52,8 @@ class MockHandler implements \Countable
      * @param callable|null $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable|null $onRejected  Callback to invoke when the return value is rejected.
      */
-    public static function createWithMiddleware(
-        array $queue = null,
-        callable $onFulfilled = null,
-        callable $onRejected = null
-    ): HandlerStack {
+    public static function createWithMiddleware(array $queue = null, callable $onFulfilled = null, callable $onRejected = null): HandlerStack
+    {
         return HandlerStack::create(new self($queue, $onFulfilled, $onRejected));
     }
 
@@ -69,11 +66,8 @@ class MockHandler implements \Countable
      * @param callable|null          $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param callable|null          $onRejected  Callback to invoke when the return value is rejected.
      */
-    public function __construct(
-        array $queue = null,
-        callable $onFulfilled = null,
-        callable $onRejected = null
-    ) {
+    public function __construct(array $queue = null, callable $onFulfilled = null, callable $onRejected = null)
+    {
         $this->onFulfilled = $onFulfilled;
         $this->onRejected = $onRejected;
 
