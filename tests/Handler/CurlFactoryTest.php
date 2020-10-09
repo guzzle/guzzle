@@ -89,7 +89,7 @@ class CurlFactoryTest extends TestCase
         $response = $a(new Psr7\Request('HEAD', Server::$url), []);
         $response->wait();
         self::assertTrue($_SERVER['_curl'][\CURLOPT_NOBODY]);
-        $checks = [\CURLOPT_WRITEFUNCTION, \CURLOPT_READFUNCTION, \CURLOPT_FILE, \CURLOPT_INFILE];
+        $checks = [\CURLOPT_READFUNCTION, \CURLOPT_FILE, \CURLOPT_INFILE];
         foreach ($checks as $check) {
             self::assertArrayNotHasKey($check, $_SERVER['_curl']);
         }
@@ -355,6 +355,27 @@ class CurlFactoryTest extends TestCase
         self::assertTrue(
             !$response->hasHeader('content-length') ||
             $response->getHeaderLine('content-length') == $response->getBody()->getSize()
+        );
+    }
+
+    /**
+     * https://github.com/guzzle/guzzle/issues/2799
+     */
+    public function testDecodesGzippedResponsesWithHeaderForHeadRequest()
+    {
+        $this->addDecodeResponse();
+        $handler = new Handler\CurlMultiHandler();
+        $request = new Psr7\Request('HEAD', Server::$url, ['Accept-Encoding' => 'gzip']);
+        $response = $handler($request, ['decode_content' => true]);
+        $response = $response->wait();
+        self::assertEquals('gzip', $_SERVER['_curl'][\CURLOPT_ENCODING]);
+        $sent = Server::received()[0];
+        self::assertEquals('gzip', $sent->getHeaderLine('Accept-Encoding'));
+
+        // Verify that the content-length matches the encoded size.
+        self::assertTrue(
+            !$response->hasHeader('content-length') ||
+            $response->getHeaderLine('content-length') == \strlen(\gzencode('test'))
         );
     }
 
