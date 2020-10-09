@@ -58,7 +58,7 @@ static-psalm:
 	docker run --rm -it -v ${PWD}:/app -w /app vimeo/psalm-github-actions
 
 static-phpstan:
-	docker run --rm -it -e REQUIRE_DEV=true -v ${PWD}:/app -w /app oskarstark/phpstan-ga:0.12.41 analyze $(PHPSTAN_PARAMS)
+	docker run --rm -it -e REQUIRE_DEV=true -v ${PWD}:/app -w /app oskarstark/phpstan-ga:0.12.48 analyze $(PHPSTAN_PARAMS)
 
 static-phpstan-update-baseline:
 	$(MAKE) static-phpstan PHPSTAN_PARAMS="--generate-baseline"
