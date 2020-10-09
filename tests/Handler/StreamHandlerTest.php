@@ -198,7 +198,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, ['decode_content' => true])->wait();
         self::assertSame('test', (string) $response->getBody());
         self::assertFalse($response->hasHeader('content-encoding'));
-        self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
+        self::assertSame(\strlen($content), $response->getHeaderLine('content-length'));
     }
 
     public function testAutomaticallyDecompressGzipHead()
@@ -216,7 +216,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, ['decode_content' => true])->wait();
 
         // Verify that the content-length matches the encoded size.
-        self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == \strlen($content));
+        self::assertSame(\strlen($content), $response->getHeaderLine('content-length'));
     }
 
     public function testReportsOriginalSizeAndContentEncodingAfterDecoding()

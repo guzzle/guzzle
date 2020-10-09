@@ -352,10 +352,7 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('gzip', $sent->getHeaderLine('Accept-Encoding'));
         self::assertEquals('test', (string) $response->getBody());
         self::assertFalse($response->hasHeader('content-encoding'));
-        self::assertTrue(
-            !$response->hasHeader('content-length') ||
-            $response->getHeaderLine('content-length') == $response->getBody()->getSize()
-        );
+        self::assertSame($response->getBody()->getSize(), $response->getHeaderLine('content-length'));
     }
 
     /**
@@ -373,10 +370,7 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('gzip', $sent->getHeaderLine('Accept-Encoding'));
 
         // Verify that the content-length matches the encoded size.
-        self::assertTrue(
-            !$response->hasHeader('content-length') ||
-            $response->getHeaderLine('content-length') == \strlen(\gzencode('test'))
-        );
+        self::assertSame(\strlen(\gzencode('test')), $response->getHeaderLine('content-length'));
     }
 
     public function testDoesNotForceDecode()
