@@ -534,11 +534,11 @@ on each other.
 
     . \RuntimeException
     └── TransferException (implements GuzzleException)
+        └── ConnectException (implements NetworkExceptionInterface)
         └── RequestException
             ├── BadResponseException
             │   ├── ServerException
             │   └── ClientException
-            ├── ConnectException
             └── TooManyRedirectsException
 
 Guzzle throws exceptions for errors that occur during a transfer.
