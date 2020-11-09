@@ -47,7 +47,7 @@ final class Middleware
 
     /**
      * Middleware that throws exceptions for 4xx or 5xx responses when the
-     * "http_error" request option is set to true.
+     * "http_errors" request option is set to true.
      *
      * @param BodySummarizerInterface|null $bodySummarizer The body summarizer to use in exception messages.
      *
