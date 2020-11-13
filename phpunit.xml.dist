@@ -5,12 +5,19 @@
            backupGlobals="true"
            colors="true"
            executionOrder="random"
+           failOnRisky="true"
+           failOnWarning="true"
   >
   <testsuites>
     <testsuite name="Test Suite">
       <directory>tests</directory>
     </testsuite>
   </testsuites>
+
+  <php>
+    <server name="TEST_SERVER" value="http://127.0.0.1:10000/server.php" />
+  </php>
+
   <filter>
     <whitelist>
       <directory suffix=".php">src</directory>

@@ -13,9 +13,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 project = u'Guzzle'
 copyright = u'2015, Michael Dowling'
-version = '6'
+version = '7'
 html_title = "Guzzle Documentation"
-html_short_title = "Guzzle 6"
+html_short_title = "Guzzle 7"
 
 exclude_patterns = ['_build']
 html_static_path = ['_static']

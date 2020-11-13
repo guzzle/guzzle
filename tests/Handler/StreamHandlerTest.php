@@ -1,7 +1,9 @@
 <?php
+
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
@@ -10,6 +12,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
+use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
@@ -49,12 +52,11 @@ class StreamHandlerTest extends TestCase
         self::assertSame('Bar', $sent->getHeaderLine('foo'));
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     */
     public function testAddsErrorToResponse()
     {
         $handler = new StreamHandler();
+
+        $this->expectException(ConnectException::class);
         $handler(
             new Request('GET', 'http://localhost:123'),
             ['timeout' => 0.01]
@@ -77,10 +79,10 @@ class StreamHandlerTest extends TestCase
         self::assertSame('8', $response->getHeaderLine('Content-Length'));
         $body = $response->getBody();
         $stream = $body->detach();
-        self::assertInternalType('resource', $stream);
-        self::assertSame('http', stream_get_meta_data($stream)['wrapper_type']);
-        self::assertSame('hi there', stream_get_contents($stream));
-        fclose($stream);
+        self::assertIsResource($stream);
+        self::assertSame('http', \stream_get_meta_data($stream)['wrapper_type']);
+        self::assertSame('hi there', \stream_get_contents($stream));
+        \fclose($stream);
         $sent = Server::received()[0];
         self::assertSame('PUT', $sent->getMethod());
         self::assertSame('http://127.0.0.1:8126/foo?baz=bar', (string) $sent->getUri());
@@ -96,28 +98,28 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, [])->wait();
         $body = $response->getBody();
         $stream = $body->detach();
-        self::assertSame('php://temp', stream_get_meta_data($stream)['uri']);
-        self::assertSame('hi', fread($stream, 2));
-        fclose($stream);
+        self::assertSame('php://temp', \stream_get_meta_data($stream)['uri']);
+        self::assertSame('hi', \fread($stream, 2));
+        \fclose($stream);
     }
 
     public function testDrainsResponseIntoSaveToBody()
     {
-        $r = fopen('php://temp', 'r+');
+        $r = \fopen('php://temp', 'r+');
         $this->queueRes();
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
         $response = $handler($request, ['sink' => $r])->wait();
         $body = $response->getBody()->detach();
-        self::assertSame('php://temp', stream_get_meta_data($body)['uri']);
-        self::assertSame('hi', fread($body, 2));
-        self::assertSame(' there', stream_get_contents($r));
-        fclose($r);
+        self::assertSame('php://temp', \stream_get_meta_data($body)['uri']);
+        self::assertSame('hi', \fread($body, 2));
+        self::assertSame(' there', \stream_get_contents($r));
+        \fclose($r);
     }
 
     public function testDrainsResponseIntoSaveToBodyAtPath()
     {
-        $tmpfname = tempnam('/tmp', 'save_to_path');
+        $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
         $this->queueRes();
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -126,13 +128,13 @@ class StreamHandlerTest extends TestCase
         self::assertSame($tmpfname, $body->getMetadata('uri'));
         self::assertSame('hi', $body->read(2));
         $body->close();
-        unlink($tmpfname);
+        \unlink($tmpfname);
     }
 
     public function testDrainsResponseIntoSaveToBodyAtNonExistentPath()
     {
-        $tmpfname = tempnam('/tmp', 'save_to_path');
-        unlink($tmpfname);
+        $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
+        \unlink($tmpfname);
         $this->queueRes();
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -141,7 +143,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame($tmpfname, $body->getMetadata('uri'));
         self::assertSame('hi', $body->read(2));
         $body->close();
-        unlink($tmpfname);
+        \unlink($tmpfname);
     }
 
     public function testDrainsResponseAndReadsOnlyContentLengthBytes()
@@ -158,8 +160,8 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, [])->wait();
         $body = $response->getBody();
         $stream = $body->detach();
-        self::assertSame('hi there', stream_get_contents($stream));
-        fclose($stream);
+        self::assertSame('hi there', \stream_get_contents($stream));
+        \fclose($stream);
     }
 
     public function testDoesNotDrainWhenHeadRequest()
@@ -177,18 +179,18 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, [])->wait();
         $body = $response->getBody();
         $stream = $body->detach();
-        self::assertSame('', stream_get_contents($stream));
-        fclose($stream);
+        self::assertSame('', \stream_get_contents($stream));
+        \fclose($stream);
     }
 
     public function testAutomaticallyDecompressGzip()
     {
         Server::flush();
-        $content = gzencode('test');
+        $content = \gzencode('test');
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length'   => strlen($content),
+                'Content-Length'   => \strlen($content),
             ], $content)
         ]);
         $handler = new StreamHandler();
@@ -199,14 +201,32 @@ class StreamHandlerTest extends TestCase
         self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }
 
-    public function testReportsOriginalSizeAndContentEncodingAfterDecoding()
+    public function testAutomaticallyDecompressGzipHead()
     {
         Server::flush();
-        $content = gzencode('test');
+        $content = \gzencode('test');
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length'   => strlen($content),
+                'Content-Length'   => \strlen($content),
+            ], $content)
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('HEAD', Server::$url);
+        $response = $handler($request, ['decode_content' => true])->wait();
+
+        // Verify that the content-length matches the encoded size.
+        self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == \strlen($content));
+    }
+
+    public function testReportsOriginalSizeAndContentEncodingAfterDecoding()
+    {
+        Server::flush();
+        $content = \gzencode('test');
+        Server::enqueue([
+            new Response(200, [
+                'Content-Encoding' => 'gzip',
+                'Content-Length'   => \strlen($content),
             ], $content)
         ]);
         $handler = new StreamHandler();
@@ -218,7 +238,7 @@ class StreamHandlerTest extends TestCase
             $response->getHeaderLine('x-encoded-content-encoding')
         );
         self::assertSame(
-            strlen($content),
+            \strlen($content),
             (int) $response->getHeaderLine('x-encoded-content-length')
         );
     }
@@ -226,11 +246,11 @@ class StreamHandlerTest extends TestCase
     public function testDoesNotForceGzipDecode()
     {
         Server::flush();
-        $content = gzencode('test');
+        $content = \gzencode('test');
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length'   => strlen($content),
+                'Content-Length'   => \strlen($content),
             ], $content)
         ]);
         $handler = new StreamHandler();
@@ -238,7 +258,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, ['decode_content' => false])->wait();
         self::assertSame($content, (string) $response->getBody());
         self::assertSame('gzip', $response->getHeaderLine('content-encoding'));
-        self::assertEquals(strlen($content), $response->getHeaderLine('content-length'));
+        self::assertEquals(\strlen($content), $response->getHeaderLine('content-length'));
     }
 
     public function testProtocolVersion()
@@ -259,72 +279,69 @@ class StreamHandlerTest extends TestCase
         return $handler($request, $opts)->wait();
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\ConnectException
-     * @expectedExceptionMessage Connection refused
-     */
     public function testAddsProxy()
     {
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection refused');
+
         $this->getSendResult(['proxy' => '127.0.0.1:8125']);
     }
 
     public function testAddsProxyByProtocol()
     {
-        $url = str_replace('http', 'tcp', Server::$url);
+        $url = \str_replace('http', 'tcp', Server::$url);
         // Workaround until #1823 is fixed properly
-        $url = rtrim($url, '/');
+        $url = \rtrim($url, '/');
         $res = $this->getSendResult(['proxy' => ['http' => $url]]);
-        $opts = stream_context_get_options($res->getBody()->detach());
+        $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame($url, $opts['http']['proxy']);
     }
 
     public function testAddsProxyButHonorsNoProxy()
     {
-        $url = str_replace('http', 'tcp', Server::$url);
+        $url = \str_replace('http', 'tcp', Server::$url);
         $res = $this->getSendResult(['proxy' => [
             'http' => $url,
             'no'   => ['*']
         ]]);
-        $opts = stream_context_get_options($res->getBody()->detach());
+        $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertArrayNotHasKey('proxy', $opts['http']);
     }
 
     public function testAddsTimeout()
     {
         $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);
-        $opts = stream_context_get_options($res->getBody()->detach());
+        $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertEquals(200, $opts['http']['timeout']);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage SSL CA bundle not found: /does/not/exist
-     */
     public function testVerifiesVerifyIsValidIfPath()
     {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('SSL CA bundle not found: /does/not/exist');
+
         $this->getSendResult(['verify' => '/does/not/exist']);
     }
 
     public function testVerifyCanBeDisabled()
     {
         $handler = $this->getSendResult(['verify' => false]);
-        self::assertInstanceOf('GuzzleHttp\Psr7\Response', $handler);
+        self::assertInstanceOf(Response::class, $handler);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage SSL certificate not found: /does/not/exist
-     */
     public function testVerifiesCertIfValidPath()
     {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('SSL certificate not found: /does/not/exist');
+
         $this->getSendResult(['cert' => '/does/not/exist']);
     }
 
     public function testVerifyCanBeSetToPath()
     {
-        $path = $path = \GuzzleHttp\default_ca_bundle();
+        $path = Utils::defaultCaBundle();
         $res = $this->getSendResult(['verify' => $path]);
-        $opts = stream_context_get_options($res->getBody()->detach());
+        $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertTrue($opts['ssl']['verify_peer']);
         self::assertTrue($opts['ssl']['verify_peer_name']);
         self::assertSame($path, $opts['ssl']['cafile']);
@@ -333,22 +350,16 @@ class StreamHandlerTest extends TestCase
 
     public function testUsesSystemDefaultBundle()
     {
-        $path = $path = \GuzzleHttp\default_ca_bundle();
         $res = $this->getSendResult(['verify' => true]);
-        $opts = stream_context_get_options($res->getBody()->detach());
-        if (PHP_VERSION_ID < 50600) {
-            self::assertSame($path, $opts['ssl']['cafile']);
-        } else {
-            self::assertArrayNotHasKey('cafile', $opts['ssl']);
-        }
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertArrayNotHasKey('cafile', $opts['ssl']);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid verify request option
-     */
     public function testEnsuresVerifyOptionIsValid()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid verify request option');
+
         $this->getSendResult(['verify' => 10]);
     }
 
@@ -356,7 +367,7 @@ class StreamHandlerTest extends TestCase
     {
         $path = __FILE__;
         $res = $this->getSendResult(['cert' => [$path, 'foo']]);
-        $opts = stream_context_get_options($res->getBody()->detach());
+        $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame($path, $opts['ssl']['local_cert']);
         self::assertSame('foo', $opts['ssl']['passphrase']);
     }
@@ -364,31 +375,31 @@ class StreamHandlerTest extends TestCase
     public function testDebugAttributeWritesToStream()
     {
         $this->queueRes();
-        $f = fopen('php://temp', 'w+');
+        $f = \fopen('php://temp', 'w+');
         $this->getSendResult(['debug' => $f]);
-        fseek($f, 0);
-        $contents = stream_get_contents($f);
-        self::assertContains('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
-        self::assertContains('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS]', $contents);
-        self::assertContains('<GET http://127.0.0.1:8126/> [PROGRESS]', $contents);
+        \fseek($f, 0);
+        $contents = \stream_get_contents($f);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS]', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [PROGRESS]', $contents);
     }
 
     public function testDebugAttributeWritesStreamInfoToBuffer()
     {
         $called = false;
         $this->queueRes();
-        $buffer = fopen('php://temp', 'r+');
+        $buffer = \fopen('php://temp', 'r+');
         $this->getSendResult([
-            'progress' => function () use (&$called) {
+            'progress' => static function () use (&$called) {
                 $called = true;
             },
             'debug' => $buffer,
         ]);
-        fseek($buffer, 0);
-        $contents = stream_get_contents($buffer);
-        self::assertContains('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
-        self::assertContains('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS] message: "Content-Length: 8"', $contents);
-        self::assertContains('<GET http://127.0.0.1:8126/> [PROGRESS] bytes_max: "8"', $contents);
+        \fseek($buffer, 0);
+        $contents = \stream_get_contents($buffer);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [CONNECT]', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [FILE_SIZE_IS] message: "Content-Length: 8"', $contents);
+        self::assertStringContainsString('<GET http://127.0.0.1:8126/> [PROGRESS] bytes_max: "8"', $contents);
         self::assertTrue($called);
     }
 
@@ -397,8 +408,8 @@ class StreamHandlerTest extends TestCase
         $called = [];
         $this->queueRes();
         $this->getSendResult([
-            'progress' => function () use (&$called) {
-                $called[] = func_get_args();
+            'progress' => static function (...$args) use (&$called) {
+                $called[] = $args;
             },
         ]);
         self::assertNotEmpty($called);
@@ -410,19 +421,19 @@ class StreamHandlerTest extends TestCase
     {
         $called = [];
         $this->queueRes();
-        $buffer = fopen('php://memory', 'w+');
+        $buffer = \fopen('php://memory', 'w+');
         $this->getSendResult([
             'debug'    => $buffer,
-            'progress' => function () use (&$called) {
-                $called[] = func_get_args();
+            'progress' => static function (...$args) use (&$called) {
+                $called[] = $args;
             },
         ]);
         self::assertNotEmpty($called);
         self::assertEquals(8, $called[0][0]);
         self::assertEquals(0, $called[0][1]);
-        rewind($buffer);
-        self::assertNotEmpty(stream_get_contents($buffer));
-        fclose($buffer);
+        \rewind($buffer);
+        self::assertNotEmpty(\stream_get_contents($buffer));
+        \fclose($buffer);
     }
 
     public function testPerformsShallowMergeOfCustomContextOptions()
@@ -441,19 +452,18 @@ class StreamHandlerTest extends TestCase
                 ],
             ],
         ]);
-        $opts = stream_context_get_options($res->getBody()->detach());
+        $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame('HEAD', $opts['http']['method']);
         self::assertTrue($opts['http']['request_fulluri']);
         self::assertSame('127.0.0.1:0', $opts['socket']['bindto']);
         self::assertFalse($opts['ssl']['verify_peer']);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage stream_context must be an array
-     */
     public function testEnsuresThatStreamContextIsAnArray()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_context must be an array');
+
         $this->getSendResult(['stream_context' => 'foo']);
     }
 
@@ -508,26 +518,20 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([$response]);
         $a = new StreamHandler();
         $request = new Request('GET', Server::$url);
-        $s = \GuzzleHttp\_current_time();
+        $s = Utils::currentTime();
         $a($request, ['delay' => 0.1])->wait();
-        self::assertGreaterThan(0.0001, \GuzzleHttp\_current_time() - $s);
+        self::assertGreaterThan(0.0001, Utils::currentTime() - $s);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testEnsuresOnHeadersIsCallable()
     {
         $req = new Request('GET', Server::$url);
         $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
         $handler($req, ['on_headers' => 'error!']);
     }
 
-    /**
-     * @expectedException \GuzzleHttp\Exception\RequestException
-     * @expectedExceptionMessage An error was encountered during the on_headers event
-     * @expectedExceptionMessage test
-     */
     public function testRejectsPromiseWhenOnHeadersFails()
     {
         Server::flush();
@@ -537,10 +541,13 @@ class StreamHandlerTest extends TestCase
         $req = new Request('GET', Server::$url);
         $handler = new StreamHandler();
         $promise = $handler($req, [
-            'on_headers' => function () {
+            'on_headers' => static function () {
                 throw new \Exception('test');
             }
         ]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
     }
 
@@ -553,9 +560,9 @@ class StreamHandlerTest extends TestCase
         $req = new Request('GET', Server::$url);
         $got = null;
 
-        $stream = Psr7\stream_for();
+        $stream = Psr7\Utils::streamFor();
         $stream = FnStream::decorate($stream, [
-            'write' => function ($data) use ($stream, &$got) {
+            'write' => static function ($data) use ($stream, &$got) {
                 self::assertNotNull($got);
                 return $stream->write($data);
             }
@@ -564,7 +571,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $promise = $handler($req, [
             'sink'       => $stream,
-            'on_headers' => function (ResponseInterface $res) use (&$got) {
+            'on_headers' => static function (ResponseInterface $res) use (&$got) {
                 $got = $res;
                 self::assertSame('bar', $res->getHeaderLine('X-Foo'));
             }
@@ -584,7 +591,7 @@ class StreamHandlerTest extends TestCase
         $gotStats = null;
         $handler = new StreamHandler();
         $promise = $handler($req, [
-            'on_stats' => function (TransferStats $stats) use (&$gotStats) {
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
                 $gotStats = $stats;
             }
         ]);
@@ -610,7 +617,7 @@ class StreamHandlerTest extends TestCase
         $promise = $handler($req, [
             'connect_timeout' => 0.001,
             'timeout' => 0.001,
-            'on_stats' => function (TransferStats $stats) use (&$gotStats) {
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
                 $gotStats = $stats;
             }
         ]);
@@ -624,7 +631,7 @@ class StreamHandlerTest extends TestCase
             'http://127.0.0.1:123',
             (string) $gotStats->getRequest()->getUri()
         );
-        self::assertInternalType('float', $gotStats->getTransferTime());
+        self::assertIsFloat($gotStats->getTransferTime());
         self::assertInstanceOf(
             ConnectException::class,
             $gotStats->getHandlerErrorData()
@@ -660,8 +667,8 @@ class StreamHandlerTest extends TestCase
         $response = $handler($request, [])->wait();
         $body = $response->getBody();
         $stream = $body->detach();
-        self::assertSame('hi there... This has a lot of data!', stream_get_contents($stream));
-        fclose($stream);
+        self::assertSame('hi there... This has a lot of data!', \stream_get_contents($stream));
+        \fclose($stream);
     }
 
     public function testHonorsReadTimeout()
@@ -678,11 +685,11 @@ class StreamHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('OK', $response->getReasonPhrase());
         $body = $response->getBody()->detach();
-        $line = fgets($body);
+        $line = \fgets($body);
         self::assertSame("sleeping 60 seconds ...\n", $line);
-        $line = fgets($body);
+        $line = \fgets($body);
         self::assertFalse($line);
-        self::assertTrue(stream_get_meta_data($body)['timed_out']);
-        self::assertFalse(feof($body));
+        self::assertTrue(\stream_get_meta_data($body)['timed_out']);
+        self::assertFalse(\feof($body));
     }
 }

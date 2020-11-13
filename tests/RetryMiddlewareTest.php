@@ -1,10 +1,10 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Middleware;
-use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RetryMiddleware;
@@ -16,11 +16,11 @@ class RetryMiddlewareTest extends TestCase
     {
         $delayCalls = 0;
         $calls = [];
-        $decider = function ($retries, $request, $response, $error) use (&$calls) {
-            $calls[] = func_get_args();
-            return count($calls) < 3;
+        $decider = static function (...$args) use (&$calls) {
+            $calls[] = $args;
+            return \count($calls) < 3;
         };
-        $delay = function ($retries, $response) use (&$delayCalls) {
+        $delay = static function ($retries, $response) use (&$delayCalls) {
             $delayCalls++;
             self::assertSame($retries, $delayCalls);
             self::assertInstanceOf(Response::class, $response);
@@ -39,7 +39,7 @@ class RetryMiddlewareTest extends TestCase
 
     public function testDoesNotRetryWhenDeciderReturnsFalse()
     {
-        $decider = function () {
+        $decider = static function () {
             return false;
         };
         $m = Middleware::retry($decider);
@@ -52,9 +52,9 @@ class RetryMiddlewareTest extends TestCase
     public function testCanRetryExceptions()
     {
         $calls = [];
-        $decider = function ($retries, $request, $response, $error) use (&$calls) {
-            $calls[] = func_get_args();
-            return $error instanceof \Exception;
+        $decider = static function (...$args) use (&$calls) {
+            $calls[] = $args;
+            return $args[3] instanceof \Exception;
         };
         $m = Middleware::retry($decider);
         $h = new MockHandler([new \Exception(), new Response(201)]);
@@ -73,9 +73,9 @@ class RetryMiddlewareTest extends TestCase
     public function testBackoffCalculateDelay()
     {
         self::assertSame(0, RetryMiddleware::exponentialDelay(0));
-        self::assertSame(1, RetryMiddleware::exponentialDelay(1));
-        self::assertSame(2, RetryMiddleware::exponentialDelay(2));
-        self::assertSame(4, RetryMiddleware::exponentialDelay(3));
-        self::assertSame(8, RetryMiddleware::exponentialDelay(4));
+        self::assertSame(1000, RetryMiddleware::exponentialDelay(1));
+        self::assertSame(2000, RetryMiddleware::exponentialDelay(2));
+        self::assertSame(4000, RetryMiddleware::exponentialDelay(3));
+        self::assertSame(8000, RetryMiddleware::exponentialDelay(4));
     }
 }

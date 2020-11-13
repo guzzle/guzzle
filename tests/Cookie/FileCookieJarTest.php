@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\FileCookieJar;
@@ -6,23 +7,25 @@ use GuzzleHttp\Cookie\SetCookie;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\Cookie\FileCookieJar
+ * @covers \GuzzleHttp\Cookie\FileCookieJar
  */
 class FileCookieJarTest extends TestCase
 {
     private $file;
 
-    public function setUp()
+    public function setUp(): void
     {
-        $this->file = tempnam('/tmp', 'file-cookies');
+        $this->file = \tempnam(\sys_get_temp_dir(), 'file-cookies');
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @dataProvider invalidCookieJarContent
      */
-    public function testValidatesCookieFile()
+    public function testValidatesCookieFile($invalidCookieJarContent)
     {
-        file_put_contents($this->file, 'true');
+        \file_put_contents($this->file, json_encode($invalidCookieJarContent));
+
+        $this->expectException(\RuntimeException::class);
         new FileCookieJar($this->file);
     }
 
@@ -30,7 +33,7 @@ class FileCookieJarTest extends TestCase
     {
         $jar = new FileCookieJar($this->file);
         self::assertSame([], $jar->getIterator()->getArrayCopy());
-        unlink($this->file);
+        \unlink($this->file);
     }
 
     /**
@@ -43,13 +46,13 @@ class FileCookieJarTest extends TestCase
             'Name'    => 'foo',
             'Value'   => 'bar',
             'Domain'  => 'foo.com',
-            'Expires' => time() + 1000
+            'Expires' => \time() + 1000
         ]));
         $jar->setCookie(new SetCookie([
             'Name'    => 'baz',
             'Value'   => 'bar',
             'Domain'  => 'foo.com',
-            'Expires' => time() + 1000
+            'Expires' => \time() + 1000
         ]));
         $jar->setCookie(new SetCookie([
             'Name'    => 'boo',
@@ -61,7 +64,7 @@ class FileCookieJarTest extends TestCase
         unset($jar);
 
         // Make sure it wrote to the file
-        $contents = file_get_contents($this->file);
+        $contents = \file_get_contents($this->file);
         self::assertNotEmpty($contents);
 
         // Load the cookieJar from the file
@@ -75,7 +78,7 @@ class FileCookieJarTest extends TestCase
         }
 
         unset($jar);
-        unlink($this->file);
+        \unlink($this->file);
     }
 
     public function providerPersistsToFileFileParameters()
@@ -83,6 +86,14 @@ class FileCookieJarTest extends TestCase
         return [
             [false],
             [true]
+        ];
+    }
+
+    public function invalidCookieJarContent(): array
+    {
+        return [
+            [true],
+            ['invalid-data']
         ];
     }
 }

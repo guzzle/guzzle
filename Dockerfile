@@ -1,7 +1,5 @@
 FROM composer:latest as setup
 
-RUN mkdir /guzzle
-
 WORKDIR /guzzle
 
 RUN set -xe \
@@ -10,8 +8,6 @@ RUN set -xe \
 
 
 FROM php:7.3
-
-RUN mkdir /guzzle
 
 WORKDIR /guzzle
 

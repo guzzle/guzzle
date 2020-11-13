@@ -1,11 +1,12 @@
 <?php
+
 namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\SetCookie;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\Cookie\SetCookie
+ * @covers \GuzzleHttp\Cookie\SetCookie
  */
 class SetCookieTest extends TestCase
 {
@@ -18,19 +19,19 @@ class SetCookieTest extends TestCase
     public function testConvertsDateTimeMaxAgeToUnixTimestamp()
     {
         $cookie = new SetCookie(['Expires' => 'November 20, 1984']);
-        self::assertInternalType('integer', $cookie->getExpires());
+        self::assertIsInt($cookie->getExpires());
     }
 
     public function testAddsExpiresBasedOnMaxAge()
     {
-        $t = time();
+        $t = \time();
         $cookie = new SetCookie(['Max-Age' => 100]);
         self::assertEquals($t + 100, $cookie->getExpires());
     }
 
     public function testHoldsValues()
     {
-        $t = time();
+        $t = \time();
         $data = [
             'Name'     => 'foo',
             'Value'    => 'baz',
@@ -86,7 +87,7 @@ class SetCookieTest extends TestCase
         $c = new SetCookie();
         $c->setExpires(10);
         self::assertTrue($c->isExpired());
-        $c->setExpires(time() + 10000);
+        $c->setExpires(\time() + 10000);
         self::assertFalse($c->isExpired());
     }
 
@@ -158,8 +159,9 @@ class SetCookieTest extends TestCase
             ['foo', 'baz', 'bar', true],
             ['0', '0', '0', true],
             ['foo[bar]', 'baz', 'bar', true],
+            ['foo', '', 'bar', true],
             ['', 'baz', 'bar', 'The cookie name must not be empty'],
-            ['foo', '', 'bar', 'The cookie value must not be empty'],
+            ['foo', null, 'bar', 'The cookie value must not be empty'],
             ['foo', 'baz', '', 'The cookie domain must not be empty'],
             ["foo\r", 'baz', '0', 'Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/?={}'],
         ];
@@ -272,7 +274,7 @@ class SetCookieTest extends TestCase
                     'HttpOnly' => false
                 ]
             ],
-            // Some of the following tests are based on http://framework.zend.com/svn/framework/standard/trunk/tests/Zend/Http/CookieTest.php
+            // Some of the following tests are based on https://github.com/zendframework/zf1/blob/master/tests/Zend/Http/CookieTest.php
             [
                 'justacookie=foo; domain=example.com',
                 [
@@ -338,7 +340,7 @@ class SetCookieTest extends TestCase
                     'Path' => '/',
                     'Secure' => true,
                     'Discard' => null,
-                    'Expires' => time() + 86400,
+                    'Expires' => \time() + 86400,
                     'Max-Age' => 86400,
                     'HttpOnly' => false,
                     'version' => '1'
@@ -372,7 +374,7 @@ class SetCookieTest extends TestCase
 
             if (isset($p['Expires'])) {
                 // Remove expires values from the assertion if they are relatively equal
-                if (abs($p['Expires'] != strtotime($parsed['Expires'])) < 40) {
+                if (\abs($p['Expires'] != \strtotime($parsed['Expires'])) < 40) {
                     unset($p['Expires']);
                     unset($parsed['Expires']);
                 }
@@ -380,10 +382,10 @@ class SetCookieTest extends TestCase
 
             if (!empty($parsed)) {
                 foreach ($parsed as $key => $value) {
-                    self::assertEquals($parsed[$key], $p[$key], 'Comparing ' . $key . ' ' . var_export($value, true) . ' : ' . var_export($parsed, true) . ' | ' . var_export($p, true));
+                    self::assertEquals($parsed[$key], $p[$key], 'Comparing ' . $key . ' ' . \var_export($value, true) . ' : ' . \var_export($parsed, true) . ' | ' . \var_export($p, true));
                 }
                 foreach ($p as $key => $value) {
-                    self::assertEquals($p[$key], $parsed[$key], 'Comparing ' . $key . ' ' . var_export($value, true) . ' : ' . var_export($parsed, true) . ' | ' . var_export($p, true));
+                    self::assertEquals($p[$key], $parsed[$key], 'Comparing ' . $key . ' ' . \var_export($value, true) . ' : ' . \var_export($parsed, true) . ' | ' . \var_export($p, true));
                 }
             } else {
                 self::assertSame([
@@ -418,11 +420,11 @@ class SetCookieTest extends TestCase
                 true,
             ],
             [
-                'FOO=bar; expires=' . date(\DateTime::RFC1123, time()+10) . ';',
+                'FOO=bar; expires=' . \date(\DateTime::RFC1123, \time() + 10) . ';',
                 false,
             ],
             [
-                'FOO=bar; expires=' . date(\DateTime::RFC1123, time()-10) . ';',
+                'FOO=bar; expires=' . \date(\DateTime::RFC1123, \time() - 10) . ';',
                 true,
             ],
             [

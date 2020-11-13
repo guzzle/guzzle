@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
@@ -8,16 +9,24 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Creates a composed Guzzle handler function by stacking middlewares on top of
  * an HTTP handler function.
+ *
+ * @final
  */
 class HandlerStack
 {
-    /** @var callable|null */
+    /**
+     * @var null|callable(RequestInterface, array): PromiseInterface
+     */
     private $handler;
 
-    /** @var array */
+    /**
+     * @var array{(callable(callable(RequestInterface, array): PromiseInterface): callable), (string|null)}[]
+     */
     private $stack = [];
 
-    /** @var callable|null */
+    /**
+     * @var null|callable(RequestInterface, array): PromiseInterface
+     */
     private $cached;
 
     /**
@@ -31,15 +40,13 @@ class HandlerStack
      * The returned handler stack can be passed to a client in the "handler"
      * option.
      *
-     * @param callable $handler HTTP handler function to use with the stack. If no
-     *                          handler is provided, the best handler for your
-     *                          system will be utilized.
-     *
-     * @return HandlerStack
+     * @param null|callable(RequestInterface, array): PromiseInterface $handler HTTP handler function to use with the stack. If no
+     *                                                                          handler is provided, the best handler for your
+     *                                                                          system will be utilized.
      */
-    public static function create(callable $handler = null)
+    public static function create(?callable $handler = null): self
     {
-        $stack = new self($handler ?: choose_handler());
+        $stack = new self($handler ?: Utils::chooseHandler());
         $stack->push(Middleware::httpErrors(), 'http_errors');
         $stack->push(Middleware::redirect(), 'allow_redirects');
         $stack->push(Middleware::cookies(), 'cookies');
@@ -49,7 +56,7 @@ class HandlerStack
     }
 
     /**
-     * @param callable $handler Underlying HTTP handler.
+     * @param null|callable(RequestInterface, array): PromiseInterface $handler Underlying HTTP handler.
      */
     public function __construct(callable $handler = null)
     {
@@ -58,9 +65,6 @@ class HandlerStack
 
     /**
      * Invokes the handler stack as a composed handler
-     *
-     * @param RequestInterface $request
-     * @param array            $options
      *
      * @return ResponseInterface|PromiseInterface
      */
@@ -80,12 +84,13 @@ class HandlerStack
     {
         $depth = 0;
         $stack = [];
-        if ($this->handler) {
+
+        if ($this->handler !== null) {
             $stack[] = "0) Handler: " . $this->debugCallable($this->handler);
         }
 
         $result = '';
-        foreach (array_reverse($this->stack) as $tuple) {
+        foreach (\array_reverse($this->stack) as $tuple) {
             $depth++;
             $str = "{$depth}) Name: '{$tuple[1]}', ";
             $str .= "Function: " . $this->debugCallable($tuple[0]);
@@ -93,7 +98,7 @@ class HandlerStack
             $stack[] = $str;
         }
 
-        foreach (array_keys($stack) as $k) {
+        foreach (\array_keys($stack) as $k) {
             $result .= "< {$stack[$k]}\n";
         }
 
@@ -103,10 +108,10 @@ class HandlerStack
     /**
      * Set the HTTP handler that actually returns a promise.
      *
-     * @param callable $handler Accepts a request and array of options and
-     *                          returns a Promise.
+     * @param callable(RequestInterface, array): PromiseInterface $handler Accepts a request and array of options and
+     *                                                                     returns a Promise.
      */
-    public function setHandler(callable $handler)
+    public function setHandler(callable $handler): void
     {
         $this->handler = $handler;
         $this->cached = null;
@@ -114,33 +119,31 @@ class HandlerStack
 
     /**
      * Returns true if the builder has a handler.
-     *
-     * @return bool
      */
-    public function hasHandler()
+    public function hasHandler(): bool
     {
-        return (bool) $this->handler;
+        return $this->handler !== null ;
     }
 
     /**
      * Unshift a middleware to the bottom of the stack.
      *
-     * @param callable $middleware Middleware function
-     * @param string   $name       Name to register for this middleware.
+     * @param callable(callable): callable $middleware Middleware function
+     * @param string                       $name       Name to register for this middleware.
      */
-    public function unshift(callable $middleware, $name = null)
+    public function unshift(callable $middleware, ?string $name = null): void
     {
-        array_unshift($this->stack, [$middleware, $name]);
+        \array_unshift($this->stack, [$middleware, $name]);
         $this->cached = null;
     }
 
     /**
      * Push a middleware to the top of the stack.
      *
-     * @param callable $middleware Middleware function
-     * @param string   $name       Name to register for this middleware.
+     * @param callable(callable): callable $middleware Middleware function
+     * @param string                       $name       Name to register for this middleware.
      */
-    public function push(callable $middleware, $name = '')
+    public function push(callable $middleware, string $name = ''): void
     {
         $this->stack[] = [$middleware, $name];
         $this->cached = null;
@@ -149,11 +152,11 @@ class HandlerStack
     /**
      * Add a middleware before another middleware by name.
      *
-     * @param string   $findName   Middleware to find
-     * @param callable $middleware Middleware function
-     * @param string   $withName   Name to register for this middleware.
+     * @param string                       $findName   Middleware to find
+     * @param callable(callable): callable $middleware Middleware function
+     * @param string                       $withName   Name to register for this middleware.
      */
-    public function before($findName, callable $middleware, $withName = '')
+    public function before(string $findName, callable $middleware, string $withName = ''): void
     {
         $this->splice($findName, $withName, $middleware, true);
     }
@@ -161,11 +164,11 @@ class HandlerStack
     /**
      * Add a middleware after another middleware by name.
      *
-     * @param string   $findName   Middleware to find
-     * @param callable $middleware Middleware function
-     * @param string   $withName   Name to register for this middleware.
+     * @param string                       $findName   Middleware to find
+     * @param callable(callable): callable $middleware Middleware function
+     * @param string                       $withName   Name to register for this middleware.
      */
-    public function after($findName, callable $middleware, $withName = '')
+    public function after(string $findName, callable $middleware, string $withName = ''): void
     {
         $this->splice($findName, $withName, $middleware, false);
     }
@@ -175,13 +178,13 @@ class HandlerStack
      *
      * @param callable|string $remove Middleware to remove by instance or name.
      */
-    public function remove($remove)
+    public function remove($remove): void
     {
         $this->cached = null;
-        $idx = is_callable($remove) ? 0 : 1;
-        $this->stack = array_values(array_filter(
+        $idx = \is_callable($remove) ? 0 : 1;
+        $this->stack = \array_values(\array_filter(
             $this->stack,
-            function ($tuple) use ($idx, $remove) {
+            static function ($tuple) use ($idx, $remove) {
                 return $tuple[$idx] !== $remove;
             }
         ));
@@ -190,16 +193,17 @@ class HandlerStack
     /**
      * Compose the middleware and handler into a single callable function.
      *
-     * @return callable
+     * @return callable(RequestInterface, array): PromiseInterface
      */
-    public function resolve()
+    public function resolve(): callable
     {
-        if (!$this->cached) {
-            if (!($prev = $this->handler)) {
+        if ($this->cached === null) {
+            if (($prev = $this->handler) === null) {
                 throw new \LogicException('No handler has been specified');
             }
 
-            foreach (array_reverse($this->stack) as $fn) {
+            foreach (\array_reverse($this->stack) as $fn) {
+                /** @var callable(RequestInterface, array): PromiseInterface $prev */
                 $prev = $fn[0]($prev);
             }
 
@@ -209,11 +213,7 @@ class HandlerStack
         return $this->cached;
     }
 
-    /**
-     * @param string $name
-     * @return int
-     */
-    private function findByName($name)
+    private function findByName(string $name): int
     {
         foreach ($this->stack as $k => $v) {
             if ($v[1] === $name) {
@@ -226,13 +226,8 @@ class HandlerStack
 
     /**
      * Splices a function into the middleware list at a specific position.
-     *
-     * @param string   $findName
-     * @param string   $withName
-     * @param callable $middleware
-     * @param bool     $before
      */
-    private function splice($findName, $withName, callable $middleware, $before)
+    private function splice(string $findName, string $withName, callable $middleware, bool $before): void
     {
         $this->cached = null;
         $idx = $this->findByName($findName);
@@ -240,38 +235,37 @@ class HandlerStack
 
         if ($before) {
             if ($idx === 0) {
-                array_unshift($this->stack, $tuple);
+                \array_unshift($this->stack, $tuple);
             } else {
                 $replacement = [$tuple, $this->stack[$idx]];
-                array_splice($this->stack, $idx, 1, $replacement);
+                \array_splice($this->stack, $idx, 1, $replacement);
             }
-        } elseif ($idx === count($this->stack) - 1) {
+        } elseif ($idx === \count($this->stack) - 1) {
             $this->stack[] = $tuple;
         } else {
             $replacement = [$this->stack[$idx], $tuple];
-            array_splice($this->stack, $idx, 1, $replacement);
+            \array_splice($this->stack, $idx, 1, $replacement);
         }
     }
 
     /**
      * Provides a debug string for a given callable.
      *
-     * @param array|callable $fn Function to write as a string.
-     *
-     * @return string
+     * @param callable $fn Function to write as a string.
      */
-    private function debugCallable($fn)
+    private function debugCallable($fn): string
     {
-        if (is_string($fn)) {
+        if (\is_string($fn)) {
             return "callable({$fn})";
         }
 
-        if (is_array($fn)) {
-            return is_string($fn[0])
+        if (\is_array($fn)) {
+            return \is_string($fn[0])
                 ? "callable({$fn[0]}::{$fn[1]})"
-                : "callable(['" . get_class($fn[0]) . "', '{$fn[1]}'])";
+                : "callable(['" . \get_class($fn[0]) . "', '{$fn[1]}'])";
         }
 
-        return 'callable(' . spl_object_hash($fn) . ')';
+        /** @var object $fn */
+        return 'callable(' . \spl_object_hash($fn) . ')';
     }
 }

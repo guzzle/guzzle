@@ -211,7 +211,7 @@ This setting can be set to any of the following types:
   .. code-block:: php
 
       // You can send requests that use a Guzzle stream object as the body
-      $stream = GuzzleHttp\Psr7\stream_for('contents...');
+      $stream = GuzzleHttp\Psr7\Utils::streamFor('contents...');
       $client->request('POST', '/post', ['body' => $stream]);
 
 .. note::
@@ -553,6 +553,31 @@ http_errors
     default when creating a handler with ``GuzzleHttp\default_handler``.
 
 
+idn_conversion
+--------------
+
+:Summary: Internationalized Domain Name (IDN) support (enabled by default if
+    ``intl`` extension is available).
+:Types:
+    - bool
+    - int
+:Default: ``true`` if ``intl`` extension is available (and ICU library is 4.6+ for PHP 7.2+), ``false`` otherwise
+:Constant: ``GuzzleHttp\RequestOptions::IDN_CONVERSION``
+
+.. code-block:: php
+
+    $client->request('GET', 'https://яндекс.рф');
+    // яндекс.рф is translated to xn--d1acpjx3f.xn--p1ai before passing it to the handler
+
+    $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' => false]);
+    // The domain part (яндекс.рф) stays unmodified
+
+Enables/disables IDN support, can also be used for precise control by combining
+IDNA_* constants (except IDNA_ERROR_*), see ``$options`` parameter in
+`idn_to_ascii() <https://www.php.net/manual/en/function.idn-to-ascii.php>`_
+documentation for more details.
+
+
 json
 ----
 
@@ -575,8 +600,6 @@ over the wire.
 
     use GuzzleHttp\Middleware;
 
-    // Grab the client's handler instance.
-    $clientHandler = $client->getConfig('handler');
     // Create a middleware that echoes parts of the request.
     $tapMiddleware = Middleware::tap(function ($request) {
         echo $request->getHeaderLine('Content-Type');
@@ -585,9 +608,11 @@ over the wire.
         // {"foo":"bar"}
     });
 
+    // The $handler variable is the handler passed in the
+    // options to the client constructor.
     $response = $client->request('PUT', '/put', [
         'json'    => ['foo' => 'bar'],
-        'handler' => $tapMiddleware($clientHandler)
+        'handler' => $tapMiddleware($handler)
     ]);
 
 .. note::
@@ -659,7 +684,7 @@ on_headers
 :Types: - callable
 :Constant: ``GuzzleHttp\RequestOptions::ON_HEADERS``
 
-The callable accepts a ``Psr\Http\ResponseInterface`` object. If an exception
+The callable accepts a ``Psr\Http\Message\ResponseInterface`` object. If an exception
 is thrown by the callable, then the promise associated with the response will
 be rejected with a ``GuzzleHttp\Exception\RequestException`` that wraps the
 exception that was thrown.
@@ -891,7 +916,7 @@ body to an open PSR-7 stream.
 .. code-block:: php
 
     $resource = fopen('/path/to/file', 'w');
-    $stream = GuzzleHttp\Psr7\stream_for($resource);
+    $stream = GuzzleHttp\Psr7\Utils::streamFor($resource);
     $client->request('GET', '/stream/20', ['save_to' => $stream]);
 
 .. note::
@@ -990,35 +1015,9 @@ verify
     // Disable validation entirely (don't do this!).
     $client->request('GET', '/', ['verify' => false]);
 
-Not all system's have a known CA bundle on disk. For example, Windows and
-OS X do not have a single common location for CA bundles. When setting
-"verify" to ``true``, Guzzle will do its best to find the most appropriate
-CA bundle on your system. When using cURL or the PHP stream wrapper on PHP
-versions >= 5.6, this happens by default. When using the PHP stream
-wrapper on versions < 5.6, Guzzle tries to find your CA bundle in the
-following order:
-
-1. Check if ``openssl.cafile`` is set in your php.ini file.
-2. Check if ``curl.cainfo`` is set in your php.ini file.
-3. Check if ``/etc/pki/tls/certs/ca-bundle.crt`` exists (Red Hat, CentOS,
-   Fedora; provided by the ca-certificates package)
-4. Check if ``/etc/ssl/certs/ca-certificates.crt`` exists (Ubuntu, Debian;
-   provided by the ca-certificates package)
-5. Check if ``/usr/local/share/certs/ca-root-nss.crt`` exists (FreeBSD;
-   provided by the ca_root_nss package)
-6. Check if ``/usr/local/etc/openssl/cert.pem`` (OS X; provided by homebrew)
-7. Check if ``C:\windows\system32\curl-ca-bundle.crt`` exists (Windows)
-8. Check if ``C:\windows\curl-ca-bundle.crt`` exists (Windows)
-
-The result of this lookup is cached in memory so that subsequent calls
-in the same process will return very quickly. However, when sending only
-a single request per-process in something like Apache, you should consider
-setting the ``openssl.cafile`` environment variable to the path on disk
-to the file so that this entire process is skipped.
-
 If you do not need a specific certificate bundle, then Mozilla provides a
 commonly used CA bundle which can be downloaded
-`here <https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt>`_
+`here <https://curl.haxx.se/ca/cacert.pem>`_
 (provided by the maintainer of cURL). Once you have a CA bundle available on
 disk, you can set the "openssl.cafile" PHP ini setting to point to the path to
 the file, allowing you to omit the "verify" request option. Much more detail on
@@ -1031,7 +1030,7 @@ SSL certificates can be found on the
 timeout
 -------
 
-:Summary: Float describing the timeout of the request in seconds. Use ``0``
+:Summary: Float describing the total timeout of the request in seconds. Use ``0``
         to wait indefinitely (the default behavior).
 :Types: float
 :Default: ``0``
@@ -1041,7 +1040,7 @@ timeout
 
     // Timeout if a server does not return a response in 3.14 seconds.
     $client->request('GET', '/delay/5', ['timeout' => 3.14]);
-    // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\RequestException'
+    // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\TransferException'
 
 
 .. _version-option:

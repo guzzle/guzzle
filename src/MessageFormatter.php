@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp;
 
 use Psr\Http\Message\MessageInterface;
@@ -31,25 +32,31 @@ use Psr\Http\Message\ResponseInterface;
  * - {res_headers}:    Response headers
  * - {req_body}:       Request body
  * - {res_body}:       Response body
+ *
+ * @final
  */
-class MessageFormatter
+class MessageFormatter implements MessageFormatterInterface
 {
     /**
      * Apache Common Log Format.
-     * @link http://httpd.apache.org/docs/2.4/logs.html#common
+     *
+     * @link https://httpd.apache.org/docs/2.4/logs.html#common
+     *
      * @var string
      */
-    const CLF = "{hostname} {req_header_User-Agent} - [{date_common_log}] \"{method} {target} HTTP/{version}\" {code} {res_header_Content-Length}";
-    const DEBUG = ">>>>>>>>\n{request}\n<<<<<<<<\n{response}\n--------\n{error}";
-    const SHORT = '[{ts}] "{method} {target} HTTP/{version}" {code}';
+    public const CLF = "{hostname} {req_header_User-Agent} - [{date_common_log}] \"{method} {target} HTTP/{version}\" {code} {res_header_Content-Length}";
+    public const DEBUG = ">>>>>>>>\n{request}\n<<<<<<<<\n{response}\n--------\n{error}";
+    public const SHORT = '[{ts}] "{method} {target} HTTP/{version}" {code}';
 
-    /** @var string Template used to format log messages */
+    /**
+     * @var string Template used to format log messages
+     */
     private $template;
 
     /**
      * @param string $template Log message template
      */
-    public function __construct($template = self::CLF)
+    public function __construct(?string $template = self::CLF)
     {
         $this->template = $template ?: self::CLF;
     }
@@ -57,20 +64,16 @@ class MessageFormatter
     /**
      * Returns a formatted message string.
      *
-     * @param RequestInterface  $request  Request that was sent
-     * @param ResponseInterface $response Response that was received
-     * @param \Exception        $error    Exception that was received
-     *
-     * @return string
+     * @param RequestInterface       $request  Request that was sent
+     * @param ResponseInterface|null $response Response that was received
+     * @param \Throwable|null        $error    Exception that was received
      */
-    public function format(
-        RequestInterface $request,
-        ResponseInterface $response = null,
-        \Exception $error = null
-    ) {
+    public function format(RequestInterface $request, ?ResponseInterface $response = null, ?\Throwable $error = null): string
+    {
         $cache = [];
 
-        return preg_replace_callback(
+        /** @var string */
+        return \preg_replace_callback(
             '/{\s*([A-Za-z_\-\.0-9]+)\s*}/',
             function (array $matches) use ($request, $response, $error, &$cache) {
                 if (isset($cache[$matches[1]])) {
@@ -80,20 +83,20 @@ class MessageFormatter
                 $result = '';
                 switch ($matches[1]) {
                     case 'request':
-                        $result = Psr7\str($request);
+                        $result = Psr7\Message::toString($request);
                         break;
                     case 'response':
-                        $result = $response ? Psr7\str($response) : '';
+                        $result = $response ? Psr7\Message::toString($response) : '';
                         break;
                     case 'req_headers':
-                        $result = trim($request->getMethod()
+                        $result = \trim($request->getMethod()
                                 . ' ' . $request->getRequestTarget())
                             . ' HTTP/' . $request->getProtocolVersion() . "\r\n"
                             . $this->headers($request);
                         break;
                     case 'res_headers':
                         $result = $response ?
-                            sprintf(
+                            \sprintf(
                                 'HTTP/%s %d %s',
                                 $response->getProtocolVersion(),
                                 $response->getStatusCode(),
@@ -102,17 +105,29 @@ class MessageFormatter
                             : 'NULL';
                         break;
                     case 'req_body':
-                        $result = $request->getBody();
+                        $result = $request->getBody()->__toString();
                         break;
                     case 'res_body':
-                        $result = $response ? $response->getBody() : 'NULL';
+                        if (!$response instanceof ResponseInterface) {
+                            $result = 'NULL';
+                            break;
+                        }
+
+                        $body = $response->getBody();
+
+                        if (!$body->isSeekable()) {
+                            $result = 'RESPONSE_NOT_LOGGEABLE';
+                            break;
+                        }
+
+                        $result = $response->getBody()->__toString();
                         break;
                     case 'ts':
                     case 'date_iso_8601':
-                        $result = gmdate('c');
+                        $result = \gmdate('c');
                         break;
                     case 'date_common_log':
-                        $result = date('d/M/Y:H:i:s O');
+                        $result = \date('d/M/Y:H:i:s O');
                         break;
                     case 'method':
                         $result = $request->getMethod();
@@ -139,7 +154,7 @@ class MessageFormatter
                         $result = $request->getHeaderLine('Host');
                         break;
                     case 'hostname':
-                        $result = gethostname();
+                        $result = \gethostname();
                         break;
                     case 'code':
                         $result = $response ? $response->getStatusCode() : 'NULL';
@@ -152,11 +167,11 @@ class MessageFormatter
                         break;
                     default:
                         // handle prefixed dynamic headers
-                        if (strpos($matches[1], 'req_header_') === 0) {
-                            $result = $request->getHeaderLine(substr($matches[1], 11));
-                        } elseif (strpos($matches[1], 'res_header_') === 0) {
+                        if (\strpos($matches[1], 'req_header_') === 0) {
+                            $result = $request->getHeaderLine(\substr($matches[1], 11));
+                        } elseif (\strpos($matches[1], 'res_header_') === 0) {
                             $result = $response
-                                ? $response->getHeaderLine(substr($matches[1], 11))
+                                ? $response->getHeaderLine(\substr($matches[1], 11))
                                 : 'NULL';
                         }
                 }
@@ -170,16 +185,14 @@ class MessageFormatter
 
     /**
      * Get headers from message as string
-     *
-     * @return string
      */
-    private function headers(MessageInterface $message)
+    private function headers(MessageInterface $message): string
     {
         $result = '';
         foreach ($message->getHeaders() as $name => $values) {
-            $result .= $name . ': ' . implode(', ', $values) . "\r\n";
+            $result .= $name . ': ' . \implode(', ', $values) . "\r\n";
         }
 
-        return trim($result);
+        return \trim($result);
     }
 }

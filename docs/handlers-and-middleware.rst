@@ -214,28 +214,29 @@ stack.
 
 .. code-block:: php
 
-    use Psr\Http\Message\RequestInterface;
+    use GuzzleHttp\Client;
     use GuzzleHttp\HandlerStack;
     use GuzzleHttp\Middleware;
-    use GuzzleHttp\Client;
+    use GuzzleHttp\Utils;
+    use Psr\Http\Message\RequestInterface;
 
     $stack = new HandlerStack();
-    $stack->setHandler(\GuzzleHttp\choose_handler());
+    $stack->setHandler(Utils::chooseHandler());
 
     $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
         echo 'A';
         return $r;
-    });
+    }));
 
     $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
         echo 'B';
         return $r;
-    });
+    }));
 
     $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
         echo 'C';
         return $r;
-    });
+    }));
 
     $client->request('GET', 'http://httpbin.org/');
     // echoes 'ABC';
@@ -243,7 +244,7 @@ stack.
     $stack->unshift(Middleware::mapRequest(function (RequestInterface $r) {
         echo '0';
         return $r;
-    });
+    }));
 
     $client = new Client(['handler' => $stack]);
     $client->request('GET', 'http://httpbin.org/');
@@ -261,17 +262,17 @@ by name.
     // Add a middleware with a name
     $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
         return $r->withHeader('X-Foo', 'Bar');
-    }, 'add_foo');
+    }, 'add_foo'));
 
     // Add a middleware before a named middleware (unshift before).
     $stack->before('add_foo', Middleware::mapRequest(function (RequestInterface $r) {
         return $r->withHeader('X-Baz', 'Qux');
-    }, 'add_baz');
+    }, 'add_baz'));
 
     // Add a middleware after a named middleware (pushed after).
     $stack->after('add_baz', Middleware::mapRequest(function (RequestInterface $r) {
         return $r->withHeader('X-Lorem', 'Ipsum');
-    });
+    }));
 
     // Remove a middleware by name
     $stack->remove('add_foo');

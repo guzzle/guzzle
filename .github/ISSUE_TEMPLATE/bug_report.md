@@ -4,6 +4,8 @@ about: Report errors and problems
 ---
 
 **Guzzle version(s) affected**: x.y.z
+**PHP version**: x.y.z (hint: `php --version`)
+**cURL version**: x.y.z (hint: `php -i | grep cURL`)
 
 **Description**  
 <!-- A clear and concise description of the problem. -->

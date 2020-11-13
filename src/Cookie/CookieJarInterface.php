@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Cookie;
 
 use Psr\Http\Message\RequestInterface;
@@ -12,7 +13,8 @@ use Psr\Http\Message\ResponseInterface;
  * necessary. Subclasses are also responsible for storing and retrieving
  * cookies from a file, database, etc.
  *
- * @link http://docs.python.org/2/library/cookielib.html Inspiration
+ * @link https://docs.python.org/2/library/cookielib.html Inspiration
+ * @extends \IteratorAggregate<SetCookie>
  */
 interface CookieJarInterface extends \Countable, \IteratorAggregate
 {
@@ -26,7 +28,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return RequestInterface returns the modified request.
      */
-    public function withCookieHeader(RequestInterface $request);
+    public function withCookieHeader(RequestInterface $request): RequestInterface;
 
     /**
      * Extract cookies from an HTTP response and store them in the CookieJar.
@@ -34,10 +36,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      * @param RequestInterface  $request  Request that was sent
      * @param ResponseInterface $response Response that was received
      */
-    public function extractCookies(
-        RequestInterface $request,
-        ResponseInterface $response
-    );
+    public function extractCookies(RequestInterface $request, ResponseInterface $response): void;
 
     /**
      * Sets a cookie in the cookie jar.
@@ -46,7 +45,7 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      *
      * @return bool Returns true on success or false on failure
      */
-    public function setCookie(SetCookie $cookie);
+    public function setCookie(SetCookie $cookie): bool;
 
     /**
      * Remove cookies currently held in the cookie jar.
@@ -61,10 +60,8 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      * @param string|null $domain Clears cookies matching a domain
      * @param string|null $path   Clears cookies matching a domain and path
      * @param string|null $name   Clears cookies matching a domain, path, and name
-     *
-     * @return CookieJarInterface
      */
-    public function clear($domain = null, $path = null, $name = null);
+    public function clear(?string $domain = null, ?string $path = null, ?string $name = null): void;
 
     /**
      * Discard all sessions cookies.
@@ -73,12 +70,10 @@ interface CookieJarInterface extends \Countable, \IteratorAggregate
      * field set to true. To be called when the user agent shuts down according
      * to RFC 2965.
      */
-    public function clearSessionCookies();
+    public function clearSessionCookies(): void;
 
     /**
      * Converts the cookie jar to an array.
-     *
-     * @return array
      */
-    public function toArray();
+    public function toArray(): array;
 }

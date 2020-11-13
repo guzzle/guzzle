@@ -106,7 +106,7 @@ headers:
         'Link' => '<http:/.../front.jpeg>; rel="front"; type="image/jpeg"'
     ]);
 
-    $parsed = Psr7\parse_header($request->getHeader('Link'));
+    $parsed = Psr7\Header::parse($request->getHeader('Link'));
     var_export($parsed);
 
 Will output:
@@ -147,9 +147,9 @@ a message in a stream that uses PHP temp streams. When the size of the body
 exceeds 2 MB, the stream will automatically switch to storing data on disk
 rather than in memory (protecting your application from memory exhaustion).
 
-The easiest way to create a body for a message is using the ``stream_for``
-function from the ``GuzzleHttp\Psr7`` namespace --
-``GuzzleHttp\Psr7\stream_for``. This function accepts strings, resources,
+The easiest way to create a body for a message is using the ``streamFor``
+method from the ``GuzzleHttp\Psr7\Utils`` class --
+``Utils::streamFor``. This method accepts strings, resources,
 callables, iterators, other streamables, and returns an instance of
 ``Psr\Http\Message\StreamInterface``.
 
@@ -226,7 +226,7 @@ When creating a request, you can provide the URI as a string or an instance of
 Scheme
 ------
 
-The `scheme <http://tools.ietf.org/html/rfc3986#section-3.1>`_ of a request
+The `scheme <https://tools.ietf.org/html/rfc3986#section-3.1>`_ of a request
 specifies the protocol to use when sending the request. When using Guzzle, the
 scheme can be set to "http" or "https".
 
@@ -372,8 +372,8 @@ stream resource, and stream decorators can be found in the
 Creating Streams
 ----------------
 
-The best way to create a stream is using the ``GuzzleHttp\Psr7\stream_for``
-function. This function accepts strings, resources returned from ``fopen()``,
+The best way to create a stream is using the ``GuzzleHttp\Psr7\Utils::streamFor``
+method. This method accepts strings, resources returned from ``fopen()``,
 an object that implements ``__toString()``, iterators, callables, and instances
 of ``Psr\Http\Message\StreamInterface``.
 
@@ -381,7 +381,7 @@ of ``Psr\Http\Message\StreamInterface``.
 
     use GuzzleHttp\Psr7;
 
-    $stream = Psr7\stream_for('string data');
+    $stream = Psr7\Utils::streamFor('string data');
     echo $stream;
     // string data
     echo $stream->read(3);
@@ -408,7 +408,7 @@ requested by a stream consumer will be buffered until a subsequent read.
     };
 
     $iter = $generator(1024);
-    $stream = Psr7\stream_for($iter);
+    $stream = Psr7\Utils::streamFor($iter);
     echo $stream->read(3); // ...
 
 
@@ -417,7 +417,7 @@ Metadata
 
 Streams expose stream metadata through the ``getMetadata()`` method. This
 method provides the data you would retrieve when calling PHP's
-`stream_get_meta_data() function <http://php.net/manual/en/function.stream-get-meta-data.php>`_,
+`stream_get_meta_data() function <https://www.php.net/manual/en/function.stream-get-meta-data.php>`_,
 and can optionally expose other custom data.
 
 .. code-block:: php
@@ -425,7 +425,7 @@ and can optionally expose other custom data.
     use GuzzleHttp\Psr7;
 
     $resource = fopen('/path/to/file', 'r');
-    $stream = Psr7\stream_for($resource);
+    $stream = Psr7\Utils::streamFor($resource);
     echo $stream->getMetadata('uri');
     // /path/to/file
     var_export($stream->isReadable());

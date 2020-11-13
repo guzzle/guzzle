@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests\CookieJar;
 
 use GuzzleHttp\Cookie\SessionCookieJar;
@@ -6,13 +7,13 @@ use GuzzleHttp\Cookie\SetCookie;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\Cookie\SessionCookieJar
+ * @covers \GuzzleHttp\Cookie\SessionCookieJar
  */
 class SessionCookieJarTest extends TestCase
 {
     private $sessionVar;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->sessionVar = 'sessionKey';
 
@@ -21,12 +22,11 @@ class SessionCookieJarTest extends TestCase
         }
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testValidatesCookieSession()
     {
         $_SESSION[$this->sessionVar] = 'true';
+
+        $this->expectException(\RuntimeException::class);
         new SessionCookieJar($this->sessionVar);
     }
 
@@ -47,13 +47,13 @@ class SessionCookieJarTest extends TestCase
             'Name'    => 'foo',
             'Value'   => 'bar',
             'Domain'  => 'foo.com',
-            'Expires' => time() + 1000
+            'Expires' => \time() + 1000
         ]));
         $jar->setCookie(new SetCookie([
             'Name'    => 'baz',
             'Value'   => 'bar',
             'Domain'  => 'foo.com',
-            'Expires' => time() + 1000
+            'Expires' => \time() + 1000
         ]));
         $jar->setCookie(new SetCookie([
             'Name'    => 'boo',

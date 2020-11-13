@@ -1,4 +1,5 @@
 <?php
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\RequestException;
@@ -9,16 +10,16 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers GuzzleHttp\MessageFormatter
+ * @covers \GuzzleHttp\MessageFormatter
  */
 class MessageFormatterTest extends TestCase
 {
     public function testCreatesWithClfByDefault()
     {
         $f = new MessageFormatter();
-        self::assertEquals(MessageFormatter::CLF, self::readAttribute($f, 'template'));
+        self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
         $f = new MessageFormatter(null);
-        self::assertEquals(MessageFormatter::CLF, self::readAttribute($f, 'template'));
+        self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
     }
 
     public function dateProvider()
@@ -33,26 +34,32 @@ class MessageFormatterTest extends TestCase
     /**
      * @dataProvider dateProvider
      */
-    public function testFormatsTimestamps($format, $pattern)
+    public function testFormatsTimestamps(string $format, string $pattern)
     {
         $f = new MessageFormatter($format);
         $request = new Request('GET', '/');
         $result = $f->format($request);
-        self::assertRegExp($pattern, $result);
+        if (method_exists($this, 'assertMatchesRegularExpression')) {
+            // PHPUnit 9
+            self::assertMatchesRegularExpression($pattern, $result);
+        } else {
+            // PHPUnit 8
+            self::assertRegExp($pattern, $result);
+        }
     }
 
     public function formatProvider()
     {
-        $request = new Request('PUT', '/', ['x-test' => 'abc'], Psr7\stream_for('foo'));
-        $response = new Response(200, ['X-Baz' => 'Bar'], Psr7\stream_for('baz'));
+        $request = new Request('PUT', '/', ['x-test' => 'abc'], Psr7\Utils::streamFor('foo'));
+        $response = new Response(200, ['X-Baz' => 'Bar'], Psr7\Utils::streamFor('baz'));
         $err = new RequestException('Test', $request, $response);
 
         return [
-            ['{request}', [$request], Psr7\str($request)],
-            ['{response}', [$request, $response], Psr7\str($response)],
-            ['{request} {response}', [$request, $response], Psr7\str($request) . ' ' . Psr7\str($response)],
+            ['{request}', [$request], Psr7\Message::toString($request)],
+            ['{response}', [$request, $response], Psr7\Message::toString($response)],
+            ['{request} {response}', [$request, $response], Psr7\Message::toString($request) . ' ' . Psr7\Message::toString($response)],
             // Empty response yields no value
-            ['{request} {response}', [$request], Psr7\str($request) . ' '],
+            ['{request} {response}', [$request], Psr7\Message::toString($request) . ' '],
             ['{req_headers}', [$request], "PUT / HTTP/1.1\r\nx-test: abc"],
             ['{res_headers}', [$request, $response], "HTTP/1.1 200 OK\r\nX-Baz: Bar"],
             ['{res_headers}', [$request], 'NULL'],
@@ -66,8 +73,8 @@ class MessageFormatterTest extends TestCase
             ['{res_version}', [$request, $response], $response->getProtocolVersion()],
             ['{res_version}', [$request], 'NULL'],
             ['{host}', [$request], $request->getHeaderLine('Host')],
-            ['{hostname}', [$request, $response], gethostname()],
-            ['{hostname}{hostname}', [$request, $response], gethostname() . gethostname()],
+            ['{hostname}', [$request, $response], \gethostname()],
+            ['{hostname}{hostname}', [$request, $response], \gethostname() . \gethostname()],
             ['{code}', [$request, $response], $response->getStatusCode()],
             ['{code}', [$request], 'NULL'],
             ['{phrase}', [$request, $response], $response->getReasonPhrase()],
@@ -85,9 +92,9 @@ class MessageFormatterTest extends TestCase
     /**
      * @dataProvider formatProvider
      */
-    public function testFormatsMessages($template, $args, $result)
+    public function testFormatsMessages(string $template, array $args, $result)
     {
         $f = new MessageFormatter($template);
-        self::assertSame((string) $result, call_user_func_array([$f, 'format'], $args));
+        self::assertSame((string) $result, $f->format(...$args));
     }
 }
