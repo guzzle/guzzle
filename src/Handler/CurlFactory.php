@@ -483,7 +483,7 @@ class CurlFactory implements CurlFactoryInterface
             }
             $conf[\CURLOPT_NOPROGRESS] = false;
             $conf[\CURLOPT_PROGRESSFUNCTION] = static function ($resource, int $downloadSize, int $downloaded, int $uploadSize, int $uploaded) use ($progress) {
-                $progress($downloadSize, $downloaded, $uploadSize, $uploaded);
+                return $progress($downloadSize, $downloaded, $uploadSize, $uploaded);
             };
         }
 
