@@ -28,7 +28,7 @@ Creating a Client
         'timeout'  => 2.0,
     ]);
 
-Clients are immutable in Guzzle 6, which means that you cannot change the defaults used by a client after it's created.
+Clients are immutable in Guzzle, which means that you cannot change the defaults used by a client after it's created.
 
 The client constructor accepts an associative array of options:
 
