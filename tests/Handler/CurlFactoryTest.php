@@ -258,22 +258,28 @@ class CurlFactoryTest extends TestCase
     {
         $certFile = tempnam(sys_get_temp_dir(), "mock_test_cert");
         rename($certFile, $certFile .= '.der');
-        $f = new Handler\CurlFactory(3);
-        $f->create(new Psr7\Request('GET', Server::$url), ['cert' => $certFile]);
-        self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
-        self::assertEquals('DER', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
-        \unlink($certFile);
+        try {
+            $f = new Handler\CurlFactory(3);
+            $f->create(new Psr7\Request('GET', Server::$url), ['cert' => $certFile]);
+            self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
+            self::assertEquals('DER', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
+        } finally {
+            @\unlink($certFile);
+        }
     }
 
     public function testAddsP12Cert()
     {
         $certFile = tempnam(sys_get_temp_dir(), "mock_test_cert");
         rename($certFile, $certFile .= '.p12');
-        $f = new Handler\CurlFactory(3);
-        $f->create(new Psr7\Request('GET', Server::$url), ['cert' => $certFile]);
-        self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
-        self::assertEquals('P12', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
-        \unlink($certFile);
+        try {
+            $f = new Handler\CurlFactory(3);
+            $f->create(new Psr7\Request('GET', Server::$url), ['cert' => $certFile]);
+            self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
+            self::assertEquals('P12', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
+        } finally {
+            @\unlink($certFile);
+        }
     }
 
     public function testValidatesProgress()
