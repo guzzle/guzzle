@@ -155,7 +155,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         // Remove request modifying parameter because it can be done up-front.
         $headers = $options[RequestOptions::HEADERS] ?? [];
         $body = $options[RequestOptions::BODY] ?? null;
-        $version = $options['version'] ?? '1.1';
+        $version = $options[RequestOptions::VERSION] ?? '1.1';
         // Merge the URI into the base URI.
         $uri = $this->buildUri(Psr7\Utils::uriFor($uri), $options);
         if (\is_array($body)) {
@@ -163,7 +163,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
-        unset($options[RequestOptions::HEADERS], $options[RequestOptions::BODY], $options['version']);
+        unset($options[RequestOptions::HEADERS], $options[RequestOptions::BODY], $options[RequestOptions::VERSION]);
 
         return $this->transfer($request, $options);
     }
