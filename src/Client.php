@@ -414,8 +414,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
         }
 
-        if (isset($options['query'])) {
-            $value = $options['query'];
+        if (isset($options[RequestOptions::QUERY])) {
+            $value = $options[RequestOptions::QUERY];
             if (\is_array($value)) {
                 $value = \http_build_query($value, '', '&', \PHP_QUERY_RFC3986);
             }
@@ -423,7 +423,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 throw new InvalidArgumentException('query must be a string or array');
             }
             $modify['query'] = $value;
-            unset($options['query']);
+            unset($options[RequestOptions::QUERY]);
         }
 
         // Ensure that sink is not an invalid value.
