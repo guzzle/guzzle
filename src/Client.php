@@ -392,8 +392,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             unset($options['body']);
         }
 
-        if (!empty($options['auth']) && \is_array($options['auth'])) {
-            $value = $options['auth'];
+        if (!empty($options[RequestOptions::AUTH]) && \is_array($options[RequestOptions::AUTH])) {
+            $value = $options[RequestOptions::AUTH];
             $type = isset($value[2]) ? \strtolower($value[2]) : 'basic';
             switch ($type) {
                 case 'basic':
