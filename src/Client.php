@@ -365,7 +365,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         if (isset($options[RequestOptions::MULTIPART])) {
             $options[RequestOptions::BODY] = new Psr7\MultipartStream($options[RequestOptions::MULTIPART]);
-            unset($options[RequestOptions::MULTIPART]);
+            unset($options['multipart']);
         }
 
         if (isset($options[RequestOptions::JSON])) {
