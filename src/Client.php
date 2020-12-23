@@ -368,9 +368,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             unset($options['multipart']);
         }
 
-        if (isset($options['json'])) {
-            $options[RequestOptions::BODY] = Utils::jsonEncode($options['json']);
-            unset($options['json']);
+        if (isset($options[RequestOptions::JSON])) {
+            $options[RequestOptions::BODY] = Utils::jsonEncode($options[RequestOptions::JSON]);
+            unset($options[RequestOptions::JSON]);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'application/json';
