@@ -153,7 +153,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
-        $headers = $options['headers'] ?? [];
+        $headers = $options[RequestOptions::HEADERS] ?? [];
         $body = $options[RequestOptions::BODY] ?? null;
         $version = $options['version'] ?? '1.1';
         // Merge the URI into the base URI.
@@ -163,7 +163,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
-        unset($options['headers'], $options[RequestOptions::BODY], $options['version']);
+        unset($options[RequestOptions::HEADERS], $options[RequestOptions::BODY], $options['version']);
 
         return $this->transfer($request, $options);
     }
@@ -292,10 +292,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         // conditional headers and as headers passed to a request ctor.
         if (\array_key_exists('headers', $options)) {
             // Allows default headers to be unset.
-            if ($options['headers'] === null) {
+            if ($options[RequestOptions::HEADERS] === null) {
                 $defaults['_conditional'] = [];
-                unset($options['headers']);
-            } elseif (!\is_array($options['headers'])) {
+                unset($options[RequestOptions::HEADERS]);
+            } elseif (!\is_array($options[RequestOptions::HEADERS])) {
                 throw new InvalidArgumentException('headers must be an array');
             }
         }
@@ -343,9 +343,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             'set_headers' => [],
         ];
 
-        if (isset($options['headers'])) {
-            $modify['set_headers'] = $options['headers'];
-            unset($options['headers']);
+        if (isset($options[RequestOptions::HEADERS])) {
+            $modify['set_headers'] = $options[RequestOptions::HEADERS];
+            unset($options[RequestOptions::HEADERS]);
         }
 
         if (isset($options[RequestOptions::FORM_PARAMS])) {
