@@ -154,7 +154,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
         $headers = $options['headers'] ?? [];
-        $body = $options['body'] ?? null;
+        $body = $options[RequestOptions::BODY] ?? null;
         $version = $options['version'] ?? '1.1';
         // Merge the URI into the base URI.
         $uri = $this->buildUri(Psr7\Utils::uriFor($uri), $options);
@@ -163,7 +163,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
-        unset($options['headers'], $options['body'], $options['version']);
+        unset($options['headers'], $options[RequestOptions::BODY], $options['version']);
 
         return $this->transfer($request, $options);
     }
@@ -356,7 +356,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     . 'x-www-form-urlencoded requests, and the multipart '
                     . 'option to send multipart/form-data requests.');
             }
-            $options['body'] = \http_build_query($options['form_params'], '', '&');
+            $options[RequestOptions::BODY] = \http_build_query($options['form_params'], '', '&');
             unset($options['form_params']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Content-Type'], $options['_conditional']);
@@ -364,12 +364,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (isset($options['multipart'])) {
-            $options['body'] = new Psr7\MultipartStream($options['multipart']);
+            $options[RequestOptions::BODY] = new Psr7\MultipartStream($options['multipart']);
             unset($options['multipart']);
         }
 
         if (isset($options['json'])) {
-            $options['body'] = Utils::jsonEncode($options['json']);
+            $options[RequestOptions::BODY] = Utils::jsonEncode($options['json']);
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Content-Type'], $options['_conditional']);
@@ -384,12 +384,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
         }
 
-        if (isset($options['body'])) {
-            if (\is_array($options['body'])) {
+        if (isset($options[RequestOptions::BODY])) {
+            if (\is_array($options[RequestOptions::BODY])) {
                 throw $this->invalidBody();
             }
-            $modify['body'] = Psr7\Utils::streamFor($options['body']);
-            unset($options['body']);
+            $modify['body'] = Psr7\Utils::streamFor($options[RequestOptions::BODY]);
+            unset($options[RequestOptions::BODY]);
         }
 
         if (!empty($options[RequestOptions::AUTH]) && \is_array($options[RequestOptions::AUTH])) {
