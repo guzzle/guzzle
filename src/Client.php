@@ -348,7 +348,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             unset($options['headers']);
         }
 
-        if (isset($options['form_params'])) {
+        if (isset($options[RequestOptions::FORM_PARAMS])) {
             if (isset($options['multipart'])) {
                 throw new InvalidArgumentException('You cannot use '
                     . 'form_params and multipart at the same time. Use the '
@@ -356,8 +356,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     . 'x-www-form-urlencoded requests, and the multipart '
                     . 'option to send multipart/form-data requests.');
             }
-            $options[RequestOptions::BODY] = \http_build_query($options['form_params'], '', '&');
-            unset($options['form_params']);
+            $options[RequestOptions::BODY] = \http_build_query($options[RequestOptions::FORM_PARAMS], '', '&');
+            unset($options[RequestOptions::FORM_PARAMS]);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
