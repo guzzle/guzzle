@@ -349,7 +349,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (isset($options[RequestOptions::FORM_PARAMS])) {
-            if (isset($options['multipart'])) {
+            if (isset($options[RequestOptions::MULTIPART])) {
                 throw new InvalidArgumentException('You cannot use '
                     . 'form_params and multipart at the same time. Use the '
                     . 'form_params option if you want to send application/'
@@ -363,9 +363,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $options['_conditional']['Content-Type'] = 'application/x-www-form-urlencoded';
         }
 
-        if (isset($options['multipart'])) {
-            $options[RequestOptions::BODY] = new Psr7\MultipartStream($options['multipart']);
-            unset($options['multipart']);
+        if (isset($options[RequestOptions::MULTIPART])) {
+            $options[RequestOptions::BODY] = new Psr7\MultipartStream($options[RequestOptions::MULTIPART]);
+            unset($options[RequestOptions::MULTIPART]);
         }
 
         if (isset($options[RequestOptions::JSON])) {
