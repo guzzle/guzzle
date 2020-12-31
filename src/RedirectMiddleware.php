@@ -5,6 +5,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -201,6 +202,12 @@ class RedirectMiddleware
      */
     private function redirectUri(RequestInterface $request, ResponseInterface $response, array $protocols): UriInterface
     {
+        if (!strpos($request->getUri(), 'http://') || !strpos($request->getUri(), 'https://')) {
+            $changes = [];
+            $changes['uri'] = new Uri('http://' . $request->getUri());
+            $request = Psr7\Utils::modifyRequest($request, $changes);
+        }
+
         $location = Psr7\UriResolver::resolve(
             $request->getUri(),
             new Psr7\Uri($response->getHeaderLine('Location'))
