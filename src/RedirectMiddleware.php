@@ -202,10 +202,9 @@ class RedirectMiddleware
      */
     private function redirectUri(RequestInterface $request, ResponseInterface $response, array $protocols): UriInterface
     {
-        if (!strpos($request->getUri(), 'http://') || !strpos($request->getUri(), 'https://')) {
+        if (strpos($request->getUri(), 'http://') == false && !strpos($request->getUri(), 'https://') == false) {
             $changes = [];
-            // New Uri will add the protocol automatically.
-            $changes['uri'] = new Uri($request->getUri());
+            $changes['uri'] = new Uri('http://' . $request->getUri());
             $request = Psr7\Utils::modifyRequest($request, $changes);
         }
 
