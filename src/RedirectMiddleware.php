@@ -204,7 +204,8 @@ class RedirectMiddleware
     {
         if (!strpos($request->getUri(), 'http://') || !strpos($request->getUri(), 'https://')) {
             $changes = [];
-            $changes['uri'] = new Uri('http://' . $request->getUri());
+            // New Uri will add the protocol automatically.
+            $changes['uri'] = new Uri($request->getUri());
             $request = Psr7\Utils::modifyRequest($request, $changes);
         }
 
