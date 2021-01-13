@@ -285,8 +285,8 @@ can be used as a string, cast to a string, or used as a stream like object.
 
 .. code-block:: php
 
-    $body = $response->getBody();
     // Implicitly cast the body to a string and echo it
+    $body = $response->getBody();
     echo $body;
     // Explicitly cast the body to a string
     $stringBody = (string) $body;
