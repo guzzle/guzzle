@@ -565,7 +565,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
 - A ``GuzzleHttp\Exception\ConnectException`` exception is thrown in the
   event of a networking error. This exception extends from
-  ``GuzzleHttp\Exception\RequestException``.
+  ``GuzzleHttp\Exception\TransferException``.
 
 - A ``GuzzleHttp\Exception\ClientException`` is thrown for 400
   level errors if the ``http_errors`` request option is set to true. This
