@@ -386,16 +386,60 @@ class StreamHandler
      */
     private function add_proxy(RequestInterface $request, array &$options, $value, array &$params): void
     {
+        $uri = null;
+
         if (!\is_array($value)) {
-            $options['http']['proxy'] = $value;
+            $uri = $value;
         } else {
             $scheme = $request->getUri()->getScheme();
             if (isset($value[$scheme])) {
                 if (!isset($value['no']) || !Utils::isHostInNoProxy($request->getUri()->getHost(), $value['no'])) {
-                    $options['http']['proxy'] = $value[$scheme];
+                    $uri = $value[$scheme];
                 }
             }
         }
+
+        if (!$uri) {
+            return;
+        }
+
+        $parsed = $this->parse_proxy($uri);
+        $options['http']['proxy'] = $parsed['proxy'];
+
+        if ($parsed['auth']) {
+            if (!isset($options['http']['header'])) {
+                $options['http']['header'] = [];
+            }
+            $options['http']['header'] .= "\r\nProxy-Authorization: {$parsed['auth']}";
+        }
+    }
+
+    /**
+     * Parses the given proxy URL to make it compatible with the format PHP's stream context expects.
+     */
+    private function parse_proxy(string $url): array
+    {
+        $parsed = \parse_url($url);
+
+        if ($parsed !== false && isset($parsed['scheme']) && $parsed['scheme'] === 'http') {
+            if (isset($parsed['host']) && isset($parsed['port'])) {
+                $auth = null;
+                if (isset($parsed['user']) && isset($parsed['pass'])) {
+                    $auth = \base64_encode("{$parsed['user']}:{$parsed['pass']}");
+                }
+
+                return [
+                    'proxy' => "tcp://{$parsed['host']}:{$parsed['port']}",
+                    'auth' => $auth ? "Basic {$auth}" : null,
+                ];
+            }
+        }
+
+        // Return proxy as-is.
+        return [
+            'proxy' => $url,
+            'auth' => null,
+        ];
     }
 
     /**
