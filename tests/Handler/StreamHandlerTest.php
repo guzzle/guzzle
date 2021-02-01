@@ -309,6 +309,21 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('proxy', $opts['http']);
     }
 
+    public function testUsesProxy()
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://www.example.com', [], null, '1.0');
+        $response = $handler($request, [
+            'proxy' => Server::$url
+        ])->wait();
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('OK', $response->getReasonPhrase());
+        self::assertSame('Bar', $response->getHeaderLine('Foo'));
+        self::assertSame('8', $response->getHeaderLine('Content-Length'));
+        self::assertSame('hi there', (string) $response->getBody());
+    }
+
     public function testAddsTimeout()
     {
         $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);
