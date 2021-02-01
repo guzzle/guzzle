@@ -289,17 +289,18 @@ class StreamHandlerTest extends TestCase
 
     public function testAddsProxyByProtocol()
     {
-        $url = \str_replace('http', 'tcp', Server::$url);
-        // Workaround until #1823 is fixed properly
-        $url = \rtrim($url, '/');
+        $url = Server::$url;
         $res = $this->getSendResult(['proxy' => ['http' => $url]]);
         $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertSame($url, $opts['http']['proxy']);
+
+        foreach ([\PHP_URL_HOST, \PHP_URL_PORT] as $part) {
+            self::assertSame(parse_url($url, $part), parse_url($opts['http']['proxy'], $part));
+        }
     }
 
     public function testAddsProxyButHonorsNoProxy()
     {
-        $url = \str_replace('http', 'tcp', Server::$url);
+        $url = Server::$url;
         $res = $this->getSendResult(['proxy' => [
             'http' => $url,
             'no'   => ['*']
