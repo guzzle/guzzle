@@ -1,8 +1,8 @@
 daysUntilStale: 120
 daysUntilClose: 14
 exemptLabels:
-  - Keep open
-  - Ready for merge
+  - lifecycle/keep-open
+  - lifecycle/ready-for-merge
 # Label to use when marking an issue as stale
 staleLabel: lifecycle/stale
 # Comment to post when marking an issue as stale. Set to `false` to disable
