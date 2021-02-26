@@ -636,7 +636,7 @@ multipart
 
 .. note::
 
-    Do not set the `Content-Type` manually when you are using `multipart/form-data`
+    Do not set the `Content-Type` manually when you are using `multipart/form-data`.
 
 The value of ``multipart`` is an array of associative arrays, each containing
 the following key value pairs:
