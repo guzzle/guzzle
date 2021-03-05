@@ -87,6 +87,11 @@ class MessageFormatter implements MessageFormatterInterface
                         break;
                     case 'response':
                         $result = $response ? Psr7\Message::toString($response) : '';
+
+                        if ($response !== null) {
+                            $response->getBody()->rewind();
+                        }
+
                         break;
                     case 'req_headers':
                         $result = \trim($request->getMethod()

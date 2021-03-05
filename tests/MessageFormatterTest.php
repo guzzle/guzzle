@@ -97,4 +97,18 @@ class MessageFormatterTest extends TestCase
         $f = new MessageFormatter($template);
         self::assertSame((string) $result, $f->format(...$args));
     }
+
+    public function testResponseFormat(): void
+    {
+        $contents = '{"aza":root@myaza.info}';
+
+        $stream = Psr7\Utils::streamFor($contents);
+        $request = new Request('GET', '/');
+        $formatter = new MessageFormatter('{response}');
+        $response = new Response(200, [], $stream);
+
+        $formatter->format($request, $response);
+
+        self::assertEquals($response->getBody()->getContents(), $contents);
+    }
 }
