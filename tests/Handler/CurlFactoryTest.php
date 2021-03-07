@@ -198,6 +198,29 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testUsesProxy()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [
+                'Foo' => 'Bar',
+                'Baz' => 'bam',
+                'Content-Length' => 2,
+            ], 'hi')
+        ]);
+
+        $handler = new Handler\CurlMultiHandler();
+        $request = new Psr7\Request('GET', 'http://www.example.com', [], null, '1.0');
+        $promise = $handler($request, [
+            'proxy' => Server::$url
+        ]);
+        $response = $promise->wait();
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('Bar', $response->getHeaderLine('Foo'));
+        self::assertSame('2', $response->getHeaderLine('Content-Length'));
+        self::assertSame('hi', (string) $response->getBody());
+    }
+
     public function testValidatesSslKey()
     {
         $f = new Handler\CurlFactory(3);

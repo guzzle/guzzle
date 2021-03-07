@@ -803,7 +803,7 @@ Pass a string to specify a proxy for all protocols.
 
 .. code-block:: php
 
-    $client->request('GET', '/', ['proxy' => 'tcp://localhost:8125']);
+    $client->request('GET', '/', ['proxy' => 'http://localhost:8125']);
 
 Pass an associative array to specify HTTP proxies for specific URI schemes
 (i.e., "http", "https"). Provide a ``no`` key value pair to provide a list of
@@ -821,8 +821,8 @@ host names that should not be proxied to.
 
     $client->request('GET', '/', [
         'proxy' => [
-            'http'  => 'tcp://localhost:8125', // Use this proxy with "http"
-            'https' => 'tcp://localhost:9124', // Use this proxy with "https",
+            'http'  => 'http://localhost:8125', // Use this proxy with "http"
+            'https' => 'http://localhost:9124', // Use this proxy with "https",
             'no' => ['.mit.edu', 'foo.com']    // Don't use a proxy with these
         ]
     ]);
