@@ -117,6 +117,7 @@ class UtilsTest extends TestCase
         return [
             ['mit.edu', ['.mit.edu'], false],
             ['foo.mit.edu', ['.mit.edu'], true],
+            ['foo.mit.edu:123', ['.mit.edu'], true],
             ['mit.edu', ['mit.edu'], true],
             ['mit.edu', ['baz', 'mit.edu'], true],
             ['mit.edu', ['', '', 'mit.edu'], true],
