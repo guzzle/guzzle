@@ -232,7 +232,7 @@ EOT
         // Strip port if present.
         if (\strpos($host, ':')) {
             /** @var string[] $hostParts will never be false because of the checks above */
-            $hostParts = \explode($host, ':', 2);
+            $hostParts = \explode(':', $host, 2);
             $host = $hostParts[0];
         }
 
