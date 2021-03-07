@@ -103,7 +103,7 @@ final class Utils
     }
 
     /**
-     * @return callable|CurlHandler|CurlMultiHandler|null
+     * @return (callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface)|null
      */
     private static function getHandler()
     {
