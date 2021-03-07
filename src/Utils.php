@@ -90,24 +90,36 @@ final class Utils
      */
     public static function chooseHandler(): callable
     {
-        $handler = null;
-        if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
-            $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
-        } elseif (\function_exists('curl_exec')) {
-            $handler = new CurlHandler();
-        } elseif (\function_exists('curl_multi_exec')) {
-            $handler = new CurlMultiHandler();
+        $handler = self::getHandler();
+        if (\ini_get('allow_url_fopen')) {
+            return $handler ? Proxy::wrapStreaming($handler, new StreamHandler()) : new StreamHandler();
         }
 
-        if (\ini_get('allow_url_fopen')) {
-            $handler = $handler
-                ? Proxy::wrapStreaming($handler, new StreamHandler())
-                : new StreamHandler();
-        } elseif (!$handler) {
+        if (!$handler) {
             throw new \RuntimeException('GuzzleHttp requires cURL, the allow_url_fopen ini setting, or a custom HTTP handler.');
         }
 
         return $handler;
+    }
+
+    /**
+     * @return callable|CurlHandler|CurlMultiHandler|null
+     */
+    private static function getHandler()
+    {
+        if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
+            return Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
+        }
+
+        if (\function_exists('curl_exec')) {
+            return new CurlHandler();
+        }
+
+        if (\function_exists('curl_multi_exec')) {
+            return new CurlMultiHandler();
+        }
+
+        return null;
     }
 
     /**
