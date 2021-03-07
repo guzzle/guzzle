@@ -95,7 +95,7 @@ final class Utils
             return $handler ? Proxy::wrapStreaming($handler, new StreamHandler()) : new StreamHandler();
         }
 
-        if (!$handler) {
+        if (is_null($handler)) {
             throw new \RuntimeException('GuzzleHttp requires cURL, the allow_url_fopen ini setting, or a custom HTTP handler.');
         }
 
