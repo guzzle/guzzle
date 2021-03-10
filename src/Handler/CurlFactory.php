@@ -456,6 +456,12 @@ class CurlFactory implements CurlFactoryInterface
             if (!\file_exists($cert)) {
                 throw new \InvalidArgumentException("SSL certificate not found: {$cert}");
             }
+            # OpenSSL (versions 0.9.3 and later) also support "P12" for PKCS#12-encoded files.
+            # see https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
+            $ext = pathinfo($cert, \PATHINFO_EXTENSION);
+            if (preg_match('#^(der|p12)$#i', $ext)) {
+                $conf[\CURLOPT_SSLCERTTYPE] = strtoupper($ext);
+            }
             $conf[\CURLOPT_SSLCERT] = $cert;
         }
 

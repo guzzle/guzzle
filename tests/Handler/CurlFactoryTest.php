@@ -277,6 +277,34 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('test', $_SERVER['_curl'][\CURLOPT_SSLCERTPASSWD]);
     }
 
+    public function testAddsDerCert()
+    {
+        $certFile = tempnam(sys_get_temp_dir(), "mock_test_cert");
+        rename($certFile, $certFile .= '.der');
+        try {
+            $f = new Handler\CurlFactory(3);
+            $f->create(new Psr7\Request('GET', Server::$url), ['cert' => $certFile]);
+            self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
+            self::assertEquals('DER', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
+        } finally {
+            @\unlink($certFile);
+        }
+    }
+
+    public function testAddsP12Cert()
+    {
+        $certFile = tempnam(sys_get_temp_dir(), "mock_test_cert");
+        rename($certFile, $certFile .= '.p12');
+        try {
+            $f = new Handler\CurlFactory(3);
+            $f->create(new Psr7\Request('GET', Server::$url), ['cert' => $certFile]);
+            self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
+            self::assertEquals('P12', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
+        } finally {
+            @\unlink($certFile);
+        }
+    }
+
     public function testValidatesProgress()
     {
         $f = new Handler\CurlFactory(3);
