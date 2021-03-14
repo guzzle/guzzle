@@ -1,5 +1,6 @@
 includes:
     - phpstan-baseline.neon
+    - vendor-bin/phpstan/vendor/phpstan/phpstan-deprecation-rules/rules.neon
 
 parameters:
     level: max

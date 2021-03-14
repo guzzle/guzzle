@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="3.16@d03e5ef057d6adc656c0ff7e166c50b73b4f48f3">
+<files psalm-version="4.x-dev@">
   <file src="src/Client.php">
     <PossiblyUndefinedVariable occurrences="1">
       <code>$options</code>
@@ -19,7 +19,11 @@
     </ImplicitToStringCast>
   </file>
   <file src="src/Handler/CurlFactory.php">
-    <PossiblyInvalidArgument occurrences="12">
+    <FalseOperand occurrences="2">
+      <code>$timeoutRequiresNoSignal</code>
+      <code>$timeoutRequiresNoSignal</code>
+    </FalseOperand>
+    <PossiblyInvalidArgument occurrences="13">
       <code>$easy-&gt;handle</code>
       <code>$easy-&gt;handle</code>
       <code>$easy-&gt;handle</code>
@@ -32,9 +36,13 @@
       <code>$resource</code>
       <code>$resource</code>
       <code>$resource</code>
+      <code>$sslKey</code>
     </PossiblyInvalidArgument>
+    <PossiblyInvalidCast occurrences="1">
+      <code>$sslKey</code>
+    </PossiblyInvalidCast>
     <TypeDoesNotContainType occurrences="1">
-      <code>$timeoutRequiresNoSignal &amp;&amp; \strtoupper(\substr(\PHP_OS, 0, 3)) !== 'WIN'</code>
+      <code>$timeoutRequiresNoSignal</code>
     </TypeDoesNotContainType>
     <UndefinedDocblockClass occurrences="2">
       <code>private $handles = [];</code>
@@ -69,6 +77,9 @@
     </UndefinedThisPropertyAssignment>
   </file>
   <file src="src/Handler/EasyHandle.php">
+    <RedundantCast occurrences="1">
+      <code>(string) $startLine[2]</code>
+    </RedundantCast>
     <UndefinedDocblockClass occurrences="1">
       <code>resource|\CurlHandle</code>
     </UndefinedDocblockClass>

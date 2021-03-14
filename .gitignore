@@ -1,10 +1,10 @@
 .php_cs
 .php_cs.cache
 .phpunit.result.cache
-/composer.lock
+composer.lock
+vendor/
 /phpstan.neon
 /phpunit.xml
-/vendor/
 
 build/
 artifacts/
