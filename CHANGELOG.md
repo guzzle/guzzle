@@ -2,6 +2,18 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 7.3.0 - 2021-03-21
+
+### Added
+
+- Support for DER and P12 certificates [#2413](https://github.com/guzzle/guzzle/pull/2413(
+- Support the cURL (http://) scheme for StreamHandler proxies [#2850](https://github.com/guzzle/guzzle/pull/2850)
+- Support for `guzzlehttp/psr7:^2.0` [#2878](https://github.com/guzzle/guzzle/pull/2878)
+
+### Fixed
+
+- Handle exceptions on invalid header consistently between PHP versions and handlers [#2872](https://github.com/guzzle/guzzle/pull/2872)
+
 ## 7.2.0 - 2020-10-10
 
 ### Added
