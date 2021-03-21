@@ -103,9 +103,9 @@ class StreamHandler
         try {
             [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($hdrs);
         } catch (\Exception $e) {
-            $msg = 'An error was encountered while creating the response';
-            $ex = new RequestException($msg, $request, null, $e);
-            return P\Create::rejectionFor($ex);
+            return P\Create::rejectionFor(
+                new RequestException('An error was encountered while creating the response', $request, null, $e)
+            );
         }
 
         [$stream, $headers] = $this->checkDecode($options, $headers, $stream);
@@ -119,18 +119,18 @@ class StreamHandler
         try {
             $response = new Psr7\Response($status, $headers, $sink, $ver, $reason);
         } catch (\Exception $e) {
-            $msg = 'An error was encountered while creating the response';
-            $ex = new RequestException($msg, $request, null, $e);
-            return P\Create::rejectionFor($ex);
+            return P\Create::rejectionFor(
+                new RequestException('An error was encountered while creating the response', $request, null, $e)
+            );
         }
 
         if (isset($options['on_headers'])) {
             try {
                 $options['on_headers']($response);
             } catch (\Exception $e) {
-                $msg = 'An error was encountered during the on_headers event';
-                $ex = new RequestException($msg, $request, $response, $e);
-                return P\Create::rejectionFor($ex);
+                return P\Create::rejectionFor(
+                    new RequestException('An error was encountered during the on_headers event', $request, $response, $e)
+                );
             }
         }
 
