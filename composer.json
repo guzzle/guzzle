@@ -69,7 +69,5 @@
         "psr-4": {
             "GuzzleHttp\\Tests\\": "tests/"
         }
-    },
-    "prefer-stable": true,
-    "minimum-stability": "dev"
+    }
 }
