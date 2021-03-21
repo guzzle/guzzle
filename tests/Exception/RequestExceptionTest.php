@@ -184,12 +184,12 @@ final class ReadSeekOnlyStream extends Stream
         parent::__construct(\fopen('php://memory', 'wb'));
     }
 
-    public function isSeekable()
+    public function isSeekable(): bool
     {
         return true;
     }
 
-    public function isReadable()
+    public function isReadable(): bool
     {
         return false;
     }

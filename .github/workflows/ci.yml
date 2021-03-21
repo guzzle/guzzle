@@ -43,6 +43,12 @@ jobs:
       max-parallel: 10
       matrix:
         php: ['7.2', '7.3', '7.4', '8.0']
+        psr7: ['^1.7']
+        include:
+          - php: '7.4'
+            psr7: '^1.7@dev'
+          - php: '7.4'
+            psr7: '^2.0@dev'
 
     steps:
       - name: Set up PHP
@@ -64,7 +70,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download dependencies
-        run: composer update --no-interaction --no-progress --prefer-dist
+        run: |
+          composer require --no-update "guzzlehttp/psr7:${{ matrix.psr7 }}"
+          composer update --no-interaction --no-progress --prefer-dist
 
       - name: Run tests
         run: make test
