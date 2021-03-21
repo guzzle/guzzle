@@ -69,7 +69,7 @@ jobs:
 
       - name: Download dependencies
         run: |
-          composer require --no-update ${{ matrix.psr7 }}
+          composer require --no-update "guzzlehttp/psr7:${{ matrix.psr7 }}"
           composer update --no-interaction --no-progress --prefer-dist
 
       - name: Run tests
