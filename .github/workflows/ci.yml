@@ -48,8 +48,6 @@ jobs:
           - php: '7.4'
             psr7: '^1.7@dev'
           - php: '7.4'
-            psr7: '^2.0@beta'
-          - php: '7.4'
             psr7: '^2.0@dev'
 
     steps:
