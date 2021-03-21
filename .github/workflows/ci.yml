@@ -46,7 +46,7 @@ jobs:
         psr7: ['^1.7']
         include:
           - php: '7.4'
-            psr7: ['2.0.x-dev']
+            psr7: '2.0.x-dev'
 
     steps:
       - name: Set up PHP
