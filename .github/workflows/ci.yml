@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download dependencies
-        run: composer update --no-interaction --prefer-stable --prefer-lowest --prefer-dist
+        run: composer update --no-interaction --no-progress --prefer-stable --prefer-lowest --prefer-dist
 
       - name: Run tests
         run: make test
@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download dependencies
-        run: composer update --no-interaction --prefer-dist
+        run: composer update --no-interaction --no-progress --prefer-dist
 
       - name: Run tests
         run: make test
@@ -97,7 +97,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download dependencies
-        run: composer update --no-interaction --prefer-dist
+        run: composer update --no-interaction --no-progress --prefer-dist
 
       - name: Start test servers
         shell: bash
