@@ -708,4 +708,34 @@ class StreamHandlerTest extends TestCase
         self::assertTrue(\stream_get_meta_data($body)['timed_out']);
         self::assertFalse(\feof($body));
     }
+
+    public function testHandlesGarbageHttpServerGracefully()
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('An error was encountered while creating the response');
+
+        $handler(
+            new Request('GET', Server::$url . 'guzzle-server/garbage'),
+            [
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+    }
+
+    public function testHandlesInvalidStatusCodeGracefully()
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('An error was encountered while creating the response');
+
+        $handler(
+            new Request('GET', Server::$url . 'guzzle-server/bad-status'),
+            [
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+    }
 }

@@ -878,4 +878,24 @@ class CurlFactoryTest extends TestCase
         }
         self::assertSame($expectedLength, $actualLength);
     }
+
+    public function testHandlesGarbageHttpServerGracefully()
+    {
+        $a = new Handler\CurlMultiHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('cURL error 1: Received HTTP/0.9 when not allowed');
+
+        $a(new Psr7\Request('GET', Server::$url . 'guzzle-server/garbage'), [])->wait();
+    }
+
+    public function testHandlesInvalidStatusCodeGracefully()
+    {
+        $a = new Handler\CurlMultiHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('An error was encountered while creating the response');
+
+        $a(new Psr7\Request('GET', Server::$url . 'guzzle-server/bad-status'), [])->wait();
+    }
 }

@@ -125,7 +125,18 @@ var GuzzleServer = function(port, log) {
   };
 
   var controlRequest = function(request, req, res) {
-    if (req.url == '/guzzle-server/perf') {
+    if (req.url == '/guzzle-server/garbage') {
+      if (that.log) {
+        console.log('returning garbage')
+      }
+      res.socket.end("220 example.com ESMTP\r\n200 This is garbage\r\n\r\n");
+    } else if (req.url == '/guzzle-server/bad-status') {
+      if (that.log) {
+        console.log('returning bad status code')
+      }
+      res.writeHead(700, 'BAD', {'Content-Length': 16});
+      res.end('Body of response');
+    } else if (req.url == '/guzzle-server/perf') {
       res.writeHead(200, 'OK', {'Content-Length': 16});
       res.end('Body of response');
     } else if (req.method == 'DELETE') {
