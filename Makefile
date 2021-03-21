@@ -55,16 +55,29 @@ docs-show:
 static: static-phpstan static-psalm static-codestyle-check
 
 static-psalm:
-	docker run --rm -it -v ${PWD}:/app -w /app vimeo/psalm-github-actions
+	composer install
+	composer bin psalm update
+	vendor/bin/psalm.phar $(PSALM_PARAMS)
+
+static-psalm-update-baseline:
+	composer install
+	composer bin psalm update
+	$(MAKE) static-psalm PSALM_PARAMS="--set-baseline=psalm-baseline.xml"
 
 static-phpstan:
-	docker run --rm -it -e REQUIRE_DEV=true -v ${PWD}:/app -w /app oskarstark/phpstan-ga:0.12.48 analyze $(PHPSTAN_PARAMS)
+	composer install
+	composer bin phpstan update
+	vendor/bin/phpstan analyze $(PHPSTAN_PARAMS)
 
 static-phpstan-update-baseline:
+	composer install
+	composer bin phpstan update
 	$(MAKE) static-phpstan PHPSTAN_PARAMS="--generate-baseline"
 
 static-codestyle-fix:
-	docker run --rm -it -v ${PWD}:/app -w /app oskarstark/php-cs-fixer-ga:2.16.4 --diff-format udiff $(CS_PARAMS)
+	composer install
+	composer bin php-cs-fixer update
+	vendor/bin/php-cs-fixer fix --diff-format udiff $(CS_PARAMS)
 
 static-codestyle-check:
 	$(MAKE) static-codestyle-fix CS_PARAMS="--dry-run"

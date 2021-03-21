@@ -15,12 +15,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: PHPStan
-        uses: docker://oskarstark/phpstan-ga:0.12.48
-        env:
-          REQUIRE_DEV: true
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          args: analyze --no-progress
+          php-version: '7.4'
+          coverage: none
+          extensions: mbstring, intl
+
+      - name: Download dependencies
+        run: composer update --no-interaction --no-progress
+
+      - name: Download PHPStan
+        run: composer bin phpstan update --no-interaction --no-progress
+
+      - name: Execute PHPStan
+        run: vendor/bin/phpstan analyze --no-progress
 
   php-cs-fixer:
     name: PHP-CS-Fixer
@@ -30,31 +39,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: PHP-CS-Fixer
-        uses: docker://oskarstark/php-cs-fixer-ga:2.16.4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          args: --dry-run --diff-format udiff
+          php-version: '7.4'
+          coverage: none
+          extensions: mbstring
+
+      - name: Download dependencies
+        run: composer update --no-interaction --no-progress
+
+      - name: Download PHP CS Fixer
+        run: composer bin php-cs-fixer update --no-interaction --no-progress
+
+      - name: Execute PHP CS Fixer
+        run: vendor/bin/php-cs-fixer fix --diff-format udiff --dry-run
 
   psalm:
     name: Psalm
     runs-on: ubuntu-latest
-    steps:
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '7.4'
-          extensions: mbstring, intl
-          tools: composer:v2
 
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Download dependencies
-        run: |
-          composer require --dev --no-update psalm/phar:3.16
-          composer update --no-interaction --prefer-dist
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+          extensions: mbstring, intl
 
-      - name: Psalm
-        run: |
-          ./vendor/bin/psalm.phar --version
-          ./vendor/bin/psalm.phar --output-format=github --no-progress --show-info=false --stats
+      - name: Download dependencies
+        run: composer update --no-interaction --no-progress
+
+      - name: Download Psalm
+        run: composer bin psalm update --no-interaction --no-progress
+
+      - name: Execute Psalm
+        run: vendor/bin/psalm.phar --no-progress --output-format=github
