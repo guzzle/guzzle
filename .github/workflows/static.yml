@@ -21,7 +21,6 @@ jobs:
           php-version: '7.4'
           coverage: none
           extensions: mbstring, intl
-          tools: composer
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress
@@ -46,7 +45,6 @@ jobs:
           php-version: '7.4'
           coverage: none
           extensions: mbstring
-          tools: composer
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress
@@ -71,7 +69,6 @@ jobs:
           php-version: '7.4'
           coverage: none
           extensions: mbstring, intl
-          tools: composer
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress
