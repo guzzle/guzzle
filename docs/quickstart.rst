@@ -342,17 +342,19 @@ resource returned from ``fopen``, or an instance of a
 
 .. code-block:: php
 
+    use GuzzleHttp\Psr7;
+
     // Provide the body as a string.
     $r = $client->request('POST', 'http://httpbin.org/post', [
         'body' => 'raw data'
     ]);
 
     // Provide an fopen resource.
-    $body = fopen('/path/to/file', 'r');
+    $body = Psr7\Utils::tryFopen('/path/to/file', 'r');
     $r = $client->request('POST', 'http://httpbin.org/post', ['body' => $body]);
 
     // Use the Utils::streamFor method to create a PSR-7 stream.
-    $body = \GuzzleHttp\Psr7\Utils::streamFor('hello!');
+    $body = Psr7\Utils::streamFor('hello!');
     $r = $client->request('POST', 'http://httpbin.org/post', ['body' => $body]);
 
 An easy way to upload JSON data and set the appropriate header is using the
@@ -406,6 +408,8 @@ associative arrays, where each associative array contains the following keys:
 
 .. code-block:: php
 
+    use GuzzleHttp\Psr7;
+
     $response = $client->request('POST', 'http://httpbin.org/post', [
         'multipart' => [
             [
@@ -414,7 +418,7 @@ associative arrays, where each associative array contains the following keys:
             ],
             [
                 'name'     => 'file_name',
-                'contents' => fopen('/path/to/file', 'r')
+                'contents' => Psr7\Utils::tryFopen('/path/to/file', 'r')
             ],
             [
                 'name'     => 'other_file',

@@ -203,7 +203,7 @@ This setting can be set to any of the following types:
   .. code-block:: php
 
       // You can send requests that use a stream resource as the body.
-      $resource = fopen('http://httpbin.org', 'r');
+      $resource = \GuzzleHttp\Psr7\Utils::tryFopen('http://httpbin.org', 'r');
       $client->request('PUT', '/put', ['body' => $resource]);
 
 - ``Psr\Http\Message\StreamInterface``
@@ -646,6 +646,8 @@ the following key value pairs:
 
 .. code-block:: php
 
+    use GuzzleHttp\Psr7;
+
     $client->request('POST', '/post', [
         'multipart' => [
             [
@@ -655,11 +657,11 @@ the following key value pairs:
             ],
             [
                 'name'     => 'baz',
-                'contents' => fopen('/path/to/file', 'r')
+                'contents' => Psr7\Utils::tryFopen('/path/to/file', 'r')
             ],
             [
                 'name'     => 'qux',
-                'contents' => fopen('/path/to/file', 'r'),
+                'contents' => Psr7\Utils::tryFopen('/path/to/file', 'r'),
                 'filename' => 'custom_filename.txt'
             ],
         ]
@@ -907,7 +909,7 @@ Pass a resource returned from ``fopen()`` to write the response to a PHP stream:
 
 .. code-block:: php
 
-    $resource = fopen('/path/to/file', 'w');
+    $resource = \GuzzleHttp\Psr7\Utils::tryFopen('/path/to/file', 'w');
     $client->request('GET', '/stream/20', ['sink' => $resource]);
 
 Pass a ``Psr\Http\Message\StreamInterface`` object to stream the response
@@ -915,8 +917,8 @@ body to an open PSR-7 stream.
 
 .. code-block:: php
 
-    $resource = fopen('/path/to/file', 'w');
-    $stream = GuzzleHttp\Psr7\Utils::streamFor($resource);
+    $resource = \GuzzleHttp\Psr7\Utils::tryFopen('/path/to/file', 'w');
+    $stream = \GuzzleHttp\Psr7\Utils::streamFor($resource);
     $client->request('GET', '/stream/20', ['save_to' => $stream]);
 
 .. note::

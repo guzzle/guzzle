@@ -424,7 +424,7 @@ and can optionally expose other custom data.
 
     use GuzzleHttp\Psr7;
 
-    $resource = fopen('/path/to/file', 'r');
+    $resource = Psr7\Utils::tryFopen('/path/to/file', 'r');
     $stream = Psr7\Utils::streamFor($resource);
     echo $stream->getMetadata('uri');
     // /path/to/file
