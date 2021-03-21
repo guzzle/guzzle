@@ -538,7 +538,7 @@ on each other.
 
     . \RuntimeException
     └── TransferException (implements GuzzleException)
-        └── ConnectException (implements NetworkExceptionInterface)
+        ├── ConnectException (implements NetworkExceptionInterface)
         └── RequestException
             ├── BadResponseException
             │   ├── ServerException
