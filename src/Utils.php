@@ -71,12 +71,7 @@ final class Utils
             return \STDOUT;
         }
 
-        $resource = \fopen('php://output', 'w');
-        if (false === $resource) {
-            throw new \RuntimeException('Can not open php output for writing to debug the resource.');
-        }
-
-        return $resource;
+        return \GuzzleHttp\Psr7\Utils::tryFopen('php://output', 'w');
     }
 
     /**

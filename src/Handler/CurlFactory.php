@@ -393,7 +393,7 @@ class CurlFactory implements CurlFactoryInterface
 
         if (!isset($options['sink'])) {
             // Use a default temp stream if no sink was set.
-            $options['sink'] = \fopen('php://temp', 'w+');
+            $options['sink'] = \GuzzleHttp\Psr7\Utils::tryFopen('php://temp', 'w+');
         }
         $sink = $options['sink'];
         if (!\is_string($sink)) {
