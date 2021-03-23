@@ -2,7 +2,7 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
-## 7.3.0 - 2021-03-21
+## 7.3.0 - 2021-03-23
 
 ### Added
 
