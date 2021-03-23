@@ -54,7 +54,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "7.3-dev"
+            "dev-master": "7.4-dev"
         }
     },
     "autoload": {
