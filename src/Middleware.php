@@ -168,7 +168,7 @@ final class Middleware
      * @param callable $delay   Function that accepts the number of retries and
      *                          returns the number of milliseconds to delay.
      *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable(callable):callable Returns a function that accepts the next handler.
      */
     public static function retry(callable $decider, callable $delay = null): callable
     {
