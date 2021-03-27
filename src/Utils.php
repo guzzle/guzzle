@@ -269,7 +269,7 @@ EOT
      * @param int    $depth   User specified recursion depth.
      * @param int    $options Bitmask of JSON decode options.
      *
-     * @return array|string|int|float|bool|null
+     * @return object|array|string|int|float|bool|null
      *
      * @throws InvalidArgumentException if the JSON cannot be decoded.
      *
@@ -281,7 +281,7 @@ EOT
         if (\JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException('json_decode error: ' . \json_last_error_msg());
         }
-        if (!is_scalar($data) && !is_array($data) && $data !== null) {
+        if (!is_object($data) && !is_scalar($data) && !is_array($data) && $data !== null) {
             throw new InvalidArgumentException('unexpected data type: ' . gettype($data));
         }
 
