@@ -28,6 +28,7 @@ final class Utils
                 return 'array(' . \count($input) . ')';
             default:
                 \ob_start();
+                /** @psalm-suppress ForbiddenCode */
                 \var_dump($input);
                 // normalize float vs double
                 /** @var string $varDumpContent */
@@ -40,8 +41,10 @@ final class Utils
     /**
      * Parses an array of header lines into an associative array of headers.
      *
-     * @param iterable $lines Header lines array of strings in the following
-     *                        format: "Name: Value"
+     * @param iterable<string> $lines Header lines array of strings in the following
+     *                                format: "Name: Value"
+     *
+     * @return array<string, non-empty-list<string|null>>
      */
     public static function headersFromLines(iterable $lines): array
     {
@@ -130,7 +133,9 @@ final class Utils
      */
     public static function defaultCaBundle(): string
     {
+        /** @var string|null $cached */
         static $cached = null;
+        /** @var list<string> $cafiles */
         static $cafiles = [
             // Red Hat, CentOS, Fedora (provided by the ca-certificates package)
             '/etc/pki/tls/certs/ca-bundle.crt',
@@ -188,6 +193,8 @@ EOT
     /**
      * Creates an associative array of lowercase header names to the actual
      * header casing.
+     *
+     * @param array<string, non-empty-list<string|null>> $headers
      */
     public static function normalizeHeaderKeys(array $headers): array
     {
@@ -262,7 +269,7 @@ EOT
      * @param int    $depth   User specified recursion depth.
      * @param int    $options Bitmask of JSON decode options.
      *
-     * @return object|array|string|int|float|bool|null
+     * @return array|string|int|float|bool|null
      *
      * @throws InvalidArgumentException if the JSON cannot be decoded.
      *
@@ -273,6 +280,9 @@ EOT
         $data = \json_decode($json, $assoc, $depth, $options);
         if (\JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException('json_decode error: ' . \json_last_error_msg());
+        }
+        if (!is_scalar($data) && !is_array($data) && $data !== null) {
+            throw new InvalidArgumentException('unexpected data type: ' . gettype($data));
         }
 
         return $data;
@@ -331,7 +341,13 @@ EOT
 
                 $errors = [];
                 foreach ($errorConstants as $errorConstant) {
-                    if ($errorBitSet & constant($errorConstant)) {
+                    /** @var mixed $errorConstantValue */
+                    $errorConstantValue = constant($errorConstant);
+                    if (!is_int($errorConstantValue)) {
+                        continue;
+                    }
+
+                    if ($errorBitSet & $errorConstantValue) {
                         $errors[] = $errorConstant;
                     }
                 }
@@ -361,14 +377,16 @@ EOT
             return (string) $_SERVER[$name];
         }
 
-        if (\PHP_SAPI === 'cli' && ($value = \getenv($name)) !== false && $value !== null) {
-            return (string) $value;
+        if (\PHP_SAPI === 'cli' && ($value = \getenv($name)) !== false) {
+            return $value;
         }
 
         return null;
     }
 
     /**
+     * @param-out array{errors: int}|null $info
+     *
      * @return string|false
      */
     private static function idnToAsci(string $domain, int $options, ?array &$info = [])

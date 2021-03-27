@@ -361,10 +361,6 @@
       <code>$headers[$normalizedKeys['content-length']]</code>
       <code>$headers[$normalizedKeys['content-length']]</code>
     </MixedArrayOffset>
-    <MixedAssignment occurrences="2">
-      <code>$headers['x-encoded-content-encoding']</code>
-      <code>$headers['x-encoded-content-length']</code>
-    </MixedAssignment>
     <UndefinedDocblockClass occurrences="1">
       <code>resource|\CurlHandle</code>
     </UndefinedDocblockClass>
@@ -424,9 +420,8 @@
     <MixedArgumentTypeCoercion occurrences="1">
       <code>$hdrs</code>
     </MixedArgumentTypeCoercion>
-    <MixedArrayAccess occurrences="4">
+    <MixedArrayAccess occurrences="3">
       <code>$args[$i]</code>
-      <code>$encoding[0]</code>
       <code>$map[$code]</code>
       <code>$options['http']['header']</code>
     </MixedArrayAccess>
@@ -453,12 +448,9 @@
       <code>$headers[$normalizedKeys['content-length']]</code>
       <code>$headers[$normalizedKeys['content-length']]</code>
     </MixedArrayOffset>
-    <MixedAssignment occurrences="21">
-      <code>$encoding</code>
+    <MixedAssignment occurrences="18">
       <code>$err</code>
       <code>$fn</code>
-      <code>$headers['x-encoded-content-encoding']</code>
-      <code>$headers['x-encoded-content-length']</code>
       <code>$key</code>
       <code>$options['http']['proxy']</code>
       <code>$options['http']['timeout']</code>
@@ -684,50 +676,14 @@
     </TooManyArguments>
   </file>
   <file src="src/Utils.php">
-    <ForbiddenCode occurrences="1">
-      <code>\var_dump($input)</code>
-    </ForbiddenCode>
-    <MixedArgument occurrences="2">
-      <code>$filename</code>
-      <code>$line</code>
-    </MixedArgument>
-    <MixedArgumentTypeCoercion occurrences="1">
-      <code>$key</code>
-    </MixedArgumentTypeCoercion>
-    <MixedAssignment occurrences="5">
-      <code>$cached</code>
-      <code>$data</code>
-      <code>$errorBitSet</code>
-      <code>$filename</code>
-      <code>$line</code>
-    </MixedAssignment>
-    <MixedInferredReturnType occurrences="2">
-      <code>object|array|string|int|float|bool|null</code>
-      <code>string</code>
-    </MixedInferredReturnType>
-    <MixedOperand occurrences="1">
-      <code>constant($errorConstant)</code>
-    </MixedOperand>
-    <MixedReturnStatement occurrences="3">
-      <code>$cached</code>
-      <code>$cached = $filename</code>
-      <code>$data</code>
-    </MixedReturnStatement>
-    <RedundantCastGivenDocblockType occurrences="1">
-      <code>(string) $value</code>
-    </RedundantCastGivenDocblockType>
-    <RedundantConditionGivenDocblockType occurrences="1">
-      <code>$value !== null</code>
-    </RedundantConditionGivenDocblockType>
+    <ReferenceConstraintViolation occurrences="2">
+      <code>$info</code>
+      <code>return \idn_to_ascii($domain, $options, \INTL_IDNA_VARIANT_UTS46, $info);</code>
+    </ReferenceConstraintViolation>
   </file>
   <file src="src/functions.php">
     <DeprecatedMethod occurrences="1">
       <code>Utils::defaultCaBundle()</code>
     </DeprecatedMethod>
-  </file>
-  <file src="tests/static/issue-2846-middleware-retry-return.php">
-    <MixedArgumentTypeCoercion occurrences="1">
-      <code>Middleware::retry(function() {})</code>
-    </MixedArgumentTypeCoercion>
   </file>
 </files>

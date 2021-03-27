@@ -21,8 +21,8 @@ function describe_type($input): string
 /**
  * Parses an array of header lines into an associative array of headers.
  *
- * @param iterable $lines Header lines array of strings in the following
- *                        format: "Name: Value"
+ * @param iterable<string> $lines Header lines array of strings in the following
+ *                                format: "Name: Value"
  *
  * @deprecated headers_from_lines will be removed in guzzlehttp/guzzle:8.0. Use Utils::headersFromLines instead.
  */
@@ -94,6 +94,8 @@ function default_ca_bundle(): string
 /**
  * Creates an associative array of lowercase header names to the actual
  * header casing.
+ *
+ * @param array<string, non-empty-list<string|null>> $headers
  *
  * @deprecated normalize_header_keys will be removed in guzzlehttp/guzzle:8.0. Use Utils::normalizeHeaderKeys instead.
  */

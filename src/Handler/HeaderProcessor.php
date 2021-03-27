@@ -16,7 +16,7 @@ final class HeaderProcessor
      *
      * @throws \RuntimeException
      *
-     * @return array{0:string, 1:int, 2:?string, 3:array}
+     * @return array{0:string, 1:int, 2:?string, 3:array<string, non-empty-list<string|null>>}
      */
     public static function parseHeaders(array $headers): array
     {

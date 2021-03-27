@@ -157,7 +157,8 @@ class StreamHandler
     }
 
     /**
-     * @param resource $stream
+     * @param array<string, non-empty-list<string|null>> $headers
+     * @param resource                                   $stream
      */
     private function checkDecode(array $options, array $headers, $stream): array
     {
