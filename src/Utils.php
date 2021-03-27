@@ -281,7 +281,7 @@ EOT
         if (\JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException('json_decode error: ' . \json_last_error_msg());
         }
-        if (!is_object($data) && !is_scalar($data) && !is_array($data) && $data !== null) {
+        if (!\is_object($data) && !\is_scalar($data) && !\is_array($data) && $data !== null) {
             throw new InvalidArgumentException('unexpected data type: ' . gettype($data));
         }
 
@@ -343,7 +343,7 @@ EOT
                 foreach ($errorConstants as $errorConstant) {
                     /** @var mixed $errorConstantValue */
                     $errorConstantValue = constant($errorConstant);
-                    if (!is_int($errorConstantValue)) {
+                    if (!\is_int($errorConstantValue)) {
                         continue;
                     }
 
