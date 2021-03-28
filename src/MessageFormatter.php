@@ -75,7 +75,11 @@ class MessageFormatter implements MessageFormatterInterface
         /** @var string */
         return \preg_replace_callback(
             '/{\s*([A-Za-z_\-\.0-9]+)\s*}/',
-            function (array $matches) use ($request, $response, $error, &$cache) {
+            /**
+             * @param array<int, string> $matches
+             */
+            function (array $matches) use ($request, $response, $error, &$cache): string {
+                /** @var array<string, string> $cache */
                 if (isset($cache[$matches[1]])) {
                     return $cache[$matches[1]];
                 }
@@ -137,7 +141,7 @@ class MessageFormatter implements MessageFormatterInterface
                         break;
                     case 'uri':
                     case 'url':
-                        $result = $request->getUri();
+                        $result = $request->getUri()->__toString();
                         break;
                     case 'target':
                         $result = $request->getRequestTarget();
@@ -155,9 +159,12 @@ class MessageFormatter implements MessageFormatterInterface
                         break;
                     case 'hostname':
                         $result = \gethostname();
+                        if ($result === false) {
+                            $result = '';
+                        }
                         break;
                     case 'code':
-                        $result = $response ? $response->getStatusCode() : 'NULL';
+                        $result = $response ? (string)$response->getStatusCode() : 'NULL';
                         break;
                     case 'phrase':
                         $result = $response ? $response->getReasonPhrase() : 'NULL';

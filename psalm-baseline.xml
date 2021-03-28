@@ -104,11 +104,6 @@
       <code>$data</code>
     </MixedAssignment>
   </file>
-  <file src="src/Exception/RequestException.php">
-    <ImplicitToStringCast occurrences="1">
-      <code>$uri</code>
-    </ImplicitToStringCast>
-  </file>
   <file src="src/Handler/CurlFactory.php">
     <FalseOperand occurrences="2">
       <code>$timeoutRequiresNoSignal</code>
@@ -472,26 +467,6 @@
       <code>$this-&gt;stack</code>
       <code>$this-&gt;stack</code>
     </PropertyTypeCoercion>
-  </file>
-  <file src="src/MessageFormatter.php">
-    <InvalidScalarArgument occurrences="1"/>
-    <MixedArgument occurrences="4">
-      <code>$matches[1]</code>
-      <code>$matches[1]</code>
-      <code>$matches[1]</code>
-      <code>$matches[1]</code>
-    </MixedArgument>
-    <MixedArrayAccess occurrences="1">
-      <code>$cache[$matches[1]]</code>
-    </MixedArrayAccess>
-    <MixedArrayAssignment occurrences="1">
-      <code>$cache[$matches[1]]</code>
-    </MixedArrayAssignment>
-    <MixedArrayOffset occurrences="3">
-      <code>$cache[$matches[1]]</code>
-      <code>$cache[$matches[1]]</code>
-      <code>$cache[$matches[1]]</code>
-    </MixedArrayOffset>
   </file>
   <file src="src/Middleware.php">
     <DocblockTypeContradiction occurrences="2">
