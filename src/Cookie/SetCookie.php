@@ -3,12 +3,14 @@
 namespace GuzzleHttp\Cookie;
 
 /**
+ * @psalm-type CookieData=array{Name: string|null, Value: string|null, Domain: string|null, Path: string, Max-Age: int|null, Expires: string|int|null, Secure: bool, Discard: bool, HttpOnly: bool}
+ *
  * Set-Cookie object
  */
 class SetCookie
 {
     /**
-     * @var array
+     * @var CookieData
      */
     private static $defaults = [
         'Name'     => null,
@@ -23,7 +25,7 @@ class SetCookie
     ];
 
     /**
-     * @var array Cookie data
+     * @var CookieData Cookie data
      */
     private $data;
 
@@ -66,15 +68,16 @@ class SetCookie
             }
         }
 
+        /** @var CookieData $data */
         return new self($data);
     }
 
     /**
-     * @param array $data Array of cookie data provided by a Cookie parser
+     * @param CookieData|array<empty, empty> $data Array of cookie data provided by a Cookie parser
      */
     public function __construct(array $data = [])
     {
-        /** @var array|null $replaced will be null in case of replace error */
+        /** @var CookieData|null $replaced will be null in case of replace error */
         $replaced = \array_replace(self::$defaults, $data);
         if ($replaced === null) {
             throw new \InvalidArgumentException('Unable to replace the default values for the Cookie.');
@@ -84,7 +87,7 @@ class SetCookie
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         if (!$this->getExpires() && $this->getMaxAge()) {
             // Calculate the Expires date
-            $this->setExpires(\time() + $this->getMaxAge());
+            $this->setExpires(\time() + ($this->getMaxAge() ?? 0));
         } elseif (null !== ($expires = $this->getExpires()) && !\is_numeric($expires)) {
             $this->setExpires($expires);
         }
@@ -92,10 +95,13 @@ class SetCookie
 
     public function __toString()
     {
-        $str = $this->data['Name'] . '=' . $this->data['Value'] . '; ';
+        $str = ($this->data['Name'] ?? '') . '=' . ($this->data['Value'] ?? '') . '; ';
         foreach ($this->data as $k => $v) {
             if ($k !== 'Name' && $k !== 'Value' && $v !== null && $v !== false) {
                 if ($k === 'Expires') {
+                    if (!\is_int($v)) {
+                        $v = 0;
+                    }
                     $str .= 'Expires=' . \gmdate('D, d M Y H:i:s \G\M\T', $v) . '; ';
                 } else {
                     $str .= ($v === true ? $k : "{$k}={$v}") . '; ';
@@ -118,7 +124,7 @@ class SetCookie
      */
     public function getName()
     {
-        return $this->data['Name'];
+        return $this->data['Name'] ?? '';
     }
 
     /**

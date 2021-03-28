@@ -67,6 +67,7 @@
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Cookie/CookieJar.php">
+    <InvalidArgument occurrences="1"/>
     <MixedArgument occurrences="1">
       <code>$cookie</code>
     </MixedArgument>
@@ -102,46 +103,6 @@
       <code>$cookie</code>
       <code>$data</code>
     </MixedAssignment>
-  </file>
-  <file src="src/Cookie/SetCookie.php">
-    <MixedArgument occurrences="1">
-      <code>$v</code>
-    </MixedArgument>
-    <MixedArgumentTypeCoercion occurrences="1">
-      <code>$search</code>
-    </MixedArgumentTypeCoercion>
-    <MixedAssignment occurrences="1">
-      <code>$v</code>
-    </MixedAssignment>
-    <MixedInferredReturnType occurrences="9">
-      <code>bool</code>
-      <code>bool|null</code>
-      <code>bool|null</code>
-      <code>int|null</code>
-      <code>string</code>
-      <code>string</code>
-      <code>string|int|null</code>
-      <code>string|null</code>
-      <code>string|null</code>
-    </MixedInferredReturnType>
-    <MixedOperand occurrences="2">
-      <code>$this-&gt;data['Name']</code>
-      <code>$this-&gt;data['Value']</code>
-    </MixedOperand>
-    <MixedReturnStatement occurrences="9">
-      <code>$this-&gt;data['Discard']</code>
-      <code>$this-&gt;data['Domain']</code>
-      <code>$this-&gt;data['Expires']</code>
-      <code>$this-&gt;data['HttpOnly']</code>
-      <code>$this-&gt;data['Max-Age']</code>
-      <code>$this-&gt;data['Name']</code>
-      <code>$this-&gt;data['Path']</code>
-      <code>$this-&gt;data['Secure']</code>
-      <code>$this-&gt;data['Value']</code>
-    </MixedReturnStatement>
-    <PossiblyNullOperand occurrences="1">
-      <code>$this-&gt;getMaxAge()</code>
-    </PossiblyNullOperand>
   </file>
   <file src="src/Exception/RequestException.php">
     <ImplicitToStringCast occurrences="1">
