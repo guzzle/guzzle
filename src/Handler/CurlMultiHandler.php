@@ -221,7 +221,7 @@ class CurlMultiHandler
     private function processMessages(): void
     {
         while ($done = \curl_multi_info_read($this->_mh)) {
-            if ($done['msg'] !== CURLMSG_DONE) {
+            if ($done['msg'] !== \CURLMSG_DONE) {
                 // if it's not done, then it would be premature to remove the handle, right?
                 continue;
             }
