@@ -374,7 +374,7 @@ class SetCookieTest extends TestCase
 
             if (isset($p['Expires'])) {
                 // Remove expires values from the assertion if they are relatively equal
-                if (\abs($p['Expires'] != \strtotime($parsed['Expires'])) < 40) {
+                if (\abs($p['Expires'] - \strtotime($parsed['Expires'])) < 40) {
                     unset($p['Expires']);
                     unset($parsed['Expires']);
                 }
