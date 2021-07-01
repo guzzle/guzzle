@@ -253,7 +253,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $defaults['proxy']['no'] = \explode(',', $cleanedNoProxy);
         }
 
-        $this->config = $this->sumArray($config, $defaults);
+        $this->config = (array) $config + (array) $defaults;
 
         if (!empty($config['cookies']) && $config['cookies'] === true) {
             $this->config['cookies'] = new CookieJar();
@@ -301,7 +301,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         // Shallow merge defaults underneath options.
-        $result = $this->sumArray($options, $defaults);
+        $result = (array) $options + (array) $defaults;
 
         // Remove null values.
         foreach ($result as $k => $v) {
@@ -470,22 +470,5 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             . 'Please use the "form_params" request option to send a '
             . 'application/x-www-form-urlencoded request, or the "multipart" '
             . 'request option to send a multipart/form-data request.');
-    }
-
-    private function sumArray($param1, $param2): array
-    {
-        if (is_array($param1) && is_array($param2)) {
-            return $param1 + $param2;
-        }
-
-        if (is_array($param1) && !is_array($param2)) {
-            return $param1;
-        }
-
-        if (is_array($param2) && !is_array($param1)) {
-            return $param2;
-        }
-
-        return [];
     }
 }
