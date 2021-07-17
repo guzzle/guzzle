@@ -120,6 +120,10 @@ pairs:
     by default when a client is created with no handler, and is added by
     default when creating a handler with ``GuzzleHttp\HandlerStack::create``.
 
+.. note::
+
+    This option has **no** effect when making requests using ``GuzzleHttp\Client::sendRequest()``. In order to stay compliant with PSR-18 any redirect response is returned as is.
+
 
 auth
 ----
