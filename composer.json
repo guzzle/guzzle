@@ -32,7 +32,8 @@
         "ext-json": "*",
         "guzzlehttp/promises": "^1.4",
         "guzzlehttp/psr7": "^1.7 || ^2.0",
-        "psr/http-client": "^1.0"
+        "psr/http-client": "^1.0",
+        "symfony/deprecation-contracts": "^2.2"
     },
     "provide": {
         "psr/http-client-implementation": "1.0"
