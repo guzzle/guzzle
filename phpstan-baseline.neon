@@ -110,3 +110,7 @@ parameters:
 			count: 2
 			path: src/Middleware.php
 
+		-
+			message: "#^Result of && is always false\\.$#"
+			count: 1
+			path: src/Cookie/SetCookie.php
