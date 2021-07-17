@@ -346,10 +346,6 @@ class SetCookie
      */
     public function matchesPath(string $requestPath): bool
     {
-        if (!is_string($requestPath)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
-        }
-
         $cookiePath = $this->getPath();
 
         // Match on exact matches or when path is the default empty "/"
@@ -378,10 +374,6 @@ class SetCookie
      */
     public function matchesDomain(string $domain): bool
     {
-        if (!is_string($domain)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
-        }
-
         $cookieDomain = $this->getDomain();
         if (null === $cookieDomain) {
             return true;
