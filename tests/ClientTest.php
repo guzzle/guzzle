@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -611,6 +612,26 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mock]);
         $client->send(new Request('GET', 'http://foo.com'));
         self::assertTrue($mock->getLastOptions()['synchronous']);
+    }
+
+    public function testSendWithInvalidHeader()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('GET', 'http://foo.com');
+
+        $this->expectException(RequestException::class);
+        $client->send($request, ['headers'=>['X-Foo: Bar']]);
+    }
+
+    public function testSendWithInvalidHeaders()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('GET', 'http://foo.com');
+
+        $this->expectException(RequestException::class);
+        $client->send($request, ['headers'=>['X-Foo: Bar', 'X-Test: Fail']]);
     }
 
     public function testCanSetCustomHandler()
