@@ -114,3 +114,8 @@ parameters:
 			message: "#^Result of && is always false\\.$#"
 			count: 1
 			path: src/Cookie/SetCookie.php
+
+		-
+			message: "#^Result of && is always false\\.$#"
+			count: 1
+			path: src/HandlerStack.php
