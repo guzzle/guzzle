@@ -180,6 +180,10 @@ class HandlerStack
      */
     public function remove($remove): void
     {
+        if (!is_string($remove) && !is_callable($remove)) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a callable or string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+        }
+
         $this->cached = null;
         $idx = \is_callable($remove) ? 0 : 1;
         $this->stack = \array_values(\array_filter(
@@ -251,7 +255,7 @@ class HandlerStack
     /**
      * Provides a debug string for a given callable.
      *
-     * @param callable $fn Function to write as a string.
+     * @param callable|string $fn Function to write as a string.
      */
     private function debugCallable($fn): string
     {
