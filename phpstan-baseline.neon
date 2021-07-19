@@ -76,11 +76,6 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: "#^Parameter \\#2 \\$prefix of function http_build_query expects string, null given\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
 			message: "#^Method GuzzleHttp\\\\ClientInterface\\:\\:send\\(\\) has parameter \\$options with no value type specified in iterable type array\\.$#"
 			count: 1
 			path: src/ClientInterface.php
