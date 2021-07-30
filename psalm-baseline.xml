@@ -121,17 +121,6 @@
     <RedundantCastGivenDocblockType occurrences="1">
       <code>(int) $this-&gt;data['Max-Age']</code>
     </RedundantCastGivenDocblockType>
-    <UndefinedFunction occurrences="9">
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a boolean to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a boolean to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a boolean to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int or string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-    </UndefinedFunction>
   </file>
   <file src="src/Handler/CurlFactory.php">
     <FalseOperand occurrences="2">
@@ -329,14 +318,14 @@
       <code>resource|\CurlMultiHandle</code>
       <code>resource|\CurlMultiHandle|null</code>
     </UndefinedDocblockClass>
-    <UndefinedFunction occurrences="1">
-      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an integer to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
-    </UndefinedFunction>
     <UndefinedThisPropertyAssignment occurrences="1">
       <code>$this-&gt;_mh</code>
     </UndefinedThisPropertyAssignment>
   </file>
   <file src="src/Handler/EasyHandle.php">
+    <InvalidArgument occurrences="1">
+      <code>$headers</code>
+    </InvalidArgument>
     <MissingConstructor occurrences="3">
       <code>$handle</code>
       <code>$request</code>
