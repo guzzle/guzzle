@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.x-dev@">
   <file src="src/Client.php">
-    <MixedArgument occurrences="19">
+    <MixedArgument occurrences="21">
       <code>$body</code>
       <code>$config['base_uri']</code>
       <code>$config['base_uri']</code>
@@ -13,6 +13,8 @@
       <code>$options['_conditional']</code>
       <code>$options['body']</code>
       <code>$options['form_params']</code>
+      <code>$options['headers']</code>
+      <code>$options['headers']</code>
       <code>$options['multipart']</code>
       <code>$opts</code>
       <code>$opts</code>
@@ -103,6 +105,33 @@
       <code>$cookie</code>
       <code>$data</code>
     </MixedAssignment>
+  </file>
+  <file src="src/Cookie/SetCookie.php">
+    <DocblockTypeContradiction occurrences="9">
+      <code>!is_int($timestamp) &amp;&amp; !is_string($timestamp)</code>
+      <code>is_bool($discard)</code>
+      <code>is_bool($httpOnly)</code>
+      <code>is_bool($secure)</code>
+      <code>is_int($maxAge)</code>
+      <code>is_string($domain)</code>
+      <code>is_string($name)</code>
+      <code>is_string($path)</code>
+      <code>is_string($value)</code>
+    </DocblockTypeContradiction>
+    <RedundantCastGivenDocblockType occurrences="1">
+      <code>(int) $this-&gt;data['Max-Age']</code>
+    </RedundantCastGivenDocblockType>
+    <UndefinedFunction occurrences="9">
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a boolean to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a boolean to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a boolean to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int or string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+    </UndefinedFunction>
   </file>
   <file src="src/Handler/CurlFactory.php">
     <FalseOperand occurrences="2">
@@ -234,6 +263,9 @@
     </PossiblyInvalidArgument>
   </file>
   <file src="src/Handler/CurlMultiHandler.php">
+    <DocblockTypeContradiction occurrences="1">
+      <code>is_int($id)</code>
+    </DocblockTypeContradiction>
     <InvalidPropertyAssignmentValue occurrences="1">
       <code>$this-&gt;active</code>
     </InvalidPropertyAssignmentValue>
@@ -297,6 +329,9 @@
       <code>resource|\CurlMultiHandle</code>
       <code>resource|\CurlMultiHandle|null</code>
     </UndefinedDocblockClass>
+    <UndefinedFunction occurrences="1">
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an integer to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+    </UndefinedFunction>
     <UndefinedThisPropertyAssignment occurrences="1">
       <code>$this-&gt;_mh</code>
     </UndefinedThisPropertyAssignment>
