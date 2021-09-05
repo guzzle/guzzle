@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download dependencies
-        run: composer update --no-interaction --no-progress --prefer-stable --prefer-lowest --prefer-dist
+        run: composer update --no-interaction --no-progress --prefer-stable --prefer-lowest
 
       - name: Run tests
         run: make test
@@ -42,15 +42,13 @@ jobs:
     strategy:
       max-parallel: 10
       matrix:
-        php: ['7.2', '7.3', '7.4', '8.0']
-        psr7: ['^1.7']
+        php: ['7.2', '7.3', '7.4', '8.0', '8.1']
+        psr7: ['^1.7', '^2.0']
         include:
           - php: '7.4'
             psr7: '^1.7@dev'
           - php: '7.4'
             psr7: '^2.0@dev'
-          - php: '7.4'
-            psr7: '^2.0@beta'
 
     steps:
       - name: Set up PHP
@@ -71,10 +69,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Mimic PHP 8.0
+        run: composer config platform.php 8.0.999
+        if: matrix.php > 8
+
       - name: Download dependencies
         run: |
           composer require --no-update "guzzlehttp/psr7:${{ matrix.psr7 }}"
-          composer update --no-interaction --no-progress --prefer-dist
+          composer update --no-interaction --no-progress
 
       - name: Run tests
         run: make test
@@ -85,7 +87,7 @@ jobs:
     strategy:
       max-parallel: 10
       matrix:
-        php: ['7.2', '7.3', '7.4', '8.0']
+        php: ['7.2', '7.3', '7.4', '8.0', '8.1']
 
     steps:
       - name: Set up PHP
@@ -106,8 +108,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Mimic PHP 8.0
+        run: composer config platform.php 8.0.999
+        if: matrix.php > 8
+
       - name: Download dependencies
-        run: composer update --no-interaction --no-progress --prefer-dist
+        run: composer update --no-interaction --no-progress
 
       - name: Start test servers
         shell: bash
