@@ -53,7 +53,7 @@ jobs:
         run: composer bin php-cs-fixer update --no-interaction --no-progress
 
       - name: Execute PHP CS Fixer
-        run: vendor/bin/php-cs-fixer fix --diff-format udiff --dry-run
+        run: vendor/bin/php-cs-fixer fix --diff --dry-run
 
   psalm:
     name: Psalm

@@ -77,7 +77,7 @@ static-phpstan-update-baseline:
 static-codestyle-fix:
 	composer install
 	composer bin php-cs-fixer update
-	vendor/bin/php-cs-fixer fix --diff-format udiff $(CS_PARAMS)
+	vendor/bin/php-cs-fixer fix --diff $(CS_PARAMS)
 
 static-codestyle-check:
 	$(MAKE) static-codestyle-fix CS_PARAMS="--dry-run"
