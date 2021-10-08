@@ -19,10 +19,10 @@ use Psr\Http\Message\ResponseInterface;
 
 class ClientTest extends TestCase
 {
-    public function testUsesDefaultHandler()
+    public function testUsesDefaultHandler(): void
     {
         $client = new Client();
-        Server::enqueue([new Response(200, ['Content-Length' => 0])]);
+        Server::enqueue([new Response(200, ['Content-Length' => '0'])]);
         $response = $client->get(Server::$url);
         self::assertSame(200, $response->getStatusCode());
     }

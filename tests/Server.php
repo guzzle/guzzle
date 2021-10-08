@@ -27,6 +27,10 @@ class Server
      */
     private static $client;
     private static $started = false;
+
+    /**
+     * @var string
+     */
     public static $url = 'http://127.0.0.1:8126/';
     public static $port = 8126;
 

@@ -1,6 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="4.x-dev@">
   <file src="src/Client.php">
+    <MixedArgument occurrences="21">
+      <code>$body</code>
+      <code>$config['base_uri']</code>
+      <code>$config['base_uri']</code>
+      <code>$headers</code>
+      <code>$idnOptions</code>
+      <code>$modify['set_headers']</code>
+      <code>$options['_conditional']</code>
+      <code>$options['_conditional']</code>
+      <code>$options['_conditional']</code>
+      <code>$options['body']</code>
+      <code>$options['form_params']</code>
+      <code>$options['headers']</code>
+      <code>$options['headers']</code>
+      <code>$options['multipart']</code>
+      <code>$opts</code>
+      <code>$opts</code>
+      <code>$this-&gt;config['headers']</code>
+      <code>$uri</code>
+      <code>$uri</code>
+      <code>$value[2]</code>
+      <code>$version</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="2">
+      <code>$k</code>
+      <code>$name</code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayAssignment occurrences="6">
+      <code>$modify['set_headers']['Accept-Encoding']</code>
+      <code>$options['curl'][\CURLOPT_HTTPAUTH]</code>
+      <code>$options['curl'][\CURLOPT_HTTPAUTH]</code>
+      <code>$options['curl'][\CURLOPT_USERPWD]</code>
+      <code>$options['curl'][\CURLOPT_USERPWD]</code>
+      <code>$this-&gt;config['headers']['User-Agent']</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="13">
+      <code>$body</code>
+      <code>$defaults['_conditional']</code>
+      <code>$headers</code>
+      <code>$idnOptions</code>
+      <code>$modify['set_headers']</code>
+      <code>$modify['set_headers'][$k]</code>
+      <code>$modify['set_headers']['Accept-Encoding']</code>
+      <code>$opts</code>
+      <code>$uri</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$value</code>
+      <code>$version</code>
+    </MixedAssignment>
+    <MixedInferredReturnType occurrences="3">
+      <code>ResponseInterface</code>
+      <code>ResponseInterface</code>
+      <code>ResponseInterface</code>
+    </MixedInferredReturnType>
+    <MixedReturnStatement occurrences="3">
+      <code>$this-&gt;requestAsync($method, $uri, $options)-&gt;wait()</code>
+      <code>$this-&gt;sendAsync($request, $options)-&gt;wait()</code>
+      <code>$this-&gt;sendAsync($request, $options)-&gt;wait()</code>
+    </MixedReturnStatement>
     <PossiblyUndefinedVariable occurrences="1">
       <code>$options</code>
     </PossiblyUndefinedVariable>
@@ -9,9 +69,90 @@
     </UndefinedInterfaceMethod>
   </file>
   <file src="src/Cookie/CookieJar.php">
+    <MixedArgument occurrences="1">
+      <code>$cookie</code>
+    </MixedArgument>
+    <MixedAssignment occurrences="2">
+      <code>$cookie</code>
+      <code>$value</code>
+    </MixedAssignment>
     <PossiblyFalseOperand occurrences="1">
       <code>$result</code>
     </PossiblyFalseOperand>
+    <PossiblyNullOperand occurrences="1">
+      <code>$cookie-&gt;getValue()</code>
+    </PossiblyNullOperand>
+    <RedundantConditionGivenDocblockType occurrences="1">
+      <code>$cookie-&gt;getName() !== null</code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="src/Cookie/FileCookieJar.php">
+    <MixedArgument occurrences="1">
+      <code>$cookie</code>
+    </MixedArgument>
+    <MixedAssignment occurrences="1">
+      <code>$cookie</code>
+    </MixedAssignment>
+  </file>
+  <file src="src/Cookie/SessionCookieJar.php">
+    <MixedArgument occurrences="3">
+      <code>$_SESSION[$this-&gt;sessionKey]</code>
+      <code>$cookie</code>
+      <code>$data</code>
+    </MixedArgument>
+    <MixedAssignment occurrences="2">
+      <code>$cookie</code>
+      <code>$data</code>
+    </MixedAssignment>
+  </file>
+  <file src="src/Cookie/SetCookie.php">
+    <DocblockTypeContradiction occurrences="9">
+      <code>!is_int($timestamp) &amp;&amp; !is_string($timestamp)</code>
+      <code>is_bool($discard)</code>
+      <code>is_bool($httpOnly)</code>
+      <code>is_bool($secure)</code>
+      <code>is_int($maxAge)</code>
+      <code>is_string($domain)</code>
+      <code>is_string($name)</code>
+      <code>is_string($path)</code>
+      <code>is_string($value)</code>
+    </DocblockTypeContradiction>
+    <MixedArgument occurrences="1">
+      <code>$v</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="1">
+      <code>$search</code>
+    </MixedArgumentTypeCoercion>
+    <MixedAssignment occurrences="1">
+      <code>$v</code>
+    </MixedAssignment>
+    <MixedInferredReturnType occurrences="8">
+      <code>bool</code>
+      <code>bool|null</code>
+      <code>bool|null</code>
+      <code>string</code>
+      <code>string</code>
+      <code>string|int|null</code>
+      <code>string|null</code>
+      <code>string|null</code>
+    </MixedInferredReturnType>
+    <MixedOperand occurrences="2">
+      <code>$this-&gt;data['Name']</code>
+      <code>$this-&gt;data['Value']</code>
+    </MixedOperand>
+    <MixedReturnStatement occurrences="8">
+      <code>$this-&gt;data['Discard']</code>
+      <code>$this-&gt;data['Domain']</code>
+      <code>$this-&gt;data['Expires']</code>
+      <code>$this-&gt;data['HttpOnly']</code>
+      <code>$this-&gt;data['Name']</code>
+      <code>$this-&gt;data['Path']</code>
+      <code>$this-&gt;data['Secure']</code>
+      <code>$this-&gt;data['Value']</code>
+    </MixedReturnStatement>
+    <PossiblyNullOperand occurrences="1">
+      <code>$this-&gt;getMaxAge()</code>
+    </PossiblyNullOperand>
   </file>
   <file src="src/Exception/RequestException.php">
     <ImplicitToStringCast occurrences="1">
@@ -23,6 +164,89 @@
       <code>$timeoutRequiresNoSignal</code>
       <code>$timeoutRequiresNoSignal</code>
     </FalseOperand>
+    <MissingClosureParamType occurrences="8">
+      <code>$ch</code>
+      <code>$ch</code>
+      <code>$ch</code>
+      <code>$fd</code>
+      <code>$h</code>
+      <code>$length</code>
+      <code>$resource</code>
+      <code>$write</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="2">
+      <code>static function ($ch, $fd, $length) use ($body) {</code>
+      <code>static function ($resource, int $downloadSize, int $downloaded, int $uploadSize, int $uploaded) use ($progress) {</code>
+    </MissingClosureReturnType>
+    <MixedArgument occurrences="19">
+      <code>$cert</code>
+      <code>$cert</code>
+      <code>$ctx</code>
+      <code>$ctx</code>
+      <code>$ctx['errno']</code>
+      <code>$ctx['error']</code>
+      <code>$ctx['error']</code>
+      <code>$curlStats</code>
+      <code>$curlStats['total_time']</code>
+      <code>$h</code>
+      <code>$h</code>
+      <code>$length</code>
+      <code>$options['_headers']</code>
+      <code>$options['curl']</code>
+      <code>$options['proxy']['no']</code>
+      <code>$sink</code>
+      <code>$sslKey</code>
+      <code>$verifyLink</code>
+      <code>$write</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="1">
+      <code>$key</code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayAccess occurrences="2">
+      <code>$curlStats['total_time']</code>
+      <code>$options['_headers'][$key]</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="9">
+      <code>$conf[\CURLOPT_HTTPHEADER][]</code>
+      <code>$conf[\CURLOPT_HTTPHEADER][]</code>
+      <code>$conf[\CURLOPT_HTTPHEADER][]</code>
+      <code>$conf[\CURLOPT_HTTPHEADER][]</code>
+      <code>$conf[\CURLOPT_HTTPHEADER][]</code>
+      <code>$conf[\CURLOPT_HTTPHEADER][]</code>
+      <code>$conf[\CURLOPT_HTTPHEADER][]</code>
+      <code>$ctx[self::CURL_VERSION_STR]</code>
+      <code>$curlStats['appconnect_time']</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="19">
+      <code>$cert</code>
+      <code>$cert</code>
+      <code>$conf[\CURLOPT_CONNECTTIMEOUT_MS]</code>
+      <code>$conf[\CURLOPT_PROXY]</code>
+      <code>$conf[\CURLOPT_PROXY]</code>
+      <code>$conf[\CURLOPT_SSLCERTPASSWD]</code>
+      <code>$conf[\CURLOPT_SSLCERT]</code>
+      <code>$conf[\CURLOPT_SSLKEY]</code>
+      <code>$conf[\CURLOPT_TIMEOUT_MS]</code>
+      <code>$ctx</code>
+      <code>$ctx[self::CURL_VERSION_STR]</code>
+      <code>$curlStats</code>
+      <code>$curlStats['appconnect_time']</code>
+      <code>$name</code>
+      <code>$options['_body_as_string']</code>
+      <code>$sink</code>
+      <code>$sslKey</code>
+      <code>$value</code>
+      <code>$values</code>
+    </MixedAssignment>
+    <MixedFunctionCall occurrences="1">
+      <code>($easy-&gt;options['on_stats'])($stats)</code>
+    </MixedFunctionCall>
+    <MixedOperand occurrences="4">
+      <code>$easy-&gt;options['_curl_retries']</code>
+      <code>$options['connect_timeout']</code>
+      <code>$options['timeout']</code>
+      <code>\curl_getinfo($easy-&gt;handle)</code>
+    </MixedOperand>
     <PossiblyInvalidArgument occurrences="13">
       <code>$easy-&gt;handle</code>
       <code>$easy-&gt;handle</code>
@@ -50,15 +274,71 @@
     </UndefinedDocblockClass>
   </file>
   <file src="src/Handler/CurlHandler.php">
+    <MixedArgument occurrences="1">
+      <code>$options['delay'] * 1000</code>
+    </MixedArgument>
+    <MixedOperand occurrences="1">
+      <code>$options['delay']</code>
+    </MixedOperand>
     <PossiblyInvalidArgument occurrences="2">
       <code>$easy-&gt;handle</code>
       <code>$easy-&gt;handle</code>
     </PossiblyInvalidArgument>
   </file>
   <file src="src/Handler/CurlMultiHandler.php">
+    <DocblockTypeContradiction occurrences="1">
+      <code>is_int($id)</code>
+    </DocblockTypeContradiction>
     <InvalidPropertyAssignmentValue occurrences="1">
       <code>$this-&gt;active</code>
     </InvalidPropertyAssignmentValue>
+    <MixedArgument occurrences="7">
+      <code>$done['handle']</code>
+      <code>$easy-&gt;handle</code>
+      <code>$entry['easy']</code>
+      <code>$handle</code>
+      <code>$handle</code>
+      <code>$this-&gt;_mh</code>
+      <code>$this-&gt;handles[$id]['easy']-&gt;handle</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="1">
+      <code>$option</code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayAccess occurrences="6">
+      <code>$easy-&gt;options['delay']</code>
+      <code>$entry['deferred']</code>
+      <code>$entry['easy']</code>
+      <code>$entry['easy']</code>
+      <code>$this-&gt;handles[$id]['easy']</code>
+      <code>$this-&gt;handles[$id]['easy']</code>
+    </MixedArrayAccess>
+    <MixedAssignment occurrences="7">
+      <code>$easy</code>
+      <code>$entry</code>
+      <code>$handle</code>
+      <code>$this-&gt;factory</code>
+      <code>$this-&gt;options</code>
+      <code>$this-&gt;selectTimeout</code>
+      <code>$value</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="1">
+      <code>resolve</code>
+    </MixedMethodCall>
+    <MixedOperand occurrences="1">
+      <code>$easy-&gt;options['delay']</code>
+    </MixedOperand>
+    <MixedPropertyAssignment occurrences="1">
+      <code>$entry['easy']</code>
+    </MixedPropertyAssignment>
+    <MixedPropertyFetch occurrences="4">
+      <code>$easy-&gt;handle</code>
+      <code>$easy-&gt;options</code>
+      <code>$this-&gt;handles[$id]['easy']-&gt;handle</code>
+      <code>$this-&gt;handles[$id]['easy']-&gt;handle</code>
+    </MixedPropertyFetch>
+    <MixedPropertyTypeCoercion occurrences="1">
+      <code>$this-&gt;delays</code>
+    </MixedPropertyTypeCoercion>
     <PossiblyInvalidArgument occurrences="7">
       <code>$this-&gt;_mh</code>
       <code>$this-&gt;_mh</code>
@@ -77,19 +357,174 @@
     </UndefinedThisPropertyAssignment>
   </file>
   <file src="src/Handler/EasyHandle.php">
-    <RedundantCast occurrences="1">
-      <code>(string) $startLine[2]</code>
-    </RedundantCast>
+    <MissingConstructor occurrences="3">
+      <code>$handle</code>
+      <code>$request</code>
+      <code>$sink</code>
+    </MissingConstructor>
+    <MixedArgumentTypeCoercion occurrences="2">
+      <code>$headers</code>
+      <code>$this-&gt;headers</code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayOffset occurrences="5">
+      <code>$headers[$normalizedKeys['content-encoding']]</code>
+      <code>$headers[$normalizedKeys['content-encoding']]</code>
+      <code>$headers[$normalizedKeys['content-length']]</code>
+      <code>$headers[$normalizedKeys['content-length']]</code>
+      <code>$headers[$normalizedKeys['content-length']]</code>
+    </MixedArrayOffset>
+    <MixedAssignment occurrences="2">
+      <code>$headers['x-encoded-content-encoding']</code>
+      <code>$headers['x-encoded-content-length']</code>
+    </MixedAssignment>
     <UndefinedDocblockClass occurrences="1">
       <code>resource|\CurlHandle</code>
     </UndefinedDocblockClass>
+  </file>
+  <file src="src/Handler/MockHandler.php">
+    <MissingClosureParamType occurrences="1">
+      <code>$reason</code>
+    </MissingClosureParamType>
+    <MixedArgument occurrences="2">
+      <code>$response</code>
+      <code>$transferTime</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="1">
+      <code>$queue</code>
+    </MixedArgumentTypeCoercion>
+    <MixedAssignment occurrences="5">
+      <code>$response</code>
+      <code>$response</code>
+      <code>$sink</code>
+      <code>$transferTime</code>
+      <code>$value</code>
+    </MixedAssignment>
+    <MixedFunctionCall occurrences="1">
+      <code>($options['on_stats'])($stats)</code>
+    </MixedFunctionCall>
   </file>
   <file src="src/Handler/StreamHandler.php">
     <ImplicitToStringCast occurrences="1">
       <code>$uri</code>
     </ImplicitToStringCast>
+    <MissingClosureParamType occurrences="12">
+      <code>$_</code>
+      <code>$a</code>
+      <code>$args</code>
+      <code>$b</code>
+      <code>$c</code>
+      <code>$code</code>
+      <code>$file</code>
+      <code>$line</code>
+      <code>$msg</code>
+      <code>$passed</code>
+      <code>$total</code>
+      <code>$transferred</code>
+    </MissingClosureParamType>
+    <MixedArgument occurrences="10">
+      <code>$headers</code>
+      <code>$map[$code]</code>
+      <code>$options['delay'] * 1000</code>
+      <code>$records[0]['ip']</code>
+      <code>$sink</code>
+      <code>$stream</code>
+      <code>$uri</code>
+      <code>$usec</code>
+      <code>$value</code>
+      <code>$value['no']</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="1">
+      <code>$hdrs</code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayAccess occurrences="4">
+      <code>$args[$i]</code>
+      <code>$encoding[0]</code>
+      <code>$map[$code]</code>
+      <code>$options['http']['header']</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="13">
+      <code>$errors[]</code>
+      <code>$options['http']['header']</code>
+      <code>$options['http']['header']</code>
+      <code>$options['http']['proxy']</code>
+      <code>$options['http']['timeout']</code>
+      <code>$options['ssl']['allow_self_signed']</code>
+      <code>$options['ssl']['cafile']</code>
+      <code>$options['ssl']['local_cert']</code>
+      <code>$options['ssl']['passphrase']</code>
+      <code>$options['ssl']['verify_peer']</code>
+      <code>$options['ssl']['verify_peer']</code>
+      <code>$options['ssl']['verify_peer_name']</code>
+      <code>$options['ssl']['verify_peer_name']</code>
+    </MixedArrayAssignment>
+    <MixedArrayOffset occurrences="6">
+      <code>$headers[$normalizedKeys['content-encoding']]</code>
+      <code>$headers[$normalizedKeys['content-encoding']]</code>
+      <code>$headers[$normalizedKeys['content-encoding']]</code>
+      <code>$headers[$normalizedKeys['content-length']]</code>
+      <code>$headers[$normalizedKeys['content-length']]</code>
+      <code>$headers[$normalizedKeys['content-length']]</code>
+    </MixedArrayOffset>
+    <MixedAssignment occurrences="21">
+      <code>$encoding</code>
+      <code>$err</code>
+      <code>$fn</code>
+      <code>$headers['x-encoded-content-encoding']</code>
+      <code>$headers['x-encoded-content-length']</code>
+      <code>$key</code>
+      <code>$options['http']['proxy']</code>
+      <code>$options['http']['timeout']</code>
+      <code>$options['ssl']['local_cert']</code>
+      <code>$options['ssl']['passphrase']</code>
+      <code>$readTimeout</code>
+      <code>$resource</code>
+      <code>$sink</code>
+      <code>$this-&gt;lastHeaders</code>
+      <code>$uri</code>
+      <code>$uri</code>
+      <code>$usec</code>
+      <code>$v</code>
+      <code>$value</code>
+      <code>$value</code>
+      <code>$value</code>
+    </MixedAssignment>
+    <MixedFunctionCall occurrences="4">
+      <code>$fn(...$args)</code>
+      <code>$options['on_headers']($response)</code>
+      <code>$value($total, $transferred, 0, 0)</code>
+      <code>($options['on_stats'])($stats)</code>
+    </MixedFunctionCall>
+    <MixedInferredReturnType occurrences="1">
+      <code>resource</code>
+    </MixedInferredReturnType>
+    <MixedOperand occurrences="6">
+      <code>$args[$i]</code>
+      <code>$options['delay']</code>
+      <code>$options['http']['header']</code>
+      <code>$readTimeout</code>
+      <code>$records[0]['ipv6']</code>
+      <code>$v</code>
+    </MixedOperand>
+    <MixedReturnStatement occurrences="1">
+      <code>$resource</code>
+    </MixedReturnStatement>
+    <PossiblyNullOperand occurrences="1">
+      <code>$startTime</code>
+    </PossiblyNullOperand>
   </file>
   <file src="src/HandlerStack.php">
+    <MixedArgument occurrences="1">
+      <code>$fn[0]</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="3">
+      <code>Middleware::cookies()</code>
+      <code>Middleware::prepareBody()</code>
+      <code>Middleware::redirect()</code>
+    </MixedArgumentTypeCoercion>
+    <MixedReturnTypeCoercion occurrences="2">
+      <code>$k</code>
+      <code>int</code>
+    </MixedReturnTypeCoercion>
     <PropertyTypeCoercion occurrences="4">
       <code>$this-&gt;stack</code>
       <code>$this-&gt;stack</code>
@@ -99,18 +534,163 @@
   </file>
   <file src="src/MessageFormatter.php">
     <InvalidScalarArgument occurrences="1"/>
+    <MixedArgument occurrences="4">
+      <code>$matches[1]</code>
+      <code>$matches[1]</code>
+      <code>$matches[1]</code>
+      <code>$matches[1]</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="1">
+      <code>$cache[$matches[1]]</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="1">
+      <code>$cache[$matches[1]]</code>
+    </MixedArrayAssignment>
+    <MixedArrayOffset occurrences="3">
+      <code>$cache[$matches[1]]</code>
+      <code>$cache[$matches[1]]</code>
+      <code>$cache[$matches[1]]</code>
+    </MixedArrayOffset>
   </file>
   <file src="src/Middleware.php">
+    <DocblockTypeContradiction occurrences="2">
+      <code>!$formatter instanceof MessageFormatter &amp;&amp; !$formatter instanceof MessageFormatterInterface</code>
+      <code>!\is_array($container) &amp;&amp; !$container instanceof \ArrayAccess</code>
+    </DocblockTypeContradiction>
     <InvalidArgument occurrences="1">
       <code>$request</code>
     </InvalidArgument>
+    <MissingClosureParamType occurrences="5">
+      <code>$reason</code>
+      <code>$reason</code>
+      <code>$request</code>
+      <code>$response</code>
+      <code>$value</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="6">
+      <code>static function ($request, array $options) use ($handler) {</code>
+      <code>static function ($value) use ($request, &amp;$container, $options) {</code>
+      <code>static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel) {</code>
+      <code>static function (RequestInterface $request, array $options) use ($handler, $before, $after) {</code>
+      <code>static function (RequestInterface $request, array $options) use ($handler, $fn) {</code>
+      <code>static function (RequestInterface $request, array $options) use ($handler, $fn) {</code>
+    </MissingClosureReturnType>
+    <MixedArgument occurrences="2">
+      <code>$request</code>
+      <code>$response</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="4">
+      <code>$delay</code>
+      <code>$handler</code>
+      <code>$handler</code>
+      <code>$handler</code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayAssignment occurrences="2">
+      <code>$container[]</code>
+      <code>$container[]</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="1">
+      <code>$response</code>
+    </MixedAssignment>
+    <MixedInferredReturnType occurrences="2"/>
+    <MixedMethodCall occurrences="5">
+      <code>then</code>
+      <code>then</code>
+      <code>then</code>
+      <code>then</code>
+      <code>then</code>
+    </MixedMethodCall>
+    <MixedReturnStatement occurrences="3">
+      <code>$handler($request, $options)</code>
+    </MixedReturnStatement>
+  </file>
+  <file src="src/Pool.php">
+    <MissingClosureParamType occurrences="4">
+      <code>$k</code>
+      <code>$k</code>
+      <code>$v</code>
+      <code>$v</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="3">
+      <code>static function ($v, $k) use (&amp;$results) {</code>
+      <code>static function ($v, $k) use (&amp;$results, $currentFn) {</code>
+      <code>static function () use ($iterable, $client, $opts) {</code>
+    </MissingClosureReturnType>
+    <MixedArgument occurrences="1">
+      <code>$opts</code>
+    </MixedArgument>
+    <MixedArrayAssignment occurrences="2">
+      <code>$results[$k]</code>
+      <code>$results[$k]</code>
+    </MixedArrayAssignment>
+    <MixedArrayOffset occurrences="2">
+      <code>$results[$k]</code>
+      <code>$results[$k]</code>
+    </MixedArrayOffset>
+    <MixedAssignment occurrences="6">
+      <code>$currentFn</code>
+      <code>$key</code>
+      <code>$opts</code>
+      <code>$results[$k]</code>
+      <code>$results[$k]</code>
+      <code>$rfn</code>
+    </MixedAssignment>
+    <MixedFunctionCall occurrences="1">
+      <code>$currentFn($v, $k)</code>
+    </MixedFunctionCall>
+  </file>
+  <file src="src/PrepareBodyMiddleware.php">
+    <MixedArrayAssignment occurrences="2">
+      <code>$modify['set_headers']['Expect']</code>
+      <code>$modify['set_headers']['Expect']</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="2">
+      <code>$expect</code>
+      <code>$uri</code>
+    </MixedAssignment>
   </file>
   <file src="src/RedirectMiddleware.php">
     <ImplicitToStringCast occurrences="1">
       <code>$location</code>
     </ImplicitToStringCast>
+    <MixedArgument occurrences="2">
+      <code>$idnOptions</code>
+      <code>$protocols</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="4">
+      <code>$options['allow_redirects']['max']</code>
+      <code>$options['allow_redirects']['protocols']</code>
+      <code>$options['allow_redirects']['referer']</code>
+      <code>$options['allow_redirects']['strict']</code>
+    </MixedArrayAccess>
+    <MixedAssignment occurrences="5">
+      <code>$current</code>
+      <code>$idnOptions</code>
+      <code>$max</code>
+      <code>$options['__redirect_count']</code>
+      <code>$protocols</code>
+    </MixedAssignment>
+    <MixedFunctionCall occurrences="1"/>
+    <MixedOperand occurrences="1">
+      <code>$current</code>
+    </MixedOperand>
   </file>
   <file src="src/RetryMiddleware.php">
+    <MissingClosureParamType occurrences="2">
+      <code>$reason</code>
+      <code>$value</code>
+    </MissingClosureParamType>
+    <MixedArgument occurrences="2">
+      <code>$value</code>
+      <code>++$options['retries']</code>
+    </MixedArgument>
+    <MixedAssignment occurrences="2">
+      <code>$options['delay']</code>
+      <code>$options['retries']</code>
+    </MixedAssignment>
+    <MixedOperand occurrences="1">
+      <code>$options['retries']</code>
+    </MixedOperand>
     <TooManyArguments occurrences="1">
       <code>($this-&gt;delay)(++$options['retries'], $response)</code>
     </TooManyArguments>
@@ -119,5 +699,1850 @@
     <ForbiddenCode occurrences="1">
       <code>\var_dump($input)</code>
     </ForbiddenCode>
+    <MixedArgument occurrences="2">
+      <code>$filename</code>
+      <code>$line</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="1">
+      <code>$key</code>
+    </MixedArgumentTypeCoercion>
+    <MixedAssignment occurrences="5">
+      <code>$cached</code>
+      <code>$data</code>
+      <code>$errorBitSet</code>
+      <code>$filename</code>
+      <code>$line</code>
+    </MixedAssignment>
+    <MixedInferredReturnType occurrences="2">
+      <code>object|array|string|int|float|bool|null</code>
+      <code>string</code>
+    </MixedInferredReturnType>
+    <MixedOperand occurrences="1">
+      <code>constant($errorConstant)</code>
+    </MixedOperand>
+    <MixedReturnStatement occurrences="3">
+      <code>$cached</code>
+      <code>$cached = $filename</code>
+      <code>$data</code>
+    </MixedReturnStatement>
+    <RedundantCastGivenDocblockType occurrences="1">
+      <code>(string) $value</code>
+    </RedundantCastGivenDocblockType>
+    <RedundantConditionGivenDocblockType occurrences="1">
+      <code>$value !== null</code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="src/functions.php">
+    <DeprecatedMethod occurrences="1">
+      <code>Utils::defaultCaBundle()</code>
+    </DeprecatedMethod>
+  </file>
+  <file src="tests/ClientTest.php">
+    <DeprecatedMethod occurrences="1">
+      <code>options</code>
+    </DeprecatedMethod>
+    <InvalidScalarArgument occurrences="1">
+      <code>['Content-Length' =&gt; 2]</code>
+    </InvalidScalarArgument>
+    <MissingReturnType occurrences="60">
+      <code>testAddsAcceptEncodingbyCurl</code>
+      <code>testAddsBody</code>
+      <code>testAllowRedirectsCanBeTrue</code>
+      <code>testAuthCanBeArrayForBasicAuth</code>
+      <code>testAuthCanBeArrayForDigestAuth</code>
+      <code>testAuthCanBeArrayForNtlmAuth</code>
+      <code>testAuthCanBeCustomType</code>
+      <code>testAuthCanBeTrue</code>
+      <code>testCanAddFormParams</code>
+      <code>testCanAddJsonData</code>
+      <code>testCanAddJsonDataWithNullHeader</code>
+      <code>testCanAddJsonDataWithoutOverwritingContentType</code>
+      <code>testCanDisableContentDecoding</code>
+      <code>testCanMergeOnBaseUri</code>
+      <code>testCanMergeOnBaseUriWithRequest</code>
+      <code>testCanSendAsyncGetRequests</code>
+      <code>testCanSendMultipart</code>
+      <code>testCanSendMultipartWithExplicitBody</code>
+      <code>testCanSendSynchronously</code>
+      <code>testCanSetContentDecodingToValue</code>
+      <code>testCanSetCustomHandler</code>
+      <code>testCanUnsetRequestOptionWithNull</code>
+      <code>testCanUseRelativeUriWithSend</code>
+      <code>testClientHasOptions</code>
+      <code>testDoesNotOverwriteHeaderWithDefault</code>
+      <code>testDoesNotOverwriteHeaderWithDefaultInRequest</code>
+      <code>testDoesOverwriteHeaderWithSetRequestOption</code>
+      <code>testEnsuresThatFormParamsAndMultipartAreExclusive</code>
+      <code>testExceptionOnInvalidIdn</code>
+      <code>testFormParamsEncodedProperly</code>
+      <code>testHandlerIsCallable</code>
+      <code>testHttpDefaultSchemeIfUriHasNone</code>
+      <code>testIdnBaseUri</code>
+      <code>testIdnIsTranslatedToAsciiWhenConversionIsEnabled</code>
+      <code>testIdnStaysTheSameWhenConversionIsDisabled</code>
+      <code>testIdnSupportDefaultValue</code>
+      <code>testIdnWithRedirect</code>
+      <code>testMergesDefaultOptionsAndDoesNotOverwriteUa</code>
+      <code>testOnlyAddSchemeWhenHostIsPresent</code>
+      <code>testProperlyBuildsQuery</code>
+      <code>testQueryCanBeArray</code>
+      <code>testQueryCanBeString</code>
+      <code>testRequestSendsWithSync</code>
+      <code>testResponseBodyAsString</code>
+      <code>testResponseContent</code>
+      <code>testSendSendsWithDomainAndHostHeaderInRequestTheHostShouldBePreserved</code>
+      <code>testSendSendsWithIpAddressAndPortAndHostHeaderInRequestTheHostShouldBePreserved</code>
+      <code>testSendSendsWithSync</code>
+      <code>testSendWithInvalidHeader</code>
+      <code>testSendWithInvalidHeaders</code>
+      <code>testSetCookieToJar</code>
+      <code>testSetCookieToTrueUsesSharedJar</code>
+      <code>testThrowsHttpErrorsByDefault</code>
+      <code>testUsesProxyEnvironmentVariables</code>
+      <code>testValidatesAllowRedirects</code>
+      <code>testValidatesArgsForMagicMethods</code>
+      <code>testValidatesCookies</code>
+      <code>testValidatesHeaders</code>
+      <code>testValidatesQuery</code>
+      <code>testValidatesSink</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="6">
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="14">
+      <code>$config['allow_redirects']</code>
+      <code>$config['base_uri']</code>
+      <code>$config['base_uri']</code>
+      <code>$config['base_uri']</code>
+      <code>$config['decode_content']</code>
+      <code>$config['handler']</code>
+      <code>$config['headers']</code>
+      <code>$config['http_errors']</code>
+      <code>$config['idn_conversion']</code>
+      <code>$config['proxy']</code>
+      <code>$config['proxy']</code>
+      <code>$config['timeout']</code>
+      <code>$config['verify']</code>
+      <code>$requests[0]['request']</code>
+    </MixedArrayAccess>
+    <MixedAssignment occurrences="9">
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+      <code>$config</code>
+      <code>$request</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="4">
+      <code>getHeaderLine</code>
+      <code>getQuery</code>
+      <code>getStatusCode</code>
+      <code>getUri</code>
+    </MixedMethodCall>
+    <PossiblyNullReference occurrences="35">
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getHeader</code>
+      <code>getHeader</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>hasHeader</code>
+      <code>hasHeader</code>
+      <code>hasHeader</code>
+    </PossiblyNullReference>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>ClientTest</code>
+      <code>ClientTest</code>
+    </PropertyNotSetInConstructor>
+    <RedundantCastGivenDocblockType occurrences="4">
+      <code>(string) $mock-&gt;getLastRequest()-&gt;getHeaderLine('Host')</code>
+      <code>(string) $request-&gt;getHeaderLine('Host')</code>
+      <code>(string) $request-&gt;getHeaderLine('Host')</code>
+      <code>(string) $request-&gt;getHeaderLine('Host')</code>
+    </RedundantCastGivenDocblockType>
+    <TooManyArguments occurrences="1">
+      <code>Server::received(true)</code>
+    </TooManyArguments>
+    <UndefinedInterfaceMethod occurrences="1">
+      <code>getUri</code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="tests/Cookie/CookieJarTest.php">
+    <ArgumentTypeCoercion occurrences="2">
+      <code>$request</code>
+      <code>$response</code>
+    </ArgumentTypeCoercion>
+    <MissingParamType occurrences="4">
+      <code>$cookiePath</code>
+      <code>$cookies</code>
+      <code>$uriPath</code>
+      <code>$url</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="23">
+      <code>futureExpirationDate</code>
+      <code>getCookiePathsDataProvider</code>
+      <code>getCookiesDataProvider</code>
+      <code>getMatchingCookiesDataProvider</code>
+      <code>getTestCookies</code>
+      <code>testAddsCookiesFromResponseWithRequest</code>
+      <code>testAddsCookiesWithEmptyPathFromResponse</code>
+      <code>testCanConvertToAndLoadFromArray</code>
+      <code>testCookiePathWithEmptySetCookiePath</code>
+      <code>testCreatesFromArray</code>
+      <code>testDeletesCookiesByName</code>
+      <code>testDoesAddValidCookies</code>
+      <code>testDoesNotAddEmptyCookies</code>
+      <code>testDoesNotAddIncompleteCookies</code>
+      <code>testEmptyJarIsCountable</code>
+      <code>testGetsCookiesByName</code>
+      <code>testOverwritesCookiesThatAreOlderOrDiscardable</code>
+      <code>testOverwritesCookiesThatHaveChanged</code>
+      <code>testRemovesSelectively</code>
+      <code>testRemovesTemporaryCookies</code>
+      <code>testReturnsCookiesMatchingRequests</code>
+      <code>testStoresAndRetrievesCookies</code>
+      <code>testThrowsExceptionWithStrictMode</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="9">
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$testCookie-&gt;getName()</code>
+      <code>$uriPath</code>
+      <code>$url</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="5">
+      <code>$cookies[0]</code>
+      <code>$cookies[1]</code>
+      <code>$cookies[2]</code>
+      <code>$this-&gt;jar-&gt;toArray()[0]['Path']</code>
+      <code>$this-&gt;jar-&gt;toArray()[1]['Path']</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="1">
+      <code>$cookies[]</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="11">
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookies</code>
+      <code>$cookies</code>
+      <code>$cookies</code>
+      <code>$cookies</code>
+      <code>$testCookie</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="1">
+      <code>getName</code>
+    </MixedMethodCall>
+    <PropertyNotSetInConstructor occurrences="3">
+      <code>$jar</code>
+      <code>CookieJarTest</code>
+      <code>CookieJarTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Cookie/FileCookieJarTest.php">
+    <MissingParamType occurrences="2">
+      <code>$invalidCookieJarContent</code>
+      <code>$testSaveSessionCookie</code>
+    </MissingParamType>
+    <MissingPropertyType occurrences="1">
+      <code>$file</code>
+    </MissingPropertyType>
+    <MissingReturnType occurrences="4">
+      <code>providerPersistsToFileFileParameters</code>
+      <code>testLoadsFromFile</code>
+      <code>testPersistsToFile</code>
+      <code>testValidatesCookieFile</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="5">
+      <code>$testSaveSessionCookie</code>
+      <code>$this-&gt;file</code>
+      <code>$this-&gt;file</code>
+      <code>$this-&gt;file</code>
+      <code>$this-&gt;file</code>
+    </MixedArgument>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>FileCookieJarTest</code>
+      <code>FileCookieJarTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Cookie/SessionCookieJarTest.php">
+    <MissingParamType occurrences="1">
+      <code>$testSaveSessionCookie</code>
+    </MissingParamType>
+    <MissingPropertyType occurrences="1">
+      <code>$sessionVar</code>
+    </MissingPropertyType>
+    <MissingReturnType occurrences="4">
+      <code>providerPersistsToSessionParameters</code>
+      <code>testLoadsFromSession</code>
+      <code>testPersistsToSession</code>
+      <code>testValidatesCookieSession</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="4">
+      <code>$testSaveSessionCookie</code>
+      <code>$this-&gt;sessionVar</code>
+      <code>$this-&gt;sessionVar</code>
+      <code>$this-&gt;sessionVar</code>
+    </MixedArgument>
+    <MixedArrayOffset occurrences="1">
+      <code>$_SESSION[$this-&gt;sessionVar]</code>
+    </MixedArrayOffset>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>SessionCookieJarTest</code>
+      <code>SessionCookieJarTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Cookie/SetCookieTest.php">
+    <InvalidScalarArgument occurrences="1">
+      <code>$p['Expires'] != \strtotime($parsed['Expires'])</code>
+    </InvalidScalarArgument>
+    <MissingParamType occurrences="11">
+      <code>$cookie</code>
+      <code>$cookie</code>
+      <code>$cookiePath</code>
+      <code>$domain</code>
+      <code>$expired</code>
+      <code>$isMatch</code>
+      <code>$name</code>
+      <code>$parsed</code>
+      <code>$requestPath</code>
+      <code>$result</code>
+      <code>$value</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="14">
+      <code>cookieValidateProvider</code>
+      <code>pathMatchProvider</code>
+      <code>testAddsExpiresBasedOnMaxAge</code>
+      <code>testConvertsDateTimeMaxAgeToUnixTimestamp</code>
+      <code>testConvertsToString</code>
+      <code>testDeterminesIfExpired</code>
+      <code>testDoesNotMatchIp</code>
+      <code>testHoldsValues</code>
+      <code>testInitializesDefaultValues</code>
+      <code>testIsExpired</code>
+      <code>testMatchesDomain</code>
+      <code>testMatchesPath</code>
+      <code>testParseCookie</code>
+      <code>testValidatesCookies</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="5">
+      <code>$cookie</code>
+      <code>$cookiePath</code>
+      <code>$parsed['Expires']</code>
+      <code>$requestPath</code>
+      <code>$v</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="4">
+      <code>$parsed[$key]</code>
+      <code>$parsed[$key]</code>
+      <code>$parsed['Expires']</code>
+      <code>$parsed['Expires']</code>
+    </MixedArrayAccess>
+    <MixedArrayOffset occurrences="2">
+      <code>$p[$key]</code>
+      <code>$parsed[$key]</code>
+    </MixedArrayOffset>
+    <MixedAssignment occurrences="4">
+      <code>$key</code>
+      <code>$v</code>
+      <code>$value</code>
+      <code>$value</code>
+    </MixedAssignment>
+    <MixedOperand occurrences="1">
+      <code>$key</code>
+    </MixedOperand>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>SetCookieTest</code>
+      <code>SetCookieTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Exception/BadResponseExceptionTest.php">
+    <MissingReturnType occurrences="1">
+      <code>testHasNoResponse</code>
+    </MissingReturnType>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>BadResponseExceptionTest</code>
+      <code>BadResponseExceptionTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Exception/ConnectExceptionTest.php">
+    <MissingReturnType occurrences="1">
+      <code>testHasRequest</code>
+    </MissingReturnType>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>ConnectExceptionTest</code>
+      <code>ConnectExceptionTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Exception/RequestExceptionTest.php">
+    <MissingParamType occurrences="1">
+      <code>$content</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="16">
+      <code>dataPrintableResponses</code>
+      <code>testCanProvideHandlerContext</code>
+      <code>testCreatesClientErrorResponseException</code>
+      <code>testCreatesExceptionWithPrintableBodySummary</code>
+      <code>testCreatesExceptionWithTruncatedSummary</code>
+      <code>testCreatesGenerateException</code>
+      <code>testCreatesGenericErrorResponseException</code>
+      <code>testCreatesServerErrorResponseException</code>
+      <code>testDoesNotWrapExistingRequestExceptions</code>
+      <code>testExceptionMessageIgnoresEmptyBody</code>
+      <code>testHasRequestAndResponse</code>
+      <code>testHasStatusCodeAsExceptionCode</code>
+      <code>testObfuscateUrlWithUsername</code>
+      <code>testObfuscateUrlWithUsernameAndPassword</code>
+      <code>testThrowsInvalidArgumentExceptionOnOutOfBoundsResponseCode</code>
+      <code>testWrapsRequestExceptions</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="2">
+      <code>$content</code>
+      <code>$content</code>
+    </MixedArgument>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>RequestExceptionTest</code>
+      <code>RequestExceptionTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Handler/CurlFactoryTest.php">
+    <ArgumentTypeCoercion occurrences="1">
+      <code>'Closure'</code>
+    </ArgumentTypeCoercion>
+    <DocblockTypeContradiction occurrences="1">
+      <code>assertInstanceOf</code>
+    </DocblockTypeContradiction>
+    <InvalidScalarArgument occurrences="8">
+      <code>$headers</code>
+      <code>['Content-Length' =&gt; 3]</code>
+      <code>['Test' =&gt; 'Hello', 'Content-Length' =&gt; 4]</code>
+    </InvalidScalarArgument>
+    <MissingClosureParamType occurrences="8">
+      <code>$args</code>
+      <code>$data</code>
+      <code>$options</code>
+      <code>$options</code>
+      <code>$options</code>
+      <code>$r</code>
+      <code>$request</code>
+      <code>$request</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="3">
+      <code>static function ($r, $options) use (&amp;$callHandler) {</code>
+      <code>static function ($request, $options) use (&amp;$fn, $factory) {</code>
+      <code>static function ($request, $options) use (&amp;$mock, &amp;$call, $factory) {</code>
+    </MissingClosureReturnType>
+    <MissingParamType occurrences="4">
+      <code>$assertUseProxy</code>
+      <code>$noProxy</code>
+      <code>$url</code>
+      <code>$withEncoding</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="58">
+      <code>addDecodeResponse</code>
+      <code>checkNoProxyForHost</code>
+      <code>testAddsCert</code>
+      <code>testAddsCertWithPassword</code>
+      <code>testAddsDerCert</code>
+      <code>testAddsP12Cert</code>
+      <code>testAddsProxy</code>
+      <code>testAddsSslKey</code>
+      <code>testAddsSslKeyWhenUsingArraySyntaxButNoPassword</code>
+      <code>testAddsSslKeyWithPassword</code>
+      <code>testAddsStreamingBody</code>
+      <code>testAddsTimeouts</code>
+      <code>testAddsVerifyAsTrue</code>
+      <code>testAddsViaScheme</code>
+      <code>testBodyEofOnWindows</code>
+      <code>testCanAddCustomCurlOptions</code>
+      <code>testCanChangeCurlOptions</code>
+      <code>testCanDisableVerify</code>
+      <code>testCanSetVerifyToDir</code>
+      <code>testCanSetVerifyToFile</code>
+      <code>testClosesIdleHandles</code>
+      <code>testCreatesConnectException</code>
+      <code>testCreatesCurlHandle</code>
+      <code>testDecodesGzippedResponses</code>
+      <code>testDecodesGzippedResponsesWithHeader</code>
+      <code>testDecodesGzippedResponsesWithHeaderForHeadRequest</code>
+      <code>testDoesNotAddMultipleContentLengthHeaders</code>
+      <code>testDoesNotForceDecode</code>
+      <code>testDoesNotRewindUnseekableBody</code>
+      <code>testEmitsDebugInfoToStream</code>
+      <code>testEmitsProgressToFunction</code>
+      <code>testEnsuresDirExistsBeforeThrowingWarning</code>
+      <code>testEnsuresOnHeadersIsCallable</code>
+      <code>testFailsWhenCannotRewindRetryAfterNoResponse</code>
+      <code>testFailsWhenRetryMoreThanThreeTimes</code>
+      <code>testHandles100Continue</code>
+      <code>testHandlesGarbageHttpServerGracefully</code>
+      <code>testHandlesInvalidStatusCodeGracefully</code>
+      <code>testInvokesOnStatsOnError</code>
+      <code>testInvokesOnStatsOnSuccess</code>
+      <code>testProtocolVersion</code>
+      <code>testRejectsPromiseWhenCreateResponseFails</code>
+      <code>testRejectsPromiseWhenOnHeadersFails</code>
+      <code>testRelease</code>
+      <code>testReportsOriginalSizeAndContentEncodingAfterDecoding</code>
+      <code>testRetriesWhenBodyCanBeRewound</code>
+      <code>testRewindsBodyIfPossible</code>
+      <code>testSavesToFileOnDisk</code>
+      <code>testSavesToGuzzleStream</code>
+      <code>testSavesToStream</code>
+      <code>testSendsHeadRequests</code>
+      <code>testSendsPostWithNoBodyOrDefaultContentType</code>
+      <code>testSuccessfullyCallsOnHeadersBeforeWritingToSink</code>
+      <code>testUsesProxy</code>
+      <code>testValidatesCert</code>
+      <code>testValidatesProgress</code>
+      <code>testValidatesSslKey</code>
+      <code>testValidatesVerify</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="29">
+      <code>$_SERVER['_curl']</code>
+      <code>$_SERVER['_curl']</code>
+      <code>$_SERVER['_curl']</code>
+      <code>$_SERVER['_curl']</code>
+      <code>$_SERVER['_curl']</code>
+      <code>$_SERVER['_curl']</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$call</code>
+      <code>$chunk</code>
+      <code>$data</code>
+      <code>$fn</code>
+      <code>$gotStats-&gt;getHandlerStats()</code>
+      <code>$gotStats-&gt;getHandlerStats()</code>
+      <code>$mock</code>
+      <code>$options</code>
+      <code>$options</code>
+      <code>$request</code>
+      <code>$request</code>
+      <code>$url</code>
+      <code>Helpers::readObjectAttribute($f, 'handles')</code>
+      <code>Helpers::readObjectAttribute($f, 'handles')</code>
+      <code>Helpers::readObjectAttribute($f, 'handles')</code>
+      <code>Helpers::readObjectAttribute($f, 'handles')</code>
+      <code>Helpers::readObjectAttribute($f, 'handles')</code>
+      <code>\CurlHandle::class</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="45">
+      <code>$_SERVER['_curl'][\CURLOPT_CAINFO]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_CAPATH]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT_MS]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_CUSTOMREQUEST]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_ENCODING]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_ENCODING]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_ENCODING]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HEADERFUNCTION]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTPHEADER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTP_VERSION]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_HTTP_VERSION]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_LOW_SPEED_LIMIT]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_NOBODY]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_POSTFIELDS]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_PROTOCOLS]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_PROXY]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_PROXY]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_READFUNCTION]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_RETURNTRANSFER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSLCERTPASSWD]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSLCERT]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSLCERT]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSLKEYPASSWD]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSLKEY]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSLKEY]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSLKEY]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSL_VERIFYHOST]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSL_VERIFYHOST]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSL_VERIFYHOST]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSL_VERIFYHOST]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSL_VERIFYPEER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSL_VERIFYPEER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSL_VERIFYPEER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_SSL_VERIFYPEER]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_TIMEOUT_MS]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_UPLOAD]</code>
+      <code>$_SERVER['_curl'][\CURLOPT_URL]</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="1">
+      <code>$called[]</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="17">
+      <code>$body</code>
+      <code>$call</code>
+      <code>$call</code>
+      <code>$chunk</code>
+      <code>$content</code>
+      <code>$res</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="44">
+      <code>eof</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getEffectiveUri</code>
+      <code>getEffectiveUri</code>
+      <code>getHandlerErrorData</code>
+      <code>getHandlerStats</code>
+      <code>getHandlerStats</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getReasonPhrase</code>
+      <code>getRequest</code>
+      <code>getRequest</code>
+      <code>getResponse</code>
+      <code>getSize</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getTransferTime</code>
+      <code>getTransferTime</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>hasHeader</code>
+      <code>hasHeader</code>
+      <code>hasHeader</code>
+      <code>hasResponse</code>
+      <code>read</code>
+      <code>wait</code>
+    </MixedMethodCall>
+    <MixedOperand occurrences="1">
+      <code>$call</code>
+    </MixedOperand>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>CurlFactoryTest</code>
+      <code>CurlFactoryTest</code>
+    </PropertyNotSetInConstructor>
+    <RedundantConditionGivenDocblockType occurrences="1">
+      <code>assertIsArray</code>
+    </RedundantConditionGivenDocblockType>
+    <UndefinedClass occurrences="1">
+      <code>\CurlHandle</code>
+    </UndefinedClass>
+    <UndefinedFunction occurrences="3">
+      <code>'abc'</code>
+      <code>'foo'</code>
+      <code>'test'</code>
+    </UndefinedFunction>
+    <UndefinedInterfaceMethod occurrences="2">
+      <code>getMethod</code>
+      <code>getMethod</code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="tests/Handler/CurlHandlerTest.php">
+    <InvalidScalarArgument occurrences="1">
+      <code>['Content-Length' =&gt; 1000000]</code>
+    </InvalidScalarArgument>
+    <MissingParamType occurrences="1">
+      <code>$options</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="6">
+      <code>getHandler</code>
+      <code>testCreatesCurlErrors</code>
+      <code>testCreatesCurlErrorsWithContext</code>
+      <code>testDoesSleep</code>
+      <code>testReusesHandles</code>
+      <code>testUsesContentLengthWhenOverInMemorySize</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="1">
+      <code>$options</code>
+    </MixedArgument>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>CurlHandlerTest</code>
+      <code>CurlHandlerTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Handler/CurlMultiHandlerTest.php">
+    <MissingReturnType occurrences="9">
+      <code>testCanAddCustomCurlOptions</code>
+      <code>testCanCancel</code>
+      <code>testCanSetSelectTimeout</code>
+      <code>testCannotCancelFinished</code>
+      <code>testCreatesExceptions</code>
+      <code>testDelaysConcurrently</code>
+      <code>testSendsRequest</code>
+      <code>testUsesTimeoutEnvironmentVariables</code>
+      <code>throwsWhenAccessingInvalidProperty</code>
+    </MissingReturnType>
+    <MixedArrayAccess occurrences="1">
+      <code>$_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]</code>
+    </MixedArrayAccess>
+    <MixedAssignment occurrences="1">
+      <code>$response</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="1">
+      <code>getStatusCode</code>
+    </MixedMethodCall>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>CurlMultiHandlerTest</code>
+      <code>CurlMultiHandlerTest</code>
+    </PropertyNotSetInConstructor>
+    <UndefinedMagicPropertyFetch occurrences="1">
+      <code>$h-&gt;foo</code>
+    </UndefinedMagicPropertyFetch>
+  </file>
+  <file src="tests/Handler/EasyHandleTest.php">
+    <MissingReturnType occurrences="1">
+      <code>testEnsuresHandleExists</code>
+    </MissingReturnType>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>EasyHandleTest</code>
+      <code>EasyHandleTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Handler/MockHandlerTest.php">
+    <MissingClosureParamType occurrences="6">
+      <code>$o</code>
+      <code>$req</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="4">
+      <code>static function ($req, $o) use ($r) {</code>
+      <code>static function (TransferStats $s) use (&amp;$stats) {</code>
+      <code>static function (TransferStats $s) use (&amp;$stats) {</code>
+      <code>static function (TransferStats $s) use (&amp;$stats) {</code>
+    </MissingClosureReturnType>
+    <MissingReturnType occurrences="21">
+      <code>testCanCreateWithDefaultMiddleware</code>
+      <code>testCanEnqueueCallables</code>
+      <code>testCanGetLastRequestAndOptions</code>
+      <code>testCanQueueExceptions</code>
+      <code>testEmptyHandlerIsCountable</code>
+      <code>testEnsuresEachAppendIsValid</code>
+      <code>testEnsuresEachAppendOnCreationIsValid</code>
+      <code>testEnsuresOnHeadersIsCallable</code>
+      <code>testInvokesOnFulfilled</code>
+      <code>testInvokesOnRejected</code>
+      <code>testInvokesOnStatsFunctionForError</code>
+      <code>testInvokesOnStatsFunctionForResponse</code>
+      <code>testIsCountable</code>
+      <code>testRejectsPromiseWhenOnHeadersFails</code>
+      <code>testResetQueue</code>
+      <code>testReturnsMockResponse</code>
+      <code>testSinkFilename</code>
+      <code>testSinkResource</code>
+      <code>testSinkStream</code>
+      <code>testThrowsWhenNoMoreResponses</code>
+      <code>testTransferTime</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="3">
+      <code>$mock</code>
+      <code>$stream-&gt;getMetadata('uri')</code>
+      <code>$stream-&gt;getMetadata('uri')</code>
+    </MixedArgument>
+    <MixedAssignment occurrences="4">
+      <code>$c</code>
+      <code>$c</code>
+      <code>$c</code>
+      <code>$c</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="7">
+      <code>append</code>
+      <code>getHandlerErrorData</code>
+      <code>getRequest</code>
+      <code>getRequest</code>
+      <code>getResponse</code>
+      <code>getResponse</code>
+      <code>getTransferTime</code>
+    </MixedMethodCall>
+    <PossiblyUndefinedMethod occurrences="1">
+      <code>wait</code>
+    </PossiblyUndefinedMethod>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>MockHandlerTest</code>
+      <code>MockHandlerTest</code>
+    </PropertyNotSetInConstructor>
+    <TypeDoesNotContainType occurrences="1">
+      <code>assertEmpty</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="tests/Handler/ProxyTest.php">
+    <MissingClosureParamType occurrences="8">
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+    </MissingClosureParamType>
+    <MissingReturnType occurrences="4">
+      <code>testSendsToNonStreaming</code>
+      <code>testSendsToNonSync</code>
+      <code>testSendsToStreaming</code>
+      <code>testSendsToSync</code>
+    </MissingReturnType>
+    <MixedAssignment occurrences="8">
+      <code>$a</code>
+      <code>$a</code>
+      <code>$a</code>
+      <code>$a</code>
+      <code>$b</code>
+      <code>$b</code>
+      <code>$b</code>
+      <code>$b</code>
+    </MixedAssignment>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>ProxyTest</code>
+      <code>ProxyTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Handler/StreamHandlerTest.php">
+    <DeprecatedMethod occurrences="1">
+      <code>Utils::defaultCaBundle()</code>
+    </DeprecatedMethod>
+    <InvalidScalarArgument occurrences="8">
+      <code>['Content-Length' =&gt; 3]</code>
+    </InvalidScalarArgument>
+    <MissingClosureParamType occurrences="3">
+      <code>$args</code>
+      <code>$args</code>
+      <code>$data</code>
+    </MissingClosureParamType>
+    <MissingReturnType occurrences="49">
+      <code>getSendResult</code>
+      <code>queueRes</code>
+      <code>testAddsContentLengthByDefault</code>
+      <code>testAddsContentLengthEvenWhenEmpty</code>
+      <code>testAddsErrorToResponse</code>
+      <code>testAddsProxy</code>
+      <code>testAddsProxyButHonorsNoProxy</code>
+      <code>testAddsProxyByProtocol</code>
+      <code>testAddsTimeout</code>
+      <code>testAutomaticallyDecompressGzip</code>
+      <code>testAutomaticallyDecompressGzipHead</code>
+      <code>testCanSetPasswordWhenSettingCert</code>
+      <code>testDebugAttributeWritesStreamInfoToBuffer</code>
+      <code>testDebugAttributeWritesToStream</code>
+      <code>testDoesNotAddContentTypeByDefault</code>
+      <code>testDoesNotDrainWhenHeadRequest</code>
+      <code>testDoesNotForceGzipDecode</code>
+      <code>testDoesSleep</code>
+      <code>testDrainsResponseAndReadsAllContentWhenContentLengthIsZero</code>
+      <code>testDrainsResponseAndReadsOnlyContentLengthBytes</code>
+      <code>testDrainsResponseIntoSaveToBody</code>
+      <code>testDrainsResponseIntoSaveToBodyAtNonExistentPath</code>
+      <code>testDrainsResponseIntoSaveToBodyAtPath</code>
+      <code>testDrainsResponseIntoTempStream</code>
+      <code>testEmitsProgressInformation</code>
+      <code>testEmitsProgressInformationAndDebugInformation</code>
+      <code>testEnsuresOnHeadersIsCallable</code>
+      <code>testEnsuresThatStreamContextIsAnArray</code>
+      <code>testEnsuresVerifyOptionIsValid</code>
+      <code>testHandlesGarbageHttpServerGracefully</code>
+      <code>testHandlesInvalidStatusCodeGracefully</code>
+      <code>testHonorsReadTimeout</code>
+      <code>testInvokesOnStatsOnError</code>
+      <code>testInvokesOnStatsOnSuccess</code>
+      <code>testPerformsShallowMergeOfCustomContextOptions</code>
+      <code>testProtocolVersion</code>
+      <code>testRejectsPromiseWhenOnHeadersFails</code>
+      <code>testReportsOriginalSizeAndContentEncodingAfterDecoding</code>
+      <code>testReturnsResponseForSuccessfulRequest</code>
+      <code>testStreamAttributeKeepsStreamOpen</code>
+      <code>testStreamIgnoresZeroTimeout</code>
+      <code>testSuccessfullyCallsOnHeadersBeforeWritingToSink</code>
+      <code>testSupports100Continue</code>
+      <code>testUsesProxy</code>
+      <code>testUsesSystemDefaultBundle</code>
+      <code>testVerifiesCertIfValidPath</code>
+      <code>testVerifiesVerifyIsValidIfPath</code>
+      <code>testVerifyCanBeDisabled</code>
+      <code>testVerifyCanBeSetToPath</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="26">
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$data</code>
+      <code>$opts['http']</code>
+      <code>$opts['http']['proxy']</code>
+      <code>$opts['ssl']</code>
+      <code>$res-&gt;getBody()-&gt;detach()</code>
+      <code>$res-&gt;getBody()-&gt;detach()</code>
+      <code>$res-&gt;getBody()-&gt;detach()</code>
+      <code>$res-&gt;getBody()-&gt;detach()</code>
+      <code>$res-&gt;getBody()-&gt;detach()</code>
+      <code>$res-&gt;getBody()-&gt;detach()</code>
+      <code>$res-&gt;getBody()-&gt;detach()</code>
+      <code>$stream</code>
+      <code>$stream</code>
+      <code>$stream</code>
+      <code>$stream</code>
+      <code>$stream</code>
+      <code>$stream</code>
+      <code>$stream</code>
+      <code>$stream</code>
+      <code>$stream</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="15">
+      <code>$called[0]</code>
+      <code>$called[0]</code>
+      <code>$called[0]</code>
+      <code>$called[0]</code>
+      <code>$opts['http']['method']</code>
+      <code>$opts['http']['proxy']</code>
+      <code>$opts['http']['request_fulluri']</code>
+      <code>$opts['http']['timeout']</code>
+      <code>$opts['socket']['bindto']</code>
+      <code>$opts['ssl']['cafile']</code>
+      <code>$opts['ssl']['local_cert']</code>
+      <code>$opts['ssl']['passphrase']</code>
+      <code>$opts['ssl']['verify_peer']</code>
+      <code>$opts['ssl']['verify_peer']</code>
+      <code>$opts['ssl']['verify_peer_name']</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="2">
+      <code>$called[]</code>
+      <code>$called[]</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="39">
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$body</code>
+      <code>$res</code>
+      <code>$res</code>
+      <code>$res</code>
+      <code>$res</code>
+      <code>$res</code>
+      <code>$res</code>
+      <code>$res</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$stream</code>
+      <code>$stream</code>
+      <code>$stream</code>
+      <code>$stream</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="86">
+      <code>close</code>
+      <code>close</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>detach</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getBody</code>
+      <code>getEffectiveUri</code>
+      <code>getEffectiveUri</code>
+      <code>getHandlerErrorData</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getMetadata</code>
+      <code>getMetadata</code>
+      <code>getPath</code>
+      <code>getReasonPhrase</code>
+      <code>getReasonPhrase</code>
+      <code>getReasonPhrase</code>
+      <code>getReasonPhrase</code>
+      <code>getRequest</code>
+      <code>getRequest</code>
+      <code>getResponse</code>
+      <code>getSize</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getTransferTime</code>
+      <code>getTransferTime</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>hasHeader</code>
+      <code>hasHeader</code>
+      <code>hasHeader</code>
+      <code>hasResponse</code>
+      <code>read</code>
+      <code>read</code>
+    </MixedMethodCall>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>StreamHandlerTest</code>
+      <code>StreamHandlerTest</code>
+    </PropertyNotSetInConstructor>
+    <UndefinedInterfaceMethod occurrences="4">
+      <code>getMethod</code>
+      <code>getMethod</code>
+      <code>getUri</code>
+      <code>getUri</code>
+    </UndefinedInterfaceMethod>
+  </file>
+  <file src="tests/HandlerStackTest.php">
+    <InvalidArgument occurrences="6">
+      <code>$f</code>
+      <code>$f</code>
+      <code>'test'</code>
+      <code>'test'</code>
+      <code>'test'</code>
+    </InvalidArgument>
+    <MissingClosureParamType occurrences="4">
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="10">
+      <code>static function ($v) use ($next, &amp;$calls) {</code>
+      <code>static function ($v) use ($next, &amp;$calls) {</code>
+      <code>static function ($v) use ($next, &amp;$calls) {</code>
+      <code>static function ($v) {</code>
+      <code>static function () {</code>
+      <code>static function () {</code>
+      <code>static function () {</code>
+      <code>static function (callable $next) use (&amp;$calls) {</code>
+      <code>static function (callable $next) use (&amp;$calls) {</code>
+      <code>static function (callable $next) use (&amp;$calls) {</code>
+    </MissingClosureReturnType>
+    <MissingReturnType occurrences="14">
+      <code>bar</code>
+      <code>foo</code>
+      <code>getFunctions</code>
+      <code>testCanAddAfterByName</code>
+      <code>testCanAddBeforeByName</code>
+      <code>testCanPrintMiddleware</code>
+      <code>testCanRemoveMiddlewareByInstance</code>
+      <code>testCanSetDifferentHandlerAfterConstruction</code>
+      <code>testEnsuresHandlerExistsByName</code>
+      <code>testEnsuresHandlerIsSet</code>
+      <code>testPicksUpCookiesFromRedirects</code>
+      <code>testPushInOrder</code>
+      <code>testSetsHandlerInCtor</code>
+      <code>testUnshiftsInReverseOrder</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="27">
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="2">
+      <code>[$this, 'bar']</code>
+      <code>[__CLASS__, 'foo']</code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayAccess occurrences="29">
+      <code>$meths[0]</code>
+      <code>$meths[0]</code>
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[1]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[2]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[3]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+      <code>$meths[4]</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="3">
+      <code>$calls[]</code>
+      <code>$calls[]</code>
+      <code>$calls[]</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="7">
+      <code>$meths</code>
+      <code>$meths</code>
+      <code>$meths</code>
+      <code>$meths</code>
+      <code>$meths</code>
+      <code>$meths</code>
+      <code>$response</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="1">
+      <code>getStatusCode</code>
+    </MixedMethodCall>
+    <MixedOperand occurrences="4">
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+      <code>$v</code>
+    </MixedOperand>
+    <PossiblyNullReference occurrences="1">
+      <code>getUri</code>
+    </PossiblyNullReference>
+    <PossiblyUndefinedMethod occurrences="1">
+      <code>wait</code>
+    </PossiblyUndefinedMethod>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>HandlerStackTest</code>
+      <code>HandlerStackTest</code>
+    </PropertyNotSetInConstructor>
+    <TooFewArguments occurrences="3">
+      <code>$composed('test')</code>
+      <code>$composed('test')</code>
+      <code>$composed('test')</code>
+    </TooFewArguments>
+    <TooManyArguments occurrences="1">
+      <code>new HandlerStack($f, [$m1])</code>
+    </TooManyArguments>
+  </file>
+  <file src="tests/Helpers.php">
+    <MissingReturnType occurrences="1">
+      <code>readObjectAttribute</code>
+    </MissingReturnType>
+    <TypeDoesNotContainType occurrences="1">
+      <code>!$attribute</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="tests/HttplugIntegrationTest.php">
+    <PropertyNotSetInConstructor occurrences="3">
+      <code>HttplugIntegrationTest</code>
+      <code>HttplugIntegrationTest</code>
+      <code>HttplugIntegrationTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/InternalUtilsTest.php">
+    <MissingReturnType occurrences="2">
+      <code>testCurrentTime</code>
+      <code>testIdnConvert</code>
+    </MissingReturnType>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>InternalUtilsTest</code>
+      <code>InternalUtilsTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/MessageFormatterTest.php">
+    <DeprecatedMethod occurrences="1">
+      <code>self::assertRegExp($pattern, $result)</code>
+    </DeprecatedMethod>
+    <MissingParamType occurrences="1">
+      <code>$result</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="5">
+      <code>dateProvider</code>
+      <code>formatProvider</code>
+      <code>testCreatesWithClfByDefault</code>
+      <code>testFormatsMessages</code>
+      <code>testFormatsTimestamps</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="1">
+      <code>$args</code>
+    </MixedArgument>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>MessageFormatterTest</code>
+      <code>MessageFormatterTest</code>
+    </PropertyNotSetInConstructor>
+    <UndefinedFunction occurrences="2">
+      <code>'baz'</code>
+      <code>'foo'</code>
+    </UndefinedFunction>
+  </file>
+  <file src="tests/MiddlewareTest.php">
+    <MissingClosureParamType occurrences="3">
+      <code>$handler</code>
+      <code>$options</code>
+      <code>$request</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="2">
+      <code>static function ($handler) use (&amp;$calls) {</code>
+      <code>static function ($request, $options) use ($handler, &amp;$calls) {</code>
+    </MissingClosureReturnType>
+    <MissingParamType occurrences="1">
+      <code>$container</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="15">
+      <code>getHistoryUseCases</code>
+      <code>testAddsCookiesToRequests</code>
+      <code>testLogsRequestsAndErrors</code>
+      <code>testLogsRequestsAndResponses</code>
+      <code>testLogsRequestsAndResponsesCustomLevel</code>
+      <code>testLogsWithStringError</code>
+      <code>testMapsRequest</code>
+      <code>testMapsResponse</code>
+      <code>testNullContainerException</code>
+      <code>testTapsBeforeAndAfter</code>
+      <code>testThrowsExceptionOnHttpClientError</code>
+      <code>testThrowsExceptionOnHttpClientErrorLongBody</code>
+      <code>testThrowsExceptionOnHttpServerError</code>
+      <code>testTracksHistory</code>
+      <code>testTracksHistoryForFailures</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="10">
+      <code>$calls</code>
+      <code>$container</code>
+      <code>$logger-&gt;records[0]['message']</code>
+      <code>$logger-&gt;records[0]['message']</code>
+      <code>$logger-&gt;records[0]['message']</code>
+      <code>$logger-&gt;records[0]['message']</code>
+      <code>$logger-&gt;records[0]['message']</code>
+      <code>$p</code>
+      <code>$p</code>
+      <code>$p</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="7">
+      <code>$m2</code>
+      <code>Middleware::log($logger, $formatter)</code>
+      <code>Middleware::log($logger, $formatter)</code>
+      <code>Middleware::log($logger, $formatter)</code>
+      <code>Middleware::log($logger, $formatter, 'debug')</code>
+    </MixedArgumentTypeCoercion>
+    <MixedArrayAccess occurrences="14">
+      <code>$container[0]['error']</code>
+      <code>$container[0]['options']</code>
+      <code>$container[0]['request']</code>
+      <code>$container[0]['request']</code>
+      <code>$container[0]['response']</code>
+      <code>$container[1]['options']</code>
+      <code>$container[1]['request']</code>
+      <code>$container[1]['response']</code>
+      <code>$logger-&gt;records[0]['level']</code>
+      <code>$logger-&gt;records[0]['message']</code>
+      <code>$logger-&gt;records[0]['message']</code>
+      <code>$logger-&gt;records[0]['message']</code>
+      <code>$logger-&gt;records[0]['message']</code>
+      <code>$logger-&gt;records[0]['message']</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="3">
+      <code>$calls[]</code>
+      <code>$calls[]</code>
+      <code>$calls[]</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="6">
+      <code>$f</code>
+      <code>$p</code>
+      <code>$p</code>
+      <code>$p</code>
+      <code>$p1</code>
+      <code>$p2</code>
+    </MixedAssignment>
+    <MixedFunctionCall occurrences="2">
+      <code>$f(new Request('GET', 'http://foo.com'), ['cookies' =&gt; $jar])</code>
+      <code>$handler($request, $options)</code>
+    </MixedFunctionCall>
+    <MixedMethodCall occurrences="11">
+      <code>getHeaderLine</code>
+      <code>getMethod</code>
+      <code>getMethod</code>
+      <code>getMethod</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>wait</code>
+      <code>wait</code>
+      <code>wait</code>
+      <code>wait</code>
+    </MixedMethodCall>
+    <NullArgument occurrences="1">
+      <code>$nullContainer</code>
+    </NullArgument>
+    <PossiblyInvalidArgument occurrences="2">
+      <code>$container</code>
+      <code>$container</code>
+    </PossiblyInvalidArgument>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>MiddlewareTest</code>
+      <code>MiddlewareTest</code>
+    </PropertyNotSetInConstructor>
+    <TooManyArguments occurrences="1">
+      <code>Middleware::cookies($jar)</code>
+    </TooManyArguments>
+  </file>
+  <file src="tests/PoolTest.php">
+    <InvalidArgument occurrences="1">
+      <code>'foo'</code>
+    </InvalidArgument>
+    <InvalidScalarArgument occurrences="2">
+      <code>\substr($request-&gt;getUri()-&gt;getPath(), 1)</code>
+      <code>\substr($request-&gt;getUri()-&gt;getPath(), 1)</code>
+    </InvalidScalarArgument>
+    <MissingClosureParamType occurrences="3">
+      <code>$index</code>
+      <code>$res</code>
+      <code>$value</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="2">
+      <code>static function (RequestInterface $request) {</code>
+      <code>static function (array $opts) use (&amp;$optHistory, $c) {</code>
+    </MissingClosureReturnType>
+    <MissingParamType occurrences="1">
+      <code>$total</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="10">
+      <code>getClient</code>
+      <code>testBatchesResults</code>
+      <code>testBatchesResultsWithCallbacks</code>
+      <code>testCanProvideCallablesThatReturnResponses</code>
+      <code>testExecutesPendingWhenWaiting</code>
+      <code>testSendsAndRealizesFuture</code>
+      <code>testUsesRequestOptions</code>
+      <code>testUsesYieldedKeyInFulfilledCallback</code>
+      <code>testValidatesEachElement</code>
+      <code>testValidatesIterable</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="4">
+      <code>$c</code>
+      <code>$h</code>
+      <code>$h</code>
+      <code>$keys</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="2">
+      <code>$h[0]</code>
+      <code>$h[0]</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="3">
+      <code>$h[]</code>
+      <code>$h[]</code>
+      <code>$keys[]</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="2">
+      <code>$c</code>
+      <code>$keys[]</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="11">
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>hasHeader</code>
+      <code>hasHeader</code>
+      <code>resolve</code>
+      <code>resolve</code>
+      <code>resolve</code>
+      <code>resolve</code>
+      <code>resolve</code>
+      <code>resolve</code>
+    </MixedMethodCall>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>PoolTest</code>
+      <code>PoolTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/PrepareBodyMiddlewareTest.php">
+    <MissingParamType occurrences="4">
+      <code>$body</code>
+      <code>$method</code>
+      <code>$result</code>
+      <code>$value</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="7">
+      <code>expectProvider</code>
+      <code>methodProvider</code>
+      <code>testAddsContentLengthWhenMissingAndPossible</code>
+      <code>testAddsContentTypeWhenMissingAndPossible</code>
+      <code>testAddsExpect</code>
+      <code>testAddsTransferEncodingWhenNoContentLength</code>
+      <code>testIgnoresIfExpectIsPresent</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="3">
+      <code>$body</code>
+      <code>$body</code>
+      <code>$method</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="5">
+      <code>$m</code>
+      <code>$m</code>
+      <code>$m</code>
+      <code>$m</code>
+      <code>$m</code>
+    </MixedArgumentTypeCoercion>
+    <MixedAssignment occurrences="5">
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="5">
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+    </MixedMethodCall>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>PrepareBodyMiddlewareTest</code>
+      <code>PrepareBodyMiddlewareTest</code>
+    </PropertyNotSetInConstructor>
+    <UndefinedFunction occurrences="1">
+      <code>'foo'</code>
+    </UndefinedFunction>
+  </file>
+  <file src="tests/RedirectMiddlewareTest.php">
+    <InvalidArgument occurrences="1"/>
+    <MissingClosureParamType occurrences="3">
+      <code>$request</code>
+      <code>$response</code>
+      <code>$uri</code>
+    </MissingClosureParamType>
+    <MissingReturnType occurrences="16">
+      <code>testAddsGuzzleRedirectHeader</code>
+      <code>testAddsGuzzleRedirectStatusHeader</code>
+      <code>testAddsRefererHeader</code>
+      <code>testAddsRefererHeaderButClearsUserInfo</code>
+      <code>testDoesNotAddRefererWhenGoingFromHttpsToHttp</code>
+      <code>testEnsuresProtocolIsValid</code>
+      <code>testIgnoresNonRedirects</code>
+      <code>testIgnoresWhenNoLocation</code>
+      <code>testInvokesOnRedirectForRedirects</code>
+      <code>testLimitsToMaxRedirects</code>
+      <code>testModifyRequestFollowRequestMethodAndBody</code>
+      <code>testNotRemoveAuthorizationHeaderOnRedirect</code>
+      <code>testRedirectsWithAbsoluteUri</code>
+      <code>testRedirectsWithRelativeUri</code>
+      <code>testRemoveAuthorizationHeaderOnRedirect</code>
+      <code>testTooManyRedirectsExceptionHasResponse</code>
+    </MissingReturnType>
+    <MixedArgumentTypeCoercion occurrences="13">
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+      <code>Middleware::redirect()</code>
+    </MixedArgumentTypeCoercion>
+    <MixedAssignment occurrences="6">
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="8">
+      <code>getHeader</code>
+      <code>getHeader</code>
+      <code>getMethod</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+    </MixedMethodCall>
+    <PossiblyNullReference occurrences="6">
+      <code>getHeaderLine</code>
+      <code>getHeaderLine</code>
+      <code>getStatusCode</code>
+      <code>getUri</code>
+      <code>getUri</code>
+      <code>hasHeader</code>
+    </PossiblyNullReference>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>RedirectMiddlewareTest</code>
+      <code>RedirectMiddlewareTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/RetryMiddlewareTest.php">
+    <ArgumentTypeCoercion occurrences="1">
+      <code>'Exception'</code>
+    </ArgumentTypeCoercion>
+    <MissingClosureParamType occurrences="4">
+      <code>$args</code>
+      <code>$args</code>
+      <code>$response</code>
+      <code>$retries</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="4">
+      <code>static function ($retries, $response) use (&amp;$delayCalls) {</code>
+      <code>static function () {</code>
+      <code>static function (...$args) use (&amp;$calls) {</code>
+      <code>static function (...$args) use (&amp;$calls) {</code>
+    </MissingClosureReturnType>
+    <MissingReturnType occurrences="4">
+      <code>testBackoffCalculateDelay</code>
+      <code>testCanRetryExceptions</code>
+      <code>testDoesNotRetryWhenDeciderReturnsFalse</code>
+      <code>testRetriesWhenDeciderReturnsTrue</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="3">
+      <code>$calls</code>
+      <code>$calls</code>
+      <code>$calls</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="6">
+      <code>$calls[0]</code>
+      <code>$calls[0]</code>
+      <code>$calls[0]</code>
+      <code>$calls[1]</code>
+      <code>$calls[1]</code>
+      <code>$calls[1]</code>
+    </MixedArrayAccess>
+    <MixedArrayAssignment occurrences="2">
+      <code>$calls[]</code>
+      <code>$calls[]</code>
+    </MixedArrayAssignment>
+    <MixedAssignment occurrences="2">
+      <code>$delayCalls</code>
+      <code>$f</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="3">
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+      <code>getStatusCode</code>
+    </MixedMethodCall>
+    <MixedOperand occurrences="1">
+      <code>$delayCalls</code>
+    </MixedOperand>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>RetryMiddlewareTest</code>
+      <code>RetryMiddlewareTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/Server.php">
+    <DocblockTypeContradiction occurrences="1">
+      <code>self::$client</code>
+    </DocblockTypeContradiction>
+    <InvalidReturnStatement occurrences="1"/>
+    <InvalidReturnType occurrences="1">
+      <code>ResponseInterface[]</code>
+    </InvalidReturnType>
+    <MissingClosureParamType occurrences="1">
+      <code>$message</code>
+    </MissingClosureParamType>
+    <MissingParamType occurrences="1">
+      <code>$maxTries</code>
+    </MissingParamType>
+    <MissingPropertyType occurrences="2">
+      <code>$port</code>
+      <code>$started</code>
+    </MissingPropertyType>
+    <MissingReturnType occurrences="8">
+      <code>enqueue</code>
+      <code>enqueueRaw</code>
+      <code>flush</code>
+      <code>getClient</code>
+      <code>isListening</code>
+      <code>start</code>
+      <code>stop</code>
+      <code>wait</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="7">
+      <code>$data</code>
+      <code>$message['body']</code>
+      <code>$message['headers']</code>
+      <code>$message['http_method']</code>
+      <code>$message['version']</code>
+      <code>$response-&gt;getBody()</code>
+      <code>$uri</code>
+    </MixedArgument>
+    <MixedArrayAccess occurrences="6">
+      <code>$message['body']</code>
+      <code>$message['headers']</code>
+      <code>$message['http_method']</code>
+      <code>$message['query_string']</code>
+      <code>$message['uri']</code>
+      <code>$message['version']</code>
+    </MixedArrayAccess>
+    <MixedAssignment occurrences="3">
+      <code>$data</code>
+      <code>$response</code>
+      <code>$uri</code>
+    </MixedAssignment>
+    <MixedMethodCall occurrences="7">
+      <code>getBody</code>
+      <code>request</code>
+      <code>request</code>
+      <code>request</code>
+      <code>request</code>
+      <code>request</code>
+      <code>request</code>
+    </MixedMethodCall>
+    <MixedOperand occurrences="3">
+      <code>$message['query_string']</code>
+      <code>$uri</code>
+      <code>self::$port</code>
+    </MixedOperand>
+  </file>
+  <file src="tests/TransferStatsTest.php">
+    <MissingReturnType occurrences="1">
+      <code>testHasData</code>
+    </MissingReturnType>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>TransferStatsTest</code>
+      <code>TransferStatsTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/UtilsTest.php">
+    <DeprecatedFunction occurrences="14">
+      <code>GuzzleHttp\choose_handler()</code>
+      <code>GuzzleHttp\debug_resource()</code>
+      <code>GuzzleHttp\default_ca_bundle()</code>
+      <code>GuzzleHttp\default_user_agent()</code>
+      <code>GuzzleHttp\describe_type($input)</code>
+      <code>GuzzleHttp\headers_from_lines($lines)</code>
+      <code>GuzzleHttp\headers_from_lines($lines)</code>
+      <code>GuzzleHttp\normalize_header_keys($input)</code>
+      <code>\GuzzleHttp\is_host_in_noproxy($host, $list)</code>
+      <code>\GuzzleHttp\is_host_in_noproxy('', [])</code>
+      <code>\GuzzleHttp\json_decode('true')</code>
+      <code>\GuzzleHttp\json_decode('{{]]')</code>
+      <code>\GuzzleHttp\json_encode("\x99")</code>
+      <code>\GuzzleHttp\json_encode(true)</code>
+    </DeprecatedFunction>
+    <DeprecatedMethod occurrences="1">
+      <code>Utils::defaultCaBundle()</code>
+    </DeprecatedMethod>
+    <InvalidScalarArgument occurrences="1">
+      <code>0</code>
+    </InvalidScalarArgument>
+    <MissingParamType occurrences="5">
+      <code>$host</code>
+      <code>$input</code>
+      <code>$list</code>
+      <code>$output</code>
+      <code>$result</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="20">
+      <code>noBodyProvider</code>
+      <code>noProxyProvider</code>
+      <code>testChecksNoProxyList</code>
+      <code>testChooseHandler</code>
+      <code>testDecodesJson</code>
+      <code>testDecodesJsonAndThrowsOnError</code>
+      <code>testDecodesJsonAndThrowsOnErrorLegacy</code>
+      <code>testDefaultUserAgent</code>
+      <code>testDescribesType</code>
+      <code>testEncodesJson</code>
+      <code>testEncodesJsonAndThrowsOnError</code>
+      <code>testEncodesJsonAndThrowsOnErrorLegacy</code>
+      <code>testEnsuresNoProxyCheckHostIsSet</code>
+      <code>testEnsuresNoProxyCheckHostIsSetLegacy</code>
+      <code>testNormalizeHeaderKeys</code>
+      <code>testParsesHeadersFromLines</code>
+      <code>testParsesHeadersFromLinesWithMultipleLines</code>
+      <code>testProvidesDefaultCaBundler</code>
+      <code>testReturnsDebugResource</code>
+      <code>typeProvider</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="3">
+      <code>$host</code>
+      <code>$list</code>
+      <code>$originalOverload</code>
+    </MixedArgument>
+    <MixedArgumentTypeCoercion occurrences="1">
+      <code>$list</code>
+    </MixedArgumentTypeCoercion>
+    <PossiblyUndefinedVariable occurrences="1">
+      <code>$originalOverload</code>
+    </PossiblyUndefinedVariable>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>UtilsTest</code>
+      <code>UtilsTest</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="tests/bootstrap.php">
+    <MissingParamType occurrences="4">
+      <code>$handle</code>
+      <code>$handle</code>
+      <code>$option</code>
+      <code>$value</code>
+    </MissingParamType>
+    <MissingReturnType occurrences="2">
+      <code>curl_multi_setopt</code>
+      <code>curl_setopt_array</code>
+    </MissingReturnType>
+    <MixedArgument occurrences="3">
+      <code>$handle</code>
+      <code>$handle</code>
+      <code>$option</code>
+    </MixedArgument>
+    <MixedArrayAssignment occurrences="1">
+      <code>$_SERVER['_curl_multi'][$option]</code>
+    </MixedArrayAssignment>
+    <MixedArrayOffset occurrences="1">
+      <code>$_SERVER['_curl_multi'][$option]</code>
+    </MixedArrayOffset>
+    <MixedAssignment occurrences="1">
+      <code>$_SERVER['_curl_multi'][$option]</code>
+    </MixedAssignment>
   </file>
 </files>
