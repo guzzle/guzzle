@@ -66,7 +66,7 @@
         "bamarni/composer-bin-plugin": "^1.4.1",
         "php-http/client-integration-tests": "^3.0",
         "phpunit/phpunit": "^8.5.5 || ^9.3.5",
-        "psr/log": "^1.1"
+        "psr/log": "^1.1 || ^2.0 || ^3.0"
     },
     "suggest": {
         "ext-curl": "Required for CURL handler support",
