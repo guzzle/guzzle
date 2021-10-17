@@ -13,16 +13,45 @@
       <code>$result</code>
     </PossiblyFalseOperand>
   </file>
+  <file src="src/Cookie/SetCookie.php">
+    <RedundantCast occurrences="9">
+      <code>(bool) $discard</code>
+      <code>(bool) $httpOnly</code>
+      <code>(bool) $secure</code>
+      <code>(int) $maxAge</code>
+      <code>(string) $domain</code>
+      <code>(string) $name</code>
+      <code>(string) $path</code>
+      <code>(string) $timestamp</code>
+      <code>(string) $value</code>
+    </RedundantCast>
+    <TooManyArguments occurrences="9">
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string or null to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int or null to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int, string or null to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+    </TooManyArguments>
+  </file>
   <file src="src/Exception/RequestException.php">
     <ImplicitToStringCast occurrences="1">
       <code>$uri</code>
     </ImplicitToStringCast>
   </file>
   <file src="src/Handler/CurlFactory.php">
-    <FalseOperand occurrences="2">
-      <code>$timeoutRequiresNoSignal</code>
+    <FalseOperand occurrences="1">
       <code>$timeoutRequiresNoSignal</code>
     </FalseOperand>
+    <InvalidOperand occurrences="1">
+      <code>$options['connect_timeout'] &lt; 1</code>
+    </InvalidOperand>
+    <PossiblyFalseOperand occurrences="1">
+      <code>$timeoutRequiresNoSignal</code>
+    </PossiblyFalseOperand>
     <PossiblyInvalidArgument occurrences="13">
       <code>$easy-&gt;handle</code>
       <code>$easy-&gt;handle</code>
@@ -41,9 +70,6 @@
     <PossiblyInvalidCast occurrences="1">
       <code>$sslKey</code>
     </PossiblyInvalidCast>
-    <TypeDoesNotContainType occurrences="1">
-      <code>$timeoutRequiresNoSignal</code>
-    </TypeDoesNotContainType>
     <UndefinedDocblockClass occurrences="2">
       <code>private $handles = [];</code>
       <code>resource[]|\CurlHandle[]</code>
@@ -68,6 +94,9 @@
       <code>$this-&gt;_mh</code>
       <code>$this-&gt;_mh</code>
     </PossiblyInvalidArgument>
+    <TooManyArguments occurrences="1">
+      <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an integer to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
+    </TooManyArguments>
     <UndefinedDocblockClass occurrences="2">
       <code>resource|\CurlMultiHandle</code>
       <code>resource|\CurlMultiHandle|null</code>
@@ -77,9 +106,6 @@
     </UndefinedThisPropertyAssignment>
   </file>
   <file src="src/Handler/EasyHandle.php">
-    <RedundantCast occurrences="1">
-      <code>(string) $startLine[2]</code>
-    </RedundantCast>
     <UndefinedDocblockClass occurrences="1">
       <code>resource|\CurlHandle</code>
     </UndefinedDocblockClass>
@@ -88,6 +114,9 @@
     <ImplicitToStringCast occurrences="1">
       <code>$uri</code>
     </ImplicitToStringCast>
+    <RedundantCondition occurrences="1">
+      <code>empty($options)</code>
+    </RedundantCondition>
   </file>
   <file src="src/HandlerStack.php">
     <PropertyTypeCoercion occurrences="4">
