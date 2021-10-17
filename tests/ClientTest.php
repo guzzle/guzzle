@@ -4,7 +4,6 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -620,7 +619,7 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mock]);
         $request = new Request('GET', 'http://foo.com');
 
-        $this->expectException(RequestException::class);
+        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
         $client->send($request, ['headers'=>['X-Foo: Bar']]);
     }
 
@@ -630,7 +629,7 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mock]);
         $request = new Request('GET', 'http://foo.com');
 
-        $this->expectException(RequestException::class);
+        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
         $client->send($request, ['headers'=>['X-Foo: Bar', 'X-Test: Fail']]);
     }
 
