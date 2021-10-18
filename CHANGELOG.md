@@ -2,6 +2,23 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 7.4.0 - 2021-10-18
+
+### Added
+
+- Support PHP 8.1 [#2929](https://github.com/guzzle/guzzle/pull/2929), [#2939](https://github.com/guzzle/guzzle/pull/2939)
+- Support `psr/log` version 2 and 3 [#2943](https://github.com/guzzle/guzzle/pull/2943)
+
+### Fixed
+
+- Make sure we always call `restore_error_handler()` [#2915](https://github.com/guzzle/guzzle/pull/2915)
+- Fix progress parameter type compatibility between the cURL and stream handlers [#2936](https://github.com/guzzle/guzzle/pull/2936)
+- Throw `InvalidArgumentException` when an incorrect `headers` array is provided [#2916](https://github.com/guzzle/guzzle/pull/2916), [#2942](https://github.com/guzzle/guzzle/pull/2942)
+
+### Changed
+
+- Be more strict with types [#2914](https://github.com/guzzle/guzzle/pull/2914), [#2917](https://github.com/guzzle/guzzle/pull/2917), [#2919](https://github.com/guzzle/guzzle/pull/2919), [#2945](https://github.com/guzzle/guzzle/pull/2945)
+
 ## 7.3.0 - 2021-03-23
 
 ### Added
