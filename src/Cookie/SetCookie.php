@@ -92,7 +92,7 @@ class SetCookie
 
     public function __toString()
     {
-        $str = $this->data['Name'] . '=' . $this->data['Value'] . '; ';
+        $str = $this->data['Name'] . '=' . ($this->data['Value'] ?? '') . '; ';
         foreach ($this->data as $k => $v) {
             if ($k !== 'Name' && $k !== 'Value' && $v !== null && $v !== false) {
                 if ($k === 'Expires') {
@@ -132,7 +132,7 @@ class SetCookie
             trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['Name'] = $name;
+        $this->data['Name'] = (string) $name;
     }
 
     /**
@@ -156,7 +156,7 @@ class SetCookie
             trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['Value'] = $value;
+        $this->data['Value'] = (string) $value;
     }
 
     /**
@@ -172,15 +172,15 @@ class SetCookie
     /**
      * Set the domain of the cookie.
      *
-     * @param string $domain
+     * @param string|null $domain
      */
     public function setDomain($domain): void
     {
-        if (!is_string($domain)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+        if (!is_string($domain) && null !== $domain) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string or null to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['Domain'] = $domain;
+        $this->data['Domain'] = null === $domain ? null : (string) $domain;
     }
 
     /**
@@ -204,7 +204,7 @@ class SetCookie
             trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['Path'] = $path;
+        $this->data['Path'] = (string) $path;
     }
 
     /**
@@ -220,15 +220,15 @@ class SetCookie
     /**
      * Set the max-age of the cookie.
      *
-     * @param int $maxAge Max age of the cookie in seconds
+     * @param int|null $maxAge Max age of the cookie in seconds
      */
     public function setMaxAge($maxAge): void
     {
-        if (!is_int($maxAge)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+        if (!is_int($maxAge) && null !== $maxAge) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int or null to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['Max-Age'] = $maxAge;
+        $this->data['Max-Age'] = $maxAge === null ? null : (int) $maxAge;
     }
 
     /**
@@ -244,23 +244,21 @@ class SetCookie
     /**
      * Set the unix timestamp for which the cookie will expire.
      *
-     * @param int|string $timestamp Unix timestamp or any English textual datetime description.
+     * @param int|string|null $timestamp Unix timestamp or any English textual datetime description.
      */
     public function setExpires($timestamp): void
     {
-        if (!is_int($timestamp) && !is_string($timestamp)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int or string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+        if (!is_int($timestamp) && !is_string($timestamp) && null !== $timestamp) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int, string or null to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['Expires'] = \is_numeric($timestamp)
-            ? (int) $timestamp
-            : \strtotime($timestamp);
+        $this->data['Expires'] = null === $timestamp ? null : (\is_numeric($timestamp) ? (int) $timestamp : \strtotime((string) $timestamp));
     }
 
     /**
      * Get whether or not this is a secure cookie.
      *
-     * @return bool|null
+     * @return bool
      */
     public function getSecure()
     {
@@ -275,10 +273,10 @@ class SetCookie
     public function setSecure($secure): void
     {
         if (!is_bool($secure)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a boolean to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['Secure'] = $secure;
+        $this->data['Secure'] = (bool) $secure;
     }
 
     /**
@@ -299,10 +297,10 @@ class SetCookie
     public function setDiscard($discard): void
     {
         if (!is_bool($discard)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a boolean to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['Discard'] = $discard;
+        $this->data['Discard'] = (bool) $discard;
     }
 
     /**
@@ -323,10 +321,10 @@ class SetCookie
     public function setHttpOnly($httpOnly): void
     {
         if (!is_bool($httpOnly)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a boolean to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['HttpOnly'] = $httpOnly;
+        $this->data['HttpOnly'] = (bool) $httpOnly;
     }
 
     /**
