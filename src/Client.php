@@ -244,6 +244,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $defaults['proxy']['http'] = $proxy;
         }
 
+        if ($proxy = Utils::getenv('HTTP_PROXY')) {
+            $defaults['proxy']['http'] = $proxy;
+        }
+        
         if ($proxy = Utils::getenv('HTTPS_PROXY')) {
             $defaults['proxy']['https'] = $proxy;
         }
