@@ -37,34 +37,24 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     ]);
      *
      * Client configuration settings include the following options:
-     *
-     * - handler: (callable) Function that transfers HTTP requests over the
-     *   wire. The function is called with a Psr7\Http\Message\RequestInterface
-     *   and array of transfer options, and must return a
-     *   GuzzleHttp\Promise\PromiseInterface that is fulfilled with a
-     *   Psr7\Http\Message\ResponseInterface on success.
-     *   If no handler is provided, a default handler will be created
-     *   that enables all of the request options below by attaching all of the
-     *   default middleware to the handler.
-     * - base_uri: (string|UriInterface) Base URI of the client that is merged
-     *   into relative URIs. Can be a string or instance of UriInterface.
-     * - **: any request option
+     * - **: any request option and/or client option
      *
      * @param array $config Client configuration settings.
      *
      * @see \GuzzleHttp\RequestOptions for a list of available request options.
+     * @see \GuzzleHttp\ClientOptions for a list of available client options.
      */
     public function __construct(array $config = [])
     {
-        if (!isset($config['handler'])) {
-            $config['handler'] = HandlerStack::create();
-        } elseif (!\is_callable($config['handler'])) {
+        if (!isset($config[ClientOptions::HANDLER])) {
+            $config[ClientOptions::HANDLER] = HandlerStack::create();
+        } elseif (!\is_callable($config[ClientOptions::HANDLER])) {
             throw new InvalidArgumentException('handler must be a callable');
         }
 
         // Convert the base_uri to a UriInterface
-        if (isset($config['base_uri'])) {
-            $config['base_uri'] = Psr7\Utils::uriFor($config['base_uri']);
+        if (isset($config[ClientOptions::BASE_URI])) {
+            $config[ClientOptions::BASE_URI] = Psr7\Utils::uriFor($config[ClientOptions::BASE_URI]);
         }
 
         $this->configureDefaults($config);
@@ -209,8 +199,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
     private function buildUri(UriInterface $uri, array $config): UriInterface
     {
-        if (isset($config['base_uri'])) {
-            $uri = Psr7\UriResolver::resolve(Psr7\Utils::uriFor($config['base_uri']), $uri);
+        if (isset($config[ClientOptions::BASE_URI])) {
+            $uri = Psr7\UriResolver::resolve(Psr7\Utils::uriFor($config[ClientOptions::BASE_URI]), $uri);
         }
 
         if (isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
@@ -325,7 +315,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         $request = $this->applyOptions($request, $options);
         /** @var HandlerStack $handler */
-        $handler = $options['handler'];
+        $handler = $options[ClientOptions::HANDLER];
 
         try {
             return P\Create::promiseFor($handler($request, $options));
