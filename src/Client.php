@@ -120,6 +120,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     public function send(RequestInterface $request, array $options = []): ResponseInterface
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
+
+        /** @var ResponseInterface */
         return $this->sendAsync($request, $options)->wait();
     }
 
@@ -134,6 +136,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $options[RequestOptions::ALLOW_REDIRECTS] = false;
         $options[RequestOptions::HTTP_ERRORS] = false;
 
+        /** @var ResponseInterface */
         return $this->sendAsync($request, $options)->wait();
     }
 
@@ -184,6 +187,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     public function request(string $method, $uri = '', array $options = []): ResponseInterface
     {
         $options[RequestOptions::SYNCHRONOUS] = true;
+
+        /** @var ResponseInterface */
         return $this->requestAsync($method, $uri, $options)->wait();
     }
 
@@ -264,6 +269,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $this->config['headers'] = ['User-Agent' => Utils::defaultUserAgent()];
         } else {
             // Add the User-Agent header if one was not already set.
+
+            /** @var string $name */
             foreach (\array_keys($this->config['headers']) as $name) {
                 if (\strtolower($name) === 'user-agent') {
                     return;

@@ -6,6 +6,7 @@ vendor/
 /phpstan.neon
 /phpunit.xml
 
+.idea/
 build/
 artifacts/
 docs/_build

@@ -32,9 +32,9 @@ class CurlMultiHandler
     private $selectTimeout;
 
     /**
-     * @var resource|\CurlMultiHandle|null the currently executing resource in `curl_multi_exec`.
+     * @var 0|1 the currently executing resource in `curl_multi_exec`.
      */
-    private $active;
+    private $active = 0;
 
     /**
      * @var array Request entry handles, indexed by handle id in `addRequest`.
@@ -53,7 +53,7 @@ class CurlMultiHandler
     /**
      * @var array<mixed> An associative array of CURLMOPT_* options and corresponding values for curl_multi_setopt()
      */
-    private $options = [];
+    private $options;
 
     /**
      * This handler accepts the following options:

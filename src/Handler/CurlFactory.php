@@ -113,6 +113,8 @@ class CurlFactory implements CurlFactoryInterface
         // Return the response if it is present and there is no error.
         $factory->release($easy);
 
+        assert($easy->response !== null);
+
         // Rewind the body of the response if possible.
         $body = $easy->response->getBody();
         if ($body->isSeekable()) {
@@ -125,6 +127,7 @@ class CurlFactory implements CurlFactoryInterface
     private static function invokeStats(EasyHandle $easy): void
     {
         $curlStats = \curl_getinfo($easy->handle);
+        assert(\is_array($curlStats));
         $curlStats['appconnect_time'] = \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME);
         $stats = new TransferStats(
             $easy->request,
@@ -142,12 +145,19 @@ class CurlFactory implements CurlFactoryInterface
     private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
         // Get error information and release the handle to the factory.
+        $curlStats = \curl_getinfo($easy->handle);
+        assert(\is_array($curlStats));
+
         $ctx = [
             'errno' => $easy->errno,
             'error' => \curl_error($easy->handle),
             'appconnect_time' => \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME),
-        ] + \curl_getinfo($easy->handle);
-        $ctx[self::CURL_VERSION_STR] = \curl_version()['version'];
+        ] + $curlStats;
+
+        $curlVersion = \curl_version();
+        assert($curlVersion !== false);
+
+        $ctx[self::CURL_VERSION_STR] = $curlVersion['version'];
         $factory->release($easy);
 
         // Retry when nothing is present or when curl failed to rewind.
@@ -338,6 +348,7 @@ class CurlFactory implements CurlFactoryInterface
      */
     private function removeHeader(string $name, array &$options): void
     {
+        /** @var string $key */
         foreach (\array_keys($options['_headers']) as $key) {
             if (!\strcasecmp($key, $name)) {
                 unset($options['_headers'][$key]);

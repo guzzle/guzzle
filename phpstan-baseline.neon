@@ -1,11 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Parameter \\#1 \\$str of function strtolower expects string, int\\|string given\\.$#"
-			count: 1
-			path: src/Client.php
-
-		-
 			message: "#^Result of && is always false\\.$#"
 			count: 3
 			path: src/Cookie/SetCookie.php
@@ -14,16 +9,6 @@ parameters:
 			message: "#^Strict comparison using \\!\\=\\= between null and null will always evaluate to false\\.$#"
 			count: 3
 			path: src/Cookie/SetCookie.php
-
-		-
-			message: "#^Cannot access offset 'version' on array\\|false\\.$#"
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: "#^Cannot call method getBody\\(\\) on Psr\\\\Http\\\\Message\\\\ResponseInterface\\|null\\.$#"
-			count: 1
-			path: src/Handler/CurlFactory.php
 
 		-
 			message: "#^Parameter \\#1 \\$ch of function curl_close expects resource, CurlHandle\\|resource given\\.$#"
@@ -56,11 +41,6 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: "#^Parameter \\#1 \\$str1 of function strcasecmp expects string, int\\|string given\\.$#"
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlFactory\\:\\:\\$handles has unknown class CurlHandle as its type\\.$#"
 			count: 1
 			path: src/Handler/CurlFactory.php
@@ -74,6 +54,11 @@ parameters:
 			message: "#^Parameter \\#1 \\$ch of function curl_exec expects resource, CurlHandle\\|resource given\\.$#"
 			count: 1
 			path: src/Handler/CurlHandler.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:__get\\(\\) has invalid return type CurlMultiHandle\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
 
 		-
 			message: "#^Parameter \\#1 \\$mh of function curl_multi_add_handle expects resource, CurlMultiHandle\\|resource given\\.$#"
@@ -102,16 +87,6 @@ parameters:
 
 		-
 			message: "#^Parameter \\#1 \\$mh of function curl_multi_select expects resource, CurlMultiHandle\\|resource given\\.$#"
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:\\$active has unknown class CurlMultiHandle as its type\\.$#"
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: "#^Return typehint of method GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:__get\\(\\) has invalid type CurlMultiHandle\\.$#"
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 

@@ -91,7 +91,7 @@ class RequestException extends TransferException implements RequestExceptionInte
         }
 
         $uri = $request->getUri();
-        $uri = static::obfuscateUri($uri);
+        $uri = self::obfuscateUri($uri);
 
         // Client Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)

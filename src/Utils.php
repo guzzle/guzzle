@@ -21,10 +21,10 @@ final class Utils
      */
     public static function describeType($input): string
     {
-        switch (\gettype($input)) {
-            case 'object':
+        switch (true) {
+            case \is_object($input):
                 return 'object(' . \get_class($input) . ')';
-            case 'array':
+            case \is_array($input):
                 return 'array(' . \count($input) . ')';
             default:
                 \ob_start();
@@ -270,11 +270,14 @@ EOT
      */
     public static function jsonDecode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
     {
+        assert($depth >= 1);
+
         $data = \json_decode($json, $assoc, $depth, $options);
         if (\JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException('json_decode error: ' . \json_last_error_msg());
         }
 
+        /** @var object|array|string|int|float|bool|null */
         return $data;
     }
 
@@ -291,6 +294,8 @@ EOT
      */
     public static function jsonEncode($value, int $options = 0, int $depth = 512): string
     {
+        assert($depth >= 1);
+
         $json = \json_encode($value, $options, $depth);
         if (\JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException('json_encode error: ' . \json_last_error_msg());
