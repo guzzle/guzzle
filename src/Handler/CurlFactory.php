@@ -145,8 +145,8 @@ class CurlFactory implements CurlFactoryInterface
     private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
         // Get error information and release the handle to the factory.
+        /** @var array<array-key, mixed> $curlStats */
         $curlStats = \curl_getinfo($easy->handle);
-        assert(\is_array($curlStats));
 
         $ctx = [
             'errno' => $easy->errno,
@@ -154,8 +154,8 @@ class CurlFactory implements CurlFactoryInterface
             'appconnect_time' => \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME),
         ] + $curlStats;
 
+        /** @var array<array-key, mixed> $curlVersion */
         $curlVersion = \curl_version();
-        assert($curlVersion !== false);
 
         $ctx[self::CURL_VERSION_STR] = $curlVersion['version'];
         $factory->release($easy);

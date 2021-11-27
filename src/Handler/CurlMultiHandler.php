@@ -32,7 +32,7 @@ class CurlMultiHandler
     private $selectTimeout;
 
     /**
-     * @var 0|1 the currently executing resource in `curl_multi_exec`.
+     * @var int the currently executing resource in `curl_multi_exec`.
      */
     private $active = 0;
 
