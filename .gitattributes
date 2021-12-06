@@ -12,3 +12,4 @@
 /psalm-baseline.xml    export-ignore
 /psalm.xml             export-ignore
 /tests/                export-ignore
+/vendor-bin/           export-ignore
