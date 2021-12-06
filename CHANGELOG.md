@@ -6,7 +6,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Allow `symfony/deprecation-contracts` version 3 [#2961](https://github.com/guzzle/guzzle/pull/2929)
+- Allow `symfony/deprecation-contracts` version 3 [#2961](https://github.com/guzzle/guzzle/pull/2961)
 
 ### Fixed
 
