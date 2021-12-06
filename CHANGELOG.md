@@ -6,6 +6,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
+- Replaced implicit URI to string coercion [#2946](https://github.com/guzzle/guzzle/pull/2946)
 - Allow `symfony/deprecation-contracts` version 3 [#2961](https://github.com/guzzle/guzzle/pull/2961)
 
 ### Fixed
