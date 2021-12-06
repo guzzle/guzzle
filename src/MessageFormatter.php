@@ -137,7 +137,7 @@ class MessageFormatter implements MessageFormatterInterface
                         break;
                     case 'uri':
                     case 'url':
-                        $result = $request->getUri();
+                        $result = $request->getUri()->__toString();
                         break;
                     case 'target':
                         $result = $request->getRequestTarget();
