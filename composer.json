@@ -56,7 +56,7 @@
         "guzzlehttp/promises": "^1.5",
         "guzzlehttp/psr7": "^1.8.3 || ^2.1",
         "psr/http-client": "^1.0",
-        "symfony/deprecation-contracts": "^2.2"
+        "symfony/deprecation-contracts": "^2.2 || ^3.0"
     },
     "provide": {
         "psr/http-client-implementation": "1.0"
