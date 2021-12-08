@@ -7,5 +7,4 @@ namespace GuzzleHttp\Exception;
  */
 class TimeoutException extends ConnectException
 {
-
 }
