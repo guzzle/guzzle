@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
@@ -27,8 +28,8 @@ class CurlHandlerTest extends TestCase
         $handler = new CurlHandler();
         $request = new Request('GET', 'http://localhost:123');
 
-        $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('cURL');
+        $this->expectException(TimeoutException::class);
+        $this->expectExceptionMessage('time-out');
         $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
     }
 
