@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -189,6 +190,18 @@ class CurlFactory implements CurlFactoryInterface
                     $easy->request,
                     $easy->response,
                     $easy->onHeadersException,
+                    $ctx
+                )
+            );
+        }
+
+        //Message is got from cURL error code: 28 by https://curl.haxx.se/libcurl/c/libcurl-errors.html
+        if ($ctx['errno'] == \CURLE_OPERATION_TIMEOUTED) {
+            return P\Create::rejectionFor(
+                new TimeoutException(
+                    "Operation timeout. The specified time-out period was reached according to the conditions.",
+                    $easy->request,
+                    null,
                     $ctx
                 )
             );
