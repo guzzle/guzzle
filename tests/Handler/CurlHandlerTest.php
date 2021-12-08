@@ -28,6 +28,16 @@ class CurlHandlerTest extends TestCase
         $handler = new CurlHandler();
         $request = new Request('GET', 'http://localhost:123');
 
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('cURL');
+        $handler($request)->wait();
+    }
+
+    public function testTimeoutError()
+    {
+        $handler = new CurlHandler();
+        $request = new Request('GET', Server::$url);
+
         $this->expectException(TimeoutException::class);
         $this->expectExceptionMessage('time-out');
         $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
