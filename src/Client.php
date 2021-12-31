@@ -307,6 +307,14 @@ class Client implements ClientInterface
         }
 
         // Shallow merge defaults underneath options.
+        if (!is_array($options)){
+             $options = (array) $options;
+        }
+
+        if (!is_array($defaults)){
+             $defaults = (array) $defaults;
+        }
+        
         $result = $options + $defaults;
 
         // Remove null values.
