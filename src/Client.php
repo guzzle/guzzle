@@ -82,8 +82,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $opts = $args[1] ?? [];
 
         return \substr($method, -5) === 'Async'
-        ? $this->requestAsync(\substr($method, 0, -5), $uri, $opts)
-        : $this->request($method, $uri, $opts);
+            ? $this->requestAsync(\substr($method, 0, -5), $uri, $opts)
+            : $this->request($method, $uri, $opts);
     }
 
     /**
@@ -195,8 +195,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     public function getConfig(?string $option = null)
     {
         return $option === null
-        ? $this->config
-        : (isset($this->config[$option]) ? $this->config[$option] : null);
+            ? $this->config
+            : (isset($this->config[$option]) ? $this->config[$option] : null);
     }
 
     private function buildUri(UriInterface $uri, array $config): UriInterface
@@ -220,11 +220,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         $defaults = [
             'allow_redirects' => RedirectMiddleware::$defaultSettings,
-            'http_errors' => true,
-            'decode_content' => true,
-            'verify' => true,
-            'cookies' => false,
-            'idn_conversion' => false,
+            'http_errors'     => true,
+            'decode_content'  => true,
+            'verify'          => true,
+            'cookies'         => false,
+            'idn_conversion'  => false,
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
@@ -400,7 +400,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     // Ensure that we don't have the header in different case and set the new value.
                     $modify['set_headers'] = Psr7\_caseless_remove(['Authorization'], $modify['set_headers']);
                     $modify['set_headers']['Authorization'] = 'Basic '
-                    . \base64_encode("$value[0]:$value[1]");
+                        . \base64_encode("$value[0]:$value[1]");
                     break;
                 case 'digest':
                     // @todo: Do not rely on curl
@@ -440,7 +440,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\_caseless_remove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary='
-            . $request->getBody()->getBoundary();
+                . $request->getBody()->getBoundary();
         }
 
         // Merge in conditional headers if they are not present.
