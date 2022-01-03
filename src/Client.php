@@ -299,6 +299,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 throw new InvalidArgumentException('headers must be an array');
             }
         }
+        
+        if (!is_array($options)) {
+            $options = [$options];
+        }
+
+        if (!is_array($defaults)) {
+            $defaults = [$defaults];
+        }
 
         // Shallow merge defaults underneath options.
         $result = $options + $defaults;
