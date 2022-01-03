@@ -299,7 +299,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 throw new InvalidArgumentException('headers must be an array');
             }
         }
-        
+
         if (!is_array($options)) {
             $options = [$options];
         }
