@@ -1,5 +1,5 @@
 {
-    "name": "guzzlehttp/guzzle",
+    "name": "vst93/guzzle",
     "type": "library",
     "description": "Guzzle is a PHP HTTP client library",
     "keywords": [
@@ -26,6 +26,9 @@
         "symfony/polyfill-intl-idn": "^1.17.0",
         "guzzlehttp/promises": "^1.0",
         "guzzlehttp/psr7": "^1.6.1"
+    },
+    "replace": {
+        "guzzlehttp/guzzle": "^6.0.0"
     },
     "require-dev": {
         "ext-curl": "*",
