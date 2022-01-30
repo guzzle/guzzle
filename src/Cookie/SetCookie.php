@@ -81,6 +81,7 @@ class SetCookie
         }
     }
 
+    #[\ReturnTypeWillChange]
     public function __toString()
     {
         $str = $this->data['Name'] . '=' . $this->data['Value'] . '; ';

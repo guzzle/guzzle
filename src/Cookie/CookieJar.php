@@ -217,11 +217,13 @@ class CookieJar implements CookieJarInterface
         return true;
     }
 
+    #[\ReturnTypeWillChange]
     public function count()
     {
         return count($this->cookies);
     }
 
+    #[\ReturnTypeWillChange]
     public function getIterator()
     {
         return new \ArrayIterator(array_values($this->cookies));

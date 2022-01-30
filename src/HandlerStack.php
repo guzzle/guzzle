@@ -76,6 +76,7 @@ class HandlerStack
      *
      * @return string
      */
+    #[\ReturnTypeWillChange]
     public function __toString()
     {
         $depth = 0;
