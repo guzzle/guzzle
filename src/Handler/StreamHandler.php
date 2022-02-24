@@ -377,6 +377,9 @@ class StreamHandler
                 'ignore_errors'    => true,
                 'follow_location'  => 0,
             ],
+            'ssl' => [
+                'peer_name' => $request->getUri()->getHost(),
+            ],
         ];
 
         $body = (string) $request->getBody();
