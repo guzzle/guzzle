@@ -739,12 +739,12 @@ class StreamHandlerTest extends TestCase
         )->wait();
     }
 
-    public function testHandlesNonHttpSchemesGracefully()
+    public function testRejectsNonHttpSchemes()
     {
         $handler = new StreamHandler();
 
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('An error was encountered while creating the response');
+        $this->expectExceptionMessage("The scheme 'file' is not supported.");
 
         $handler(
             new Request('GET', 'file:///etc/passwd'),

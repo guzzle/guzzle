@@ -266,6 +266,10 @@ class StreamHandler
             $methods = \array_flip(\get_class_methods(__CLASS__));
         }
 
+        if (!\in_array($request->getUri()->getScheme(), ['http', 'https'])) {
+            throw new RequestException(\sprintf("The scheme '%s' is not supported.", $request->getUri()->getScheme()), $request);
+        }
+
         // HTTP/1.1 streams using the PHP stream wrapper require a
         // Connection: close header
         if ($request->getProtocolVersion() == '1.1'
