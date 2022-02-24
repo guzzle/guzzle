@@ -738,4 +738,19 @@ class StreamHandlerTest extends TestCase
             ]
         )->wait();
     }
+
+    public function testHandlesNonHttpSchemesGracefully()
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('An error was encountered while creating the response');
+
+        $handler(
+            new Request('GET', 'file:///etc/passwd'),
+            [
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+    }
 }
