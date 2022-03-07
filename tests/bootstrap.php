@@ -2,6 +2,7 @@
 
 namespace {
     \setlocale(\LC_ALL, 'C');
+    \error_reporting(\E_ALL);
 }
 
 namespace GuzzleHttp\Test {
