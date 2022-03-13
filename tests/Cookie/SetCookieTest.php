@@ -373,11 +373,11 @@ class SetCookieTest extends TestCase
             $p = $c->toArray();
 
             if (isset($p['Expires'])) {
-                // Remove expires values from the assertion if they are relatively equal
-                if (\abs($p['Expires'] != \strtotime($parsed['Expires'])) < 40) {
-                    unset($p['Expires']);
-                    unset($parsed['Expires']);
-                }
+                $delta = 40;
+                $parsedExpires = \is_numeric($parsed['Expires']) ? $parsed['Expires'] : \strtotime($parsed['Expires']);
+                self::assertLessThan($delta, \abs($p['Expires'] - $parsedExpires), 'Comparing Expires ' . \var_export($p['Expires'], true) . ' : ' . \var_export($parsed, true) . ' | ' . \var_export($p, true));
+                unset($p['Expires']);
+                unset($parsed['Expires']);
             }
 
             if (!empty($parsed)) {
