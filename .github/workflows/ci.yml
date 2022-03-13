@@ -49,6 +49,9 @@ jobs:
             psr7: '^1.7@dev'
           - php: '7.4'
             psr7: '^2.0@dev'
+        exclude:
+          - php: '8.1'
+            psr7: '^1.7'
 
     steps:
       - name: Set up PHP
