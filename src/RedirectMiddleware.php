@@ -88,6 +88,16 @@ class RedirectMiddleware
         $this->guardMax($request, $response, $options);
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
+        // If authorization is handled by curl, unset it if host is different.
+        if ($request->getUri()->getHost() !== $nextRequest->getUri()->getHost()
+            && defined('\CURLOPT_HTTPAUTH')
+        ) {
+            unset(
+                $options['curl'][\CURLOPT_HTTPAUTH],
+                $options['curl'][\CURLOPT_USERPWD]
+            );
+        }
+
         if (isset($options['allow_redirects']['on_redirect'])) {
             ($options['allow_redirects']['on_redirect'])(
                 $request,

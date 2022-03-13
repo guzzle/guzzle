@@ -301,6 +301,64 @@ class RedirectMiddlewareTest extends TestCase
     }
 
     /**
+     * @testWith ["digest"]
+     *           ["ntlm"]
+     */
+    public function testRemoveCurlAuthorizationOptionsOnRedirect($auth)
+    {
+        if (!defined('\CURLOPT_HTTPAUTH')) {
+            self::markTestSkipped('ext-curl is required for this test');
+        }
+
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com']),
+            static function (RequestInterface $request, $options) {
+                self::assertFalse(
+                    isset($options['curl'][\CURLOPT_HTTPAUTH]),
+                    'curl options still contain CURLOPT_HTTPAUTH entry'
+                );
+                self::assertFalse(
+                    isset($options['curl'][\CURLOPT_USERPWD]),
+                    'curl options still contain CURLOPT_USERPWD entry'
+                );
+                return new Response(200);
+            }
+        ]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
+    }
+
+    /**
+     * @testWith ["digest"]
+     *           ["ntlm"]
+     */
+    public function testNotRemoveCurlAuthorizationOptionsOnRedirect($auth)
+    {
+        if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_USERPWD')) {
+            self::markTestSkipped('ext-curl is required for this test');
+        }
+
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://example.com/2']),
+            static function (RequestInterface $request, $options) {
+                self::assertTrue(
+                    isset($options['curl'][\CURLOPT_HTTPAUTH]),
+                    'curl options does not contain expected CURLOPT_HTTPAUTH entry'
+                );
+                self::assertTrue(
+                    isset($options['curl'][\CURLOPT_USERPWD]),
+                    'curl options does not contain expected CURLOPT_USERPWD entry'
+                );
+                return new Response(200);
+            }
+        ]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
+    }
+
+    /**
      * Verifies how RedirectMiddleware::modifyRequest() modifies the method and body of a request issued when
      * encountering a redirect response.
      *
