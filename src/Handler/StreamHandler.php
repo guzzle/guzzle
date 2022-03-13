@@ -266,6 +266,10 @@ class StreamHandler
             $methods = \array_flip(\get_class_methods(__CLASS__));
         }
 
+        if (!\in_array($request->getUri()->getScheme(), ['http', 'https'])) {
+            throw new RequestException(\sprintf("The scheme '%s' is not supported.", $request->getUri()->getScheme()), $request);
+        }
+
         // HTTP/1.1 streams using the PHP stream wrapper require a
         // Connection: close header
         if ($request->getProtocolVersion() == '1.1'
@@ -318,7 +322,7 @@ class StreamHandler
         return $this->createResource(
             function () use ($uri, &$http_response_header, $contextResource, $context, $options, $request) {
                 $resource = @\fopen((string) $uri, 'r', false, $contextResource);
-                $this->lastHeaders = $http_response_header;
+                $this->lastHeaders = $http_response_header ?? [];
 
                 if (false === $resource) {
                     throw new ConnectException(sprintf('Connection refused for URI %s', $uri), $request, null, $context);

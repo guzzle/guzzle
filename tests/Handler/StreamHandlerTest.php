@@ -738,4 +738,19 @@ class StreamHandlerTest extends TestCase
             ]
         )->wait();
     }
+
+    public function testRejectsNonHttpSchemes()
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage("The scheme 'file' is not supported.");
+
+        $handler(
+            new Request('GET', 'file:///etc/passwd'),
+            [
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+    }
 }
