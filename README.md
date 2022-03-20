@@ -42,8 +42,8 @@ $promise->wait();
 
 We use GitHub issues only to discuss bugs and new features. For support please refer to:
 
-- [Documentation](http://guzzlephp.org/)
-- [Stack Overflow](http://stackoverflow.com/questions/tagged/guzzle)
+- [Documentation](https://docs.guzzlephp.org)
+- [Stack Overflow](https://stackoverflow.com/questions/tagged/guzzle)
 - [#guzzle](https://app.slack.com/client/T0D2S9JCT/CE6UAAKL4) channel on [PHP-HTTP Slack](http://slack.httplug.io/)
 - [Gitter](https://gitter.im/guzzle/guzzle)
 
