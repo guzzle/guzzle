@@ -268,7 +268,7 @@ You must specify the cookies option as a
     This option only has an effect if your handler has the
     ``GuzzleHttp\Middleware::cookies`` middleware. This middleware is added
     by default when a client is created with no handler, and is added by
-    default when creating a handler with ``GuzzleHttp\default_handler``.
+    default when creating a handler with ``GuzzleHttp\HandlerStack::create``.
 
 .. tip::
 
@@ -554,7 +554,7 @@ http_errors
     This option only has an effect if your handler has the
     ``GuzzleHttp\Middleware::httpErrors`` middleware. This middleware is added
     by default when a client is created with no handler, and is added by
-    default when creating a handler with ``GuzzleHttp\default_handler``.
+    default when creating a handler with ``GuzzleHttp\HandlerStack::create``.
 
 
 idn_conversion
