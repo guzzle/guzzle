@@ -77,6 +77,14 @@ branch by setting the version requirement for Guzzle to ``^7.0@dev``.
    }
 
 
+Upgrading
+=========
+The git repository contains an `upgrade guide`__ that details what changed
+between the major versions.
+
+__ https://github.com/guzzle/guzzle/blob/master/UPGRADING.md
+
+
 License
 =======
 
