@@ -178,7 +178,7 @@ class CurlMultiHandler
         while ($this->handles || !$queue->isEmpty()) {
             // If there are no transfers, then sleep for the next delay
             if (!$this->active && $this->delays) {
-                \usleep($this->timeToNext());
+                \usleep(intval($this->timeToNext()));
             }
             $this->tick();
         }
