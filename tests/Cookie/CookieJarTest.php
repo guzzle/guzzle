@@ -421,6 +421,8 @@ class CookieJarTest extends TestCase
             ['www.example.com', 'example.com', true],
             ['www.example.com', 'EXAMPLE.com', true],
             ['fra.de.example.com', 'EXAMPLE.com', true],
+            ['www.EXAMPLE.com', 'www.example.com', true],
+            ['www.EXAMPLE.com', 'www.example.COM', true],
         ];
     }
 
