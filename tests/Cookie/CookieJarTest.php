@@ -385,9 +385,6 @@ class CookieJarTest extends TestCase
             ['/foo', '/'],
             ['/foo/bar', '/foo'],
             ['/foo/bar/', '/foo/bar'],
-            ['foo', '/'],
-            ['foo/bar', '/'],
-            ['foo/bar/', '/'],
         ];
     }
 
@@ -406,11 +403,41 @@ class CookieJarTest extends TestCase
                 "bar=foo; expires={$this->futureExpirationDate()}; domain=www.example.com; path=foobar;"
             )
         ;
-        $request = (new Request('GET', $uriPath))->withHeader('Host', 'www.example.com');
+        $request = (new Request('GET', "https://www.example.com{$uriPath}"));
         $this->jar->extractCookies($request, $response);
 
         self::assertSame($cookiePath, $this->jar->toArray()[0]['Path']);
         self::assertSame($cookiePath, $this->jar->toArray()[1]['Path']);
+    }
+
+    public function getDomainMatchesProvider()
+    {
+        return [
+            ['www.example.com', 'www.example.com', true],
+            ['www.example.com', 'www.EXAMPLE.com', true],
+            ['www.example.com', 'www.example.net', false],
+            ['www.example.com', 'ftp.example.com', false],
+            ['www.example.com', 'example.com', true],
+            ['www.example.com', 'EXAMPLE.com', true],
+            ['fra.de.example.com', 'EXAMPLE.com', true],
+        ];
+    }
+
+    /**
+     * @dataProvider getDomainMatchesProvider
+     */
+    public function testIgnoresCookiesForMismatchingDomains($requestHost, $domainAttribute, $matches)
+    {
+        $response = (new Response(200))
+            ->withAddedHeader(
+                'Set-Cookie',
+                "foo=bar; expires={$this->futureExpirationDate()}; domain={$domainAttribute}; path=/;"
+            )
+        ;
+        $request = (new Request('GET', "https://{$requestHost}/"));
+        $this->jar->extractCookies($request, $response);
+
+        self::assertCount($matches ? 1 : 0, $this->jar->toArray());
     }
 
     private function futureExpirationDate()
