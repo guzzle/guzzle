@@ -2,7 +2,7 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
-## 7.4.3 - 2022-05-22
+## 7.4.3 - 2022-05-25
 
 * Fix cross-domain cookie leakage
 
