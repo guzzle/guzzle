@@ -241,6 +241,11 @@ class CookieJar implements CookieJarInterface
                 if (0 !== \strpos($sc->getPath(), '/')) {
                     $sc->setPath($this->getCookiePathFromRequest($request));
                 }
+                if (!$sc->matchesDomain($request->getUri()->getHost())) {
+                    continue;
+                }
+                // Note: At this point `$sc->getDomain()` being a public suffix should
+                // be rejected, but we don't want to pull in the full PSL dependency.
                 $this->setCookie($sc);
             }
         }
