@@ -1,6 +1,6 @@
 # Change Log
 
-## 6.5.6 - 2022-05-22
+## 6.5.6 - 2022-05-25
 
 * Fix cross-domain cookie leakage
 
