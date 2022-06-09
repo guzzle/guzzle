@@ -232,15 +232,12 @@ class RedirectMiddleware
 
     /**
      * Set the appropriate URL on the request based on the location header.
-     *
-     * @param RequestInterface  $request
-     * @param ResponseInterface $response
-     * @param array             $protocols
-     *
-     * @return UriInterface
      */
-    private static function redirectUri(RequestInterface $request, ResponseInterface $response, array $protocols): UriInterface
-    {
+    private static function redirectUri(
+        RequestInterface $request,
+        ResponseInterface $response,
+        array $protocols
+    ): UriInterface {
         $location = Psr7\UriResolver::resolve(
             $request->getUri(),
             new Psr7\Uri($response->getHeaderLine('Location'))

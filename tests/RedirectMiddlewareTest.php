@@ -293,7 +293,7 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => $targetUri]),
-            function (RequestInterface $request) use ($shouldBePresent) {
+            static function (RequestInterface $request) use ($shouldBePresent) {
                 self::assertSame($shouldBePresent, $request->hasHeader('Authorization'));
                 self::assertSame($shouldBePresent, $request->hasHeader('Cookie'));
 
