@@ -2,6 +2,11 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 7.4.4 - 2022-06-09
+
+* Fix failure to strip Authorization header on HTTP downgrade
+* Fix failure to strip the Cookie header on change in host or HTTP downgrade
+
 ## 7.4.3 - 2022-05-25
 
 * Fix cross-domain cookie leakage
