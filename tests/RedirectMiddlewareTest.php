@@ -251,31 +251,36 @@ class RedirectMiddlewareTest extends TestCase
         self::assertTrue($call);
     }
 
-    public function testRemoveAuthorizationHeaderOnRedirect()
+    public function crossOriginRedirectProvider()
     {
-        $mock = new MockHandler([
-            new Response(302, ['Location' => 'http://test.com']),
-            function (RequestInterface $request) {
-                self::assertFalse($request->hasHeader('Authorization'));
-                return new Response(200);
-            }
-        ]);
-        $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
-        $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass']]);
+        return [
+            ['http://example.com?a=b', 'http://test.com/', false],
+            ['https://example.com?a=b', 'https://test.com/', false],
+            ['http://example.com?a=b', 'https://test.com/', false],
+            ['https://example.com?a=b', 'http://test.com/', false],
+            ['http://example.com?a=b', 'http://example.com/', true],
+            ['https://example.com?a=b', 'https://example.com/', true],
+            ['http://example.com?a=b', 'https://example.com/', true],
+            ['https://example.com?a=b', 'http://example.com/', false],
+        ];
     }
 
-    public function testNotRemoveAuthorizationHeaderOnRedirect()
+    /**
+     * @dataProvider crossOriginRedirectProvider
+     */
+    public function testHeadersTreatmentOnRedirect($originalUri, $targetUri, $shouldBePresent)
     {
         $mock = new MockHandler([
-            new Response(302, ['Location' => 'http://example.com/2']),
-            function (RequestInterface $request) {
-                self::assertTrue($request->hasHeader('Authorization'));
+            new Response(302, ['Location' => $targetUri]),
+            function (RequestInterface $request) use ($shouldBePresent) {
+                self::assertSame($shouldBePresent, $request->hasHeader('Authorization'));
+                self::assertSame($shouldBePresent, $request->hasHeader('Cookie'));
+
                 return new Response(200);
             }
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass']]);
+        $client->get($originalUri, ['auth' => ['testuser', 'testpass'], 'headers' => ['Cookie' => 'foo=bar']]);
     }
 }
