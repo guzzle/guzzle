@@ -72,10 +72,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Mimic PHP 8.0
-        run: composer config platform.php 8.0.999
-        if: matrix.php > 8
-
       - name: Download dependencies
         run: |
           composer require --no-update "guzzlehttp/psr7:${{ matrix.psr7 }}"
@@ -110,10 +106,6 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Mimic PHP 8.0
-        run: composer config platform.php 8.0.999
-        if: matrix.php > 8
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress
