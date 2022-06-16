@@ -114,7 +114,7 @@ class CurlMultiHandler
     {
         if (isset($this->_mh)) {
             \curl_multi_close($this->_mh);
-            unset($this->_mh);
+            $this->_mh = null;
         }
     }
 

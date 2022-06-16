@@ -75,7 +75,7 @@ class CurlFactory implements CurlFactoryInterface
     public function release(EasyHandle $easy): void
     {
         $resource = $easy->handle;
-        unset($easy->handle);
+        $easy->handle = null;
 
         if (\count($this->handles) >= $this->maxHandles) {
             \curl_close($resource);
