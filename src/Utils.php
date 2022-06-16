@@ -23,7 +23,7 @@ final class Utils
     {
         switch (\gettype($input)) {
             case 'object':
-                return 'object(' . \get_class($input) . ')';
+                return 'object(' . $input::class . ')';
             case 'array':
                 return 'array(' . \count($input) . ')';
             default:
