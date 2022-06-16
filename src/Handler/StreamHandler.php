@@ -442,9 +442,9 @@ class StreamHandler
         $parsed = \parse_url($url);
 
         if ($parsed !== false && isset($parsed['scheme']) && $parsed['scheme'] === 'http') {
-            if (isset($parsed['host']) && isset($parsed['port'])) {
+            if (isset($parsed['host'], $parsed['port'])  ) {
                 $auth = null;
-                if (isset($parsed['user']) && isset($parsed['pass'])) {
+                if (isset($parsed['user'], $parsed['pass'])  ) {
                     $auth = \base64_encode("{$parsed['user']}:{$parsed['pass']}");
                 }
 
