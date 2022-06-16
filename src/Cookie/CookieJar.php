@@ -114,7 +114,8 @@ class CookieJar implements CookieJarInterface
         if (!$domain) {
             $this->cookies = [];
             return;
-        } elseif (!$path) {
+        }
+        if (!$path) {
             $this->cookies = \array_filter(
                 $this->cookies,
                 static function (SetCookie $cookie) use ($domain): bool {
