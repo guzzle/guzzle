@@ -314,9 +314,7 @@ class StreamHandler
         $uri = $this->resolveHost($request, $options);
 
         $contextResource = $this->createResource(
-            static function () use ($context, $params) {
-                return \stream_context_create($context, $params);
-            }
+            static fn () => \stream_context_create($context, $params)
         );
 
         return $this->createResource(

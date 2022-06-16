@@ -188,9 +188,7 @@ class HandlerStack
         $idx = \is_callable($remove) ? 0 : 1;
         $this->stack = \array_values(\array_filter(
             $this->stack,
-            static function ($tuple) use ($idx, $remove) {
-                return $tuple[$idx] !== $remove;
-            }
+            static fn ($tuple) => $tuple[$idx] !== $remove
         ));
     }
 

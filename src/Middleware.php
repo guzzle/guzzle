@@ -150,9 +150,7 @@ final class Middleware
      */
     public static function redirect(): callable
     {
-        return static function (callable $handler): RedirectMiddleware {
-            return new RedirectMiddleware($handler);
-        };
+        return static fn (callable $handler): RedirectMiddleware => new RedirectMiddleware($handler);
     }
 
     /**
@@ -172,9 +170,7 @@ final class Middleware
      */
     public static function retry(callable $decider, callable $delay = null): callable
     {
-        return static function (callable $handler) use ($decider, $delay): RetryMiddleware {
-            return new RetryMiddleware($decider, $handler, $delay);
-        };
+        return static fn (callable $handler): RetryMiddleware => new RetryMiddleware($decider, $handler, $delay);
     }
 
     /**
@@ -221,9 +217,7 @@ final class Middleware
      */
     public static function prepareBody(): callable
     {
-        return static function (callable $handler): PrepareBodyMiddleware {
-            return new PrepareBodyMiddleware($handler);
-        };
+        return static fn (callable $handler): PrepareBodyMiddleware => new PrepareBodyMiddleware($handler);
     }
 
     /**
@@ -235,11 +229,7 @@ final class Middleware
      */
     public static function mapRequest(callable $fn): callable
     {
-        return static function (callable $handler) use ($fn): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, $fn) {
-                return $handler($fn($request), $options);
-            };
-        };
+        return static fn (callable $handler): callable => static fn (RequestInterface $request, array $options) => $handler($fn($request), $options);
     }
 
     /**
@@ -251,10 +241,6 @@ final class Middleware
      */
     public static function mapResponse(callable $fn): callable
     {
-        return static function (callable $handler) use ($fn): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, $fn) {
-                return $handler($request, $options)->then($fn);
-            };
-        };
+        return static fn (callable $handler): callable => static fn (RequestInterface $request, array $options) => $handler($request, $options)->then($fn);
     }
 }

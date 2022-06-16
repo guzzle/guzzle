@@ -293,9 +293,7 @@ class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body) {
-                return $body->read($length);
-            };
+            $conf[\CURLOPT_READFUNCTION] = static fn ($ch, $fd, $length) => $body->read($length);
         }
 
         // If the Expect header is not present, prevent curl from adding it
@@ -408,9 +406,7 @@ class CurlFactory implements CurlFactoryInterface
             $sink = new LazyOpenStream($sink, 'w+');
         }
         $easy->sink = $sink;
-        $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, $write) use ($sink): int {
-            return $sink->write($write);
-        };
+        $conf[\CURLOPT_WRITEFUNCTION] = static fn ($ch, $write): int => $sink->write($write);
 
         $timeoutRequiresNoSignal = false;
         if (isset($options['timeout'])) {

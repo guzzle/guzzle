@@ -325,9 +325,7 @@ EOT
             if ($asciiHost === false) {
                 $errorBitSet = $info['errors'] ?? 0;
 
-                $errorConstants = array_filter(array_keys(get_defined_constants()), static function (string $name): bool {
-                    return substr($name, 0, 11) === 'IDNA_ERROR_';
-                });
+                $errorConstants = array_filter(array_keys(get_defined_constants()), static fn (string $name): bool => substr($name, 0, 11) === 'IDNA_ERROR_');
 
                 $errors = [];
                 foreach ($errorConstants as $errorConstant) {

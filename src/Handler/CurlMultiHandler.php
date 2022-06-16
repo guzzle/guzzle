@@ -125,9 +125,7 @@ class CurlMultiHandler
 
         $promise = new Promise(
             [$this, 'execute'],
-            function () use ($id) {
-                return $this->cancel($id);
-            }
+            fn () => $this->cancel($id)
         );
 
         $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
