@@ -58,7 +58,7 @@ class HandlerStack
     /**
      * @param (callable(RequestInterface, array): PromiseInterface)|null $handler Underlying HTTP handler.
      */
-    public function __construct(callable $handler = null)
+    public function __construct(?callable $handler = null)
     {
         $this->handler = $handler;
     }

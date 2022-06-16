@@ -83,8 +83,8 @@ class StreamHandler
         array $options,
         RequestInterface $request,
         ?float $startTime,
-        ResponseInterface $response = null,
-        \Throwable $error = null
+        ?ResponseInterface $response = null,
+        ?\Throwable $error = null
     ): void {
         if (isset($options['on_stats'])) {
             $stats = new TransferStats($request, $response, Utils::currentTime() - $startTime, $error, []);
