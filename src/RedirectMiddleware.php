@@ -79,7 +79,7 @@ class RedirectMiddleware
      */
     public function checkRedirect(RequestInterface $request, array $options, ResponseInterface $response)
     {
-        if (\strpos((string) $response->getStatusCode(), '3') !== 0
+        if (!\str_starts_with((string) $response->getStatusCode(), '3')  
             || !$response->hasHeader('Location')
         ) {
             return $response;
