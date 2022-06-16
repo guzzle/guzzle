@@ -541,7 +541,7 @@ class CurlFactory implements CurlFactoryInterface
                 . 'https://bugs.php.net/bug.php?id=47204 for more information.';
             return self::createRejection($easy, $ctx);
         } else {
-            $easy->options['_curl_retries']++;
+            ++$easy->options['_curl_retries'];
         }
 
         return $handler($easy->request, $easy->options);
