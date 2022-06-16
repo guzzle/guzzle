@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 // Don't redefine the functions if included multiple times.
 if (!\function_exists('GuzzleHttp\describe_type')) {
