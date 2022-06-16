@@ -223,11 +223,11 @@ class RedirectMiddleware
             return true;
         }
 
-        if ($originalUri->getScheme() !== $modifiedUri->getScheme() && 'https' !== $modifiedUri->getScheme()) {
-            return true;
-        }
+        return (bool) ($originalUri->getScheme() !== $modifiedUri->getScheme() && 'https' !== $modifiedUri->getScheme()) 
+             
+        
 
-        return false;
+         ;
     }
 
     /**
