@@ -122,7 +122,7 @@ class HandlerStack
      */
     public function hasHandler(): bool
     {
-        return $this->handler !== null ;
+        return $this->handler !== null;
     }
 
     /**
