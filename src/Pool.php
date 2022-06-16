@@ -111,12 +111,12 @@ class Pool implements PromisorInterface
     private static function cmpCallback(array &$options, string $name, array &$results): void
     {
         if (!isset($options[$name])) {
-            $options[$name] = static function ($v, $k) use (&$results) {
+            $options[$name] = static function ($v, $k) use (&$results): void {
                 $results[$k] = $v;
             };
         } else {
             $currentFn = $options[$name];
-            $options[$name] = static function ($v, $k) use (&$results, $currentFn) {
+            $options[$name] = static function ($v, $k) use (&$results, $currentFn): void {
                 $currentFn($v, $k);
                 $results[$k] = $v;
             };

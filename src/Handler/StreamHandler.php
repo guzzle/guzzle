@@ -522,7 +522,7 @@ class StreamHandler
     {
         self::addNotification(
             $params,
-            static function ($code, $a, $b, $c, $transferred, $total) use ($value) {
+            static function ($code, $a, $b, $c, $transferred, $total) use ($value): void {
                 if ($code == \STREAM_NOTIFY_PROGRESS) {
                     // The upload progress cannot be determined. Use 0 for cURL compatibility:
                     // https://curl.se/libcurl/c/CURLOPT_PROGRESSFUNCTION.html
@@ -584,7 +584,7 @@ class StreamHandler
 
     private static function callArray(array $functions): callable
     {
-        return static function (...$args) use ($functions) {
+        return static function (...$args) use ($functions): void {
             foreach ($functions as $fn) {
                 $fn(...$args);
             }
