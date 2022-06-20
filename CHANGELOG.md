@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.5.8 - 2022-06-20
+
+* Fix change in port should be considered a change in origin
+* Fix `CURLOPT_HTTPAUTH` option not cleared on change of origin
+
 ## 6.5.7 - 2022-06-09
 
 * Fix failure to strip Authorization header on HTTP downgrade

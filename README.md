@@ -1,5 +1,6 @@
-Guzzle, PHP HTTP client
-=======================
+![Guzzle](.github/logo.png?raw=true)
+
+# Guzzle, PHP HTTP client
 
 [![Latest Version](https://img.shields.io/github/release/guzzle/guzzle.svg?style=flat-square)](https://github.com/guzzle/guzzle/releases)
 [![Build Status](https://img.shields.io/github/workflow/status/guzzle/guzzle/CI?label=ci%20build&style=flat-square)](https://github.com/guzzle/guzzle/actions?query=workflow%3ACI)
@@ -38,15 +39,18 @@ $promise->wait();
 
 ## Help and docs
 
-- [Documentation](http://guzzlephp.org/)
-- [Stack Overflow](http://stackoverflow.com/questions/tagged/guzzle)
+We use GitHub issues only to discuss bugs and new features. For support please refer to:
+
+- [Documentation](https://docs.guzzlephp.org)
+- [Stack Overflow](https://stackoverflow.com/questions/tagged/guzzle)
+- [#guzzle](https://app.slack.com/client/T0D2S9JCT/CE6UAAKL4) channel on [PHP-HTTP Slack](https://slack.httplug.io/)
 - [Gitter](https://gitter.im/guzzle/guzzle)
 
 
 ## Installing Guzzle
 
 The recommended way to install Guzzle is through
-[Composer](http://getcomposer.org).
+[Composer](https://getcomposer.org/).
 
 ```bash
 # Install Composer
@@ -87,7 +91,7 @@ composer update
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
 [guzzle-6-repo]: https://github.com/guzzle/guzzle/tree/6.5
 [guzzle-7-repo]: https://github.com/guzzle/guzzle
-[guzzle-3-docs]: http://guzzle3.readthedocs.org
-[guzzle-5-docs]: http://docs.guzzlephp.org/en/5.3/
-[guzzle-6-docs]: http://docs.guzzlephp.org/en/6.5/
-[guzzle-7-docs]: http://docs.guzzlephp.org/en/latest/
+[guzzle-3-docs]: https://guzzle3.readthedocs.io/
+[guzzle-5-docs]: https://docs.guzzlephp.org/en/5.3/
+[guzzle-6-docs]: https://docs.guzzlephp.org/en/6.5/
+[guzzle-7-docs]: https://docs.guzzlephp.org/en/latest/

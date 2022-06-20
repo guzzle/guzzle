@@ -53,9 +53,9 @@
     "require": {
         "php": ">=5.5",
         "ext-json": "*",
-        "symfony/polyfill-intl-idn": "^1.17.0",
+        "symfony/polyfill-intl-idn": "^1.17",
         "guzzlehttp/promises": "^1.0",
-        "guzzlehttp/psr7": "^1.6.1"
+        "guzzlehttp/psr7": "^1.9"
     },
     "require-dev": {
         "ext-curl": "*",
@@ -66,7 +66,10 @@
         "psr/log": "Required for using the Log middleware"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "bamarni/composer-bin-plugin": true
+        }
     },
     "extra": {
         "branch-alias": {
