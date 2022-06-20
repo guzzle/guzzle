@@ -44,7 +44,7 @@ We use GitHub issues only to discuss bugs and new features. For support please r
 
 - [Documentation](https://docs.guzzlephp.org)
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/guzzle)
-- [#guzzle](https://app.slack.com/client/T0D2S9JCT/CE6UAAKL4) channel on [PHP-HTTP Slack](http://slack.httplug.io/)
+- [#guzzle](https://app.slack.com/client/T0D2S9JCT/CE6UAAKL4) channel on [PHP-HTTP Slack](https://slack.httplug.io/)
 - [Gitter](https://gitter.im/guzzle/guzzle)
 
 
@@ -73,10 +73,10 @@ composer require guzzlehttp/guzzle
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
 [guzzle-6-repo]: https://github.com/guzzle/guzzle/tree/6.5
 [guzzle-7-repo]: https://github.com/guzzle/guzzle
-[guzzle-3-docs]: http://guzzle3.readthedocs.org
-[guzzle-5-docs]: http://docs.guzzlephp.org/en/5.3/
-[guzzle-6-docs]: http://docs.guzzlephp.org/en/6.5/
-[guzzle-7-docs]: http://docs.guzzlephp.org/en/latest/
+[guzzle-3-docs]: https://guzzle3.readthedocs.io/
+[guzzle-5-docs]: https://docs.guzzlephp.org/en/5.3/
+[guzzle-6-docs]: https://docs.guzzlephp.org/en/6.5/
+[guzzle-7-docs]: https://docs.guzzlephp.org/en/latest/
 
 
 ## Security
