@@ -82,7 +82,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "7.4-dev"
+            "dev-master": "7.5-dev"
         }
     },
     "autoload": {
