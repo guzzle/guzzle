@@ -103,6 +103,14 @@ class RedirectMiddleware
             );
         }
 
+        // If authorization is handled by curl, unset it if URI is cross-origin.
+        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri()) && defined('\CURLOPT_HTTPAUTH')) {
+            unset(
+                $options['curl'][\CURLOPT_HTTPAUTH],
+                $options['curl'][\CURLOPT_USERPWD]
+            );
+        }
+
         /** @var PromiseInterface|ResponseInterface $promise */
         $promise = $this($nextRequest, $options);
 
@@ -210,38 +218,13 @@ class RedirectMiddleware
             $modify['remove_headers'][] = 'Referer';
         }
 
-        // Remove Authorization and Cookie headers if required.
-        if (self::shouldStripSensitiveHeaders($request->getUri(), $modify['uri'])) {
+        // Remove Authorization and Cookie headers if URI is cross-origin.
+        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $modify['uri'])) {
             $modify['remove_headers'][] = 'Authorization';
             $modify['remove_headers'][] = 'Cookie';
         }
 
         return Psr7\modify_request($request, $modify);
-    }
-
-    /**
-     * Determine if we should strip sensitive headers from the request.
-     *
-     * We return true if either of the following conditions are true:
-     *
-     * 1. the host is different;
-     * 2. the scheme has changed, and now is non-https.
-     *
-     * @return bool
-     */
-    private static function shouldStripSensitiveHeaders(
-        UriInterface $originalUri,
-        UriInterface $modifiedUri
-    ) {
-        if (strcasecmp($originalUri->getHost(), $modifiedUri->getHost()) !== 0) {
-            return true;
-        }
-
-        if ($originalUri->getScheme() !== $modifiedUri->getScheme() && 'https' !== $modifiedUri->getScheme()) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
