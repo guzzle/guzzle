@@ -94,20 +94,20 @@ class RedirectMiddleware
         $this->guardMax($request, $options);
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
+        // If authorization is handled by curl, unset it if URI is cross-origin.
+        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri()) && defined('\CURLOPT_HTTPAUTH')) {
+            unset(
+                $options['curl'][\CURLOPT_HTTPAUTH],
+                $options['curl'][\CURLOPT_USERPWD]
+            );
+        }
+
         if (isset($options['allow_redirects']['on_redirect'])) {
             call_user_func(
                 $options['allow_redirects']['on_redirect'],
                 $request,
                 $response,
                 $nextRequest->getUri()
-            );
-        }
-
-        // If authorization is handled by curl, unset it if URI is cross-origin.
-        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri()) && defined('\CURLOPT_HTTPAUTH')) {
-            unset(
-                $options['curl'][\CURLOPT_HTTPAUTH],
-                $options['curl'][\CURLOPT_USERPWD]
             );
         }
 
