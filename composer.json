@@ -54,7 +54,7 @@
         "php": "^7.2.5 || ^8.0",
         "ext-json": "*",
         "guzzlehttp/promises": "^1.5",
-        "guzzlehttp/psr7": "^1.8.3 || ^2.1",
+        "guzzlehttp/psr7": "^1.9 || ^2.4",
         "psr/http-client": "^1.0",
         "symfony/deprecation-contracts": "^2.2 || ^3.0"
     },

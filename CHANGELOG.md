@@ -2,6 +2,11 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 7.4.5 - 2022-06-20
+
+* Fix change in port should be considered a change in origin
+* Fix `CURLOPT_HTTPAUTH` option not cleared on change of origin
+
 ## 7.4.4 - 2022-06-09
 
 * Fix failure to strip Authorization header on HTTP downgrade
