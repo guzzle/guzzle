@@ -142,7 +142,7 @@ auth
 The built-in authentication types are as follows:
 
 basic
-    Use `basic HTTP authentication <http://www.ietf.org/rfc/rfc2069.txt>`_
+    Use `basic HTTP authentication <http://www.ietf.org/rfc/rfc7617.txt>`_
     in the ``Authorization`` header (the default setting used if none is
     specified).
 
