@@ -121,6 +121,7 @@ class MessageFormatter implements MessageFormatterInterface
                         }
 
                         $result = $response->getBody()->__toString();
+                        $response->getBody()->rewind();
                         break;
                     case 'ts':
                     case 'date_iso_8601':
