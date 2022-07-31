@@ -9,7 +9,7 @@ on:
 jobs:
   build-lowest-version:
     name: Build lowest version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Set up PHP
@@ -28,7 +28,7 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress --prefer-stable --prefer-lowest
@@ -38,20 +38,22 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       max-parallel: 10
       matrix:
-        php: ['7.2', '7.3', '7.4', '8.0', '8.1']
-        psr7: ['^1.7', '^2.0']
+        php: ['7.2', '7.3', '7.4', '8.0', '8.1', '8.2']
+        psr7: ['^1.9', '^2.4']
         include:
-          - php: '7.4'
-            psr7: '^1.7@dev'
-          - php: '7.4'
-            psr7: '^2.0@dev'
+          - php: '8.0'
+            psr7: '^1.9@dev'
+          - php: '8.2'
+            psr7: '^2.4@dev'
         exclude:
           - php: '8.1'
-            psr7: '^1.7'
+            psr7: '^1.9'
+          - php: '8.2'
+            psr7: '^1.9'
 
     steps:
       - name: Set up PHP
@@ -70,7 +72,11 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Mimic PHP 8.1
+        run: composer config platform.php 8.1.999
+        if: matrix.php > 8.1
 
       - name: Download dependencies
         run: |
@@ -82,11 +88,11 @@ jobs:
 
   build-windows:
     name: Build on Windows
-    runs-on: windows-latest
+    runs-on: windows-2022
     strategy:
       max-parallel: 10
       matrix:
-        php: ['7.2', '7.3', '7.4', '8.0', '8.1']
+        php: ['7.2', '7.3', '7.4', '8.0', '8.1', '8.2']
 
     steps:
       - name: Set up PHP
@@ -105,7 +111,11 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Mimic PHP 8.1
+        run: composer config platform.php 8.1.999
+        if: matrix.php > 8.1
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress
