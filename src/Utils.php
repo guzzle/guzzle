@@ -86,12 +86,15 @@ final class Utils
     public static function chooseHandler(): callable
     {
         $handler = null;
-        if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
-            $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
-        } elseif (\function_exists('curl_exec')) {
-            $handler = new CurlHandler();
-        } elseif (\function_exists('curl_multi_exec')) {
-            $handler = new CurlMultiHandler();
+
+        if (\defined('CURLOPT_CUSTOMREQUEST')) {
+            if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
+                $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
+            } elseif (\function_exists('curl_exec')) {
+                $handler = new CurlHandler();
+            } elseif (\function_exists('curl_multi_exec')) {
+                $handler = new CurlMultiHandler();
+            }
         }
 
         if (\ini_get('allow_url_fopen')) {
