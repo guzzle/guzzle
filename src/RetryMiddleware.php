@@ -109,7 +109,7 @@ class RetryMiddleware
 
     private function doRetry(RequestInterface $request, array $options, ResponseInterface $response = null): PromiseInterface
     {
-        $options['delay'] = ($this->delay)(++$options['retries'], $response);
+        $options['delay'] = ($this->delay)(++$options['retries'], $response, $request);
 
         return $this($request, $options);
     }
