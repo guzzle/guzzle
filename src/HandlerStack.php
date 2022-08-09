@@ -126,6 +126,20 @@ class HandlerStack
     }
 
     /**
+     * Returns true if a middleware has already been pushed with this name.
+     */
+    public function hasMiddleware(string $name): bool
+    {
+        foreach ($this->stack as $k => $v) {
+            if ($v[1] === $name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Unshift a middleware to the bottom of the stack.
      *
      * @param callable(callable): callable $middleware Middleware function
