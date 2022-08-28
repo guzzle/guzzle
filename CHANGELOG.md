@@ -2,6 +2,13 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 7.5.0 - 2022-08-28
+
+### Added
+
+- Support PHP 8.2
+- Add request to delay closure params
+
 ## 7.4.5 - 2022-06-20
 
 * Fix change in port should be considered a change in origin
