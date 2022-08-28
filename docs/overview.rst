@@ -147,7 +147,7 @@ Guzzle is unit tested with PHPUnit. Run the tests using the Makefile:
 
 .. note::
 
-    You'll need to install node.js v8 or newer in order to perform integration
+    You'll need to install Node.js 14 in order to perform integration
     tests on Guzzle's HTTP handlers.
 
 
