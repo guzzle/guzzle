@@ -37,11 +37,6 @@
       <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an int, string or null to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
     </TooManyArguments>
   </file>
-  <file src="src/Exception/RequestException.php">
-    <ImplicitToStringCast occurrences="1">
-      <code>$uri</code>
-    </ImplicitToStringCast>
-  </file>
   <file src="src/Handler/CurlFactory.php">
     <FalseOperand occurrences="1">
       <code>$timeoutRequiresNoSignal</code>
@@ -82,9 +77,9 @@
     </PossiblyInvalidArgument>
   </file>
   <file src="src/Handler/CurlMultiHandler.php">
-    <InvalidPropertyAssignmentValue occurrences="1">
-      <code>$this-&gt;active</code>
-    </InvalidPropertyAssignmentValue>
+    <ArgumentTypeCoercion occurrences="1">
+      <code>$this-&gt;timeToNext()</code>
+    </ArgumentTypeCoercion>
     <PossiblyInvalidArgument occurrences="7">
       <code>$this-&gt;_mh</code>
       <code>$this-&gt;_mh</code>
@@ -97,9 +92,8 @@
     <TooManyArguments occurrences="1">
       <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an integer to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
     </TooManyArguments>
-    <UndefinedDocblockClass occurrences="2">
+    <UndefinedDocblockClass occurrences="1">
       <code>resource|\CurlMultiHandle</code>
-      <code>resource|\CurlMultiHandle|null</code>
     </UndefinedDocblockClass>
     <UndefinedThisPropertyAssignment occurrences="1">
       <code>$this-&gt;_mh</code>
@@ -109,6 +103,11 @@
     <UndefinedDocblockClass occurrences="1">
       <code>resource|\CurlHandle</code>
     </UndefinedDocblockClass>
+  </file>
+  <file src="src/Handler/MockHandler.php">
+    <ArgumentTypeCoercion occurrences="1">
+      <code>(int) $options['delay'] * 1000</code>
+    </ArgumentTypeCoercion>
   </file>
   <file src="src/Handler/StreamHandler.php">
     <ImplicitToStringCast occurrences="1">
@@ -141,7 +140,7 @@
   </file>
   <file src="src/RetryMiddleware.php">
     <TooManyArguments occurrences="1">
-      <code>($this-&gt;delay)(++$options['retries'], $response)</code>
+      <code>($this-&gt;delay)(++$options['retries'], $response, $request)</code>
     </TooManyArguments>
   </file>
   <file src="src/Utils.php">

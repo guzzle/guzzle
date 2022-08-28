@@ -1,9 +1,29 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:request\\(\\) should return Psr\\\\Http\\\\Message\\\\ResponseInterface but returns mixed\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:send\\(\\) should return Psr\\\\Http\\\\Message\\\\ResponseInterface but returns mixed\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Client\\:\\:sendRequest\\(\\) should return Psr\\\\Http\\\\Message\\\\ResponseInterface but returns mixed\\.$#"
+			count: 1
+			path: src/Client.php
+
+		-
 			message: "#^Parameter \\#1 \\$str of function strtolower expects string, int\\|string given\\.$#"
 			count: 1
 			path: src/Client.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strlen expects string, mixed given\\.$#"
+			count: 1
+			path: src/Cookie/SessionCookieJar.php
 
 		-
 			message: "#^Result of && is always false\\.$#"
@@ -14,6 +34,16 @@ parameters:
 			message: "#^Strict comparison using \\!\\=\\= between null and null will always evaluate to false\\.$#"
 			count: 3
 			path: src/Cookie/SetCookie.php
+
+		-
+			message: "#^Unsafe call to private method GuzzleHttp\\\\Exception\\\\RequestException\\:\\:obfuscateUri\\(\\) through static\\:\\:\\.$#"
+			count: 1
+			path: src/Exception/RequestException.php
+
+		-
+			message: "#^Binary operation \"\\+\" between array\\{errno\\: int, error\\: string, appconnect_time\\: float\\} and \\(array\\{url\\: string, content_type\\: string\\|null, http_code\\: int, header_size\\: int, request_size\\: int, filetime\\: int, ssl_verify_result\\: int, redirect_count\\: int, \\.\\.\\.\\}\\|false\\) results in an error\\.$#"
+			count: 1
+			path: src/Handler/CurlFactory.php
 
 		-
 			message: "#^Cannot access offset 'version' on array\\|false\\.$#"
@@ -76,6 +106,11 @@ parameters:
 			path: src/Handler/CurlHandler.php
 
 		-
+			message: "#^Method GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:__get\\(\\) has invalid return type CurlMultiHandle\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
 			message: "#^Parameter \\#1 \\$mh of function curl_multi_add_handle expects resource, CurlMultiHandle\\|resource given\\.$#"
 			count: 2
 			path: src/Handler/CurlMultiHandler.php
@@ -106,14 +141,19 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: "#^Return typehint of method GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:__get\\(\\) has invalid type CurlMultiHandle\\.$#"
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
 			message: "#^Property GuzzleHttp\\\\Handler\\\\EasyHandle\\:\\:\\$handle has unknown class CurlHandle as its type\\.$#"
 			count: 1
 			path: src/Handler/EasyHandle.php
+
+		-
+			message: "#^Trying to invoke mixed but it's not a callable\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: "#^Variable \\$http_response_header on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
 
 		-
 			message: "#^Result of && is always false\\.$#"
@@ -124,4 +164,29 @@ parameters:
 			message: "#^Result of && is always false\\.$#"
 			count: 2
 			path: src/Middleware.php
+
+		-
+			message: "#^Method GuzzleHttp\\\\Utils\\:\\:jsonDecode\\(\\) should return array\\|bool\\|float\\|int\\|object\\|string\\|null but returns mixed\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Parameter \\#1 \\$object of function get_class expects object, mixed given\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Parameter \\#1 \\$var of function count expects array\\|Countable, mixed given\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Parameter \\#3 \\$depth of function json_decode expects int\\<1, max\\>, int given\\.$#"
+			count: 1
+			path: src/Utils.php
+
+		-
+			message: "#^Parameter \\#3 \\$depth of function json_encode expects int\\<1, max\\>, int given\\.$#"
+			count: 1
+			path: src/Utils.php
 
