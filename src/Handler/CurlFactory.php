@@ -22,11 +22,6 @@ class CurlFactory implements CurlFactoryInterface
     public const CURL_VERSION_STR = 'curl_version';
 
     /**
-     * @deprecated
-     */
-    public const LOW_CURL_VERSION_NUMBER = '7.21.2';
-
-    /**
      * @var resource[]|\CurlHandle[]
      */
     private $handles = [];

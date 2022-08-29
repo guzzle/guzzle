@@ -2,7 +2,6 @@
 
 namespace GuzzleHttp\Test;
 
-use GuzzleHttp;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 
@@ -43,7 +42,6 @@ class UtilsTest extends TestCase
 
         try {
             self::assertSame($output, Utils::describeType($input));
-            self::assertSame($output, GuzzleHttp\describe_type($input));
         } finally {
             if (extension_loaded('xdebug')) {
                 ini_set('xdebug.overload_var_dump', $originalOverload);
@@ -67,7 +65,6 @@ class UtilsTest extends TestCase
         ];
 
         self::assertSame($expected, Utils::headersFromLines($lines));
-        self::assertSame($expected, GuzzleHttp\headers_from_lines($lines));
     }
 
     public function testParsesHeadersFromLinesWithMultipleLines()
@@ -76,31 +73,21 @@ class UtilsTest extends TestCase
         $expected = ['Foo' => ['bar', 'baz', '123']];
 
         self::assertSame($expected, Utils::headersFromLines($lines));
-        self::assertSame($expected, GuzzleHttp\headers_from_lines($lines));
     }
 
     public function testChooseHandler()
     {
         self::assertIsCallable(Utils::chooseHandler());
-        self::assertIsCallable(GuzzleHttp\choose_handler());
     }
 
     public function testDefaultUserAgent()
     {
         self::assertIsString(Utils::defaultUserAgent());
-        self::assertIsString(GuzzleHttp\default_user_agent());
     }
 
     public function testReturnsDebugResource()
     {
         self::assertIsResource(Utils::debugResource());
-        self::assertIsResource(GuzzleHttp\debug_resource());
-    }
-
-    public function testProvidesDefaultCaBundler()
-    {
-        self::assertFileExists(Utils::defaultCaBundle());
-        self::assertFileExists(GuzzleHttp\default_ca_bundle());
     }
 
     public function testNormalizeHeaderKeys()
@@ -109,7 +96,6 @@ class UtilsTest extends TestCase
         $expected = ['hello' => 'HelLo', 'world' => 'WORld'];
 
         self::assertSame($expected, Utils::normalizeHeaderKeys($input));
-        self::assertSame($expected, GuzzleHttp\normalize_header_keys($input));
     }
 
     public function noProxyProvider()
@@ -131,7 +117,6 @@ class UtilsTest extends TestCase
     public function testChecksNoProxyList($host, $list, $result)
     {
         self::assertSame($result, Utils::isHostInNoProxy($host, $list));
-        self::assertSame($result, \GuzzleHttp\is_host_in_noproxy($host, $list));
     }
 
     public function testEnsuresNoProxyCheckHostIsSet()
@@ -141,17 +126,9 @@ class UtilsTest extends TestCase
         Utils::isHostInNoProxy('', []);
     }
 
-    public function testEnsuresNoProxyCheckHostIsSetLegacy()
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        \GuzzleHttp\is_host_in_noproxy('', []);
-    }
-
     public function testEncodesJson()
     {
         self::assertSame('true', Utils::jsonEncode(true));
-        self::assertSame('true', \GuzzleHttp\json_encode(true));
     }
 
     public function testEncodesJsonAndThrowsOnError()
@@ -161,17 +138,9 @@ class UtilsTest extends TestCase
         Utils::jsonEncode("\x99");
     }
 
-    public function testEncodesJsonAndThrowsOnErrorLegacy()
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        \GuzzleHttp\json_encode("\x99");
-    }
-
     public function testDecodesJson()
     {
         self::assertTrue(Utils::jsonDecode('true'));
-        self::assertTrue(\GuzzleHttp\json_decode('true'));
     }
 
     public function testDecodesJsonAndThrowsOnError()
@@ -179,13 +148,6 @@ class UtilsTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         Utils::jsonDecode('{{]]');
-    }
-
-    public function testDecodesJsonAndThrowsOnErrorLegacy()
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        \GuzzleHttp\json_decode('{{]]');
     }
 }
 
