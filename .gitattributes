@@ -3,6 +3,7 @@
 /.github/              export-ignore
 .gitignore             export-ignore
 .php-cs-fixer.dist.php export-ignore
+/CHANGELOG.md          export-ignore
 /docs/                 export-ignore
 /Dockerfile            export-ignore
 /Makefile              export-ignore
@@ -12,4 +13,5 @@
 /psalm-baseline.xml    export-ignore
 /psalm.xml             export-ignore
 /tests/                export-ignore
+/UPGRADING.md          export-ignore
 /vendor-bin/           export-ignore
