@@ -70,7 +70,7 @@ final class RequestOptions
     /**
      * connect_timeout: (float, default=0) Float describing the number of
      * seconds to wait while trying to connect to a server. Use 0 to wait
-     * indefinitely (the default behavior).
+     * 300 seconds (the default behavior).
      */
     public const CONNECT_TIMEOUT = 'connect_timeout';
 

@@ -224,7 +224,7 @@ class CurlFactory implements CurlFactoryInterface
             \CURLOPT_URL            => (string) $easy->request->getUri()->withFragment(''),
             \CURLOPT_RETURNTRANSFER => false,
             \CURLOPT_HEADER         => false,
-            \CURLOPT_CONNECTTIMEOUT => 150,
+            \CURLOPT_CONNECTTIMEOUT_MS => 300000,
         ];
 
         if (\defined('CURLOPT_PROTOCOLS')) {
