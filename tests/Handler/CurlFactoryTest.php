@@ -371,7 +371,7 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('test', (string) $response->getBody());
         self::assertEquals('', $_SERVER['_curl'][\CURLOPT_ENCODING]);
         $sent = Server::received()[0];
-        self::assertFalse($sent->hasHeader('Accept-Encoding'));
+        self::assertTrue($sent->hasHeader('Accept-Encoding'));
     }
 
     public function testReportsOriginalSizeAndContentEncodingAfterDecoding()
