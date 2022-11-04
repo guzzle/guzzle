@@ -50,42 +50,49 @@ class MessageFormatterTest extends TestCase
 
     public function formatProvider()
     {
-        $request = new Request('PUT', '/', ['x-test' => 'abc'], Psr7\Utils::streamFor('foo'));
-        $response = new Response(200, ['X-Baz' => 'Bar'], Psr7\Utils::streamFor('baz'));
-        $err = new RequestException('Test', $request, $response);
+        $request = static function () {
+            return new Request('PUT', '/', ['x-test' => 'abc'], Psr7\Utils::streamFor('foo'));
+        };
+        $response = static function () {
+            return new Response(200, ['X-Baz' => 'Bar'], Psr7\Utils::streamFor('baz'));
+        };
+        $err = static function () use ($request, $response) {
+            return [$req = $request(),$res = $response(),new RequestException('Test', $req, $res)];
+        };
 
         return [
-            ['{request}', [$request], Psr7\Message::toString($request)],
-            ['{response}', [$request, $response], Psr7\Message::toString($response)],
-            ['{request} {response}', [$request, $response], Psr7\Message::toString($request) . ' ' . Psr7\Message::toString($response)],
+            ['{request}', [$request()], Psr7\Message::toString($request())],
+            ['{response}', [$request(), $response()], Psr7\Message::toString($response())],
+            ['{request} {response}', [$request(), $response()], Psr7\Message::toString($request()) . ' ' . Psr7\Message::toString($response())],
             // Empty response yields no value
-            ['{request} {response}', [$request], Psr7\Message::toString($request) . ' '],
-            ['{req_headers}', [$request], "PUT / HTTP/1.1\r\nx-test: abc"],
-            ['{res_headers}', [$request, $response], "HTTP/1.1 200 OK\r\nX-Baz: Bar"],
-            ['{res_headers}', [$request], 'NULL'],
-            ['{req_body}', [$request], 'foo'],
-            ['{res_body}', [$request, $response], 'baz'],
-            ['{res_body}', [$request], 'NULL'],
-            ['{method}', [$request], $request->getMethod()],
-            ['{url}', [$request], $request->getUri()],
-            ['{target}', [$request], $request->getRequestTarget()],
-            ['{req_version}', [$request], $request->getProtocolVersion()],
-            ['{res_version}', [$request, $response], $response->getProtocolVersion()],
-            ['{res_version}', [$request], 'NULL'],
-            ['{host}', [$request], $request->getHeaderLine('Host')],
-            ['{hostname}', [$request, $response], \gethostname()],
-            ['{hostname}{hostname}', [$request, $response], \gethostname() . \gethostname()],
-            ['{code}', [$request, $response], $response->getStatusCode()],
-            ['{code}', [$request], 'NULL'],
-            ['{phrase}', [$request, $response], $response->getReasonPhrase()],
-            ['{phrase}', [$request], 'NULL'],
-            ['{error}', [$request, $response, $err], 'Test'],
-            ['{error}', [$request], 'NULL'],
-            ['{req_header_x-test}', [$request], 'abc'],
-            ['{req_header_x-not}', [$request], ''],
-            ['{res_header_X-Baz}', [$request, $response], 'Bar'],
-            ['{res_header_x-not}', [$request, $response], ''],
-            ['{res_header_X-Baz}', [$request], 'NULL'],
+            ['{request} {response}', [$request()], Psr7\Message::toString($request()) . ' '],
+            ['{req_headers}', [$request()], "PUT / HTTP/1.1\r\nx-test: abc"],
+            ['{res_headers}', [$request(), $response()], "HTTP/1.1 200 OK\r\nX-Baz: Bar"],
+            ['{res_headers}', [$request()], 'NULL'],
+            ['{req_body}', [$request()], 'foo'],
+            ['{res_body}', [$request(), $response()], 'baz'],
+            ['{res_body}', [$request()], 'NULL'],
+            ['{method}', [$request()], $request()->getMethod()],
+            ['{url}', [$request()], $request()->getUri()],
+            ['{target}', [$request()], $request()->getRequestTarget()],
+            ['{req_version}', [$request()], $request()->getProtocolVersion()],
+            ['{res_version}', [$request(), $response()], $response()->getProtocolVersion()],
+            ['{res_version}', [$request()], 'NULL'],
+            ['{host}', [$request()], $request()->getHeaderLine('Host')],
+            ['{hostname}', [$request(), $response()], \gethostname()],
+            ['{hostname}{hostname}', [$request(), $response()], \gethostname() . \gethostname()],
+            ['{code}', [$request(), $response()], $response()->getStatusCode()],
+            ['{code}', [$request()], 'NULL'],
+            ['{phrase}', [$request(), $response()], $response()->getReasonPhrase()],
+            ['{phrase}', [$request()], 'NULL'],
+            ['{error}', $err(), 'Test'],
+            ['{error}', [$request()], 'NULL'],
+            ['{req_header_x-test}', [$request()], 'abc'],
+            ['{req_header_x-not}', [$request()], ''],
+            ['{res_header_X-Baz}', [$request(), $response()], 'Bar'],
+            ['{res_header_x-not}', [$request(), $response()], ''],
+            ['{res_header_X-Baz}', [$request()], 'NULL'],
+            [' ',[$request()],' '],
         ];
     }
 
@@ -96,5 +103,48 @@ class MessageFormatterTest extends TestCase
     {
         $f = new MessageFormatter($template);
         self::assertSame((string) $result, $f->format(...$args));
+    }
+
+    /**
+     * @dataProvider formatProvider
+     */
+    public function testBodiesDoNotGetConsumed(string $template, array $args)
+    {
+        $f = new MessageFormatter($template);
+
+        $f->format(...$args);
+
+        self::assertSame('foo', $args[0]->getBody()->getContents());
+
+        if (isset($args[1])) {
+            self::assertSame('baz', $args[1]->getBody()->getContents());
+        }
+    }
+
+    /**
+     * @dataProvider formatProvider
+     */
+    public function testBodiesRetainPointerPosition(string $template, array $args)
+    {
+        $f = new MessageFormatter($template);
+
+        // Initialize positions
+        $args[0]->getBody()->seek(1);
+
+        if (isset($args[1])) {
+            $args[1]->getBody()->seek(1);
+        }
+
+        // Trigger formatting
+        $f->format(...$args);
+
+        // Assert we are still at position 1
+        self::assertSame(1, $args[0]->getBody()->tell());
+        self::assertSame('oo', $args[0]->getBody()->getContents());
+
+        if (isset($args[1])) {
+            self::assertSame(1, $args[1]->getBody()->tell());
+            self::assertSame('az', $args[1]->getBody()->getContents());
+        }
     }
 }

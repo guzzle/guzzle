@@ -72,8 +72,11 @@ class MessageFormatter implements MessageFormatterInterface
     {
         $cache = [];
 
+        $requestPosition = $request->getBody()->tell();
+        $responsePosition = $response instanceof ResponseInterface ? $response->getBody()->tell() : 0;
+
         /** @var string */
-        return \preg_replace_callback(
+        $result = \preg_replace_callback(
             '/{\s*([A-Za-z_\-\.0-9]+)\s*}/',
             function (array $matches) use ($request, $response, $error, &$cache) {
                 if (isset($cache[$matches[1]])) {
@@ -105,7 +108,14 @@ class MessageFormatter implements MessageFormatterInterface
                             : 'NULL';
                         break;
                     case 'req_body':
-                        $result = $request->getBody()->__toString();
+                        $body = $request->getBody();
+
+                        if (!$body->isSeekable()) {
+                            $result = 'REQUEST_NOT_LOGGEABLE';
+                            break;
+                        }
+
+                        $result = $body->__toString();
                         break;
                     case 'res_body':
                         if (!$response instanceof ResponseInterface) {
@@ -120,7 +130,7 @@ class MessageFormatter implements MessageFormatterInterface
                             break;
                         }
 
-                        $result = $response->getBody()->__toString();
+                        $result = $body->__toString();
                         break;
                     case 'ts':
                     case 'date_iso_8601':
@@ -181,6 +191,15 @@ class MessageFormatter implements MessageFormatterInterface
             },
             $this->template
         );
+
+        if ($request->getBody()->isSeekable()) {
+            $request->getBody()->seek($requestPosition);
+        }
+        if ($response instanceof ResponseInterface && $response->getBody()->isSeekable()) {
+            $response->getBody()->seek($responsePosition);
+        }
+
+        return $result;
     }
 
     /**
