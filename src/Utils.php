@@ -363,6 +363,9 @@ EOT
         if (isset($_SERVER[$name])) {
             return (string) $_SERVER[$name];
         }
+        if (function_exists('config')){
+            return config($name);
+        }
 
         if (\PHP_SAPI === 'cli' && ($value = \getenv($name)) !== false && $value !== null) {
             return (string) $value;
