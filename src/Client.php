@@ -301,7 +301,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         // Shallow merge defaults underneath options.
-        $result = $options + $defaults;
+        $result = (array) $options + (array) $defaults;
 
         // Remove null values.
         foreach ($result as $k => $v) {
