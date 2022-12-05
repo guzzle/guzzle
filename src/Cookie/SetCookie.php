@@ -82,7 +82,7 @@ class SetCookie
 
         $this->data = $replaced;
         // Extract the Expires value and turn it into a UNIX timestamp if needed
-        if (!$this->getExpires() && $this->getMaxAge()) {
+        if (!$this->getExpires() && $this->getMaxAge() && \is_numeric($this->getMaxAge())) {
             // Calculate the Expires date
             $this->setExpires(\time() + $this->getMaxAge());
         } elseif (null !== ($expires = $this->getExpires()) && !\is_numeric($expires)) {
