@@ -15,6 +15,7 @@ use Psr\Http\Message\RequestInterface;
  *
  * @property resource $_mh Internal use only. Lazy loaded multi-handle.
  */
+#[\AllowDynamicProperties]
 class CurlMultiHandler
 {
     /** @var CurlFactoryInterface */
