@@ -228,7 +228,7 @@ class MiddlewareTest extends TestCase
 
     public function testLogsRequestsAndResponsesLevelCallback()
     {
-        $logLevelResolver = static function (RequestInterface $req, ResponseInterface  $res): string {
+        $logLevelResolver = static function (RequestInterface $req, ResponseInterface $res): string {
             return LogLevel::ALERT;
         };
 
