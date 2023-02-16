@@ -19,6 +19,7 @@ use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LogLevel;
 
 class MiddlewareTest extends TestCase
 {
@@ -223,6 +224,25 @@ class MiddlewareTest extends TestCase
         self::assertCount(1, $logger->records);
         self::assertStringContainsString('"PUT / HTTP/1.1" 200', $logger->records[0]['message']);
         self::assertSame('debug', $logger->records[0]['level']);
+    }
+
+    public function testLogsRequestsAndResponsesLevelCallback()
+    {
+        $logLevelResolver = static function (RequestInterface $req, ResponseInterface  $res): string {
+            return LogLevel::ALERT;
+        };
+
+        $h = new MockHandler([new Response(200)]);
+        $stack = new HandlerStack($h);
+        $logger = new TestLogger();
+        $formatter = new MessageFormatter();
+        $stack->push(Middleware::log($logger, $formatter, $logLevelResolver));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('PUT', 'http://www.google.com'), []);
+        $p->wait();
+        self::assertCount(1, $logger->records);
+        self::assertStringContainsString('"PUT / HTTP/1.1" 200', $logger->records[0]['message']);
+        self::assertSame(LogLevel::ALERT, $logger->records[0]['level']);
     }
 
     public function testLogsRequestsAndErrors()

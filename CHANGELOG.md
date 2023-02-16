@@ -2,6 +2,12 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 7.6.0 - XXXX-XX-XX
+
+### Added
+
+- Ability to pass callable as `logLevel` to `Middleware::log()` to choice a level for each Request/Response pair
+
 ## 7.5.0 - 2022-08-28
 
 ### Added
