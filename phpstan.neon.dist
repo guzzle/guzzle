@@ -5,6 +5,9 @@ includes:
 parameters:
     level: max
     checkMissingIterableValueType: false
+    typeAliases:
+        LogLevelConstant: '\Psr\Log\LogLevel::*'
+        LogLevelResolver: 'callable(\Psr\Http\Message\RequestInterface, \Psr\Http\Message\ResponseInterface): LogLevelConstant'
     paths:
         - src
     bootstrapFiles:

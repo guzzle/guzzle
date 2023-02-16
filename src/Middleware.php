@@ -183,7 +183,7 @@ final class Middleware
      * Middleware that logs requests, responses, and errors using a message
      * formatter.
      *
-     * @phpstan-param \Psr\Log\LogLevel::*|callable(RequestInterface, ResponseInterface):\Psr\Log\LogLevel::* $logLevel  Level at which to log requests.
+     * @phpstan-param LogLevelConstant|LogLevelResolver $logLevel  Level at which to log requests.
      *
      * @param LoggerInterface                            $logger    Logs messages.
      * @param MessageFormatterInterface|MessageFormatter $formatter Formatter used to create message strings.
