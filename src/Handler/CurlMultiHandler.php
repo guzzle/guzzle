@@ -20,7 +20,7 @@ class CurlMultiHandler
     /** @var CurlFactoryInterface */
     private $factory;
     private $selectTimeout;
-    private $active;
+    private $active = 0;
     private $handles = [];
     private $delays = [];
     private $options = [];
