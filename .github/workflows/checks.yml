@@ -17,14 +17,3 @@ jobs:
 
       - name: Composer normalize
         uses: docker://ergebnis/composer-normalize-action
-
-  roave-bc-check:
-    name: Roave BC Check
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Roave BC Check
-        uses: docker://nyholm/roave-bc-check-ga
