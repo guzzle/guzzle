@@ -86,7 +86,7 @@
             "forward-command": false
         },
         "branch-alias": {
-            "dev-master": "7.5-dev"
+            "dev-master": "7.6-dev"
         }
     },
     "autoload": {
