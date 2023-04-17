@@ -144,9 +144,27 @@ Using the test server
     is not necessary for mocking requests. For that, please use the
     Mock handler and history middleware.
 
-Guzzle ships with a node.js test server that receives requests and returns
-responses from a queue. The test server exposes a simple API that is used to
-enqueue responses and inspect the requests that it has received.
+Guzzle provides a node.js test server as a separate composer package that
+receives requests and returns responses from a queue. The test server exposes
+a simple API that is used to enqueue responses and inspect the requests that it
+has received.
+
+You can add the test server as a dev dependency using Composer.
+
+.. code-block:: bash
+
+    composer require --dev guzzlehttp/test-server:^0.1
+
+Alternatively, you can include it as a dev dependency in your project's
+existing composer.json file:
+
+.. code-block:: json
+
+    {
+        "require-dev": {
+            "guzzlehttp/test-server": "^0.1"
+        }
+    }
 
 Any operation on the ``Server`` object will ensure that
 the server is running and wait until it is able to receive requests before
