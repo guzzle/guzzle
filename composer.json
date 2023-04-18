@@ -84,9 +84,6 @@
         "bamarni-bin": {
             "bin-links": true,
             "forward-command": false
-        },
-        "branch-alias": {
-            "dev-master": "7.5-dev"
         }
     },
     "autoload": {
