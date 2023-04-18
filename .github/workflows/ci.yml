@@ -3,11 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - master
   pull_request:
 
 permissions:
-  contents: read  #  to clone the repos and get release assets (shivammathur/setup-php)
+  contents: read
 
 jobs:
   build-lowest-version:
