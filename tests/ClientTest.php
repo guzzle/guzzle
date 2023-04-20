@@ -714,16 +714,42 @@ class ClientTest extends TestCase
         self::assertSame($responseBody, $response->getBody()->getContents());
     }
 
-    public function testIdnSupportDefaultValue()
+    public function defaultValueProvider()
     {
+        yield [true];
+        yield [false];
+    }
+
+    /**
+     * @dataProvider defaultValueProvider
+     */
+    public function testIdnSupportDefaultValue($defaultValue)
+    {
+        if (true === $defaultValue && !defined('IDNA_DEFAULT')) {
+            self::markTestSkipped(
+                'This test requires the "intl" extension or the "symfony/polyfill-intl-idn" package.'
+            );
+        }
+
+        if (false === $defaultValue && defined('IDNA_DEFAULT')) {
+            self::markTestSkipped(
+                'This test requires the absence of the "intl" extension and the "symfony/polyfill-intl-idn" package.'
+            );
+        }
+
+        self::assertSame($defaultValue, defined('IDNA_DEFAULT'));
+
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
         $config = $client->getConfig();
 
-        self::assertTrue($config['idn_conversion']);
+        self::assertSame($defaultValue, $config['idn_conversion']);
     }
 
+    /**
+     * @requires intl
+     */
     public function testIdnIsTranslatedToAsciiWhenConversionIsEnabled()
     {
         $mockHandler = new MockHandler([new Response()]);
@@ -751,6 +777,8 @@ class ClientTest extends TestCase
     }
 
     /**
+     * @requires intl
+     *
      * @expectedException \GuzzleHttp\Exception\InvalidArgumentException
      * @expectedExceptionMessage IDN conversion failed
      */

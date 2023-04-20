@@ -236,7 +236,7 @@ class Client implements ClientInterface
             'decode_content'  => true,
             'verify'          => true,
             'cookies'         => false,
-            'idn_conversion'  => true,
+            'idn_conversion'  => defined('IDNA_DEFAULT'),
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
