@@ -209,6 +209,11 @@ This setting can be set to any of the following types:
       // You can send requests that use a stream resource as the body.
       $resource = \GuzzleHttp\Psr7\Utils::tryFopen('http://httpbin.org', 'r');
       $client->request('PUT', '/put', ['body' => $resource]);
+      $resource->close();
+
+  .. note::
+
+    It is the responsibility of the calling code to close the resource.
 
 - ``Psr\Http\Message\StreamInterface``
 
@@ -217,6 +222,12 @@ This setting can be set to any of the following types:
       // You can send requests that use a Guzzle stream object as the body
       $stream = GuzzleHttp\Psr7\Utils::streamFor('contents...');
       $client->request('POST', '/post', ['body' => $stream]);
+      $stream->close();
+
+  .. note::
+
+    It is the responsibility of the calling code to close the stream.
+
 
 .. note::
 
@@ -652,6 +663,8 @@ the following key value pairs:
 
     use GuzzleHttp\Psr7;
 
+    $baz = Psr7\Utils::tryFopen('/path/to/file', 'r');
+    $qux = Psr7\Utils::tryFopen('/path/to/file', 'r');
     $client->request('POST', '/post', [
         'multipart' => [
             [
@@ -661,15 +674,18 @@ the following key value pairs:
             ],
             [
                 'name'     => 'baz',
-                'contents' => Psr7\Utils::tryFopen('/path/to/file', 'r')
+                'contents' => $baz
             ],
             [
                 'name'     => 'qux',
-                'contents' => Psr7\Utils::tryFopen('/path/to/file', 'r'),
+                'contents' => $qux,
                 'filename' => 'custom_filename.txt'
             ],
         ]
     ]);
+
+    $baz->close();
+    $qux->close();
 
 .. note::
 
@@ -678,6 +694,8 @@ the following key value pairs:
     requests, and ``multipart`` for ``multipart/form-data`` requests.
 
     This option cannot be used with ``body``, ``form_params``, or ``json``
+
+    If using a resource, or class implementing the `StreamInterface``, it is the responsibility of the calling code to close the resource.
 
 
 .. _on-headers:

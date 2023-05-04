@@ -363,6 +363,12 @@ write-only, read-write, allow arbitrary random access (seeking forwards or
 backwards to any location), or only allow sequential access (for example in the
 case of a socket or pipe).
 
+.. note::
+
+    When a stream is no-longer needed, the ``close()`` method should be called.
+    Guzzle will not close streams automatically when the request or response object
+    is destroyed.
+
 Guzzle uses the ``guzzlehttp/psr7`` package to provide stream support. More
 information on using streams, creating streams, converting streams to PHP
 stream resource, and stream decorators can be found in the
