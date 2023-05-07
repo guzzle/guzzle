@@ -388,7 +388,7 @@ class StreamHandler
 
         $body = (string) $request->getBody();
 
-        if (!empty($body)) {
+        if ('' !== $body) {
             $context['http']['content'] = $body;
             // Prevent the HTTP handler from adding a Content-Type header.
             if (!$request->hasHeader('Content-Type')) {
