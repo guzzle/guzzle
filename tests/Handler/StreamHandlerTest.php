@@ -379,6 +379,45 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['verify' => 10]);
     }
 
+    public function testEnsuresCryptoMethodOptionIsValid()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid crypto_method request option: unknown version provided');
+
+        $this->getSendResult(['crypto_method' => 123]);
+    }
+
+    public function testSetsCryptoMethodTls10()
+    {
+        $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT, $opts['http']['crypto_method']);
+    }
+
+    public function testSetsCryptoMethodTls11()
+    {
+        $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT, $opts['http']['crypto_method']);
+    }
+
+    public function testSetsCryptoMethodTls12()
+    {
+        $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT, $opts['http']['crypto_method']);
+    }
+
+    /**
+     * @requires PHP >=7.4
+     */
+    public function testSetsCryptoMethodTls13()
+    {
+        $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT, $opts['http']['crypto_method']);
+    }
+
     public function testCanSetPasswordWhenSettingCert()
     {
         $path = __FILE__;

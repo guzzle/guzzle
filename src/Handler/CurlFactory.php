@@ -452,6 +452,32 @@ class CurlFactory implements CurlFactoryInterface
             }
         }
 
+        if (isset($options['crypto_method'])) {
+            if (\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $options['crypto_method']) {
+                if (!defined('CURL_SSLVERSION_TLSv1_0')) {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.0 not supported by your version of cURL');
+                }
+                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_0;
+            } elseif (\STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $options['crypto_method']) {
+                if (!defined('CURL_SSLVERSION_TLSv1_1')) {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.1 not supported by your version of cURL');
+                }
+                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_1;
+            } elseif (\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $options['crypto_method']) {
+                if (!defined('CURL_SSLVERSION_TLSv1_2')) {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.2 not supported by your version of cURL');
+                }
+                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
+            } elseif (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $options['crypto_method']) {
+                if (!defined('CURL_SSLVERSION_TLSv1_3')) {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
+                }
+                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
+            } else {
+                throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
+            }
+        }
+
         if (isset($options['cert'])) {
             $cert = $options['cert'];
             if (\is_array($cert)) {

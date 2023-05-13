@@ -221,6 +221,46 @@ class CurlFactoryTest extends TestCase
         self::assertSame('hi', (string) $response->getBody());
     }
 
+    public function testValidatesCryptoMethodInvalidMethod()
+    {
+        $f = new Handler\CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid crypto_method request option: unknown version provided');
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => 123]);
+    }
+
+    public function testAddsCryptoMethodTls10()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT]);
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_0, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+    }
+
+    public function testAddsCryptoMethodTls11()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT]);
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_1, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+    }
+
+    public function testAddsCryptoMethodTls12()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+    }
+
+    /**
+     * @requires PHP >= 7.4
+     */
+    public function testAddsCryptoMethodTls13()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+    }
+
     public function testValidatesSslKey()
     {
         $f = new Handler\CurlFactory(3);
