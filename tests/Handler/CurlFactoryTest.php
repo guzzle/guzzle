@@ -234,21 +234,21 @@ class CurlFactoryTest extends TestCase
     {
         $f = new Handler\CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT]);
-        self::assertEquals(\CURL_SSLVERSION_TLSv1_0, $_SERVER['_curl']['crypto_method']);
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_0, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
     public function testAddsCryptoMethodTls11()
     {
         $f = new Handler\CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT]);
-        self::assertEquals(\CURL_SSLVERSION_TLSv1_1, $_SERVER['_curl']['crypto_method']);
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_1, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
     public function testAddsCryptoMethodTls12()
     {
         $f = new Handler\CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
-        self::assertEquals(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl']['crypto_method']);
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
     /**
@@ -258,7 +258,7 @@ class CurlFactoryTest extends TestCase
     {
         $f = new Handler\CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
-        self::assertEquals(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl']['crypto_method']);
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
     public function testValidatesSslKey()
