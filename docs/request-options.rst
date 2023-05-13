@@ -299,6 +299,28 @@ connect_timeout
     handler.
 
 
+.. _crypto_method-option:
+
+crypto_method
+---------------
+
+:Summary: A value describing the minimum TLS protocol version to use.
+:Types: int
+:Default: None
+:Constant: ``GuzzleHttp\RequestOptions::CRYPTO_METHOD``
+
+.. code-block:: php
+
+    $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
+
+.. note::
+
+    This setting must be set to one of the ``STREAM_CRYPTO_METHOD_TLS*_CLIENT``
+    constants. PHP 7.4 or higher is required in order to use TLS 1.3, and cURL
+    7.34.0 or higher is required in order to specify a crypto method, with cURL
+    7.52.0 or higher being required to use TLS 1.3.
+
+
 .. _debug-option:
 
 debug
