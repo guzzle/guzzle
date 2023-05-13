@@ -371,7 +371,7 @@ class SetCookieTest extends TestCase
                     'Secure' => true,
                     'Discard' => false,
                     'Max-Age' => 604800,
-                    'HttpOnly' => false,
+                    'HttpOnly' => true,
                     'SameSite' => 'None',
                 ],
             ],
