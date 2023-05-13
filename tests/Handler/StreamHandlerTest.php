@@ -382,7 +382,7 @@ class StreamHandlerTest extends TestCase
     public function testEnsuresCryptoMethodOptionIsValid()
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid verify request option');
+        $this->expectExceptionMessage('Invalid crypto_method request option: unknown version provided');
 
         $this->getSendResult(['crypto_method' => 123]);
     }

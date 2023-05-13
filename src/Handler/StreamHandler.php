@@ -485,7 +485,7 @@ class StreamHandler
             return;
         }
 
-        throw new InvalidArgumentException('An invalid `crypto_method` value was supplied.');
+        throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
     }
 
     /**

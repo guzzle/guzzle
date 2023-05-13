@@ -226,7 +226,7 @@ class CurlFactoryTest extends TestCase
         $f = new Handler\CurlFactory(3);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('An invalid `crypto_method` value was supplied.');
+        $this->expectExceptionMessage('Invalid crypto_method request option: unknown version provided');
         $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => 123]);
     }
 
