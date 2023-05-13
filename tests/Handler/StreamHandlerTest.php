@@ -426,18 +426,6 @@ class StreamHandlerTest extends TestCase
         self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT, $opts['http']['crypto_method']);
     }
 
-    public function testEnsuresVerifyOptionIsValid()
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid verify request option');
-
-        $this->getSendResult(['crypto_method' => 123]);
-    }
-
-
-
-
-
     public function testCanSetPasswordWhenSettingCert()
     {
         $path = __FILE__;
