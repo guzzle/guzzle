@@ -360,6 +360,20 @@ class SetCookieTest extends TestCase
                     'HttpOnly' => false
                 ]
             ],
+            [
+                'fr=synced; Max-Age=604800 Expires=Mon, 12 Dec 2022 13:27:50 GMT; Domain=.emxdgt.com; Path=/; SameSite=None; Secure; HttpOnly',
+                [
+                    'Name' => 'PHPSESSID',
+                    'Value' => '123456789+abcd%2Cef',
+                    'Domain' => '.localdomain',
+                    'Path' => '/foo/baz',
+                    'Expires' => 'Tue, 21-Nov-2006 08:33:44 GMT',
+                    'Secure' => true,
+                    'Discard' => true,
+                    'Max-Age' => null,
+                    'HttpOnly' => false
+                ]
+            ],
         ];
     }
 

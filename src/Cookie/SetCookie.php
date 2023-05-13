@@ -80,7 +80,42 @@ class SetCookie
             throw new \InvalidArgumentException('Unable to replace the default values for the Cookie.');
         }
 
-        $this->data = $replaced;
+        if (isset($replaced['Name'])) {
+            $this->setName($replaced['Name']);
+        }
+
+        if (isset($replaced['Value'])) {
+            $this->setValue($replaced['Value']);
+        }
+
+        if (isset($replaced['Domain'])) {
+            $this->setDomain($replaced['Domain']);
+        }
+
+        if (isset($replaced['Path'])) {
+            $this->setPath($replaced['Path']);
+        }
+
+        if (isset($replaced['Max-Age'])) {
+            $this->setMaxAge($replaced['Max-Age']);
+        }
+
+        if (isset($replaced['Expires'])) {
+            $this->setExpires($replaced['Expires']);
+        }
+
+        if (isset($replaced['Secure'])) {
+            $this->setSecure($replaced['Secure']);
+        }
+
+        if (isset($replaced['Discard'])) {
+            $this->setDiscard($replaced['Discard']);
+        }
+
+        if (isset($replaced['HttpOnly'])) {
+            $this->setHttpOnly($replaced['HttpOnly']);
+        }
+
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         if (!$this->getExpires() && $this->getMaxAge()) {
             // Calculate the Expires date
