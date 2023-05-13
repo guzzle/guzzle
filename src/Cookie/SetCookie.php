@@ -74,46 +74,42 @@ class SetCookie
      */
     public function __construct(array $data = [])
     {
-        /** @var array|null $replaced will be null in case of replace error */
-        $replaced = \array_replace(self::$defaults, $data);
-        if ($replaced === null) {
-            throw new \InvalidArgumentException('Unable to replace the default values for the Cookie.');
+        $this->data = self::$defaults;
+
+        if (isset($data['Name'])) {
+            $this->setName($data['Name']);
         }
 
-        if (isset($replaced['Name'])) {
-            $this->setName($replaced['Name']);
+        if (isset($data['Value'])) {
+            $this->setValue($data['Value']);
         }
 
-        if (isset($replaced['Value'])) {
-            $this->setValue($replaced['Value']);
+        if (isset($data['Domain'])) {
+            $this->setDomain($data['Domain']);
         }
 
-        if (isset($replaced['Domain'])) {
-            $this->setDomain($replaced['Domain']);
+        if (isset($data['Path'])) {
+            $this->setPath($data['Path']);
         }
 
-        if (isset($replaced['Path'])) {
-            $this->setPath($replaced['Path']);
+        if (isset($data['Max-Age'])) {
+            $this->setMaxAge($data['Max-Age']);
         }
 
-        if (isset($replaced['Max-Age'])) {
-            $this->setMaxAge($replaced['Max-Age']);
+        if (isset($data['Expires'])) {
+            $this->setExpires($data['Expires']);
         }
 
-        if (isset($replaced['Expires'])) {
-            $this->setExpires($replaced['Expires']);
+        if (isset($data['Secure'])) {
+            $this->setSecure($data['Secure']);
         }
 
-        if (isset($replaced['Secure'])) {
-            $this->setSecure($replaced['Secure']);
+        if (isset($data['Discard'])) {
+            $this->setDiscard($data['Discard']);
         }
 
-        if (isset($replaced['Discard'])) {
-            $this->setDiscard($replaced['Discard']);
-        }
-
-        if (isset($replaced['HttpOnly'])) {
-            $this->setHttpOnly($replaced['HttpOnly']);
+        if (isset($data['HttpOnly'])) {
+            $this->setHttpOnly($data['HttpOnly']);
         }
 
         // Extract the Expires value and turn it into a UNIX timestamp if needed
