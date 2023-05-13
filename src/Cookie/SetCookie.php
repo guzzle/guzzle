@@ -112,6 +112,11 @@ class SetCookie
             $this->setHttpOnly($data['HttpOnly']);
         }
 
+        // Set the remaining values that don't have extra validation logic
+        foreach (array_diff(array_keys($data), array_keys(self::$defaults)) as $key) {
+            $this->data[$key] = $data[$key];
+        }
+
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         if (!$this->getExpires() && $this->getMaxAge()) {
             // Calculate the Expires date
