@@ -221,6 +221,46 @@ class CurlFactoryTest extends TestCase
         self::assertSame('hi', (string) $response->getBody());
     }
 
+    public function testValidatesCryptoMethodInvalidMethod()
+    {
+        $f = new Handler\CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('SSL certificate not found: /does/not/exist');
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => 123]);
+    }
+
+    public function testAddsCryptoMethodTls10()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT]);
+        self::assertEquals(__FILE__, $_SERVER['_curl'][\CURL_SSLVERSION_TLSv1_0]);
+    }
+
+    public function testAddsCryptoMethodTls11()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT]);
+        self::assertEquals(__FILE__, $_SERVER['_curl'][\CURL_SSLVERSION_TLSv1_1]);
+    }
+
+    public function testAddsCryptoMethodTls12()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
+        self::assertEquals(__FILE__, $_SERVER['_curl'][\CURL_SSLVERSION_TLSv1_2]);
+    }
+
+    /**
+     * @requires PHP >= 7.4
+     */
+    public function testAddsCryptoMethodTls13()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
+        self::assertEquals(__FILE__, $_SERVER['_curl'][\CURL_SSLVERSION_TLSv1_3]);
+    }
+
     public function testValidatesSslKey()
     {
         $f = new Handler\CurlFactory(3);

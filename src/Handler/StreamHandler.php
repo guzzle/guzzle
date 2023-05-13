@@ -472,6 +472,22 @@ class StreamHandler
         }
     }
 
+    private function add_crypto_method(RequestInterface $request, array &$options, $value, array &$params): void
+    {
+        if (
+            $value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT
+            || $value === \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT
+            || $value === \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
+            || (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && $value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT)
+        ) {
+            $options['http']['crypto_method'] = $value;
+
+            return;
+        }
+
+        throw new InvalidArgumentException('An invalid `crypto_method` value was supplied.');
+    }
+
     /**
      * @param mixed $value as passed via Request transfer options.
      */
