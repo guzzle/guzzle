@@ -472,6 +472,9 @@ class StreamHandler
         }
     }
 
+    /**
+     * @param mixed $value as passed via Request transfer options.
+     */
     private function add_crypto_method(RequestInterface $request, array &$options, $value, array &$params): void
     {
         if (

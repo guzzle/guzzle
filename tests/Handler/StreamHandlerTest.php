@@ -389,8 +389,6 @@ class StreamHandlerTest extends TestCase
 
     public function testSetsCryptoMethodTls10()
     {
-
-        $path = __FILE__;
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT, $opts['http']['crypto_method']);
@@ -398,8 +396,6 @@ class StreamHandlerTest extends TestCase
 
     public function testSetsCryptoMethodTls11()
     {
-
-        $path = __FILE__;
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT, $opts['http']['crypto_method']);
@@ -407,8 +403,6 @@ class StreamHandlerTest extends TestCase
 
     public function testSetsCryptoMethodTls12()
     {
-
-        $path = __FILE__;
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT, $opts['http']['crypto_method']);
@@ -419,8 +413,6 @@ class StreamHandlerTest extends TestCase
      */
     public function testSetsCryptoMethodTls13()
     {
-
-        $path = __FILE__;
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT, $opts['http']['crypto_method']);
