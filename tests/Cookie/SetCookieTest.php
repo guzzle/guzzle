@@ -224,8 +224,8 @@ class SetCookieTest extends TestCase
                     'Discard' => null,
                     'Name' => 'ASIHTTPRequestTestCookie',
                     'Value' => 'This+is+the+value',
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                ],
             ],
             ['', []],
             ['foo', []],
@@ -241,8 +241,8 @@ class SetCookieTest extends TestCase
                     'Max-Age' => null,
                     'Path' => '/',
                     'Secure' => null,
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                ],
             ],
             // Test setting a blank value for a cookie
             [[
@@ -256,8 +256,8 @@ class SetCookieTest extends TestCase
                     'Max-Age' => null,
                     'Path' => '/',
                     'Secure' => null,
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                ],
             ],
             // Test setting a value and removing quotes
             [[
@@ -271,8 +271,8 @@ class SetCookieTest extends TestCase
                     'Max-Age' => null,
                     'Path' => '/',
                     'Secure' => null,
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                ],
             ],
             // Some of the following tests are based on https://github.com/zendframework/zf1/blob/master/tests/Zend/Http/CookieTest.php
             [
@@ -286,8 +286,8 @@ class SetCookieTest extends TestCase
                     'Max-Age' => null,
                     'Path' => '/',
                     'Secure' => null,
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                ],
             ],
             [
                 'expires=tomorrow; secure; path=/Space Out/; expires=Tue, 21-Nov-2006 08:33:44 GMT; domain=.example.com',
@@ -300,8 +300,8 @@ class SetCookieTest extends TestCase
                     'Discard' => null,
                     'Secure' => true,
                     'Max-Age' => null,
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                ],
             ],
             [
                 'domain=unittests; expires=Tue, 21-Nov-2006 08:33:44 GMT; domain=example.com; path=/some value/',
@@ -314,8 +314,8 @@ class SetCookieTest extends TestCase
                     'Secure' => false,
                     'Discard' => null,
                     'Max-Age' => null,
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                ],
             ],
             [
                 'path=indexAction; path=/; domain=.foo.com; expires=Tue, 21-Nov-2006 08:33:44 GMT',
@@ -328,8 +328,8 @@ class SetCookieTest extends TestCase
                     'Secure' => false,
                     'Discard' => null,
                     'Max-Age' => null,
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                ],
             ],
             [
                 'secure=sha1; secure; SECURE; domain=some.really.deep.domain.com; version=1; Max-Age=86400',
@@ -343,8 +343,8 @@ class SetCookieTest extends TestCase
                     'Expires' => \time() + 86400,
                     'Max-Age' => 86400,
                     'HttpOnly' => false,
-                    'version' => '1'
-                ]
+                    'version' => '1',
+                ],
             ],
             [
                 'PHPSESSID=123456789+abcd%2Cef; secure; discard; domain=.localdomain; path=/foo/baz; expires=Tue, 21-Nov-2006 08:33:44 GMT;',
@@ -357,22 +357,23 @@ class SetCookieTest extends TestCase
                     'Secure' => true,
                     'Discard' => true,
                     'Max-Age' => null,
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                ],
             ],
             [
-                'fr=synced; Max-Age=604800 Expires=Mon, 12 Dec 2022 13:27:50 GMT; Domain=.emxdgt.com; Path=/; SameSite=None; Secure; HttpOnly',
+                'fr=synced; Max-Age=604800 Expires=Mon, 12 Dec 2022 13:27:50 GMT; Domain=.example.com; Path=/; SameSite=None; Secure; HttpOnly',
                 [
-                    'Name' => 'PHPSESSID',
-                    'Value' => '123456789+abcd%2Cef',
-                    'Domain' => '.localdomain',
-                    'Path' => '/foo/baz',
-                    'Expires' => 'Tue, 21-Nov-2006 08:33:44 GMT',
+                    'Name' => 'fr',
+                    'Value' => 'synced',
+                    'Domain' => '.example.com',
+                    'Path' => '/',
+                    'Expires' => 1684597887,
                     'Secure' => true,
                     'Discard' => true,
                     'Max-Age' => null,
-                    'HttpOnly' => false
-                ]
+                    'HttpOnly' => false,
+                    'SameSite' => 'None',
+                ],
             ],
         ];
     }
