@@ -128,55 +128,112 @@ class CookieJarTest extends TestCase
         self::assertCount(0, $this->jar);
     }
 
-    public function testDoesNotAddIncompleteCookies()
+    public static function providesIncompleteCookies(): array
     {
-        self::assertFalse($this->jar->setCookie(new SetCookie()));
-        self::assertFalse($this->jar->setCookie(new SetCookie([
-            'Name' => 'foo'
-        ])));
-        self::assertFalse($this->jar->setCookie(new SetCookie([
-            'Name' => false
-        ])));
-        self::assertFalse($this->jar->setCookie(new SetCookie([
-            'Name' => true
-        ])));
-        self::assertFalse($this->jar->setCookie(new SetCookie([
-            'Name'   => 'foo',
-            'Domain' => 'foo.com'
-        ])));
+        return [
+            [
+                [],
+            ],
+            [
+                [
+                    'Name' => 'foo',
+                ],
+            ],
+            [
+                [
+                    'Name' => false,
+                ],
+            ],
+            [
+                [
+                    'Name' => true,
+                ],
+            ],
+            [
+                [
+                    'Name'   => 'foo',
+                    'Domain' => 'foo.com',
+                ],
+            ],
+        ];
     }
 
-    public function testDoesNotAddEmptyCookies()
+    /**
+     * @dataProvider providesIncompleteCookies
+     */
+    public function testDoesNotAddIncompleteCookies(array $cookie)
     {
-        self::assertFalse($this->jar->setCookie(new SetCookie([
-            'Name'   => '',
-            'Domain' => 'foo.com',
-            'Value'  => 0
-        ])));
+        self::assertFalse($this->jar->setCookie(new SetCookie($cookie)));
     }
 
-    public function testDoesAddValidCookies()
+    public static function providesEmptyCookies(): array
     {
-        self::assertTrue($this->jar->setCookie(new SetCookie([
-            'Name'   => '0',
-            'Domain' => 'foo.com',
-            'Value'  => 0
-        ])));
-        self::assertTrue($this->jar->setCookie(new SetCookie([
-            'Name'   => 'foo',
-            'Domain' => 'foo.com',
-            'Value'  => 0
-        ])));
-        self::assertTrue($this->jar->setCookie(new SetCookie([
-            'Name'   => 'foo',
-            'Domain' => 'foo.com',
-            'Value'  => 0.0
-        ])));
-        self::assertTrue($this->jar->setCookie(new SetCookie([
-            'Name'   => 'foo',
-            'Domain' => 'foo.com',
-            'Value'  => '0'
-        ])));
+        return [
+            [
+                [
+                    'Name'   => '',
+                    'Domain' => 'foo.com',
+                    'Value'  => 0,
+                ],
+            ],
+            [
+                [
+                    'Name'   => null,
+                    'Domain' => 'foo.com',
+                    'Value'  => 0,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider providesEmptyCookies
+     */
+    public function testDoesNotAddEmptyCookies(array $cookie)
+    {
+        self::assertFalse($this->jar->setCookie(new SetCookie($cookie)));
+    }
+
+    public static function providesValidCookies(): array
+    {
+        return [
+            [
+                [
+                    'Name'   => '0',
+                    'Domain' => 'foo.com',
+                    'Value'  => 0,
+                ],
+            ],
+            [
+                [
+                    'Name'   => 'foo',
+                    'Domain' => 'foo.com',
+                    'Value'  => 0,
+                ],
+            ],
+            [
+                [
+                    'Name'   => 'foo',
+                    'Domain' => 'foo.com',
+                    'Value'  => 0.0,
+                ],
+            ],
+            [
+                [
+                    'Name'   => 'foo',
+                    'Domain' => 'foo.com',
+                    'Value'  => '0',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider providesValidCookies
+     */
+    public function testDoesAddValidCookies(array $cookie)
+    {
+        self::assertTrue($this->jar->setCookie(new SetCookie($cookie)));
     }
 
     public function testOverwritesCookiesThatAreOlderOrDiscardable()

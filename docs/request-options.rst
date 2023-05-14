@@ -282,7 +282,7 @@ connect_timeout
 ---------------
 
 :Summary: Float describing the number of seconds to wait while trying to connect
-        to a server. Use ``0`` to wait indefinitely (the default behavior).
+        to a server. Use ``0`` to wait 300 seconds (the default behavior).
 :Types: float
 :Default: ``0``
 :Constant: ``GuzzleHttp\RequestOptions::CONNECT_TIMEOUT``
