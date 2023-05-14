@@ -708,6 +708,26 @@ class ClientTest extends TestCase
         );
     }
 
+    public function testThatVersionIsOverwrittenWhenSendingARequest()
+    {
+        $mockHandler = new MockHandler([new Response(), new Response()]);
+        $client = new Client(['handler'  => $mockHandler]);
+
+        $request = new Request('get', '/bar', [], null, '1.1');
+        $client->send($request, [RequestOptions::VERSION => '1.0']);
+        self::assertSame(
+            '1.0',
+            $mockHandler->getLastRequest()->getProtocolVersion()
+        );
+
+        $request = new Request('get', '/bar', [], null, '1.0');
+        $client->send($request, [RequestOptions::VERSION => '1.1']);
+        self::assertSame(
+            '1.1',
+            $mockHandler->getLastRequest()->getProtocolVersion()
+        );
+    }
+
     public function testHandlerIsCallable()
     {
         $this->expectException(\InvalidArgumentException::class);
