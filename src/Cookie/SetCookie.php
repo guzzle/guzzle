@@ -58,7 +58,13 @@ class SetCookie
             } else {
                 foreach (\array_keys(self::$defaults) as $search) {
                     if (!\strcasecmp($search, $key)) {
-                        $data[$search] = $value;
+                        if ($search === 'Max-Age') {
+                            if (is_numeric($value)) {
+                                $data[$search] = (int) $value;
+                            }
+                        } else {
+                            $data[$search] = $value;
+                        }
                         continue 2;
                     }
                 }
