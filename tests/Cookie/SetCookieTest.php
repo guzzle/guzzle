@@ -367,7 +367,7 @@ class SetCookieTest extends TestCase
                     'Value' => 'synced',
                     'Domain' => '.example.com',
                     'Path' => '/',
-                    'Expires' => \time() + 604800,
+                    'Expires' => null,
                     'Secure' => true,
                     'Discard' => false,
                     'Max-Age' => null,
