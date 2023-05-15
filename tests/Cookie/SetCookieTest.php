@@ -370,7 +370,7 @@ class SetCookieTest extends TestCase
                     'Expires' => \time() + 604800,
                     'Secure' => true,
                     'Discard' => false,
-                    'Max-Age' => 604800,
+                    'Max-Age' => null,
                     'HttpOnly' => true,
                     'SameSite' => 'None',
                 ],
