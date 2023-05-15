@@ -60,7 +60,7 @@ class SetCookie
                     if (!\strcasecmp($search, $key)) {
                         if ($search === 'Max-Age') {
                             if (is_numeric($value)) {
-                                $value = (int) $value;
+                                $data[$search] = (int) $value;
                             }
                         } else {
                             $data[$search] = $value;
