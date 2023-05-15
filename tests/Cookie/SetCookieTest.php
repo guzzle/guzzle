@@ -375,6 +375,36 @@ class SetCookieTest extends TestCase
                     'SameSite' => 'None',
                 ],
             ],
+            [
+                'SESS3a6f27284c4d8b34b6f4ff98cb87703e=Ts-5YeSyvOCMS%2CzkEb9eDfW4C4ZNFOcRYdu-3JpEAXIm58aH; expires=Wed, 07-Jun-2023 15:56:35 GMT; Max-Age=2000000; path=/; domain=.example.com; HttpOnly; SameSite=Lax',
+                [
+                    'Name' => 'SESS3a6f27284c4d8b34b6f4ff98cb87703e',
+                    'Value' => 'Ts-5YeSyvOCMS%2CzkEb9eDfW4C4ZNFOcRYdu-3JpEAXIm58aH',
+                    'Domain' => '.example.com',
+                    'Path' => '/',
+                    'Expires' => 'Wed, 07-Jun-2023 15:56:35 GMT',
+                    'Secure' => false,
+                    'Discard' => false,
+                    'Max-Age' => 2000000,
+                    'HttpOnly' => true,
+                    'SameSite' => 'Lax',
+                ],
+            ],
+            [
+                'SESS3a6f27284c4d8b34b6f4ff98cb87703e=Ts-5YeSyvOCMS%2CzkEb9eDfW4C4ZNFOcRYdu-3JpEAXIm58aH; expires=Wed, 07-Jun-2023 15:56:35 GMT; Max-Age=qwerty; path=/; domain=.example.com; HttpOnly; SameSite=Lax',
+                [
+                    'Name' => 'SESS3a6f27284c4d8b34b6f4ff98cb87703e',
+                    'Value' => 'Ts-5YeSyvOCMS%2CzkEb9eDfW4C4ZNFOcRYdu-3JpEAXIm58aH',
+                    'Domain' => '.example.com',
+                    'Path' => '/',
+                    'Expires' => 'Wed, 07-Jun-2023 15:56:35 GMT',
+                    'Secure' => false,
+                    'Discard' => false,
+                    'Max-Age' => null,
+                    'HttpOnly' => true,
+                    'SameSite' => 'Lax',
+                ],
+            ],
         ];
     }
 
