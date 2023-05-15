@@ -2,6 +2,12 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 7.6.1 - 2023-05-15
+
+### Fixed
+
+- Fix `SetCookie::fromString` MaxAge deprecation warning and skip invalid MaxAge values
+
 ## 7.6.0 - 2023-05-14
 
 ### Added
