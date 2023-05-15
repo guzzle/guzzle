@@ -361,7 +361,7 @@ class SetCookieTest extends TestCase
                 ],
             ],
             [
-                'fr=synced; Max-Age=604800 Expires=Mon, 12 Dec 2022 13:27:50 GMT; Domain=.example.com; Path=/; SameSite=None; Secure; HttpOnly',
+                'fr=synced; Max-Age=604800; Expires=Mon, 12 Dec 2022 13:27:50 GMT; Domain=.example.com; Path=/; SameSite=None; Secure; HttpOnly',
                 [
                     'Name' => 'fr',
                     'Value' => 'synced',
