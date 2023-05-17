@@ -11,6 +11,16 @@ use Psr\Http\Message\StreamInterface;
 /**
  * Represents a cURL easy handle and the data it populates.
  *
+ * @property resource|\CurlHandle $handle resource cURL resource
+ * @property StreamInterface $sink Where data is being written
+ * @property array $headers Received HTTP headers so far
+ * @property ResponseInterface|null $response Received response (if any)
+ * @property RequestInterface $request Request being sent
+ * @property array $options Request options
+ * @property int $errno int cURL error number
+ * @property \Throwable|null $onHeadersException Exception during on_headers (if any)
+ * @property \Throwable|null $createResponseException Exception during createResponse (if any)
+ *
  * @internal
  */
 final class EasyHandle
@@ -18,47 +28,52 @@ final class EasyHandle
     /**
      * @var resource|\CurlHandle cURL resource
      */
-    public $handle;
+    private $handle;
 
     /**
      * @var StreamInterface Where data is being written
      */
-    public $sink;
-
-    /**
-     * @var array Received HTTP headers so far
-     */
-    public $headers = [];
-
-    /**
-     * @var ResponseInterface|null Received response (if any)
-     */
-    public $response;
+    private $sink;
 
     /**
      * @var RequestInterface Request being sent
      */
-    public $request;
+    private $request;
 
     /**
      * @var array Request options
      */
-    public $options = [];
+    private $options = [];
 
     /**
      * @var int cURL error number (if any)
      */
-    public $errno = 0;
+    private $errno = \CURLE_OK;
+
+    /**
+     * @var array Received HTTP headers so far
+     */
+    private $headers = [];
+
+    /**
+     * @var ResponseInterface|null Received response (if any)
+     */
+    private $response;
 
     /**
      * @var \Throwable|null Exception during on_headers (if any)
      */
-    public $onHeadersException;
+    private $onHeadersException;
 
     /**
-     * @var \Exception|null Exception during createResponse (if any)
+     * @var \Throwable|null Exception during createResponse (if any)
      */
-    public $createResponseException;
+    private $createResponseException;
+
+    /**
+     * @var bool Tells if the EasyHandle has been initialized
+     */
+    private $initialized = false;
 
     /**
      * Attach a response to the easy handle based on the received headers.
@@ -98,15 +113,72 @@ final class EasyHandle
     }
 
     /**
-     * @param string $name
-     *
-     * @return void
+     * @return mixed
      *
      * @throws \BadMethodCallException
      */
-    public function __get($name)
+    public function &__get(string $name)
     {
-        $msg = $name === 'handle' ? 'The EasyHandle has been released' : 'Invalid property: ' . $name;
+        if (('handle' !== $name && property_exists($this, $name)) || $this->initialized && isset($this->handle)) {
+            return $this->{$name};
+        }
+
+        $msg = $name === 'handle'
+            ? 'The EasyHandle ' . ($this->initialized ? 'has been released' : 'is not initialized')
+            : sprintf('Undefined property: %s::$%s', __CLASS__, $name);
+
         throw new \BadMethodCallException($msg);
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @throws \UnexpectedValueException|\LogicException
+     */
+    public function __set(string $name, $value): void
+    {
+        if ($this->initialized && !isset($this->handle)) {
+            throw new \UnexpectedValueException('The EasyHandle has been released, please use a new EasyHandle instead.');
+        }
+
+        if (in_array($name, ['response', 'initialized'], true)) {
+            throw new \LogicException(sprintf('Cannot set private property %s::$%s.', __CLASS__, $name));
+        }
+
+        if (in_array($name, ['errno', 'handle', 'headers', 'onHeadersException', 'createResponseException'], true)) {
+            if ('handle' === $name) {
+                if (isset($this->handle)) {
+                    throw new \UnexpectedValueException(sprintf('Property %s::$%s is already set, please use a new EasyHandle instead.', __CLASS__, $name));
+                }
+
+                if (!is_resource($value) || 'curl' !== get_resource_type($value)) {
+                    throw new \UnexpectedValueException(sprintf('Property %s::$%s can only accept a resource of type "curl".', __CLASS__, $name));
+                }
+
+                $this->initialized = true;
+            } else {
+                if (!isset($this->handle) || !is_resource($this->handle) || 'curl' !== get_resource_type($this->handle)) {
+                    throw new \UnexpectedValueException(sprintf('Property %s::$%s could not be set when there isn\'t a valid handle.', __CLASS__, $name));
+                }
+
+                if ('errno' === $name && \CURLE_OK !== ($handleErrno = curl_errno($this->handle)) && $value !== $handleErrno) {
+                    throw new \UnexpectedValueException(sprintf('Property %s::$errno could not be set with %u since the handle is reporting error %u.', __CLASS__, $value, $handleErrno));
+                }
+            }
+        }
+
+        $this->{$name} = $value;
+    }
+
+    /**
+     * @throws \LogicException
+     */
+    public function __unset(string $name): void
+    {
+        if ('handle' !== $name) {
+            throw new \Error(sprintf('Cannot unset private property %s::$%s.', __CLASS__, $name));
+        }
+
+        unset($this->{$name});
     }
 }
