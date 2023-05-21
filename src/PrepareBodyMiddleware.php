@@ -84,6 +84,7 @@ class PrepareBodyMiddleware
         // The expect header is unconditionally enabled
         if ($expect === true) {
             $modify['set_headers']['Expect'] = '100-Continue';
+
             return;
         }
 

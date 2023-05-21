@@ -39,8 +39,9 @@ class PrepareBodyMiddlewareTest extends TestCase
                 } else {
                     self::assertFalse($request->hasHeader('Content-Length'));
                 }
+
                 return new Response(200);
-            }
+            },
         ]);
         $m = Middleware::prepareBody();
         $stack = new HandlerStack($h);
@@ -57,14 +58,15 @@ class PrepareBodyMiddlewareTest extends TestCase
         $body = FnStream::decorate(Psr7\Utils::streamFor('foo'), [
             'getSize' => static function () {
                 return null;
-            }
+            },
         ]);
         $h = new MockHandler([
             static function (RequestInterface $request) {
                 self::assertFalse($request->hasHeader('Content-Length'));
                 self::assertSame('chunked', $request->getHeaderLine('Transfer-Encoding'));
+
                 return new Response(200);
-            }
+            },
         ]);
         $m = Middleware::prepareBody();
         $stack = new HandlerStack($h);
@@ -78,13 +80,14 @@ class PrepareBodyMiddlewareTest extends TestCase
 
     public function testAddsContentTypeWhenMissingAndPossible()
     {
-        $bd = Psr7\Utils::streamFor(\fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7\Utils::streamFor(\fopen(__DIR__.'/../composer.json', 'r'));
         $h = new MockHandler([
             static function (RequestInterface $request) {
                 self::assertSame('application/json', $request->getHeaderLine('Content-Type'));
                 self::assertTrue($request->hasHeader('Content-Length'));
+
                 return new Response(200);
-            }
+            },
         ]);
         $m = Middleware::prepareBody();
         $stack = new HandlerStack($h);
@@ -102,7 +105,7 @@ class PrepareBodyMiddlewareTest extends TestCase
             [true, ['100-Continue']],
             [false, []],
             [10, ['100-Continue']],
-            [500000, []]
+            [500000, []],
         ];
     }
 
@@ -111,13 +114,14 @@ class PrepareBodyMiddlewareTest extends TestCase
      */
     public function testAddsExpect($value, $result)
     {
-        $bd = Psr7\Utils::streamFor(\fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7\Utils::streamFor(\fopen(__DIR__.'/../composer.json', 'r'));
 
         $h = new MockHandler([
             static function (RequestInterface $request) use ($result) {
                 self::assertSame($result, $request->getHeader('Expect'));
+
                 return new Response(200);
-            }
+            },
         ]);
 
         $m = Middleware::prepareBody();
@@ -125,7 +129,7 @@ class PrepareBodyMiddlewareTest extends TestCase
         $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request('PUT', 'http://www.google.com', [], $bd), [
-            'expect' => $value
+            'expect' => $value,
         ]);
         self::assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
@@ -134,12 +138,13 @@ class PrepareBodyMiddlewareTest extends TestCase
 
     public function testIgnoresIfExpectIsPresent()
     {
-        $bd = Psr7\Utils::streamFor(\fopen(__DIR__ . '/../composer.json', 'r'));
+        $bd = Psr7\Utils::streamFor(\fopen(__DIR__.'/../composer.json', 'r'));
         $h = new MockHandler([
             static function (RequestInterface $request) {
                 self::assertSame(['Foo'], $request->getHeader('Expect'));
+
                 return new Response(200);
-            }
+            },
         ]);
 
         $m = Middleware::prepareBody();

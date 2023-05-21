@@ -12,7 +12,7 @@ class EasyHandleTest extends TestCase
 {
     public function testEnsuresHandleExists()
     {
-        $easy = new EasyHandle;
+        $easy = new EasyHandle();
         unset($easy->handle);
 
         $this->expectException(\BadMethodCallException::class);

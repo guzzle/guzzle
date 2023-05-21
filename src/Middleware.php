@@ -34,10 +34,12 @@ final class Middleware
                 }
                 $cookieJar = $options['cookies'];
                 $request = $cookieJar->withCookieHeader($request);
+
                 return $handler($request, $options)
                     ->then(
                         static function (ResponseInterface $response) use ($cookieJar, $request): ResponseInterface {
                             $cookieJar->extractCookies($request, $response);
+
                             return $response;
                         }
                     );
@@ -60,6 +62,7 @@ final class Middleware
                 if (empty($options['http_errors'])) {
                     return $handler($request, $options);
                 }
+
                 return $handler($request, $options)->then(
                     static function (ResponseInterface $response) use ($request, $bodySummarizer) {
                         $code = $response->getStatusCode();
@@ -93,20 +96,22 @@ final class Middleware
                 return $handler($request, $options)->then(
                     static function ($value) use ($request, &$container, $options) {
                         $container[] = [
-                            'request'  => $request,
+                            'request' => $request,
                             'response' => $value,
-                            'error'    => null,
-                            'options'  => $options
+                            'error' => null,
+                            'options' => $options,
                         ];
+
                         return $value;
                     },
                     static function ($reason) use ($request, &$container, $options) {
                         $container[] = [
-                            'request'  => $request,
+                            'request' => $request,
                             'response' => null,
-                            'error'    => $reason,
-                            'options'  => $options
+                            'error' => $reason,
+                            'options' => $options,
                         ];
+
                         return P\Create::rejectionFor($reason);
                     }
                 );
@@ -138,6 +143,7 @@ final class Middleware
                 if ($after) {
                     $after($request, $options, $response);
                 }
+
                 return $response;
             };
         };
@@ -202,12 +208,14 @@ final class Middleware
                     static function ($response) use ($logger, $request, $formatter, $logLevel): ResponseInterface {
                         $message = $formatter->format($request, $response);
                         $logger->log($logLevel, $message);
+
                         return $response;
                     },
                     static function ($reason) use ($logger, $request, $formatter): PromiseInterface {
                         $response = $reason instanceof RequestException ? $reason->getResponse() : null;
                         $message = $formatter->format($request, $response, P\Create::exceptionFor($reason));
                         $logger->error($message);
+
                         return P\Create::rejectionFor($reason);
                     }
                 );

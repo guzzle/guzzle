@@ -33,17 +33,17 @@ class SetCookieTest extends TestCase
     {
         $t = \time();
         $data = [
-            'Name'     => 'foo',
-            'Value'    => 'baz',
-            'Path'     => '/bar',
-            'Domain'   => 'baz.com',
-            'Expires'  => $t,
-            'Max-Age'  => 100,
-            'Secure'   => true,
-            'Discard'  => true,
+            'Name' => 'foo',
+            'Value' => 'baz',
+            'Path' => '/bar',
+            'Domain' => 'baz.com',
+            'Expires' => $t,
+            'Max-Age' => 100,
+            'Secure' => true,
+            'Discard' => true,
             'HttpOnly' => true,
-            'foo'      => 'baz',
-            'bar'      => 'bam'
+            'foo' => 'baz',
+            'bar' => 'bam',
         ];
 
         $cookie = new SetCookie($data);
@@ -173,8 +173,8 @@ class SetCookieTest extends TestCase
     public function testValidatesCookies($name, $value, $domain, $result)
     {
         $cookie = new SetCookie([
-            'Name'   => $name,
-            'Value'  => $value,
+            'Name' => $name,
+            'Value' => $value,
             'Domain' => $domain,
         ]);
         self::assertSame($result, $cookie->validate());
@@ -196,7 +196,7 @@ class SetCookieTest extends TestCase
             'Expires' => $t,
             'Path' => '/abc',
             'HttpOnly' => true,
-            'Secure' => true
+            'Secure' => true,
         ]);
         self::assertSame(
             'test=123; Domain=foo.com; Path=/abc; Expires=Sun, 27 Oct 2013 23:20:08 GMT; Secure; HttpOnly',
@@ -246,7 +246,7 @@ class SetCookieTest extends TestCase
             ],
             // Test setting a blank value for a cookie
             [[
-                'foo=', 'foo =', 'foo =;', 'foo= ;', 'foo =', 'foo= '],
+                'foo=', 'foo =', 'foo =;', 'foo= ;', 'foo =', 'foo= ', ],
                 [
                     'Name' => 'foo',
                     'Value' => '',
@@ -261,7 +261,7 @@ class SetCookieTest extends TestCase
             ],
             // Test setting a value and removing quotes
             [[
-                'foo=1', 'foo =1', 'foo =1;', 'foo=1 ;', 'foo =1', 'foo= 1', 'foo = 1 ;'],
+                'foo=1', 'foo =1', 'foo =1;', 'foo=1 ;', 'foo =1', 'foo= 1', 'foo = 1 ;', ],
                 [
                     'Name' => 'foo',
                     'Value' => '1',
@@ -420,17 +420,17 @@ class SetCookieTest extends TestCase
             if (isset($p['Expires'])) {
                 $delta = 40;
                 $parsedExpires = \is_numeric($parsed['Expires']) ? $parsed['Expires'] : \strtotime($parsed['Expires']);
-                self::assertLessThan($delta, \abs($p['Expires'] - $parsedExpires), 'Comparing Expires ' . \var_export($p['Expires'], true) . ' : ' . \var_export($parsed, true) . ' | ' . \var_export($p, true));
+                self::assertLessThan($delta, \abs($p['Expires'] - $parsedExpires), 'Comparing Expires '.\var_export($p['Expires'], true).' : '.\var_export($parsed, true).' | '.\var_export($p, true));
                 unset($p['Expires']);
                 unset($parsed['Expires']);
             }
 
             if (!empty($parsed)) {
                 foreach ($parsed as $key => $value) {
-                    self::assertEquals($parsed[$key], $p[$key], 'Comparing ' . $key . ' ' . \var_export($value, true) . ' : ' . \var_export($parsed, true) . ' | ' . \var_export($p, true));
+                    self::assertEquals($parsed[$key], $p[$key], 'Comparing '.$key.' '.\var_export($value, true).' : '.\var_export($parsed, true).' | '.\var_export($p, true));
                 }
                 foreach ($p as $key => $value) {
-                    self::assertEquals($p[$key], $parsed[$key], 'Comparing ' . $key . ' ' . \var_export($value, true) . ' : ' . \var_export($parsed, true) . ' | ' . \var_export($p, true));
+                    self::assertEquals($p[$key], $parsed[$key], 'Comparing '.$key.' '.\var_export($value, true).' : '.\var_export($parsed, true).' | '.\var_export($p, true));
                 }
             } else {
                 self::assertSame([
@@ -465,11 +465,11 @@ class SetCookieTest extends TestCase
                 true,
             ],
             [
-                'FOO=bar; expires=' . \date(\DateTime::RFC1123, \time() + 10) . ';',
+                'FOO=bar; expires='.\date(\DateTime::RFC1123, \time() + 10).';',
                 false,
             ],
             [
-                'FOO=bar; expires=' . \date(\DateTime::RFC1123, \time() - 10) . ';',
+                'FOO=bar; expires='.\date(\DateTime::RFC1123, \time() - 10).';',
                 true,
             ],
             [

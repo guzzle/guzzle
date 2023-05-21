@@ -76,7 +76,7 @@ class MockHandlerTest extends TestCase
 
     public function testSinkFilename()
     {
-        $filename = \sys_get_temp_dir() . '/mock_test_' . \uniqid();
+        $filename = \sys_get_temp_dir().'/mock_test_'.\uniqid();
         $res = new Response(200, [], 'TEST CONTENT');
         $mock = new MockHandler([$res]);
         $request = new Request('GET', '/');
@@ -146,7 +146,7 @@ class MockHandlerTest extends TestCase
         $promise = $mock($request, [
             'on_headers' => static function () {
                 throw new \Exception('test');
-            }
+            },
         ]);
 
         $this->expectException(RequestException::class);

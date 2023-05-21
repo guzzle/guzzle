@@ -17,7 +17,7 @@ class StreamHandlerTest extends TestCase
     public function setUp(): void
     {
         if (!($_SERVER['GUZZLE_TEST_ALLOW_NETWORK'] ?? false)) {
-            self::markTestSkipped("This test requires the GUZZLE_TEST_ALLOW_NETWORK environment variable.");
+            self::markTestSkipped('This test requires the GUZZLE_TEST_ALLOW_NETWORK environment variable.');
         }
     }
 
@@ -33,7 +33,7 @@ class StreamHandlerTest extends TestCase
         )->wait();
 
         self::assertSame(200, $response->getStatusCode());
-        self::assertStringContainsString('<h1>Example Domain</h1>', (string)$response->getBody());
+        self::assertStringContainsString('<h1>Example Domain</h1>', (string) $response->getBody());
     }
 
     public function testSslRequestWorksWithForceIpResolve()
@@ -49,7 +49,7 @@ class StreamHandlerTest extends TestCase
         )->wait();
 
         self::assertSame(200, $response->getStatusCode());
-        self::assertStringContainsString('<h1>Example Domain</h1>', (string)$response->getBody());
+        self::assertStringContainsString('<h1>Example Domain</h1>', (string) $response->getBody());
     }
 
     public function testSslRequestWorksWithForceIpResolveAfterRedirect()
@@ -66,6 +66,6 @@ class StreamHandlerTest extends TestCase
         );
 
         self::assertSame(200, $response->getStatusCode());
-        self::assertStringContainsString('jobsjob_idstepsrun', (string)$response->getBody());
+        self::assertStringContainsString('jobsjob_idstepsrun', (string) $response->getBody());
     }
 }

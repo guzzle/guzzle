@@ -6,8 +6,8 @@ namespace {
 }
 
 namespace GuzzleHttp\Test {
-    require __DIR__ . '/../vendor/autoload.php';
-    require __DIR__ . '/Server.php';
+    require __DIR__.'/../vendor/autoload.php';
+    require __DIR__.'/Server.php';
     use GuzzleHttp\Tests\Server;
 
     Server::start();
@@ -17,6 +17,7 @@ namespace GuzzleHttp\Test {
 }
 
 // Override curl_setopt_array() and curl_multi_setopt() to get the last set curl options
+
 namespace GuzzleHttp\Handler {
     function curl_setopt_array($handle, array $options)
     {
@@ -25,6 +26,7 @@ namespace GuzzleHttp\Handler {
         } else {
             unset($_SERVER['_curl']);
         }
+
         return \curl_setopt_array($handle, $options);
     }
 
@@ -35,6 +37,7 @@ namespace GuzzleHttp\Handler {
         } else {
             unset($_SERVER['_curl_multi']);
         }
+
         return \curl_multi_setopt($handle, $option, $value);
     }
 }

@@ -28,7 +28,7 @@ class StreamHandlerTest extends TestCase
             new Response(200, [
                 'Foo' => 'Bar',
                 'Content-Length' => 8,
-            ], 'hi there')
+            ], 'hi there'),
         ]);
     }
 
@@ -69,7 +69,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request(
             'PUT',
-            Server::$url . 'foo?baz=bar',
+            Server::$url.'foo?baz=bar',
             ['Foo' => 'Bar'],
             'test'
         );
@@ -153,7 +153,7 @@ class StreamHandlerTest extends TestCase
             new Response(200, [
                 'Foo' => 'Bar',
                 'Content-Length' => 8,
-            ], 'hi there... This has way too much data!')
+            ], 'hi there... This has way too much data!'),
         ]);
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -172,7 +172,7 @@ class StreamHandlerTest extends TestCase
             new Response(200, [
                 'Foo' => 'Bar',
                 'Content-Length' => 8,
-            ], '')
+            ], ''),
         ]);
         $handler = new StreamHandler();
         $request = new Request('HEAD', Server::$url);
@@ -190,8 +190,8 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length'   => \strlen($content),
-            ], $content)
+                'Content-Length' => \strlen($content),
+            ], $content),
         ]);
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -208,8 +208,8 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length'   => \strlen($content),
-            ], $content)
+                'Content-Length' => \strlen($content),
+            ], $content),
         ]);
         $handler = new StreamHandler();
         $request = new Request('HEAD', Server::$url);
@@ -226,8 +226,8 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length'   => \strlen($content),
-            ], $content)
+                'Content-Length' => \strlen($content),
+            ], $content),
         ]);
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -250,8 +250,8 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length'   => \strlen($content),
-            ], $content)
+                'Content-Length' => \strlen($content),
+            ], $content),
         ]);
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -276,6 +276,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $opts['stream'] = true;
         $request = new Request('GET', Server::$url);
+
         return $handler($request, $opts)->wait();
     }
 
@@ -303,7 +304,7 @@ class StreamHandlerTest extends TestCase
         $url = Server::$url;
         $res = $this->getSendResult(['proxy' => [
             'http' => $url,
-            'no'   => ['*']
+            'no' => ['*'],
         ]]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertArrayNotHasKey('proxy', $opts['http']);
@@ -315,7 +316,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', 'http://www.example.com', [], null, '1.0');
         $response = $handler($request, [
-            'proxy' => Server::$url
+            'proxy' => Server::$url,
         ])->wait();
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('OK', $response->getReasonPhrase());
@@ -478,7 +479,7 @@ class StreamHandlerTest extends TestCase
         $this->queueRes();
         $buffer = \fopen('php://memory', 'w+');
         $this->getSendResult([
-            'debug'    => $buffer,
+            'debug' => $buffer,
             'progress' => static function (...$args) use (&$called) {
                 $called[] = $args;
             },
@@ -591,14 +592,14 @@ class StreamHandlerTest extends TestCase
     {
         Server::flush();
         Server::enqueue([
-            new Response(200, ['X-Foo' => 'bar'], 'abc 123')
+            new Response(200, ['X-Foo' => 'bar'], 'abc 123'),
         ]);
         $req = new Request('GET', Server::$url);
         $handler = new StreamHandler();
         $promise = $handler($req, [
             'on_headers' => static function () {
                 throw new \Exception('test');
-            }
+            },
         ]);
 
         $this->expectException(RequestException::class);
@@ -610,7 +611,7 @@ class StreamHandlerTest extends TestCase
     {
         Server::flush();
         Server::enqueue([
-            new Response(200, ['X-Foo' => 'bar'], 'abc 123')
+            new Response(200, ['X-Foo' => 'bar'], 'abc 123'),
         ]);
         $req = new Request('GET', Server::$url);
         $got = null;
@@ -619,17 +620,18 @@ class StreamHandlerTest extends TestCase
         $stream = FnStream::decorate($stream, [
             'write' => static function ($data) use ($stream, &$got) {
                 self::assertNotNull($got);
+
                 return $stream->write($data);
-            }
+            },
         ]);
 
         $handler = new StreamHandler();
         $promise = $handler($req, [
-            'sink'       => $stream,
+            'sink' => $stream,
             'on_headers' => static function (ResponseInterface $res) use (&$got) {
                 $got = $res;
                 self::assertSame('bar', $res->getHeaderLine('X-Foo'));
-            }
+            },
         ]);
 
         $response = $promise->wait();
@@ -648,7 +650,7 @@ class StreamHandlerTest extends TestCase
         $promise = $handler($req, [
             'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
                 $gotStats = $stats;
-            }
+            },
         ]);
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
@@ -674,7 +676,7 @@ class StreamHandlerTest extends TestCase
             'timeout' => 0.001,
             'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
                 $gotStats = $stats;
-            }
+            },
         ]);
         $promise->wait(false);
         self::assertFalse($gotStats->hasResponse());
@@ -702,7 +704,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $promise = $handler($req, [
             'connect_timeout' => 10,
-            'timeout' => 0
+            'timeout' => 0,
         ]);
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
@@ -715,7 +717,7 @@ class StreamHandlerTest extends TestCase
             new Response(200, [
                 'Foo' => 'Bar',
                 'Content-Length' => '0',
-            ], 'hi there... This has a lot of data!')
+            ], 'hi there... This has a lot of data!'),
         ]);
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -731,7 +733,7 @@ class StreamHandlerTest extends TestCase
         Server::flush();
         $handler = new StreamHandler();
         $response = $handler(
-            new Request('GET', Server::$url . 'guzzle-server/read-timeout'),
+            new Request('GET', Server::$url.'guzzle-server/read-timeout'),
             [
                 RequestOptions::READ_TIMEOUT => 1,
                 RequestOptions::STREAM => true,
@@ -756,7 +758,7 @@ class StreamHandlerTest extends TestCase
         $this->expectExceptionMessage('An error was encountered while creating the response');
 
         $handler(
-            new Request('GET', Server::$url . 'guzzle-server/garbage'),
+            new Request('GET', Server::$url.'guzzle-server/garbage'),
             [
                 RequestOptions::STREAM => true,
             ]
@@ -771,7 +773,7 @@ class StreamHandlerTest extends TestCase
         $this->expectExceptionMessage('An error was encountered while creating the response');
 
         $handler(
-            new Request('GET', Server::$url . 'guzzle-server/bad-status'),
+            new Request('GET', Server::$url.'guzzle-server/bad-status'),
             [
                 RequestOptions::STREAM => true,
             ]

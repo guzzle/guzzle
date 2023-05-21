@@ -22,7 +22,7 @@ class UtilsTest extends TestCase
             [10, 'int(10)'],
             [1.0, 'float(1)'],
             [new StrClass(), 'object(GuzzleHttp\Test\StrClass)'],
-            [['foo'], 'array(1)']
+            [['foo'], 'array(1)'],
         ];
     }
 

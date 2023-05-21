@@ -122,7 +122,7 @@ class RequestExceptionTest extends TestCase
         $content = \str_repeat('+', 121);
         $response = new Response(500, [], $content);
         $e = RequestException::create(new Request('GET', '/'), $response);
-        $expected = \str_repeat('+', 120) . ' (truncated...)';
+        $expected = \str_repeat('+', 120).' (truncated...)';
         self::assertStringContainsString($expected, $e->getMessage());
     }
 

@@ -47,36 +47,36 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
-            new Response(200)
+            new Response(200),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2]
+            'allow_redirects' => ['max' => 2],
         ]);
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
-        self::assertSame('http://test.com', (string)$mock->getLastRequest()->getUri());
+        self::assertSame('http://test.com', (string) $mock->getLastRequest()->getUri());
     }
 
     public function testRedirectsWithRelativeUri()
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => '/foo']),
-            new Response(200)
+            new Response(200),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2]
+            'allow_redirects' => ['max' => 2],
         ]);
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
-        self::assertSame('http://example.com/foo', (string)$mock->getLastRequest()->getUri());
+        self::assertSame('http://example.com/foo', (string) $mock->getLastRequest()->getUri());
     }
 
     public function testLimitsToMaxRedirects()
@@ -85,7 +85,7 @@ class RedirectMiddlewareTest extends TestCase
             new Response(301, ['Location' => 'http://test.com']),
             new Response(302, ['Location' => 'http://test.com']),
             new Response(303, ['Location' => 'http://test.com']),
-            new Response(304, ['Location' => 'http://test.com'])
+            new Response(304, ['Location' => 'http://test.com']),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
@@ -102,7 +102,7 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(301, ['Location' => 'http://test.com']),
-            new Response(302, ['Location' => 'http://test.com'])
+            new Response(302, ['Location' => 'http://test.com']),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
@@ -121,7 +121,7 @@ class RedirectMiddlewareTest extends TestCase
     public function testEnsuresProtocolIsValid()
     {
         $mock = new MockHandler([
-            new Response(301, ['Location' => 'ftp://test.com'])
+            new Response(301, ['Location' => 'ftp://test.com']),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
@@ -137,14 +137,14 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
-            new Response(200)
+            new Response(200),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2, 'referer' => true]
+            'allow_redirects' => ['max' => 2, 'referer' => true],
         ]);
         $promise->wait();
         self::assertSame(
@@ -157,14 +157,14 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
-            new Response(200)
+            new Response(200),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://foo:bar@example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2, 'referer' => true]
+            'allow_redirects' => ['max' => 2, 'referer' => true],
         ]);
         $promise->wait();
         self::assertSame(
@@ -179,7 +179,7 @@ class RedirectMiddlewareTest extends TestCase
             new Response(302, ['Location' => 'http://example.com']),
             new Response(302, ['Location' => 'http://example.com/foo']),
             new Response(302, ['Location' => 'http://example.com/bar']),
-            new Response(200)
+            new Response(200),
         ]);
 
         $stack = new HandlerStack($mock);
@@ -187,7 +187,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['track_redirects' => true]
+            'allow_redirects' => ['track_redirects' => true],
         ]);
         $response = $promise->wait(true);
         self::assertSame(
@@ -207,7 +207,7 @@ class RedirectMiddlewareTest extends TestCase
             new Response(302, ['Location' => 'http://example.com/foo']),
             new Response(301, ['Location' => 'http://example.com/bar']),
             new Response(302, ['Location' => 'http://example.com/baz']),
-            new Response(200)
+            new Response(200),
         ]);
 
         $stack = new HandlerStack($mock);
@@ -215,7 +215,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['track_redirects' => true]
+            'allow_redirects' => ['track_redirects' => true],
         ]);
         $response = $promise->wait(true);
         self::assertSame(
@@ -233,14 +233,14 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
-            new Response(200)
+            new Response(200),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'https://example.com?a=b');
         $promise = $handler($request, [
-            'allow_redirects' => ['max' => 2, 'referer' => true]
+            'allow_redirects' => ['max' => 2, 'referer' => true],
         ]);
         $promise->wait();
         self::assertFalse($mock->getLastRequest()->hasHeader('Referer'));
@@ -250,7 +250,7 @@ class RedirectMiddlewareTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
-            new Response(200)
+            new Response(200),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
@@ -265,8 +265,8 @@ class RedirectMiddlewareTest extends TestCase
                     self::assertSame('GET', $request->getMethod());
                     self::assertSame('http://test.com', (string) $uri);
                     $call = true;
-                }
-            ]
+                },
+            ],
         ]);
         $promise->wait();
         self::assertTrue($call);
@@ -293,8 +293,9 @@ class RedirectMiddlewareTest extends TestCase
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options still contain CURLOPT_USERPWD entry'
                 );
+
                 return new Response(200);
-            }
+            },
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
@@ -322,8 +323,9 @@ class RedirectMiddlewareTest extends TestCase
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options still contain CURLOPT_USERPWD entry'
                 );
+
                 return new Response(200);
-            }
+            },
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
@@ -351,8 +353,9 @@ class RedirectMiddlewareTest extends TestCase
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options still contain CURLOPT_USERPWD entry'
                 );
+
                 return new Response(200);
-            }
+            },
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
@@ -380,8 +383,9 @@ class RedirectMiddlewareTest extends TestCase
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options still contain CURLOPT_USERPWD entry'
                 );
+
                 return new Response(200);
-            }
+            },
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
@@ -409,8 +413,9 @@ class RedirectMiddlewareTest extends TestCase
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options does not contain expected CURLOPT_USERPWD entry'
                 );
+
                 return new Response(200);
-            }
+            },
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
@@ -451,7 +456,7 @@ class RedirectMiddlewareTest extends TestCase
                 self::assertSame(!$isCrossOrigin, $request->hasHeader('Cookie'));
 
                 return new Response(200);
-            }
+            },
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
@@ -464,8 +469,9 @@ class RedirectMiddlewareTest extends TestCase
             new Response(302, ['Location' => 'http://example.com/2']),
             static function (RequestInterface $request) {
                 self::assertTrue($request->hasHeader('Authorization'));
+
                 return new Response(200);
-            }
+            },
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);

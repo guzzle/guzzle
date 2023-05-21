@@ -96,13 +96,13 @@ class HandlerStackTest extends TestCase
         $builder->push($meths[2], 'a');
         $builder->push([__CLASS__, 'foo']);
         $builder->push([$this, 'bar']);
-        $builder->push(__CLASS__ . '::' . 'foo');
+        $builder->push(__CLASS__.'::'.'foo');
         $lines = \explode("\n", (string) $builder);
         self::assertStringContainsString("> 4) Name: 'a', Function: callable(", $lines[0]);
         self::assertStringContainsString("> 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
         self::assertStringContainsString("> 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[2]);
         self::assertStringContainsString("> 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[3]);
-        self::assertStringContainsString("< 0) Handler: callable(", $lines[4]);
+        self::assertStringContainsString('< 0) Handler: callable(', $lines[4]);
         self::assertStringContainsString("< 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[5]);
         self::assertStringContainsString("< 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[6]);
         self::assertStringContainsString("< 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[7]);
@@ -154,17 +154,17 @@ class HandlerStackTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(301, [
-                'Location'   => 'http://foo.com/baz',
-                'Set-Cookie' => 'foo=bar; Domain=foo.com'
+                'Location' => 'http://foo.com/baz',
+                'Set-Cookie' => 'foo=bar; Domain=foo.com',
             ]),
-            new Response(200)
+            new Response(200),
         ]);
         $handler = HandlerStack::create($mock);
         $request = new Request('GET', 'http://foo.com/bar');
         $jar = new CookieJar();
         $response = $handler($request, [
             'allow_redirects' => true,
-            'cookies' => $jar
+            'cookies' => $jar,
         ])->wait();
         self::assertSame(200, $response->getStatusCode());
         $lastRequest = $mock->getLastRequest();
@@ -179,26 +179,29 @@ class HandlerStackTest extends TestCase
         $a = static function (callable $next) use (&$calls) {
             return static function ($v) use ($next, &$calls) {
                 $calls[] = ['a', $v];
-                return $next($v . '1');
+
+                return $next($v.'1');
             };
         };
 
         $b = static function (callable $next) use (&$calls) {
             return static function ($v) use ($next, &$calls) {
                 $calls[] = ['b', $v];
-                return $next($v . '2');
+
+                return $next($v.'2');
             };
         };
 
         $c = static function (callable $next) use (&$calls) {
             return static function ($v) use ($next, &$calls) {
                 $calls[] = ['c', $v];
-                return $next($v . '3');
+
+                return $next($v.'3');
             };
         };
 
         $handler = static function ($v) {
-            return 'Hello - ' . $v;
+            return 'Hello - '.$v;
         };
 
         return [&$calls, $handler, $a, $b, $c];

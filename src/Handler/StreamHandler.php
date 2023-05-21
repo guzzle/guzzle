@@ -67,7 +67,7 @@ class StreamHandler
             if (false !== \strpos($message, 'getaddrinfo') // DNS lookup failed
                 || false !== \strpos($message, 'Connection refused')
                 || false !== \strpos($message, "couldn't connect to host") // error on HHVM
-                || false !== \strpos($message, "connection attempt failed")
+                || false !== \strpos($message, 'connection attempt failed')
             ) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             } else {
@@ -231,9 +231,10 @@ class StreamHandler
         \set_error_handler(static function ($_, $msg, $file, $line) use (&$errors): bool {
             $errors[] = [
                 'message' => $msg,
-                'file'    => $file,
-                'line'    => $line
+                'file' => $file,
+                'line' => $line,
             ];
+
             return true;
         });
 
@@ -247,7 +248,7 @@ class StreamHandler
             $message = 'Error creating resource: ';
             foreach ($errors as $err) {
                 foreach ($err as $key => $value) {
-                    $message .= "[$key] $value" . \PHP_EOL;
+                    $message .= "[$key] $value".\PHP_EOL;
                 }
             }
             throw new \RuntimeException(\trim($message));
@@ -350,6 +351,7 @@ class StreamHandler
                 if (false === $records || !isset($records[0]['ip'])) {
                     throw new ConnectException(\sprintf("Could not resolve IPv4 address for host '%s'", $uri->getHost()), $request);
                 }
+
                 return $uri->withHost($records[0]['ip']);
             }
             if ('v6' === $options['force_ip_resolve']) {
@@ -357,7 +359,8 @@ class StreamHandler
                 if (false === $records || !isset($records[0]['ipv6'])) {
                     throw new ConnectException(\sprintf("Could not resolve IPv6 address for host '%s'", $uri->getHost()), $request);
                 }
-                return $uri->withHost('[' . $records[0]['ipv6'] . ']');
+
+                return $uri->withHost('['.$records[0]['ipv6'].']');
             }
         }
 
@@ -375,11 +378,11 @@ class StreamHandler
 
         $context = [
             'http' => [
-                'method'           => $request->getMethod(),
-                'header'           => $headers,
+                'method' => $request->getMethod(),
+                'header' => $headers,
                 'protocol_version' => $request->getProtocolVersion(),
-                'ignore_errors'    => true,
-                'follow_location'  => 0,
+                'ignore_errors' => true,
+                'follow_location' => 0,
             ],
             'ssl' => [
                 'peer_name' => $request->getUri()->getHost(),
@@ -561,27 +564,27 @@ class StreamHandler
         }
 
         static $map = [
-            \STREAM_NOTIFY_CONNECT       => 'CONNECT',
+            \STREAM_NOTIFY_CONNECT => 'CONNECT',
             \STREAM_NOTIFY_AUTH_REQUIRED => 'AUTH_REQUIRED',
-            \STREAM_NOTIFY_AUTH_RESULT   => 'AUTH_RESULT',
-            \STREAM_NOTIFY_MIME_TYPE_IS  => 'MIME_TYPE_IS',
-            \STREAM_NOTIFY_FILE_SIZE_IS  => 'FILE_SIZE_IS',
-            \STREAM_NOTIFY_REDIRECTED    => 'REDIRECTED',
-            \STREAM_NOTIFY_PROGRESS      => 'PROGRESS',
-            \STREAM_NOTIFY_FAILURE       => 'FAILURE',
-            \STREAM_NOTIFY_COMPLETED     => 'COMPLETED',
-            \STREAM_NOTIFY_RESOLVE       => 'RESOLVE',
+            \STREAM_NOTIFY_AUTH_RESULT => 'AUTH_RESULT',
+            \STREAM_NOTIFY_MIME_TYPE_IS => 'MIME_TYPE_IS',
+            \STREAM_NOTIFY_FILE_SIZE_IS => 'FILE_SIZE_IS',
+            \STREAM_NOTIFY_REDIRECTED => 'REDIRECTED',
+            \STREAM_NOTIFY_PROGRESS => 'PROGRESS',
+            \STREAM_NOTIFY_FAILURE => 'FAILURE',
+            \STREAM_NOTIFY_COMPLETED => 'COMPLETED',
+            \STREAM_NOTIFY_RESOLVE => 'RESOLVE',
         ];
         static $args = ['severity', 'message', 'message_code', 'bytes_transferred', 'bytes_max'];
 
         $value = Utils::debugResource($value);
-        $ident = $request->getMethod() . ' ' . $request->getUri()->withFragment('');
+        $ident = $request->getMethod().' '.$request->getUri()->withFragment('');
         self::addNotification(
             $params,
             static function (int $code, ...$passed) use ($ident, $value, $map, $args): void {
                 \fprintf($value, '<%s> [%s] ', $ident, $map[$code]);
                 foreach (\array_filter($passed) as $i => $v) {
-                    \fwrite($value, $args[$i] . ': "' . $v . '" ');
+                    \fwrite($value, $args[$i].': "'.$v.'" ');
                 }
                 \fwrite($value, "\n");
             }
@@ -596,7 +599,7 @@ class StreamHandler
         } else {
             $params['notification'] = self::callArray([
                 $params['notification'],
-                $notify
+                $notify,
             ]);
         }
     }

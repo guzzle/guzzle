@@ -31,12 +31,12 @@ class MiddlewareTest extends TestCase
                 static function (RequestInterface $request) {
                     return new Response(200, [
                         'Set-Cookie' => (string) new SetCookie([
-                            'Name'   => 'name',
-                            'Value'  => 'value',
-                            'Domain' => 'foo.com'
-                        ])
+                            'Name' => 'name',
+                            'Value' => 'value',
+                            'Domain' => 'foo.com',
+                        ]),
                     ]);
-                }
+                },
             ]
         );
         $f = $m($h);
@@ -119,7 +119,7 @@ class MiddlewareTest extends TestCase
     {
         return [
             [[]],                // 1. Container is an array
-            [new \ArrayObject()] // 2. Container is an ArrayObject
+            [new \ArrayObject()], // 2. Container is an ArrayObject
         ];
     }
 
@@ -142,6 +142,7 @@ class MiddlewareTest extends TestCase
         $m = static function ($handler) use (&$calls) {
             return static function ($request, $options) use ($handler, &$calls) {
                 $calls[] = '2';
+
                 return $handler($request, $options);
             };
         };
@@ -171,8 +172,9 @@ class MiddlewareTest extends TestCase
         $h = new MockHandler([
             static function (RequestInterface $request, array $options) {
                 self::assertSame('foo', $request->getHeaderLine('Bar'));
+
                 return new Response(200);
-            }
+            },
         ]);
         $stack = new HandlerStack($h);
         $stack->push(Middleware::mapRequest(static function (RequestInterface $request) {

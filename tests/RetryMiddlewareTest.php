@@ -18,13 +18,15 @@ class RetryMiddlewareTest extends TestCase
         $calls = [];
         $decider = static function (...$args) use (&$calls) {
             $calls[] = $args;
+
             return \count($calls) < 3;
         };
         $delay = static function ($retries, $response, $request) use (&$delayCalls) {
-            $delayCalls++;
+            ++$delayCalls;
             self::assertSame($retries, $delayCalls);
             self::assertInstanceOf(Response::class, $response);
             self::assertInstanceOf(Request::class, $request);
+
             return 1;
         };
         $m = Middleware::retry($decider, $delay);
@@ -55,6 +57,7 @@ class RetryMiddlewareTest extends TestCase
         $calls = [];
         $decider = static function (...$args) use (&$calls) {
             $calls[] = $args;
+
             return $args[3] instanceof \Exception;
         };
         $m = Middleware::retry($decider);

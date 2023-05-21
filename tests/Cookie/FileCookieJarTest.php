@@ -43,21 +43,21 @@ class FileCookieJarTest extends TestCase
     {
         $jar = new FileCookieJar($this->file, $testSaveSessionCookie);
         $jar->setCookie(new SetCookie([
-            'Name'    => 'foo',
-            'Value'   => 'bar',
-            'Domain'  => 'foo.com',
-            'Expires' => \time() + 1000
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
         ]));
         $jar->setCookie(new SetCookie([
-            'Name'    => 'baz',
-            'Value'   => 'bar',
-            'Domain'  => 'foo.com',
-            'Expires' => \time() + 1000
+            'Name' => 'baz',
+            'Value' => 'bar',
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
         ]));
         $jar->setCookie(new SetCookie([
-            'Name'    => 'boo',
-            'Value'   => 'bar',
-            'Domain'  => 'foo.com',
+            'Name' => 'boo',
+            'Value' => 'bar',
+            'Domain' => 'foo.com',
         ]));
 
         self::assertCount(3, $jar);
@@ -85,7 +85,7 @@ class FileCookieJarTest extends TestCase
     {
         return [
             [false],
-            [true]
+            [true],
         ];
     }
 
@@ -93,7 +93,7 @@ class FileCookieJarTest extends TestCase
     {
         return [
             [true],
-            ['invalid-data']
+            ['invalid-data'],
         ];
     }
 }

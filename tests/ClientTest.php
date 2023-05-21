@@ -61,9 +61,9 @@ class ClientTest extends TestCase
     {
         $client = new Client([
             'base_uri' => 'http://foo.com',
-            'timeout'  => 2,
-            'headers'  => ['bar' => 'baz'],
-            'handler'  => new MockHandler()
+            'timeout' => 2,
+            'headers' => ['bar' => 'baz'],
+            'handler' => new MockHandler(),
         ]);
         $config = Helpers::readObjectAttribute($client, 'config');
         self::assertArrayHasKey('base_uri', $config);
@@ -80,12 +80,12 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response()]);
         $client = new Client([
             'base_uri' => 'http://foo.com/bar/',
-            'handler'  => $mock
+            'handler' => $mock,
         ]);
         $client->get('baz');
         self::assertSame(
             'http://foo.com/bar/baz',
-            (string)$mock->getLastRequest()->getUri()
+            (string) $mock->getLastRequest()->getUri()
         );
     }
 
@@ -93,8 +93,8 @@ class ClientTest extends TestCase
     {
         $mock = new MockHandler([new Response(), new Response()]);
         $client = new Client([
-            'handler'  => $mock,
-            'base_uri' => 'http://foo.com/bar/'
+            'handler' => $mock,
+            'base_uri' => 'http://foo.com/bar/',
         ]);
         $client->request('GET', new Uri('baz'));
         self::assertSame(
@@ -114,8 +114,8 @@ class ClientTest extends TestCase
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client([
-            'handler'  => $mock,
-            'base_uri' => 'http://bar.com'
+            'handler' => $mock,
+            'base_uri' => 'http://bar.com',
         ]);
         $config = Helpers::readObjectAttribute($client, 'config');
         self::assertSame('http://bar.com', (string) $config['base_uri']);
@@ -143,7 +143,7 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response()]);
         $c = new Client([
             'headers' => ['User-agent' => 'foo'],
-            'handler' => $mock
+            'handler' => $mock,
         ]);
         $c->get('http://example.com', ['headers' => ['User-Agent' => 'bar']]);
         self::assertSame('bar', $mock->getLastRequest()->getHeaderLine('User-Agent'));
@@ -154,7 +154,7 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response()]);
         $c = new Client([
             'headers' => ['User-agent' => 'foo'],
-            'handler' => $mock
+            'handler' => $mock,
         ]);
         $request = new Request('GET', Server::$url, ['User-Agent' => 'bar']);
         $c->send($request);
@@ -166,7 +166,7 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response()]);
         $c = new Client([
             'headers' => ['User-agent' => 'foo'],
-            'handler' => $mock
+            'handler' => $mock,
         ]);
         $request = new Request('GET', Server::$url, ['User-Agent' => 'bar']);
         $c->send($request, ['headers' => ['User-Agent' => 'YO']]);
@@ -178,7 +178,7 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response()]);
         $c = new Client([
             'headers' => ['foo' => 'bar'],
-            'handler' => $mock
+            'handler' => $mock,
         ]);
         $c->get('http://example.com', ['headers' => null]);
         self::assertFalse($mock->getLastRequest()->hasHeader('foo'));
@@ -229,7 +229,7 @@ class ClientTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(200, ['Set-Cookie' => 'foo=bar']),
-            new Response()
+            new Response(),
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler, 'cookies' => true]);
@@ -242,7 +242,7 @@ class ClientTest extends TestCase
     {
         $mock = new MockHandler([
             new Response(200, ['Set-Cookie' => 'foo=bar']),
-            new Response()
+            new Response(),
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
@@ -352,7 +352,7 @@ class ClientTest extends TestCase
         $request = new Request('PUT', 'http://foo.com');
         $client->send($request, [
             'headers' => ['content-type' => 'foo'],
-            'json'    => 'a'
+            'json' => 'a',
         ]);
         $last = $mock->getLastRequest();
         self::assertSame('"a"', (string) $mock->getLastRequest()->getBody());
@@ -366,7 +366,7 @@ class ClientTest extends TestCase
         $request = new Request('PUT', 'http://foo.com');
         $client->send($request, [
             'headers' => null,
-            'json'    => 'a'
+            'json' => 'a',
         ]);
         $last = $mock->getLastRequest();
         self::assertSame('"a"', (string) $mock->getLastRequest()->getBody());
@@ -399,7 +399,7 @@ class ClientTest extends TestCase
         $last = $mock->getLastOptions();
         self::assertSame([
             \CURLOPT_HTTPAUTH => 2,
-            \CURLOPT_USERPWD  => 'a:b'
+            \CURLOPT_USERPWD => 'a:b',
         ], $last['curl']);
     }
 
@@ -411,7 +411,7 @@ class ClientTest extends TestCase
         $last = $mock->getLastOptions();
         self::assertSame([
             \CURLOPT_HTTPAUTH => 8,
-            \CURLOPT_USERPWD  => 'a:b'
+            \CURLOPT_USERPWD => 'a:b',
         ], $last['curl']);
     }
 
@@ -431,8 +431,8 @@ class ClientTest extends TestCase
         $client->post('http://foo.com', [
             'form_params' => [
                 'foo' => 'bar bam',
-                'baz' => ['boo' => 'qux']
-            ]
+                'baz' => ['boo' => 'qux'],
+            ],
         ]);
         $last = $mock->getLastRequest();
         self::assertSame(
@@ -454,8 +454,8 @@ class ClientTest extends TestCase
         $client->post('http://foo.com', [
             'form_params' => [
                 'foo' => 'bar bam',
-                'baz' => ['boo' => 'qux']
-            ]
+                'baz' => ['boo' => 'qux'],
+            ],
         ]);
         $last = $mock->getLastRequest();
         self::assertSame(
@@ -474,7 +474,7 @@ class ClientTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $client->post('http://foo.com', [
             'form_params' => ['foo' => 'bar bam'],
-            'multipart' => []
+            'multipart' => [],
         ]);
     }
 
@@ -485,14 +485,14 @@ class ClientTest extends TestCase
         $client->post('http://foo.com', [
             'multipart' => [
                 [
-                    'name'     => 'foo',
-                    'contents' => 'bar'
+                    'name' => 'foo',
+                    'contents' => 'bar',
                 ],
                 [
-                    'name'     => 'test',
-                    'contents' => \fopen(__FILE__, 'r')
-                ]
-            ]
+                    'name' => 'test',
+                    'contents' => \fopen(__FILE__, 'r'),
+                ],
+            ],
         ]);
 
         $last = $mock->getLastRequest();
@@ -508,7 +508,7 @@ class ClientTest extends TestCase
 
         self::assertStringContainsString('bar', (string) $last->getBody());
         self::assertStringContainsString(
-            'Content-Disposition: form-data; name="foo"' . "\r\n",
+            'Content-Disposition: form-data; name="foo"'."\r\n",
             (string) $last->getBody()
         );
         self::assertStringContainsString(
@@ -554,7 +554,7 @@ class ClientTest extends TestCase
 
         self::assertStringContainsString('bar', (string) $last->getBody());
         self::assertStringContainsString(
-            'Content-Disposition: form-data; name="foo"' . "\r\n",
+            'Content-Disposition: form-data; name="foo"'."\r\n",
             (string) $last->getBody()
         );
         self::assertStringContainsString(
@@ -587,7 +587,7 @@ class ClientTest extends TestCase
             $config = Helpers::readObjectAttribute($client, 'config');
             self::assertArrayHasKey('proxy', $config);
             self::assertSame(
-                ['http' => '127.0.0.1', 'https' => '127.0.0.2', 'no' => ['127.0.0.3','127.0.0.4']],
+                ['http' => '127.0.0.1', 'https' => '127.0.0.2', 'no' => ['127.0.0.3', '127.0.0.4']],
                 $config['proxy']
             );
         } finally {
@@ -620,7 +620,7 @@ class ClientTest extends TestCase
         $request = new Request('GET', 'http://foo.com');
 
         $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
-        $client->send($request, ['headers'=>['X-Foo: Bar']]);
+        $client->send($request, ['headers' => ['X-Foo: Bar']]);
     }
 
     public function testSendWithInvalidHeaders()
@@ -630,7 +630,7 @@ class ClientTest extends TestCase
         $request = new Request('GET', 'http://foo.com');
 
         $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
-        $client->send($request, ['headers'=>['X-Foo: Bar', 'X-Test: Fail']]);
+        $client->send($request, ['headers' => ['X-Foo: Bar', 'X-Test: Fail']]);
     }
 
     public function testCanSetCustomHandler()
@@ -641,7 +641,7 @@ class ClientTest extends TestCase
         self::assertSame(
             200,
             $client->send(new Request('GET', 'http://foo.com'), [
-                'handler' => $mock2
+                'handler' => $mock2,
             ])->getStatusCode()
         );
     }
@@ -711,7 +711,7 @@ class ClientTest extends TestCase
     public function testThatVersionIsOverwrittenWhenSendingARequest()
     {
         $mockHandler = new MockHandler([new Response(), new Response()]);
-        $client = new Client(['handler'  => $mockHandler]);
+        $client = new Client(['handler' => $mockHandler]);
 
         $request = new Request('get', '/bar', [], null, '1.1');
         $client->send($request, [RequestOptions::VERSION => '1.0']);
@@ -817,7 +817,7 @@ class ClientTest extends TestCase
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client([
-            'handler'  => $mock,
+            'handler' => $mock,
             'base_uri' => 'http://яндекс.рф',
             'idn_conversion' => true,
         ]);
@@ -836,7 +836,7 @@ class ClientTest extends TestCase
     {
         $mockHandler = new MockHandler([
             new Response(302, ['Location' => 'http://www.tést.com/whatever']),
-            new Response()
+            new Response(),
         ]);
         $handler = HandlerStack::create($mockHandler);
         $requests = [];
@@ -846,9 +846,9 @@ class ClientTest extends TestCase
         $client->request('GET', 'https://яндекс.рф/images', [
             RequestOptions::ALLOW_REDIRECTS => [
                 'referer' => true,
-                'track_redirects' => true
+                'track_redirects' => true,
             ],
-            'idn_conversion' => true
+            'idn_conversion' => true,
         ]);
 
         $request = $mockHandler->getLastRequest();
