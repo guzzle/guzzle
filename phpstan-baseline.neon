@@ -141,6 +141,16 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
+			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:\\$_mh \\(CurlMultiHandle\\|resource\\) in isset\\(\\) is not nullable\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: "#^Property GuzzleHttp\\\\Handler\\\\CurlMultiHandler\\:\\:\\$_mh has unknown class CurlMultiHandle as its type\\.$#"
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
 			message: "#^Property GuzzleHttp\\\\Handler\\\\EasyHandle\\:\\:\\$handle has unknown class CurlHandle as its type\\.$#"
 			count: 1
 			path: src/Handler/EasyHandle.php

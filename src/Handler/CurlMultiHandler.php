@@ -15,11 +15,8 @@ use Psr\Http\Message\RequestInterface;
  * associative array of curl option constants mapping to values in the
  * **curl** key of the provided request options.
  *
- * @property resource|\CurlMultiHandle $_mh Internal use only. Lazy loaded multi-handle.
- *
  * @final
  */
-#[\AllowDynamicProperties]
 class CurlMultiHandler
 {
     /**
@@ -56,6 +53,9 @@ class CurlMultiHandler
      */
     private $options = [];
 
+    /** @var resource|\CurlMultiHandle */
+    private $_mh;
+
     /**
      * This handler accepts the following options:
      *
@@ -79,6 +79,10 @@ class CurlMultiHandler
         }
 
         $this->options = $options['options'] ?? [];
+
+        // unsetting the property forces the first access to go through
+        // __get().
+        unset($this->_mh);
     }
 
     /**

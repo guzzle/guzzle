@@ -80,7 +80,8 @@
     <ArgumentTypeCoercion occurrences="1">
       <code>$this-&gt;timeToNext()</code>
     </ArgumentTypeCoercion>
-    <PossiblyInvalidArgument occurrences="7">
+    <PossiblyInvalidArgument occurrences="8">
+      <code>$this-&gt;_mh</code>
       <code>$this-&gt;_mh</code>
       <code>$this-&gt;_mh</code>
       <code>$this-&gt;_mh</code>
@@ -89,15 +90,16 @@
       <code>$this-&gt;_mh</code>
       <code>$this-&gt;_mh</code>
     </PossiblyInvalidArgument>
+    <RedundantPropertyInitializationCheck occurrences="1">
+      <code>isset($this-&gt;_mh)</code>
+    </RedundantPropertyInitializationCheck>
     <TooManyArguments occurrences="1">
       <code>trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing an integer to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__)</code>
     </TooManyArguments>
-    <UndefinedDocblockClass occurrences="1">
+    <UndefinedDocblockClass occurrences="2">
+      <code>resource|\CurlMultiHandle</code>
       <code>resource|\CurlMultiHandle</code>
     </UndefinedDocblockClass>
-    <UndefinedThisPropertyAssignment occurrences="1">
-      <code>$this-&gt;_mh</code>
-    </UndefinedThisPropertyAssignment>
   </file>
   <file src="src/Handler/EasyHandle.php">
     <UndefinedDocblockClass occurrences="1">
