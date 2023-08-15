@@ -299,6 +299,26 @@ connect_timeout
     handler.
 
 
+.. _curl-option:
+
+curl
+-----
+
+:Summary: Associative array of curl specific options to use.
+:Types:
+    - array
+:Default: None
+:Constant: ``GuzzleHttp\RequestOptions::CURL``
+
+.. code-block:: php
+
+    // Use specific curl options when sending a request.
+    $client->request('GET', '/curl', ['curl' => CURLOPT_HAPROXYPROTOCOL => true]);
+
+Options are identical to those listed in the `curl_setopt() <https://www.php.net/curl_setopt>`_
+documentation.
+
+
 .. _crypto_method-option:
 
 crypto_method

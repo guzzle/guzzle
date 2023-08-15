@@ -273,4 +273,10 @@ final class RequestOptions
      * force_ip_resolve: (bool) Force client to use only ipv4 or ipv6 protocol
      */
     public const FORCE_IP_RESOLVE = 'force_ip_resolve';
+
+    /**
+     * curl: (array) Associative array of curl specific options to use.
+     * Options are identical to those listed in the curl_setopt() documentation.
+     */
+    public const CURL = 'curl';
 }
