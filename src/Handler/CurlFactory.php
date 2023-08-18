@@ -446,7 +446,9 @@ class CurlFactory implements CurlFactoryInterface
                 if (isset($options['proxy'][$scheme])) {
                     $host = $easy->request->getUri()->getHost();
                     if (isset($options['proxy']['no']) && Utils::isHostInNoProxy($host, $options['proxy']['no'])) {
-                        unset($conf[\CURLOPT_PROXY]);
+                        // To support older versions of php
+                        $conf[\CURLOPT_PROXY] = '';
+                        $conf[\CURLOPT_NOPROXY] = $host;
                     } else {
                         $conf[\CURLOPT_PROXY] = $options['proxy'][$scheme];
                     }
