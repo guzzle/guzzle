@@ -153,11 +153,11 @@ class Server
         self::$started = false;
     }
 
-    public static function wait($maxTries = 5)
+    public static function wait($maxTries = 8)
     {
         $tries = 0;
         while (!self::isListening() && ++$tries < $maxTries) {
-            \usleep(50000 * $tries ** 2);
+            \usleep(100000 * $tries ** 2);
         }
 
         if (!self::isListening()) {
