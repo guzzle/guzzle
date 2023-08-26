@@ -157,7 +157,7 @@ class Server
     {
         $tries = 0;
         while (!self::isListening() && ++$tries < $maxTries) {
-            \usleep(100000);
+            \usleep(50000 * $tries ** 2);
         }
 
         if (!self::isListening()) {
