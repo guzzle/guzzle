@@ -47,7 +47,7 @@
     <PossiblyFalseOperand occurrences="1">
       <code>$timeoutRequiresNoSignal</code>
     </PossiblyFalseOperand>
-    <PossiblyInvalidArgument occurrences="13">
+    <PossiblyInvalidArgument occurrences="14">
       <code>$easy-&gt;handle</code>
       <code>$easy-&gt;handle</code>
       <code>$easy-&gt;handle</code>
@@ -61,6 +61,7 @@
       <code>$resource</code>
       <code>$resource</code>
       <code>$sslKey</code>
+      <code>$handle</code>
     </PossiblyInvalidArgument>
     <PossiblyInvalidCast occurrences="1">
       <code>$sslKey</code>
