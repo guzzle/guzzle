@@ -23,9 +23,9 @@ jobs:
           extensions: mbstring, intl
 
       - name: Set up Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: '18.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
@@ -36,8 +36,14 @@ jobs:
       - name: Download dependencies
         run: composer update --no-interaction --no-progress --prefer-stable --prefer-lowest
 
+      - name: Start test servers
+        shell: bash
+        run: |
+          node tests/server.js &
+          ./vendor/bin/http_test_server &
+
       - name: Run tests
-        run: make test
+        run: ./vendor/bin/phpunit
 
   build:
     name: Build
@@ -70,9 +76,9 @@ jobs:
           extensions: mbstring, intl
 
       - name: Set up Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: '18.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
@@ -85,8 +91,14 @@ jobs:
           composer require --no-update "guzzlehttp/psr7:${{ matrix.psr7 }}"
           composer update --no-interaction --no-progress
 
+      - name: Start test servers
+        shell: bash
+        run: |
+          node tests/server.js &
+          ./vendor/bin/http_test_server &
+
       - name: Run tests
-        run: make test
+        run: ./vendor/bin/phpunit
 
   build-windows:
     name: Build on Windows
@@ -106,9 +118,9 @@ jobs:
           extensions: mbstring, intl
 
       - name: Set up Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: '18.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
