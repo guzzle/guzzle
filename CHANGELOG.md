@@ -7,7 +7,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-Remove the need for AllowDynamicProperties in CurlMultiHandler
+- Remove the need for `AllowDynamicProperties` in `CurlMultiHandler`
+
 
 ## 7.7.0 - 2023-05-21
 
