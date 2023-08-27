@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.8.0 - 2023-08-27
+
+### Added
+
+- Support for PHP 8.3
+- Added automatic closing of handles on `CurlFactory` object destruction
+
+
 ## 7.7.1 - 2023-08-27
 
 ### Changed
