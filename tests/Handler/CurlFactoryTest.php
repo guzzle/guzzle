@@ -445,8 +445,8 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('test', (string) $response->getBody());
         self::assertFalse($response->hasHeader('content-encoding'));
         self::assertTrue(
-            !$response->hasHeader('content-length') ||
-            $response->getHeaderLine('content-length') == $response->getBody()->getSize()
+            !$response->hasHeader('content-length')
+            || $response->getHeaderLine('content-length') == $response->getBody()->getSize()
         );
     }
 
@@ -466,8 +466,8 @@ class CurlFactoryTest extends TestCase
 
         // Verify that the content-length matches the encoded size.
         self::assertTrue(
-            !$response->hasHeader('content-length') ||
-            $response->getHeaderLine('content-length') == \strlen(\gzencode('test'))
+            !$response->hasHeader('content-length')
+            || $response->getHeaderLine('content-length') == \strlen(\gzencode('test'))
         );
     }
 
