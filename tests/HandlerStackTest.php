@@ -96,7 +96,7 @@ class HandlerStackTest extends TestCase
         $builder->push($meths[2], 'a');
         $builder->push([__CLASS__, 'foo']);
         $builder->push([$this, 'bar']);
-        $builder->push(__CLASS__.'::'.'foo');
+        $builder->push(__CLASS__.'::foo');
         $lines = \explode("\n", (string) $builder);
         self::assertStringContainsString("> 4) Name: 'a', Function: callable(", $lines[0]);
         self::assertStringContainsString("> 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
