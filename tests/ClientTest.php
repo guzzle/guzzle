@@ -811,6 +811,7 @@ class ClientTest extends TestCase
 
     /**
      * @depends testCanUseRelativeUriWithSend
+     *
      * @requires extension idn
      */
     public function testIdnBaseUri()

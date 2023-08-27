@@ -41,11 +41,6 @@ parameters:
 			path: src/Exception/RequestException.php
 
 		-
-			message: "#^Binary operation \"\\+\" between array\\{errno\\: int, error\\: string, appconnect_time\\: float\\} and \\(array\\{url\\: string, content_type\\: string\\|null, http_code\\: int, header_size\\: int, request_size\\: int, filetime\\: int, ssl_verify_result\\: int, redirect_count\\: int, \\.\\.\\.\\}\\|false\\) results in an error\\.$#"
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: "#^Cannot access offset 'version' on array\\|false\\.$#"
 			count: 1
 			path: src/Handler/CurlFactory.php
@@ -166,6 +161,11 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
+			message: "#^Variable \\$options in empty\\(\\) always exists and is not falsy\\.$#"
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
 			message: "#^Result of && is always false\\.$#"
 			count: 1
 			path: src/HandlerStack.php
@@ -177,16 +177,6 @@ parameters:
 
 		-
 			message: "#^Method GuzzleHttp\\\\Utils\\:\\:jsonDecode\\(\\) should return array\\|bool\\|float\\|int\\|object\\|string\\|null but returns mixed\\.$#"
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: "#^Parameter \\#1 \\$object of function get_class expects object, mixed given\\.$#"
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: "#^Parameter \\#1 \\$var of function count expects array\\|Countable, mixed given\\.$#"
 			count: 1
 			path: src/Utils.php
 
