@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.7.1 - 2023-08-27
+
+### Changed
+
+- Remove the need for `AllowDynamicProperties` in `CurlMultiHandler`
+
+
 ## 7.7.0 - 2023-05-21
 
 ### Added
