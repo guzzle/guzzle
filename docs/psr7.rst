@@ -226,9 +226,9 @@ When creating a request, you can provide the URI as a string or an instance of
 Scheme
 ------
 
-The `scheme <https://tools.ietf.org/html/rfc3986#section-3.1>`_ of a request
-specifies the protocol to use when sending the request. When using Guzzle, the
-scheme can be set to "http" or "https".
+The `scheme <https://datatracker.ietf.org/doc/html/rfc3986#section-3.1>`_ of a
+request specifies the protocol to use when sending the request. When using
+Guzzle, the scheme can be set to "http" or "https".
 
 .. code-block:: php
 
@@ -275,7 +275,7 @@ The path of a request is accessible via the URI object.
 The contents of the path will be automatically filtered to ensure that only
 allowed characters are present in the path. Any characters that are not allowed
 in the path will be percent-encoded according to
-`RFC 3986 section 3.3 <https://tools.ietf.org/html/rfc3986#section-3.3>`_
+`RFC 3986 section 3.3 <https://datatracker.ietf.org/doc/html/rfc3986#section-3.3>`_
 
 
 Query string
@@ -292,7 +292,7 @@ URI object owned by the request.
 The contents of the query string will be automatically filtered to ensure that
 only allowed characters are present in the query string. Any characters that
 are not allowed in the query string will be percent-encoded according to
-`RFC 3986 section 3.4 <https://tools.ietf.org/html/rfc3986#section-3.4>`_
+`RFC 3986 section 3.4 <https://datatracker.ietf.org/doc/html/rfc3986#section-3.4>`_
 
 
 Responses

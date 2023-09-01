@@ -643,7 +643,8 @@ object).
   * Note: This has been changed in 5.0.3 to now encode query string values by
     default unless the `rawString` argument is provided when setting the query
     string on a URL: Now allowing many more characters to be present in the
-    query string without being percent encoded. See https://tools.ietf.org/html/rfc3986#appendix-A
+    query string without being percent encoded. See
+    https://datatracker.ietf.org/doc/html/rfc3986#appendix-A
 
 
 ## 5.0.1 - 2014-10-16
@@ -1182,7 +1183,7 @@ interfaces.
 
 ## 3.4.0 - 2013-04-11
 
-* Bug fix: URLs are now resolved correctly based on https://tools.ietf.org/html/rfc3986#section-5.2. #289
+* Bug fix: URLs are now resolved correctly based on https://datatracker.ietf.org/doc/html/rfc3986#section-5.2. #289
 * Bug fix: Absolute URLs with a path in a service description will now properly override the base URL. #289
 * Bug fix: Parsing a query string with a single PHP array value will now result in an array. #263
 * Bug fix: Better normalization of the User-Agent header to prevent duplicate headers. #264.
