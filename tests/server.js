@@ -34,7 +34,7 @@
  *      > DELETE /guzzle-server
  *      > Host: 127.0.0.1:8126
  *
- * @package Guzzle PHP <http://www.guzzlephp.org>
+ * @package Guzzle PHP <https://docs.guzzlephp.org/en/stable/>
  * @license See the LICENSE file that was distributed with this source code.
  */
 
