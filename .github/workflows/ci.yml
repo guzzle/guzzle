@@ -21,7 +21,6 @@ jobs:
           ini-values: error_reporting=E_ALL
           coverage: none
           extensions: mbstring, intl
-          tools: composer:2.5.8
 
       - name: Set up Node
         uses: actions/setup-node@v3
@@ -75,7 +74,6 @@ jobs:
           ini-values: error_reporting=E_ALL
           coverage: none
           extensions: mbstring, intl
-          tools: composer:2.5.8
 
       - name: Set up Node
         uses: actions/setup-node@v3
@@ -118,7 +116,6 @@ jobs:
           ini-values: error_reporting=E_ALL
           coverage: none
           extensions: mbstring, intl
-          tools: composer:2.5.8
 
       - name: Set up Node
         uses: actions/setup-node@v3
