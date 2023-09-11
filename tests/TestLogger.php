@@ -69,7 +69,7 @@ class TestLogger extends AbstractLogger
             return false;
         }
         foreach ($this->recordsByLevel[$level] as $i => $rec) {
-            if (call_user_func($predicate, $rec, $i)) {
+            if ($predicate($rec, $i)) {
                 return true;
             }
         }
@@ -85,7 +85,7 @@ class TestLogger extends AbstractLogger
             if (method_exists($this, $genericMethod)) {
                 $args[] = $level;
 
-                return call_user_func_array([$this, $genericMethod], $args);
+                return ($this->{$genericMethod})(...$args);
             }
         }
         throw new \BadMethodCallException('Call to undefined method '.static::class.'::'.$method.'()');
