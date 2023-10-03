@@ -81,6 +81,55 @@ class FileCookieJarTest extends TestCase
         \unlink($this->file);
     }
 
+    public function testRemovesCookie()
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
+        ]));
+
+        self::assertCount(1, $jar);
+
+        // Remove the cookie.
+        $jar->clear('foo.com', '/', 'foo');
+
+        // Confirm that the cookie was removed.
+        self::assertCount(0, $jar);
+
+        \unlink($this->file);
+    }
+
+    public function testUpdatesCookie()
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
+        ]));
+
+        self::assertCount(1, $jar);
+
+        // Update the cookie value.
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'new_value',
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
+        ]));
+
+        $cookies = $jar->getIterator()->getArrayCopy();
+
+        // Confirm that the cookie was updated.
+        self::assertEquals('new_value', $cookies[0]->getValue());
+
+        \unlink($this->file);
+    }
+
     public function providerPersistsToFileFileParameters()
     {
         return [
