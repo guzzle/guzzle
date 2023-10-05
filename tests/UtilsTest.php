@@ -168,6 +168,13 @@ class UtilsTest extends TestCase
         \GuzzleHttp\json_encode("\x99");
     }
 
+    public function testEncodesJsonAndThrowsOnErrorWithNativeOption()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Utils::jsonEncode("\x99", \JSON_THROW_ON_ERROR);
+    }
+
     public function testDecodesJson()
     {
         self::assertTrue(Utils::jsonDecode('true'));
@@ -186,6 +193,13 @@ class UtilsTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
 
         \GuzzleHttp\json_decode('{{]]');
+    }
+
+    public function testDecodesJsonAndThrowsOnErrorWithNativeOption()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Utils::jsonDecode('{{]]', false, 512, \JSON_THROW_ON_ERROR);
     }
 }
 
