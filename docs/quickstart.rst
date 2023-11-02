@@ -58,6 +58,7 @@ The client constructor accepts an associative array of options:
     ``http://foo.com/foo``   ``/bar``            ``http://foo.com/bar``
     ``http://foo.com/foo``   ``bar``             ``http://foo.com/bar``
     ``http://foo.com/foo/``  ``bar``             ``http://foo.com/foo/bar``
+    ``http://foo.com/foo/``  ``/bar``            ``http://foo.com/bar``
     ``http://foo.com``       ``http://baz.com``  ``http://baz.com``
     ``http://foo.com/?bar``  ``bar``             ``http://foo.com/bar``
     =======================  ==================  ===============================
