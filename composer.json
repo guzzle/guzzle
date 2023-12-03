@@ -63,10 +63,10 @@
     },
     "require-dev": {
         "ext-curl": "*",
-        "bamarni/composer-bin-plugin": "^1.8.1",
+        "bamarni/composer-bin-plugin": "^1.8.2",
         "php-http/client-integration-tests": "dev-master#2c025848417c1135031fdf9c728ee53d0a7ceaee as 3.0.999",
         "php-http/message-factory": "^1.1",
-        "phpunit/phpunit": "^8.5.29 || ^9.5.23",
+        "phpunit/phpunit": "^8.5.36 || ^9.6.15",
         "psr/log": "^1.1 || ^2.0 || ^3.0"
     },
     "suggest": {

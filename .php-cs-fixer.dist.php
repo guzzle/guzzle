@@ -8,6 +8,9 @@ $config = (new PhpCsFixer\Config())
         '@Symfony' => true,
         'declare_strict_types' => false,
         'global_namespace_import' => false,
+        'no_superfluous_phpdoc_tags' => [
+            'allow_mixed' => true,
+        ],
         'phpdoc_annotation_without_dot' => false,
         'phpdoc_summary' => false,
         'phpdoc_to_comment' => false,
