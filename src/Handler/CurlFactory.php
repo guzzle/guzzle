@@ -46,6 +46,16 @@ class CurlFactory implements CurlFactoryInterface
 
     public function create(RequestInterface $request, array $options): EasyHandle
     {
+        $protocolVersion = $request->getProtocolVersion();
+
+        if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
+            if (!defined('CURL_VERSION_HTTP2') || !defined('CURL_SSLVERSION_TLSv1_2')) {
+                throw new ConnectException('HTTP/2 is supported by the cURL handler, however the version of libcurl is too old or built with HTTP/2 and TLS 1.2 support disabled.', $request);
+            }
+        } elseif ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
+            throw new ConnectException(sprintf('HTTP/%s is not supported by the cURL handler.', $protocolVersion), $request);
+        }
+
         if (isset($options['curl']['body_as_string'])) {
             $options['_body_as_string'] = $options['curl']['body_as_string'];
             unset($options['curl']['body_as_string']);
@@ -232,10 +242,11 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $version = $easy->request->getProtocolVersion();
-        if ($version == 1.1) {
-            $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_1;
-        } elseif ($version == 2.0) {
+
+        if ('2' === $version || '2.0' === $version) {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
+        } elseif ('1.1' === $version) {
+            $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_1;
         } else {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_0;
         }
@@ -455,7 +466,25 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (isset($options['crypto_method'])) {
-            if (\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $options['crypto_method']) {
+            $protocolVersion = $easy->request->getProtocolVersion();
+
+            // If HTTP/2, upgrade TLS 1.0 and 1.1 to 1.2
+            if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
+                if (
+                    \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $options['crypto_method']
+                    || \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $options['crypto_method']
+                    || \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $options['crypto_method']
+                ) {
+                    $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
+                } elseif (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $options['crypto_method']) {
+                    if (!defined('CURL_SSLVERSION_TLSv1_3')) {
+                        throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
+                    }
+                    $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
+                } else {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
+                }
+            } elseif (\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $options['crypto_method']) {
                 if (!defined('CURL_SSLVERSION_TLSv1_0')) {
                     throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.0 not supported by your version of cURL');
                 }
