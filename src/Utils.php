@@ -272,12 +272,11 @@ EOT
      */
     public static function jsonDecode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
     {
-        $data = \json_decode($json, $assoc, $depth, $options);
-        if (\JSON_ERROR_NONE !== \json_last_error()) {
-            throw new InvalidArgumentException('json_decode error: '.\json_last_error_msg());
+        try {
+            return \json_decode($json, $assoc, $depth, $options | \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new InvalidArgumentException('json_decode error: '.$e->getMessage(), 0, $e);
         }
-
-        return $data;
     }
 
     /**
@@ -293,13 +292,11 @@ EOT
      */
     public static function jsonEncode($value, int $options = 0, int $depth = 512): string
     {
-        $json = \json_encode($value, $options, $depth);
-        if (\JSON_ERROR_NONE !== \json_last_error()) {
-            throw new InvalidArgumentException('json_encode error: '.\json_last_error_msg());
+        try {
+            return \json_encode($value, $options | \JSON_THROW_ON_ERROR, $depth);
+        } catch (\JsonException $e) {
+            throw new InvalidArgumentException('json_encode error: '.$e->getMessage(), 0, $e);
         }
-
-        /** @var string */
-        return $json;
     }
 
     /**
