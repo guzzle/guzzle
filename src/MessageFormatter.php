@@ -68,7 +68,7 @@ class MessageFormatter implements MessageFormatterInterface
      * @param ResponseInterface|null $response Response that was received
      * @param \Throwable|null        $error    Exception that was received
      */
-    public function format(RequestInterface $request, ResponseInterface $response = null, \Throwable $error = null): string
+    public function format(RequestInterface $request, ?ResponseInterface $response = null, ?\Throwable $error = null): string
     {
         $cache = [];
 
