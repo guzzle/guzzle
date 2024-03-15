@@ -103,7 +103,7 @@ class CookieJar implements CookieJarInterface
         }, $this->getIterator()->getArrayCopy());
     }
 
-    public function clear(string $domain = null, string $path = null, string $name = null): void
+    public function clear(?string $domain = null, ?string $path = null, ?string $name = null): void
     {
         if (!$domain) {
             $this->cookies = [];
