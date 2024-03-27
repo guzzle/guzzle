@@ -244,6 +244,39 @@ cert
     $client->request('GET', '/', ['cert' => ['/path/server.pem', 'password']]);
 
 
+.. _cert_blob-option:
+
+cert-blob
+----
+
+:Summary: Set to a string containing a formatted client side certificate.
+        If a password is required, then set to an array containing the PEM certificate
+        and the password.
+        If the certificate format is 'DER' or 'P12' the type must be specified.
+:Types:
+        - string
+        - array
+:Default: None
+:Constant: ``GuzzleHttp\RequestOptions::CERT_BLOB``
+
+.. code-block:: php
+
+    $client->request('GET', '/', [
+        'cert_blob' => [
+            'cert' => 'certificate',
+            'password' => 'password',
+            'type' => 'P12',
+        ],
+    ]);
+
+.. note::
+
+    ``cert_blob`` is implemented by HTTP handlers. This is currently only
+    supported by the cURL handler, but might be supported by other third-part
+    handlers.
+    The option is available in PHP >= 8.1
+
+
 .. _cookies-option:
 
 cookies
@@ -974,6 +1007,29 @@ ssl_key
     ``ssl_key`` is implemented by HTTP handlers. This is currently only
     supported by the cURL handler, but might be supported by other third-part
     handlers.
+
+
+.. _ssl_key_blob-option:
+
+ssl_key_blob
+-------
+
+:Summary: Specify a string containing a private SSL key in PEM format.
+        If a password is required, then set to an array containing the SSL key
+        in the first array element followed by the password required for the
+        certificate in the second element.
+:Types:
+        - string
+        - array
+:Default: None
+:Constant: ``GuzzleHttp\RequestOptions::SSL_KEY_BLOB``
+
+.. note::
+
+    ``ssl_key_blob`` is implemented by HTTP handlers. This is currently only
+    supported by the cURL handler, but might be supported by other third-part
+    handlers.
+    The option is available in PHP >= 8.1
 
 
 .. _stream-option:

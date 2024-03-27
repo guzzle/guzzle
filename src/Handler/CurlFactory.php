@@ -498,6 +498,24 @@ class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_SSLCERT] = $cert;
         }
 
+        if (isset($options['cert_blob'])) {
+            if (\version_compare(PHP_VERSION, '8.1.0', '<')) {
+                throw new \InvalidArgumentException('cert blob option is available in PHP >= 8.1');
+            }
+            $cert = $options['cert_blob'];
+            if (\is_array($cert)) {
+                if (!empty($cert['password'])) {
+                    $conf[\CURLOPT_SSLCERTPASSWD] = $cert['password'];
+                }
+                if (!empty($cert['type'])) {
+                    $conf[\CURLOPT_SSLCERTTYPE] = strtoupper($cert['type']);
+                }
+                $cert = $cert['cert'];
+            }
+
+            $conf[\CURLOPT_SSLCERT_BLOB] = $cert;
+        }
+
         if (isset($options['ssl_key'])) {
             if (\is_array($options['ssl_key'])) {
                 if (\count($options['ssl_key']) === 2) {
@@ -513,6 +531,24 @@ class CurlFactory implements CurlFactoryInterface
                 throw new \InvalidArgumentException("SSL private key not found: {$sslKey}");
             }
             $conf[\CURLOPT_SSLKEY] = $sslKey;
+        }
+
+        if (isset($options['ssl_key_blob'])) {
+            if (\version_compare(PHP_VERSION, '8.1.0', '<')) {
+                throw new \InvalidArgumentException('ssl key blob option is available in PHP >= 8.1');
+            }
+
+            if (\is_array($options['ssl_key_blob'])) {
+                if (\count($options['ssl_key_blob']) === 2) {
+                    [$sslKey, $conf[\CURLOPT_SSLKEYPASSWD]] = $options['ssl_key_blob'];
+                } else {
+                    [$sslKey] = $options['ssl_key_blob'];
+                }
+            }
+
+            $sslKey = $sslKey ?? $options['ssl_key_blob'];
+
+            $conf[\CURLOPT_SSLKEY_BLOB] = $sslKey;
         }
 
         if (isset($options['progress'])) {
