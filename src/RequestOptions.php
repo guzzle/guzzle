@@ -57,6 +57,14 @@ final class RequestOptions
     public const CERT = 'cert';
 
     /**
+     * cert_blob: (string|array) Set to a string containing a
+     * SSL client side certificate. If a password is required, then set
+     * cert to an array.
+     * If the certificate format is 'DER' or 'P12' the type must be specified.
+     */
+    public const CERT_BLOB = 'cert_blob';
+
+    /**
      * cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
      * Specifies whether or not cookies are used in a request or what cookie
      * jar to use or what cookies to send. This option only works if your
@@ -235,6 +243,14 @@ final class RequestOptions
     public const SSL_KEY = 'ssl_key';
 
     /**
+     * ssl_key_blob: (array|string) Specify a string containing a private
+     * SSL key in PEM format. If a password is required, then set to an array
+     * containing the SSL key in the first array element followed
+     * by the password required for the certificate in the second element.
+     */
+    public const SSL_KEY_BLOB = 'ssl_key_blob';
+
+    /**
      * stream: Set to true to attempt to stream a response rather than
      * download it all up-front.
      */
@@ -249,6 +265,12 @@ final class RequestOptions
      * disk to enable verification using a custom certificate.
      */
     public const VERIFY = 'verify';
+
+    /**
+     * verify_blob: (string) Specify the CA bundle to use for SSL certificate
+     * verification. When this option is used certificate verification is enforced.
+     */
+    public const VERIFY_BLOB = 'verify_blob';
 
     /**
      * timeout: (float, default=0) Float describing the timeout of the

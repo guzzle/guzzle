@@ -160,6 +160,18 @@ class CurlFactoryTest extends TestCase
         self::assertFalse($_SERVER['_curl'][\CURLOPT_SSL_VERIFYPEER]);
     }
 
+    /**
+     * @requires PHP >= 8.4
+     */
+    public function testCanSetVerifyBlob()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'http://foo.com'), ['verify' => __FILE__]);
+        self::assertEquals(__FILE__, $_SERVER['_curl'][\CURLOPT_CAINFO]);
+        self::assertEquals(2, $_SERVER['_curl'][\CURLOPT_SSL_VERIFYHOST]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_SSL_VERIFYPEER]);
+    }
+
     public function testAddsProxy()
     {
         $f = new Handler\CurlFactory(3);
@@ -293,6 +305,38 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(__FILE__, $_SERVER['_curl'][\CURLOPT_SSLKEY]);
     }
 
+    /**
+     * @requires PHP >= 8.1
+     */
+    public function testAddsSslKeyBlob()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key_blob' => 'certificate']);
+        self::assertEquals('certificate', $_SERVER['_curl'][\CURLOPT_SSLKEY_BLOB]);
+    }
+
+    /**
+     * @requires PHP >= 8.1
+     */
+    public function testAddsSslKeyBlobWithPassword()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key_blob' => ['certificate', 'test']]);
+        self::assertEquals('certificate', $_SERVER['_curl'][\CURLOPT_SSLKEY_BLOB]);
+        self::assertEquals('test', $_SERVER['_curl'][\CURLOPT_SSLKEYPASSWD]);
+    }
+
+    /**
+     * @requires PHP >= 8.1
+     */
+    public function testAddsSslKeyBlobWhenUsingArraySyntaxButNoPassword()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key_blob' => [__FILE__]]);
+
+        self::assertEquals(__FILE__, $_SERVER['_curl'][\CURLOPT_SSLKEY_BLOB]);
+    }
+
     public function testValidatesCert()
     {
         $f = new Handler\CurlFactory(3);
@@ -343,6 +387,64 @@ class CurlFactoryTest extends TestCase
         } finally {
             @\unlink($certFile);
         }
+    }
+
+    /**
+     * @requires PHP >= 8.1
+     */
+    public function testAddsCertBlob()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), ['cert_blob' => 'certificate']);
+        self::assertEquals('certificate', $_SERVER['_curl'][\CURLOPT_SSLCERT_BLOB]);
+    }
+
+    /**
+     * @requires PHP >= 8.1
+     */
+    public function testAddsCertBlobWithPassword()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'cert_blob' => [
+                'cert' => 'certificate',
+                'password' => 'test',
+            ],
+        ]);
+        self::assertEquals('certificate', $_SERVER['_curl'][\CURLOPT_SSLCERT_BLOB]);
+        self::assertEquals('test', $_SERVER['_curl'][\CURLOPT_SSLCERTPASSWD]);
+    }
+
+    /**
+     * @requires PHP >= 8.1
+     */
+    public function testAddsDerCertBlob()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'cert_blob' => [
+                'cert' => 'certificate',
+                'type' => 'der',
+            ],
+        ]);
+        self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
+        self::assertEquals('DER', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
+    }
+
+    /**
+     * @requires PHP >= 8.1
+     */
+    public function testAddsP12CertBlob()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'cert_blob' => [
+                'cert' => 'certificate',
+                'type' => 'P12',
+            ],
+        ]);
+        self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
+        self::assertEquals('P12', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
     }
 
     public function testValidatesProgress()
