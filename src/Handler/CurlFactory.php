@@ -382,6 +382,15 @@ class CurlFactory implements CurlFactoryInterface
             }
         }
 
+        if (isset($options['verify_blob'])) {
+            if (\version_compare(PHP_VERSION, '8.2.0', '<')) {
+                throw new \InvalidArgumentException('verify blob option is available in PHP >= 8.2');
+            }
+            $conf[\CURLOPT_SSL_VERIFYHOST] = 2;
+            $conf[\CURLOPT_SSL_VERIFYPEER] = true;
+            $conf[\CURLOPT_CAINFO_BLOB] = $options['verify_blob'];
+        }
+
         if (!isset($options['curl'][\CURLOPT_ENCODING]) && !empty($options['decode_content'])) {
             $accept = $easy->request->getHeaderLine('Accept-Encoding');
             if ($accept) {

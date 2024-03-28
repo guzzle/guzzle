@@ -1109,6 +1109,28 @@ SSL certificates can be found on the
 `cURL website <http://curl.haxx.se/docs/sslcerts.html>`_.
 
 
+.. _verify_blob-option:
+
+verify_blob
+------
+
+:Summary: Specify the CA bundle to use for SSL certificate verification. When this
+        option is used certificate verification is enforced.
+:Types: string
+:Constant: ``GuzzleHttp\RequestOptions::VERIFY_BLOB``
+
+.. code-block:: php
+
+    $client->request('GET', '/', ['verify_blob' => 'certificates']);
+
+.. note::
+
+    ``verify_blob`` is implemented by HTTP handlers. This is currently only
+    supported by the cURL handler, but might be supported by other third-part
+    handlers.
+    The option is available in PHP >= 8.2
+
+
 .. _timeout-option:
 
 timeout

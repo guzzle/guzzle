@@ -267,6 +267,12 @@ final class RequestOptions
     public const VERIFY = 'verify';
 
     /**
+     * verify_blob: (string) Specify the CA bundle to use for SSL certificate
+     * verification. When this option is used certificate verification is enforced.
+     */
+    public const VERIFY_BLOB = 'verify_blob';
+
+    /**
      * timeout: (float, default=0) Float describing the timeout of the
      * request in seconds. Use 0 to wait indefinitely (the default behavior).
      */

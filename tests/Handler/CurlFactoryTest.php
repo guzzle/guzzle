@@ -160,6 +160,18 @@ class CurlFactoryTest extends TestCase
         self::assertFalse($_SERVER['_curl'][\CURLOPT_SSL_VERIFYPEER]);
     }
 
+    /**
+     * @requires PHP >= 8.4
+     */
+    public function testCanSetVerifyBlob()
+    {
+        $f = new Handler\CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'http://foo.com'), ['verify' => __FILE__]);
+        self::assertEquals(__FILE__, $_SERVER['_curl'][\CURLOPT_CAINFO]);
+        self::assertEquals(2, $_SERVER['_curl'][\CURLOPT_SSL_VERIFYHOST]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_SSL_VERIFYPEER]);
+    }
+
     public function testAddsProxy()
     {
         $f = new Handler\CurlFactory(3);
