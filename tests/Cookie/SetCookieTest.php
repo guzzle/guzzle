@@ -24,6 +24,12 @@ class SetCookieTest extends TestCase
         self::assertIsInt($cookie->getExpires());
     }
 
+    public function testIgnoresInvalidExpiresValue()
+    {
+        $cookie = new SetCookie(['Expires' => 'not a date']);
+        self::assertNull($cookie->getExpires());
+    }
+
     public function testAddsExpiresBasedOnMaxAge()
     {
         $t = \time();

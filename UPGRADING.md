@@ -33,11 +33,18 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
-#### SetCookie boolean flags
+#### SetCookie types
+
+`SetCookie` methods now declare native parameter and return types where PHP 7.4
+allows. Code overriding `SetCookie` methods must update method signatures
+accordingly.
 
 `SetCookie::setSecure()`, `SetCookie::setDiscard()`, and
 `SetCookie::setHttpOnly()` now require boolean parameters. Calls from files that
 declare strict types will throw `TypeError` for non-boolean values.
+
+`SetCookie::getExpires()` now returns `int|null`. Invalid textual expiration
+dates are treated as `null`.
 
 #### RetryMiddleware::exponentialDelay
 
