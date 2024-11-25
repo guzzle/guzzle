@@ -129,7 +129,7 @@ class HandlerStack
      * Unshift a middleware to the bottom of the stack.
      *
      * @param callable(callable): callable $middleware Middleware function
-     * @param string                       $name       Name to register for this middleware.
+     * @param ?string                      $name       Name to register for this middleware.
      */
     public function unshift(callable $middleware, ?string $name = null): void
     {
