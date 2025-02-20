@@ -653,7 +653,7 @@ class StreamHandlerTest extends TestCase
         $promise = $handler($req, [
             'on_headers' => static function (ResponseInterface $res, RequestInterface $req) {
                 self::assertInstanceOf(RequestInterface::class, $req);
-                self::assertSame(Server::$url, (string)$req->getUri());
+                self::assertSame(Server::$url, (string) $req->getUri());
             },
         ]);
 
