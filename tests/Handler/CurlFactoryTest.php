@@ -13,6 +13,7 @@ use GuzzleHttp\Tests\Helpers;
 use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -800,6 +801,25 @@ class CurlFactoryTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('bar', $response->getHeaderLine('X-Foo'));
         self::assertSame('abc 123', (string) $response->getBody());
+    }
+
+    public function testOnHeadersRequestArgument()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $req = new Psr7\Request('GET', Server::$url);
+
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'on_headers' => static function (ResponseInterface $res, RequestInterface $req) {
+                self::assertInstanceOf(RequestInterface::class, $req);
+                self::assertSame(Server::$url, (string)$req->getUri());
+            },
+        ]);
+
+        $promise->wait();
     }
 
     public function testInvokesOnStatsOnSuccess()

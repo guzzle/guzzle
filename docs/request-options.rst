@@ -733,7 +733,7 @@ on_headers
 :Types: - callable
 :Constant: ``GuzzleHttp\RequestOptions::ON_HEADERS``
 
-The callable accepts a ``Psr\Http\Message\ResponseInterface`` object. If an exception
+The callable accepts a ``Psr\Http\Message\ResponseInterface`` and ``Psr\Http\Message\RequestInterface`` objects. If an exception
 is thrown by the callable, then the promise associated with the response will
 be rejected with a ``GuzzleHttp\Exception\RequestException`` that wraps the
 exception that was thrown.
@@ -745,9 +745,9 @@ can be written to the sink.
 
     // Reject responses that are greater than 1024 bytes.
     $client->request('GET', 'http://httpbin.org/stream/1024', [
-        'on_headers' => function (ResponseInterface $response) {
+        'on_headers' => function (ResponseInterface $response, RequestInterface $request) {
             if ($response->getHeaderLine('Content-Length') > 1024) {
-                throw new \Exception('The file is too big!');
+                throw new \Exception('The file is too big! URL: ' . (string)$request->getUri());
             }
         }
     ]);
