@@ -47,7 +47,7 @@ class SetCookie
         foreach ($pieces as $part) {
             $cookieParts = \explode('=', $part, 2);
             $key = \trim($cookieParts[0]);
-            $value = isset($cookieParts[1])
+            $value = isset($cookieParts[1]) && !is_bool($data[$key] ?? null)
                 ? \trim($cookieParts[1], " \n\r\t\0\x0B")
                 : true;
 
