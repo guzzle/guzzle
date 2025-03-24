@@ -15,7 +15,7 @@ class BadResponseException extends RequestException
         RequestInterface $request,
         ResponseInterface $response,
         ?\Throwable $previous = null,
-        array $handlerContext = []
+        array $handlerContext = [],
     ) {
         parent::__construct($message, $request, $response, $previous, $handlerContext);
     }

@@ -26,7 +26,7 @@ class ConnectException extends TransferException implements NetworkExceptionInte
         string $message,
         RequestInterface $request,
         ?\Throwable $previous = null,
-        array $handlerContext = []
+        array $handlerContext = [],
     ) {
         parent::__construct($message, 0, $previous);
         $this->request = $request;
