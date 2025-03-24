@@ -544,14 +544,14 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(3, $req->getHeaderLine('Content-Length'));
     }
 
-    public function testAddsContentLengthEvenWhenEmpty()
+    public function testDontAddContentLengthEvenWhenEmpty()
     {
         $this->queueRes();
         $handler = new StreamHandler();
         $request = new Request('PUT', Server::$url, [], '');
         $handler($request, []);
         $req = Server::received()[0];
-        self::assertEquals(0, $req->getHeaderLine('Content-Length'));
+        self::assertSame('', $req->getHeaderLine('Content-Length'));
     }
 
     public function testSupports100Continue()
