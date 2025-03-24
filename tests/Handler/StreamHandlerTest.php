@@ -750,12 +750,33 @@ class StreamHandlerTest extends TestCase
         self::assertFalse(\feof($body));
     }
 
-    public function testHandlesGarbageHttpServerGracefully()
+    /**
+     * @requires PHP <=8.1
+     */
+    public function testHandlesGarbageHttpServerGracefullyLegacy()
     {
         $handler = new StreamHandler();
 
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('An error was encountered while creating the response');
+
+        $handler(
+            new Request('GET', Server::$url.'guzzle-server/garbage'),
+            [
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+    }
+
+    /**
+     * @requires PHP >8.1
+     */
+    public function testHandlesGarbageHttpServerGracefully()
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Connection refused for URI '.Server::$url);
 
         $handler(
             new Request('GET', Server::$url.'guzzle-server/garbage'),
