@@ -63,9 +63,7 @@ class SetCookie
                                 $data[$search] = (int) $value;
                             }
                         } elseif ($search === 'Secure' || $search === 'Discard' || $search === 'HttpOnly') {
-                            if ('false' === $value || '0' === $value) {
-                                $data[$search] = false;
-                            } elseif ($value) {
+                            if ($value) {
                                 $data[$search] = true;
                             }
                         } else {
