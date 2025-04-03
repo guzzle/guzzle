@@ -235,6 +235,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             'verify' => true,
             'cookies' => false,
             'idn_conversion' => false,
+            'json_encode_options' => 0,
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.
@@ -301,6 +302,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 throw new InvalidArgumentException('headers must be an array');
             }
         }
+
+        if (isset($options['json'])) {
+            $jsonOptions = $defaults['json_encode_options'] ?? 0;
+            $options['json'] = Utils::jsonDecode(Utils::jsonEncode($options['json'], $jsonOptions));
+        }
+
 
         // Shallow merge defaults underneath options.
         $result = $options + $defaults;
@@ -374,8 +381,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (isset($options['json'])) {
-            $options['body'] = Utils::jsonEncode($options['json']);
+            // Allow request-level override of json_encode_options
+            $jsonOptions = $options['json_encode_options'] ?? $this->config['json_encode_options'] ?? 0;
+            $options['body'] = Utils::jsonEncode($options['json'], $jsonOptions);
             unset($options['json']);
+            unset($options['json_encode_options']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Content-Type'], $options['_conditional']);
             $options['_conditional']['Content-Type'] = 'application/json';
