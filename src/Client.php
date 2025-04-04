@@ -305,7 +305,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         if (isset($options['json'])) {
             $jsonOptions = $defaults['json_encode_options'] ?? 0;
-            $options['json'] = Utils::jsonDecode(Utils::jsonEncode($options['json'], $jsonOptions));
+            $options['json'] = Utils::jsonDecode(Utils::jsonEncode($options['json'], (int)$jsonOptions));
         }
 
 
@@ -383,7 +383,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (isset($options['json'])) {
             // Allow request-level override of json_encode_options
             $jsonOptions = $options['json_encode_options'] ?? $this->config['json_encode_options'] ?? 0;
-            $options['body'] = Utils::jsonEncode($options['json'], $jsonOptions);
+            $options['body'] = Utils::jsonEncode($options['json'], (int)$jsonOptions);
             unset($options['json']);
             unset($options['json_encode_options']);
             // Ensure that we don't have the header in different case and set the new value.
