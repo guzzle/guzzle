@@ -3,11 +3,18 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
-## 7.9.3 - 2025
+## 7.9.4 - 2025
 
 ### Changed
 
 - Add `RequestInterface` as a second argument to `on_headers` callback
+
+## 7.9.3 - 2025-03-27
+
+### Changed
+
+- Remove explicit content-length header for GET requests
+- Improve compatibility with bad servers for boolean cookie values
 
 ## 7.9.2 - 2024-07-24
 
