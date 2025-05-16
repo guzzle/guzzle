@@ -56,7 +56,7 @@ class FileCookieJar extends CookieJar
      */
     public function save(string $filename): void
     {
-        $json = [];
+        $json = ['_comment' => "//<?php die('Security');?>"];
         /** @var SetCookie $cookie */
         foreach ($this as $cookie) {
             if (CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
@@ -91,6 +91,7 @@ class FileCookieJar extends CookieJar
 
         $data = Utils::jsonDecode($json, true);
         if (\is_array($data)) {
+            unset($data['_comment']);
             foreach ($data as $cookie) {
                 $this->setCookie(new SetCookie($cookie));
             }
