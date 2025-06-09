@@ -33,7 +33,7 @@ class RequestException extends TransferException implements RequestExceptionInte
         RequestInterface $request,
         ?ResponseInterface $response = null,
         ?\Throwable $previous = null,
-        array $handlerContext = []
+        array $handlerContext = [],
     ) {
         // Set the code of the exception if the response is set and not future.
         $code = $response ? $response->getStatusCode() : 0;
@@ -65,7 +65,7 @@ class RequestException extends TransferException implements RequestExceptionInte
         ?ResponseInterface $response = null,
         ?\Throwable $previous = null,
         array $handlerContext = [],
-        ?BodySummarizerInterface $bodySummarizer = null
+        ?BodySummarizerInterface $bodySummarizer = null,
     ): self {
         if (!$response) {
             return new self(

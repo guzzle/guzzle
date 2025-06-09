@@ -211,7 +211,7 @@ class RedirectMiddleware
     private static function redirectUri(
         RequestInterface $request,
         ResponseInterface $response,
-        array $protocols
+        array $protocols,
     ): UriInterface {
         $location = Psr7\UriResolver::resolve(
             $request->getUri(),

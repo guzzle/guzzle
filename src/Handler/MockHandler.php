@@ -201,7 +201,7 @@ class MockHandler implements \Countable
         RequestInterface $request,
         array $options,
         ?ResponseInterface $response = null,
-        $reason = null
+        $reason = null,
     ): void {
         if (isset($options['on_stats'])) {
             $transferTime = $options['transfer_time'] ?? 0;

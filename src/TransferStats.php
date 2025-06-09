@@ -49,7 +49,7 @@ final class TransferStats
         ?ResponseInterface $response = null,
         ?float $transferTime = null,
         $handlerErrorData = null,
-        array $handlerStats = []
+        array $handlerStats = [],
     ) {
         $this->request = $request;
         $this->response = $response;

@@ -488,7 +488,7 @@ class RedirectMiddlewareTest extends TestCase
      */
     public function testModifyRequestFollowRequestMethodAndBody(
         RequestInterface $request,
-        $expectedFollowRequestMethod
+        $expectedFollowRequestMethod,
     ) {
         $redirectMiddleware = new RedirectMiddleware(static function () {
         });
