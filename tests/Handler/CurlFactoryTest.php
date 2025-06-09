@@ -491,6 +491,15 @@ class CurlFactoryTest extends TestCase
         $request = new Psr7\Request('GET', Server::$url, [], null, '1.0');
         $a($request, []);
         self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+        $request = new Psr7\Request('GET', Server::$url, [], null, '2.0');
+        $a($request, []);
+        self::assertEquals(\CURL_HTTP_VERSION_2, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+        // HTTP/3 is only available in PHP 8.4 and curl experimental builds, so check it's available before we try to use it
+        if (\defined('CURL_VERSION_HTTP3') && (\CURL_VERSION_HTTP3 & \curl_version()['features'])) {
+            $request = new Psr7\Request('GET', Server::$url, [], null, '3.0');
+            $a($request, []);
+            self::assertEquals(\CURL_HTTP_VERSION_3, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+        }
     }
 
     public function testSavesToStream()

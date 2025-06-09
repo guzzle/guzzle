@@ -49,7 +49,11 @@ class CurlFactory implements CurlFactoryInterface
     {
         $protocolVersion = $request->getProtocolVersion();
 
-        if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
+        if ('3' === $protocolVersion || '3.0' === $protocolVersion) {
+            if (!self::supportsHttp3()) {
+                throw new ConnectException('HTTP/3 is supported by the cURL handler, however libcurl is built without HTTP/3 support.', $request);
+            }
+        } elseif ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!self::supportsHttp2()) {
                 throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
             }
@@ -81,6 +85,29 @@ class CurlFactory implements CurlFactoryInterface
         curl_setopt_array($easy->handle, $conf);
 
         return $easy;
+    }
+
+    private static function supportsHttp3(): bool
+    {
+        static $supportsHttp3 = null;
+
+        if (null === $supportsHttp3) {
+            $curlVersion = curl_version();
+            $http3Flag = 0;
+            if (defined('CURL_VERSION_HTTP3')) {
+                /** @var int $http3FlagConst */
+                $http3FlagConst = \CURL_VERSION_HTTP3;
+                $http3Flag = intval(''.$http3FlagConst);
+            }
+            /** @psalm-suppress RedundantCondition */
+            $supportsHttp3 = self::supportsTls13()
+                && is_array($curlVersion)
+                && isset($curlVersion['features'])
+                && is_int($curlVersion['features'])
+                && ($http3Flag & $curlVersion['features']);
+        }
+
+        return (bool) $supportsHttp3;
     }
 
     private static function supportsHttp2(): bool
@@ -316,7 +343,9 @@ class CurlFactory implements CurlFactoryInterface
 
         $version = $easy->request->getProtocolVersion();
 
-        if ('2' === $version || '2.0' === $version) {
+        if (('3' === $version || '3.0' === $version) && defined('CURL_HTTP_VERSION_3')) {
+            $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_3;
+        } elseif ('2' === $version || '2.0' === $version) {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
         } elseif ('1.1' === $version) {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_1;
