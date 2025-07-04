@@ -53,6 +53,9 @@
     <PossiblyFalseOperand>
       <code><![CDATA[$timeoutRequiresNoSignal]]></code>
     </PossiblyFalseOperand>
+    <PossiblyFalsePropertyAssignmentValue>
+      <code><![CDATA[$this->handlePool->get()]]></code>
+    </PossiblyFalsePropertyAssignmentValue>
     <PossiblyInvalidArgument>
       <code><![CDATA[$easy->handle]]></code>
       <code><![CDATA[$easy->handle]]></code>
@@ -60,25 +63,29 @@
       <code><![CDATA[$easy->handle]]></code>
       <code><![CDATA[$easy->handle]]></code>
       <code><![CDATA[$easy->handle]]></code>
-      <code><![CDATA[$handle]]></code>
-      <code><![CDATA[$resource]]></code>
-      <code><![CDATA[$resource]]></code>
-      <code><![CDATA[$resource]]></code>
-      <code><![CDATA[$resource]]></code>
-      <code><![CDATA[$resource]]></code>
-      <code><![CDATA[$resource]]></code>
       <code><![CDATA[$sslKey]]></code>
     </PossiblyInvalidArgument>
     <PossiblyInvalidCast>
       <code><![CDATA[$sslKey]]></code>
     </PossiblyInvalidCast>
+    <UndefinedVariable>
+      <code><![CDATA[$startingResponse]]></code>
+    </UndefinedVariable>
+  </file>
+  <file src="src/Handler/CurlHandlePool.php">
+    <PossiblyInvalidArgument>
+      <code><![CDATA[$handle]]></code>
+    </PossiblyInvalidArgument>
     <UndefinedDocblockClass>
       <code><![CDATA[private $handles = [];]]></code>
       <code><![CDATA[resource[]|\CurlHandle[]]]></code>
     </UndefinedDocblockClass>
-    <UndefinedVariable>
-      <code><![CDATA[$startingResponse]]></code>
-    </UndefinedVariable>
+  </file>
+  <file src="src/Handler/CurlHandlePoolInterface.php">
+    <UndefinedDocblockClass>
+      <code><![CDATA[resource|\CurlHandle]]></code>
+      <code><![CDATA[resource|\CurlHandle|false]]></code>
+    </UndefinedDocblockClass>
   </file>
   <file src="src/Handler/CurlHandler.php">
     <PossiblyInvalidArgument>

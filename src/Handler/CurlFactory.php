@@ -28,21 +28,18 @@ class CurlFactory implements CurlFactoryInterface
     public const LOW_CURL_VERSION_NUMBER = '7.21.2';
 
     /**
-     * @var resource[]|\CurlHandle[]
+     * @var CurlHandlePoolInterface
      */
-    private $handles = [];
+    private $handlePool;
 
     /**
-     * @var int Total number of idle handles to keep in cache
+     * @param int|CurlHandlePoolInterface $maxHandles Maximum number of idle handles.
      */
-    private $maxHandles;
-
-    /**
-     * @param int $maxHandles Maximum number of idle handles.
-     */
-    public function __construct(int $maxHandles)
+    public function __construct($maxHandles)
     {
-        $this->maxHandles = $maxHandles;
+        $this->handlePool = $maxHandles instanceof CurlHandlePoolInterface
+            ? $maxHandles
+            : new CurlHandlePool($maxHandles);
     }
 
     public function create(RequestInterface $request, array $options): EasyHandle
@@ -77,7 +74,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
-        $easy->handle = $this->handles ? \array_pop($this->handles) : \curl_init();
+        $easy->handle = $this->handlePool->get();
         curl_setopt_array($easy->handle, $conf);
 
         return $easy;
@@ -124,20 +121,7 @@ class CurlFactory implements CurlFactoryInterface
         $resource = $easy->handle;
         unset($easy->handle);
 
-        if (\count($this->handles) >= $this->maxHandles) {
-            \curl_close($resource);
-        } else {
-            // Remove all callback functions as they can hold onto references
-            // and are not cleaned up by curl_reset. Using curl_setopt_array
-            // does not work for some reason, so removing each one
-            // individually.
-            \curl_setopt($resource, \CURLOPT_HEADERFUNCTION, null);
-            \curl_setopt($resource, \CURLOPT_READFUNCTION, null);
-            \curl_setopt($resource, \CURLOPT_WRITEFUNCTION, null);
-            \curl_setopt($resource, \CURLOPT_PROGRESSFUNCTION, null);
-            \curl_reset($resource);
-            $this->handles[] = $resource;
-        }
+        $this->handlePool->put($resource);
     }
 
     /**
@@ -724,13 +708,5 @@ class CurlFactory implements CurlFactoryInterface
 
             return \strlen($h);
         };
-    }
-
-    public function __destruct()
-    {
-        foreach ($this->handles as $id => $handle) {
-            \curl_close($handle);
-            unset($this->handles[$id]);
-        }
     }
 }

@@ -487,12 +487,6 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$ch of function curl_close expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Parameter \#1 \$ch of function curl_error expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
@@ -500,18 +494,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$ch of function curl_getinfo expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 4
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_reset expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 4
 			path: src/Handler/CurlFactory.php
@@ -619,12 +601,6 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlFactory\:\:\$handles has unknown class CurlHandle as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Property GuzzleHttp\\Handler\\EasyHandle\:\:\$handle \(CurlHandle\|resource\) does not accept CurlHandle\|resource\|false\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -635,6 +611,54 @@ parameters:
 			identifier: callable.nonCallable
 			count: 1
 			path: src/Handler/CurlFactory.php
+
+		-
+			message: '#^Method GuzzleHttp\\Handler\\CurlHandlePool\:\:get\(\) has invalid return type CurlHandle\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/CurlHandlePool.php
+
+		-
+			message: '#^Parameter \#1 \$ch of function curl_close expects resource, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Handler/CurlHandlePool.php
+
+		-
+			message: '#^Parameter \#1 \$ch of function curl_reset expects resource, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Handler/CurlHandlePool.php
+
+		-
+			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Handler/CurlHandlePool.php
+
+		-
+			message: '#^Parameter \$handle of method GuzzleHttp\\Handler\\CurlHandlePool\:\:put\(\) has invalid type CurlHandle\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/CurlHandlePool.php
+
+		-
+			message: '#^Property GuzzleHttp\\Handler\\CurlHandlePool\:\:\$handles has unknown class CurlHandle as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/CurlHandlePool.php
+
+		-
+			message: '#^Method GuzzleHttp\\Handler\\CurlHandlePoolInterface\:\:get\(\) has invalid return type CurlHandle\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/CurlHandlePoolInterface.php
+
+		-
+			message: '#^Parameter \$handle of method GuzzleHttp\\Handler\\CurlHandlePoolInterface\:\:put\(\) has invalid type CurlHandle\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/CurlHandlePoolInterface.php
 
 		-
 			message: '#^Binary operation "\*" between mixed and 1000 results in an error\.$#'

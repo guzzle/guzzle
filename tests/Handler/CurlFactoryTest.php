@@ -711,20 +711,20 @@ class CurlFactoryTest extends TestCase
         $easy = $f->create($req, []);
         $h1 = $easy->handle;
         $f->release($easy);
-        self::assertCount(1, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(1, Helpers::readObjectAttribute(Helpers::readObjectAttribute($f, 'handlePool'), 'handles'));
         $easy = $f->create($req, []);
         self::assertSame($easy->handle, $h1);
         $easy2 = $f->create($req, []);
         $easy3 = $f->create($req, []);
         $easy4 = $f->create($req, []);
         $f->release($easy);
-        self::assertCount(1, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(1, Helpers::readObjectAttribute(Helpers::readObjectAttribute($f, 'handlePool'), 'handles'));
         $f->release($easy2);
-        self::assertCount(2, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(2, Helpers::readObjectAttribute(Helpers::readObjectAttribute($f, 'handlePool'), 'handles'));
         $f->release($easy3);
-        self::assertCount(3, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(3, Helpers::readObjectAttribute(Helpers::readObjectAttribute($f, 'handlePool'), 'handles'));
         $f->release($easy4);
-        self::assertCount(3, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(3, Helpers::readObjectAttribute(Helpers::readObjectAttribute($f, 'handlePool'), 'handles'));
     }
 
     public function testRejectsPromiseWhenCreateResponseFails()
