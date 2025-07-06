@@ -1075,6 +1075,12 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
+			message: '#^Property GuzzleHttp\\Handler\\StreamHandler\:\:\$lastHeaders \(array\) does not accept mixed\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
 			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
 			identifier: callable.nonCallable
 			count: 4

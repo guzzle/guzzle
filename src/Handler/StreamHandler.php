@@ -335,7 +335,11 @@ class StreamHandler
         return $this->createResource(
             function () use ($uri, &$http_response_header, $contextResource, $context, $options, $request) {
                 $resource = @\fopen((string) $uri, 'r', false, $contextResource);
-                $this->lastHeaders = $http_response_header ?? [];
+                if (\function_exists('http_get_last_response_headers')) {
+                    $this->lastHeaders = \http_get_last_response_headers() ?? [];
+                } else {
+                    $this->lastHeaders = $http_response_header ?? [];
+                }
 
                 if (false === $resource) {
                     throw new ConnectException(sprintf('Connection refused for URI %s', $uri), $request, null, $context);
