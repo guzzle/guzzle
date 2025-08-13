@@ -729,7 +729,11 @@ class CurlFactory implements CurlFactoryInterface
     public function __destruct()
     {
         foreach ($this->handles as $id => $handle) {
-            \curl_close($handle);
+            if (PHP_VERSION_ID < 80500) {
+                \curl_close($handle);
+            } else {
+                $handle = null;
+            }
             unset($this->handles[$id]);
         }
     }
