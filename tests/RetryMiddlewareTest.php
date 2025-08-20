@@ -3,11 +3,13 @@
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RetryMiddleware;
+use Psr\Http\Message\ResponseInterface;
 use PHPUnit\Framework\TestCase;
 
 class RetryMiddlewareTest extends TestCase
@@ -18,7 +20,6 @@ class RetryMiddlewareTest extends TestCase
         $calls = [];
         $decider = static function (...$args) use (&$calls) {
             $calls[] = $args;
-
             return \count($calls) < 3;
         };
         $delay = static function ($retries, $response, $request) use (&$delayCalls) {
@@ -26,7 +27,6 @@ class RetryMiddlewareTest extends TestCase
             self::assertSame($retries, $delayCalls);
             self::assertInstanceOf(Response::class, $response);
             self::assertInstanceOf(Request::class, $request);
-
             return 1;
         };
         $m = Middleware::retry($decider, $delay);
@@ -57,7 +57,6 @@ class RetryMiddlewareTest extends TestCase
         $calls = [];
         $decider = static function (...$args) use (&$calls) {
             $calls[] = $args;
-
             return $args[3] instanceof \Exception;
         };
         $m = Middleware::retry($decider);
@@ -81,5 +80,25 @@ class RetryMiddlewareTest extends TestCase
         self::assertSame(2000, RetryMiddleware::exponentialDelay(2));
         self::assertSame(4000, RetryMiddleware::exponentialDelay(3));
         self::assertSame(8000, RetryMiddleware::exponentialDelay(4));
+    }
+
+    public function testRespectsRetryAfterHeader(): void
+    {
+        $mock = new MockHandler([
+            new Response(429, ['Retry-After' => '1']),
+            new Response(200),
+        ]);
+
+        $stack = HandlerStack::create($mock);
+        $stack->push(Middleware::retry(
+            static fn($r, $req, $res, $ex) => true,
+            static fn($retries, ?ResponseInterface $res) => $res && $res->hasHeader('Retry-After')
+                ? ((int) $res->getHeaderLine('Retry-After')) * 1000
+                : 0
+        ));
+
+        $client = new Client(['handler' => $stack]);
+        $res = $client->request('GET', 'http://example.com');
+        $this->assertSame(200, $res->getStatusCode());
     }
 }
