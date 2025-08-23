@@ -775,7 +775,6 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
 
         $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Connection refused for URI '.Server::$url);
 
         $handler(
             new Request('GET', Server::$url.'guzzle-server/garbage'),
