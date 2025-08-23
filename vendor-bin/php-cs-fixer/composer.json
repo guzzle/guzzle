@@ -1,7 +1,7 @@
 {
     "require": {
-        "php": "^7.4 || ^8.0",
-        "friendsofphp/php-cs-fixer": "3.68.5"
+        "php": "^7.4",
+        "friendsofphp/php-cs-fixer": "3.86.0"
     },
     "config": {
         "preferred-install": "dist"

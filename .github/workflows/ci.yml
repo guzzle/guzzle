@@ -11,7 +11,7 @@ permissions:
 jobs:
   build-lowest-version:
     name: Build lowest version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Set up PHP
@@ -31,7 +31,7 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress --prefer-stable --prefer-lowest
@@ -47,15 +47,15 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       max-parallel: 10
       matrix:
-        php: ['7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
-        psr7: ['^2.7.0']
+        php: ['7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+        psr7: ['^2.8']
         include:
-          - php: '8.4'
-            psr7: '^2.7.0@dev'
+          - php: '8.5'
+            psr7: '^2.8@dev'
 
     steps:
       - name: Set up PHP
@@ -75,7 +75,7 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download dependencies
         run: |
@@ -93,11 +93,11 @@ jobs:
 
   build-windows:
     name: Build on Windows
-    runs-on: windows-2022
+    runs-on: windows-2025
     strategy:
       max-parallel: 10
       matrix:
-        php: ['7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
+        php: ['7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
 
     steps:
       - name: Set up PHP
@@ -117,7 +117,7 @@ jobs:
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress

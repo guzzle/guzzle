@@ -47,16 +47,26 @@ class CurlFactoryTest extends TestCase
             'Content-Length' => '7',
         ], 'testing');
         $f = new CurlFactory(3);
+
         $result = $f->create($request, ['sink' => $stream]);
-        self::assertInstanceOf(EasyHandle::class, $result);
-        if (\PHP_VERSION_ID >= 80000) {
-            self::assertInstanceOf(\CurlHandle::class, $result->handle);
-        } else {
-            self::assertIsResource($result->handle);
+
+        try {
+            self::assertInstanceOf(EasyHandle::class, $result);
+
+            if (\PHP_VERSION_ID >= 80000) {
+                self::assertInstanceOf(\CurlHandle::class, $result->handle);
+            } else {
+                self::assertIsResource($result->handle);
+            }
+
+            self::assertIsArray($result->headers);
+            self::assertSame($stream, $result->sink);
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_close($result->handle);
+            }
         }
-        self::assertIsArray($result->headers);
-        self::assertSame($stream, $result->sink);
-        \curl_close($result->handle);
+
         self::assertSame('PUT', $_SERVER['_curl'][\CURLOPT_CUSTOMREQUEST]);
         self::assertSame(
             'http://127.0.0.1:8126/',
@@ -652,7 +662,11 @@ class CurlFactoryTest extends TestCase
     public function testCreatesConnectException()
     {
         $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
-        $m->setAccessible(true);
+
+        if (PHP_VERSION_ID < 80100) {
+            $m->setAccessible(true);
+        }
+
         $factory = new CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
         $easy->errno = \CURLE_COULDNT_CONNECT;
