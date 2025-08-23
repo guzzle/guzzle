@@ -774,7 +774,7 @@ class StreamHandlerTest extends TestCase
     {
         $handler = new StreamHandler();
 
-        $this->expectException(ConnectException::class);
+        $this->expectException(RequestException::class);
         $this->expectExceptionMessage('Connection refused for URI '.Server::$url);
 
         $handler(
