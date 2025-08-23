@@ -662,7 +662,11 @@ class CurlFactoryTest extends TestCase
     public function testCreatesConnectException()
     {
         $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
-        $m->setAccessible(true);
+
+        if (PHP_VERSION_ID < 80100) {
+            $m->setAccessible(true);
+        }
+
         $factory = new CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
         $easy->errno = \CURLE_COULDNT_CONNECT;

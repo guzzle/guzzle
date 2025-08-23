@@ -16,12 +16,16 @@ class Helpers
                     return $object->$attributeName;
                 }
 
-                $attribute->setAccessible(true);
+                if (PHP_VERSION_ID < 80100) {
+                    $attribute->setAccessible(true);
+                }
 
                 try {
                     return $attribute->getValue($object);
                 } finally {
-                    $attribute->setAccessible(false);
+                    if (PHP_VERSION_ID < 80100) {
+                        $attribute->setAccessible(false);
+                    }
                 }
             } catch (\ReflectionException $e) {
                 // do nothing
