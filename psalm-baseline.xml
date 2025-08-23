@@ -126,9 +126,6 @@
       <code><![CDATA[!empty($options)]]></code>
       <code><![CDATA[empty($options)]]></code>
     </RedundantCondition>
-    <UndefinedVariable>
-      <code><![CDATA[$http_response_header]]></code>
-    </UndefinedVariable>
   </file>
   <file src="src/MessageFormatter.php">
     <InvalidArgument>

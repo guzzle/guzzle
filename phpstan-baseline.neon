@@ -1057,12 +1057,6 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Variable \$http_response_header on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: '#^Variable \$options in empty\(\) always exists and is not falsy\.$#'
 			identifier: empty.variable
 			count: 1
