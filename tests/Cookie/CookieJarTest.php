@@ -65,7 +65,7 @@ class CookieJarTest extends TestCase
     /**
      * Provides test data for cookie cookieJar retrieval
      */
-    public function getCookiesDataProvider()
+    public static function getCookiesDataProvider()
     {
         return [
             [['foo', 'baz', 'test', 'muppet', 'googoo'], '', '', '', false],
@@ -314,7 +314,7 @@ class CookieJarTest extends TestCase
         self::assertCount(1, $this->jar);
     }
 
-    public function getMatchingCookiesDataProvider()
+    public static function getMatchingCookiesDataProvider()
     {
         return [
             ['https://example.com', 'foo=bar; baz=foobar'],
@@ -435,7 +435,7 @@ class CookieJarTest extends TestCase
         self::assertTrue($newRequest->hasHeader('Cookie'));
     }
 
-    public function getCookiePathsDataProvider()
+    public static function getCookiePathsDataProvider()
     {
         return [
             ['', '/'],
@@ -468,7 +468,7 @@ class CookieJarTest extends TestCase
         self::assertSame($cookiePath, $this->jar->toArray()[1]['Path']);
     }
 
-    public function getDomainMatchesProvider()
+    public static function getDomainMatchesProvider()
     {
         return [
             ['www.example.com', 'www.example.com', true],

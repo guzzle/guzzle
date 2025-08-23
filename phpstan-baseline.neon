@@ -61,25 +61,25 @@ parameters:
 			path: src/Client.php
 
 		-
+			message: '#^Parameter \#1 \$array of function array_keys expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Client.php
+
+		-
+			message: '#^Parameter \#1 \$data of function http_build_query expects array\|object, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Client.php
+
+		-
 			message: '#^Parameter \#1 \$elements of class GuzzleHttp\\Psr7\\MultipartStream constructor expects array, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$input of function array_keys expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Client.php
-
-		-
 			message: '#^Parameter \#1 \$name of method Psr\\Http\\Message\\MessageInterface\:\:hasHeader\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#1 \$querydata of function http_build_query expects array\|object, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Client.php
@@ -91,13 +91,13 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$str of function strtolower expects string, int\|string given\.$#'
+			message: '#^Parameter \#1 \$string of function strtolower expects string, int\|string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$str of function strtolower expects string, mixed given\.$#'
+			message: '#^Parameter \#1 \$string of function strtolower expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Client.php
@@ -109,7 +109,7 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$var of function count expects array\|Countable, mixed given\.$#'
+			message: '#^Parameter \#1 \$value of function count expects array\|Countable, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Client.php
@@ -349,7 +349,7 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
-			message: '#^Parameter \#2 \$timestamp of function gmdate expects int, mixed given\.$#'
+			message: '#^Parameter \#2 \$timestamp of function gmdate expects int\|null, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Cookie/SetCookie.php
@@ -487,37 +487,7 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$ch of function curl_close expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_error expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_getinfo expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 4
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_reset expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 4
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_setopt_array expects resource, CurlHandle\|resource\|false given\.$#'
+			message: '#^Parameter \#1 \$array of function array_keys expects array, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlFactory.php
@@ -535,7 +505,37 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$input of function array_keys expects array, mixed given\.$#'
+			message: '#^Parameter \#1 \$handle of function curl_close expects CurlHandle, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: '#^Parameter \#1 \$handle of function curl_error expects CurlHandle, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: '#^Parameter \#1 \$handle of function curl_getinfo expects CurlHandle, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: '#^Parameter \#1 \$handle of function curl_reset expects CurlHandle, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: '#^Parameter \#1 \$handle of function curl_setopt expects CurlHandle, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: '#^Parameter \#1 \$handle of function curl_setopt_array expects CurlHandle, CurlHandle\|resource\|false given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlFactory.php
@@ -559,19 +559,13 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$str of function trim expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$str1 of function strcasecmp expects string, int\|string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Parameter \#1 \$string of function strlen expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlFactory.php
@@ -583,13 +577,19 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#2 \$arr2 of function array_replace expects array, mixed given\.$#'
+			message: '#^Parameter \#1 \$string1 of function strcasecmp expects string, int\|string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlFactory.php
 
 		-
 			message: '#^Parameter \#2 \$noProxyArray of static method GuzzleHttp\\Utils\:\:isHostInNoProxy\(\) expects array\<string\>, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Handler/CurlFactory.php
+
+		-
+			message: '#^Parameter \#2 \.\.\.\$replacements of function array_replace expects array, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlFactory.php
@@ -619,12 +619,6 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlFactory\:\:\$handles has unknown class CurlHandle as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Property GuzzleHttp\\Handler\\EasyHandle\:\:\$handle \(CurlHandle\|resource\) does not accept CurlHandle\|resource\|false\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -643,13 +637,13 @@ parameters:
 			path: src/Handler/CurlHandler.php
 
 		-
-			message: '#^Parameter \#1 \$ch of function curl_errno expects resource, CurlHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$handle of function curl_errno expects CurlHandle, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlHandler.php
 
 		-
-			message: '#^Parameter \#1 \$ch of function curl_exec expects resource, CurlHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$handle of function curl_exec expects CurlHandle, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlHandler.php
@@ -715,69 +709,51 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:__get\(\) has invalid return type CurlMultiHandle\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:__get\(\) never returns CurlMultiHandle so it can be removed from the return type\.$#'
+			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:__get\(\) never returns resource so it can be removed from the return type\.$#'
 			identifier: return.unusedType
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$ch of function curl_close expects resource, mixed given\.$#'
+			message: '#^Parameter \#1 \$handle of function curl_close expects CurlHandle, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_add_handle expects resource, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$multi_handle of function curl_multi_add_handle expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_close expects resource, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$multi_handle of function curl_multi_close expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_exec expects resource, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$multi_handle of function curl_multi_exec expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_info_read expects resource, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$multi_handle of function curl_multi_info_read expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_remove_handle expects resource, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$multi_handle of function curl_multi_remove_handle expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_select expects resource, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$multi_handle of function curl_multi_select expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 3
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#2 \$ch of function curl_multi_add_handle expects resource, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#2 \$ch of function curl_multi_remove_handle expects resource, mixed given\.$#'
-			identifier: argument.type
-			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-
@@ -787,20 +763,26 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
+			message: '#^Parameter \#2 \$handle of function curl_multi_add_handle expects CurlHandle, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: '#^Parameter \#2 \$handle of function curl_multi_remove_handle expects CurlHandle, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Handler/CurlMultiHandler.php
+
+		-
 			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh \(CurlMultiHandle\|resource\) in isset\(\) is not nullable\.$#'
 			identifier: isset.property
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh \(CurlMultiHandle\|resource\) is never assigned CurlMultiHandle so it can be removed from the property type\.$#'
+			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh \(CurlMultiHandle\|resource\) is never assigned resource so it can be removed from the property type\.$#'
 			identifier: property.unusedType
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh has unknown class CurlMultiHandle as its type\.$#'
-			identifier: class.notFound
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
@@ -829,7 +811,7 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Strict comparison using \=\=\= between false and resource will always evaluate to false\.$#'
+			message: '#^Strict comparison using \=\=\= between false and CurlMultiHandle will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
@@ -843,12 +825,6 @@ parameters:
 		-
 			message: '#^Parameter \#2 \$headers of class GuzzleHttp\\Psr7\\Response constructor expects array\<array\<string\>\|string\>, array given\.$#'
 			identifier: argument.type
-			count: 1
-			path: src/Handler/EasyHandle.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\EasyHandle\:\:\$handle has unknown class CurlHandle as its type\.$#'
-			identifier: class.notFound
 			count: 1
 			path: src/Handler/EasyHandle.php
 
@@ -991,7 +967,7 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Cannot access offset int\<0, max\> on mixed\.$#'
+			message: '#^Cannot access offset int\|string on mixed\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
 			path: src/Handler/StreamHandler.php
@@ -1375,7 +1351,7 @@ parameters:
 			path: src/Utils.php
 
 		-
-			message: '#^Parameter \#2 \$str of function explode expects string, mixed given\.$#'
+			message: '#^Parameter \#2 \$string of function explode expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Utils.php
