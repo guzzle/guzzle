@@ -131,7 +131,9 @@ auth
 :Summary: Pass an array of HTTP authentication parameters to use with the
         request. The array must contain the username in index [0], the password in
         index [1], and you can optionally provide a built-in authentication type in
-        index [2]. Pass ``null`` to disable authentication for a request.
+        index [2]. In the case of ``bearer`` authentication, the token will be in
+        index [0], and index [1] contains the empty string.
+        Pass ``null`` to disable authentication for a request.
 :Types:
         - array
         - string
@@ -174,6 +176,20 @@ ntlm
 
     $client->request('GET', '/get', [
         'auth' => ['username', 'password', 'ntlm']
+    ]);
+
+.. note::
+
+    This is currently only supported when using the cURL handler.
+
+bearer
+    Use `Bearer authentication <https://datatracker.ietf.org/doc/html/rfc6750>`_
+    (must be supported by the HTTP handler).
+
+.. code-block:: php
+
+    $client->request('GET', '/get', [
+        'auth' => ['token', '', 'bearer']
     ]);
 
 .. note::

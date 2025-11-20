@@ -275,6 +275,7 @@ class RedirectMiddlewareTest extends TestCase
     /**
      * @testWith ["digest"]
      *           ["ntlm"]
+     *           ["bearer"]
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossHost($auth)
     {
@@ -293,6 +294,10 @@ class RedirectMiddlewareTest extends TestCase
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options still contain CURLOPT_USERPWD entry'
                 );
+                self::assertFalse(
+                    isset($options['curl'][\CURLOPT_XOAUTH2_BEARER]),
+                    'curl options still contain CURLOPT_XOAUTH2_BEARER entry'
+                );
 
                 return new Response(200);
             },
@@ -305,6 +310,7 @@ class RedirectMiddlewareTest extends TestCase
     /**
      * @testWith ["digest"]
      *           ["ntlm"]
+     *           ["bearer"]
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossPort($auth)
     {
@@ -323,6 +329,10 @@ class RedirectMiddlewareTest extends TestCase
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options still contain CURLOPT_USERPWD entry'
                 );
+                self::assertFalse(
+                    isset($options['curl'][\CURLOPT_XOAUTH2_BEARER]),
+                    'curl options still contain CURLOPT_XOAUTH2_BEARER entry'
+                );
 
                 return new Response(200);
             },
@@ -335,6 +345,7 @@ class RedirectMiddlewareTest extends TestCase
     /**
      * @testWith ["digest"]
      *           ["ntlm"]
+     *           ["bearer"]
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossScheme($auth)
     {
@@ -353,6 +364,10 @@ class RedirectMiddlewareTest extends TestCase
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options still contain CURLOPT_USERPWD entry'
                 );
+                self::assertFalse(
+                    isset($options['curl'][\CURLOPT_XOAUTH2_BEARER]),
+                    'curl options still contain CURLOPT_XOAUTH2_BEARER entry'
+                );
 
                 return new Response(200);
             },
@@ -365,6 +380,7 @@ class RedirectMiddlewareTest extends TestCase
     /**
      * @testWith ["digest"]
      *           ["ntlm"]
+     *           ["bearer"]
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossSchemeSamePort($auth)
     {
@@ -382,6 +398,10 @@ class RedirectMiddlewareTest extends TestCase
                 self::assertFalse(
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options still contain CURLOPT_USERPWD entry'
+                );
+                self::assertFalse(
+                    isset($options['curl'][\CURLOPT_XOAUTH2_BEARER]),
+                    'curl options still contain CURLOPT_XOAUTH2_BEARER entry'
                 );
 
                 return new Response(200);
@@ -412,6 +432,32 @@ class RedirectMiddlewareTest extends TestCase
                 self::assertTrue(
                     isset($options['curl'][\CURLOPT_USERPWD]),
                     'curl options does not contain expected CURLOPT_USERPWD entry'
+                );
+
+                return new Response(200);
+            },
+        ]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
+    }
+
+    /**
+     * @testWith ["bearer"]
+     *
+     */
+    public function testNotRemoveCurlBearerAuthorizationOptionsOnRedirect($auth)
+    {
+        if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_XOAUTH2_BEARER')) {
+            self::markTestSkipped('ext-curl is required for this test');
+        }
+
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://example.com/2']),
+            static function (RequestInterface $request, $options) {
+                self::assertTrue(
+                    isset($options['curl'][\CURLOPT_XOAUTH2_BEARER]),
+                    'curl options still contain CURLOPT_XOAUTH2_BEARER entry'
                 );
 
                 return new Response(200);

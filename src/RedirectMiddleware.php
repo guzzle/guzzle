@@ -92,7 +92,8 @@ class RedirectMiddleware
         if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri()) && defined('\CURLOPT_HTTPAUTH')) {
             unset(
                 $options['curl'][\CURLOPT_HTTPAUTH],
-                $options['curl'][\CURLOPT_USERPWD]
+                $options['curl'][\CURLOPT_USERPWD],
+                $options['curl'][\CURLOPT_XOAUTH2_BEARER]
             );
         }
 

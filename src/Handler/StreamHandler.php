@@ -324,6 +324,11 @@ class StreamHandler
             throw new \InvalidArgumentException('Microsoft NTLM authentication only supported with curl handler');
         }
 
+        // Bearer authentication only supported with curl handler
+        if (isset($options['auth'][2]) && 'bearer' === $options['auth'][2]) {
+            throw new \InvalidArgumentException('Bearer authentication only supported with curl handler');
+        }
+
         $uri = $this->resolveHost($request, $options);
 
         $contextResource = $this->createResource(

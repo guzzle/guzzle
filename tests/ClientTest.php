@@ -403,6 +403,18 @@ class ClientTest extends TestCase
         ], $last['curl']);
     }
 
+    public function testAuthCanBeArrayForBearerAuth()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => ['a', '', 'bearer']]);
+        $last = $mock->getLastOptions();
+        self::assertSame([
+            \CURLOPT_HTTPAUTH => 64,
+            \CURLOPT_XOAUTH2_BEARER => 'a',
+        ], $last['curl']);
+    }
+
     public function testAuthCanBeArrayForNtlmAuth()
     {
         $mock = new MockHandler([new Response()]);

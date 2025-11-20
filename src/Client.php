@@ -416,6 +416,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     $options['curl'][\CURLOPT_HTTPAUTH] = \CURLAUTH_NTLM;
                     $options['curl'][\CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
+                case 'bearer':
+                    $options['curl'][\CURLOPT_HTTPAUTH] = \CURLAUTH_BEARER;
+                    $options['curl'][\CURLOPT_XOAUTH2_BEARER] = $value[0];
+                    break;
             }
         }
 
