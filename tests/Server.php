@@ -35,7 +35,7 @@ class Server
      *
      * @throws \RuntimeException
      */
-    public static function flush()
+    public static function flush(): ResponseInterface
     {
         return self::getClient()->request('DELETE', 'guzzle-server/requests');
     }
@@ -108,7 +108,7 @@ class Server
      *
      * @throws \RuntimeException
      */
-    public static function received()
+    public static function received(): array
     {
         if (!self::$started) {
             return [];
@@ -180,7 +180,7 @@ class Server
         self::$started = true;
     }
 
-    private static function isListening()
+    private static function isListening(): bool
     {
         try {
             self::getClient()->request('GET', 'guzzle-server/perf', [
@@ -194,7 +194,7 @@ class Server
         }
     }
 
-    private static function getClient()
+    private static function getClient(): Client
     {
         if (!self::$client) {
             self::$client = new Client([

@@ -19,7 +19,7 @@ namespace GuzzleHttp\Test {
 // Override curl_setopt_array() and curl_multi_setopt() to get the last set curl options
 
 namespace GuzzleHttp\Handler {
-    function curl_setopt_array($handle, array $options)
+    function curl_setopt_array($handle, array $options): bool
     {
         if (!empty($_SERVER['curl_test'])) {
             $_SERVER['_curl'] = $options;
@@ -30,7 +30,7 @@ namespace GuzzleHttp\Handler {
         return \curl_setopt_array($handle, $options);
     }
 
-    function curl_multi_setopt($handle, $option, $value)
+    function curl_multi_setopt($handle, $option, $value): bool
     {
         if (!empty($_SERVER['curl_test'])) {
             $_SERVER['_curl_multi'][$option] = $value;

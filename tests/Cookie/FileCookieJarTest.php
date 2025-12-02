@@ -130,7 +130,7 @@ class FileCookieJarTest extends TestCase
         \unlink($this->file);
     }
 
-    public static function providerPersistsToFileFileParameters()
+    public static function providerPersistsToFileFileParameters(): array
     {
         return [
             [false],

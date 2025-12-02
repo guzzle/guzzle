@@ -162,7 +162,7 @@ class SetCookie
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->data['Name'];
     }
@@ -186,7 +186,7 @@ class SetCookie
      *
      * @return string|null
      */
-    public function getValue()
+    public function getValue(): ?string
     {
         return $this->data['Value'];
     }
@@ -210,7 +210,7 @@ class SetCookie
      *
      * @return string|null
      */
-    public function getDomain()
+    public function getDomain(): ?string
     {
         return $this->data['Domain'];
     }
@@ -234,7 +234,7 @@ class SetCookie
      *
      * @return string
      */
-    public function getPath()
+    public function getPath(): string
     {
         return $this->data['Path'];
     }
@@ -258,7 +258,7 @@ class SetCookie
      *
      * @return int|null
      */
-    public function getMaxAge()
+    public function getMaxAge(): ?int
     {
         return null === $this->data['Max-Age'] ? null : (int) $this->data['Max-Age'];
     }
@@ -306,7 +306,7 @@ class SetCookie
      *
      * @return bool
      */
-    public function getSecure()
+    public function getSecure(): bool
     {
         return $this->data['Secure'];
     }
@@ -330,7 +330,7 @@ class SetCookie
      *
      * @return bool|null
      */
-    public function getDiscard()
+    public function getDiscard(): ?bool
     {
         return $this->data['Discard'];
     }
@@ -354,7 +354,7 @@ class SetCookie
      *
      * @return bool
      */
-    public function getHttpOnly()
+    public function getHttpOnly(): bool
     {
         return $this->data['HttpOnly'];
     }

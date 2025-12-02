@@ -26,7 +26,7 @@ class CookieJarTest extends TestCase
         $this->jar = new CookieJar();
     }
 
-    protected function getTestCookies()
+    protected function getTestCookies(): array
     {
         return [
             new SetCookie(['Name' => 'foo',  'Value' => 'bar', 'Domain' => 'foo.com', 'Path' => '/',    'Discard' => true]),
@@ -65,7 +65,7 @@ class CookieJarTest extends TestCase
     /**
      * Provides test data for cookie cookieJar retrieval
      */
-    public static function getCookiesDataProvider()
+    public static function getCookiesDataProvider(): array
     {
         return [
             [['foo', 'baz', 'test', 'muppet', 'googoo'], '', '', '', false],
@@ -314,7 +314,7 @@ class CookieJarTest extends TestCase
         self::assertCount(1, $this->jar);
     }
 
-    public static function getMatchingCookiesDataProvider()
+    public static function getMatchingCookiesDataProvider(): array
     {
         return [
             ['https://example.com', 'foo=bar; baz=foobar'],
@@ -435,7 +435,7 @@ class CookieJarTest extends TestCase
         self::assertTrue($newRequest->hasHeader('Cookie'));
     }
 
-    public static function getCookiePathsDataProvider()
+    public static function getCookiePathsDataProvider(): array
     {
         return [
             ['', '/'],
@@ -468,7 +468,7 @@ class CookieJarTest extends TestCase
         self::assertSame($cookiePath, $this->jar->toArray()[1]['Path']);
     }
 
-    public static function getDomainMatchesProvider()
+    public static function getDomainMatchesProvider(): array
     {
         return [
             ['www.example.com', 'www.example.com', true],
@@ -500,7 +500,7 @@ class CookieJarTest extends TestCase
         self::assertCount($matches ? 1 : 0, $this->jar->toArray());
     }
 
-    private function futureExpirationDate()
+    private function futureExpirationDate(): string
     {
         return (new DateTimeImmutable())->add(new DateInterval('P1D'))->format(DateTime::COOKIE);
     }

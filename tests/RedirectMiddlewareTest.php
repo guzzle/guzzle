@@ -422,7 +422,7 @@ class RedirectMiddlewareTest extends TestCase
         $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
     }
 
-    public static function crossOriginRedirectProvider()
+    public static function crossOriginRedirectProvider(): array
     {
         return [
             ['http://example.com/123', 'http://example.com/', false],
@@ -510,7 +510,7 @@ class RedirectMiddlewareTest extends TestCase
     /**
      * @return array
      */
-    public static function modifyRequestFollowRequyestMethodAndBodyProvider()
+    public static function modifyRequestFollowRequyestMethodAndBodyProvider(): array
     {
         return [
             'DELETE' => [

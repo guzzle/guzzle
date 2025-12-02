@@ -15,7 +15,7 @@ use Psr\Http\Message\RequestInterface;
 
 class PrepareBodyMiddlewareTest extends TestCase
 {
-    public static function methodProvider()
+    public static function methodProvider(): \Generator
     {
         $methods = ['GET', 'PUT', 'POST'];
         $bodies = ['Test', ''];
@@ -99,7 +99,7 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public static function expectProvider()
+    public static function expectProvider(): array
     {
         return [
             [true, ['100-Continue']],

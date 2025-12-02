@@ -172,7 +172,7 @@ class HandlerStackTest extends TestCase
         self::assertSame('foo=bar', $lastRequest->getHeaderLine('Cookie'));
     }
 
-    private function getFunctions()
+    private function getFunctions(): array
     {
         $calls = [];
 

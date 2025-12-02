@@ -87,7 +87,7 @@ class RequestExceptionTest extends TestCase
         throw RequestException::create(new Request('GET', '/'), new Response(600));
     }
 
-    public static function dataPrintableResponses()
+    public static function dataPrintableResponses(): array
     {
         return [
             ['You broke the test!'],

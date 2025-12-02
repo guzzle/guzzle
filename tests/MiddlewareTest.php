@@ -115,7 +115,7 @@ class MiddlewareTest extends TestCase
         Middleware::history($nullContainer);
     }
 
-    public static function getHistoryUseCases()
+    public static function getHistoryUseCases(): array
     {
         return [
             [[]],                // 1. Container is an array

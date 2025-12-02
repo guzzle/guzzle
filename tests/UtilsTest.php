@@ -8,12 +8,12 @@ use PHPUnit\Framework\TestCase;
 
 class UtilsTest extends TestCase
 {
-    public static function noBodyProvider()
+    public static function noBodyProvider(): array
     {
         return [['get'], ['head'], ['delete']];
     }
 
-    public static function typeProvider()
+    public static function typeProvider(): array
     {
         return [
             ['foo', 'string(3) "foo"'],
@@ -112,7 +112,7 @@ class UtilsTest extends TestCase
         self::assertSame($expected, GuzzleHttp\normalize_header_keys($input));
     }
 
-    public static function noProxyProvider()
+    public static function noProxyProvider(): array
     {
         return [
             ['mit.edu', ['.mit.edu'], false],

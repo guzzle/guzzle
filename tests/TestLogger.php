@@ -26,12 +26,12 @@ class TestLogger extends AbstractLogger
         $this->records[] = $record;
     }
 
-    public function hasRecords($level)
+    public function hasRecords($level): bool
     {
         return isset($this->recordsByLevel[$level]);
     }
 
-    public function hasRecord($record, $level)
+    public function hasRecord($record, $level): bool
     {
         if (is_string($record)) {
             $record = ['message' => $record];
@@ -49,21 +49,21 @@ class TestLogger extends AbstractLogger
         }, $level);
     }
 
-    public function hasRecordThatContains($message, $level)
+    public function hasRecordThatContains($message, $level): bool
     {
         return $this->hasRecordThatPasses(static function ($rec) use ($message) {
             return strpos($rec['message'], $message) !== false;
         }, $level);
     }
 
-    public function hasRecordThatMatches($regex, $level)
+    public function hasRecordThatMatches($regex, $level): bool
     {
         return $this->hasRecordThatPasses(static function ($rec) use ($regex) {
             return preg_match($regex, $rec['message']) > 0;
         }, $level);
     }
 
-    public function hasRecordThatPasses(callable $predicate, $level)
+    public function hasRecordThatPasses(callable $predicate, $level): bool
     {
         if (!isset($this->recordsByLevel[$level])) {
             return false;

@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
  */
 class CurlHandlerTest extends TestCase
 {
-    protected function getHandler($options = [])
+    protected function getHandler($options = []): CurlHandler
     {
         return new CurlHandler($options);
     }

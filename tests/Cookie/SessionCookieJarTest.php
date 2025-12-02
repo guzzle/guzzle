@@ -82,7 +82,7 @@ class SessionCookieJarTest extends TestCase
         unset($_SESSION[$this->sessionVar]);
     }
 
-    public static function providerPersistsToSessionParameters()
+    public static function providerPersistsToSessionParameters(): array
     {
         return [
             [false],

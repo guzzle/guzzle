@@ -122,7 +122,7 @@ class SetCookieTest extends TestCase
         self::assertFalse($cookie->matchesDomain('example.com'));
     }
 
-    public static function pathMatchProvider()
+    public static function pathMatchProvider(): array
     {
         return [
             ['/foo', '/foo', true],
@@ -153,7 +153,7 @@ class SetCookieTest extends TestCase
         self::assertSame($isMatch, $cookie->matchesPath($requestPath));
     }
 
-    public static function cookieValidateProvider()
+    public static function cookieValidateProvider(): array
     {
         return [
             ['foo', 'baz', 'bar', true],
@@ -209,7 +209,7 @@ class SetCookieTest extends TestCase
      *
      * @return array
      */
-    public static function cookieParserDataProvider()
+    public static function cookieParserDataProvider(): array
     {
         return [
             [
@@ -453,7 +453,7 @@ class SetCookieTest extends TestCase
      *
      * @return array
      */
-    public static function isExpiredProvider()
+    public static function isExpiredProvider(): array
     {
         return [
             [

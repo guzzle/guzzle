@@ -183,7 +183,7 @@ class PoolTest extends TestCase
         self::assertSame($keys, \array_keys($requests));
     }
 
-    private function getClient($total = 1)
+    private function getClient($total = 1): Client
     {
         $queue = [];
         for ($i = 0; $i < $total; ++$i) {
