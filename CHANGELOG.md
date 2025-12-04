@@ -2,6 +2,10 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+### Added
+
+- Add support for Bearer tokens
+
 ## 7.10.0 - 2025-08-23
 
 ### Added

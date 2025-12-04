@@ -92,9 +92,13 @@ class RedirectMiddleware
         if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri()) && defined('\CURLOPT_HTTPAUTH')) {
             unset(
                 $options['curl'][\CURLOPT_HTTPAUTH],
-                $options['curl'][\CURLOPT_USERPWD],
-                $options['curl'][\CURLOPT_XOAUTH2_BEARER]
+                $options['curl'][\CURLOPT_USERPWD]
             );
+            if (defined('CURLOPT_XOAUTH2_BEARER')) {
+                unset(
+                    $options['curl'][\CURLOPT_XOAUTH2_BEARER]
+                );
+            }
         }
 
         if (isset($options['allow_redirects']['on_redirect'])) {

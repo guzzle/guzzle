@@ -194,7 +194,7 @@ bearer
 
 .. note::
 
-    This is currently only supported when using the cURL handler.
+    This is currently only supported when using the cURL handler with cURL version 7.61.0 or higher and PHP version 7.3 or higher
 
 
 body
