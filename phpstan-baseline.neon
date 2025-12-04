@@ -37,9 +37,15 @@ parameters:
 			path: src/Client.php
 
 		-
+			message: '#^Cannot access offset 10220 on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Client.php
+
+		-
 			message: '#^Cannot access offset 107 on mixed\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
+			count: 3
 			path: src/Client.php
 
 		-
@@ -957,7 +963,7 @@ parameters:
 		-
 			message: '#^Cannot access offset 2 on mixed\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
+			count: 2
 			path: src/Handler/StreamHandler.php
 
 		-
@@ -1220,6 +1226,12 @@ parameters:
 
 		-
 			message: '#^Cannot access offset ''track_redirects'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/RedirectMiddleware.php
+
+		-
+			message: '#^Cannot access offset 10220 on mixed\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
 			path: src/RedirectMiddleware.php
