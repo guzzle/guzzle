@@ -465,7 +465,7 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
+        $client->get('http://example.com?a=b', ['auth' => ['testtoken', '', $auth]]);
     }
 
     public static function crossOriginRedirectProvider()
