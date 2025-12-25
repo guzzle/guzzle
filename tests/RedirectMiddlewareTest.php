@@ -278,7 +278,7 @@ class RedirectMiddlewareTest extends TestCase
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossHost($auth)
     {
-        if (!defined('\CURLOPT_HTTPAUTH')) {
+        if (!defined('CURLOPT_HTTPAUTH')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
@@ -308,7 +308,7 @@ class RedirectMiddlewareTest extends TestCase
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossPort($auth)
     {
-        if (!defined('\CURLOPT_HTTPAUTH')) {
+        if (!defined('CURLOPT_HTTPAUTH')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
@@ -338,7 +338,7 @@ class RedirectMiddlewareTest extends TestCase
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossScheme($auth)
     {
-        if (!defined('\CURLOPT_HTTPAUTH')) {
+        if (!defined('CURLOPT_HTTPAUTH')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
@@ -368,7 +368,7 @@ class RedirectMiddlewareTest extends TestCase
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossSchemeSamePort($auth)
     {
-        if (!defined('\CURLOPT_HTTPAUTH')) {
+        if (!defined('CURLOPT_HTTPAUTH')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
@@ -398,7 +398,7 @@ class RedirectMiddlewareTest extends TestCase
      */
     public function testNotRemoveCurlAuthorizationOptionsOnRedirect($auth)
     {
-        if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_USERPWD')) {
+        if (!defined('CURLOPT_HTTPAUTH') || !defined('CURLOPT_USERPWD')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
