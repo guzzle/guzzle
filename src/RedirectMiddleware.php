@@ -89,7 +89,10 @@ class RedirectMiddleware
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
         // If authorization is handled by curl, unset it if URI is cross-origin.
-        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri()) && defined('\CURLOPT_HTTPAUTH')) {
+        if (
+            Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri())
+            && defined('CURLOPT_HTTPAUTH')
+        ) {
             unset(
                 $options['curl'][\CURLOPT_HTTPAUTH],
                 $options['curl'][\CURLOPT_USERPWD]
