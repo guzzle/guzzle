@@ -482,8 +482,11 @@ class SetCookie
 
         // Domains must not be empty, but can be 0. "0" is not a valid internet
         // domain, but may be used as server name in a private network.
+        // A null domain is allowed per RFC 6265 Section 4.1.2.3 — when the
+        // Domain attribute is omitted, the cookie becomes a "host-only" cookie
+        // that is returned only to the origin server.
         $domain = $this->getDomain();
-        if ($domain === null || $domain === '') {
+        if ($domain !== null && $domain === '') {
             return 'The cookie domain must not be empty';
         }
 

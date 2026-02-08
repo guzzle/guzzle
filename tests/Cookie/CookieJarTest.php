@@ -500,6 +500,21 @@ class CookieJarTest extends TestCase
         self::assertCount($matches ? 1 : 0, $this->jar->toArray());
     }
 
+        /**
+     * @see https://github.com/guzzle/guzzle/issues/3315
+     */
+    public function testAcceptsCookieWithoutDomain(): void
+    {
+        $jar = new CookieJar(true);
+        $cookie = new SetCookie([
+            'Name' => 'test',
+            'Value' => 'value',
+        ]);
+        self::assertTrue($jar->setCookie($cookie));
+        self::assertCount(1, $jar);
+        self::assertNull($jar->toArray()[0]['Domain']);
+    }
+
     private function futureExpirationDate()
     {
         return (new DateTimeImmutable())->add(new DateInterval('P1D'))->format(DateTime::COOKIE);
