@@ -6,6 +6,43 @@ namespace GuzzleHttp;
  * This class contains a list of built-in Guzzle request options.
  *
  * @see https://docs.guzzlephp.org/en/latest/request-options.html
+ *
+ * @psalm-type OptionsArray = array{
+ *     handler?: callable,
+ *     base_uri?: string|\Psr\Http\Message\UriInterface,
+ *     allow_redirects?: bool|array,
+ *     auth?: array{0: string, 1: string, 2?: string}|null,
+ *     body?: resource|string|null|int|float|\Psr\Http\Message\StreamInterface|callable|\Iterator,
+ *     cert?: string|array,
+ *     connect_timeout?: float,
+ *     cookies?: bool|\GuzzleHttp\Cookie\CookieJarInterface,
+ *     crypto_method?: int,
+ *     debug?: bool|resource,
+ *     decode_content?: bool|string,
+ *     delay?: int|float,
+ *     expect?: bool|int,
+ *     form_params?: array<string, string|array<string>>,
+ *     headers?: array<string, string|array<string>>,
+ *     http_errors?: bool,
+ *     idn_conversion?: bool|int,
+ *     json?: mixed,
+ *     multipart?: array<int, array{name: string, contents: mixed, headers?: array, filename?: string}>,
+ *     on_headers?: callable,
+ *     on_stats?: callable,
+ *     progress?: callable,
+ *     proxy?: string|array,
+ *     query?: array|string,
+ *     read_timeout?: float,
+ *     sink?: resource|string|\Psr\Http\Message\StreamInterface,
+ *     ssl_key?: array|string,
+ *     stream?: bool,
+ *     synchronous?: bool,
+ *     timeout?: float,
+ *     verify?: bool|string,
+ *     version?: float,
+ *     force_ip_resolve?: string,
+ *     ...
+ * }
  */
 final class RequestOptions
 {

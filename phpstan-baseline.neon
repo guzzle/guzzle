@@ -105,7 +105,13 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$uri of static method GuzzleHttp\\Psr7\\Utils\:\:uriFor\(\) expects Psr\\Http\\Message\\UriInterface\|string, mixed given\.$#'
 			identifier: argument.type
-			count: 2
+			count: 1
+			path: src/Client.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
 			path: src/Client.php
 
 		-

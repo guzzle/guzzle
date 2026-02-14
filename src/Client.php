@@ -13,6 +13,8 @@ use Psr\Http\Message\UriInterface;
 
 /**
  * @final
+ *
+ * @psalm-import-type OptionsArray from \GuzzleHttp\RequestOptions
  */
 class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 {
@@ -51,6 +53,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * - **: any request option
      *
      * @param array $config Client configuration settings.
+     *
+     * @psalm-param OptionsArray $config
      *
      * @see RequestOptions for a list of available request options.
      */
