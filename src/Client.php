@@ -162,6 +162,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (\is_array($body)) {
             throw $this->invalidBody();
         }
+        // Special case for the Host header
+        if (!isset($headers['Host']) && isset($this->config['headers']['Host'])) {
+            $headers['Host'] = $this->config['headers']['Host'];
+        }
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
         unset($options['headers'], $options['body'], $options['version']);

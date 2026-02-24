@@ -181,6 +181,12 @@ parameters:
 			path: src/Client.php
 
 		-
+			message: '#^Cannot access offset ''Host'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 3
+			path: src/Client.php
+
+		-
 			message: '#^Parameter \#1 \$data of class GuzzleHttp\\Cookie\\SetCookie constructor expects array, mixed given\.$#'
 			identifier: argument.type
 			count: 1
