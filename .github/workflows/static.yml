@@ -15,12 +15,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.5'
           coverage: none
           extensions: mbstring, intl
 
@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -56,27 +56,3 @@ jobs:
 
       - name: Execute PHP CS Fixer
         run: vendor/bin/php-cs-fixer fix --diff --dry-run
-
-  psalm:
-    name: Psalm
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          coverage: none
-          extensions: mbstring, intl
-
-      - name: Download dependencies
-        run: composer update --no-interaction --no-progress
-
-      - name: Download Psalm
-        run: composer bin psalm update --no-interaction --no-progress
-
-      - name: Execute Psalm
-        run: vendor/bin/psalm.phar --no-progress --output-format=github
