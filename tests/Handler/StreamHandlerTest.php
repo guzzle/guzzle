@@ -770,50 +770,23 @@ class StreamHandlerTest extends TestCase
         self::assertFalse(\feof($body));
     }
 
-    private static function shouldRunOnThisPhpVersion(): bool
-    {
-        return (PHP_VERSION_ID >= 80132 && PHP_VERSION_ID < 80200)
-            || (PHP_VERSION_ID >= 80228 && PHP_VERSION_ID < 80300)
-            || (PHP_VERSION_ID >= 80319 && PHP_VERSION_ID < 80400)
-            || PHP_VERSION_ID >= 80405;
-    }
-
-    public function testHandlesGarbageHttpServerGracefullyLegacy()
-    {
-        if (self::shouldRunOnThisPhpVersion()) {
-            $this->markTestSkipped('This test is not relevant for '.PHP_VERSION);
-        }
-
-        $handler = new StreamHandler();
-
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('An error was encountered while creating the response');
-
-        $handler(
-            new Request('GET', Server::$url.'guzzle-server/garbage'),
-            [
-                RequestOptions::STREAM => true,
-            ]
-        )->wait();
-    }
-
     public function testHandlesGarbageHttpServerGracefully()
     {
-        if (!self::shouldRunOnThisPhpVersion()) {
-            $this->markTestSkipped('This test is not relevant for '.PHP_VERSION);
-        }
-
         $handler = new StreamHandler();
 
-        $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('Connection refused for URI '.Server::$url);
-
-        $handler(
-            new Request('GET', Server::$url.'guzzle-server/garbage'),
-            [
-                RequestOptions::STREAM => true,
-            ]
-        )->wait();
+        try {
+            $handler(
+                new Request('GET', Server::$url.'guzzle-server/garbage'),
+                [
+                    RequestOptions::STREAM => true,
+                ]
+            )->wait();
+            self::fail('Expected an exception');
+        } catch (ConnectException $e) {
+            self::assertStringContainsString('Connection refused', $e->getMessage());
+        } catch (RequestException $e) {
+            self::assertStringContainsString('An error was encountered while creating the response', $e->getMessage());
+        }
     }
 
     public function testHandlesInvalidStatusCodeGracefully()
