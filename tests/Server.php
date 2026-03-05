@@ -55,7 +55,7 @@ class Server
     {
         $data = [];
         foreach ((array) $responses as $response) {
-            if (!($response instanceof ResponseInterface)) {
+            if (!$response instanceof ResponseInterface) {
                 throw new \Exception('Invalid response given.');
             }
             $headers = \array_map(static function ($h) {
