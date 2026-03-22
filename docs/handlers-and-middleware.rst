@@ -201,6 +201,66 @@ Modifying a response is also much simpler using the
 
     $client = new Client(['handler' => $stack]);
 
+Retry Middleware
+----------------
+
+Use ``GuzzleHttp\Middleware::retry()`` to retry requests when a custom decider
+returns ``true``. The decider receives the current retry count, the request,
+the response if one was received, and the exception if the request failed
+before a response was returned.
+
+.. code-block:: php
+
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Exception\ConnectException;
+    use GuzzleHttp\HandlerStack;
+    use GuzzleHttp\Middleware;
+    use Psr\Http\Message\RequestInterface;
+    use Psr\Http\Message\ResponseInterface;
+
+    $stack = HandlerStack::create();
+
+    $stack->push(Middleware::retry(
+        function (
+            int $retries,
+            RequestInterface $request,
+            ?ResponseInterface $response = null,
+            ?\Throwable $exception = null
+        ) {
+            if ($retries >= 3) {
+                return false;
+            }
+
+            if ($exception instanceof ConnectException) {
+                return true;
+            }
+
+            return $response && $response->getStatusCode() >= 500;
+        },
+        function (int $retries) {
+            return 1000 * $retries;
+        }
+    ));
+
+    $client = new Client(['handler' => $stack]);
+    $response = $client->request('GET', 'https://example.com');
+
+The retry middleware keeps track of the current retry count in the
+``retries`` request option. The option is initialized to ``0`` before the
+first attempt and incremented before each retry. You can read this option in
+custom middleware or seed it on a per-request basis:
+
+.. code-block:: php
+
+    $response = $client->request('GET', 'https://example.com', [
+        'retries' => 1,
+    ]);
+
+If you do not provide a delay callback, the middleware uses
+``GuzzleHttp\RetryMiddleware::exponentialDelay()``. When a retry is scheduled,
+the middleware writes the computed wait time in milliseconds to the
+``delay`` request option before invoking the next attempt.
+
 
 HandlerStack
 ============
