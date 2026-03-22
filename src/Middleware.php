@@ -171,10 +171,8 @@ final class Middleware
      * @param callable $decider Function that accepts the number of retries,
      *                          a request, [response], and [exception] and
      *                          returns true if the request is to be retried.
-     * @param callable $delay   Function that accepts the number of retries,
-     *                          the response if available, and the request,
-     *                          and returns the number of milliseconds to
-     *                          delay.
+     * @param callable $delay   Function that accepts the number of retries and
+     *                          returns the number of milliseconds to delay.
      *
      * @return callable Returns a function that accepts the next handler.
      */
