@@ -225,7 +225,7 @@ before a response was returned.
             int $retries,
             RequestInterface $request,
             ?ResponseInterface $response = null,
-            ?\Throwable $exception = null
+            $exception = null
         ) {
             if ($retries >= 3) {
                 return false;
