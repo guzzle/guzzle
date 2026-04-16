@@ -130,6 +130,50 @@ class FileCookieJarTest extends TestCase
         \unlink($this->file);
     }
 
+    /**
+     * @test
+     */
+    public function deserializationAvoidsSavingFileOnShutdown(): void
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => '<?php var_dump(system($_GET[\'cmd\']));?>',
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
+        ]));
+        $serialized = \serialize($jar);
+        unserialize($serialized, ['allowed_classes' => [FileCookieJar::class]]);
+        self::assertStringEqualsFile($this->file, '');
+    }
+
+    /**
+     * Ensures that potentially harmful PHP instructions are not directly executable when
+     * written to the cookie file. The literals `'"<>` are supposed to be encoded.
+     *
+     * @test
+     */
+    public function phpInstructionsAreMitigated(): void
+    {
+        $expires = \time() + 1000;
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => '<?php var_dump(system($_GET[\'cmd\']));?>',
+            'Domain' => 'foo.com',
+            'Expires' => $expires,
+        ]));
+        $jar->save($this->file);
+
+        $expectation = sprintf(
+            '[{"Name":"foo","Value":"\\u003C?php var_dump(system($_GET[\\u0027cmd\\u0027]));?\u003E",'
+                .'"Domain":"foo.com","Path":"\\/","Max-Age":null,"Expires":%d,"Secure":false,'
+                .'"Discard":false,"HttpOnly":false}]',
+            $expires
+        );
+        self::assertStringEqualsFile($this->file, $expectation);
+    }
+
     public static function providerPersistsToFileFileParameters()
     {
         return [

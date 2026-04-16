@@ -20,6 +20,11 @@ class FileCookieJar extends CookieJar
     private $storeSessionCookies;
 
     /**
+     * @var bool Whether to invoke save() automatically on shutdown.
+     */
+    private $autoSave = true;
+
+    /**
      * Create a new FileCookieJar object
      *
      * @param string $cookieFile          File to store the cookie data
@@ -44,7 +49,22 @@ class FileCookieJar extends CookieJar
      */
     public function __destruct()
     {
-        $this->save($this->filename);
+        if ($this->autoSave) {
+            $this->save($this->filename);
+        }
+    }
+
+    /**
+     * Disables auto-save on destruction.
+     *
+     * This class has a __destruct() method that writes to $filename,
+     * making it a potential gadget for PHP object injection attacks.
+     *
+     * @throws \RuntimeException
+     */
+    public function __wakeup(): void
+    {
+        $this->autoSave = false;
     }
 
     /**
@@ -64,7 +84,7 @@ class FileCookieJar extends CookieJar
             }
         }
 
-        $jsonStr = Utils::jsonEncode($json);
+        $jsonStr = Utils::jsonEncode($json, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG);
         if (false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
