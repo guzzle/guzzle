@@ -127,4 +127,40 @@ class CurlMultiHandlerTest extends TestCase
         $this->expectException(\BadMethodCallException::class);
         $h->foo;
     }
+
+    public function testAcceptsShareOption()
+    {
+        if (!\function_exists('curl_share_init')) {
+            self::markTestSkipped('curl_share_init is not available');
+        }
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+
+        $handler = new CurlMultiHandler([
+            'share' => [\CURL_LOCK_DATA_DNS, \CURL_LOCK_DATA_SSL_SESSION],
+        ]);
+        $request = new Request('GET', Server::$url);
+        $handler($request, [])->wait();
+
+        $this->assertTrue(true);
+    }
+
+    public function testAcceptsSharePersistentOption()
+    {
+        if (!\function_exists('curl_share_init_persistent')) {
+            self::markTestSkipped('curl_share_init_persistent is not available (PHP 8.5+)');
+        }
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+
+        $handler = new CurlMultiHandler([
+            'share_persistent' => [\CURL_LOCK_DATA_DNS],
+        ]);
+        $request = new Request('GET', Server::$url);
+        $handler($request, [])->wait();
+
+        $this->assertTrue(true);
+    }
 }

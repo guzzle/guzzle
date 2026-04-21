@@ -30,6 +30,26 @@ namespace GuzzleHttp\Handler {
         return \curl_setopt_array($handle, $options);
     }
 
+    function curl_setopt($handle, $option, $value)
+    {
+        if (!empty($_SERVER['curl_test'])) {
+            $_SERVER['_curl'][$option] = $value;
+
+            // Skip setting CURLOPT_SHARE if the value is not a valid cURL share handle
+            // This allows tests to use mock share handles for assertions
+            if ($option === \CURLOPT_SHARE) {
+                $isValidShareHandle = is_resource($value)
+                    || (PHP_VERSION_ID >= 80000 && ($value instanceof \CurlShareHandle || $value instanceof \CurlSharePersistentHandle));
+
+                if (!$isValidShareHandle) {
+                    return true;
+                }
+            }
+        }
+
+        return \curl_setopt($handle, $option, $value);
+    }
+
     function curl_multi_setopt($handle, $option, $value)
     {
         if (!empty($_SERVER['curl_test'])) {

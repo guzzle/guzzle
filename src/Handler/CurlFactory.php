@@ -38,11 +38,18 @@ class CurlFactory implements CurlFactoryInterface
     private $maxHandles;
 
     /**
-     * @param int $maxHandles Maximum number of idle handles.
+     * @var \CurlShareHandle|\CurlSharePersistentHandle|resource|null
      */
-    public function __construct(int $maxHandles)
+    private $shareHandle;
+
+    /**
+     * @param int                                                       $maxHandles  Maximum number of idle handles.
+     * @param \CurlShareHandle|\CurlSharePersistentHandle|resource|null $shareHandle Optional cURL share handle for sharing data between handles.
+     */
+    public function __construct(int $maxHandles, $shareHandle = null)
     {
         $this->maxHandles = $maxHandles;
+        $this->shareHandle = $shareHandle;
     }
 
     public function create(RequestInterface $request, array $options): EasyHandle
@@ -79,6 +86,11 @@ class CurlFactory implements CurlFactoryInterface
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         $easy->handle = $this->handles ? \array_pop($this->handles) : \curl_init();
         curl_setopt_array($easy->handle, $conf);
+
+        if ($this->shareHandle !== null) {
+            /** @phpstan-ignore-next-line argument.type (supports resource in PHP 7.x and CurlShareHandle/CurlSharePersistentHandle in PHP 8.x) */
+            curl_setopt($easy->handle, \CURLOPT_SHARE, $this->shareHandle);
+        }
 
         return $easy;
     }

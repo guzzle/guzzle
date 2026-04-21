@@ -957,4 +957,65 @@ class CurlFactoryTest extends TestCase
 
         $a(new Psr7\Request('GET', Server::$url.'guzzle-server/bad-status'), [])->wait();
     }
+
+    public function testAcceptsShareHandle()
+    {
+        if (!\function_exists('curl_share_init')) {
+            self::markTestSkipped('curl_share_init is not available');
+        }
+
+        $sh = \curl_share_init();
+        \curl_share_setopt($sh, \CURLSHOPT_SHARE, \CURL_LOCK_DATA_DNS);
+
+        $f = new CurlFactory(3, $sh);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $f->create($request, []);
+
+        // Verify the share handle was set via the test bootstrap's curl_setopt override
+        self::assertEquals($sh, $_SERVER['_curl'][\CURLOPT_SHARE] ?? null);
+
+        if (PHP_VERSION_ID < 80000) {
+            \curl_close($easy->handle);
+            \curl_share_close($sh);
+        }
+    }
+
+    public function testAppliesShareHandleToCreatedHandles()
+    {
+        $mockShare = 'mock_share_handle';
+        $f = new CurlFactory(3, $mockShare);
+        $request = new Psr7\Request('GET', Server::$url);
+
+        $easy = $f->create($request, []);
+
+        self::assertEquals($mockShare, $_SERVER['_curl'][\CURLOPT_SHARE] ?? null);
+
+        if (PHP_VERSION_ID < 80000) {
+            \curl_close($easy->handle);
+        }
+    }
+
+    public function testReappliesShareHandleAfterHandleReuse()
+    {
+        $mockShare = 'mock_share_handle';
+        $f = new CurlFactory(3, $mockShare);
+        $request = new Psr7\Request('GET', Server::$url);
+
+        $easy1 = $f->create($request, []);
+        $handle1 = $easy1->handle;
+        self::assertEquals($mockShare, $_SERVER['_curl'][\CURLOPT_SHARE] ?? null);
+
+        $f->release($easy1);
+
+        $_SERVER['_curl'] = [];
+
+        $easy2 = $f->create($request, []);
+
+        self::assertSame($handle1, $easy2->handle);
+        self::assertEquals($mockShare, $_SERVER['_curl'][\CURLOPT_SHARE] ?? null);
+
+        if (PHP_VERSION_ID < 80000) {
+            \curl_close($easy2->handle);
+        }
+    }
 }

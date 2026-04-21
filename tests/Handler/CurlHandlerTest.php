@@ -98,4 +98,40 @@ class CurlHandlerTest extends TestCase
         self::assertEquals(1000000, $received->getHeaderLine('Content-Length'));
         self::assertFalse($received->hasHeader('Transfer-Encoding'));
     }
+
+    public function testAcceptsShareOption()
+    {
+        if (!\function_exists('curl_share_init')) {
+            self::markTestSkipped('curl_share_init is not available');
+        }
+
+        $handler = new CurlHandler([
+            'share' => [\CURL_LOCK_DATA_DNS, \CURL_LOCK_DATA_SSL_SESSION],
+        ]);
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $request = new Request('GET', Server::$url);
+        $handler($request, [])->wait();
+
+        $this->assertTrue(true);
+    }
+
+    public function testAcceptsSharePersistentOption()
+    {
+        if (!\function_exists('curl_share_init_persistent')) {
+            self::markTestSkipped('curl_share_init_persistent is not available (PHP 8.5+)');
+        }
+
+        $handler = new CurlHandler([
+            'share_persistent' => [\CURL_LOCK_DATA_DNS],
+        ]);
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $request = new Request('GET', Server::$url);
+        $handler($request, [])->wait();
+
+        $this->assertTrue(true);
+    }
 }

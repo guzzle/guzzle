@@ -26,6 +26,18 @@ class CurlMultiHandler
     private $factory;
 
     /**
+     * @var \CurlShareHandle|\CurlSharePersistentHandle|resource|null
+     *
+     * @phpstan-ignore-next-line property.unusedType (resource is used in PHP 7.x)
+     */
+    private $shareHandle;
+
+    /**
+     * @var bool
+     */
+    private $isPersistentShare = false;
+
+    /**
      * @var int
      */
     private $selectTimeout;
@@ -65,10 +77,31 @@ class CurlMultiHandler
      *   out while selecting curl handles. Defaults to 1 second.
      * - options: An associative array of CURLMOPT_* options and
      *   corresponding values for curl_multi_setopt()
+     * - share: Array of CURL_LOCK_DATA_* constants to set on a curl_share_init handle.
+     * - share_persistent: Array of CURL_LOCK_DATA_* constants to set on a curl_share_init_persistent handle (PHP 8.5+).
+     *
+     * If share and share_persistent are both set, share_persistent will be used if the function curl_share_init_persistent is available,
+     * otherwise share will be used if the function curl_share_init is available.
      */
     public function __construct(array $options = [])
     {
-        $this->factory = $options['handle_factory'] ?? new CurlFactory(50);
+        if (isset($options['share_persistent']) && \function_exists('curl_share_init_persistent')) {
+            /** @var int[] $sharePersistent */
+            $sharePersistent = $options['share_persistent'];
+            /** @var \CurlSharePersistentHandle $handle */
+            $handle = \curl_share_init_persistent($sharePersistent);
+            $this->shareHandle = $handle;
+            $this->isPersistentShare = true;
+        } elseif (isset($options['share']) && \function_exists('curl_share_init')) {
+            /** @var int[] $share */
+            $share = $options['share'];
+            $this->shareHandle = \curl_share_init();
+            foreach ($share as $lock) {
+                \curl_share_setopt($this->shareHandle, \CURLSHOPT_SHARE, $lock);
+            }
+        }
+
+        $this->factory = $options['handle_factory'] ?? new CurlFactory(50, $this->shareHandle);
 
         if (isset($options['select_timeout'])) {
             $this->selectTimeout = $options['select_timeout'];
@@ -121,6 +154,14 @@ class CurlMultiHandler
         if (isset($this->_mh)) {
             \curl_multi_close($this->_mh);
             unset($this->_mh);
+        }
+
+        // Only close non-persistent share handles
+        // Persistent handles are managed by PHP and should not be closed
+        // curl_share_close has no effect in PHP version >= 8.0.0
+        if ($this->shareHandle !== null && !$this->isPersistentShare && PHP_VERSION_ID < 80000) {
+            /** @phpstan-ignore-next-line */
+            \curl_share_close($this->shareHandle);
         }
     }
 

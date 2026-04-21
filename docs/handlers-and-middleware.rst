@@ -302,3 +302,48 @@ These request options are a subset of request options called
 - :ref:`ssl_key-option`
 - :ref:`stream-option`
 - :ref:`verify-option`
+
+
+Handler Options
+===============
+
+CurlHandler and CurlMultiHandler
+---------------------------------
+
+The ``CurlHandler`` and ``CurlMultiHandler`` accept constructor options that
+configure how cURL handles are created and managed.
+
+share
+~~~~~
+
+:Summary: Array of ``CURL_LOCK_DATA_*`` constants to share between requests via ``curl_share_init()``
+:Types: ``int[]``
+:Default: ``null``
+
+Specify which data types should be shared between cURL handles. Creates a
+cURL share handle that allows multiple cURL handles to share the specified
+data. This can significantly improve performance for applications making
+multiple requests to the same hosts by eliminating redundant DNS lookups
+and SSL handshakes.
+
+share_persistent
+~~~~~~~~~~~~~~~~
+
+:Summary: Array of ``CURL_LOCK_DATA_*`` constants for persistent sharing via ``curl_share_init_persistent()`` (PHP 8.5+)
+:Types: ``int[]``
+:Default: ``null``
+
+In PHP 8.5+, you can specify which data types to share across requests using
+persistent cURL share handles. Persistent share handles survive across multiple
+PHP requests in long-running processes or FPM workers, providing even better
+performance than regular share handles.
+
+If both ``share`` and ``share_persistent`` are specified, ``share_persistent``
+will be used if ``curl_share_init_persistent()`` is available (PHP 8.5+),
+otherwise ``share`` will be used as a fallback.
+
+.. important::
+
+    Do not include ``CURL_LOCK_DATA_COOKIE`` in share handles, as PHP will
+    raise a ``ValueError`` when using persistent share handles. Guzzle manages
+    cookies through middleware, not at the cURL level.
