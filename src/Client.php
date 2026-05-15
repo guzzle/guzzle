@@ -158,7 +158,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $body = $options['body'] ?? null;
         $version = $options['version'] ?? '1.1';
         // Merge the URI into the base URI.
-        $uri = $this->buildUri(Psr7\Utils::uriFor($uri), $options);
+        $uri = $this->buildUri(self::uriForRequest($uri, $options), $options);
         if (\is_array($body)) {
             throw $this->invalidBody();
         }
@@ -221,6 +221,53 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;
+    }
+
+    /**
+     * @param string|UriInterface $uri
+     */
+    private static function uriForRequest($uri, array $config): UriInterface
+    {
+        if (\is_string($uri) && isset($config['base_uri']) && self::isRelativePathReference($uri)) {
+            // Avoid parse_url() treating a relative path segment with ":<port>" later in the path as an authority.
+            return self::uriForRelativePathReference($uri);
+        }
+
+        return Psr7\Utils::uriFor($uri);
+    }
+
+    private static function uriForRelativePathReference(string $uri): UriInterface
+    {
+        // Split query and fragment manually so the remaining value can be used as a path verbatim.
+        $fragment = '';
+        if (false !== $fragmentPos = \strpos($uri, '#')) {
+            $fragment = \substr($uri, $fragmentPos + 1);
+            $uri = \substr($uri, 0, $fragmentPos);
+        }
+
+        $query = '';
+        if (false !== $queryPos = \strpos($uri, '?')) {
+            $query = \substr($uri, $queryPos + 1);
+            $uri = \substr($uri, 0, $queryPos);
+        }
+
+        return (new Psr7\Uri())
+            ->withPath($uri)
+            ->withQuery($query)
+            ->withFragment($fragment);
+    }
+
+    private static function isRelativePathReference(string $uri): bool
+    {
+        if ($uri === '' || $uri[0] === '/' || $uri[0] === '?' || $uri[0] === '#') {
+            return false;
+        }
+
+        // A colon in the first segment denotes a scheme per RFC 3986, not a relative path reference.
+        $firstDelimiter = \strcspn($uri, '/?#');
+        $firstSegment = \substr($uri, 0, $firstDelimiter);
+
+        return \strpos($firstSegment, ':') === false;
     }
 
     /**

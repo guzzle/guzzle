@@ -89,6 +89,22 @@ class ClientTest extends TestCase
         );
     }
 
+    public function testCanMergeRelativeUriWithColonInPathSegmentOnBaseUri()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client([
+            'base_uri' => 'https://bedrock-runtime.us-east-1.amazonaws.com',
+            'handler' => $mock,
+        ]);
+
+        $client->post('model/amazon.titan-image-generator-v2:0/invoke');
+
+        self::assertSame(
+            'https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.titan-image-generator-v2:0/invoke',
+            (string) $mock->getLastRequest()->getUri()
+        );
+    }
+
     public function testCanMergeOnBaseUriWithRequest()
     {
         $mock = new MockHandler([new Response(), new Response()]);
