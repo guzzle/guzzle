@@ -2,6 +2,16 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 8.0.0 - Upcoming
+
+### Security
+
+- Hardened `FileCookieJar` against use as a PHP object injection file-write
+  gadget. Instances restored via `unserialize()` no longer automatically save
+  on destruction, and saved cookie files now JSON-escape tag characters so
+  cookie values cannot write literal PHP open tags to disk.
+
+
 ## 7.10.1 - 2026-05-19
 
 ### Fixed
