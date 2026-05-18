@@ -23,7 +23,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: '7.4'
           coverage: none
           extensions: mbstring, intl
 
@@ -59,3 +59,20 @@ jobs:
 
       - name: Execute PHP CS Fixer
         run: vendor/bin/php-cs-fixer fix --diff --dry-run
+
+  composer-normalize:
+    name: Composer Normalize
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+
+      - name: Execute Composer Normalize
+        run: make static-composer-normalize-check

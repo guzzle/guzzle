@@ -1,42 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
-			identifier: foreach.nonIterable
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Cannot access offset ''Accept\-Encoding'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Cannot access offset ''User\-Agent'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Cannot access offset ''http'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Cannot access offset 10005 on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: src/Client.php
-
-		-
-			message: '#^Cannot access offset 107 on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: src/Client.php
-
-		-
 			message: '#^Method GuzzleHttp\\Client\:\:request\(\) should return Psr\\Http\\Message\\ResponseInterface but returns mixed\.$#'
 			identifier: return.type
 			count: 1
@@ -55,109 +19,13 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$array of function array_keys expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#1 \$data of function http_build_query expects array\|object, mixed given\.$#'
+			message: '#^Parameter \#1 \$str of function strtolower expects string, int\|string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$elements of class GuzzleHttp\\Psr7\\MultipartStream constructor expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#1 \$name of method Psr\\Http\\Message\\MessageInterface\:\:hasHeader\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#1 \$resource of static method GuzzleHttp\\Psr7\\Utils\:\:streamFor\(\) expects bool\|\(callable\(\)\: mixed\)\|float\|int\|Iterator\|Psr\\Http\\Message\\StreamInterface\|resource\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#1 \$string of function strtolower expects string, int\|string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#1 \$string of function strtolower expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#1 \$uri of static method GuzzleHttp\\Psr7\\Utils\:\:uriFor\(\) expects Psr\\Http\\Message\\UriInterface\|string, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#1 \$value of function count expects array\|Countable, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#2 \$data of static method GuzzleHttp\\Psr7\\Utils\:\:caselessRemove\(\) expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 5
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#2 \$options of static method GuzzleHttp\\Utils\:\:idnUriConvert\(\) expects int, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#2 \$uri of method GuzzleHttp\\Client\:\:request\(\) expects Psr\\Http\\Message\\UriInterface\|string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#2 \$uri of method GuzzleHttp\\Client\:\:requestAsync\(\) expects Psr\\Http\\Message\\UriInterface\|string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#3 \$headers of class GuzzleHttp\\Psr7\\Request constructor expects array\<array\<string\>\|string\>, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#3 \$options of method GuzzleHttp\\Client\:\:request\(\) expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#3 \$options of method GuzzleHttp\\Client\:\:requestAsync\(\) expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#4 \$body of class GuzzleHttp\\Psr7\\Request constructor expects Psr\\Http\\Message\\StreamInterface\|resource\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#5 \$version of class GuzzleHttp\\Psr7\\Request constructor expects string, mixed given\.$#'
+			message: '#^Parameter \#1 \$str of function strtolower expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Client.php
@@ -175,28 +43,10 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: '#^Possibly invalid array key type mixed\.$#'
-			identifier: offsetAccess.invalidOffset
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Parameter \#1 \$data of class GuzzleHttp\\Cookie\\SetCookie constructor expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/CookieJar.php
-
-		-
 			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Cookie/CookieJar.php
-
-		-
-			message: '#^Parameter \#1 \$data of class GuzzleHttp\\Cookie\\SetCookie constructor expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/FileCookieJar.php
 
 		-
 			message: '#^Parameter \#1 \$data of class GuzzleHttp\\Cookie\\SetCookie constructor expects array, mixed given\.$#'
@@ -217,18 +67,6 @@ parameters:
 			path: src/Cookie/SessionCookieJar.php
 
 		-
-			message: '#^Binary operation "\." between mixed and ''\='' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
 			message: '#^Call to function is_bool\(\) with bool will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 3
@@ -238,126 +76,6 @@ parameters:
 			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 3
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Method GuzzleHttp\\Cookie\\SetCookie\:\:getDiscard\(\) should return bool\|null but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Method GuzzleHttp\\Cookie\\SetCookie\:\:getDomain\(\) should return string\|null but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Method GuzzleHttp\\Cookie\\SetCookie\:\:getExpires\(\) should return int\|string\|null but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Method GuzzleHttp\\Cookie\\SetCookie\:\:getHttpOnly\(\) should return bool but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Method GuzzleHttp\\Cookie\\SetCookie\:\:getName\(\) should return string but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Method GuzzleHttp\\Cookie\\SetCookie\:\:getPath\(\) should return string but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Method GuzzleHttp\\Cookie\\SetCookie\:\:getSecure\(\) should return bool but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Method GuzzleHttp\\Cookie\\SetCookie\:\:getValue\(\) should return string\|null but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#1 \$discard of method GuzzleHttp\\Cookie\\SetCookie\:\:setDiscard\(\) expects bool, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#1 \$domain of method GuzzleHttp\\Cookie\\SetCookie\:\:setDomain\(\) expects string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#1 \$httpOnly of method GuzzleHttp\\Cookie\\SetCookie\:\:setHttpOnly\(\) expects bool, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#1 \$maxAge of method GuzzleHttp\\Cookie\\SetCookie\:\:setMaxAge\(\) expects int\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#1 \$name of method GuzzleHttp\\Cookie\\SetCookie\:\:setName\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#1 \$path of method GuzzleHttp\\Cookie\\SetCookie\:\:setPath\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#1 \$secure of method GuzzleHttp\\Cookie\\SetCookie\:\:setSecure\(\) expects bool, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#1 \$timestamp of method GuzzleHttp\\Cookie\\SetCookie\:\:setExpires\(\) expects int\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#1 \$value of method GuzzleHttp\\Cookie\\SetCookie\:\:setValue\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Parameter \#2 \$timestamp of function gmdate expects int\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Part \$v \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 1
 			path: src/Cookie/SetCookie.php
 
 		-
@@ -373,54 +91,6 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
-			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
-			identifier: foreach.nonIterable
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Binary operation "&" between 6 and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Binary operation "&" between 65536 and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Binary operation "&" between 7 and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Binary operation "\*" between mixed and 1000 results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Call to deprecated function curl_close\(\)\.$#'
-			identifier: function.deprecated
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Cannot access an offset on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 7
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Cannot access offset ''body_as_string'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Cannot access offset ''features'' on array\|false\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 3
@@ -433,151 +103,49 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Cannot access offset 10102 on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Cannot access offset int on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Cannot call method getBody\(\) on Psr\\Http\\Message\\ResponseInterface\|null\.$#'
 			identifier: method.nonObject
 			count: 1
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Cannot use \+\+ on mixed\.$#'
-			identifier: preInc.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlFactory\:\:getCurlVersion\(\) should return string but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlFactory\:\:supportsHttp2\(\) should return bool but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlFactory\:\:supportsTls12\(\) should return bool but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlFactory\:\:supportsTls13\(\) should return bool but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$array of function array_keys expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$error of static method GuzzleHttp\\Handler\\CurlFactory\:\:sanitizeCurlError\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$filename of function file_exists expects string, mixed given\.$#'
+			message: '#^Parameter \#1 \$ch of function curl_close expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 2
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$handle of function curl_close expects CurlHandle, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$handle of function curl_error expects CurlHandle, CurlHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$ch of function curl_error expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$handle of function curl_getinfo expects CurlHandle, CurlHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$ch of function curl_getinfo expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 4
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$handle of function curl_reset expects CurlHandle, CurlHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$ch of function curl_reset expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$handle of function curl_setopt expects CurlHandle, CurlHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 4
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$handle of function curl_setopt_array expects CurlHandle, CurlHandle\|resource\|false given\.$#'
+			message: '#^Parameter \#1 \$ch of function curl_setopt_array expects resource, CurlHandle\|resource\|false given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#1 \$length of method Psr\\Http\\Message\\StreamInterface\:\:read\(\) expects int, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$path of function pathinfo expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$resource of static method GuzzleHttp\\Psr7\\Utils\:\:streamFor\(\) expects bool\|\(callable\(\)\: mixed\)\|float\|int\|Iterator\|Psr\\Http\\Message\\StreamInterface\|resource\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$string of function strlen expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$string of function trim expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$string of method Psr\\Http\\Message\\StreamInterface\:\:write\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$string1 of function strcasecmp expects string, int\|string given\.$#'
+			message: '#^Parameter \#1 \$str1 of function strcasecmp expects string, int\|string given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlFactory.php
@@ -589,32 +157,8 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Parameter \#2 \.\.\.\$replacements of function array_replace expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#2 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Part \$cert \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Part \$name \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Part \$sslKey \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
+			message: '#^Property GuzzleHttp\\Handler\\CurlFactory\:\:\$handles has unknown class CurlHandle as its type\.$#'
+			identifier: class.notFound
 			count: 1
 			path: src/Handler/CurlFactory.php
 
@@ -625,40 +169,16 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Binary operation "\*" between mixed and 1000 results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/CurlHandler.php
-
-		-
-			message: '#^Parameter \#1 \$handle of function curl_errno expects CurlHandle, CurlHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$ch of function curl_errno expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlHandler.php
 
 		-
-			message: '#^Parameter \#1 \$handle of function curl_exec expects CurlHandle, CurlHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$ch of function curl_exec expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlHandler.php
-
-		-
-			message: '#^Binary operation "/" between mixed and 1000 results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Call to deprecated function curl_close\(\)\.$#'
-			identifier: function.deprecated
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
 
 		-
 			message: '#^Call to function is_int\(\) with int will always evaluate to true\.$#'
@@ -667,117 +187,51 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Cannot access offset ''deferred'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
+			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:__get\(\) has invalid return type CurlMultiHandle\.$#'
+			identifier: class.notFound
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Cannot access offset ''delay'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Cannot access offset ''easy'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 4
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Cannot access property \$errno on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Cannot access property \$handle on mixed\.$#'
-			identifier: property.nonObject
-			count: 4
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Cannot access property \$options on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Cannot call method resolve\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
-			count: 2
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:__get\(\) never returns resource so it can be removed from the return type\.$#'
+			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:__get\(\) never returns CurlMultiHandle so it can be removed from the return type\.$#'
 			identifier: return.unusedType
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$handle of function curl_close expects CurlHandle, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#1 \$multi_handle of function curl_multi_add_handle expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$mh of function curl_multi_add_handle expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$multi_handle of function curl_multi_close expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$mh of function curl_multi_close expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$multi_handle of function curl_multi_exec expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$mh of function curl_multi_exec expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$multi_handle of function curl_multi_info_read expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$mh of function curl_multi_info_read expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$multi_handle of function curl_multi_remove_handle expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$mh of function curl_multi_remove_handle expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$multi_handle of function curl_multi_select expects CurlMultiHandle, CurlMultiHandle\|resource given\.$#'
+			message: '#^Parameter \#1 \$mh of function curl_multi_select expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 3
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#2 \$easy of static method GuzzleHttp\\Handler\\CurlFactory\:\:finish\(\) expects GuzzleHttp\\Handler\\EasyHandle, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#2 \$handle of function curl_multi_add_handle expects CurlHandle, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#2 \$handle of function curl_multi_remove_handle expects CurlHandle, mixed given\.$#'
-			identifier: argument.type
-			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-
@@ -787,226 +241,28 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh \(CurlMultiHandle\|resource\) is never assigned resource so it can be removed from the property type\.$#'
+			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh \(CurlMultiHandle\|resource\) is never assigned CurlMultiHandle so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$active \(int\) does not accept mixed\.$#'
-			identifier: assign.propertyType
-			count: 2
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$factory \(GuzzleHttp\\Handler\\CurlFactoryInterface\) does not accept mixed\.$#'
-			identifier: assign.propertyType
+			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh has unknown class CurlMultiHandle as its type\.$#'
+			identifier: class.notFound
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$options \(array\<mixed\>\) does not accept mixed\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$selectTimeout \(int\) does not accept mixed\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between false and CurlMultiHandle will always evaluate to false\.$#'
+			message: '#^Strict comparison using \=\=\= between false and resource will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Parameter \#1 \$headers of static method GuzzleHttp\\Handler\\HeaderProcessor\:\:parseHeaders\(\) expects array\<string\>, array given\.$#'
-			identifier: argument.type
+			message: '#^Property GuzzleHttp\\Handler\\EasyHandle\:\:\$handle has unknown class CurlHandle as its type\.$#'
+			identifier: class.notFound
 			count: 1
 			path: src/Handler/EasyHandle.php
-
-		-
-			message: '#^Parameter \#2 \$headers of class GuzzleHttp\\Psr7\\Response constructor expects array\<array\<string\>\|string\>, array given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/EasyHandle.php
-
-		-
-			message: '#^Possibly invalid array key type mixed\.$#'
-			identifier: offsetAccess.invalidOffset
-			count: 5
-			path: src/Handler/EasyHandle.php
-
-		-
-			message: '#^Parameter \#1 \$queue of class GuzzleHttp\\Handler\\MockHandler constructor expects array\<int, mixed\>\|null, array\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: '#^Parameter \#3 \$response of class GuzzleHttp\\Exception\\RequestException constructor expects Psr\\Http\\Message\\ResponseInterface\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: '#^Parameter \#3 \$transferTime of class GuzzleHttp\\TransferStats constructor expects float\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 1
-			path: src/Handler/MockHandler.php
-
-		-
-			message: '#^Binary operation "\*" between mixed and 1000 results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Binary operation "\-" between mixed and int results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Binary operation "\." between ''\['' and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Binary operation "\." between mixed and ''\: "'' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Binary operation "\.\=" between mixed and non\-falsy\-string results in an error\.$#'
-			identifier: assignOp.invalid
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''allow_self_signed'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''cafile'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''crypto_method'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''header'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''local_cert'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''passphrase'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''proxy'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''timeout'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''verify_peer'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset ''verify_peer_name'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset 0 on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset 2 on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset int on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset int\|string on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot access offset non\-falsy\-string on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Method GuzzleHttp\\Handler\\StreamHandler\:\:createResource\(\) should return resource but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^PHPDoc tag @var with type array\|null is not subtype of native type list\<string\>\|null\.$#'
-			identifier: varTag.nativeType
-			count: 1
-			path: src/Handler/StreamHandler.php
 
 		-
 			message: '#^Parameter \#1 \$filename of function file_exists expects string, mixed given\.$#'
@@ -1015,31 +271,7 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Parameter \#1 \$headers of static method GuzzleHttp\\Handler\\HeaderProcessor\:\:parseHeaders\(\) expects array\<string\>, array given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Parameter \#1 \$host of method Psr\\Http\\Message\\UriInterface\:\:withHost\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Parameter \#1 \$resource of static method GuzzleHttp\\Psr7\\Utils\:\:streamFor\(\) expects bool\|\(callable\(\)\: mixed\)\|float\|int\|Iterator\|Psr\\Http\\Message\\StreamInterface\|resource\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: '#^Parameter \#1 \$url of method GuzzleHttp\\Handler\\StreamHandler\:\:parse_proxy\(\) expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Parameter \#2 \$headers of class GuzzleHttp\\Psr7\\Response constructor expects array\<array\<string\>\|string\>, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Handler/StreamHandler.php
@@ -1051,33 +283,15 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Parameter \#4 \.\.\.\$values of function fprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Part \$parsed\[''auth''\] \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: '#^Part \$value \(mixed\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 1
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Possibly invalid array key type mixed\.$#'
-			identifier: offsetAccess.invalidOffset
-			count: 6
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
 			identifier: callable.nonCallable
-			count: 4
+			count: 1
 			path: src/Handler/StreamHandler.php
 
 		-
@@ -1093,40 +307,10 @@ parameters:
 			path: src/HandlerStack.php
 
 		-
-			message: '#^Parameter \#1 \$object of function get_class expects object, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/HandlerStack.php
-
-		-
-			message: '#^Part \$fn\[1\] \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 2
-			path: src/HandlerStack.php
-
-		-
 			message: '#^Result of && is always false\.$#'
 			identifier: booleanAnd.alwaysFalse
 			count: 1
 			path: src/HandlerStack.php
-
-		-
-			message: '#^Parameter \#2 \$callback of function preg_replace_callback expects callable\(array\<string\>\)\: string, Closure\(array\)\: mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/MessageFormatter.php
-
-		-
-			message: '#^Anonymous function should return Psr\\Http\\Message\\ResponseInterface but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Middleware.php
-
-		-
-			message: '#^Cannot call method then\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 5
-			path: src/Middleware.php
 
 		-
 			message: '#^Instanceof between ArrayAccess\<int, array\> and ArrayAccess will always evaluate to true\.$#'
@@ -1141,160 +325,10 @@ parameters:
 			path: src/Middleware.php
 
 		-
-			message: '#^Parameter \#1 \$request of method GuzzleHttp\\Cookie\\CookieJarInterface\:\:withCookieHeader\(\) expects Psr\\Http\\Message\\RequestInterface, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Middleware.php
-
-		-
-			message: '#^Parameter \#1 \$request of static method GuzzleHttp\\Exception\\RequestException\:\:create\(\) expects Psr\\Http\\Message\\RequestInterface, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Middleware.php
-
-		-
-			message: '#^Parameter \#2 \$response of method GuzzleHttp\\MessageFormatterInterface\:\:format\(\) expects Psr\\Http\\Message\\ResponseInterface\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Middleware.php
-
-		-
 			message: '#^Result of && is always false\.$#'
 			identifier: booleanAnd.alwaysFalse
 			count: 2
 			path: src/Middleware.php
-
-		-
-			message: '#^Parameter \#2 \$options of method GuzzleHttp\\ClientInterface\:\:sendAsync\(\) expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Pool.php
-
-		-
-			message: '#^Possibly invalid array key type mixed\.$#'
-			identifier: offsetAccess.invalidOffset
-			count: 2
-			path: src/Pool.php
-
-		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 1
-			path: src/Pool.php
-
-		-
-			message: '#^Cannot access offset ''Content\-Type'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/PrepareBodyMiddleware.php
-
-		-
-			message: '#^Cannot access offset ''Expect'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: src/PrepareBodyMiddleware.php
-
-		-
-			message: '#^Cannot cast mixed to int\.$#'
-			identifier: cast.int
-			count: 1
-			path: src/PrepareBodyMiddleware.php
-
-		-
-			message: '#^Binary operation "\+" between mixed and 1 results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access an offset on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access offset ''Referer'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access offset ''max'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access offset ''on_redirect'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access offset ''protocols'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access offset ''referer'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access offset ''strict'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access offset ''track_redirects'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access offset 10005 on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot access offset 107 on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Parameter \#2 \$options of static method GuzzleHttp\\Utils\:\:idnUriConvert\(\) expects int, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Parameter \#3 \$protocols of static method GuzzleHttp\\RedirectMiddleware\:\:redirectUri\(\) expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Part \$max \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 1
-			path: src/RedirectMiddleware.php
-
-		-
-			message: '#^Cannot use \+\+ on mixed\.$#'
-			identifier: preInc.type
-			count: 1
-			path: src/RetryMiddleware.php
 
 		-
 			message: '#^PHPDoc tag @var has invalid value \(callable\(int\)\)\: Unexpected token "\(", expected TOKEN_HORIZONTAL_WS at offset 24 on line 2$#'
@@ -1303,34 +337,10 @@ parameters:
 			path: src/RetryMiddleware.php
 
 		-
-			message: '#^Parameter \#3 \$response of method GuzzleHttp\\RetryMiddleware\:\:doRetry\(\) expects Psr\\Http\\Message\\ResponseInterface\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/RetryMiddleware.php
-
-		-
 			message: '#^Property GuzzleHttp\\RetryMiddleware\:\:\$delay has no type specified\.$#'
 			identifier: missingType.property
 			count: 1
 			path: src/RetryMiddleware.php
-
-		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 1
-			path: src/RetryMiddleware.php
-
-		-
-			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
-			identifier: foreach.nonIterable
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: '#^Binary operation "&" between mixed and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: src/Utils.php
 
 		-
 			message: '#^Cannot access offset ''version'' on array\|false\.$#'
@@ -1342,12 +352,6 @@ parameters:
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 1
-			path: src/Utils.php
-
-		-
-			message: '#^Method GuzzleHttp\\Utils\:\:defaultCaBundle\(\) should return string but returns mixed\.$#'
-			identifier: return.type
-			count: 2
 			path: src/Utils.php
 
 		-
@@ -1363,24 +367,6 @@ parameters:
 			path: src/Utils.php
 
 		-
-			message: '#^Parameter \#1 \$filename of function file_exists expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: '#^Parameter \#1 \$version1 of function version_compare expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: '#^Parameter \#2 \$string of function explode expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Utils.php
-
-		-
 			message: '#^Parameter \#3 \$depth of function json_decode expects int\<1, max\>, int given\.$#'
 			identifier: argument.type
 			count: 1
@@ -1389,12 +375,6 @@ parameters:
 		-
 			message: '#^Parameter \#3 \$depth of function json_encode expects int\<1, max\>, int given\.$#'
 			identifier: argument.type
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: '#^Parameter &\$info by\-ref type of method GuzzleHttp\\Utils\:\:idnToAsci\(\) expects array\|null, mixed given\.$#'
-			identifier: parameterByRef.type
 			count: 1
 			path: src/Utils.php
 
