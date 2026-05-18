@@ -3,6 +3,7 @@ includes:
     - vendor-bin/phpstan/vendor/phpstan/phpstan-deprecation-rules/rules.neon
 
 parameters:
+    phpVersion: 70400
     ignoreErrors:
         -
             identifier: missingType.iterableValue
