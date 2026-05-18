@@ -128,15 +128,6 @@ over the internet.
 Using the test server
 ---------------------
 
-.. warning::
-
-    The following functionality is provided to help developers of Guzzle
-    develop HTTP handlers. There is no promise of backwards compatibility
-    when it comes to the node.js test server or the ``GuzzleHttp\Server\Server``
-    class. If you are using the test server or ``Server`` class outside of
-    guzzlehttp/guzzle, then you will need to configure autoloading and
-    ensure the web server is started manually.
-
 .. hint::
 
     You almost never need to use this test web server. You should only ever
@@ -144,9 +135,12 @@ Using the test server
     is not necessary for mocking requests. For that, please use the
     Mock handler and history middleware.
 
-Guzzle provides a node.js test server as a separate composer package that
-receives requests and returns responses from a queue. The test server exposes
-a simple API that is used to enqueue responses and inspect the requests that it
+The test server is distributed separately from ``guzzlehttp/guzzle`` as the
+``guzzlehttp/test-server`` Composer package. It is not installed with Guzzle by
+default. The package provides a node.js server that receives requests and
+returns responses from a queue. It requires Node.js
+``^20.19 || ^22.13 || >=24`` available as ``node``. The test server exposes a
+simple API that is used to enqueue responses and inspect the requests that it
 has received.
 
 You can add the test server as a dev dependency using Composer.
