@@ -120,30 +120,48 @@ class StreamHandlerTest extends TestCase
     public function testDrainsResponseIntoSaveToBodyAtPath()
     {
         $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
-        $this->queueRes();
-        $handler = new StreamHandler();
-        $request = new Request('GET', Server::$url);
-        $response = $handler($request, ['sink' => $tmpfname])->wait();
-        $body = $response->getBody();
-        self::assertSame($tmpfname, $body->getMetadata('uri'));
-        self::assertSame('hi', $body->read(2));
-        $body->close();
-        \unlink($tmpfname);
+        $body = null;
+
+        try {
+            $this->queueRes();
+            $handler = new StreamHandler();
+            $request = new Request('GET', Server::$url);
+            $response = $handler($request, ['sink' => $tmpfname])->wait();
+            $body = $response->getBody();
+            self::assertSame($tmpfname, $body->getMetadata('uri'));
+            self::assertSame('hi', $body->read(2));
+        } finally {
+            if ($body !== null) {
+                $body->close();
+            }
+            if (\file_exists($tmpfname)) {
+                \unlink($tmpfname);
+            }
+        }
     }
 
     public function testDrainsResponseIntoSaveToBodyAtNonExistentPath()
     {
         $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
         \unlink($tmpfname);
-        $this->queueRes();
-        $handler = new StreamHandler();
-        $request = new Request('GET', Server::$url);
-        $response = $handler($request, ['sink' => $tmpfname])->wait();
-        $body = $response->getBody();
-        self::assertSame($tmpfname, $body->getMetadata('uri'));
-        self::assertSame('hi', $body->read(2));
-        $body->close();
-        \unlink($tmpfname);
+        $body = null;
+
+        try {
+            $this->queueRes();
+            $handler = new StreamHandler();
+            $request = new Request('GET', Server::$url);
+            $response = $handler($request, ['sink' => $tmpfname])->wait();
+            $body = $response->getBody();
+            self::assertSame($tmpfname, $body->getMetadata('uri'));
+            self::assertSame('hi', $body->read(2));
+        } finally {
+            if ($body !== null) {
+                $body->close();
+            }
+            if (\file_exists($tmpfname)) {
+                \unlink($tmpfname);
+            }
+        }
     }
 
     public function testDrainsResponseAndReadsOnlyContentLengthBytes()

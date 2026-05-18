@@ -18,6 +18,13 @@ class FileCookieJarTest extends TestCase
         $this->file = \tempnam(\sys_get_temp_dir(), 'file-cookies');
     }
 
+    public function tearDown(): void
+    {
+        if (\file_exists($this->file)) {
+            \unlink($this->file);
+        }
+    }
+
     /**
      * @dataProvider invalidCookieJarContent
      */
@@ -33,7 +40,6 @@ class FileCookieJarTest extends TestCase
     {
         $jar = new FileCookieJar($this->file);
         self::assertSame([], $jar->getIterator()->getArrayCopy());
-        \unlink($this->file);
     }
 
     /**
@@ -78,7 +84,6 @@ class FileCookieJarTest extends TestCase
         }
 
         unset($jar);
-        \unlink($this->file);
     }
 
     public function testRemovesCookie()
@@ -98,8 +103,6 @@ class FileCookieJarTest extends TestCase
 
         // Confirm that the cookie was removed.
         self::assertCount(0, $jar);
-
-        \unlink($this->file);
     }
 
     public function testUpdatesCookie()
@@ -126,8 +129,6 @@ class FileCookieJarTest extends TestCase
 
         // Confirm that the cookie was updated.
         self::assertEquals('new_value', $cookies[0]->getValue());
-
-        \unlink($this->file);
     }
 
     public static function providerPersistsToFileFileParameters()
