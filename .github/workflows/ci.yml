@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  COMPOSER_ROOT_VERSION: 7.10.x-dev
+
 jobs:
   build-lowest-version:
     name: Build lowest version
@@ -23,9 +26,9 @@ jobs:
           extensions: mbstring, intl
 
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
-          node-version: '18.x'
+          node-version: '22.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
@@ -38,9 +41,7 @@ jobs:
 
       - name: Start test servers
         shell: bash
-        run: |
-          node tests/server.js &
-          ./vendor/bin/http_test_server &
+        run: ./vendor/bin/http_test_server &
 
       - name: Run tests
         run: ./vendor/bin/phpunit
@@ -68,9 +69,9 @@ jobs:
           extensions: mbstring, intl
 
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
-          node-version: '18.x'
+          node-version: '22.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
@@ -85,9 +86,7 @@ jobs:
 
       - name: Start test servers
         shell: bash
-        run: |
-          node tests/server.js &
-          ./vendor/bin/http_test_server &
+        run: ./vendor/bin/http_test_server &
 
       - name: Run tests
         run: ./vendor/bin/phpunit
@@ -111,9 +110,9 @@ jobs:
           extensions: mbstring, intl
 
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
-          node-version: '18.x'
+          node-version: '22.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
@@ -126,9 +125,7 @@ jobs:
 
       - name: Start test servers
         shell: bash
-        run: |
-          node tests/server.js &
-          ./vendor/bin/http_test_server &
+        run: ./vendor/bin/http_test_server &
 
       - name: Run tests
         run: vendor/bin/phpunit.bat

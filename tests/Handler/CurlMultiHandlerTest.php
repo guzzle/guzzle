@@ -7,8 +7,8 @@ use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Server\Server;
 use GuzzleHttp\Tests\Helpers;
-use GuzzleHttp\Tests\Server;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 

@@ -10,7 +10,7 @@ use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
-use GuzzleHttp\Tests\Server;
+use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;

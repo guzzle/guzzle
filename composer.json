@@ -93,6 +93,7 @@
         "ext-curl": "*",
         "bamarni/composer-bin-plugin": "^1.8.2",
         "guzzle/client-integration-tests": "3.0.2",
+        "guzzlehttp/test-server": "^0.3.2",
         "php-http/message-factory": "^1.1",
         "phpunit/phpunit": "^8.5.39 || ^9.6.20",
         "psr/log": "^1.1 || ^2.0 || ^3.0"

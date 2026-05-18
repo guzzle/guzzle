@@ -13,6 +13,7 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RequestOptions;
+use GuzzleHttp\Server\Server;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
