@@ -403,12 +403,6 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Call to deprecated function curl_close\(\)\.$#'
-			identifier: function.deprecated
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Cannot access an offset on mixed\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 7
@@ -651,12 +645,6 @@ parameters:
 		-
 			message: '#^Binary operation "/" between mixed and 1000 results in an error\.$#'
 			identifier: binaryOp.invalid
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Call to deprecated function curl_close\(\)\.$#'
-			identifier: function.deprecated
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
@@ -1093,18 +1081,6 @@ parameters:
 			path: src/HandlerStack.php
 
 		-
-			message: '#^Parameter \#1 \$object of function get_class expects object, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/HandlerStack.php
-
-		-
-			message: '#^Part \$fn\[1\] \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 2
-			path: src/HandlerStack.php
-
-		-
 			message: '#^Result of && is always false\.$#'
 			identifier: booleanAnd.alwaysFalse
 			count: 1
@@ -1263,6 +1239,12 @@ parameters:
 		-
 			message: '#^Cannot access offset 107 on mixed\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/RedirectMiddleware.php
+
+		-
+			message: '#^Parameter \#2 \$array of function implode expects array\<string\>, array given\.$#'
+			identifier: argument.type
 			count: 1
 			path: src/RedirectMiddleware.php
 
