@@ -535,16 +535,20 @@ class CurlFactoryTest extends TestCase
     public function testSavesToFileOnDisk()
     {
         $tmpfile = \tempnam(\sys_get_temp_dir(), 'testfile');
-        $this->addDecodeResponse();
-        $handler = new Handler\CurlMultiHandler();
-        $request = new Psr7\Request('GET', Server::$url);
-        $response = $handler($request, [
-            'decode_content' => true,
-            'sink' => $tmpfile,
-        ]);
-        $response->wait();
-        self::assertStringEqualsFile($tmpfile, 'test');
-        @\unlink($tmpfile);
+
+        try {
+            $this->addDecodeResponse();
+            $handler = new Handler\CurlMultiHandler();
+            $request = new Psr7\Request('GET', Server::$url);
+            $response = $handler($request, [
+                'decode_content' => true,
+                'sink' => $tmpfile,
+            ]);
+            $response->wait();
+            self::assertStringEqualsFile($tmpfile, 'test');
+        } finally {
+            @\unlink($tmpfile);
+        }
     }
 
     public function testDoesNotAddMultipleContentLengthHeaders()
