@@ -7,8 +7,7 @@ namespace {
 
 namespace GuzzleHttp\Test {
     require __DIR__.'/../vendor/autoload.php';
-    require __DIR__.'/Server.php';
-    use GuzzleHttp\Tests\Server;
+    use GuzzleHttp\Server\Server;
 
     Server::start();
     \register_shutdown_function(static function () {

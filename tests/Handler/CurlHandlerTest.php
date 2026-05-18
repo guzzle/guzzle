@@ -8,7 +8,7 @@ use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Tests\Server;
+use GuzzleHttp\Server\Server;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 

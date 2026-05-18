@@ -132,7 +132,7 @@ Using the test server
 
     The following functionality is provided to help developers of Guzzle
     develop HTTP handlers. There is no promise of backwards compatibility
-    when it comes to the node.js test server or the ``GuzzleHttp\Tests\Server``
+    when it comes to the node.js test server or the ``GuzzleHttp\Server\Server``
     class. If you are using the test server or ``Server`` class outside of
     guzzlehttp/guzzle, then you will need to configure autoloading and
     ensure the web server is started manually.
@@ -153,7 +153,7 @@ You can add the test server as a dev dependency using Composer.
 
 .. code-block:: bash
 
-    composer require --dev guzzlehttp/test-server:^0.1
+    composer require --dev guzzlehttp/test-server:^0.3
 
 Alternatively, you can include it as a dev dependency in your project's
 existing composer.json file:
@@ -162,7 +162,7 @@ existing composer.json file:
 
     {
         "require-dev": {
-            "guzzlehttp/test-server": "^0.1"
+            "guzzlehttp/test-server": "^0.3"
         }
     }
 
@@ -170,7 +170,7 @@ Any operation on the ``Server`` object will ensure that
 the server is running and wait until it is able to receive requests before
 returning.
 
-``GuzzleHttp\Tests\Server`` provides a static interface to the test server. You
+``GuzzleHttp\Server\Server`` provides a static interface to the test server. You
 can queue an HTTP response or an array of responses by calling
 ``Server::enqueue()``. This method accepts an array of
 ``Psr\Http\Message\ResponseInterface`` and ``Exception`` objects.
@@ -179,7 +179,7 @@ can queue an HTTP response or an array of responses by calling
 
     use GuzzleHttp\Client;
     use GuzzleHttp\Psr7\Response;
-    use GuzzleHttp\Tests\Server;
+    use GuzzleHttp\Server\Server;
 
     // Start the server and queue a response
     Server::enqueue([

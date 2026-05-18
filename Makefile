@@ -15,12 +15,12 @@ help:
 	@echo "  static-codestyle-check         to run php-cs-fixer on the codebase"
 
 start-server: stop-server
-	node tests/server.js &> /dev/null &
+	node vendor/guzzlehttp/test-server/src/server.js &> /dev/null &
 	./vendor/bin/http_test_server &> /dev/null &
 
 stop-server:
 	@PID=$(shell ps axo pid,command \
-	  | grep 'tests/server.js' \
+	  | grep 'vendor/guzzlehttp/test-server/src/server.js' \
 	  | grep -v grep \
 	  | cut -f 1 -d " "\
 	) && [ -n "$$PID" ] && kill $$PID || true

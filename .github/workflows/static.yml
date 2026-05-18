@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  COMPOSER_ROOT_VERSION: 7.10.x-dev
+
 jobs:
   phpstan:
     name: PHPStan
