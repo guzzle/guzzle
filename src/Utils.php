@@ -201,6 +201,10 @@ final class Utils
      */
     public static function jsonDecode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
     {
+        if ($depth < 1) {
+            throw new InvalidArgumentException('json_decode error: Maximum stack depth exceeded');
+        }
+
         try {
             return \json_decode($json, $assoc, $depth, $options | \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {

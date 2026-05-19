@@ -163,6 +163,21 @@ class UtilsTest extends TestCase
 
         Utils::jsonDecode('{{]]', false, 512, \JSON_THROW_ON_ERROR);
     }
+
+    /**
+     * @dataProvider invalidJsonDepthProvider
+     */
+    public function testDecodesJsonAndThrowsOnInvalidDepth(int $depth)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Utils::jsonDecode('{}', true, $depth);
+    }
+
+    public static function invalidJsonDepthProvider(): array
+    {
+        return [[0], [-1]];
+    }
 }
 
 final class StrClass
