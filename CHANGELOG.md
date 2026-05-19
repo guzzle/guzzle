@@ -13,6 +13,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added boolean parameter types to `SetCookie` flag setters
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Pass the request as the second argument to `on_headers` callbacks
+- Store response cookies without a `Domain` attribute as host-only cookies
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
 
 ### Removed

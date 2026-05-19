@@ -96,7 +96,7 @@ class SetCookieTest extends TestCase
     public function testMatchesDomain()
     {
         $cookie = new SetCookie();
-        self::assertTrue($cookie->matchesDomain('baz.com'));
+        self::assertFalse($cookie->matchesDomain('baz.com'));
 
         $cookie->setDomain('baz.com');
         self::assertTrue($cookie->matchesDomain('baz.com'));
@@ -122,6 +122,33 @@ class SetCookieTest extends TestCase
 
         $cookie->setDomain('example.com/'); // malformed domain
         self::assertFalse($cookie->matchesDomain('example.com'));
+    }
+
+    public function testHostOnlyCookieOnlyMatchesExactDomain(): void
+    {
+        $cookie = new SetCookie([
+            'Name' => 'sid',
+            'Value' => 'abc',
+            'Domain' => 'example.com',
+            'HostOnly' => true,
+        ]);
+
+        self::assertTrue($cookie->matchesDomain('example.com'));
+        self::assertFalse($cookie->matchesDomain('foo.example.com'));
+        self::assertFalse($cookie->matchesDomain('not-example.com'));
+    }
+
+    public function testHostOnlyCookieMatchesIpExactly(): void
+    {
+        $cookie = new SetCookie([
+            'Name' => 'sid',
+            'Value' => 'abc',
+            'Domain' => '127.0.0.1',
+            'HostOnly' => true,
+        ]);
+
+        self::assertTrue($cookie->matchesDomain('127.0.0.1'));
+        self::assertFalse($cookie->matchesDomain('foo.127.0.0.1'));
     }
 
     public static function pathMatchProvider()
@@ -217,6 +244,38 @@ class SetCookieTest extends TestCase
         self::assertSame('test=123; Path=/', (string) $cookie);
     }
 
+    public function testConvertsHostOnlyCookieToStringWithoutDomainAttribute()
+    {
+        $cookie = new SetCookie([
+            'Name' => 'test',
+            'Value' => '123',
+            'Domain' => 'example.com',
+            'HostOnly' => true,
+        ]);
+
+        self::assertSame('test=123; Path=/', (string) $cookie);
+        self::assertTrue($cookie->toArray()['HostOnly']);
+    }
+
+    public function testIgnoresHostOnlySetCookieExtension()
+    {
+        $cookie = SetCookie::fromString('test=123; HostOnly; Domain=example.com');
+
+        self::assertFalse($cookie->getHostOnly());
+        self::assertArrayNotHasKey('HostOnly', $cookie->toArray());
+    }
+
+    public function testRejectsHostOnlyCookieWithoutDomain()
+    {
+        $cookie = new SetCookie([
+            'Name' => 'test',
+            'Value' => '123',
+            'HostOnly' => true,
+        ]);
+
+        self::assertSame('Host-only cookies must have a domain', $cookie->validate());
+    }
+
     /**
      * Provides the parsed information from a cookie
      *
@@ -307,7 +366,7 @@ class SetCookieTest extends TestCase
                 [
                     'Name' => 'expires',
                     'Value' => 'tomorrow',
-                    'Domain' => '.example.com',
+                    'Domain' => 'example.com',
                     'Path' => '/Space Out/',
                     'Expires' => 'Tue, 21-Nov-2006 08:33:44 GMT',
                     'Discard' => null,
@@ -335,7 +394,7 @@ class SetCookieTest extends TestCase
                 [
                     'Name' => 'path',
                     'Value' => 'indexAction',
-                    'Domain' => '.foo.com',
+                    'Domain' => 'foo.com',
                     'Path' => '/',
                     'Expires' => 'Tue, 21-Nov-2006 08:33:44 GMT',
                     'Secure' => false,
@@ -364,7 +423,7 @@ class SetCookieTest extends TestCase
                 [
                     'Name' => 'PHPSESSID',
                     'Value' => '123456789+abcd%2Cef',
-                    'Domain' => '.localdomain',
+                    'Domain' => 'localdomain',
                     'Path' => '/foo/baz',
                     'Expires' => 'Tue, 21-Nov-2006 08:33:44 GMT',
                     'Secure' => true,
@@ -378,7 +437,7 @@ class SetCookieTest extends TestCase
                 [
                     'Name' => 'fr',
                     'Value' => 'synced',
-                    'Domain' => '.example.com',
+                    'Domain' => 'example.com',
                     'Path' => '/',
                     'Expires' => null,
                     'Secure' => true,
@@ -393,7 +452,7 @@ class SetCookieTest extends TestCase
                 [
                     'Name' => 'SESS3a6f27284c4d8b34b6f4ff98cb87703e',
                     'Value' => 'Ts-5YeSyvOCMS%2CzkEb9eDfW4C4ZNFOcRYdu-3JpEAXIm58aH',
-                    'Domain' => '.example.com',
+                    'Domain' => 'example.com',
                     'Path' => '/',
                     'Expires' => 'Wed, 07-Jun-2023 15:56:35 GMT',
                     'Secure' => false,
@@ -408,7 +467,7 @@ class SetCookieTest extends TestCase
                 [
                     'Name' => 'SESS3a6f27284c4d8b34b6f4ff98cb87703e',
                     'Value' => 'Ts-5YeSyvOCMS%2CzkEb9eDfW4C4ZNFOcRYdu-3JpEAXIm58aH',
-                    'Domain' => '.example.com',
+                    'Domain' => 'example.com',
                     'Path' => '/',
                     'Expires' => 'Wed, 07-Jun-2023 15:56:35 GMT',
                     'Secure' => false,

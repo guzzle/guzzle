@@ -107,6 +107,28 @@ class FileCookieJarTest extends TestCase
         unset($jar, $reloaded);
     }
 
+    public function testPersistsHostOnlyCookie(): void
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Domain' => 'example.com',
+            'HostOnly' => true,
+            'Expires' => \time() + 1000,
+        ]));
+        $jar->save($this->file);
+
+        $reloaded = new FileCookieJar($this->file);
+        $cookie = $reloaded->getCookieByName('foo');
+
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertSame('example.com', $cookie->getDomain());
+        self::assertTrue($cookie->getHostOnly());
+
+        unset($jar, $reloaded);
+    }
+
     public function testRemovesCookie()
     {
         $jar = new FileCookieJar($this->file);
