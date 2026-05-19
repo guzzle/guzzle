@@ -729,6 +729,45 @@ class ClientTest extends TestCase
         );
     }
 
+    public function testSendPreservesCustomRequestWhenApplyingRequestOptions()
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+        $request = new ClientTestRequest('POST', new ClientTestUri('http://foo.com/path'));
+
+        $client->send($request, [
+            RequestOptions::HEADERS => ['X-Test' => '1'],
+            RequestOptions::BODY => 'payload',
+            RequestOptions::QUERY => ['a' => 'b'],
+            RequestOptions::VERSION => '1.0',
+        ]);
+
+        $lastRequest = $mockHandler->getLastRequest();
+        self::assertInstanceOf(ClientTestRequest::class, $lastRequest);
+        self::assertInstanceOf(ClientTestUri::class, $lastRequest->getUri());
+        self::assertSame('http://foo.com/path?a=b', (string) $lastRequest->getUri());
+        self::assertSame('1', $lastRequest->getHeaderLine('X-Test'));
+        self::assertSame('payload', (string) $lastRequest->getBody());
+        self::assertSame('1.0', $lastRequest->getProtocolVersion());
+    }
+
+    public function testSendPreservesCustomUriWhenMergingBaseUri()
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client([
+            'handler' => $mockHandler,
+            'base_uri' => new ClientTestUri('http://foo.com/base/'),
+        ]);
+        $request = new ClientTestRequest('GET', new ClientTestUri('relative'));
+
+        $client->send($request);
+
+        $lastRequest = $mockHandler->getLastRequest();
+        self::assertInstanceOf(ClientTestRequest::class, $lastRequest);
+        self::assertInstanceOf(ClientTestUri::class, $lastRequest->getUri());
+        self::assertSame('http://foo.com/base/relative', (string) $lastRequest->getUri());
+    }
+
     public function testHandlerIsCallable()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -862,4 +901,12 @@ class ClientTest extends TestCase
         self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
     }
+}
+
+final class ClientTestRequest extends Request
+{
+}
+
+final class ClientTestUri extends Uri
+{
 }

@@ -10,6 +10,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RedirectMiddleware;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -77,6 +78,27 @@ class RedirectMiddlewareTest extends TestCase
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('http://example.com/foo', (string) $mock->getLastRequest()->getUri());
+    }
+
+    public function testRelativeRedirectPreservesCustomRequestAndUriImplementations()
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => '/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new RedirectTestRequest('GET', new RedirectTestUri('http://example.com?a=b'));
+        $response = $handler($request, [
+            'allow_redirects' => ['max' => 2],
+        ])->wait();
+
+        $lastRequest = $mock->getLastRequest();
+        self::assertSame(200, $response->getStatusCode());
+        self::assertInstanceOf(RedirectTestRequest::class, $lastRequest);
+        self::assertInstanceOf(RedirectTestUri::class, $lastRequest->getUri());
+        self::assertSame('http://example.com/foo', (string) $lastRequest->getUri());
     }
 
     public function testLimitsToMaxRedirects()
@@ -543,4 +565,12 @@ class RedirectMiddlewareTest extends TestCase
             ],
         ];
     }
+}
+
+final class RedirectTestRequest extends Request
+{
+}
+
+final class RedirectTestUri extends Uri
+{
 }

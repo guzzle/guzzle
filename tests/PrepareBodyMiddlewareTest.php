@@ -53,6 +53,26 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+    public function testPreservesCustomRequestWhenAddingContentLength()
+    {
+        $h = new MockHandler([
+            static function (RequestInterface $request) {
+                self::assertInstanceOf(PrepareBodyTestRequest::class, $request);
+                self::assertSame('7', $request->getHeaderLine('Content-Length'));
+
+                return new Response(200);
+            },
+        ]);
+        $m = Middleware::prepareBody();
+        $stack = new HandlerStack($h);
+        $stack->push($m);
+        $comp = $stack->resolve();
+        $p = $comp(new PrepareBodyTestRequest('POST', 'http://www.google.com', [], 'payload'), []);
+        self::assertInstanceOf(PromiseInterface::class, $p);
+        $response = $p->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
     public function testAddsTransferEncodingWhenNoContentLength()
     {
         $body = FnStream::decorate(Psr7\Utils::streamFor('foo'), [
@@ -136,6 +156,30 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+    public function testPreservesCustomRequestWhenAddingExpect()
+    {
+        $h = new MockHandler([
+            static function (RequestInterface $request) {
+                self::assertInstanceOf(PrepareBodyTestRequest::class, $request);
+                self::assertSame('100-Continue', $request->getHeaderLine('Expect'));
+
+                return new Response(200);
+            },
+        ]);
+
+        $m = Middleware::prepareBody();
+        $stack = new HandlerStack($h);
+        $stack->push($m);
+        $comp = $stack->resolve();
+        $p = $comp(
+            new PrepareBodyTestRequest('POST', 'http://www.google.com', [], 'payload'),
+            ['expect' => true]
+        );
+        self::assertInstanceOf(PromiseInterface::class, $p);
+        $response = $p->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
     public function testIgnoresIfExpectIsPresent()
     {
         $bd = Psr7\Utils::streamFor(\fopen(__DIR__.'/../composer.json', 'r'));
@@ -159,4 +203,8 @@ class PrepareBodyMiddlewareTest extends TestCase
         $response = $p->wait();
         self::assertSame(200, $response->getStatusCode());
     }
+}
+
+final class PrepareBodyTestRequest extends Request
+{
 }
