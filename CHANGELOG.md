@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Hardened `FileCookieJar` persistence against unsafe unserialization
+- Pass the request as the second argument to `on_headers` callbacks
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
 
 

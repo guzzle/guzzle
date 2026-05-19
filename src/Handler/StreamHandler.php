@@ -134,7 +134,7 @@ class StreamHandler
 
         if (isset($options['on_headers'])) {
             try {
-                $options['on_headers']($response);
+                $options['on_headers']($response, $request);
             } catch (\Throwable $e) {
                 return P\Create::rejectionFor(
                     new RequestException('An error was encountered during the on_headers event', $request, $response, $e)

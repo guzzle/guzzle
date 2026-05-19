@@ -733,19 +733,26 @@ on_headers
 :Types: - callable
 :Constant: ``GuzzleHttp\RequestOptions::ON_HEADERS``
 
-The callable accepts a ``Psr\Http\Message\ResponseInterface`` object. If an exception
-is thrown by the callable, then the promise associated with the response will
-be rejected with a ``GuzzleHttp\Exception\RequestException`` that wraps the
-exception that was thrown.
+The callable accepts a ``Psr\Http\Message\ResponseInterface`` object as the
+first argument and a ``Psr\Http\Message\RequestInterface`` object as the second
+argument. If an exception is thrown by the callable, then the promise associated
+with the response will be rejected with a ``GuzzleHttp\Exception\RequestException``
+that wraps the exception that was thrown.
 
 You may need to know what headers and status codes were received before data
 can be written to the sink.
 
 .. code-block:: php
 
+    use Psr\Http\Message\RequestInterface;
+    use Psr\Http\Message\ResponseInterface;
+
     // Reject responses that are greater than 1024 bytes.
     $client->request('GET', 'http://httpbin.org/stream/1024', [
-        'on_headers' => function (ResponseInterface $response) {
+        'on_headers' => function (
+            ResponseInterface $response,
+            RequestInterface $request
+        ) {
             if ($response->getHeaderLine('Content-Length') > 1024) {
                 throw new \Exception('The file is too big!');
             }
@@ -755,7 +762,8 @@ can be written to the sink.
 .. note::
 
     When writing HTTP handlers, the ``on_headers`` function must be invoked
-    before writing data to the body of the response.
+    with the response and request before writing data to the body of the
+    response.
 
 
 .. _on_stats:

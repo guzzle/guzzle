@@ -14,6 +14,7 @@ use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -720,6 +721,7 @@ class StreamHandlerTest extends TestCase
         ]);
         $req = new Request('GET', Server::$url);
         $got = null;
+        $gotRequest = null;
 
         $stream = Psr7\Utils::streamFor();
         $stream = FnStream::decorate($stream, [
@@ -733,13 +735,19 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $promise = $handler($req, [
             'sink' => $stream,
-            'on_headers' => static function (ResponseInterface $res) use (&$got) {
+            'on_headers' => static function (
+                ResponseInterface $res,
+                RequestInterface $request
+            ) use (&$got, &$gotRequest, $req) {
                 $got = $res;
+                $gotRequest = $request;
+                self::assertSame($req, $request);
                 self::assertSame('bar', $res->getHeaderLine('X-Foo'));
             },
         ]);
 
         $response = $promise->wait();
+        self::assertSame($req, $gotRequest);
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('bar', $response->getHeaderLine('X-Foo'));
         self::assertSame('abc 123', (string) $response->getBody());

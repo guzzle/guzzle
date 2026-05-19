@@ -15,6 +15,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Server\Server;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class PoolTest extends TestCase
 {
@@ -86,6 +87,42 @@ class PoolTest extends TestCase
         $p->promise()->wait();
         self::assertCount(1, $h);
         self::assertTrue($h[0]->hasHeader('x-foo'));
+    }
+
+    public function testOnHeadersOptionReceivesCurrentPoolRequest()
+    {
+        $requests = [
+            new Request('GET', 'http://example.com/one'),
+            new Request('GET', 'http://example.com/two'),
+        ];
+        $handler = new MockHandler([
+            new Response(200, ['X-Request' => 'one']),
+            new Response(200, ['X-Request' => 'two']),
+        ]);
+        $client = new Client(['handler' => $handler]);
+        $seen = [];
+
+        $pool = new Pool($client, $requests, [
+            'concurrency' => 1,
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request
+                ) use (&$seen): void {
+                    $seen[] = [
+                        (string) $request->getUri(),
+                        $response->getHeaderLine('X-Request'),
+                    ];
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame([
+            ['http://example.com/one', 'one'],
+            ['http://example.com/two', 'two'],
+        ], $seen);
     }
 
     public function testCanProvideCallablesThatReturnResponses()
