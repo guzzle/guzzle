@@ -77,10 +77,8 @@ class HandlerStack
 
     /**
      * Dumps a string representation of the stack.
-     *
-     * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         $depth = 0;
         $stack = [];
