@@ -1,6 +1,18 @@
 Guzzle Upgrade Guide
 ====================
 
+7.0 to 8.0
+----------
+
+#### FileCookieJar serialization
+
+`FileCookieJar` instances restored with `unserialize()` no longer save cookies
+automatically on destruction. If your application intentionally unserializes a
+`FileCookieJar` and expects changes to persist, call `save()` explicitly.
+
+Saved cookie files now JSON-escape tag characters. Existing cookie files remain
+readable, and cookie values are unchanged when loaded.
+
 6.0 to 7.0
 ----------
 
