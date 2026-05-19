@@ -296,6 +296,7 @@ These request options are a subset of request options called
 - :ref:`delay-option`
 - :ref:`decode_content-option`
 - :ref:`expect-option`
+- :ref:`on-headers`
 - :ref:`proxy-option`
 - :ref:`sink-option`
 - :ref:`timeout-option`
