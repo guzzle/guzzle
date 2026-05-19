@@ -2,6 +2,7 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+
 ## 8.0.0 - Upcoming
 
 ### Changed
@@ -15,17 +16,15 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.10`
-
-### Fixed
-
 - Improve invalid response handling across handlers
 
 
-## 7.10.1 - Upcoming
+## 7.10.1 - 2026-05-19
 
 ### Fixed
 
 - Fail clearly when cURL options cannot be applied
+- Fail clearly when the certificate option is malformed
 - Fail clearly when JSON decode depth is invalid
 - Fail clearly when session cookie data is malformed
 - Fail clearly when the stream progress option is not callable
