@@ -966,7 +966,7 @@ interfaces.
 ## 4.0.0 - 2014-03-29
 
 * For information on changes and upgrading, see:
-  https://github.com/guzzle/guzzle/blob/master/UPGRADING.md#3x-to-40
+  https://github.com/guzzle/guzzle/blob/4.x/UPGRADING.md#3x-to-40
 * Added `GuzzleHttp\batch()` as a convenience function for sending requests in
   parallel without needing to write asynchronous code.
 * Restructured how events are added to `GuzzleHttp\ClientInterface::sendAll()`.
@@ -999,7 +999,7 @@ interfaces.
 
 ## 4.0.0-rc.1 - 2014-03-15
 
-* See https://github.com/guzzle/guzzle/blob/master/UPGRADING.md#3x-to-40
+* See https://github.com/guzzle/guzzle/blob/4.x/UPGRADING.md#3x-to-40
 
 ## 3.8.1 - 2014-01-28
 

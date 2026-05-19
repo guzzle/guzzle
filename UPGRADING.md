@@ -49,7 +49,7 @@ curl_version();
 \curl_version();
 ```
 
-For the full diff you can check [here](https://github.com/guzzle/guzzle/compare/6.5.4..master).
+For the full diff you can check [here](https://github.com/guzzle/guzzle/compare/6.5.4..7.11).
 
 5.0 to 6.0
 ----------
@@ -189,11 +189,11 @@ $client = new GuzzleHttp\Client(['handler' => $handler]);
 
 ## POST Requests
 
-This version added the [`form_params`](docs/request-options.md#form_params)
+This version added the [`form_params`](https://github.com/guzzle/guzzle/blob/6.5/docs/request-options.rst#form_params)
 and `multipart` request options. `form_params` is an associative array of
 strings or array of strings and is used to serialize an
 `application/x-www-form-urlencoded` POST request. The
-[`multipart`](docs/request-options.md#multipart)
+[`multipart`](https://github.com/guzzle/guzzle/blob/6.5/docs/request-options.rst#multipart)
 option is now used to send a multipart/form-data POST request.
 
 `GuzzleHttp\Post\PostFile` has been removed. Use the `multipart` option to add

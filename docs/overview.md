@@ -71,7 +71,7 @@ vendor/bin/phpunit
 ```
 
 > [!NOTE]
-> You'll need to install node.js v8 or newer in order to perform integration tests on Guzzle's HTTP handlers.
+> You'll need Node.js `^20.19 || ^22.13 || >=24` available as `node` in order to perform integration tests on Guzzle's HTTP handlers.
 
 ## Reporting a security vulnerability
 
