@@ -306,7 +306,7 @@ class CurlFactory implements CurlFactoryInterface
                 new RequestException(
                     'An error was encountered while creating the response',
                     $easy->request,
-                    $easy->response,
+                    null,
                     $easy->createResponseException,
                     $ctx
                 )
@@ -774,7 +774,8 @@ class CurlFactory implements CurlFactoryInterface
                 $startingResponse = true;
                 try {
                     $easy->createResponse();
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
+                    $easy->response = null;
                     $easy->createResponseException = $e;
 
                     return -1;
@@ -782,7 +783,7 @@ class CurlFactory implements CurlFactoryInterface
                 if ($onHeaders !== null) {
                     try {
                         $onHeaders($easy->response);
-                    } catch (\Exception $e) {
+                    } catch (\Throwable $e) {
                         // Associate the exception with the handle and trigger
                         // a curl header write error by returning 0.
                         $easy->onHeadersException = $e;

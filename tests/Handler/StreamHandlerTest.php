@@ -634,6 +634,32 @@ class StreamHandlerTest extends TestCase
         $promise->wait();
     }
 
+    public function testRejectsPromiseWhenOnHeadersThrowsThrowable()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $req = new Request('GET', Server::$url);
+        $handler = new StreamHandler();
+        $promise = $handler($req, [
+            'on_headers' => static function (): void {
+                throw new \Error('test');
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString(
+                'An error was encountered during the on_headers event',
+                $e->getMessage()
+            );
+            self::assertInstanceOf(\Error::class, $e->getPrevious());
+        }
+    }
+
     public function testSuccessfullyCallsOnHeadersBeforeWritingToSink()
     {
         Server::flush();
@@ -799,16 +825,37 @@ class StreamHandlerTest extends TestCase
     public function testHandlesInvalidStatusCodeGracefully()
     {
         $handler = new StreamHandler();
+        $called = false;
+        $stats = null;
 
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('An error was encountered while creating the response');
-
-        $handler(
-            new Request('GET', Server::$url.'guzzle-server/bad-status'),
-            [
-                RequestOptions::STREAM => true,
-            ]
-        )->wait();
+        try {
+            $handler(
+                new Request('GET', Server::$url.'guzzle-server/bad-status'),
+                [
+                    RequestOptions::STREAM => true,
+                    'on_headers' => static function () use (&$called): void {
+                        $called = true;
+                    },
+                    'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                        $stats = $transferStats;
+                    },
+                ]
+            )->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString(
+                'An error was encountered while creating the response',
+                $e->getMessage()
+            );
+            self::assertFalse($called);
+            self::assertFalse($e->hasResponse());
+            self::assertNull($e->getResponse());
+            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+            self::assertInstanceOf(TransferStats::class, $stats);
+            self::assertFalse($stats->hasResponse());
+            self::assertNull($stats->getResponse());
+            self::assertSame($e, $stats->getHandlerErrorData());
+        }
     }
 
     public function testRejectsNonHttpSchemes()

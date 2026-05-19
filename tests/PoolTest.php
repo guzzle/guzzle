@@ -4,12 +4,15 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Server\Server;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
@@ -181,6 +184,40 @@ class PoolTest extends TestCase
         $p->promise()->wait();
         self::assertCount(3, $keys);
         self::assertSame($keys, \array_keys($requests));
+    }
+
+    public function testPoolHandlesInvalidResponseStatusAsResponseLessRejection()
+    {
+        $client = new Client([
+            'handler' => HandlerStack::create(new CurlMultiHandler()),
+        ]);
+        $requests = [
+            new Request('GET', Server::$url.'guzzle-server/bad-status'),
+            new Request('GET', Server::$url.'guzzle-server/bad-status'),
+        ];
+        $fulfilled = 0;
+        $rejected = [];
+
+        $pool = new Pool($client, $requests, [
+            'concurrency' => 2,
+            'fulfilled' => static function () use (&$fulfilled): void {
+                ++$fulfilled;
+            },
+            'rejected' => static function ($reason) use (&$rejected): void {
+                $rejected[] = $reason;
+            },
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame(0, $fulfilled);
+        self::assertCount(2, $rejected);
+
+        foreach ($rejected as $reason) {
+            self::assertInstanceOf(RequestException::class, $reason);
+            self::assertFalse($reason->hasResponse());
+            self::assertNull($reason->getResponse());
+        }
     }
 
     private function getClient($total = 1)

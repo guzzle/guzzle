@@ -114,10 +114,8 @@ class StreamHandler
 
         try {
             [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($hdrs);
-        } catch (\Exception $e) {
-            return P\Create::rejectionFor(
-                new RequestException('An error was encountered while creating the response', $request, null, $e)
-            );
+        } catch (\Throwable $e) {
+            return $this->rejectResponseCreation($options, $request, $startTime, $e);
         }
 
         [$stream, $headers] = $this->checkDecode($options, $headers, $stream);
@@ -130,16 +128,14 @@ class StreamHandler
 
         try {
             $response = new Psr7\Response($status, $headers, $sink, $ver, $reason);
-        } catch (\Exception $e) {
-            return P\Create::rejectionFor(
-                new RequestException('An error was encountered while creating the response', $request, null, $e)
-            );
+        } catch (\Throwable $e) {
+            return $this->rejectResponseCreation($options, $request, $startTime, $e);
         }
 
         if (isset($options['on_headers'])) {
             try {
                 $options['on_headers']($response);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 return P\Create::rejectionFor(
                     new RequestException('An error was encountered during the on_headers event', $request, $response, $e)
                 );
@@ -155,6 +151,24 @@ class StreamHandler
         $this->invokeStats($options, $request, $startTime, $response, null);
 
         return new FulfilledPromise($response);
+    }
+
+    private function rejectResponseCreation(
+        array $options,
+        RequestInterface $request,
+        ?float $startTime,
+        \Throwable $previous
+    ): PromiseInterface {
+        $reason = new RequestException(
+            'An error was encountered while creating the response',
+            $request,
+            null,
+            $previous
+        );
+
+        $this->invokeStats($options, $request, $startTime, null, $reason);
+
+        return P\Create::rejectionFor($reason);
     }
 
     private function createSink(StreamInterface $stream, array $options): StreamInterface
@@ -338,7 +352,6 @@ class StreamHandler
 
                 // See https://wiki.php.net/rfc/deprecations_php_8_5#deprecate_the_http_response_header_predefined_variable
                 if (function_exists('http_get_last_response_headers')) {
-                    /** @var array|null */
                     $http_response_header = \http_get_last_response_headers();
                 }
 

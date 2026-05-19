@@ -9,11 +9,19 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Hardened `FileCookieJar` persistence against unsafe unserialization
 
 
-## 7.10.1 - 2026-05-19
+## 7.11.0 - Upcoming
+
+### Fixed
+
+- Improve invalid response handling across handlers
+
+
+## 7.10.1 - Upcoming
 
 ### Fixed
 
 - Fail clearly when cURL options cannot be applied
+- Prevent response creation failures from exposing stale cURL responses
 
 
 ## 7.10.0 - 2025-08-23

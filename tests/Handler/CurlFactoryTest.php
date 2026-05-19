@@ -783,11 +783,57 @@ class CurlFactoryTest extends TestCase
 
         $req = new Psr7\Request('GET', Server::$url);
         $handler = new Handler\CurlHandler();
-        $promise = $handler($req, []);
+        $called = false;
+        $promise = $handler($req, [
+            'on_headers' => static function () use (&$called): void {
+                $called = true;
+            },
+        ]);
 
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('An error was encountered while creating the response');
-        $promise->wait();
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString(
+                'An error was encountered while creating the response',
+                $e->getMessage()
+            );
+            self::assertFalse($called);
+            self::assertFalse($e->hasResponse());
+            self::assertNull($e->getResponse());
+            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+        }
+    }
+
+    public function testCreateResponseFailureDoesNotExposeStaleCurlResponse()
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy->response = new Psr7\Response(100);
+        $easy->errno = \CURLE_WRITE_ERROR;
+        $easy->createResponseException = new \InvalidArgumentException(
+            'Status code must be an integer value between 1xx and 5xx.'
+        );
+
+        $promise = CurlFactory::finish(
+            static function () {
+            },
+            $easy,
+            $factory
+        );
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString(
+                'An error was encountered while creating the response',
+                $e->getMessage()
+            );
+            self::assertFalse($e->hasResponse());
+            self::assertNull($e->getResponse());
+            self::assertSame($easy->createResponseException, $e->getPrevious());
+        }
     }
 
     public function testEnsuresOnHeadersIsCallable()
@@ -816,6 +862,32 @@ class CurlFactoryTest extends TestCase
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
+    }
+
+    public function testRejectsPromiseWhenOnHeadersThrowsThrowable()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $req = new Psr7\Request('GET', Server::$url);
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'on_headers' => static function (): void {
+                throw new \Error('test');
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString(
+                'An error was encountered during the on_headers event',
+                $e->getMessage()
+            );
+            self::assertInstanceOf(\Error::class, $e->getPrevious());
+        }
     }
 
     public function testSuccessfullyCallsOnHeadersBeforeWritingToSink()
@@ -987,9 +1059,17 @@ class CurlFactoryTest extends TestCase
     {
         $a = new Handler\CurlMultiHandler();
 
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('An error was encountered while creating the response');
-
-        $a(new Psr7\Request('GET', Server::$url.'guzzle-server/bad-status'), [])->wait();
+        try {
+            $a(new Psr7\Request('GET', Server::$url.'guzzle-server/bad-status'), [])->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString(
+                'An error was encountered while creating the response',
+                $e->getMessage()
+            );
+            self::assertFalse($e->hasResponse());
+            self::assertNull($e->getResponse());
+            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+        }
     }
 }
