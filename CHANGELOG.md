@@ -10,7 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Hardened `FileCookieJar` persistence against unsafe unserialization
 - Adjusted `guzzlehttp/promises` version constraint to `^3.0`
 - Adjusted `guzzlehttp/psr7` version constraint to `^3.0`
-- Added boolean parameter types to `SetCookie` flag setters
+- Added parameter and return types to `SetCookie` methods
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Pass the request as the second argument to `on_headers` callbacks
 - Store response cookies without a `Domain` attribute as host-only cookies
