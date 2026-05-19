@@ -480,10 +480,10 @@ class SetCookie
             return 'The cookie value must not be empty';
         }
 
-        // Domains must not be empty, but can be 0. "0" is not a valid internet
-        // domain, but may be used as server name in a private network.
+        // Domains must not be empty, but may be omitted. "0" is not a valid
+        // internet domain, but may be used as server name in a private network.
         $domain = $this->getDomain();
-        if ($domain === null || $domain === '') {
+        if ($domain === '') {
             return 'The cookie domain must not be empty';
         }
 

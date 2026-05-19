@@ -17,6 +17,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
+- Allow domainless `SetCookie` instances to be stored without using them as wildcard request cookies
 - Remove middleware by name when the name is also a callable string
 
 

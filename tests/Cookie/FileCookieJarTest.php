@@ -86,6 +86,25 @@ class FileCookieJarTest extends TestCase
         unset($jar);
     }
 
+    public function testPersistsCookieWithoutDomain(): void
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Expires' => \time() + 1000,
+        ]));
+        $jar->save($this->file);
+
+        $reloaded = new FileCookieJar($this->file);
+        $cookie = $reloaded->getCookieByName('foo');
+
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertNull($cookie->getDomain());
+
+        unset($jar, $reloaded);
+    }
+
     public function testRemovesCookie()
     {
         $jar = new FileCookieJar($this->file);
