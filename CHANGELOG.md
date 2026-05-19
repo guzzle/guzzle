@@ -29,6 +29,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.10`
 - Allow domainless `SetCookie` instances to be stored without using them as wildcard request cookies
+- Converted documentation to Markdown and removed website build tooling
 - Prevent `CurlMultiHandler` destructors from throwing during cleanup
 - Improve invalid response handling across handlers
 
@@ -985,7 +986,7 @@ interfaces.
 ## 4.0.0 - 2014-03-29
 
 * For information on changes and upgrading, see:
-  https://github.com/guzzle/guzzle/blob/master/UPGRADING.md#3x-to-40
+  https://github.com/guzzle/guzzle/blob/4.x/UPGRADING.md#3x-to-40
 * Added `GuzzleHttp\batch()` as a convenience function for sending requests in
   parallel without needing to write asynchronous code.
 * Restructured how events are added to `GuzzleHttp\ClientInterface::sendAll()`.
@@ -1018,7 +1019,7 @@ interfaces.
 
 ## 4.0.0-rc.1 - 2014-03-15
 
-* See https://github.com/guzzle/guzzle/blob/master/UPGRADING.md#3x-to-40
+* See https://github.com/guzzle/guzzle/blob/4.x/UPGRADING.md#3x-to-40
 
 ## 3.8.1 - 2014-01-28
 

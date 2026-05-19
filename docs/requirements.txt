@@ -1,4 +1,0 @@
-Sphinx>=1.3.0,<1.4.0
-guzzle_sphinx_theme>=0.7.0,<0.8.0
-jinja2<3
-markupsafe<2.1
