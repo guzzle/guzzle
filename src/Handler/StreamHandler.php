@@ -444,17 +444,26 @@ class StreamHandler
         $uri = null;
 
         if (!\is_array($value)) {
+            if (!\is_string($value)) {
+                throw new \InvalidArgumentException('proxy must be a string or array');
+            }
+
             $uri = $value;
         } else {
             $scheme = $request->getUri()->getScheme();
             if (isset($value[$scheme])) {
-                if (!isset($value['no']) || !Utils::isHostInNoProxy($request->getUri()->getHost(), $value['no'])) {
+                if (!\is_string($value[$scheme])) {
+                    throw new \InvalidArgumentException('proxy values must be strings');
+                }
+
+                $noProxy = isset($value['no']) ? Utils::normalizeNoProxy($value['no']) : [];
+                if ($noProxy === [] || !Utils::isHostInNoProxy($request->getUri()->getHost(), $noProxy)) {
                     $uri = $value[$scheme];
                 }
             }
         }
 
-        if (!$uri) {
+        if ($uri === null || $uri === '') {
             return;
         }
 

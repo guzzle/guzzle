@@ -185,6 +185,38 @@ final class Utils
     }
 
     /**
+     * Normalize a no-proxy list from request options.
+     *
+     * @param mixed $noProxy No-proxy value as passed via request transfer options.
+     *
+     * @return string[]
+     *
+     * @internal
+     */
+    public static function normalizeNoProxy($noProxy): array
+    {
+        if (\is_string($noProxy)) {
+            $noProxy = \explode(',', $noProxy);
+        } elseif (!\is_array($noProxy)) {
+            throw new InvalidArgumentException('proxy no list must be a string or array of strings');
+        }
+
+        $result = [];
+        foreach ($noProxy as $area) {
+            if (!\is_string($area)) {
+                throw new InvalidArgumentException('proxy no list must be a string or array of strings');
+            }
+
+            $area = \trim($area);
+            if ($area !== '') {
+                $result[] = $area;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Wrapper for json_decode that throws when an error occurs.
      *
      * @param string $json    JSON data to parse

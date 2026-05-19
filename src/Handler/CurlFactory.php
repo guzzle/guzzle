@@ -620,16 +620,29 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (isset($options['proxy'])) {
-            if (!\is_array($options['proxy'])) {
-                $conf[\CURLOPT_PROXY] = $options['proxy'];
+            $proxy = $options['proxy'];
+            if (!\is_array($proxy)) {
+                if (!\is_string($proxy)) {
+                    throw new \InvalidArgumentException('proxy must be a string or array');
+                }
+
+                $conf[\CURLOPT_PROXY] = $proxy;
+                $conf[\CURLOPT_NOPROXY] = '';
             } else {
                 $scheme = $easy->request->getUri()->getScheme();
-                if (isset($options['proxy'][$scheme])) {
+                if (isset($proxy[$scheme])) {
+                    if (!\is_string($proxy[$scheme])) {
+                        throw new \InvalidArgumentException('proxy values must be strings');
+                    }
+
                     $host = $easy->request->getUri()->getHost();
-                    if (isset($options['proxy']['no']) && Utils::isHostInNoProxy($host, $options['proxy']['no'])) {
-                        unset($conf[\CURLOPT_PROXY]);
+                    $noProxy = isset($proxy['no']) ? Utils::normalizeNoProxy($proxy['no']) : [];
+                    if ($noProxy !== [] && Utils::isHostInNoProxy($host, $noProxy)) {
+                        $conf[\CURLOPT_PROXY] = '';
+                        $conf[\CURLOPT_NOPROXY] = $host;
                     } else {
-                        $conf[\CURLOPT_PROXY] = $options['proxy'][$scheme];
+                        $conf[\CURLOPT_PROXY] = $proxy[$scheme];
+                        $conf[\CURLOPT_NOPROXY] = '';
                     }
                 }
             }

@@ -207,6 +207,7 @@ class CurlFactoryTest extends TestCase
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), ['proxy' => 'http://bar.com']);
         self::assertEquals('http://bar.com', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
     }
 
     public function testAddsViaScheme()
@@ -216,11 +217,39 @@ class CurlFactoryTest extends TestCase
             'proxy' => ['http' => 'http://bar.com', 'https' => 'https://t'],
         ]);
         self::assertEquals('http://bar.com', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
         $this->checkNoProxyForHost('http://test.test.com', ['test.test.com'], false);
         $this->checkNoProxyForHost('http://test.test.com', ['.test.com'], false);
+        $this->checkNoProxyForHost('http://test.test.com', 'test.test.com,example.com', false);
+        $this->checkNoProxyForHost('http://test.test.com', '.example.com,example.org', true);
+        $this->checkNoProxyForHost('http://test.test.com', [], true);
+        $this->checkNoProxyForHost('http://test.test.com', '', true);
         $this->checkNoProxyForHost('http://test.test.com', ['*.test.com'], true);
         $this->checkNoProxyForHost('http://test.test.com', ['*'], false);
         $this->checkNoProxyForHost('http://127.0.0.1', ['127.0.0.*'], true);
+    }
+
+    /**
+     * @dataProvider invalidProxyOptionProvider
+     *
+     * @param mixed $proxy
+     */
+    public function testValidatesProxyOption($proxy)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $f->create(new Psr7\Request('GET', Server::$url), ['proxy' => $proxy]);
+    }
+
+    public static function invalidProxyOptionProvider(): array
+    {
+        return [
+            [new \stdClass()],
+            [['http' => new \stdClass()]],
+            [['http' => 'http://bar.com', 'no' => new \stdClass()]],
+            [['http' => 'http://bar.com', 'no' => [new \stdClass()]]],
+        ];
     }
 
     private function checkNoProxyForHost($url, $noProxy, $assertUseProxy)
@@ -234,9 +263,11 @@ class CurlFactoryTest extends TestCase
             ],
         ]);
         if ($assertUseProxy) {
-            self::assertArrayHasKey(\CURLOPT_PROXY, $_SERVER['_curl']);
+            self::assertSame('http://bar.com', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
         } else {
-            self::assertArrayNotHasKey(\CURLOPT_PROXY, $_SERVER['_curl']);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame(parse_url($url, \PHP_URL_HOST), $_SERVER['_curl'][\CURLOPT_NOPROXY]);
         }
     }
 
