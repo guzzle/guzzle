@@ -486,9 +486,6 @@ All of the above exceptions extend from `GuzzleHttp\Exception\TransferException`
 
 Guzzle exposes a few environment variables that can be used to customize the behavior of the library.
 
-`GUZZLE_CURL_SELECT_TIMEOUT`
-Controls the duration in seconds that a `curl_multi_*` handler will use when selecting on curl handles using `curl_multi_select()`. Some systems have issues with PHP's implementation of `curl_multi_select()` where calling this function always results in waiting for the maximum duration of the timeout.
-
 `HTTP_PROXY`
 Defines the proxy to use when sending requests using the "http" protocol.
 

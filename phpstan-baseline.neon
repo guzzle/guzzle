@@ -133,12 +133,6 @@ parameters:
 			path: src/Handler/CurlHandler.php
 
 		-
-			message: '#^Call to function is_int\(\) with int will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
 			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:__get\(\) has invalid return type CurlMultiHandle\.$#'
 			identifier: class.notFound
 			count: 1

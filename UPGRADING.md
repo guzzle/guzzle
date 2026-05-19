@@ -47,6 +47,11 @@ declare strict types will throw `TypeError` for non-boolean values.
 `SetCookie::getExpires()` now returns `int|null`. Invalid textual expiration
 dates are treated as `null`.
 
+#### CurlMultiHandler select timeout
+
+The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
+the `select_timeout` option to `CurlMultiHandler` instead.
+
 #### RetryMiddleware::exponentialDelay
 
 `RetryMiddleware::exponentialDelay()` has been removed. The retry middleware
