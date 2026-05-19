@@ -10,7 +10,7 @@ class SetCookie
     /**
      * @var array
      */
-    private static $defaults = [
+    private const DEFAULTS = [
         'Name' => null,
         'Value' => null,
         'Domain' => null,
@@ -40,7 +40,7 @@ class SetCookie
     public static function fromString(string $cookie): self
     {
         // Create the default return array
-        $data = self::$defaults;
+        $data = self::DEFAULTS;
         // Explode the cookie string using a series of semicolons
         $pieces = \array_filter(\array_map('trim', \explode(';', $cookie)));
         // The name of the cookie (first kvp) must exist and include an equal sign.
@@ -61,7 +61,7 @@ class SetCookie
                 $data['Name'] = $key;
                 $data['Value'] = $value;
             } else {
-                foreach (\array_keys(self::$defaults) as $search) {
+                foreach (\array_keys(self::DEFAULTS) as $search) {
                     if (!\strcasecmp($search, $key)) {
                         if ($search === 'Max-Age') {
                             if (is_numeric($value)) {
@@ -92,7 +92,7 @@ class SetCookie
      */
     public function __construct(array $data = [])
     {
-        $this->data = self::$defaults;
+        $this->data = self::DEFAULTS;
 
         if (\array_key_exists('HostOnly', $data)) {
             $this->setHostOnly((bool) $data['HostOnly']);
@@ -136,7 +136,7 @@ class SetCookie
         }
 
         // Set the remaining values that don't have extra validation logic
-        foreach (array_diff(array_keys($data), array_keys(self::$defaults)) as $key) {
+        foreach (array_diff(array_keys($data), array_keys(self::DEFAULTS)) as $key) {
             $this->data[$key] = $data[$key];
         }
 

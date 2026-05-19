@@ -19,6 +19,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Removed
 
 - Dropped support for PHP 7.2 and 7.3
+- Removed `RedirectMiddleware::$defaultSettings`; use `RedirectMiddleware::DEFAULT_SETTINGS`
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
 
 
