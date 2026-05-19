@@ -78,9 +78,87 @@ class CurlFactory implements CurlFactoryInterface
 
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         $easy->handle = $this->handles ? \array_pop($this->handles) : \curl_init();
-        curl_setopt_array($easy->handle, $conf);
+
+        try {
+            $this->applyCurlOptions($easy->handle, $conf);
+        } catch (\Throwable $e) {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_close($easy->handle);
+            }
+            unset($easy->handle);
+
+            throw $e;
+        }
 
         return $easy;
+    }
+
+    /**
+     * @param resource|\CurlHandle $handle
+     * @param array<int|string, mixed> $conf
+     */
+    private function applyCurlOptions($handle, array $conf): void
+    {
+        foreach ($conf as $option => $value) {
+            if (!\is_int($option)) {
+                throw new \InvalidArgumentException(\sprintf(
+                    'Invalid cURL option %s.',
+                    self::formatCurlOption($option)
+                ));
+            }
+
+            try {
+                $success = curl_setopt($handle, $option, $value);
+            } catch (\Throwable $e) {
+                throw new \InvalidArgumentException(
+                    \sprintf(
+                        'Unable to set cURL option %s: %s',
+                        self::formatCurlOption($option),
+                        $e->getMessage()
+                    ),
+                    0,
+                    $e
+                );
+            }
+
+            if (!$success) {
+                throw new \InvalidArgumentException(\sprintf(
+                    'Unable to set cURL option %s.',
+                    self::formatCurlOption($option)
+                ));
+            }
+        }
+    }
+
+    /**
+     * @param int|string $option
+     */
+    private static function formatCurlOption($option): string
+    {
+        if (!\is_int($option)) {
+            return \sprintf('"%s"', $option);
+        }
+
+        static $names = null;
+
+        if (null === $names) {
+            $names = [];
+            foreach (\get_defined_constants(true)['curl'] ?? [] as $name => $value) {
+                if (
+                    \is_int($value)
+                    && \strpos($name, 'CURLOPT_') === 0
+                    && !isset($names[$value])
+                ) {
+                    $names[$value] = $name;
+                }
+            }
+        }
+
+        if (isset($names[$option])) {
+            return \sprintf('%s (%d)', $names[$option], $option);
+        }
+
+        return (string) $option;
     }
 
     private static function supportsHttp2(): bool
