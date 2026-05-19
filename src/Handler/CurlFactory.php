@@ -311,7 +311,7 @@ class CurlFactory implements CurlFactoryInterface
                 new RequestException(
                     'An error was encountered while creating the response',
                     $easy->request,
-                    $easy->response,
+                    null,
                     $easy->createResponseException,
                     $ctx
                 )
