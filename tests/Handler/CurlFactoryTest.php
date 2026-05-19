@@ -864,6 +864,32 @@ class CurlFactoryTest extends TestCase
         $promise->wait();
     }
 
+    public function testRejectsPromiseWhenOnHeadersThrowsThrowable()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $req = new Psr7\Request('GET', Server::$url);
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'on_headers' => static function (): void {
+                throw new \Error('test');
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString(
+                'An error was encountered during the on_headers event',
+                $e->getMessage()
+            );
+            self::assertInstanceOf(\Error::class, $e->getPrevious());
+        }
+    }
+
     public function testSuccessfullyCallsOnHeadersBeforeWritingToSink()
     {
         Server::flush();

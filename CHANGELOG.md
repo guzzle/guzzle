@@ -2,6 +2,13 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 7.11.0 - Upcoming
+
+### Fixed
+
+- Improve invalid response handling across handlers
+
+
 ## 7.10.1 - Upcoming
 
 ### Fixed
