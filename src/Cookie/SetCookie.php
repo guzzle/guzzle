@@ -28,6 +28,11 @@ class SetCookie
     private $data;
 
     /**
+     * @var bool Whether this cookie was set without a Domain attribute.
+     */
+    private $hostOnly = false;
+
+    /**
      * Create a new SetCookie object from a string.
      *
      * @param string $cookie Set-Cookie header string
@@ -72,6 +77,9 @@ class SetCookie
                         continue 2;
                     }
                 }
+                if (!\strcasecmp('HostOnly', $key)) {
+                    continue;
+                }
                 $data[$key] = $value;
             }
         }
@@ -85,6 +93,11 @@ class SetCookie
     public function __construct(array $data = [])
     {
         $this->data = self::$defaults;
+
+        if (\array_key_exists('HostOnly', $data)) {
+            $this->setHostOnly($data['HostOnly']);
+            unset($data['HostOnly']);
+        }
 
         if (isset($data['Name'])) {
             $this->setName($data['Name']);
@@ -140,6 +153,9 @@ class SetCookie
     {
         $str = $this->data['Name'].'='.($this->data['Value'] ?? '').'; ';
         foreach ($this->data as $k => $v) {
+            if ($k === 'Domain' && $this->getHostOnly()) {
+                continue;
+            }
             if ($k !== 'Name' && $k !== 'Value' && $v !== null && $v !== false) {
                 if ($k === 'Expires') {
                     $str .= 'Expires='.\gmdate('D, d M Y H:i:s \G\M\T', $v).'; ';
@@ -154,7 +170,12 @@ class SetCookie
 
     public function toArray(): array
     {
-        return $this->data;
+        $data = $this->data;
+        if ($this->getHostOnly()) {
+            $data['HostOnly'] = true;
+        }
+
+        return $data;
     }
 
     /**
@@ -226,7 +247,31 @@ class SetCookie
             trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a string or null to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
         }
 
-        $this->data['Domain'] = null === $domain ? null : (string) $domain;
+        $this->data['Domain'] = null === $domain ? null : self::normalizeDomain((string) $domain);
+    }
+
+    /**
+     * Get whether this cookie is scoped to the origin host only.
+     *
+     * @return bool
+     */
+    public function getHostOnly()
+    {
+        return $this->hostOnly;
+    }
+
+    /**
+     * Set whether this cookie is scoped to the origin host only.
+     *
+     * @param bool $hostOnly Set to true for host-only cookies
+     */
+    public function setHostOnly($hostOnly): void
+    {
+        if (!is_bool($hostOnly)) {
+            trigger_deprecation('guzzlehttp/guzzle', '8.0', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 9.0.', __CLASS__, __FUNCTION__);
+        }
+
+        $this->hostOnly = (bool) $hostOnly;
     }
 
     /**
@@ -401,15 +446,19 @@ class SetCookie
     public function matchesDomain(string $domain): bool
     {
         $cookieDomain = $this->getDomain();
-        if (null === $cookieDomain) {
-            return true;
+        if (null === $cookieDomain || $cookieDomain === '') {
+            return false;
         }
 
         // Remove the leading '.' as per spec in RFC 6265.
         // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.3
-        $cookieDomain = \ltrim(\strtolower($cookieDomain), '.');
+        $cookieDomain = self::normalizeDomain($cookieDomain);
 
         $domain = \strtolower($domain);
+
+        if ($this->getHostOnly()) {
+            return $domain === $cookieDomain;
+        }
 
         // Domain not set or exact match.
         if ('' === $cookieDomain || $domain === $cookieDomain) {
@@ -469,6 +518,21 @@ class SetCookie
             return 'The cookie domain must not be empty';
         }
 
+        if ($this->getHostOnly() && $domain === null) {
+            return 'Host-only cookies must have a domain';
+        }
+
         return true;
+    }
+
+    private static function normalizeDomain(string $domain): string
+    {
+        $domain = \strtolower($domain);
+
+        if ($domain !== '' && $domain[0] === '.') {
+            return \substr($domain, 1);
+        }
+
+        return $domain;
     }
 }

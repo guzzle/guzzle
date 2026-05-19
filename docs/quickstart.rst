@@ -479,10 +479,11 @@ You can manually set cookies into a cookie jar with the named constructor
         'example.org'
     );
 
-Domainless ``SetCookie`` instances can be stored in a cookie jar for
-representing or forwarding ``Set-Cookie`` headers. Because manually-created
-domainless cookies do not include an origin host, Guzzle will not send them on
-outgoing requests.
+Cookies received from responses without a ``Domain`` attribute are stored as
+host-only cookies and are sent only to the exact host that set them. Domainless
+``SetCookie`` instances can still be stored in a cookie jar for representing or
+forwarding ``Set-Cookie`` headers. Because manually-created domainless cookies
+do not include an origin host, Guzzle will not send them on outgoing requests.
 
 You can get a cookie by its name with the ``getCookieByName($name)`` method
 which returns a ``GuzzleHttp\Cookie\SetCookie`` instance.

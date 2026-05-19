@@ -399,6 +399,104 @@ class CookieJarTest extends TestCase
         $request = new Request('GET', 'http://www.example.com');
         $this->jar->extractCookies($request, $response);
         self::assertCount(1, $this->jar);
+
+        $cookie = $this->jar->getCookieByName('fpc');
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertSame('www.example.com', $cookie->getDomain());
+        self::assertTrue($cookie->getHostOnly());
+    }
+
+    public function testExtractsCookieWithoutDomainAsHostOnly(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Path=/'])
+        );
+
+        $cookie = $this->jar->getCookieByName('sid');
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertSame('example.com', $cookie->getDomain());
+        self::assertTrue($cookie->getHostOnly());
+    }
+
+    public function testDoesNotSendHostOnlyCookieToSubdomain(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Path=/'])
+        );
+
+        $sameHost = $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'));
+        $subdomain = $this->jar->withCookieHeader(new Request('GET', 'https://foo.example.com/'));
+
+        self::assertSame('sid=abc', $sameHost->getHeaderLine('Cookie'));
+        self::assertFalse($subdomain->hasHeader('Cookie'));
+    }
+
+    public function testSendsDomainCookieToSubdomain(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Domain=example.com; Path=/'])
+        );
+
+        $request = $this->jar->withCookieHeader(new Request('GET', 'https://foo.example.com/'));
+
+        self::assertSame('sid=abc', $request->getHeaderLine('Cookie'));
+    }
+
+    public function testEmptyDomainAttributeCreatesHostOnlyCookie(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Domain=; Path=/'])
+        );
+
+        $cookie = $this->jar->getCookieByName('sid');
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertSame('example.com', $cookie->getDomain());
+        self::assertTrue($cookie->getHostOnly());
+    }
+
+    public function testHostOnlyAndDomainCookiesWithSameNameCanCoexist(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=host; Path=/'])
+        );
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=domain; Domain=example.com; Path=/'])
+        );
+
+        self::assertCount(2, $this->jar);
+
+        $sameHost = $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'));
+        $subdomain = $this->jar->withCookieHeader(new Request('GET', 'https://foo.example.com/'));
+
+        self::assertSame('sid=host; sid=domain', $sameHost->getHeaderLine('Cookie'));
+        self::assertSame('sid=domain', $subdomain->getHeaderLine('Cookie'));
+    }
+
+    public function testClearingSubdomainDoesNotRemoveParentHostOnlyCookie(): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'sid',
+            'Value' => 'host',
+            'Domain' => 'example.com',
+            'HostOnly' => true,
+        ]));
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'sid',
+            'Value' => 'domain',
+            'Domain' => 'example.com',
+        ]));
+
+        $this->jar->clear('foo.example.com');
+
+        self::assertCount(1, $this->jar);
+        $request = $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'));
+        self::assertSame('sid=host', $request->getHeaderLine('Cookie'));
     }
 
     public static function getMatchingCookiesDataProvider()
@@ -520,6 +618,9 @@ class CookieJarTest extends TestCase
         $this->jar->extractCookies($request, $response);
         $newRequest = $this->jar->withCookieHeader(new Request('GET', 'http://www.example.com/foo'));
         self::assertTrue($newRequest->hasHeader('Cookie'));
+
+        $subdomainRequest = $this->jar->withCookieHeader(new Request('GET', 'http://foo.www.example.com/foo'));
+        self::assertFalse($subdomainRequest->hasHeader('Cookie'));
     }
 
     public static function getCookiePathsDataProvider()

@@ -13,6 +13,18 @@ automatically on destruction. If your application intentionally unserializes a
 Saved cookie files now JSON-escape tag characters. Existing cookie files remain
 readable, and cookie values are unchanged when loaded.
 
+#### Host-only cookies
+
+Cookies extracted from responses without a `Domain` attribute are now stored as
+host-only cookies. They are sent only to the exact host that set them.
+
+Previously, Guzzle stored these cookies with the request host as a normal domain
+cookie, so they could also be sent to subdomains. Applications relying on that
+behavior should use an explicit `Domain` attribute.
+
+`SetCookie::toArray()` may include `HostOnly => true` for host-only cookies.
+Existing persisted cookie files without this key load as non-host-only cookies.
+
 #### PHP Version and Dependencies
 
 Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
