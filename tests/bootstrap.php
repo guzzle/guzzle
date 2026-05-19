@@ -21,6 +21,9 @@ namespace GuzzleHttp\Handler {
     function curl_setopt($handle, int $option, $value)
     {
         if (!empty($_SERVER['curl_test'])) {
+            if ($option === \CURLOPT_CUSTOMREQUEST) {
+                $_SERVER['_curl'] = [];
+            }
             $_SERVER['_curl'][$option] = $value;
         } else {
             unset($_SERVER['_curl']);
