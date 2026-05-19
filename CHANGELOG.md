@@ -16,6 +16,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Removed
 
 - Dropped support for PHP 7.2 and 7.3
+- Removed the deprecated `RetryMiddleware::exponentialDelay()` method
 
 
 ## 7.11.0 - Upcoming

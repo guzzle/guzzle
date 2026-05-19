@@ -21,6 +21,13 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
+#### RetryMiddleware::exponentialDelay
+
+`RetryMiddleware::exponentialDelay()` has been removed. The retry middleware
+continues to use the same exponential backoff calculation by default. If you
+called the static method directly, inline that calculation or pass a custom
+delay callable to `Middleware::retry()`.
+
 #### on_headers callback arguments
 
 The `on_headers` request option callback now receives the request as its second

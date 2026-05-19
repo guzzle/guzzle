@@ -8,7 +8,6 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\RetryMiddleware;
 use PHPUnit\Framework\TestCase;
 
 class RetryMiddlewareTest extends TestCase
@@ -95,30 +94,5 @@ class RetryMiddlewareTest extends TestCase
 
         self::assertSame(200, $p->wait()->getStatusCode());
         self::assertSame([1000, 2000], $delays);
-    }
-
-    public function testExponentialDelayIsDeprecated()
-    {
-        $deprecations = [];
-
-        set_error_handler(static function (int $severity, string $message) use (&$deprecations): bool {
-            if ($severity !== \E_USER_DEPRECATED) {
-                return false;
-            }
-
-            $deprecations[] = $message;
-
-            return true;
-        });
-
-        try {
-            self::assertSame(1000, RetryMiddleware::exponentialDelay(1));
-        } finally {
-            restore_error_handler();
-        }
-
-        self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: GuzzleHttp\\RetryMiddleware::exponentialDelay() is deprecated and will be removed in 8.0.',
-        ], $deprecations);
     }
 }

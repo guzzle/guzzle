@@ -49,20 +49,6 @@ class RetryMiddleware
         };
     }
 
-    /**
-     * Default exponential backoff delay function.
-     *
-     * @return int milliseconds.
-     *
-     * @deprecated since 7.11, will be removed in 8.0.
-     */
-    public static function exponentialDelay(int $retries): int
-    {
-        trigger_deprecation('guzzlehttp/guzzle', '7.11', '%s::%s() is deprecated and will be removed in 8.0.', __CLASS__, __FUNCTION__);
-
-        return (int) 2 ** ($retries - 1) * 1000;
-    }
-
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         if (!isset($options['retries'])) {
