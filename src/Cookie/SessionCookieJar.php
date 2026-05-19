@@ -54,7 +54,12 @@ class SessionCookieJar extends CookieJar
             }
         }
 
-        $_SESSION[$this->sessionKey] = \json_encode($json);
+        $json = \json_encode($json);
+        if (false === $json) {
+            throw new \RuntimeException('Unable to encode cookie data');
+        }
+
+        $_SESSION[$this->sessionKey] = $json;
     }
 
     /**
@@ -65,12 +70,22 @@ class SessionCookieJar extends CookieJar
         if (!isset($_SESSION[$this->sessionKey])) {
             return;
         }
-        $data = \json_decode($_SESSION[$this->sessionKey], true);
+
+        $json = $_SESSION[$this->sessionKey];
+        if (!\is_string($json)) {
+            throw new \RuntimeException('Invalid cookie data');
+        }
+
+        $data = \json_decode($json, true);
         if (\is_array($data)) {
             foreach ($data as $cookie) {
+                if (!\is_array($cookie)) {
+                    throw new \RuntimeException('Invalid cookie data');
+                }
+
                 $this->setCookie(new SetCookie($cookie));
             }
-        } elseif (\strlen($data)) {
+        } elseif (\is_scalar($data) && \strlen((string) $data)) {
             throw new \RuntimeException('Invalid cookie data');
         }
     }

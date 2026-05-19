@@ -49,24 +49,6 @@ parameters:
 			path: src/Cookie/CookieJar.php
 
 		-
-			message: '#^Parameter \#1 \$data of class GuzzleHttp\\Cookie\\SetCookie constructor expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SessionCookieJar.php
-
-		-
-			message: '#^Parameter \#1 \$json of function json_decode expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SessionCookieJar.php
-
-		-
-			message: '#^Parameter \#1 \$string of function strlen expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SessionCookieJar.php
-
-		-
 			message: '#^Call to function is_bool\(\) with bool will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 3
