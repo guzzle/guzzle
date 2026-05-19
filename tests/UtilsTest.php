@@ -210,7 +210,7 @@ class UtilsTest extends TestCase
 
 final class StrClass
 {
-    public function __toString()
+    public function __toString(): string
     {
         return 'foo';
     }

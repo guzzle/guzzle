@@ -33,11 +33,12 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
-#### SetCookie types
+#### Native type declarations
 
-`SetCookie` methods now declare native parameter and return types where PHP 7.4
-allows. Code overriding `SetCookie` methods must update method signatures
-accordingly.
+Guzzle 8 adds native parameter and return types where PHP 7.4 allows. Code
+overriding affected methods must update method signatures accordingly.
+
+`HandlerStack::__toString()` and `SetCookie::__toString()` now return `string`.
 
 `SetCookie::setSecure()`, `SetCookie::setDiscard()`, and
 `SetCookie::setHttpOnly()` now require boolean parameters. Calls from files that
