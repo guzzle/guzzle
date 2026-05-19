@@ -20,6 +20,8 @@ class SessionCookieJarTest extends TestCase
         if (!isset($_SESSION)) {
             $_SESSION = [];
         }
+
+        unset($_SESSION[$this->sessionVar]);
     }
 
     public function testValidatesCookieSession()
@@ -28,6 +30,40 @@ class SessionCookieJarTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         new SessionCookieJar($this->sessionVar);
+    }
+
+    /**
+     * @dataProvider invalidCookieSessionProvider
+     *
+     * @param mixed $sessionData
+     */
+    public function testValidatesMalformedCookieSession($sessionData)
+    {
+        $_SESSION[$this->sessionVar] = $sessionData;
+
+        $this->expectException(\RuntimeException::class);
+        new SessionCookieJar($this->sessionVar);
+    }
+
+    public function testValidatesCookieSessionJsonEncoding(): void
+    {
+        $jar = new SessionCookieJar($this->sessionVar, true);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => "\x99",
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
+        ]));
+
+        try {
+            $jar->save();
+            self::fail('Expected RuntimeException was not thrown');
+        } catch (\RuntimeException $e) {
+            self::assertSame('Unable to encode cookie data', $e->getMessage());
+        } finally {
+            $jar->clear();
+            unset($jar, $_SESSION[$this->sessionVar]);
+        }
     }
 
     public function testLoadsFromSession()
@@ -87,6 +123,15 @@ class SessionCookieJarTest extends TestCase
         return [
             [false],
             [true],
+        ];
+    }
+
+    public static function invalidCookieSessionProvider(): array
+    {
+        return [
+            [[]],
+            [new \stdClass()],
+            ['[1]'],
         ];
     }
 }
