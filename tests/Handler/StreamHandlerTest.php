@@ -850,7 +850,7 @@ class StreamHandlerTest extends TestCase
             self::assertFalse($called);
             self::assertFalse($e->hasResponse());
             self::assertNull($e->getResponse());
-            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+            self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
             self::assertInstanceOf(TransferStats::class, $stats);
             self::assertFalse($stats->hasResponse());
             self::assertNull($stats->getResponse());

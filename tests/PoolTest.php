@@ -217,6 +217,9 @@ class PoolTest extends TestCase
             self::assertInstanceOf(RequestException::class, $reason);
             self::assertFalse($reason->hasResponse());
             self::assertNull($reason->getResponse());
+            self::assertArrayNotHasKey('http_code', $reason->getHandlerContext());
+            self::assertArrayNotHasKey('header_size', $reason->getHandlerContext());
+            self::assertArrayNotHasKey('content_type', $reason->getHandlerContext());
         }
     }
 

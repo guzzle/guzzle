@@ -248,6 +248,14 @@ class CurlFactory implements CurlFactoryInterface
     {
         $curlStats = \curl_getinfo($easy->handle);
         $curlStats['appconnect_time'] = \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME);
+
+        if ($easy->createResponseException) {
+            $curlStats = [
+                'total_time' => $curlStats['total_time'],
+                'appconnect_time' => $curlStats['appconnect_time'],
+            ];
+        }
+
         $stats = new TransferStats(
             $easy->request,
             $easy->response,
@@ -264,12 +272,7 @@ class CurlFactory implements CurlFactoryInterface
     private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
         // Get error information and release the handle to the factory.
-        $ctx = [
-            'errno' => $easy->errno,
-            'error' => \curl_error($easy->handle),
-            'appconnect_time' => \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME),
-        ] + \curl_getinfo($easy->handle);
-        $ctx[self::CURL_VERSION_STR] = self::getCurlVersion();
+        $ctx = self::createErrorContext($easy);
         $factory->release($easy);
 
         // Retry when nothing is present or when curl failed to rewind.
@@ -278,6 +281,23 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         return self::createRejection($easy, $ctx);
+    }
+
+    private static function createErrorContext(EasyHandle $easy): array
+    {
+        $ctx = [
+            'errno' => $easy->errno,
+            'error' => \curl_error($easy->handle),
+        ];
+
+        if (!$easy->createResponseException) {
+            $ctx['appconnect_time'] = \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME);
+            $ctx += \curl_getinfo($easy->handle);
+        }
+
+        $ctx[self::CURL_VERSION_STR] = self::getCurlVersion();
+
+        return $ctx;
     }
 
     private static function getCurlVersion(): string

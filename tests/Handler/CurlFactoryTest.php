@@ -784,9 +784,13 @@ class CurlFactoryTest extends TestCase
         $req = new Psr7\Request('GET', Server::$url);
         $handler = new Handler\CurlHandler();
         $called = false;
+        $stats = null;
         $promise = $handler($req, [
             'on_headers' => static function () use (&$called): void {
                 $called = true;
+            },
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
             },
         ]);
 
@@ -801,7 +805,12 @@ class CurlFactoryTest extends TestCase
             self::assertFalse($called);
             self::assertFalse($e->hasResponse());
             self::assertNull($e->getResponse());
-            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+            self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
+            self::assertResponseInfoWasNotExposed($e->getHandlerContext());
+            self::assertInstanceOf(TransferStats::class, $stats);
+            self::assertFalse($stats->hasResponse());
+            self::assertNull($stats->getResponse());
+            self::assertResponseInfoWasNotExposed($stats->getHandlerStats());
         }
     }
 
@@ -833,6 +842,7 @@ class CurlFactoryTest extends TestCase
             self::assertFalse($e->hasResponse());
             self::assertNull($e->getResponse());
             self::assertSame($easy->createResponseException, $e->getPrevious());
+            self::assertResponseInfoWasNotExposed($e->getHandlerContext());
         }
     }
 
@@ -1069,7 +1079,15 @@ class CurlFactoryTest extends TestCase
             );
             self::assertFalse($e->hasResponse());
             self::assertNull($e->getResponse());
-            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+            self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
+            self::assertResponseInfoWasNotExposed($e->getHandlerContext());
         }
+    }
+
+    private static function assertResponseInfoWasNotExposed(array $context): void
+    {
+        self::assertArrayNotHasKey('http_code', $context);
+        self::assertArrayNotHasKey('header_size', $context);
+        self::assertArrayNotHasKey('content_type', $context);
     }
 }

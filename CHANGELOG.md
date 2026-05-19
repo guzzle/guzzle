@@ -4,9 +4,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 8.0.0 - Upcoming
 
-### Security
+### Changed
 
 - Hardened `FileCookieJar` persistence against unsafe unserialization
+- Tighten invalid response handling and avoid exposing response-derived cURL stats
 
 
 ## 7.11.0 - Upcoming
