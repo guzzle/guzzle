@@ -24,9 +24,14 @@ final class HeaderProcessor
             throw new \RuntimeException('Expected a non-empty array of header data');
         }
 
-        $headers = self::getLastHeaderBlock($headers);
+        $headers = self::getLastHeaderBlock(\array_values($headers));
 
-        $parts = \explode(' ', \array_shift($headers), 3);
+        $statusLine = \array_shift($headers);
+        if ($statusLine === null) {
+            throw new \RuntimeException('Expected a non-empty array of header data');
+        }
+
+        $parts = \explode(' ', $statusLine, 3);
         $version = \explode('/', $parts[0])[1] ?? null;
 
         if ($version === null) {
@@ -47,13 +52,13 @@ final class HeaderProcessor
     }
 
     /**
-     * @param string[] $headers
+     * @param non-empty-list<string> $headers
      *
-     * @return string[]
+     * @return list<string>
      */
     private static function getLastHeaderBlock(array $headers): array
     {
-        $lastStatusLine = null;
+        $lastStatusLine = 0;
 
         foreach ($headers as $index => $line) {
             if (\preg_match('/^HTTP\/\S+\s+/i', $line)) {
@@ -61,6 +66,6 @@ final class HeaderProcessor
             }
         }
 
-        return $lastStatusLine === null ? $headers : \array_slice($headers, $lastStatusLine);
+        return \array_slice($headers, $lastStatusLine);
     }
 }
