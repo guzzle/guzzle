@@ -79,7 +79,7 @@ final class Utils
      *
      * The returned handler is not wrapped by any default middlewares.
      *
-     * @return callable(\Psr\Http\Message\RequestInterface, array): \GuzzleHttp\Promise\PromiseInterface Returns the best handler for the given system.
+     * @return callable(\Psr\Http\Message\RequestInterface, array): Promise\PromiseInterface Returns the best handler for the given system.
      *
      * @throws \RuntimeException if no viable Handler is available.
      */
@@ -87,7 +87,7 @@ final class Utils
     {
         $handler = null;
 
-        if (\defined('CURLOPT_CUSTOMREQUEST')) {
+        if (\defined('CURLOPT_CUSTOMREQUEST') && \function_exists('curl_version') && version_compare(curl_version()['version'], '7.21.2') >= 0) {
             if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
                 $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
             } elseif (\function_exists('curl_exec')) {

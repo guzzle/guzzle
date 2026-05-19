@@ -7,7 +7,6 @@ use GuzzleHttp\BodySummarizerInterface;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
 
 /**
  * HTTP Request exception
@@ -90,8 +89,7 @@ class RequestException extends TransferException implements RequestExceptionInte
             $className = __CLASS__;
         }
 
-        $uri = $request->getUri();
-        $uri = static::obfuscateUri($uri);
+        $uri = \GuzzleHttp\Psr7\Utils::redactUserInfo($request->getUri());
 
         // Client Error: `GET /` resulted in a `404 Not Found` response:
         // <html> ... (truncated)
@@ -111,20 +109,6 @@ class RequestException extends TransferException implements RequestExceptionInte
         }
 
         return new $className($message, $request, $response, $previous, $handlerContext);
-    }
-
-    /**
-     * Obfuscates URI if there is a username and a password present
-     */
-    private static function obfuscateUri(UriInterface $uri): UriInterface
-    {
-        $userInfo = $uri->getUserInfo();
-
-        if (false !== ($pos = \strpos($userInfo, ':'))) {
-            return $uri->withUserInfo(\substr($userInfo, 0, $pos), '***');
-        }
-
-        return $uri;
     }
 
     /**

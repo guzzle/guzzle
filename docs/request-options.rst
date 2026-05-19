@@ -400,6 +400,28 @@ header of the request.
     // Pass "gzip" as the Accept-Encoding header.
     $client->request('GET', '/foo.js', ['decode_content' => 'gzip']);
 
+.. warning::
+
+    The ``Accept-Encoding`` header will not be sent unless you provide it
+    explicitly, or pass a string value to ``decode_content``. That is
+    `equivalent <https://www.rfc-editor.org/rfc/rfc9110#field.accept-encoding>`
+    to sending ``Accept-Encoding: *``. Most servers will probably
+    return an uncompressed body in response to that but some might opt
+    to use a compression method that is not supported by your system.
+
+    In order to enable compression, and to ensure that only supported
+    encoding methods will be used, you should let curl send
+    the ``Accept-Encoding`` header:
+
+    .. code-block:: php
+
+        // Delegate choosing compression method to curl
+        $client->request('GET', '/foo.js', [
+            'curl' => [
+                \CURLOPT_ENCODING => '',
+            ],
+        ]);
+
 
 .. _delay-option:
 

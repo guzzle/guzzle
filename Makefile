@@ -1,26 +1,28 @@
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
-	@echo "  start-server                   to start the test server"
-	@echo "  stop-server                    to stop the test server"
-	@echo "  test                           to perform unit tests.  Provide TEST to perform a specific test."
-	@echo "  coverage                       to perform unit tests with code coverage. Provide TEST to perform a specific test."
-	@echo "  coverage-show                  to show the code coverage report"
-	@echo "  clean                          to remove build artifacts"
-	@echo "  docs                           to build the Sphinx docs"
-	@echo "  docs-show                      to view the Sphinx docs"
-	@echo "  static                         to run phpstan and php-cs-fixer on the codebase"
-	@echo "  static-phpstan                 to run phpstan on the codebase"
-	@echo "  static-phpstan-update-baseline to regenerate the phpstan baseline file"
-	@echo "  static-codestyle-fix           to run php-cs-fixer on the codebase, writing the changes"
-	@echo "  static-codestyle-check         to run php-cs-fixer on the codebase"
+	@printf "  %-32s %s\n" "start-server" "to start the test server"
+	@printf "  %-32s %s\n" "stop-server" "to stop the test server"
+	@printf "  %-32s %s\n" "test" "to perform unit tests.  Provide TEST to perform a specific test."
+	@printf "  %-32s %s\n" "coverage" "to perform unit tests with code coverage. Provide TEST to perform a specific test."
+	@printf "  %-32s %s\n" "coverage-show" "to show the code coverage report"
+	@printf "  %-32s %s\n" "clean" "to remove build artifacts"
+	@printf "  %-32s %s\n" "docs" "to build the Sphinx docs"
+	@printf "  %-32s %s\n" "docs-show" "to view the Sphinx docs"
+	@printf "  %-32s %s\n" "static" "to run static checks on the codebase"
+	@printf "  %-32s %s\n" "static-phpstan" "to run phpstan on the codebase"
+	@printf "  %-32s %s\n" "static-phpstan-update-baseline" "to regenerate the phpstan baseline file"
+	@printf "  %-32s %s\n" "static-codestyle-fix" "to run php-cs-fixer on the codebase, writing the changes"
+	@printf "  %-32s %s\n" "static-codestyle-check" "to run php-cs-fixer on the codebase"
+	@printf "  %-32s %s\n" "static-composer-normalize-fix" "to run composer-normalize on composer.json, writing changes"
+	@printf "  %-32s %s\n" "static-composer-normalize-check" "to run composer-normalize on composer.json"
 
 start-server: stop-server
-	node tests/server.js &> /dev/null &
+	node vendor/guzzlehttp/test-server/src/server.js &> /dev/null &
 	./vendor/bin/http_test_server &> /dev/null &
 
 stop-server:
 	@PID=$(shell ps axo pid,command \
-	  | grep 'tests/server.js' \
+	  | grep 'vendor/guzzlehttp/test-server/src/server.js' \
 	  | grep -v grep \
 	  | cut -f 1 -d " "\
 	) && [ -n "$$PID" ] && kill $$PID || true
@@ -52,17 +54,7 @@ docs:
 docs-show:
 	open docs/_build/html/index.html
 
-static: static-phpstan static-psalm static-codestyle-check
-
-static-psalm:
-	composer install
-	composer bin psalm update
-	vendor/bin/psalm.phar $(PSALM_PARAMS)
-
-static-psalm-update-baseline:
-	composer install
-	composer bin psalm update
-	$(MAKE) static-psalm PSALM_PARAMS="--set-baseline=psalm-baseline.xml"
+static: static-phpstan static-codestyle-check static-composer-normalize-check
 
 static-phpstan:
 	composer install
@@ -81,5 +73,13 @@ static-codestyle-fix:
 
 static-codestyle-check:
 	$(MAKE) static-codestyle-fix CS_PARAMS="--dry-run"
+
+static-composer-normalize-fix:
+	composer install
+	composer bin composer-normalize update
+	composer bin composer-normalize normalize --diff $(COMPOSER_NORMALIZE_PARAMS) ../../composer.json
+
+static-composer-normalize-check:
+	$(MAKE) static-composer-normalize-fix COMPOSER_NORMALIZE_PARAMS="--dry-run"
 
 .PHONY: docs coverage-show view-coverage

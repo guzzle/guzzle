@@ -9,8 +9,8 @@ use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\Server\Server;
 use GuzzleHttp\Tests\Helpers;
-use GuzzleHttp\Tests\Server;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -28,7 +28,7 @@ class CurlFactoryTest extends TestCase
 
     public static function tearDownAfterClass(): void
     {
-        unset($_SERVER['_curl'], $_SERVER['curl_test']);
+        unset($_SERVER['_curl'], $_SERVER['curl_test'], $_SERVER['curl_setopt_fail']);
     }
 
     public function testCreatesCurlHandle()
@@ -47,16 +47,26 @@ class CurlFactoryTest extends TestCase
             'Content-Length' => '7',
         ], 'testing');
         $f = new CurlFactory(3);
+
         $result = $f->create($request, ['sink' => $stream]);
-        self::assertInstanceOf(EasyHandle::class, $result);
-        if (\PHP_VERSION_ID >= 80000) {
-            self::assertInstanceOf(\CurlHandle::class, $result->handle);
-        } else {
-            self::assertIsResource($result->handle);
+
+        try {
+            self::assertInstanceOf(EasyHandle::class, $result);
+
+            if (\PHP_VERSION_ID >= 80000) {
+                self::assertInstanceOf(\CurlHandle::class, $result->handle);
+            } else {
+                self::assertIsResource($result->handle);
+            }
+
+            self::assertIsArray($result->headers);
+            self::assertSame($stream, $result->sink);
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_close($result->handle);
+            }
         }
-        self::assertIsArray($result->headers);
-        self::assertSame($stream, $result->sink);
-        \curl_close($result->handle);
+
         self::assertSame('PUT', $_SERVER['_curl'][\CURLOPT_CUSTOMREQUEST]);
         self::assertSame(
             'http://127.0.0.1:8126/',
@@ -114,6 +124,37 @@ class CurlFactoryTest extends TestCase
         $req = new Psr7\Request('GET', Server::$url);
         $a($req, ['curl' => [\CURLOPT_HTTP_VERSION => \CURL_HTTP_VERSION_1_0]]);
         self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+    }
+
+    public function testThrowsWhenCurlOptionCannotBeApplied()
+    {
+        $_SERVER['curl_setopt_fail'] = \CURLOPT_LOW_SPEED_LIMIT;
+        $f = new CurlFactory(3);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('Unable to set cURL option CURLOPT_LOW_SPEED_LIMIT');
+
+            $f->create(
+                new Psr7\Request('GET', Server::$url),
+                ['curl' => [\CURLOPT_LOW_SPEED_LIMIT => 10]]
+            );
+        } finally {
+            unset($_SERVER['curl_setopt_fail']);
+        }
+    }
+
+    public function testThrowsWhenCurlOptionNameIsInvalid()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid cURL option "not-a-curl-option".');
+
+        $f->create(
+            new Psr7\Request('GET', Server::$url),
+            ['curl' => ['not-a-curl-option' => true]]
+        );
     }
 
     public function testValidatesVerify()
@@ -525,16 +566,20 @@ class CurlFactoryTest extends TestCase
     public function testSavesToFileOnDisk()
     {
         $tmpfile = \tempnam(\sys_get_temp_dir(), 'testfile');
-        $this->addDecodeResponse();
-        $handler = new Handler\CurlMultiHandler();
-        $request = new Psr7\Request('GET', Server::$url);
-        $response = $handler($request, [
-            'decode_content' => true,
-            'sink' => $tmpfile,
-        ]);
-        $response->wait();
-        self::assertStringEqualsFile($tmpfile, 'test');
-        @\unlink($tmpfile);
+
+        try {
+            $this->addDecodeResponse();
+            $handler = new Handler\CurlMultiHandler();
+            $request = new Psr7\Request('GET', Server::$url);
+            $response = $handler($request, [
+                'decode_content' => true,
+                'sink' => $tmpfile,
+            ]);
+            $response->wait();
+            self::assertStringEqualsFile($tmpfile, 'test');
+        } finally {
+            @\unlink($tmpfile);
+        }
     }
 
     public function testDoesNotAddMultipleContentLengthHeaders()
@@ -652,7 +697,11 @@ class CurlFactoryTest extends TestCase
     public function testCreatesConnectException()
     {
         $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
-        $m->setAccessible(true);
+
+        if (PHP_VERSION_ID < 80100) {
+            $m->setAccessible(true);
+        }
+
         $factory = new CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
         $easy->errno = \CURLE_COULDNT_CONNECT;

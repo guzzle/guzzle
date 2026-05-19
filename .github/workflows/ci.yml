@@ -8,10 +8,13 @@ on:
 permissions:
   contents: read
 
+env:
+  COMPOSER_ROOT_VERSION: 7.10.x-dev
+
 jobs:
   build-lowest-version:
     name: Build lowest version
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Set up PHP
@@ -23,35 +26,38 @@ jobs:
           extensions: mbstring, intl
 
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
-          node-version: '18.x'
+          node-version: '22.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress --prefer-stable --prefer-lowest
 
       - name: Start test servers
         shell: bash
-        run: |
-          node tests/server.js &
-          ./vendor/bin/http_test_server &
+        run: ./vendor/bin/http_test_server &
 
       - name: Run tests
         run: ./vendor/bin/phpunit
 
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       max-parallel: 10
       matrix:
-        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
+        php: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+        psr7: ['^2.8']
+        include:
+          - php: '8.5'
+            psr7: '^2.8@dev'
 
     steps:
       - name: Set up PHP
@@ -63,36 +69,36 @@ jobs:
           extensions: mbstring, intl
 
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
-          node-version: '18.x'
+          node-version: '22.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download dependencies
         run: |
+          composer require --no-update "guzzlehttp/psr7:${{ matrix.psr7 }}"
           composer update --no-interaction --no-progress
 
       - name: Start test servers
         shell: bash
-        run: |
-          node tests/server.js &
-          ./vendor/bin/http_test_server &
+        run: ./vendor/bin/http_test_server &
 
       - name: Run tests
         run: ./vendor/bin/phpunit
 
   build-windows:
     name: Build on Windows
-    runs-on: windows-2022
+    runs-on: windows-2025
     strategy:
+      fail-fast: false
       max-parallel: 10
       matrix:
-        php: ['7.4', '8.0', '8.1', '8.2', '8.3']
+        php: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
 
     steps:
       - name: Set up PHP
@@ -104,24 +110,22 @@ jobs:
           extensions: mbstring, intl
 
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
-          node-version: '18.x'
+          node-version: '22.x'
 
       - name: Setup Problem Matchers for PHPUnit
         run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download dependencies
         run: composer update --no-interaction --no-progress
 
       - name: Start test servers
         shell: bash
-        run: |
-          node tests/server.js &
-          ./vendor/bin/http_test_server &
+        run: ./vendor/bin/http_test_server &
 
       - name: Run tests
         run: vendor/bin/phpunit.bat

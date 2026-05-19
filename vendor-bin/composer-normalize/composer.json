@@ -1,0 +1,11 @@
+{
+    "require": {
+        "ergebnis/composer-normalize": "2.52.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        },
+        "preferred-install": "dist"
+    }
+}

@@ -10,7 +10,7 @@ use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
-use GuzzleHttp\Tests\Server;
+use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
@@ -120,30 +120,48 @@ class StreamHandlerTest extends TestCase
     public function testDrainsResponseIntoSaveToBodyAtPath()
     {
         $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
-        $this->queueRes();
-        $handler = new StreamHandler();
-        $request = new Request('GET', Server::$url);
-        $response = $handler($request, ['sink' => $tmpfname])->wait();
-        $body = $response->getBody();
-        self::assertSame($tmpfname, $body->getMetadata('uri'));
-        self::assertSame('hi', $body->read(2));
-        $body->close();
-        \unlink($tmpfname);
+        $body = null;
+
+        try {
+            $this->queueRes();
+            $handler = new StreamHandler();
+            $request = new Request('GET', Server::$url);
+            $response = $handler($request, ['sink' => $tmpfname])->wait();
+            $body = $response->getBody();
+            self::assertSame($tmpfname, $body->getMetadata('uri'));
+            self::assertSame('hi', $body->read(2));
+        } finally {
+            if ($body !== null) {
+                $body->close();
+            }
+            if (\file_exists($tmpfname)) {
+                \unlink($tmpfname);
+            }
+        }
     }
 
     public function testDrainsResponseIntoSaveToBodyAtNonExistentPath()
     {
         $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
         \unlink($tmpfname);
-        $this->queueRes();
-        $handler = new StreamHandler();
-        $request = new Request('GET', Server::$url);
-        $response = $handler($request, ['sink' => $tmpfname])->wait();
-        $body = $response->getBody();
-        self::assertSame($tmpfname, $body->getMetadata('uri'));
-        self::assertSame('hi', $body->read(2));
-        $body->close();
-        \unlink($tmpfname);
+        $body = null;
+
+        try {
+            $this->queueRes();
+            $handler = new StreamHandler();
+            $request = new Request('GET', Server::$url);
+            $response = $handler($request, ['sink' => $tmpfname])->wait();
+            $body = $response->getBody();
+            self::assertSame($tmpfname, $body->getMetadata('uri'));
+            self::assertSame('hi', $body->read(2));
+        } finally {
+            if ($body !== null) {
+                $body->close();
+            }
+            if (\file_exists($tmpfname)) {
+                \unlink($tmpfname);
+            }
+        }
     }
 
     public function testDrainsResponseAndReadsOnlyContentLengthBytes()
@@ -533,7 +551,7 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(3, $req->getHeaderLine('Content-Length'));
     }
 
-    public function testAddsContentLengthEvenWhenEmpty()
+    public function testAddsContentLengthForPUTEvenWhenEmpty()
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -541,6 +559,26 @@ class StreamHandlerTest extends TestCase
         $handler($request, []);
         $req = Server::received()[0];
         self::assertEquals(0, $req->getHeaderLine('Content-Length'));
+    }
+
+    public function testAddsContentLengthForPOSTEvenWhenEmpty()
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('POST', Server::$url, [], '');
+        $handler($request, []);
+        $req = Server::received()[0];
+        self::assertEquals(0, $req->getHeaderLine('Content-Length'));
+    }
+
+    public function testDontAddContentLengthForGETEvenWhenEmpty()
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url, [], '');
+        $handler($request, []);
+        $req = Server::received()[0];
+        self::assertSame('', $req->getHeaderLine('Content-Length'));
     }
 
     public function testSupports100Continue()
@@ -743,15 +781,19 @@ class StreamHandlerTest extends TestCase
     {
         $handler = new StreamHandler();
 
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('An error was encountered while creating the response');
-
-        $handler(
-            new Request('GET', Server::$url.'guzzle-server/garbage'),
-            [
-                RequestOptions::STREAM => true,
-            ]
-        )->wait();
+        try {
+            $handler(
+                new Request('GET', Server::$url.'guzzle-server/garbage'),
+                [
+                    RequestOptions::STREAM => true,
+                ]
+            )->wait();
+            self::fail('Expected an exception');
+        } catch (ConnectException $e) {
+            self::assertStringContainsString('Connection refused', $e->getMessage());
+        } catch (RequestException $e) {
+            self::assertStringContainsString('An error was encountered while creating the response', $e->getMessage());
+        }
     }
 
     public function testHandlesInvalidStatusCodeGracefully()

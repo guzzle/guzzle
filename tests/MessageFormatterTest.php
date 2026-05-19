@@ -22,7 +22,7 @@ class MessageFormatterTest extends TestCase
         self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
     }
 
-    public function dateProvider()
+    public static function dateProvider()
     {
         return [
             ['{ts}', '/^[0-9]{4}\-[0-9]{2}\-[0-9]{2}/'],
@@ -48,7 +48,7 @@ class MessageFormatterTest extends TestCase
         }
     }
 
-    public function formatProvider()
+    public static function formatProvider()
     {
         $request = new Request('PUT', '/', ['x-test' => 'abc'], Psr7\Utils::streamFor('foo'));
         $response = new Response(200, ['X-Baz' => 'Bar'], Psr7\Utils::streamFor('baz'));

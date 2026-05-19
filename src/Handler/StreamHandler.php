@@ -53,8 +53,14 @@ class StreamHandler
             $request = $request->withoutHeader('Expect');
 
             // Append a content-length header if body size is zero to match
-            // cURL's behavior.
-            if (0 === $request->getBody()->getSize()) {
+            // the behavior of `CurlHandler`
+            if (
+                (
+                    0 === \strcasecmp('PUT', $request->getMethod())
+                    || 0 === \strcasecmp('POST', $request->getMethod())
+                )
+                && 0 === $request->getBody()->getSize()
+            ) {
                 $request = $request->withHeader('Content-Length', '0');
             }
 
@@ -327,8 +333,15 @@ class StreamHandler
         );
 
         return $this->createResource(
-            function () use ($uri, &$http_response_header, $contextResource, $context, $options, $request) {
+            function () use ($uri, $contextResource, $context, $options, $request) {
                 $resource = @\fopen((string) $uri, 'r', false, $contextResource);
+
+                // See https://wiki.php.net/rfc/deprecations_php_8_5#deprecate_the_http_response_header_predefined_variable
+                if (function_exists('http_get_last_response_headers')) {
+                    /** @var array|null */
+                    $http_response_header = \http_get_last_response_headers();
+                }
+
                 $this->lastHeaders = $http_response_header ?? [];
 
                 if (false === $resource) {

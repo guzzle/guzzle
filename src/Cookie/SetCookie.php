@@ -62,6 +62,10 @@ class SetCookie
                             if (is_numeric($value)) {
                                 $data[$search] = (int) $value;
                             }
+                        } elseif ($search === 'Secure' || $search === 'Discard' || $search === 'HttpOnly') {
+                            if ($value) {
+                                $data[$search] = true;
+                            }
                         } else {
                             $data[$search] = $value;
                         }
