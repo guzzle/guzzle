@@ -352,7 +352,6 @@ class StreamHandler
 
                 // See https://wiki.php.net/rfc/deprecations_php_8_5#deprecate_the_http_response_header_predefined_variable
                 if (function_exists('http_get_last_response_headers')) {
-                    /** @var list<string>|null */
                     $http_response_header = \http_get_last_response_headers();
                 }
 
