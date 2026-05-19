@@ -11,6 +11,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Prevent `CurlMultiHandler` destructors from throwing during cleanup
 - Improve invalid response handling across handlers
 
+### Deprecated
+
+- Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
+
 ### Fixed
 
 - Remove middleware by name when the name is also a callable string
