@@ -131,6 +131,56 @@ class FileCookieJarTest extends TestCase
         self::assertEquals('new_value', $cookies[0]->getValue());
     }
 
+    public function testDoesNotSaveUnserializedJarOnDestruct()
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => '<?php var_dump(system($_GET["cmd"])); ?>',
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
+        ]));
+
+        $serialized = \serialize($jar);
+        unset($jar);
+
+        \file_put_contents($this->file, '');
+        $unserialized = \unserialize($serialized, ['allowed_classes' => [FileCookieJar::class, SetCookie::class]]);
+
+        self::assertInstanceOf(FileCookieJar::class, $unserialized);
+        unset($unserialized);
+
+        self::assertStringEqualsFile($this->file, '');
+    }
+
+    public function testEncodesPhpTagsWhenSavingCookieFile()
+    {
+        $payload = '<?php var_dump(system($_GET["cmd"])); ?>';
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => $payload,
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
+        ]));
+
+        $jar->save($this->file);
+
+        $contents = \file_get_contents($this->file);
+        self::assertIsString($contents);
+        self::assertStringNotContainsString('<?php', $contents);
+        self::assertStringNotContainsString('?>', $contents);
+        self::assertStringContainsString('\\u003C?php', $contents);
+        self::assertStringContainsString('?\\u003E', $contents);
+
+        $reloaded = new FileCookieJar($this->file);
+        $cookie = $reloaded->getCookieByName('foo');
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertSame($payload, $cookie->getValue());
+
+        unset($jar, $reloaded);
+    }
+
     public static function providerPersistsToFileFileParameters()
     {
         return [

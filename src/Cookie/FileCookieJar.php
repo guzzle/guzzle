@@ -20,6 +20,15 @@ class FileCookieJar extends CookieJar
     private $storeSessionCookies;
 
     /**
+     * @var bool Whether to save the cookie jar on destruction.
+     *
+     * Disabled by __wakeup() to prevent FileCookieJar from being used as a
+     * PHP object injection file-write gadget when an application unserializes
+     * attacker-controlled data.
+     */
+    private $autoSave = true;
+
+    /**
      * Create a new FileCookieJar object
      *
      * @param string $cookieFile          File to store the cookie data
@@ -44,7 +53,17 @@ class FileCookieJar extends CookieJar
      */
     public function __destruct()
     {
-        $this->save($this->filename);
+        if ($this->autoSave) {
+            $this->save($this->filename);
+        }
+    }
+
+    /**
+     * Disable automatic persistence after unserialization.
+     */
+    public function __wakeup(): void
+    {
+        $this->autoSave = false;
     }
 
     /**
@@ -64,7 +83,7 @@ class FileCookieJar extends CookieJar
             }
         }
 
-        $jsonStr = Utils::jsonEncode($json);
+        $jsonStr = Utils::jsonEncode($json, \JSON_HEX_TAG);
         if (false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }

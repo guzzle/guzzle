@@ -2,6 +2,13 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 8.0.0 - Upcoming
+
+### Security
+
+- Hardened `FileCookieJar` persistence against unsafe unserialization
+
+
 ## 7.10.1 - 2026-05-19
 
 ### Fixed
