@@ -524,7 +524,7 @@ class SetCookie
         $domain = \strtolower($domain);
 
         if ($domain !== '' && $domain[0] === '.') {
-            return \substr($domain, 1) ?: '';
+            return \substr($domain, 1);
         }
 
         return $domain;
