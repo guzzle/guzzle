@@ -864,15 +864,15 @@ Pass a string to specify a proxy for all protocols.
 
 Pass an associative array to specify HTTP proxies for specific URI schemes
 (i.e., "http", "https"). Provide a ``no`` key value pair to provide a list of
-host names that should not be proxied to.
+host names that should not be proxied to. The ``no`` value may be an array of
+host names or a comma-delimited string.
 
 .. note::
 
     Guzzle will automatically populate this value with your environment's
     ``NO_PROXY`` environment variable. However, when providing a ``proxy``
-    request option, it is up to you to provide the ``no`` value parsed from
-    the ``NO_PROXY`` environment variable
-    (e.g., ``explode(',', getenv('NO_PROXY'))``).
+    request option, it is up to you to provide the ``no`` value from the
+    ``NO_PROXY`` environment variable.
 
 .. code-block:: php
 
@@ -881,6 +881,15 @@ host names that should not be proxied to.
             'http'  => 'http://localhost:8125', // Use this proxy with "http"
             'https' => 'http://localhost:9124', // Use this proxy with "https",
             'no' => ['.mit.edu', 'foo.com']    // Don't use a proxy with these
+        ]
+    ]);
+
+.. code-block:: php
+
+    $client->request('GET', '/', [
+        'proxy' => [
+            'http' => 'http://localhost:8125',
+            'no' => getenv('NO_PROXY') ?: ''
         ]
     ]);
 

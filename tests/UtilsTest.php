@@ -119,6 +119,32 @@ class UtilsTest extends TestCase
         self::assertSame($result, Utils::isHostInNoProxy($host, $list));
     }
 
+    public function testNormalizesNoProxyString()
+    {
+        self::assertSame(['foo.com', '.bar.com'], Utils::normalizeNoProxy(' foo.com, .bar.com, '));
+    }
+
+    public function testNormalizesNoProxyArray()
+    {
+        self::assertSame(['foo.com', '.bar.com'], Utils::normalizeNoProxy([' foo.com ', '', '.bar.com']));
+    }
+
+    public function testValidatesNoProxyValue()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('proxy no list must be a string or array of strings');
+
+        Utils::normalizeNoProxy(new \stdClass());
+    }
+
+    public function testValidatesNoProxyArrayValues()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('proxy no list must be a string or array of strings');
+
+        Utils::normalizeNoProxy(['foo.com', new \stdClass()]);
+    }
+
     public function testEnsuresNoProxyCheckHostIsSet()
     {
         $this->expectException(\InvalidArgumentException::class);

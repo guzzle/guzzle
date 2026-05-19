@@ -36,6 +36,26 @@ work, but callbacks that inspect all arguments, for example with
 `func_get_args()` or a variadic parameter, will observe the additional
 `Psr\Http\Message\RequestInterface` argument.
 
+#### Proxy option validation
+
+The `proxy` request option is validated more strictly. Proxy values must be
+strings, and the `proxy['no']` value may be either an array of strings or a
+comma-delimited string such as the value from the `NO_PROXY` environment
+variable. Other values now throw `InvalidArgumentException`.
+
+Explicit proxy options also override environment no-proxy settings. If you pass
+a `proxy` request option and want to exclude hosts, provide the `no` value
+explicitly:
+
+```php
+$client->request('GET', '/', [
+    'proxy' => [
+        'http' => 'http://localhost:8125',
+        'no' => getenv('NO_PROXY') ?: '',
+    ],
+]);
+```
+
 6.0 to 7.0
 ----------
 

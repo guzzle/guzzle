@@ -299,6 +299,25 @@ class StreamHandlerTest extends TestCase
         return $handler($request, $opts)->wait();
     }
 
+    /**
+     * @param mixed $proxy
+     */
+    private function getProxyContext($proxy, string $uri = 'http://example.com'): array
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', $uri);
+        $options = ['http' => []];
+        $params = [];
+        $method = new \ReflectionMethod(StreamHandler::class, 'add_proxy');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs($handler, [$request, &$options, $proxy, &$params]);
+
+        return $options;
+    }
+
     public function testAddsProxy()
     {
         $this->expectException(ConnectException::class);
@@ -327,6 +346,48 @@ class StreamHandlerTest extends TestCase
         ]]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertArrayNotHasKey('proxy', $opts['http']);
+    }
+
+    public function testAddsProxyButHonorsNoProxyString()
+    {
+        $opts = $this->getProxyContext([
+            'http' => 'http://proxy.example.com:8125',
+            'no' => 'example.com,localhost',
+        ]);
+
+        self::assertArrayNotHasKey('proxy', $opts['http']);
+    }
+
+    public function testAddsProxyWithEmptyNoProxyString()
+    {
+        $opts = $this->getProxyContext([
+            'http' => 'http://proxy.example.com:8125',
+            'no' => '',
+        ]);
+
+        self::assertSame('tcp://proxy.example.com:8125', $opts['http']['proxy']);
+    }
+
+    /**
+     * @dataProvider invalidProxyOptionProvider
+     *
+     * @param mixed $proxy
+     */
+    public function testEnsuresProxyOptionShapeIsValid($proxy)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        $this->getProxyContext($proxy);
+    }
+
+    public static function invalidProxyOptionProvider(): array
+    {
+        return [
+            [new \stdClass()],
+            [['http' => new \stdClass()]],
+            [['http' => 'http://proxy.example.com:8125', 'no' => new \stdClass()]],
+            [['http' => 'http://proxy.example.com:8125', 'no' => [new \stdClass()]]],
+        ];
     }
 
     public function testUsesProxy()
