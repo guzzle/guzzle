@@ -313,16 +313,10 @@ class SetCookie
 
     /**
      * Set whether or not the cookie is secure.
-     *
-     * @param bool $secure Set to true or false if secure
      */
-    public function setSecure($secure): void
+    public function setSecure(bool $secure): void
     {
-        if (!is_bool($secure)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
-        }
-
-        $this->data['Secure'] = (bool) $secure;
+        $this->data['Secure'] = $secure;
     }
 
     /**
@@ -337,16 +331,10 @@ class SetCookie
 
     /**
      * Set whether or not this is a session cookie.
-     *
-     * @param bool $discard Set to true or false if this is a session cookie
      */
-    public function setDiscard($discard): void
+    public function setDiscard(bool $discard): void
     {
-        if (!is_bool($discard)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
-        }
-
-        $this->data['Discard'] = (bool) $discard;
+        $this->data['Discard'] = $discard;
     }
 
     /**
@@ -361,16 +349,10 @@ class SetCookie
 
     /**
      * Set whether or not this is an HTTP only cookie.
-     *
-     * @param bool $httpOnly Set to true or false if this is HTTP only
      */
-    public function setHttpOnly($httpOnly): void
+    public function setHttpOnly(bool $httpOnly): void
     {
-        if (!is_bool($httpOnly)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
-        }
-
-        $this->data['HttpOnly'] = (bool) $httpOnly;
+        $this->data['HttpOnly'] = $httpOnly;
     }
 
     /**

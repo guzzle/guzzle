@@ -21,6 +21,12 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
+#### SetCookie boolean flags
+
+`SetCookie::setSecure()`, `SetCookie::setDiscard()`, and
+`SetCookie::setHttpOnly()` now require boolean parameters. Calls from files that
+declare strict types will throw `TypeError` for non-boolean values.
+
 #### RetryMiddleware::exponentialDelay
 
 `RetryMiddleware::exponentialDelay()` has been removed. The retry middleware

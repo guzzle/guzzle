@@ -82,6 +82,27 @@ class SetCookieTest extends TestCase
         self::assertFalse($cookie->getHttpOnly());
     }
 
+    public static function booleanSetterProvider(): array
+    {
+        return [
+            ['setSecure'],
+            ['setDiscard'],
+            ['setHttpOnly'],
+        ];
+    }
+
+    /**
+     * @dataProvider booleanSetterProvider
+     */
+    public function testBooleanSettersRequireBooleanParameters(string $method): void
+    {
+        $reflection = new \ReflectionMethod(SetCookie::class, $method);
+        $type = $reflection->getParameters()[0]->getType();
+
+        self::assertInstanceOf(\ReflectionNamedType::class, $type);
+        self::assertSame('bool', $type->getName());
+    }
+
     public function testDeterminesIfExpired()
     {
         $c = new SetCookie();
