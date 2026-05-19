@@ -119,8 +119,13 @@ class CurlMultiHandler
     public function __destruct()
     {
         if (isset($this->_mh)) {
-            \curl_multi_close($this->_mh);
-            unset($this->_mh);
+            try {
+                \curl_multi_close($this->_mh);
+            } catch (\Throwable $e) {
+                // Destructors must not throw.
+            } finally {
+                unset($this->_mh);
+            }
         }
     }
 

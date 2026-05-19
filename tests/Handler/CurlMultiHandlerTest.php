@@ -61,6 +61,31 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals(2, Helpers::readObjectAttribute($a, 'selectTimeout'));
     }
 
+    public function testDestructorDoesNotThrowWhenCurlMultiCloseFails()
+    {
+        $handler = new CurlMultiHandler();
+
+        $setMultiHandle = \Closure::bind(static function (CurlMultiHandler $handler): void {
+            $handler->_mh = new \stdClass();
+        }, null, CurlMultiHandler::class);
+        $hasMultiHandle = \Closure::bind(static function (CurlMultiHandler $handler): bool {
+            return isset($handler->_mh);
+        }, null, CurlMultiHandler::class);
+
+        $setMultiHandle($handler);
+        \set_error_handler(static function (int $severity, string $message, string $file, int $line): void {
+            throw new \ErrorException($message, 0, $severity, $file, $line);
+        });
+
+        try {
+            $handler->__destruct();
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertFalse($hasMultiHandle($handler));
+    }
+
     public function testCanCancel()
     {
         Server::flush();
