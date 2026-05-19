@@ -358,6 +358,45 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('test', $_SERVER['_curl'][\CURLOPT_SSLCERTPASSWD]);
     }
 
+    public function testAddsCertWithArrayPathOnly()
+    {
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', 'http://example.com'), ['cert' => [__FILE__]]);
+
+        try {
+            self::assertInstanceOf(EasyHandle::class, $easy);
+        } finally {
+            if (\PHP_VERSION_ID < 80000) {
+                \curl_close($easy->handle);
+            }
+        }
+    }
+
+    /**
+     * @dataProvider invalidCertOptionProvider
+     *
+     * @param mixed $cert
+     */
+    public function testValidatesCertOptionShape($cert)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid cert request option');
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['cert' => $cert]);
+    }
+
+    public static function invalidCertOptionProvider(): array
+    {
+        return [
+            [[]],
+            [['passphrase' => 'test']],
+            [[new \stdClass(), 'test']],
+            [[__FILE__, new \stdClass()]],
+            [new \stdClass()],
+        ];
+    }
+
     public function testAddsDerCert()
     {
         $certFile = tempnam(sys_get_temp_dir(), 'mock_test_cert');

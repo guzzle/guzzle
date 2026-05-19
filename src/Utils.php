@@ -272,6 +272,10 @@ EOT
      */
     public static function jsonDecode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
     {
+        if ($depth < 1) {
+            throw new InvalidArgumentException('json_decode error: Maximum stack depth exceeded');
+        }
+
         $data = \json_decode($json, $assoc, $depth, $options);
         if (\JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException('json_decode error: '.\json_last_error_msg());

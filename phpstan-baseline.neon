@@ -49,24 +49,6 @@ parameters:
 			path: src/Cookie/CookieJar.php
 
 		-
-			message: '#^Parameter \#1 \$data of class GuzzleHttp\\Cookie\\SetCookie constructor expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SessionCookieJar.php
-
-		-
-			message: '#^Parameter \#1 \$json of function json_decode expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SessionCookieJar.php
-
-		-
-			message: '#^Parameter \#1 \$string of function strlen expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Cookie/SessionCookieJar.php
-
-		-
 			message: '#^Call to function is_bool\(\) with bool will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 3
@@ -259,12 +241,6 @@ parameters:
 			path: src/Handler/EasyHandle.php
 
 		-
-			message: '#^Parameter \#1 \$filename of function file_exists expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: '#^Parameter \#1 \$url of method GuzzleHttp\\Handler\\StreamHandler\:\:parse_proxy\(\) expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -273,18 +249,6 @@ parameters:
 		-
 			message: '#^Parameter \#2 \$noProxyArray of static method GuzzleHttp\\Utils\:\:isHostInNoProxy\(\) expects array\<string\>, mixed given\.$#'
 			identifier: argument.type
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Part \$value \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
 			count: 1
 			path: src/Handler/StreamHandler.php
 
@@ -357,12 +321,6 @@ parameters:
 		-
 			message: '#^PHPDoc tag @var with type string is not subtype of native type non\-empty\-string\|false\.$#'
 			identifier: varTag.nativeType
-			count: 1
-			path: src/Utils.php
-
-		-
-			message: '#^Parameter \#3 \$depth of function json_decode expects int\<1, max\>, int given\.$#'
-			identifier: argument.type
 			count: 1
 			path: src/Utils.php
 
