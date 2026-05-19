@@ -40,6 +40,9 @@ overriding affected methods must update method signatures accordingly.
 
 `HandlerStack::__toString()` and `SetCookie::__toString()` now return `string`.
 
+`HandlerStack::remove()` now throws `TypeError` when passed a value that is
+neither a callable nor a middleware name string.
+
 `SetCookie::setSecure()`, `SetCookie::setDiscard()`, and
 `SetCookie::setHttpOnly()` now require boolean parameters. Calls from files that
 declare strict types will throw `TypeError` for non-boolean values.

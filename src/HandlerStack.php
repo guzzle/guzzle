@@ -178,8 +178,9 @@ class HandlerStack
      */
     public function remove($remove): void
     {
-        if (!is_string($remove) && !is_callable($remove)) {
-            trigger_deprecation('guzzlehttp/guzzle', '7.4', 'Not passing a callable or string to %s::%s() is deprecated and will cause an error in 8.0.', __CLASS__, __FUNCTION__);
+        if (!\is_string($remove) && !\is_callable($remove)) {
+            // TODO: Move this to the parameter definition in 9.0.
+            throw new \TypeError(__METHOD__.'(): Argument #1 ($remove) must be of type callable|string');
         }
 
         $this->cached = null;
