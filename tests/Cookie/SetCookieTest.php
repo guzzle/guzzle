@@ -163,6 +163,7 @@ class SetCookieTest extends TestCase
             ['', 'baz', 'bar', 'The cookie name must not be empty'],
             ['foo', null, 'bar', 'The cookie value must not be empty'],
             ['foo', 'baz', '', 'The cookie domain must not be empty'],
+            ['foo', 'baz', null, true],
             ["foo\r", 'baz', '0', 'Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/?={}'],
         ];
     }
@@ -202,6 +203,16 @@ class SetCookieTest extends TestCase
             'test=123; Domain=foo.com; Path=/abc; Expires=Sun, 27 Oct 2013 23:20:08 GMT; Secure; HttpOnly',
             (string) $cookie
         );
+    }
+
+    public function testConvertsToStringWithoutDomainAttribute()
+    {
+        $cookie = new SetCookie([
+            'Name' => 'test',
+            'Value' => '123',
+        ]);
+
+        self::assertSame('test=123; Path=/', (string) $cookie);
     }
 
     /**
