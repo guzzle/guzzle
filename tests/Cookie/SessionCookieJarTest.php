@@ -118,6 +118,25 @@ class SessionCookieJarTest extends TestCase
         unset($_SESSION[$this->sessionVar]);
     }
 
+    public function testPersistsCookieWithoutDomain(): void
+    {
+        $jar = new SessionCookieJar($this->sessionVar);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Expires' => \time() + 1000,
+        ]));
+        $jar->save();
+
+        $reloaded = new SessionCookieJar($this->sessionVar);
+        $cookie = $reloaded->getCookieByName('foo');
+
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertNull($cookie->getDomain());
+
+        unset($jar, $reloaded, $_SESSION[$this->sessionVar]);
+    }
+
     public static function providerPersistsToSessionParameters()
     {
         return [

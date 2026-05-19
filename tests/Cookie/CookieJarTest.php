@@ -128,6 +128,66 @@ class CookieJarTest extends TestCase
         self::assertCount(0, $this->jar);
     }
 
+    public static function domainClearProvider(): array
+    {
+        return [
+            ['example.com', null, null],
+            ['example.com', '/', null],
+            ['example.com', '/', 'domain-cookie'],
+        ];
+    }
+
+    /**
+     * @dataProvider domainClearProvider
+     */
+    public function testClearingDomainDoesNotRemoveCookieWithoutDomain(string $domain, ?string $path, ?string $name): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'domainless-cookie',
+            'Value' => 'value',
+        ]));
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'domain-cookie',
+            'Value' => 'value',
+            'Domain' => 'example.com',
+            'Path' => '/',
+        ]));
+
+        $this->jar->clear($domain, $path, $name);
+
+        self::assertCount(1, $this->jar);
+        $cookie = $this->jar->getCookieByName('domainless-cookie');
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertNull($cookie->getDomain());
+    }
+
+    public function testInvalidCookieWithoutDomainDoesNotClearJar(): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'session',
+            'Value' => 'value',
+            'Domain' => 'example.com',
+        ]));
+
+        self::assertFalse($this->jar->setCookie(new SetCookie(['Name' => 'session'])));
+        self::assertCount(1, $this->jar);
+    }
+
+    public function testInvalidCookieWithEmptyDomainDoesNotClearJar(): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'session',
+            'Value' => 'value',
+            'Domain' => 'example.com',
+        ]));
+
+        self::assertFalse($this->jar->setCookie(new SetCookie([
+            'Name' => 'session',
+            'Domain' => '',
+        ])));
+        self::assertCount(1, $this->jar);
+    }
+
     public static function providesIncompleteCookies(): array
     {
         return [
@@ -234,6 +294,31 @@ class CookieJarTest extends TestCase
     public function testDoesAddValidCookies(array $cookie)
     {
         self::assertTrue($this->jar->setCookie(new SetCookie($cookie)));
+    }
+
+    public function testAcceptsCookieWithoutDomain(): void
+    {
+        $jar = new CookieJar(true);
+        $cookie = new SetCookie([
+            'Name' => 'test',
+            'Value' => 'value',
+        ]);
+
+        self::assertTrue($jar->setCookie($cookie));
+        self::assertCount(1, $jar);
+        self::assertNull($jar->toArray()[0]['Domain']);
+    }
+
+    public function testDoesNotSendCookieWithoutDomainToRequests(): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'test',
+            'Value' => 'value',
+        ]));
+
+        $request = $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'));
+
+        self::assertFalse($request->hasHeader('Cookie'));
     }
 
     public function testOverwritesCookiesThatAreOlderOrDiscardable()

@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.10`
+- Allow domainless `SetCookie` instances to be stored without using them as wildcard request cookies
 - Prevent `CurlMultiHandler` destructors from throwing during cleanup
 - Improve invalid response handling across handlers
 
