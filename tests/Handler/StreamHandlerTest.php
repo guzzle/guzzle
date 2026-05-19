@@ -626,6 +626,16 @@ class StreamHandlerTest extends TestCase
         $handler($req, ['on_headers' => 'error!']);
     }
 
+    public function testEnsuresProgressIsCallable()
+    {
+        $req = new Request('GET', 'http://example.com');
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('progress client option must be callable');
+        $handler($req, ['progress' => 'error!']);
+    }
+
     public function testRejectsPromiseWhenOnHeadersFails()
     {
         Server::flush();

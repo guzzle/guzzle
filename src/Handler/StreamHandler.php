@@ -561,6 +561,10 @@ class StreamHandler
      */
     private function add_progress(RequestInterface $request, array &$options, $value, array &$params): void
     {
+        if (!\is_callable($value)) {
+            throw new \InvalidArgumentException('progress client option must be callable');
+        }
+
         self::addNotification(
             $params,
             static function ($code, $a, $b, $c, $transferred, $total) use ($value) {

@@ -9,6 +9,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fail clearly when cURL options cannot be applied
 - Fail clearly when JSON decode depth is invalid
 - Fail clearly when session cookie data is malformed
+- Fail clearly when the stream progress option is not callable
 - Prevent response creation failures from exposing stale cURL responses
 
 
