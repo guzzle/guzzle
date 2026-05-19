@@ -7,6 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fail clearly when cURL options cannot be applied
+- Fail clearly when session cookie data is malformed
 - Prevent response creation failures from exposing stale cURL responses
 
 
