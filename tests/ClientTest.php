@@ -298,6 +298,18 @@ class ClientTest extends TestCase
         self::assertSame('foo', (string) $last->getBody());
     }
 
+    public function testAddsIteratorBody()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('PUT', 'http://foo.com');
+        $client->send($request, [
+            'body' => new \ArrayIterator(['foo', 'bar']),
+        ]);
+        $last = $mock->getLastRequest();
+        self::assertSame('foobar', (string) $last->getBody());
+    }
+
     public function testValidatesQuery()
     {
         $mock = new MockHandler();

@@ -8,8 +8,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Hardened `FileCookieJar` persistence against unsafe unserialization
+- Adjusted `guzzlehttp/promises` version constraint to `^3.0`
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.0`
 - Pass the request as the second argument to `on_headers` callbacks
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
+
+### Removed
+
+- Dropped support for PHP 7.2 and 7.3
 
 
 ## 7.11.0 - Upcoming
