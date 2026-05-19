@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: 📚Documentation
-    url: https://docs.guzzlephp.org/en/stable/
+    url: https://github.com/guzzle/guzzle/blob/7.11/docs/index.md
     about: Check the documentation before opening an issue.
 
   - name: ❓Support
