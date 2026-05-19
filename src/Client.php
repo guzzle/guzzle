@@ -96,7 +96,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * Asynchronously send an HTTP request.
      *
      * @param array $options Request options to apply to the given
-     *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
+     *                       request and to the transfer. See {@see RequestOptions}.
      */
     public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface
     {
@@ -113,7 +113,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * Send an HTTP request.
      *
      * @param array $options Request options to apply to the given
-     *                       request and to the transfer. See \GuzzleHttp\RequestOptions.
+     *                       request and to the transfer. See {@see RequestOptions}.
      *
      * @throws GuzzleException
      */
@@ -148,7 +148,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param string              $method  HTTP method
      * @param string|UriInterface $uri     URI object or string.
-     * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
+     * @param array               $options Request options to apply. See {@see RequestOptions}.
      */
     public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
@@ -178,7 +178,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param string              $method  HTTP method.
      * @param string|UriInterface $uri     URI object or string.
-     * @param array               $options Request options to apply. See \GuzzleHttp\RequestOptions.
+     * @param array               $options Request options to apply. See {@see RequestOptions}.
      *
      * @throws GuzzleException
      */
@@ -321,7 +321,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * The URI of the request is not modified and the request options are used
      * as-is without merging in default options.
      *
-     * @param array $options See \GuzzleHttp\RequestOptions.
+     * @param array $options See {@see RequestOptions}.
      */
     private function transfer(RequestInterface $request, array $options): PromiseInterface
     {
