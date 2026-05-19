@@ -194,7 +194,7 @@ class MockHandlerTest extends TestCase
         $promise = $mock($request, [
             'on_headers' => static function (
                 ResponseInterface $response,
-                RequestInterface $receivedRequest,
+                RequestInterface $receivedRequest
             ) use (&$gotResponse, &$gotRequest): void {
                 $gotResponse = $response;
                 $gotRequest = $receivedRequest;

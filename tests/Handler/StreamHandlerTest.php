@@ -800,7 +800,7 @@ class StreamHandlerTest extends TestCase
             'sink' => $stream,
             'on_headers' => static function (
                 ResponseInterface $res,
-                RequestInterface $request,
+                RequestInterface $request
             ) use (&$got, &$gotRequest, $req) {
                 $got = $res;
                 $gotRequest = $request;

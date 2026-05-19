@@ -109,7 +109,7 @@ class PoolTest extends TestCase
             'options' => [
                 'on_headers' => static function (
                     ResponseInterface $response,
-                    RequestInterface $request,
+                    RequestInterface $request
                 ) use (&$seen): void {
                     $seen[] = [
                         (string) $request->getUri(),
