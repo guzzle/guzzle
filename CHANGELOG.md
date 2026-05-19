@@ -7,9 +7,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.10`
-
-### Fixed
-
 - Improve invalid response handling across handlers
 
 
