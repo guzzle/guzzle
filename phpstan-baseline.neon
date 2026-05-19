@@ -135,13 +135,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
-			count: 4
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_setopt_array expects resource, CurlHandle\|resource\|false given\.$#'
-			identifier: argument.type
-			count: 1
+			count: 5
 			path: src/Handler/CurlFactory.php
 
 		-
@@ -157,14 +151,14 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlFactory\:\:\$handles has unknown class CurlHandle as its type\.$#'
+			message: '#^Parameter \$handle of method GuzzleHttp\\Handler\\CurlFactory\:\:applyCurlOptions\(\) has invalid type CurlHandle\.$#'
 			identifier: class.notFound
 			count: 1
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\EasyHandle\:\:\$handle \(CurlHandle\|resource\) does not accept CurlHandle\|resource\|false\.$#'
-			identifier: assign.propertyType
+			message: '#^Property GuzzleHttp\\Handler\\CurlFactory\:\:\$handles has unknown class CurlHandle as its type\.$#'
+			identifier: class.notFound
 			count: 1
 			path: src/Handler/CurlFactory.php
 
@@ -383,4 +377,3 @@ parameters:
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Utils.php
-

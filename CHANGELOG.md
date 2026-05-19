@@ -2,6 +2,13 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
+## 7.10.1 - 2026-05-19
+
+### Fixed
+
+- Fail clearly when cURL options cannot be applied
+
+
 ## 7.10.0 - 2025-08-23
 
 ### Added

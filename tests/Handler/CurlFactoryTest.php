@@ -28,7 +28,7 @@ class CurlFactoryTest extends TestCase
 
     public static function tearDownAfterClass(): void
     {
-        unset($_SERVER['_curl'], $_SERVER['curl_test']);
+        unset($_SERVER['_curl'], $_SERVER['curl_test'], $_SERVER['curl_setopt_fail']);
     }
 
     public function testCreatesCurlHandle()
@@ -124,6 +124,37 @@ class CurlFactoryTest extends TestCase
         $req = new Psr7\Request('GET', Server::$url);
         $a($req, ['curl' => [\CURLOPT_HTTP_VERSION => \CURL_HTTP_VERSION_1_0]]);
         self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+    }
+
+    public function testThrowsWhenCurlOptionCannotBeApplied()
+    {
+        $_SERVER['curl_setopt_fail'] = \CURLOPT_LOW_SPEED_LIMIT;
+        $f = new CurlFactory(3);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('Unable to set cURL option CURLOPT_LOW_SPEED_LIMIT');
+
+            $f->create(
+                new Psr7\Request('GET', Server::$url),
+                ['curl' => [\CURLOPT_LOW_SPEED_LIMIT => 10]]
+            );
+        } finally {
+            unset($_SERVER['curl_setopt_fail']);
+        }
+    }
+
+    public function testThrowsWhenCurlOptionNameIsInvalid()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid cURL option "not-a-curl-option".');
+
+        $f->create(
+            new Psr7\Request('GET', Server::$url),
+            ['curl' => ['not-a-curl-option' => true]]
+        );
     }
 
     public function testValidatesVerify()
