@@ -810,16 +810,29 @@ class StreamHandlerTest extends TestCase
     public function testHandlesInvalidStatusCodeGracefully()
     {
         $handler = new StreamHandler();
+        $called = false;
 
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('An error was encountered while creating the response');
-
-        $handler(
-            new Request('GET', Server::$url.'guzzle-server/bad-status'),
-            [
-                RequestOptions::STREAM => true,
-            ]
-        )->wait();
+        try {
+            $handler(
+                new Request('GET', Server::$url.'guzzle-server/bad-status'),
+                [
+                    RequestOptions::STREAM => true,
+                    'on_headers' => static function () use (&$called): void {
+                        $called = true;
+                    },
+                ]
+            )->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString(
+                'An error was encountered while creating the response',
+                $e->getMessage()
+            );
+            self::assertFalse($called);
+            self::assertFalse($e->hasResponse());
+            self::assertNull($e->getResponse());
+            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+        }
     }
 
     public function testRejectsNonHttpSchemes()
