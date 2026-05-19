@@ -187,6 +187,31 @@ class UtilsTest extends TestCase
 
         \GuzzleHttp\json_decode('{{]]');
     }
+
+    /**
+     * @dataProvider invalidJsonDepthProvider
+     */
+    public function testDecodesJsonAndThrowsOnInvalidDepth(int $depth)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        Utils::jsonDecode('{}', true, $depth);
+    }
+
+    /**
+     * @dataProvider invalidJsonDepthProvider
+     */
+    public function testDecodesJsonAndThrowsOnInvalidDepthLegacy(int $depth)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        \GuzzleHttp\json_decode('{}', true, $depth);
+    }
+
+    public static function invalidJsonDepthProvider(): array
+    {
+        return [[0], [-1]];
+    }
 }
 
 final class StrClass

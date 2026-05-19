@@ -343,12 +343,6 @@ parameters:
 			path: src/Utils.php
 
 		-
-			message: '#^Parameter \#3 \$depth of function json_decode expects int\<1, max\>, int given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Utils.php
-
-		-
 			message: '#^Parameter \#3 \$depth of function json_encode expects int\<1, max\>, int given\.$#'
 			identifier: argument.type
 			count: 1
