@@ -13,6 +13,14 @@ automatically on destruction. If your application intentionally unserializes a
 Saved cookie files now JSON-escape tag characters. Existing cookie files remain
 readable, and cookie values are unchanged when loaded.
 
+#### PHP Version and Dependencies
+
+Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
+`^7.2.5 || ^8.0`.
+
+Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
+your application uses those packages directly, review their upgrade guides.
+
 #### on_headers callback arguments
 
 The `on_headers` request option callback now receives the request as its second

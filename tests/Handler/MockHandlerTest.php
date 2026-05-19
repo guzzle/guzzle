@@ -228,6 +228,25 @@ class MockHandlerTest extends TestCase
         self::assertSame($e, $c);
     }
 
+    public function testLateRejectedHandlerReceivesRejectedReason()
+    {
+        $e = new \Exception('a');
+        $mock = new MockHandler([$e]);
+        $request = new Request('GET', 'http://example.com');
+
+        $promise = $mock($request, []);
+        $promise->wait(false);
+
+        $reason = null;
+        $promise->then(null, static function ($value) use (&$reason): void {
+            $reason = $value;
+        });
+
+        \GuzzleHttp\Promise\Utils::queue()->run();
+
+        self::assertSame($e, $reason);
+    }
+
     public function testThrowsWhenNoMoreResponses()
     {
         $mock = new MockHandler();
