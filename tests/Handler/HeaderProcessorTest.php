@@ -25,6 +25,15 @@ class HeaderProcessorTest extends TestCase
         self::assertSame(['X-Foo' => ['bar']], $headers);
     }
 
+    public function testParsesBoundaryStatusCodes(): void
+    {
+        [, $informationalStatus] = HeaderProcessor::parseHeaders(['HTTP/1.1 100 Continue']);
+        [, $customServerErrorStatus] = HeaderProcessor::parseHeaders(['HTTP/1.1 599 Custom']);
+
+        self::assertSame(100, $informationalStatus);
+        self::assertSame(599, $customServerErrorStatus);
+    }
+
     public function testRejectsMalformedStatusCode(): void
     {
         $this->expectException(\RuntimeException::class);
@@ -33,5 +42,26 @@ class HeaderProcessorTest extends TestCase
         HeaderProcessor::parseHeaders([
             'HTTP/1.1 200abc Weird',
         ]);
+    }
+
+    /**
+     * @dataProvider invalidStatusCodeProvider
+     */
+    public function testRejectsOutOfRangeStatusCode(string $statusLine): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('HTTP status code is invalid');
+
+        HeaderProcessor::parseHeaders([$statusLine]);
+    }
+
+    public static function invalidStatusCodeProvider(): iterable
+    {
+        return [
+            ['HTTP/1.1 099 Bad'],
+            ['HTTP/1.1 600 Bad'],
+            ['HTTP/1.1 700 Bad'],
+            ['HTTP/1.1 999 Bad'],
+        ];
     }
 }
