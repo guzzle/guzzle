@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 if (!\defined('IDNA_DEFAULT')) {
     \define('IDNA_DEFAULT', 0);
 }
