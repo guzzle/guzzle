@@ -241,12 +241,6 @@ parameters:
 			path: src/Handler/EasyHandle.php
 
 		-
-			message: '#^Parameter \#1 \$filename of function file_exists expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: '#^Parameter \#1 \$url of method GuzzleHttp\\Handler\\StreamHandler\:\:parse_proxy\(\) expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -255,12 +249,6 @@ parameters:
 		-
 			message: '#^Parameter \#2 \$noProxyArray of static method GuzzleHttp\\Utils\:\:isHostInNoProxy\(\) expects array\<string\>, mixed given\.$#'
 			identifier: argument.type
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
-			message: '#^Part \$value \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
 			count: 1
 			path: src/Handler/StreamHandler.php
 

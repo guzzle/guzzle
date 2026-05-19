@@ -446,6 +446,48 @@ class StreamHandlerTest extends TestCase
         self::assertSame('foo', $opts['ssl']['passphrase']);
     }
 
+    public function testCanSetCertWithArrayPathOnly()
+    {
+        $path = __FILE__;
+        $handler = new StreamHandler();
+        $options = [];
+        $params = [];
+        $method = new \ReflectionMethod(StreamHandler::class, 'add_cert');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs($handler, [new Request('GET', 'http://example.com'), &$options, [$path], &$params]);
+
+        self::assertSame($path, $options['ssl']['local_cert']);
+        self::assertArrayNotHasKey('passphrase', $options['ssl']);
+    }
+
+    /**
+     * @dataProvider invalidCertOptionProvider
+     *
+     * @param mixed $cert
+     */
+    public function testEnsuresCertOptionShapeIsValid($cert)
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid cert request option');
+        $handler(new Request('GET', 'http://example.com'), ['cert' => $cert]);
+    }
+
+    public static function invalidCertOptionProvider(): array
+    {
+        return [
+            [[]],
+            [['passphrase' => 'test']],
+            [[new \stdClass(), 'test']],
+            [[__FILE__, new \stdClass()]],
+            [new \stdClass()],
+        ];
+    }
+
     public function testDebugAttributeWritesToStream()
     {
         $this->queueRes();

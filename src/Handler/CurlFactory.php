@@ -661,8 +661,19 @@ class CurlFactory implements CurlFactoryInterface
         if (isset($options['cert'])) {
             $cert = $options['cert'];
             if (\is_array($cert)) {
-                $conf[\CURLOPT_SSLCERTPASSWD] = $cert[1];
+                if (!isset($cert[0]) || !\is_string($cert[0])) {
+                    throw new \InvalidArgumentException('Invalid cert request option');
+                }
+                if (isset($cert[1])) {
+                    if (!\is_string($cert[1])) {
+                        throw new \InvalidArgumentException('Invalid cert request option');
+                    }
+                    $conf[\CURLOPT_SSLCERTPASSWD] = $cert[1];
+                }
                 $cert = $cert[0];
+            }
+            if (!\is_string($cert)) {
+                throw new \InvalidArgumentException('Invalid cert request option');
             }
             if (!\file_exists($cert)) {
                 throw new \InvalidArgumentException("SSL certificate not found: {$cert}");
