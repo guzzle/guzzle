@@ -2,11 +2,12 @@
 
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
-## 7.10.1 - 2026-05-19
+## 7.10.1 - Upcoming
 
 ### Fixed
 
 - Fail clearly when cURL options cannot be applied
+- Prevent response creation failures from exposing stale cURL responses
 
 
 ## 7.10.0 - 2025-08-23
