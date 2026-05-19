@@ -10,6 +10,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.10`
 - Improve invalid response handling across handlers
 
+### Deprecated
+
+- Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
+
 ### Fixed
 
 - Remove middleware by name when the name is also a callable string
