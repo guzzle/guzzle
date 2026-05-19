@@ -77,13 +77,17 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
-        $easy->handle = $this->handles ? \array_pop($this->handles) : \curl_init();
+        $handle = $this->handles ? \array_pop($this->handles) : \curl_init();
+        if (false === $handle) {
+            throw new \RuntimeException('Can not initialize cURL handle.');
+        }
+        $easy->handle = $handle;
 
         try {
-            $this->applyCurlOptions($easy->handle, $conf);
+            $this->applyCurlOptions($handle, $conf);
         } catch (\Throwable $e) {
-            if (PHP_VERSION_ID < 80000) {
-                \curl_close($easy->handle);
+            if (PHP_VERSION_ID < 80000 && \is_resource($handle)) {
+                \curl_close($handle);
             }
             unset($easy->handle);
 
@@ -94,7 +98,7 @@ class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @param resource|\CurlHandle $handle
+     * @param resource|\CurlHandle     $handle
      * @param array<int|string, mixed> $conf
      */
     private function applyCurlOptions($handle, array $conf): void
@@ -144,11 +148,7 @@ class CurlFactory implements CurlFactoryInterface
         if (null === $names) {
             $names = [];
             foreach (\get_defined_constants(true)['curl'] ?? [] as $name => $value) {
-                if (
-                    \is_int($value)
-                    && \strpos($name, 'CURLOPT_') === 0
-                    && !isset($names[$value])
-                ) {
+                if (\is_int($value) && \strpos($name, 'CURLOPT_') === 0 && !isset($names[$value])) {
                     $names[$value] = $name;
                 }
             }
