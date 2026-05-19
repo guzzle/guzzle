@@ -46,6 +46,11 @@ continues to use the same exponential backoff calculation by default. If you
 called the static method directly, inline that calculation or pass a custom
 delay callable to `Middleware::retry()`.
 
+#### RedirectMiddleware default settings
+
+`RedirectMiddleware::$defaultSettings` has been removed. Use
+`RedirectMiddleware::DEFAULT_SETTINGS` instead.
+
 #### on_headers callback arguments
 
 The `on_headers` request option callback now receives the request as its second

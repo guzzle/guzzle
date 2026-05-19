@@ -26,7 +26,7 @@ class RedirectMiddleware
     /**
      * @var array
      */
-    public static $defaultSettings = [
+    public const DEFAULT_SETTINGS = [
         'max' => 5,
         'protocols' => ['http', 'https'],
         'strict' => false,
@@ -56,12 +56,12 @@ class RedirectMiddleware
         }
 
         if ($options['allow_redirects'] === true) {
-            $options['allow_redirects'] = self::$defaultSettings;
+            $options['allow_redirects'] = self::DEFAULT_SETTINGS;
         } elseif (!\is_array($options['allow_redirects'])) {
             throw new \InvalidArgumentException('allow_redirects must be true, false, or array');
         } else {
             // Merge the default settings with the provided settings
-            $options['allow_redirects'] += self::$defaultSettings;
+            $options['allow_redirects'] += self::DEFAULT_SETTINGS;
         }
 
         if (empty($options['allow_redirects']['max'])) {
