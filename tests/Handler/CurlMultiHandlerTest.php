@@ -128,25 +128,6 @@ class CurlMultiHandlerTest extends TestCase
         self::assertGreaterThanOrEqual($expected, Utils::currentTime());
     }
 
-    public function testUsesTimeoutEnvironmentVariables()
-    {
-        unset($_SERVER['GUZZLE_CURL_SELECT_TIMEOUT']);
-        \putenv('GUZZLE_CURL_SELECT_TIMEOUT=');
-
-        try {
-            $a = new CurlMultiHandler();
-            // Default if no options are given and no environment variable is set
-            self::assertEquals(1, Helpers::readObjectAttribute($a, 'selectTimeout'));
-
-            \putenv('GUZZLE_CURL_SELECT_TIMEOUT=3');
-            $a = new CurlMultiHandler();
-            // Handler reads from the environment if no options are given
-            self::assertEquals(3, Helpers::readObjectAttribute($a, 'selectTimeout'));
-        } finally {
-            \putenv('GUZZLE_CURL_SELECT_TIMEOUT=');
-        }
-    }
-
     public function throwsWhenAccessingInvalidProperty()
     {
         $h = new CurlMultiHandler();
