@@ -95,7 +95,7 @@ class SetCookie
         $this->data = self::$defaults;
 
         if (\array_key_exists('HostOnly', $data)) {
-            $this->setHostOnly($data['HostOnly']);
+            $this->setHostOnly((bool) $data['HostOnly']);
             unset($data['HostOnly']);
         }
 
@@ -262,16 +262,10 @@ class SetCookie
 
     /**
      * Set whether this cookie is scoped to the origin host only.
-     *
-     * @param bool $hostOnly Set to true for host-only cookies
      */
-    public function setHostOnly($hostOnly): void
+    public function setHostOnly(bool $hostOnly): void
     {
-        if (!is_bool($hostOnly)) {
-            trigger_deprecation('guzzlehttp/guzzle', '8.0', 'Not passing a bool to %s::%s() is deprecated and will cause an error in 9.0.', __CLASS__, __FUNCTION__);
-        }
-
-        $this->hostOnly = (bool) $hostOnly;
+        $this->hostOnly = $hostOnly;
     }
 
     /**
@@ -530,7 +524,7 @@ class SetCookie
         $domain = \strtolower($domain);
 
         if ($domain !== '' && $domain[0] === '.') {
-            return \substr($domain, 1);
+            return \substr($domain, 1) ?: '';
         }
 
         return $domain;
