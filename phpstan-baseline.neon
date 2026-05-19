@@ -265,12 +265,6 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Trying to invoke mixed but it''s not a callable\.$#'
-			identifier: callable.nonCallable
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: '#^Variable \$options in empty\(\) always exists and is not falsy\.$#'
 			identifier: empty.variable
 			count: 1
