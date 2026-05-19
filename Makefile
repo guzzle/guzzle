@@ -6,8 +6,6 @@ help:
 	@printf "  %-32s %s\n" "coverage" "to perform unit tests with code coverage. Provide TEST to perform a specific test."
 	@printf "  %-32s %s\n" "coverage-show" "to show the code coverage report"
 	@printf "  %-32s %s\n" "clean" "to remove build artifacts"
-	@printf "  %-32s %s\n" "docs" "to build the Sphinx docs"
-	@printf "  %-32s %s\n" "docs-show" "to view the Sphinx docs"
 	@printf "  %-32s %s\n" "static" "to run static checks on the codebase"
 	@printf "  %-32s %s\n" "static-phpstan" "to run phpstan on the codebase"
 	@printf "  %-32s %s\n" "static-phpstan-update-baseline" "to regenerate the phpstan baseline file"
@@ -48,12 +46,6 @@ view-coverage:
 clean:
 	rm -rf artifacts/*
 
-docs:
-	cd docs && make html && cd ..
-
-docs-show:
-	open docs/_build/html/index.html
-
 static: static-phpstan static-codestyle-check static-composer-normalize-check
 
 static-phpstan:
@@ -82,4 +74,4 @@ static-composer-normalize-fix:
 static-composer-normalize-check:
 	$(MAKE) static-composer-normalize-fix COMPOSER_NORMALIZE_PARAMS="--dry-run"
 
-.PHONY: docs coverage-show view-coverage
+.PHONY: coverage-show view-coverage
