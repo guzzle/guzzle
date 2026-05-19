@@ -10,6 +10,8 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\MockHandler
@@ -157,6 +159,50 @@ class MockHandlerTest extends TestCase
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
+    }
+
+    public function testRejectsPromiseWhenOnHeadersThrowsThrowable()
+    {
+        $res = new Response();
+        $mock = new MockHandler([$res]);
+        $request = new Request('GET', 'http://example.com');
+        $promise = $mock($request, [
+            'on_headers' => static function (): void {
+                throw new \Error('test');
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
+            self::assertInstanceOf(\Error::class, $e->getPrevious());
+        }
+    }
+
+    public function testInvokesOnHeadersWithResponseAndRequest()
+    {
+        $res = new Response(201, ['X-Foo' => 'bar']);
+        $mock = new MockHandler([$res]);
+        $request = new Request('GET', 'http://example.com');
+        $gotResponse = null;
+        $gotRequest = null;
+
+        $promise = $mock($request, [
+            'on_headers' => static function (
+                ResponseInterface $response,
+                RequestInterface $receivedRequest
+            ) use (&$gotResponse, &$gotRequest): void {
+                $gotResponse = $response;
+                $gotRequest = $receivedRequest;
+                self::assertSame('bar', $response->getHeaderLine('X-Foo'));
+            },
+        ]);
+
+        self::assertSame($res, $promise->wait());
+        self::assertSame($res, $gotResponse);
+        self::assertSame($request, $gotRequest);
     }
 
     public function testInvokesOnFulfilled()

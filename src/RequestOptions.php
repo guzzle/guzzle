@@ -172,7 +172,9 @@ final class RequestOptions
     /**
      * on_headers: (callable) A callable that is invoked when the HTTP headers
      * of the response have been received but the body has not yet begun to
-     * download.
+     * download. The callable is passed the response and request as
+     * {@see \Psr\Http\Message\ResponseInterface} and
+     * {@see \Psr\Http\Message\RequestInterface} objects, respectively.
      */
     public const ON_HEADERS = 'on_headers';
 

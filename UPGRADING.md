@@ -13,6 +13,14 @@ automatically on destruction. If your application intentionally unserializes a
 Saved cookie files now JSON-escape tag characters. Existing cookie files remain
 readable, and cookie values are unchanged when loaded.
 
+#### on_headers callback arguments
+
+The `on_headers` request option callback now receives the request as its second
+argument. Existing userland callbacks that accept only the response continue to
+work, but callbacks that inspect all arguments, for example with
+`func_get_args()` or a variadic parameter, will observe the additional
+`Psr\Http\Message\RequestInterface` argument.
+
 6.0 to 7.0
 ----------
 
