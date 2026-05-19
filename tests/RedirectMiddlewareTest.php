@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
@@ -510,7 +512,7 @@ class RedirectMiddlewareTest extends TestCase
      */
     public function testModifyRequestFollowRequestMethodAndBody(
         RequestInterface $request,
-        $expectedFollowRequestMethod
+        $expectedFollowRequestMethod,
     ) {
         $redirectMiddleware = new RedirectMiddleware(static function () {
         });
