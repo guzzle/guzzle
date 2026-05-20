@@ -42,6 +42,11 @@ class StreamHandler
 
         $protocolVersion = $request->getProtocolVersion();
 
+        if ('' === $protocolVersion) {
+            $protocolVersion = '1.1';
+            $request = Psr7\Utils::modifyRequest($request, ['version' => $protocolVersion]);
+        }
+
         if ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
             throw new ConnectException(sprintf('HTTP/%s is not supported by the stream handler.', $protocolVersion), $request);
         }

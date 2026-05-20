@@ -324,6 +324,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     private function transfer(RequestInterface $request, array $options): PromiseInterface
     {
         $request = $this->applyOptions($request, $options);
+
+        if ('' === $request->getProtocolVersion()) {
+            $request = Psr7\Utils::modifyRequest($request, ['version' => '1.1']);
+        }
+
         /** @var HandlerStack $handler */
         $handler = $options['handler'];
 
@@ -472,6 +477,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     private static function normalizeProtocolVersion($version): string
     {
+        if ('' === $version) {
+            return '1.1';
+        }
+
         return \is_float($version) ? \number_format($version, 1, '.', '') : (string) $version;
     }
 
