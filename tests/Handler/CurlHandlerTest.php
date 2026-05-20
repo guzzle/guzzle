@@ -19,12 +19,12 @@ use PHPUnit\Framework\TestCase;
  */
 class CurlHandlerTest extends TestCase
 {
-    protected function getHandler($options = [])
+    protected function getHandler(array $options = []): CurlHandler
     {
         return new CurlHandler($options);
     }
 
-    public function testCreatesCurlErrors()
+    public function testCreatesCurlErrors(): void
     {
         $handler = new CurlHandler();
         $request = new Request('GET', 'http://localhost:123');
@@ -34,7 +34,7 @@ class CurlHandlerTest extends TestCase
         $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
     }
 
-    public function testRedactsUserInfoInErrors()
+    public function testRedactsUserInfoInErrors(): void
     {
         $handler = new CurlHandler();
         $request = new Request('GET', 'http://my_user:secretPass@localhost:123');
@@ -47,7 +47,7 @@ class CurlHandlerTest extends TestCase
         }
     }
 
-    public function testReusesHandles()
+    public function testReusesHandles(): void
     {
         Server::flush();
         $response = new Response(200);
@@ -58,7 +58,7 @@ class CurlHandlerTest extends TestCase
         self::assertInstanceOf(FulfilledPromise::class, $a($request, []));
     }
 
-    public function testDoesSleep()
+    public function testDoesSleep(): void
     {
         $response = new Response(200);
         Server::enqueue([$response]);
@@ -69,13 +69,13 @@ class CurlHandlerTest extends TestCase
         self::assertGreaterThan(0.0001, Utils::currentTime() - $s);
     }
 
-    public function testCreatesCurlErrorsWithContext()
+    public function testCreatesCurlErrorsWithContext(): void
     {
         $handler = new CurlHandler();
         $request = new Request('GET', 'http://localhost:123');
         $called = false;
         $p = $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])
-            ->otherwise(static function (ConnectException $e) use (&$called) {
+            ->otherwise(static function (ConnectException $e) use (&$called): void {
                 $called = true;
                 self::assertArrayHasKey('errno', $e->getHandlerContext());
             });
@@ -83,7 +83,7 @@ class CurlHandlerTest extends TestCase
         self::assertTrue($called);
     }
 
-    public function testUsesContentLengthWhenOverInMemorySize()
+    public function testUsesContentLengthWhenOverInMemorySize(): void
     {
         Server::flush();
         Server::enqueue([new Response()]);

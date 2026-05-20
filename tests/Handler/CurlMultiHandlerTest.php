@@ -27,7 +27,7 @@ class CurlMultiHandlerTest extends TestCase
         unset($_SERVER['_curl_multi'], $_SERVER['curl_test']);
     }
 
-    public function testCanAddCustomCurlOptions()
+    public function testCanAddCustomCurlOptions(): void
     {
         Server::flush();
         Server::enqueue([new Response()]);
@@ -39,7 +39,7 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals(5, $_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]);
     }
 
-    public function testSendsRequest()
+    public function testSendsRequest(): void
     {
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler();
@@ -48,7 +48,7 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testCreatesExceptions()
+    public function testCreatesExceptions(): void
     {
         $a = new CurlMultiHandler();
 
@@ -57,13 +57,13 @@ class CurlMultiHandlerTest extends TestCase
         $a(new Request('GET', 'http://localhost:123'), [])->wait();
     }
 
-    public function testCanSetSelectTimeout()
+    public function testCanSetSelectTimeout(): void
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
         self::assertEquals(2, Helpers::readObjectAttribute($a, 'selectTimeout'));
     }
 
-    public function testDestructorDoesNotThrowWhenCurlMultiCloseFails()
+    public function testDestructorDoesNotThrowWhenCurlMultiCloseFails(): void
     {
         $handler = new CurlMultiHandler();
 
@@ -88,7 +88,7 @@ class CurlMultiHandlerTest extends TestCase
         self::assertFalse($hasMultiHandle($handler));
     }
 
-    public function testCanCancel()
+    public function testCanCancel(): void
     {
         Server::flush();
         $response = new Response(200);
@@ -106,7 +106,7 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
-    public function testCannotCancelFinished()
+    public function testCannotCancelFinished(): void
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
@@ -117,7 +117,7 @@ class CurlMultiHandlerTest extends TestCase
         self::assertTrue(P\Is::fulfilled($response));
     }
 
-    public function testDelaysConcurrently()
+    public function testDelaysConcurrently(): void
     {
         Server::flush();
         Server::enqueue([new Response()]);
@@ -128,7 +128,7 @@ class CurlMultiHandlerTest extends TestCase
         self::assertGreaterThanOrEqual($expected, Utils::currentTime());
     }
 
-    public function throwsWhenAccessingInvalidProperty()
+    public function throwsWhenAccessingInvalidProperty(): void
     {
         $h = new CurlMultiHandler();
 

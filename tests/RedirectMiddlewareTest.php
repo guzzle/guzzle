@@ -16,13 +16,15 @@ use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RedirectMiddleware;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * @covers \GuzzleHttp\RedirectMiddleware
  */
 class RedirectMiddlewareTest extends TestCase
 {
-    public function testIgnoresNonRedirects()
+    public function testIgnoresNonRedirects(): void
     {
         $response = new Response(200);
         $stack = new HandlerStack(new MockHandler([$response]));
@@ -34,7 +36,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testIgnoresWhenNoLocation()
+    public function testIgnoresWhenNoLocation(): void
     {
         $response = new Response(304);
         $stack = new HandlerStack(new MockHandler([$response]));
@@ -46,7 +48,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame(304, $response->getStatusCode());
     }
 
-    public function testRedirectsWithAbsoluteUri()
+    public function testRedirectsWithAbsoluteUri(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
@@ -64,7 +66,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame('http://test.com', (string) $mock->getLastRequest()->getUri());
     }
 
-    public function testRedirectsWithRelativeUri()
+    public function testRedirectsWithRelativeUri(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => '/foo']),
@@ -82,7 +84,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame('http://example.com/foo', (string) $mock->getLastRequest()->getUri());
     }
 
-    public function testRelativeRedirectPreservesCustomRequestAndUriImplementations()
+    public function testRelativeRedirectPreservesCustomRequestAndUriImplementations(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => '/foo']),
@@ -103,7 +105,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame('http://example.com/foo', (string) $lastRequest->getUri());
     }
 
-    public function testLimitsToMaxRedirects()
+    public function testLimitsToMaxRedirects(): void
     {
         $mock = new MockHandler([
             new Response(301, ['Location' => 'http://test.com']),
@@ -122,7 +124,7 @@ class RedirectMiddlewareTest extends TestCase
         $promise->wait();
     }
 
-    public function testTooManyRedirectsExceptionHasResponse()
+    public function testTooManyRedirectsExceptionHasResponse(): void
     {
         $mock = new MockHandler([
             new Response(301, ['Location' => 'http://test.com']),
@@ -142,7 +144,7 @@ class RedirectMiddlewareTest extends TestCase
         }
     }
 
-    public function testEnsuresProtocolIsValid()
+    public function testEnsuresProtocolIsValid(): void
     {
         $mock = new MockHandler([
             new Response(301, ['Location' => 'ftp://test.com']),
@@ -157,7 +159,7 @@ class RedirectMiddlewareTest extends TestCase
         $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
     }
 
-    public function testAddsRefererHeader()
+    public function testAddsRefererHeader(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
@@ -177,7 +179,7 @@ class RedirectMiddlewareTest extends TestCase
         );
     }
 
-    public function testAddsRefererHeaderButClearsUserInfo()
+    public function testAddsRefererHeaderButClearsUserInfo(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
@@ -197,7 +199,7 @@ class RedirectMiddlewareTest extends TestCase
         );
     }
 
-    public function testAddsGuzzleRedirectHeader()
+    public function testAddsGuzzleRedirectHeader(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://example.com']),
@@ -224,7 +226,7 @@ class RedirectMiddlewareTest extends TestCase
         );
     }
 
-    public function testAddsGuzzleRedirectStatusHeader()
+    public function testAddsGuzzleRedirectStatusHeader(): void
     {
         $mock = new MockHandler([
             new Response(301, ['Location' => 'http://example.com']),
@@ -253,7 +255,7 @@ class RedirectMiddlewareTest extends TestCase
         );
     }
 
-    public function testDoesNotAddRefererWhenGoingFromHttpsToHttp()
+    public function testDoesNotAddRefererWhenGoingFromHttpsToHttp(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
@@ -270,7 +272,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertFalse($mock->getLastRequest()->hasHeader('Referer'));
     }
 
-    public function testInvokesOnRedirectForRedirects()
+    public function testInvokesOnRedirectForRedirects(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
@@ -284,7 +286,7 @@ class RedirectMiddlewareTest extends TestCase
         $promise = $handler($request, [
             'allow_redirects' => [
                 'max' => 2,
-                'on_redirect' => static function ($request, $response, $uri) use (&$call) {
+                'on_redirect' => static function (RequestInterface $request, ResponseInterface $response, UriInterface $uri) use (&$call): void {
                     self::assertSame(302, $response->getStatusCode());
                     self::assertSame('GET', $request->getMethod());
                     self::assertSame('http://test.com', (string) $uri);
@@ -300,7 +302,7 @@ class RedirectMiddlewareTest extends TestCase
      * @testWith ["digest"]
      *           ["ntlm"]
      */
-    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossHost($auth)
+    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossHost(string $auth): void
     {
         if (!defined('\CURLOPT_HTTPAUTH')) {
             self::markTestSkipped('ext-curl is required for this test');
@@ -308,7 +310,7 @@ class RedirectMiddlewareTest extends TestCase
 
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
-            static function (RequestInterface $request, $options) {
+            static function (RequestInterface $request, array $options): ResponseInterface {
                 self::assertFalse(
                     isset($options['curl'][\CURLOPT_HTTPAUTH]),
                     'curl options still contain CURLOPT_HTTPAUTH entry'
@@ -330,7 +332,7 @@ class RedirectMiddlewareTest extends TestCase
      * @testWith ["digest"]
      *           ["ntlm"]
      */
-    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossPort($auth)
+    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossPort(string $auth): void
     {
         if (!defined('\CURLOPT_HTTPAUTH')) {
             self::markTestSkipped('ext-curl is required for this test');
@@ -338,7 +340,7 @@ class RedirectMiddlewareTest extends TestCase
 
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://example.com:81/']),
-            static function (RequestInterface $request, $options) {
+            static function (RequestInterface $request, array $options): ResponseInterface {
                 self::assertFalse(
                     isset($options['curl'][\CURLOPT_HTTPAUTH]),
                     'curl options still contain CURLOPT_HTTPAUTH entry'
@@ -360,7 +362,7 @@ class RedirectMiddlewareTest extends TestCase
      * @testWith ["digest"]
      *           ["ntlm"]
      */
-    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossScheme($auth)
+    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossScheme(string $auth): void
     {
         if (!defined('\CURLOPT_HTTPAUTH')) {
             self::markTestSkipped('ext-curl is required for this test');
@@ -368,7 +370,7 @@ class RedirectMiddlewareTest extends TestCase
 
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://example.com?a=b']),
-            static function (RequestInterface $request, $options) {
+            static function (RequestInterface $request, array $options): ResponseInterface {
                 self::assertFalse(
                     isset($options['curl'][\CURLOPT_HTTPAUTH]),
                     'curl options still contain CURLOPT_HTTPAUTH entry'
@@ -390,7 +392,7 @@ class RedirectMiddlewareTest extends TestCase
      * @testWith ["digest"]
      *           ["ntlm"]
      */
-    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossSchemeSamePort($auth)
+    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossSchemeSamePort(string $auth): void
     {
         if (!defined('\CURLOPT_HTTPAUTH')) {
             self::markTestSkipped('ext-curl is required for this test');
@@ -398,7 +400,7 @@ class RedirectMiddlewareTest extends TestCase
 
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://example.com:80?a=b']),
-            static function (RequestInterface $request, $options) {
+            static function (RequestInterface $request, array $options): ResponseInterface {
                 self::assertFalse(
                     isset($options['curl'][\CURLOPT_HTTPAUTH]),
                     'curl options still contain CURLOPT_HTTPAUTH entry'
@@ -420,7 +422,7 @@ class RedirectMiddlewareTest extends TestCase
      * @testWith ["digest"]
      *           ["ntlm"]
      */
-    public function testNotRemoveCurlAuthorizationOptionsOnRedirect($auth)
+    public function testNotRemoveCurlAuthorizationOptionsOnRedirect(string $auth): void
     {
         if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_USERPWD')) {
             self::markTestSkipped('ext-curl is required for this test');
@@ -428,7 +430,7 @@ class RedirectMiddlewareTest extends TestCase
 
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://example.com/2']),
-            static function (RequestInterface $request, $options) {
+            static function (RequestInterface $request, array $options): ResponseInterface {
                 self::assertTrue(
                     isset($options['curl'][\CURLOPT_HTTPAUTH]),
                     'curl options does not contain expected CURLOPT_HTTPAUTH entry'
@@ -446,7 +448,7 @@ class RedirectMiddlewareTest extends TestCase
         $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
     }
 
-    public static function crossOriginRedirectProvider()
+    public static function crossOriginRedirectProvider(): array
     {
         return [
             ['http://example.com/123', 'http://example.com/', false],
@@ -471,11 +473,11 @@ class RedirectMiddlewareTest extends TestCase
     /**
      * @dataProvider crossOriginRedirectProvider
      */
-    public function testHeadersTreatmentOnRedirect($originalUri, $targetUri, $isCrossOrigin)
+    public function testHeadersTreatmentOnRedirect(string $originalUri, string $targetUri, bool $isCrossOrigin): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => $targetUri]),
-            static function (RequestInterface $request) use ($isCrossOrigin) {
+            static function (RequestInterface $request) use ($isCrossOrigin): ResponseInterface {
                 self::assertSame(!$isCrossOrigin, $request->hasHeader('Authorization'));
                 self::assertSame(!$isCrossOrigin, $request->hasHeader('Cookie'));
 
@@ -487,11 +489,11 @@ class RedirectMiddlewareTest extends TestCase
         $client->get($originalUri, ['auth' => ['testuser', 'testpass'], 'headers' => ['Cookie' => 'foo=bar']]);
     }
 
-    public function testNotRemoveAuthorizationHeaderOnRedirect()
+    public function testNotRemoveAuthorizationHeaderOnRedirect(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://example.com/2']),
-            static function (RequestInterface $request) {
+            static function (RequestInterface $request): ResponseInterface {
                 self::assertTrue($request->hasHeader('Authorization'));
 
                 return new Response(200);
@@ -507,14 +509,12 @@ class RedirectMiddlewareTest extends TestCase
      * encountering a redirect response.
      *
      * @dataProvider modifyRequestFollowRequyestMethodAndBodyProvider
-     *
-     * @param string $expectedFollowRequestMethod
      */
     public function testModifyRequestFollowRequestMethodAndBody(
         RequestInterface $request,
-        $expectedFollowRequestMethod
-    ) {
-        $redirectMiddleware = new RedirectMiddleware(static function () {
+        string $expectedFollowRequestMethod
+    ): void {
+        $redirectMiddleware = new RedirectMiddleware(static function (): void {
         });
 
         $options = [
@@ -531,10 +531,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertEquals(0, $modifiedRequest->getBody()->getSize());
     }
 
-    /**
-     * @return array
-     */
-    public static function modifyRequestFollowRequyestMethodAndBodyProvider()
+    public static function modifyRequestFollowRequyestMethodAndBodyProvider(): array
     {
         return [
             'DELETE' => [

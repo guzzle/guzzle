@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  */
 class SessionCookieJarTest extends TestCase
 {
-    private $sessionVar;
+    private string $sessionVar;
 
     public function setUp(): void
     {
@@ -26,7 +26,7 @@ class SessionCookieJarTest extends TestCase
         unset($_SESSION[$this->sessionVar]);
     }
 
-    public function testValidatesCookieSession()
+    public function testValidatesCookieSession(): void
     {
         $_SESSION[$this->sessionVar] = 'true';
 
@@ -39,7 +39,7 @@ class SessionCookieJarTest extends TestCase
      *
      * @param mixed $sessionData
      */
-    public function testValidatesMalformedCookieSession($sessionData)
+    public function testValidatesMalformedCookieSession($sessionData): void
     {
         $_SESSION[$this->sessionVar] = $sessionData;
 
@@ -68,7 +68,7 @@ class SessionCookieJarTest extends TestCase
         }
     }
 
-    public function testLoadsFromSession()
+    public function testLoadsFromSession(): void
     {
         $jar = new SessionCookieJar($this->sessionVar);
         self::assertSame([], $jar->getIterator()->getArrayCopy());
@@ -78,7 +78,7 @@ class SessionCookieJarTest extends TestCase
     /**
      * @dataProvider providerPersistsToSessionParameters
      */
-    public function testPersistsToSession($testSaveSessionCookie = false)
+    public function testPersistsToSession(bool $testSaveSessionCookie = false): void
     {
         $jar = new SessionCookieJar($this->sessionVar, $testSaveSessionCookie);
         $jar->setCookie(new SetCookie([
@@ -161,7 +161,7 @@ class SessionCookieJarTest extends TestCase
         unset($jar, $reloaded, $_SESSION[$this->sessionVar]);
     }
 
-    public static function providerPersistsToSessionParameters()
+    public static function providerPersistsToSessionParameters(): array
     {
         return [
             [false],

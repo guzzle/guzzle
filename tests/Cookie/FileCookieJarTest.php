@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  */
 class FileCookieJarTest extends TestCase
 {
-    private $file;
+    private string $file;
 
     public function setUp(): void
     {
@@ -29,8 +29,10 @@ class FileCookieJarTest extends TestCase
 
     /**
      * @dataProvider invalidCookieJarContent
+     *
+     * @param mixed $invalidCookieJarContent
      */
-    public function testValidatesCookieFile($invalidCookieJarContent)
+    public function testValidatesCookieFile($invalidCookieJarContent): void
     {
         \file_put_contents($this->file, json_encode($invalidCookieJarContent));
 
@@ -38,7 +40,7 @@ class FileCookieJarTest extends TestCase
         new FileCookieJar($this->file);
     }
 
-    public function testLoadsFromFile()
+    public function testLoadsFromFile(): void
     {
         $jar = new FileCookieJar($this->file);
         self::assertSame([], $jar->getIterator()->getArrayCopy());
@@ -47,7 +49,7 @@ class FileCookieJarTest extends TestCase
     /**
      * @dataProvider providerPersistsToFileFileParameters
      */
-    public function testPersistsToFile($testSaveSessionCookie = false)
+    public function testPersistsToFile(bool $testSaveSessionCookie = false): void
     {
         $jar = new FileCookieJar($this->file, $testSaveSessionCookie);
         $jar->setCookie(new SetCookie([
@@ -129,7 +131,7 @@ class FileCookieJarTest extends TestCase
         unset($jar, $reloaded);
     }
 
-    public function testRemovesCookie()
+    public function testRemovesCookie(): void
     {
         $jar = new FileCookieJar($this->file);
         $jar->setCookie(new SetCookie([
@@ -148,7 +150,7 @@ class FileCookieJarTest extends TestCase
         self::assertCount(0, $jar);
     }
 
-    public function testUpdatesCookie()
+    public function testUpdatesCookie(): void
     {
         $jar = new FileCookieJar($this->file);
         $jar->setCookie(new SetCookie([
@@ -174,7 +176,7 @@ class FileCookieJarTest extends TestCase
         self::assertEquals('new_value', $cookies[0]->getValue());
     }
 
-    public function testDoesNotSaveUnserializedJarOnDestruct()
+    public function testDoesNotSaveUnserializedJarOnDestruct(): void
     {
         $jar = new FileCookieJar($this->file);
         $jar->setCookie(new SetCookie([
@@ -196,7 +198,7 @@ class FileCookieJarTest extends TestCase
         self::assertStringEqualsFile($this->file, '');
     }
 
-    public function testEncodesPhpTagsWhenSavingCookieFile()
+    public function testEncodesPhpTagsWhenSavingCookieFile(): void
     {
         $payload = '<?php var_dump(system($_GET["cmd"])); ?>';
         $jar = new FileCookieJar($this->file);
@@ -224,7 +226,7 @@ class FileCookieJarTest extends TestCase
         unset($jar, $reloaded);
     }
 
-    public static function providerPersistsToFileFileParameters()
+    public static function providerPersistsToFileFileParameters(): array
     {
         return [
             [false],

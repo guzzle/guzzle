@@ -24,7 +24,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class StreamHandlerTest extends TestCase
 {
-    private function queueRes()
+    private function queueRes(): void
     {
         Server::flush();
         Server::enqueue([
@@ -35,7 +35,7 @@ class StreamHandlerTest extends TestCase
         ]);
     }
 
-    public function testReturnsResponseForSuccessfulRequest()
+    public function testReturnsResponseForSuccessfulRequest(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -55,7 +55,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('Bar', $sent->getHeaderLine('foo'));
     }
 
-    public function testRejectsEmptyProtocolVersion()
+    public function testRejectsEmptyProtocolVersion(): void
     {
         $handler = new StreamHandler();
 
@@ -65,7 +65,7 @@ class StreamHandlerTest extends TestCase
         $handler(new Request('GET', Server::$url, [], null, ''), []);
     }
 
-    public function testAddsErrorToResponse()
+    public function testAddsErrorToResponse(): void
     {
         $handler = new StreamHandler();
 
@@ -76,7 +76,7 @@ class StreamHandlerTest extends TestCase
         )->wait();
     }
 
-    public function testRejectsHttp3()
+    public function testRejectsHttp3(): void
     {
         $handler = new StreamHandler();
 
@@ -86,7 +86,7 @@ class StreamHandlerTest extends TestCase
         $handler(new Request('GET', 'https://example.com', [], null, '3.0'), []);
     }
 
-    public function testStreamAttributeKeepsStreamOpen()
+    public function testStreamAttributeKeepsStreamOpen(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -113,7 +113,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('test', (string) $sent->getBody());
     }
 
-    public function testDrainsResponseIntoTempStream()
+    public function testDrainsResponseIntoTempStream(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -126,7 +126,7 @@ class StreamHandlerTest extends TestCase
         \fclose($stream);
     }
 
-    public function testDrainsResponseIntoSaveToBody()
+    public function testDrainsResponseIntoSaveToBody(): void
     {
         $r = \fopen('php://temp', 'r+');
         $this->queueRes();
@@ -140,7 +140,7 @@ class StreamHandlerTest extends TestCase
         \fclose($r);
     }
 
-    public function testDrainsResponseIntoSaveToBodyAtPath()
+    public function testDrainsResponseIntoSaveToBodyAtPath(): void
     {
         $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
         $body = null;
@@ -163,7 +163,7 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testDrainsResponseIntoSaveToBodyAtNonExistentPath()
+    public function testDrainsResponseIntoSaveToBodyAtNonExistentPath(): void
     {
         $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
         \unlink($tmpfname);
@@ -187,7 +187,7 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testDrainsResponseAndReadsOnlyContentLengthBytes()
+    public function testDrainsResponseAndReadsOnlyContentLengthBytes(): void
     {
         Server::flush();
         Server::enqueue([
@@ -205,7 +205,7 @@ class StreamHandlerTest extends TestCase
         \fclose($stream);
     }
 
-    public function testDoesNotDrainWhenHeadRequest()
+    public function testDoesNotDrainWhenHeadRequest(): void
     {
         Server::flush();
         // Say the content-length is 8, but return no response.
@@ -224,7 +224,7 @@ class StreamHandlerTest extends TestCase
         \fclose($stream);
     }
 
-    public function testAutomaticallyDecompressGzip()
+    public function testAutomaticallyDecompressGzip(): void
     {
         Server::flush();
         $content = \gzencode('test');
@@ -242,7 +242,7 @@ class StreamHandlerTest extends TestCase
         self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }
 
-    public function testAutomaticallyDecompressGzipHead()
+    public function testAutomaticallyDecompressGzipHead(): void
     {
         Server::flush();
         $content = \gzencode('test');
@@ -260,7 +260,7 @@ class StreamHandlerTest extends TestCase
         self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == \strlen($content));
     }
 
-    public function testReportsOriginalSizeAndContentEncodingAfterDecoding()
+    public function testReportsOriginalSizeAndContentEncodingAfterDecoding(): void
     {
         Server::flush();
         $content = \gzencode('test');
@@ -284,7 +284,7 @@ class StreamHandlerTest extends TestCase
         );
     }
 
-    public function testDoesNotForceGzipDecode()
+    public function testDoesNotForceGzipDecode(): void
     {
         Server::flush();
         $content = \gzencode('test');
@@ -302,7 +302,7 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(\strlen($content), $response->getHeaderLine('content-length'));
     }
 
-    public function testProtocolVersion()
+    public function testProtocolVersion(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -311,7 +311,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('1.0', Server::received()[0]->getProtocolVersion());
     }
 
-    protected function getSendResult(array $opts)
+    protected function getSendResult(array $opts): ResponseInterface
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -354,7 +354,7 @@ class StreamHandlerTest extends TestCase
         return $context;
     }
 
-    public function testAddsProxy()
+    public function testAddsProxy(): void
     {
         $this->expectException(ConnectException::class);
         $this->expectExceptionMessage('Connection refused');
@@ -362,7 +362,7 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['proxy' => '127.0.0.1:8125']);
     }
 
-    public function testAddsProxyByProtocol()
+    public function testAddsProxyByProtocol(): void
     {
         $url = Server::$url;
         $res = $this->getSendResult(['proxy' => ['http' => $url]]);
@@ -373,7 +373,7 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testAddsProxyButHonorsNoProxy()
+    public function testAddsProxyButHonorsNoProxy(): void
     {
         $url = Server::$url;
         $res = $this->getSendResult(['proxy' => [
@@ -384,7 +384,7 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('proxy', $opts['http']);
     }
 
-    public function testAddsProxyButHonorsNoProxyString()
+    public function testAddsProxyButHonorsNoProxyString(): void
     {
         $opts = $this->getProxyContext([
             'http' => 'http://proxy.example.com:8125',
@@ -394,7 +394,7 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('proxy', $opts['http']);
     }
 
-    public function testAddsProxyWithEmptyNoProxyString()
+    public function testAddsProxyWithEmptyNoProxyString(): void
     {
         $opts = $this->getProxyContext([
             'http' => 'http://proxy.example.com:8125',
@@ -409,7 +409,7 @@ class StreamHandlerTest extends TestCase
      *
      * @param mixed $proxy
      */
-    public function testEnsuresProxyOptionShapeIsValid($proxy)
+    public function testEnsuresProxyOptionShapeIsValid($proxy): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
@@ -426,7 +426,7 @@ class StreamHandlerTest extends TestCase
         ];
     }
 
-    public function testUsesProxy()
+    public function testUsesProxy(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -441,14 +441,14 @@ class StreamHandlerTest extends TestCase
         self::assertSame('hi there', (string) $response->getBody());
     }
 
-    public function testAddsTimeout()
+    public function testAddsTimeout(): void
     {
         $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertEquals(200, $opts['http']['timeout']);
     }
 
-    public function testTruncatesStreamTimeoutToMilliseconds()
+    public function testTruncatesStreamTimeoutToMilliseconds(): void
     {
         $res = $this->getSendResult(['stream' => true, 'timeout' => 0.0015]);
         $opts = \stream_context_get_options($res->getBody()->detach());
@@ -460,7 +460,7 @@ class StreamHandlerTest extends TestCase
      *
      * @param mixed $value
      */
-    public function testRejectsInvalidStreamTimeouts(string $option, $value)
+    public function testRejectsInvalidStreamTimeouts(string $option, $value): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage($option.' must be 0 or greater than or equal to 0.001 seconds');
@@ -477,7 +477,7 @@ class StreamHandlerTest extends TestCase
         ];
     }
 
-    public function testVerifiesVerifyIsValidIfPath()
+    public function testVerifiesVerifyIsValidIfPath(): void
     {
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('SSL CA bundle not found: /does/not/exist');
@@ -485,13 +485,13 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['verify' => '/does/not/exist']);
     }
 
-    public function testVerifyCanBeDisabled()
+    public function testVerifyCanBeDisabled(): void
     {
         $handler = $this->getSendResult(['verify' => false]);
         self::assertInstanceOf(Response::class, $handler);
     }
 
-    public function testVerifiesCertIfValidPath()
+    public function testVerifiesCertIfValidPath(): void
     {
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('SSL certificate not found: /does/not/exist');
@@ -499,14 +499,14 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['cert' => '/does/not/exist']);
     }
 
-    public function testUsesSystemDefaultBundle()
+    public function testUsesSystemDefaultBundle(): void
     {
         $res = $this->getSendResult(['verify' => true]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertArrayNotHasKey('cafile', $opts['ssl']);
     }
 
-    public function testEnsuresVerifyOptionIsValid()
+    public function testEnsuresVerifyOptionIsValid(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid verify request option');
@@ -514,7 +514,7 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['verify' => 10]);
     }
 
-    public function testEnsuresCryptoMethodOptionIsValid()
+    public function testEnsuresCryptoMethodOptionIsValid(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid crypto_method request option: unknown version provided');
@@ -522,21 +522,21 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['crypto_method' => 123]);
     }
 
-    public function testDefaultsHttpsToTls12Minimum()
+    public function testDefaultsHttpsToTls12Minimum(): void
     {
         $context = $this->applyDefaultTlsMinimum('https://example.com', ['ssl' => []]);
 
         self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $context['ssl']['min_proto_version']);
     }
 
-    public function testDoesNotDefaultTlsMinimumForHttp()
+    public function testDoesNotDefaultTlsMinimumForHttp(): void
     {
         $context = $this->applyDefaultTlsMinimum('http://example.com', ['ssl' => []]);
 
         self::assertArrayNotHasKey('min_proto_version', $context['ssl']);
     }
 
-    public function testDoesNotDefaultTlsMinimumWhenTlsContextExists()
+    public function testDoesNotDefaultTlsMinimumWhenTlsContextExists(): void
     {
         $context = $this->applyDefaultTlsMinimum('https://example.com', [
             'ssl' => ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT],
@@ -545,35 +545,35 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('min_proto_version', $context['ssl']);
     }
 
-    public function testSetsCryptoMethodTls10()
+    public function testSetsCryptoMethodTls10(): void
     {
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_0, $opts['ssl']['min_proto_version']);
     }
 
-    public function testSetsCryptoMethodTls11()
+    public function testSetsCryptoMethodTls11(): void
     {
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_1, $opts['ssl']['min_proto_version']);
     }
 
-    public function testSetsCryptoMethodTls12()
+    public function testSetsCryptoMethodTls12(): void
     {
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $opts['ssl']['min_proto_version']);
     }
 
-    public function testSetsCryptoMethodTls13()
+    public function testSetsCryptoMethodTls13(): void
     {
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_3, $opts['ssl']['min_proto_version']);
     }
 
-    public function testStreamContextTlsMinimumOverridesCryptoMethod()
+    public function testStreamContextTlsMinimumOverridesCryptoMethod(): void
     {
         $res = $this->getSendResult([
             'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
@@ -586,7 +586,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_0, $opts['ssl']['min_proto_version']);
     }
 
-    public function testStreamContextCryptoMethodOverridesCryptoMethod()
+    public function testStreamContextCryptoMethodOverridesCryptoMethod(): void
     {
         $res = $this->getSendResult([
             'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
@@ -600,7 +600,7 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('min_proto_version', $opts['ssl']);
     }
 
-    public function testCanSetPasswordWhenSettingCert()
+    public function testCanSetPasswordWhenSettingCert(): void
     {
         $path = __FILE__;
         $res = $this->getSendResult(['cert' => [$path, 'foo']]);
@@ -609,7 +609,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('foo', $opts['ssl']['passphrase']);
     }
 
-    public function testCanSetCertWithArrayPathOnly()
+    public function testCanSetCertWithArrayPathOnly(): void
     {
         $path = __FILE__;
         $handler = new StreamHandler();
@@ -631,7 +631,7 @@ class StreamHandlerTest extends TestCase
      *
      * @param mixed $cert
      */
-    public function testEnsuresCertOptionShapeIsValid($cert)
+    public function testEnsuresCertOptionShapeIsValid($cert): void
     {
         $handler = new StreamHandler();
 
@@ -651,7 +651,7 @@ class StreamHandlerTest extends TestCase
         ];
     }
 
-    public function testDebugAttributeWritesToStream()
+    public function testDebugAttributeWritesToStream(): void
     {
         $this->queueRes();
         $f = \fopen('php://temp', 'w+');
@@ -663,13 +663,13 @@ class StreamHandlerTest extends TestCase
         self::assertStringContainsString('<GET http://127.0.0.1:8126/> [PROGRESS]', $contents);
     }
 
-    public function testDebugAttributeWritesStreamInfoToBuffer()
+    public function testDebugAttributeWritesStreamInfoToBuffer(): void
     {
         $called = false;
         $this->queueRes();
         $buffer = \fopen('php://temp', 'r+');
         $this->getSendResult([
-            'progress' => static function () use (&$called) {
+            'progress' => static function () use (&$called): void {
                 $called = true;
             },
             'debug' => $buffer,
@@ -682,12 +682,12 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($called);
     }
 
-    public function testEmitsProgressInformation()
+    public function testEmitsProgressInformation(): void
     {
         $called = [];
         $this->queueRes();
         $this->getSendResult([
-            'progress' => static function (...$args) use (&$called) {
+            'progress' => static function (...$args) use (&$called): void {
                 $called[] = $args;
             },
         ]);
@@ -696,14 +696,14 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(0, $called[0][1]);
     }
 
-    public function testEmitsProgressInformationAndDebugInformation()
+    public function testEmitsProgressInformationAndDebugInformation(): void
     {
         $called = [];
         $this->queueRes();
         $buffer = \fopen('php://memory', 'w+');
         $this->getSendResult([
             'debug' => $buffer,
-            'progress' => static function (...$args) use (&$called) {
+            'progress' => static function (...$args) use (&$called): void {
                 $called[] = $args;
             },
         ]);
@@ -715,7 +715,7 @@ class StreamHandlerTest extends TestCase
         \fclose($buffer);
     }
 
-    public function testPerformsShallowMergeOfCustomContextOptions()
+    public function testPerformsShallowMergeOfCustomContextOptions(): void
     {
         $res = $this->getSendResult([
             'stream_context' => [
@@ -738,7 +738,7 @@ class StreamHandlerTest extends TestCase
         self::assertFalse($opts['ssl']['verify_peer']);
     }
 
-    public function testEnsuresThatStreamContextIsAnArray()
+    public function testEnsuresThatStreamContextIsAnArray(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('stream_context must be an array');
@@ -746,7 +746,7 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['stream_context' => 'foo']);
     }
 
-    public function testDoesNotAddContentTypeByDefault()
+    public function testDoesNotAddContentTypeByDefault(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -757,7 +757,7 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(3, $req->getHeaderLine('Content-Length'));
     }
 
-    public function testAddsContentLengthByDefault()
+    public function testAddsContentLengthByDefault(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -767,7 +767,7 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(3, $req->getHeaderLine('Content-Length'));
     }
 
-    public function testAddsContentLengthForPUTEvenWhenEmpty()
+    public function testAddsContentLengthForPUTEvenWhenEmpty(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -777,7 +777,7 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(0, $req->getHeaderLine('Content-Length'));
     }
 
-    public function testAddsContentLengthForPOSTEvenWhenEmpty()
+    public function testAddsContentLengthForPOSTEvenWhenEmpty(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -787,7 +787,7 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(0, $req->getHeaderLine('Content-Length'));
     }
 
-    public function testDontAddContentLengthForGETEvenWhenEmpty()
+    public function testDontAddContentLengthForGETEvenWhenEmpty(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -797,7 +797,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('', $req->getHeaderLine('Content-Length'));
     }
 
-    public function testSupports100Continue()
+    public function testSupports100Continue(): void
     {
         Server::flush();
         $response = new Response(200, ['Test' => 'Hello', 'Content-Length' => '4'], 'test');
@@ -811,7 +811,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('test', (string) $response->getBody());
     }
 
-    public function testDoesSleep()
+    public function testDoesSleep(): void
     {
         $response = new Response(200);
         Server::enqueue([$response]);
@@ -822,7 +822,7 @@ class StreamHandlerTest extends TestCase
         self::assertGreaterThan(0.0001, Utils::currentTime() - $s);
     }
 
-    public function testEnsuresOnHeadersIsCallable()
+    public function testEnsuresOnHeadersIsCallable(): void
     {
         $req = new Request('GET', Server::$url);
         $handler = new StreamHandler();
@@ -831,7 +831,7 @@ class StreamHandlerTest extends TestCase
         $handler($req, ['on_headers' => 'error!']);
     }
 
-    public function testEnsuresProgressIsCallable()
+    public function testEnsuresProgressIsCallable(): void
     {
         $req = new Request('GET', 'http://example.com');
         $handler = new StreamHandler();
@@ -841,7 +841,7 @@ class StreamHandlerTest extends TestCase
         $handler($req, ['progress' => 'error!']);
     }
 
-    public function testRejectsPromiseWhenOnHeadersFails()
+    public function testRejectsPromiseWhenOnHeadersFails(): void
     {
         Server::flush();
         Server::enqueue([
@@ -850,7 +850,7 @@ class StreamHandlerTest extends TestCase
         $req = new Request('GET', Server::$url);
         $handler = new StreamHandler();
         $promise = $handler($req, [
-            'on_headers' => static function () {
+            'on_headers' => static function (): void {
                 throw new \Exception('test');
             },
         ]);
@@ -860,7 +860,7 @@ class StreamHandlerTest extends TestCase
         $promise->wait();
     }
 
-    public function testRejectsPromiseWhenOnHeadersThrowsThrowable()
+    public function testRejectsPromiseWhenOnHeadersThrowsThrowable(): void
     {
         Server::flush();
         Server::enqueue([
@@ -886,7 +886,7 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testSuccessfullyCallsOnHeadersBeforeWritingToSink()
+    public function testSuccessfullyCallsOnHeadersBeforeWritingToSink(): void
     {
         Server::flush();
         Server::enqueue([
@@ -898,7 +898,7 @@ class StreamHandlerTest extends TestCase
 
         $stream = Psr7\Utils::streamFor();
         $stream = FnStream::decorate($stream, [
-            'write' => static function ($data) use ($stream, &$got) {
+            'write' => static function (string $data) use ($stream, &$got): int {
                 self::assertNotNull($got);
 
                 return $stream->write($data);
@@ -911,7 +911,7 @@ class StreamHandlerTest extends TestCase
             'on_headers' => static function (
                 ResponseInterface $res,
                 RequestInterface $request
-            ) use (&$got, &$gotRequest, $req) {
+            ) use (&$got, &$gotRequest, $req): void {
                 $got = $res;
                 $gotRequest = $request;
                 self::assertSame($req, $request);
@@ -926,7 +926,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('abc 123', (string) $response->getBody());
     }
 
-    public function testInvokesOnStatsOnSuccess()
+    public function testInvokesOnStatsOnSuccess(): void
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
@@ -934,7 +934,7 @@ class StreamHandlerTest extends TestCase
         $gotStats = null;
         $handler = new StreamHandler();
         $promise = $handler($req, [
-            'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats): void {
                 $gotStats = $stats;
             },
         ]);
@@ -952,7 +952,7 @@ class StreamHandlerTest extends TestCase
         self::assertGreaterThan(0, $gotStats->getTransferTime());
     }
 
-    public function testInvokesOnStatsOnError()
+    public function testInvokesOnStatsOnError(): void
     {
         $req = new Request('GET', 'http://127.0.0.1:123');
         $gotStats = null;
@@ -960,7 +960,7 @@ class StreamHandlerTest extends TestCase
         $promise = $handler($req, [
             'connect_timeout' => 0.001,
             'timeout' => 0.001,
-            'on_stats' => static function (TransferStats $stats) use (&$gotStats) {
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats): void {
                 $gotStats = $stats;
             },
         ]);
@@ -981,7 +981,7 @@ class StreamHandlerTest extends TestCase
         );
     }
 
-    public function testStreamIgnoresZeroTimeout()
+    public function testStreamIgnoresZeroTimeout(): void
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
@@ -996,7 +996,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testDrainsResponseAndReadsAllContentWhenContentLengthIsZero()
+    public function testDrainsResponseAndReadsAllContentWhenContentLengthIsZero(): void
     {
         Server::flush();
         Server::enqueue([
@@ -1014,7 +1014,7 @@ class StreamHandlerTest extends TestCase
         \fclose($stream);
     }
 
-    public function testHonorsReadTimeout()
+    public function testHonorsReadTimeout(): void
     {
         Server::flush();
         $handler = new StreamHandler();
@@ -1036,7 +1036,7 @@ class StreamHandlerTest extends TestCase
         self::assertFalse(\feof($body));
     }
 
-    public function testHandlesGarbageHttpServerGracefully()
+    public function testHandlesGarbageHttpServerGracefully(): void
     {
         $handler = new StreamHandler();
 
@@ -1055,7 +1055,7 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testHandlesInvalidStatusCodeGracefully()
+    public function testHandlesInvalidStatusCodeGracefully(): void
     {
         $handler = new StreamHandler();
         $called = false;
@@ -1091,7 +1091,7 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testRejectsNonHttpSchemes()
+    public function testRejectsNonHttpSchemes(): void
     {
         $handler = new StreamHandler();
 

@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 class TransferStatsTest extends TestCase
 {
-    public function testHasData()
+    public function testHasData(): void
     {
         $request = new Psr7\Request('GET', 'http://foo.com');
         $response = new Psr7\Response();

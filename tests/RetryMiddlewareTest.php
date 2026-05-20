@@ -8,22 +8,25 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class RetryMiddlewareTest extends TestCase
 {
-    public function testRetriesWhenDeciderReturnsTrue()
+    public function testRetriesWhenDeciderReturnsTrue(): void
     {
         $delayCalls = 0;
         $calls = [];
-        $decider = static function (...$args) use (&$calls) {
+        $decider = static function (...$args) use (&$calls): bool {
             $calls[] = $args;
 
             return \count($calls) < 3;
         };
-        $delay = static function ($retries, $response, $request) use (&$delayCalls) {
+        $delay = static function (int $retries, ?ResponseInterface $response, RequestInterface $request) use (&$delayCalls): int {
             ++$delayCalls;
             self::assertSame($retries, $delayCalls);
             self::assertInstanceOf(Response::class, $response);
@@ -42,7 +45,7 @@ class RetryMiddlewareTest extends TestCase
         self::assertSame(202, $p->wait()->getStatusCode());
     }
 
-    public function testRetriesWithOneArgumentDelayCallable()
+    public function testRetriesWithOneArgumentDelayCallable(): void
     {
         $delayCalls = [];
         $decider = static function (int $retries): bool {
@@ -62,7 +65,7 @@ class RetryMiddlewareTest extends TestCase
         self::assertSame([1], $delayCalls);
     }
 
-    public function testRetriesWithInternalOneArgumentDelayCallable()
+    public function testRetriesWithInternalOneArgumentDelayCallable(): void
     {
         $decider = static function (int $retries): bool {
             return $retries < 1;
@@ -75,7 +78,7 @@ class RetryMiddlewareTest extends TestCase
         self::assertSame(201, $c->send(new Request('GET', 'http://test.com'))->getStatusCode());
     }
 
-    public function testRetriesWithVariadicDelayCallableReceivesContext()
+    public function testRetriesWithVariadicDelayCallableReceivesContext(): void
     {
         $delayArgs = [];
         $decider = static function (int $retries): bool {
@@ -99,9 +102,9 @@ class RetryMiddlewareTest extends TestCase
         self::assertInstanceOf(Request::class, $delayArgs[2]);
     }
 
-    public function testDoesNotRetryWhenDeciderReturnsFalse()
+    public function testDoesNotRetryWhenDeciderReturnsFalse(): void
     {
-        $decider = static function () {
+        $decider = static function (): bool {
             return false;
         };
         $m = Middleware::retry($decider);
@@ -111,10 +114,10 @@ class RetryMiddlewareTest extends TestCase
         self::assertSame(200, $p->wait()->getStatusCode());
     }
 
-    public function testCanRetryExceptions()
+    public function testCanRetryExceptions(): void
     {
         $calls = [];
-        $decider = static function (...$args) use (&$calls) {
+        $decider = static function (...$args) use (&$calls): bool {
             $calls[] = $args;
 
             return $args[3] instanceof \Exception;
@@ -133,18 +136,18 @@ class RetryMiddlewareTest extends TestCase
         self::assertNull($calls[1][3]);
     }
 
-    public function testUsesDefaultExponentialDelay()
+    public function testUsesDefaultExponentialDelay(): void
     {
         $responses = [new Response(500), new Response(500), new Response(200)];
         $delays = [];
-        $handler = static function ($request, array $options) use (&$responses, &$delays) {
+        $handler = static function (RequestInterface $request, array $options) use (&$responses, &$delays): PromiseInterface {
             if (isset($options['delay'])) {
                 $delays[] = $options['delay'];
             }
 
             return Create::promiseFor(\array_shift($responses));
         };
-        $decider = static function ($retries) {
+        $decider = static function (int $retries): bool {
             return $retries < 2;
         };
 

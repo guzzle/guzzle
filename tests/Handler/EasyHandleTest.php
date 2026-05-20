@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
  */
 class EasyHandleTest extends TestCase
 {
-    public function testEnsuresHandleExists()
+    public function testEnsuresHandleExists(): void
     {
         $easy = new EasyHandle();
         unset($easy->handle);

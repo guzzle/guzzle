@@ -9,12 +9,12 @@ use PHPUnit\Framework\TestCase;
 
 class UtilsTest extends TestCase
 {
-    public static function noBodyProvider()
+    public static function noBodyProvider(): array
     {
         return [['get'], ['head'], ['delete']];
     }
 
-    public static function typeProvider()
+    public static function typeProvider(): array
     {
         return [
             ['foo', 'string(3) "foo"'],
@@ -29,8 +29,10 @@ class UtilsTest extends TestCase
 
     /**
      * @dataProvider typeProvider
+     *
+     * @param mixed $input
      */
-    public function testDescribesType($input, $output)
+    public function testDescribesType($input, string $output): void
     {
         /**
          * Output may not match if Xdebug is loaded and overloading var_dump().
@@ -51,7 +53,7 @@ class UtilsTest extends TestCase
         }
     }
 
-    public function testParsesHeadersFromLines()
+    public function testParsesHeadersFromLines(): void
     {
         $lines = [
             'Foo: bar',
@@ -69,7 +71,7 @@ class UtilsTest extends TestCase
         self::assertSame($expected, Utils::headersFromLines($lines));
     }
 
-    public function testParsesHeadersFromLinesWithMultipleLines()
+    public function testParsesHeadersFromLinesWithMultipleLines(): void
     {
         $lines = ['Foo: bar', 'Foo: baz', 'Foo: 123'];
         $expected = ['Foo' => ['bar', 'baz', '123']];
@@ -77,22 +79,22 @@ class UtilsTest extends TestCase
         self::assertSame($expected, Utils::headersFromLines($lines));
     }
 
-    public function testChooseHandler()
+    public function testChooseHandler(): void
     {
         self::assertIsCallable(Utils::chooseHandler());
     }
 
-    public function testDefaultUserAgent()
+    public function testDefaultUserAgent(): void
     {
         self::assertIsString(Utils::defaultUserAgent());
     }
 
-    public function testReturnsDebugResource()
+    public function testReturnsDebugResource(): void
     {
         self::assertIsResource(Utils::debugResource());
     }
 
-    public function testNormalizeHeaderKeys()
+    public function testNormalizeHeaderKeys(): void
     {
         $input = ['HelLo' => 'foo', 'WORld' => 'bar'];
         $expected = ['hello' => 'HelLo', 'world' => 'WORld'];
@@ -100,7 +102,7 @@ class UtilsTest extends TestCase
         self::assertSame($expected, Utils::normalizeHeaderKeys($input));
     }
 
-    public static function noProxyProvider()
+    public static function noProxyProvider(): array
     {
         return [
             ['mit.edu', ['.mit.edu'], false],
@@ -116,22 +118,22 @@ class UtilsTest extends TestCase
     /**
      * @dataProvider noproxyProvider
      */
-    public function testChecksNoProxyList($host, $list, $result)
+    public function testChecksNoProxyList(string $host, array $list, bool $result): void
     {
         self::assertSame($result, Utils::isHostInNoProxy($host, $list));
     }
 
-    public function testNormalizesNoProxyString()
+    public function testNormalizesNoProxyString(): void
     {
         self::assertSame(['foo.com', '.bar.com'], Utils::normalizeNoProxy(' foo.com, .bar.com, '));
     }
 
-    public function testNormalizesNoProxyArray()
+    public function testNormalizesNoProxyArray(): void
     {
         self::assertSame(['foo.com', '.bar.com'], Utils::normalizeNoProxy([' foo.com ', '', '.bar.com']));
     }
 
-    public function testValidatesNoProxyValue()
+    public function testValidatesNoProxyValue(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('proxy no list must be a string or array of strings');
@@ -139,7 +141,7 @@ class UtilsTest extends TestCase
         Utils::normalizeNoProxy(new \stdClass());
     }
 
-    public function testValidatesNoProxyArrayValues()
+    public function testValidatesNoProxyArrayValues(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('proxy no list must be a string or array of strings');
@@ -147,45 +149,45 @@ class UtilsTest extends TestCase
         Utils::normalizeNoProxy(['foo.com', new \stdClass()]);
     }
 
-    public function testEnsuresNoProxyCheckHostIsSet()
+    public function testEnsuresNoProxyCheckHostIsSet(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
         Utils::isHostInNoProxy('', []);
     }
 
-    public function testEncodesJson()
+    public function testEncodesJson(): void
     {
         self::assertSame('true', Utils::jsonEncode(true));
     }
 
-    public function testEncodesJsonAndThrowsOnError()
+    public function testEncodesJsonAndThrowsOnError(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
         Utils::jsonEncode("\x99");
     }
 
-    public function testEncodesJsonAndThrowsOnErrorWithNativeOption()
+    public function testEncodesJsonAndThrowsOnErrorWithNativeOption(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
         Utils::jsonEncode("\x99", \JSON_THROW_ON_ERROR);
     }
 
-    public function testDecodesJson()
+    public function testDecodesJson(): void
     {
         self::assertTrue(Utils::jsonDecode('true'));
     }
 
-    public function testDecodesJsonAndThrowsOnError()
+    public function testDecodesJsonAndThrowsOnError(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
         Utils::jsonDecode('{{]]');
     }
 
-    public function testDecodesJsonAndThrowsOnErrorWithNativeOption()
+    public function testDecodesJsonAndThrowsOnErrorWithNativeOption(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
@@ -195,7 +197,7 @@ class UtilsTest extends TestCase
     /**
      * @dataProvider invalidJsonDepthProvider
      */
-    public function testDecodesJsonAndThrowsOnInvalidDepth(int $depth)
+    public function testDecodesJsonAndThrowsOnInvalidDepth(int $depth): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
