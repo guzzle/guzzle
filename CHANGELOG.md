@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 8.0.0 - Upcoming
 
+### Added
+
+- Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
+
 ### Changed
 
 - Hardened `FileCookieJar` persistence against unsafe unserialization
@@ -15,7 +19,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Pass the request as the second argument to `on_headers` callbacks
 - Reject invalid `HandlerStack::remove()` arguments
-- Add HTTP/3 request support to the built-in cURL handlers when libcurl provides HTTP/3 support
 - Raised the minimum supported libcurl version for the built-in cURL handlers to 7.34.0
 - Store response cookies without a `Domain` attribute as host-only cookies
 - Tighten invalid response handling and avoid exposing response-derived cURL stats

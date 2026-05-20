@@ -1028,7 +1028,7 @@ $request = $client->request('GET', '/get', ['version' => 1.0]);
 $request = $client->request('GET', 'https://example.com', ['version' => 3.0]);
 ```
 
-The built-in cURL handler supports HTTP versions `1.0`, `1.1`, `2.0`, and `3.0`, depending on the linked libcurl capabilities. HTTP/3 requires a PHP cURL extension built against libcurl 7.66.0 or higher, a runtime libcurl built with HTTP/3 and QUIC support, and TLS 1.3 support exposed by the PHP cURL extension.
+The built-in cURL handler supports HTTP versions `1.0`, `1.1`, `2.0`, and `3.0`, depending on the linked libcurl capabilities. HTTP/3 requires PHP 8.4 or higher, a PHP cURL extension built against libcurl 7.66.0 or higher, a runtime libcurl built with HTTP/3 and QUIC support, and TLS 1.3 support exposed by the PHP cURL extension.
 
 The built-in stream handler supports only HTTP versions `1.0` and `1.1`.
 

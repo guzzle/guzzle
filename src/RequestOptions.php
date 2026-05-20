@@ -269,8 +269,9 @@ final class RequestOptions
      * version: (string|float) Specifies the HTTP protocol version to attempt
      * to use.
      *
-     * HTTP/3 is supported by the built-in cURL handler when the PHP cURL
-     * extension and linked libcurl support HTTP/3 and TLS 1.3.
+     * HTTP/3 is supported by the built-in cURL handler on PHP 8.4 or higher
+     * when the PHP cURL extension and linked libcurl support HTTP/3 and
+     * TLS 1.3.
      */
     public const VERSION = 'version';
 
