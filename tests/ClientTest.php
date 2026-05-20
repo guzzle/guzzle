@@ -790,6 +790,8 @@ class ClientTest extends TestCase
         yield [1.1, '1.1'];
         yield ['2', '2'];
         yield [2.0, '2.0'];
+        yield ['3', '3'];
+        yield [3.0, '3.0'];
     }
 
     public function testSendPreservesCustomRequestWhenApplyingRequestOptions()
