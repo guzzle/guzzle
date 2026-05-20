@@ -85,6 +85,27 @@ continues to use the same exponential backoff calculation by default. If you
 called the static method directly, inline that calculation or pass a custom
 delay callable to `Middleware::retry()`.
 
+#### Retry delay callback arguments
+
+Retry delay callbacks may now explicitly use either the documented one-argument
+form or the existing three-argument form.
+
+```php
+// Retry count only:
+$delay = static function (int $retries): int {
+    return $retries * 1000;
+};
+
+// Full retry context:
+$delay = static function (int $retries, ?ResponseInterface $response, RequestInterface $request): int {
+    return $retries * 1000;
+};
+```
+
+Callbacks that accept three arguments continue to receive the response and
+request. One-argument callbacks are now called with only the retry count, which
+also allows internal PHP functions with a single-argument signature.
+
 #### RedirectMiddleware default settings
 
 `RedirectMiddleware::$defaultSettings` has been removed. Use

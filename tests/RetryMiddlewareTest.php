@@ -42,6 +42,63 @@ class RetryMiddlewareTest extends TestCase
         self::assertSame(202, $p->wait()->getStatusCode());
     }
 
+    public function testRetriesWithOneArgumentDelayCallable()
+    {
+        $delayCalls = [];
+        $decider = static function (int $retries): bool {
+            return $retries < 1;
+        };
+        $delay = static function (int $retries) use (&$delayCalls): int {
+            $delayCalls[] = $retries;
+
+            return 1;
+        };
+
+        $m = Middleware::retry($decider, $delay);
+        $h = new MockHandler([new Response(200), new Response(201)]);
+        $c = new Client(['handler' => $m($h)]);
+
+        self::assertSame(201, $c->send(new Request('GET', 'http://test.com'))->getStatusCode());
+        self::assertSame([1], $delayCalls);
+    }
+
+    public function testRetriesWithInternalOneArgumentDelayCallable()
+    {
+        $decider = static function (int $retries): bool {
+            return $retries < 1;
+        };
+
+        $m = Middleware::retry($decider, 'abs');
+        $h = new MockHandler([new Response(200), new Response(201)]);
+        $c = new Client(['handler' => $m($h)]);
+
+        self::assertSame(201, $c->send(new Request('GET', 'http://test.com'))->getStatusCode());
+    }
+
+    public function testRetriesWithVariadicDelayCallableReceivesContext()
+    {
+        $delayArgs = [];
+        $decider = static function (int $retries): bool {
+            return $retries < 1;
+        };
+        $delay = static function (...$args) use (&$delayArgs): int {
+            $delayArgs = $args;
+
+            return 1;
+        };
+
+        $m = Middleware::retry($decider, $delay);
+        $h = new MockHandler([new Response(200), new Response(201)]);
+        $c = new Client(['handler' => $m($h)]);
+
+        $c->send(new Request('GET', 'http://test.com'));
+
+        self::assertCount(3, $delayArgs);
+        self::assertSame(1, $delayArgs[0]);
+        self::assertInstanceOf(Response::class, $delayArgs[1]);
+        self::assertInstanceOf(Request::class, $delayArgs[2]);
+    }
+
     public function testDoesNotRetryWhenDeciderReturnsFalse()
     {
         $decider = static function () {

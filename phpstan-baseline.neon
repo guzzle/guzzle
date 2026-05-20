@@ -217,18 +217,6 @@ parameters:
 			path: src/Middleware.php
 
 		-
-			message: '#^PHPDoc tag @var has invalid value \(callable\(int\)\)\: Unexpected token "\(", expected TOKEN_HORIZONTAL_WS at offset 24 on line 2$#'
-			identifier: phpDoc.parseError
-			count: 1
-			path: src/RetryMiddleware.php
-
-		-
-			message: '#^Property GuzzleHttp\\RetryMiddleware\:\:\$delay has no type specified\.$#'
-			identifier: missingType.property
-			count: 1
-			path: src/RetryMiddleware.php
-
-		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 1
