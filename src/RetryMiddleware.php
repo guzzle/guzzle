@@ -26,7 +26,7 @@ class RetryMiddleware
     private $decider;
 
     /**
-     * @var callable
+     * @var (callable(int): int)|(callable(int, ResponseInterface|null, RequestInterface): int)
      */
     private $delay;
 
