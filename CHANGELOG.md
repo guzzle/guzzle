@@ -56,7 +56,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
 
-## 7.10.3 - Upcoming
+## 7.10.3 - 2025-05-20
 
 ### Fixed
 
