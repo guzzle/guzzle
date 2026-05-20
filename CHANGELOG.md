@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 8.0.0 - Upcoming
 
+### Added
+
+- Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
+
 ### Changed
 
 - Hardened `FileCookieJar` persistence against unsafe unserialization
