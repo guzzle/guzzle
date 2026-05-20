@@ -98,7 +98,7 @@ final class Utils
             }
         }
 
-        if (null !== $curlVersion && version_compare($curlVersion, self::MIN_CURL_VERSION, '>=')) {
+        if (null !== $curlVersion && \defined('CURL_SSLVERSION_TLSv1_2') && version_compare($curlVersion, self::MIN_CURL_VERSION, '>=')) {
             if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
                 $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
             } elseif (\function_exists('curl_exec')) {
