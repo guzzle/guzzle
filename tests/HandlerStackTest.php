@@ -88,6 +88,51 @@ class HandlerStackTest extends TestCase
         self::assertSame('Hello - test1131', $composed('test'));
     }
 
+    public function testCanRemoveMiddlewareByCallableStringName()
+    {
+        $meths = $this->getFunctions();
+        $builder = new HandlerStack();
+        $builder->setHandler($meths[1]);
+        $builder->push($meths[2], 'strlen');
+
+        $builder->remove('strlen');
+
+        $composed = $builder->resolve();
+        self::assertSame('Hello - test', $composed('test'));
+        self::assertSame([], $meths[0]);
+    }
+
+    public function testCanRemoveMiddlewareByCallableStringInstance()
+    {
+        $builder = new HandlerStack();
+        $builder->setHandler(static function ($value) {
+            return 'Hello - '.$value;
+        });
+        $builder->push(__CLASS__.'::addSuffixMiddleware');
+
+        $builder->remove(__CLASS__.'::addSuffixMiddleware');
+
+        $composed = $builder->resolve();
+        self::assertSame('Hello - test', $composed('test'));
+    }
+
+    public function testRemovePrefersNameWhenStringIsAlsoCallable()
+    {
+        $meths = $this->getFunctions();
+        $name = __CLASS__.'::addSuffixMiddleware';
+
+        $builder = new HandlerStack();
+        $builder->setHandler($meths[1]);
+        $builder->push($meths[2], $name);
+        $builder->push($name);
+
+        $builder->remove($name);
+
+        $composed = $builder->resolve();
+        self::assertSame('Hello - testx', $composed('test'));
+        self::assertSame([], $meths[0]);
+    }
+
     public function testCanPrintMiddleware()
     {
         $meths = $this->getFunctions();
@@ -209,6 +254,13 @@ class HandlerStackTest extends TestCase
 
     public static function foo()
     {
+    }
+
+    public static function addSuffixMiddleware(callable $handler)
+    {
+        return static function ($value) use ($handler) {
+            return $handler($value.'x');
+        };
     }
 
     public function bar()
