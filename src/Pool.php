@@ -30,7 +30,7 @@ class Pool implements PromisorInterface
 
     /**
      * @param ClientInterface $client   Client used to send the requests.
-     * @param array|\Iterator $requests Requests or functions that return
+     * @param mixed           $requests Requests or functions that return
      *                                  requests to send concurrently.
      * @param array           $config   Associative array of options
      *                                  - concurrency: (int) Maximum number of requests to send concurrently
@@ -51,7 +51,7 @@ class Pool implements PromisorInterface
             $opts = [];
         }
 
-        $iterable = P\Create::iterFor($requests);
+        $iterable = P\Create::iterFor(\is_iterable($requests) ? $requests : [$requests]);
         $requests = static function () use ($iterable, $client, $opts) {
             foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
