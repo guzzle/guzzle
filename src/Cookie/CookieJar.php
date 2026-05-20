@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Cookie;
 
 use Psr\Http\Message\RequestInterface;
@@ -49,10 +51,14 @@ class CookieJar implements CookieJarInterface
     {
         $cookieJar = new self();
         foreach ($cookies as $name => $value) {
+            if (!\is_scalar($value) && !(\is_object($value) && \method_exists($value, '__toString'))) {
+                throw new \InvalidArgumentException('Cookie value must be scalar or stringable');
+            }
+
             $cookieJar->setCookie(new SetCookie([
                 'Domain' => $domain,
-                'Name' => $name,
-                'Value' => $value,
+                'Name' => (string) $name,
+                'Value' => (string) $value,
                 'Discard' => true,
             ]));
         }

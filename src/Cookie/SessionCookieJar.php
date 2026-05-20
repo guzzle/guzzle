@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Cookie;
 
 /**
@@ -83,7 +85,11 @@ class SessionCookieJar extends CookieJar
                     throw new \RuntimeException('Invalid cookie data');
                 }
 
-                $this->setCookie(new SetCookie($cookie));
+                try {
+                    $this->setCookie(new SetCookie($cookie));
+                } catch (\InvalidArgumentException $e) {
+                    throw new \RuntimeException('Invalid cookie data', 0, $e);
+                }
             }
         } elseif (\is_scalar($data) && \strlen((string) $data)) {
             throw new \RuntimeException('Invalid cookie data');

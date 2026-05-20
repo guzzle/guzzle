@@ -46,6 +46,29 @@ class CookieJarTest extends TestCase
         self::assertCount(2, $jar);
     }
 
+    public function testCreatesFromArrayWithScalarNamesAndValues(): void
+    {
+        $jar = CookieJar::fromArray([
+            1 => 0,
+            'enabled' => true,
+        ], 'example.com');
+
+        $numeric = $jar->getCookieByName('1');
+        $enabled = $jar->getCookieByName('enabled');
+
+        self::assertInstanceOf(SetCookie::class, $numeric);
+        self::assertSame('0', $numeric->getValue());
+        self::assertInstanceOf(SetCookie::class, $enabled);
+        self::assertSame('1', $enabled->getValue());
+    }
+
+    public function testRejectsNonScalarCookieValuesFromArray(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        CookieJar::fromArray(['foo' => []], 'example.com');
+    }
+
     public function testEmptyJarIsCountable()
     {
         self::assertCount(0, new CookieJar());
@@ -267,16 +290,6 @@ class CookieJarTest extends TestCase
             ],
             [
                 [
-                    'Name' => false,
-                ],
-            ],
-            [
-                [
-                    'Name' => true,
-                ],
-            ],
-            [
-                [
                     'Name' => 'foo',
                     'Domain' => 'foo.com',
                 ],
@@ -299,14 +312,14 @@ class CookieJarTest extends TestCase
                 [
                     'Name' => '',
                     'Domain' => 'foo.com',
-                    'Value' => 0,
+                    'Value' => '0',
                 ],
             ],
             [
                 [
                     'Name' => null,
                     'Domain' => 'foo.com',
-                    'Value' => 0,
+                    'Value' => '0',
                 ],
             ],
         ];
@@ -327,21 +340,21 @@ class CookieJarTest extends TestCase
                 [
                     'Name' => '0',
                     'Domain' => 'foo.com',
-                    'Value' => 0,
+                    'Value' => '0',
                 ],
             ],
             [
                 [
                     'Name' => 'foo',
                     'Domain' => 'foo.com',
-                    'Value' => 0,
+                    'Value' => '0',
                 ],
             ],
             [
                 [
                     'Name' => 'foo',
                     'Domain' => 'foo.com',
-                    'Value' => 0.0,
+                    'Value' => '0.0',
                 ],
             ],
             [
@@ -395,7 +408,7 @@ class CookieJarTest extends TestCase
             'Value' => 'bar',
             'Domain' => '.example.com',
             'Path' => '/',
-            'Max-Age' => '86400',
+            'Max-Age' => 86400,
             'Secure' => true,
             'Discard' => true,
             'Expires' => $t,
@@ -432,7 +445,7 @@ class CookieJarTest extends TestCase
             'Value' => 'bar',
             'Domain' => '.example.com',
             'Path' => '/',
-            'Max-Age' => '86400',
+            'Max-Age' => 86400,
             'Secure' => true,
             'Discard' => true,
             'Expires' => $t,
@@ -585,7 +598,7 @@ class CookieJarTest extends TestCase
                 'Value' => 'bar',
                 'Domain' => 'example.com',
                 'Path' => '/',
-                'Max-Age' => '86400',
+                'Max-Age' => 86400,
                 'Secure' => true,
             ]),
             new SetCookie([
@@ -593,7 +606,7 @@ class CookieJarTest extends TestCase
                 'Value' => 'foobar',
                 'Domain' => 'example.com',
                 'Path' => '/',
-                'Max-Age' => '86400',
+                'Max-Age' => 86400,
                 'Secure' => true,
             ]),
             new SetCookie([

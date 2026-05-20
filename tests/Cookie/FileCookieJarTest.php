@@ -237,6 +237,8 @@ class FileCookieJarTest extends TestCase
         return [
             [true],
             ['invalid-data'],
+            [[1]],
+            [[['Name' => false, 'Value' => 'bar']]],
         ];
     }
 }

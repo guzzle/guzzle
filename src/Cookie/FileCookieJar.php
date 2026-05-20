@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\Utils;
@@ -111,7 +113,15 @@ class FileCookieJar extends CookieJar
         $data = Utils::jsonDecode($json, true);
         if (\is_array($data)) {
             foreach ($data as $cookie) {
-                $this->setCookie(new SetCookie($cookie));
+                if (!\is_array($cookie)) {
+                    throw new \RuntimeException("Invalid cookie file: {$filename}");
+                }
+
+                try {
+                    $this->setCookie(new SetCookie($cookie));
+                } catch (\InvalidArgumentException $e) {
+                    throw new \RuntimeException("Invalid cookie file: {$filename}", 0, $e);
+                }
             }
         } elseif (\is_scalar($data) && !empty($data)) {
             throw new \RuntimeException("Invalid cookie file: {$filename}");
