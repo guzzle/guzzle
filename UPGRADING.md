@@ -33,6 +33,17 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
+#### Generic Promise PHPDoc Types
+
+Guzzle's async client APIs, handlers, and middleware callable annotations now use
+generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a
+static-analysis-only change and does not alter runtime behavior.
+
+Code using unparameterized promise types continues to work. If your project
+implements Guzzle client interfaces, provides custom handlers or middleware, or
+uses stricter static analysis, you may need to update your PHPDoc annotations to
+include promise fulfillment and rejection types.
+
 #### cURL minimum version
 
 Guzzle 8 requires libcurl 7.34.0 or higher when using the built-in cURL
