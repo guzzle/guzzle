@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
@@ -352,6 +353,10 @@ class CurlFactoryTest extends TestCase
 
     public function testAddsCryptoMethodTls13()
     {
+        if (!CurlVersion::supportsTls13()) {
+            self::markTestSkipped('TLS 1.3 is not supported by this cURL installation.');
+        }
+
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
         self::assertEquals(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);

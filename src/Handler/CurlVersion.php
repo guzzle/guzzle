@@ -17,7 +17,7 @@ final class CurlVersion
     /**
      * @var array{version: string, features: int}|false|null
      */
-    private static $versionInfo = null;
+    private static $versionInfo;
 
     private function __construct()
     {
