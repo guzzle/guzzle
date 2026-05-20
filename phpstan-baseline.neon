@@ -1,24 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Method GuzzleHttp\\Client\:\:request\(\) should return Psr\\Http\\Message\\ResponseInterface but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Method GuzzleHttp\\Client\:\:send\(\) should return Psr\\Http\\Message\\ResponseInterface but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Method GuzzleHttp\\Client\:\:sendRequest\(\) should return Psr\\Http\\Message\\ResponseInterface but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Client.php
-
-		-
 			message: '#^Parameter \#1 \$str of function strtolower expects string, int\|string given\.$#'
 			identifier: argument.type
 			count: 1
@@ -35,12 +17,6 @@ parameters:
 			identifier: notIdentical.alwaysFalse
 			count: 1
 			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Cannot call method getBody\(\) on Psr\\Http\\Message\\ResponseInterface\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Handler/CurlFactory.php
 
 		-
 			message: '#^Parameter \#1 \$ch of function curl_close expects resource, CurlHandle\|resource given\.$#'

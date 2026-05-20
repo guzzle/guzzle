@@ -16,7 +16,7 @@ use Psr\Http\Message\ResponseInterface;
 class RetryMiddleware
 {
     /**
-     * @var callable(RequestInterface, array): PromiseInterface
+     * @var callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>
      */
     private $nextHandler;
 
@@ -34,7 +34,7 @@ class RetryMiddleware
      * @param callable(int, RequestInterface, ResponseInterface|null, mixed): bool                     $decider     Function that accepts the number of retries,
      *                                                                                                              a request, [response], and [rejection reason]
      *                                                                                                              and returns true if the request is to be retried.
-     * @param callable(RequestInterface, array): PromiseInterface                                      $nextHandler Next handler to invoke.
+     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>            $nextHandler Next handler to invoke.
      * @param (callable(int): int)|(callable(int, ResponseInterface|null, RequestInterface): int)|null $delay       Function that returns the number of milliseconds to delay.
      */
     public function __construct(callable $decider, callable $nextHandler, ?callable $delay = null)
@@ -46,6 +46,9 @@ class RetryMiddleware
         };
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         if (!isset($options['retries'])) {
@@ -54,11 +57,14 @@ class RetryMiddleware
 
         $fn = $this->nextHandler;
 
-        return $fn($request, $options)
+        /** @var PromiseInterface<ResponseInterface, mixed> */
+        $promise = $fn($request, $options)
             ->then(
                 $this->onFulfilled($request, $options),
                 $this->onRejected($request, $options)
             );
+
+        return $promise;
     }
 
     /**
@@ -95,10 +101,14 @@ class RetryMiddleware
                 return P\Create::rejectionFor($reason);
             }
 
+            /** @var PromiseInterface<mixed, mixed> */
             return $this->doRetry($req, $options);
         };
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
     private function doRetry(RequestInterface $request, array $options, ?ResponseInterface $response = null): PromiseInterface
     {
         ++$options['retries'];

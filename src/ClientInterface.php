@@ -35,6 +35,8 @@ interface ClientInterface
      * @param RequestInterface $request Request to send
      * @param array            $options Request options to apply to the given
      *                                  request and to the transfer.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface;
 
@@ -64,6 +66,8 @@ interface ClientInterface
      * @param string              $method  HTTP method
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function requestAsync(string $method, $uri, array $options = []): PromiseInterface;
 }

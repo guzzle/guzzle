@@ -20,11 +20,13 @@ use Psr\Http\Message\RequestInterface;
  * options, and the function MUST then return a wait-able promise.
  *
  * @final
+ *
+ * @implements PromisorInterface<mixed, mixed>
  */
 class Pool implements PromisorInterface
 {
     /**
-     * @var EachPromise
+     * @var EachPromise<array-key, mixed, mixed>
      */
     private $each;
 
@@ -69,6 +71,8 @@ class Pool implements PromisorInterface
 
     /**
      * Get promise
+     *
+     * @return PromiseInterface<mixed, mixed>
      */
     public function promise(): PromiseInterface
     {

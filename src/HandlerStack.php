@@ -15,17 +15,17 @@ use Psr\Http\Message\ResponseInterface;
 class HandlerStack
 {
     /**
-     * @var (callable(RequestInterface, array): PromiseInterface)|null
+     * @var (callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>)|null
      */
     private $handler;
 
     /**
-     * @var array{(callable(callable(RequestInterface, array): PromiseInterface): callable), (string|null)}[]
+     * @var array{(callable(callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>): callable), (string|null)}[]
      */
     private $stack = [];
 
     /**
-     * @var (callable(RequestInterface, array): PromiseInterface)|null
+     * @var (callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>)|null
      */
     private $cached;
 
@@ -40,9 +40,9 @@ class HandlerStack
      * The returned handler stack can be passed to a client in the "handler"
      * option.
      *
-     * @param (callable(RequestInterface, array): PromiseInterface)|null $handler HTTP handler function to use with the stack. If no
-     *                                                                            handler is provided, the best handler for your
-     *                                                                            system will be utilized.
+     * @param (callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>)|null $handler HTTP handler function to use with the stack. If no
+     *                                                                                                      handler is provided, the best handler for your
+     *                                                                                                      system will be utilized.
      */
     public static function create(?callable $handler = null): self
     {
@@ -56,7 +56,7 @@ class HandlerStack
     }
 
     /**
-     * @param (callable(RequestInterface, array): PromiseInterface)|null $handler Underlying HTTP handler.
+     * @param (callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>)|null $handler Underlying HTTP handler.
      */
     public function __construct(?callable $handler = null)
     {
@@ -66,7 +66,7 @@ class HandlerStack
     /**
      * Invokes the handler stack as a composed handler
      *
-     * @return ResponseInterface|PromiseInterface
+     * @return ResponseInterface|PromiseInterface<ResponseInterface, mixed>
      */
     public function __invoke(RequestInterface $request, array $options)
     {
@@ -106,8 +106,8 @@ class HandlerStack
     /**
      * Set the HTTP handler that actually returns a promise.
      *
-     * @param callable(RequestInterface, array): PromiseInterface $handler Accepts a request and array of options and
-     *                                                                     returns a Promise.
+     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler Accepts a request and array of options and
+     *                                                                                               returns a Promise.
      */
     public function setHandler(callable $handler): void
     {
@@ -210,7 +210,7 @@ class HandlerStack
     /**
      * Compose the middleware and handler into a single callable function.
      *
-     * @return callable(RequestInterface, array): PromiseInterface
+     * @return callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>
      */
     public function resolve(): callable
     {
@@ -220,7 +220,7 @@ class HandlerStack
             }
 
             foreach (\array_reverse($this->stack) as $fn) {
-                /** @var callable(RequestInterface, array): PromiseInterface $prev */
+                /** @var callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $prev */
                 $prev = $fn[0]($prev);
             }
 

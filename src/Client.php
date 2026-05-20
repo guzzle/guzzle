@@ -75,6 +75,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param array $options Request options to apply to the given
      *                       request and to the transfer. See {@see RequestOptions}.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface
     {
@@ -127,6 +129,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string              $method  HTTP method
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply. See {@see RequestOptions}.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
@@ -298,6 +302,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * as-is without merging in default options.
      *
      * @param array $options See {@see RequestOptions}.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     private function transfer(RequestInterface $request, array $options): PromiseInterface
     {
@@ -311,8 +317,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $handler = $options['handler'];
 
         try {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::promiseFor($handler($request, $options));
         } catch (\Exception $e) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor($e);
         }
     }

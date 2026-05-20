@@ -5,7 +5,6 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise as P;
-use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\TransferStats;
@@ -32,6 +31,8 @@ class StreamHandler
      *
      * @param RequestInterface $request Request to send.
      * @param array            $options Request transfer options.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
@@ -91,6 +92,7 @@ class StreamHandler
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
 
+            /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor($e);
         }
     }
@@ -110,6 +112,8 @@ class StreamHandler
 
     /**
      * @param resource $stream
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     private function createResponse(RequestInterface $request, array $options, $stream, ?float $startTime): PromiseInterface
     {
@@ -140,6 +144,7 @@ class StreamHandler
             try {
                 $options['on_headers']($response, $request);
             } catch (\Throwable $e) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
                 return P\Create::rejectionFor(
                     new RequestException('An error was encountered during the on_headers event', $request, $response, $e)
                 );
@@ -154,9 +159,13 @@ class StreamHandler
 
         $this->invokeStats($options, $request, $startTime, $response, null);
 
-        return new FulfilledPromise($response);
+        /** @var PromiseInterface<ResponseInterface, mixed> */
+        return P\Create::promiseFor($response);
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
     private function rejectResponseCreation(
         array $options,
         RequestInterface $request,
@@ -172,6 +181,7 @@ class StreamHandler
 
         $this->invokeStats($options, $request, $startTime, null, $reason);
 
+        /** @var PromiseInterface<ResponseInterface, mixed> */
         return P\Create::rejectionFor($reason);
     }
 
