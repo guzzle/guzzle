@@ -905,6 +905,52 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(200, $_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT_MS]);
     }
 
+    public function testAddsZeroTimeouts()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'timeout' => 0,
+            'connect_timeout' => 0,
+        ]);
+        self::assertSame(0, $_SERVER['_curl'][\CURLOPT_TIMEOUT_MS]);
+        self::assertSame(0, $_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT_MS]);
+    }
+
+    public function testTruncatesTimeoutsToMilliseconds()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'timeout' => 0.0015,
+            'connect_timeout' => 0.0025,
+        ]);
+        self::assertSame(1, $_SERVER['_curl'][\CURLOPT_TIMEOUT_MS]);
+        self::assertSame(2, $_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT_MS]);
+    }
+
+    /**
+     * @dataProvider invalidCurlTimeoutProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidCurlTimeouts(string $option, $value)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage($option.' must be 0 or greater than or equal to 0.001 seconds');
+        $f->create(new Psr7\Request('GET', Server::$url), [$option => $value]);
+    }
+
+    public static function invalidCurlTimeoutProvider(): array
+    {
+        return [
+            ['timeout', 0.0001],
+            ['timeout', -1],
+            ['connect_timeout', 0.0001],
+            ['connect_timeout', -1],
+        ];
+    }
+
     public function testAddsStreamingBody()
     {
         $f = new CurlFactory(3);

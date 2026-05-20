@@ -246,7 +246,7 @@ $client->request('GET', '/get', ['cookies' => $jar]);
 ## connect_timeout
 
 Summary
-Float describing the number of seconds to wait while trying to connect to a server. Use `0` to wait 300 seconds (the default behavior).
+Float describing the number of seconds to wait while trying to connect to a server. Use `0` to wait 300 seconds (the default behavior). Positive values below `0.001` seconds are rejected by the built-in cURL handler.
 
 Types
 float
@@ -828,7 +828,7 @@ $client->request('GET', '/get?abc=123', ['query' => ['foo' => 'bar']]);
 ## read_timeout
 
 Summary
-Float describing the timeout to use when reading a streamed body
+Float describing the timeout to use when reading a streamed body. Positive values below `0.001` seconds are rejected by the built-in stream handler.
 
 Types
 float
@@ -989,7 +989,7 @@ If you do not need a specific certificate bundle, then Mozilla provides a common
 ## timeout
 
 Summary
-Float describing the total timeout of the request in seconds. Use `0` to wait indefinitely (the default behavior).
+Float describing the total timeout of the request in seconds. Use `0` to wait indefinitely (the default behavior). Positive values below `0.001` seconds are rejected by the built-in handlers.
 
 Types
 float
