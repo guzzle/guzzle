@@ -320,6 +320,20 @@ class StreamHandlerTest extends TestCase
         return $options;
     }
 
+    private function applyDefaultTlsMinimum(string $uri, array $context): array
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', $uri);
+        $method = new \ReflectionMethod(StreamHandler::class, 'addDefaultTlsMinimum');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs($handler, [$request, &$context]);
+
+        return $context;
+    }
+
     public function testAddsProxy()
     {
         $this->expectException(ConnectException::class);
@@ -459,35 +473,82 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['crypto_method' => 123]);
     }
 
+    public function testDefaultsHttpsToTls12Minimum()
+    {
+        $context = $this->applyDefaultTlsMinimum('https://example.com', ['ssl' => []]);
+
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $context['ssl']['min_proto_version']);
+    }
+
+    public function testDoesNotDefaultTlsMinimumForHttp()
+    {
+        $context = $this->applyDefaultTlsMinimum('http://example.com', ['ssl' => []]);
+
+        self::assertArrayNotHasKey('min_proto_version', $context['ssl']);
+    }
+
+    public function testDoesNotDefaultTlsMinimumWhenTlsContextExists()
+    {
+        $context = $this->applyDefaultTlsMinimum('https://example.com', [
+            'ssl' => ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT],
+        ]);
+
+        self::assertArrayNotHasKey('min_proto_version', $context['ssl']);
+    }
+
     public function testSetsCryptoMethodTls10()
     {
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT, $opts['http']['crypto_method']);
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_0, $opts['ssl']['min_proto_version']);
     }
 
     public function testSetsCryptoMethodTls11()
     {
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT, $opts['http']['crypto_method']);
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_1, $opts['ssl']['min_proto_version']);
     }
 
     public function testSetsCryptoMethodTls12()
     {
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT, $opts['http']['crypto_method']);
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $opts['ssl']['min_proto_version']);
     }
 
-    /**
-     * @requires PHP >=7.4
-     */
     public function testSetsCryptoMethodTls13()
     {
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
         $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT, $opts['http']['crypto_method']);
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_3, $opts['ssl']['min_proto_version']);
+    }
+
+    public function testStreamContextTlsMinimumOverridesCryptoMethod()
+    {
+        $res = $this->getSendResult([
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            'stream_context' => [
+                'ssl' => ['min_proto_version' => \STREAM_CRYPTO_PROTO_TLSv1_0],
+            ],
+        ]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_0, $opts['ssl']['min_proto_version']);
+    }
+
+    public function testStreamContextCryptoMethodOverridesCryptoMethod()
+    {
+        $res = $this->getSendResult([
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            'stream_context' => [
+                'ssl' => ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT],
+            ],
+        ]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+
+        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT, $opts['ssl']['crypto_method']);
+        self::assertArrayNotHasKey('min_proto_version', $opts['ssl']);
     }
 
     public function testCanSetPasswordWhenSettingCert()

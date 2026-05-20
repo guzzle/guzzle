@@ -15,8 +15,11 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Pass the request as the second argument to `on_headers` callbacks
 - Reject invalid `HandlerStack::remove()` arguments
+- Raised the minimum supported libcurl version for the built-in cURL handlers to 7.34.0
 - Store response cookies without a `Domain` attribute as host-only cookies
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
+- Default HTTPS requests sent by the built-in cURL and stream handlers to TLS 1.2 or newer
+- Apply the stream handler `crypto_method` option through the SSL context so it consistently controls the minimum TLS version
 
 ### Removed
 

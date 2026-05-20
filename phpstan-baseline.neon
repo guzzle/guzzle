@@ -55,18 +55,6 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
-			message: '#^Cannot access offset ''features'' on array\|false\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 3
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Cannot access offset ''version'' on array\|false\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Cannot call method getBody\(\) on Psr\\Http\\Message\\ResponseInterface\|null\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -257,12 +245,6 @@ parameters:
 			identifier: missingType.property
 			count: 1
 			path: src/RetryMiddleware.php
-
-		-
-			message: '#^Cannot access offset ''version'' on array\|false\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: src/Utils.php
 
 		-
 			message: '#^Cannot cast mixed to string\.$#'

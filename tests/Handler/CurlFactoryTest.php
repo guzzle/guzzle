@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
@@ -81,12 +82,10 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(0, $_SERVER['_curl'][\CURLOPT_HEADER]);
         self::assertSame(300, $_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT]);
         self::assertInstanceOf('Closure', $_SERVER['_curl'][\CURLOPT_HEADERFUNCTION]);
-        if (\defined('CURLOPT_PROTOCOLS')) {
-            self::assertSame(
-                \CURLPROTO_HTTP | \CURLPROTO_HTTPS,
-                $_SERVER['_curl'][\CURLOPT_PROTOCOLS]
-            );
-        }
+        self::assertSame(
+            \CURLPROTO_HTTP | \CURLPROTO_HTTPS,
+            $_SERVER['_curl'][\CURLOPT_PROTOCOLS]
+        );
         self::assertContains('Expect:', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
         self::assertContains('Accept:', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
         self::assertContains('Content-Type:', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
@@ -296,6 +295,32 @@ class CurlFactoryTest extends TestCase
         self::assertSame('hi', (string) $response->getBody());
     }
 
+    public function testDefaultsHttpsToTls12Minimum()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+    }
+
+    public function testDoesNotSetDefaultTlsMinimumForHttp()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'http://example.com'), []);
+
+        self::assertArrayNotHasKey(\CURLOPT_SSLVERSION, $_SERVER['_curl']);
+    }
+
+    public function testCurlSslVersionOptionOverridesDefaultTlsMinimum()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'curl' => [\CURLOPT_SSLVERSION => \CURL_SSLVERSION_TLSv1_1],
+        ]);
+
+        self::assertEquals(\CURL_SSLVERSION_TLSv1_1, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+    }
+
     public function testValidatesCryptoMethodInvalidMethod()
     {
         $f = new CurlFactory(3);
@@ -326,11 +351,12 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
-    /**
-     * @requires PHP >= 7.4
-     */
     public function testAddsCryptoMethodTls13()
     {
+        if (!CurlVersion::supportsTls13()) {
+            self::markTestSkipped('TLS 1.3 is not supported by this cURL installation.');
+        }
+
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
         self::assertEquals(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);

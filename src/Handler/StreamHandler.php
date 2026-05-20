@@ -312,6 +312,7 @@ class StreamHandler
 
         $params = [];
         $context = $this->getDefaultContext($request);
+        $streamContextHasTlsSettings = self::hasStreamContextTlsSettings($options);
 
         if (isset($options['on_headers']) && !\is_callable($options['on_headers'])) {
             throw new \InvalidArgumentException('on_headers must be callable');
@@ -327,11 +328,19 @@ class StreamHandler
         }
 
         if (isset($options['stream_context'])) {
-            if (!\is_array($options['stream_context'])) {
+            $streamContext = $options['stream_context'];
+            if (!\is_array($streamContext)) {
                 throw new \InvalidArgumentException('stream_context must be an array');
             }
-            $context = \array_replace_recursive($context, $options['stream_context']);
+            $context = \array_replace_recursive($context, $streamContext);
+
+            $sslContext = $streamContext['ssl'] ?? null;
+            if ($streamContextHasTlsSettings && \is_array($sslContext) && !\array_key_exists('min_proto_version', $sslContext)) {
+                unset($context['ssl']['min_proto_version']);
+            }
         }
+
+        $this->addDefaultTlsMinimum($request, $context);
 
         // Microsoft NTLM authentication only supported with curl handler
         if (isset($options['auth'][2]) && 'ntlm' === $options['auth'][2]) {
@@ -397,6 +406,39 @@ class StreamHandler
         }
 
         return $uri;
+    }
+
+    private static function hasStreamContextTlsSettings(array $options): bool
+    {
+        if (!isset($options['stream_context']) || !\is_array($options['stream_context'])) {
+            return false;
+        }
+
+        $sslContext = $options['stream_context']['ssl'] ?? null;
+        if (!\is_array($sslContext)) {
+            return false;
+        }
+
+        return \array_key_exists('crypto_method', $sslContext)
+            || \array_key_exists('min_proto_version', $sslContext)
+            || \array_key_exists('max_proto_version', $sslContext);
+    }
+
+    private function addDefaultTlsMinimum(RequestInterface $request, array &$context): void
+    {
+        if ('https' !== $request->getUri()->getScheme() || !isset($context['ssl']) || !\is_array($context['ssl'])) {
+            return;
+        }
+
+        if (
+            \array_key_exists('crypto_method', $context['ssl'])
+            || \array_key_exists('min_proto_version', $context['ssl'])
+            || \array_key_exists('max_proto_version', $context['ssl'])
+        ) {
+            return;
+        }
+
+        $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_2;
     }
 
     private function getDefaultContext(RequestInterface $request): array
@@ -521,13 +563,26 @@ class StreamHandler
      */
     private function add_crypto_method(RequestInterface $request, array &$options, $value, array &$params): void
     {
-        if (
-            $value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT
-            || $value === \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT
-            || $value === \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
-            || (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && $value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT)
-        ) {
-            $options['http']['crypto_method'] = $value;
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
+            $options['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_0;
+
+            return;
+        }
+
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT) {
+            $options['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_1;
+
+            return;
+        }
+
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT) {
+            $options['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_2;
+
+            return;
+        }
+
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT) {
+            $options['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_3;
 
             return;
         }

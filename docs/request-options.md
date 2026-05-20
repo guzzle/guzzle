@@ -274,7 +274,7 @@ Types
 int
 
 Default
-None
+TLS 1.2 or newer for HTTPS requests sent by the built-in cURL and stream handlers.
 
 Constant
 `GuzzleHttp\RequestOptions::CRYPTO_METHOD`
@@ -284,7 +284,7 @@ $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2
 ```
 
 > [!NOTE]
-> This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. PHP 7.4 or higher is required in order to use TLS 1.3, and cURL 7.34.0 or higher is required in order to specify a crypto method, with cURL 7.52.0 or higher being required to use TLS 1.3.
+> This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. It controls the minimum TLS protocol version. cURL 7.52.0 or higher is required to use TLS 1.3 with the cURL handler.
 
 ## debug
 
@@ -311,7 +311,7 @@ Running the above example would output something like the following:
     *   Trying 107.21.213.98... * Connected to httpbin.org (107.21.213.98) port 80 (#0)
     > GET /get HTTP/1.1
     Host: httpbin.org
-    User-Agent: Guzzle/4.0 curl/7.21.4 PHP/5.5.7
+    User-Agent: GuzzleHttp/8
 
     < HTTP/1.1 200 OK
     < Access-Control-Allow-Origin: *

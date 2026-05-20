@@ -5,6 +5,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use Psr\Http\Message\UriInterface;
@@ -87,7 +88,7 @@ final class Utils
     {
         $handler = null;
 
-        if (\defined('CURLOPT_CUSTOMREQUEST') && \function_exists('curl_version') && version_compare(curl_version()['version'], '7.21.2') >= 0) {
+        if (CurlVersion::supportsTls12()) {
             if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
                 $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
             } elseif (\function_exists('curl_exec')) {
@@ -102,7 +103,7 @@ final class Utils
                 ? Proxy::wrapStreaming($handler, new StreamHandler())
                 : new StreamHandler();
         } elseif (!$handler) {
-            throw new \RuntimeException('GuzzleHttp requires cURL, the allow_url_fopen ini setting, or a custom HTTP handler.');
+            throw new \RuntimeException('GuzzleHttp requires a supported cURL version, the allow_url_fopen ini setting, or a custom HTTP handler.');
         }
 
         return $handler;
