@@ -90,7 +90,7 @@ class CurlHandlerTest extends TestCase
         $request = new Request(
             'PUT',
             Server::$url,
-            ['Content-Length' => 1000000],
+            ['Content-Length' => '1000000'],
             $stream
         );
         $handler($request, [])->wait();

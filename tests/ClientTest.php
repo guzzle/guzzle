@@ -22,7 +22,7 @@ class ClientTest extends TestCase
     public function testUsesDefaultHandler()
     {
         $client = new Client();
-        Server::enqueue([new Response(200, ['Content-Length' => 0])]);
+        Server::enqueue([new Response(200, ['Content-Length' => '0'])]);
         $response = $client->get(Server::$url);
         self::assertSame(200, $response->getStatusCode());
     }
@@ -40,7 +40,7 @@ class ClientTest extends TestCase
     {
         $client = new Client();
         Server::flush();
-        Server::enqueue([new Response(200, ['Content-Length' => 2], 'hi')]);
+        Server::enqueue([new Response(200, ['Content-Length' => '2'], 'hi')]);
         $p = $client->getAsync(Server::$url, ['query' => ['test' => 'foo']]);
         self::assertInstanceOf(PromiseInterface::class, $p);
         self::assertSame(200, $p->wait()->getStatusCode());
@@ -709,24 +709,36 @@ class ClientTest extends TestCase
         );
     }
 
-    public function testThatVersionIsOverwrittenWhenSendingARequest()
+    /**
+     * @dataProvider versionProvider
+     */
+    public function testNormalizesVersionOption($version, string $expected)
     {
         $mockHandler = new MockHandler([new Response(), new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $request = new Request('get', '/bar', [], null, '1.1');
-        $client->send($request, [RequestOptions::VERSION => '1.0']);
+        $client->request('GET', 'http://example.com', [RequestOptions::VERSION => $version]);
         self::assertSame(
-            '1.0',
+            $expected,
             $mockHandler->getLastRequest()->getProtocolVersion()
         );
 
-        $request = new Request('get', '/bar', [], null, '1.0');
-        $client->send($request, [RequestOptions::VERSION => '1.1']);
+        $request = new Request('GET', 'http://example.com');
+        $client->send($request, [RequestOptions::VERSION => $version]);
         self::assertSame(
-            '1.1',
+            $expected,
             $mockHandler->getLastRequest()->getProtocolVersion()
         );
+    }
+
+    public static function versionProvider(): iterable
+    {
+        yield ['1.0', '1.0'];
+        yield [1.0, '1.0'];
+        yield ['1.1', '1.1'];
+        yield [1.1, '1.1'];
+        yield ['2', '2'];
+        yield [2.0, '2.0'];
     }
 
     public function testSendPreservesCustomRequestWhenApplyingRequestOptions()
@@ -739,7 +751,7 @@ class ClientTest extends TestCase
             RequestOptions::HEADERS => ['X-Test' => '1'],
             RequestOptions::BODY => 'payload',
             RequestOptions::QUERY => ['a' => 'b'],
-            RequestOptions::VERSION => '1.0',
+            RequestOptions::VERSION => 1.0,
         ]);
 
         $lastRequest = $mockHandler->getLastRequest();
