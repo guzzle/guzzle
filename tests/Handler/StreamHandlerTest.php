@@ -27,7 +27,7 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Foo' => 'Bar',
-                'Content-Length' => 8,
+                'Content-Length' => '8',
             ], 'hi there'),
         ]);
     }
@@ -170,7 +170,7 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Foo' => 'Bar',
-                'Content-Length' => 8,
+                'Content-Length' => '8',
             ], 'hi there... This has way too much data!'),
         ]);
         $handler = new StreamHandler();
@@ -189,7 +189,7 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Foo' => 'Bar',
-                'Content-Length' => 8,
+                'Content-Length' => '8',
             ], ''),
         ]);
         $handler = new StreamHandler();
@@ -208,7 +208,7 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length' => \strlen($content),
+                'Content-Length' => (string) \strlen($content),
             ], $content),
         ]);
         $handler = new StreamHandler();
@@ -226,7 +226,7 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length' => \strlen($content),
+                'Content-Length' => (string) \strlen($content),
             ], $content),
         ]);
         $handler = new StreamHandler();
@@ -244,7 +244,7 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length' => \strlen($content),
+                'Content-Length' => (string) \strlen($content),
             ], $content),
         ]);
         $handler = new StreamHandler();
@@ -268,7 +268,7 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([
             new Response(200, [
                 'Content-Encoding' => 'gzip',
-                'Content-Length' => \strlen($content),
+                'Content-Length' => (string) \strlen($content),
             ], $content),
         ]);
         $handler = new StreamHandler();
@@ -587,7 +587,7 @@ class StreamHandlerTest extends TestCase
     {
         $this->queueRes();
         $handler = new StreamHandler();
-        $request = new Request('PUT', Server::$url, ['Content-Length' => 3], 'foo');
+        $request = new Request('PUT', Server::$url, ['Content-Length' => '3'], 'foo');
         $handler($request, []);
         $req = Server::received()[0];
         self::assertEquals('', $req->getHeaderLine('Content-Type'));
