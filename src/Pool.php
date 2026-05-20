@@ -2,7 +2,6 @@
 
 namespace GuzzleHttp;
 
-use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\EachPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\PromisorInterface;
@@ -32,7 +31,7 @@ class Pool implements PromisorInterface
 
     /**
      * @param ClientInterface $client   Client used to send the requests.
-     * @param array|\Iterator $requests Requests or functions that return
+     * @param iterable        $requests Requests or functions that return
      *                                  requests to send concurrently.
      * @param array           $config   Associative array of options
      *                                  - concurrency: (int) Maximum number of requests to send concurrently
@@ -40,7 +39,7 @@ class Pool implements PromisorInterface
      *                                  - fulfilled: (callable) Function to invoke when a request completes.
      *                                  - rejected: (callable) Function to invoke when a request is rejected.
      */
-    public function __construct(ClientInterface $client, $requests, array $config = [])
+    public function __construct(ClientInterface $client, iterable $requests, array $config = [])
     {
         if (!isset($config['concurrency'])) {
             $config['concurrency'] = 25;
@@ -53,9 +52,8 @@ class Pool implements PromisorInterface
             $opts = [];
         }
 
-        $iterable = P\Create::iterFor($requests);
-        $requests = static function () use ($iterable, $client, $opts) {
-            foreach ($iterable as $key => $rfn) {
+        $requestGenerator = static function () use ($requests, $client, $opts) {
+            foreach ($requests as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
                     yield $key => $client->sendAsync($rfn, $opts);
                 } elseif (\is_callable($rfn)) {
@@ -66,7 +64,7 @@ class Pool implements PromisorInterface
             }
         };
 
-        $this->each = new EachPromise($requests(), $config);
+        $this->each = new EachPromise($requestGenerator(), $config);
     }
 
     /**
@@ -88,7 +86,7 @@ class Pool implements PromisorInterface
      * indeterminate number of requests concurrently.
      *
      * @param ClientInterface $client   Client used to send the requests
-     * @param array|\Iterator $requests Requests to send concurrently.
+     * @param iterable        $requests Requests to send concurrently.
      * @param array           $options  Passes through the options available in
      *                                  {@see Pool::__construct}
      *
@@ -97,7 +95,7 @@ class Pool implements PromisorInterface
      *
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
-    public static function batch(ClientInterface $client, $requests, array $options = []): array
+    public static function batch(ClientInterface $client, iterable $requests, array $options = []): array
     {
         $res = [];
         self::cmpCallback($options, 'fulfilled', $res);

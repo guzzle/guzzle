@@ -24,6 +24,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays
 - Reject invalid `HandlerStack::remove()` arguments
+- Require `Pool` request collections to be iterable
 - Raised the minimum supported libcurl version for the built-in cURL handlers to 7.34.0
 - Store response cookies without a `Domain` attribute as host-only cookies
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
