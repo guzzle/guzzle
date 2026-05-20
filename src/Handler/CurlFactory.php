@@ -563,8 +563,9 @@ class CurlFactory implements CurlFactoryInterface
 
         $timeoutRequiresNoSignal = false;
         if (isset($options['timeout'])) {
-            $timeoutRequiresNoSignal |= $options['timeout'] < 1;
-            $conf[\CURLOPT_TIMEOUT_MS] = $options['timeout'] * 1000;
+            $timeout = Utils::timeoutToMilliseconds($options['timeout'], 'timeout');
+            $timeoutRequiresNoSignal |= $timeout < 1000;
+            $conf[\CURLOPT_TIMEOUT_MS] = $timeout;
         }
 
         // CURL default value is CURL_IPRESOLVE_WHATEVER
@@ -577,8 +578,9 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (isset($options['connect_timeout'])) {
-            $timeoutRequiresNoSignal |= $options['connect_timeout'] < 1;
-            $conf[\CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
+            $connectTimeout = Utils::timeoutToMilliseconds($options['connect_timeout'], 'connect_timeout');
+            $timeoutRequiresNoSignal |= $connectTimeout < 1000;
+            $conf[\CURLOPT_CONNECTTIMEOUT_MS] = $connectTimeout;
         }
 
         if ($timeoutRequiresNoSignal && \strtoupper(\substr(\PHP_OS, 0, 3)) !== 'WIN') {

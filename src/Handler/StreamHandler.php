@@ -318,6 +318,10 @@ class StreamHandler
             throw new \InvalidArgumentException('on_headers must be callable');
         }
 
+        $readTimeout = isset($options['read_timeout'])
+            ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout')
+            : null;
+
         if (!empty($options)) {
             foreach ($options as $key => $value) {
                 $method = "add_{$key}";
@@ -356,7 +360,7 @@ class StreamHandler
         );
 
         return $this->createResource(
-            function () use ($uri, $contextResource, $context, $options, $request) {
+            function () use ($uri, $contextResource, $context, $request, $readTimeout) {
                 $resource = @\fopen((string) $uri, 'r', false, $contextResource);
 
                 // See https://wiki.php.net/rfc/deprecations_php_8_5#deprecate_the_http_response_header_predefined_variable
@@ -370,10 +374,9 @@ class StreamHandler
                     throw new ConnectException(sprintf('Connection refused for URI %s', $uri), $request, null, $context);
                 }
 
-                if (isset($options['read_timeout'])) {
-                    $readTimeout = $options['read_timeout'];
-                    $sec = (int) $readTimeout;
-                    $usec = ($readTimeout - $sec) * 100000;
+                if ($readTimeout !== null) {
+                    $sec = \intdiv($readTimeout, 1000);
+                    $usec = ($readTimeout % 1000) * 1000;
                     \stream_set_timeout($resource, $sec, $usec);
                 }
 
@@ -553,8 +556,10 @@ class StreamHandler
      */
     private function add_timeout(RequestInterface $request, array &$options, $value, array &$params): void
     {
-        if ($value > 0) {
-            $options['http']['timeout'] = $value;
+        $timeout = Utils::timeoutToMilliseconds($value, 'timeout');
+
+        if ($timeout > 0) {
+            $options['http']['timeout'] = $timeout / 1000;
         }
     }
 

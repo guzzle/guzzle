@@ -438,6 +438,35 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(200, $opts['http']['timeout']);
     }
 
+    public function testTruncatesStreamTimeoutToMilliseconds()
+    {
+        $res = $this->getSendResult(['stream' => true, 'timeout' => 0.0015]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertEquals(0.001, $opts['http']['timeout']);
+    }
+
+    /**
+     * @dataProvider invalidStreamTimeoutProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidStreamTimeouts(string $option, $value)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage($option.' must be 0 or greater than or equal to 0.001 seconds');
+        $this->getSendResult([$option => $value]);
+    }
+
+    public static function invalidStreamTimeoutProvider(): array
+    {
+        return [
+            ['timeout', 0.0001],
+            ['timeout', -1],
+            ['read_timeout', 0.0001],
+            ['read_timeout', -1],
+        ];
+    }
+
     public function testVerifiesVerifyIsValidIfPath()
     {
         $this->expectException(RequestException::class);

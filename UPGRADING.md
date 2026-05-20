@@ -41,6 +41,13 @@ not select the cURL handler automatically. Manually configured cURL handlers als
 reject requests when the linked libcurl version is lower than 7.34.0 or the PHP
 cURL extension does not expose TLS 1.2 support.
 
+#### Timeout option validation
+
+The built-in cURL and stream handlers now validate timeout option values before
+applying them. `timeout`, `connect_timeout`, and `read_timeout` must be `0` or at
+least `0.001` seconds when provided. Positive values below 1 millisecond now
+throw `InvalidArgumentException` instead of being converted to no timeout.
+
 #### TLS minimum version
 
 The built-in cURL and stream handlers now default HTTPS requests to TLS 1.2 or

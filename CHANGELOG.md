@@ -28,6 +28,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
 - Default HTTPS requests sent by the built-in cURL and stream handlers to TLS 1.2 or newer
 - Apply the stream handler `crypto_method` option through the SSL context so it consistently controls the minimum TLS version
+- Validate built-in handler timeout options before applying them
 
 ### Removed
 

@@ -68,7 +68,8 @@ final class RequestOptions
     /**
      * connect_timeout: (float, default=0) Float describing the number of
      * seconds to wait while trying to connect to a server. Use 0 to wait
-     * 300 seconds (the default behavior).
+     * 300 seconds (the default behavior). Positive values below 0.001 seconds
+     * are rejected by the built-in cURL handler.
      */
     public const CONNECT_TIMEOUT = 'connect_timeout';
 
@@ -256,12 +257,14 @@ final class RequestOptions
     /**
      * timeout: (float, default=0) Float describing the timeout of the
      * request in seconds. Use 0 to wait indefinitely (the default behavior).
+     * Positive values below 0.001 seconds are rejected by the built-in handlers.
      */
     public const TIMEOUT = 'timeout';
 
     /**
      * read_timeout: (float, default=default_socket_timeout ini setting) Float describing
-     * the body read timeout, for stream requests.
+     * the body read timeout, for stream requests. Positive values below 0.001
+     * seconds are rejected by the built-in stream handler.
      */
     public const READ_TIMEOUT = 'read_timeout';
 
