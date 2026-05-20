@@ -633,14 +633,15 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
     }
 
-    public function testEmptyProtocolVersionDefaultsToHttp11()
+    public function testRejectsEmptyProtocolVersion()
     {
-        Server::flush();
-        Server::enqueue([new Psr7\Response()]);
-        $a = new Handler\CurlMultiHandler();
+        $factory = new CurlFactory(3);
         $request = new Psr7\Request('GET', Server::$url, [], null, '');
-        $a($request, []);
-        self::assertEquals(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('HTTP protocol version must not be empty.');
+
+        $factory->create($request, []);
     }
 
     public function testThrowsWhenHttp3IsUnsupported()

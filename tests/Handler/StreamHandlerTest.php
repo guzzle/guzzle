@@ -55,15 +55,14 @@ class StreamHandlerTest extends TestCase
         self::assertSame('Bar', $sent->getHeaderLine('foo'));
     }
 
-    public function testEmptyProtocolVersionDefaultsToHttp11()
+    public function testRejectsEmptyProtocolVersion()
     {
-        $this->queueRes();
         $handler = new StreamHandler();
 
-        $response = $handler(new Request('GET', Server::$url, [], null, ''), [])->wait();
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('HTTP protocol version must not be empty.');
 
-        self::assertSame(200, $response->getStatusCode());
-        self::assertSame('1.1', Server::received()[0]->getProtocolVersion());
+        $handler(new Request('GET', Server::$url, [], null, ''), []);
     }
 
     public function testAddsErrorToResponse()
