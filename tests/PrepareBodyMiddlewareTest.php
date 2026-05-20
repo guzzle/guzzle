@@ -11,6 +11,7 @@ use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 
 class PrepareBodyMiddlewareTest extends TestCase
@@ -48,6 +49,45 @@ class PrepareBodyMiddlewareTest extends TestCase
         $stack->push($m);
         $comp = $stack->resolve();
         $p = $comp(new Request($method, 'http://www.google.com', [], $body), []);
+        self::assertInstanceOf(PromiseInterface::class, $p);
+        $response = $p->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testSetsContentLengthAsStringForStrictPsr7Implementations()
+    {
+        // PSR-7 MessageInterface::withHeader() requires string|string[] values.
+        // Strict implementations (e.g. TYPO3\CMS\Core\Http\Message) reject ints.
+        // See https://github.com/php-fig/http-message/blob/master/src/MessageInterface.php
+        $strictRequest = new class('PUT', 'http://www.example.com', [], 'Test') extends Request {
+            public function withHeader($header, $value): MessageInterface
+            {
+                if (\is_string($value)) {
+                    $value = [$value];
+                }
+                if (!\is_array($value) || $value !== \array_filter($value, 'is_string')) {
+                    throw new \InvalidArgumentException(\sprintf(
+                        'Invalid header value for header "%s". The value must be a string or an array of strings.',
+                        $header
+                    ));
+                }
+
+                return parent::withHeader($header, $value);
+            }
+        };
+
+        $h = new MockHandler([
+            static function (RequestInterface $request) {
+                self::assertSame('4', $request->getHeaderLine('Content-Length'));
+
+                return new Response(200);
+            },
+        ]);
+        $m = Middleware::prepareBody();
+        $stack = new HandlerStack($h);
+        $stack->push($m);
+        $comp = $stack->resolve();
+        $p = $comp($strictRequest, []);
         self::assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         self::assertSame(200, $response->getStatusCode());
