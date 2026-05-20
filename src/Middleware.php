@@ -127,8 +127,8 @@ final class Middleware
      * before listener accepts a request and options array, and the after
      * listener accepts a request, options array, and response promise.
      *
-     * @param callable $before Function to invoke before forwarding the request.
-     * @param callable $after  Function invoked after forwarding.
+     * @param (callable(RequestInterface, array): mixed)|null                   $before Function to invoke before forwarding the request.
+     * @param (callable(RequestInterface, array, PromiseInterface): mixed)|null $after  Function invoked after forwarding.
      *
      * @return callable Returns a function that accepts the next handler.
      */
@@ -168,11 +168,12 @@ final class Middleware
      * If no delay function is provided, a simple implementation of exponential
      * backoff will be utilized.
      *
-     * @param callable $decider Function that accepts the number of retries,
-     *                          a request, [response], and [exception] and
-     *                          returns true if the request is to be retried.
-     * @param callable $delay   Function that accepts the number of retries and
-     *                          returns the number of milliseconds to delay.
+     * @param callable(int, RequestInterface, ResponseInterface|null, mixed): bool                     $decider Function that accepts the number of retries,
+     *                                                                                                          a request, [response], and [rejection reason]
+     *                                                                                                          and returns true if the request is to be retried.
+     * @param (callable(int): int)|(callable(int, ResponseInterface|null, RequestInterface): int)|null $delay   Function that accepts the number of retries
+     *                                                                                                          or retry context and returns the number of
+     *                                                                                                          milliseconds to delay.
      *
      * @return callable Returns a function that accepts the next handler.
      */
@@ -238,8 +239,8 @@ final class Middleware
      * Middleware that applies a map function to the request before passing to
      * the next handler.
      *
-     * @param callable $fn Function that accepts a RequestInterface and returns
-     *                     a RequestInterface.
+     * @param callable(RequestInterface): RequestInterface $fn Function that accepts a RequestInterface and returns
+     *                                                         a RequestInterface.
      */
     public static function mapRequest(callable $fn): callable
     {
@@ -254,8 +255,8 @@ final class Middleware
      * Middleware that applies a map function to the resolved promise's
      * response.
      *
-     * @param callable $fn Function that accepts a ResponseInterface and
-     *                     returns a ResponseInterface.
+     * @param callable(ResponseInterface): ResponseInterface $fn Function that accepts a ResponseInterface and
+     *                                                           returns a ResponseInterface.
      */
     public static function mapResponse(callable $fn): callable
     {
