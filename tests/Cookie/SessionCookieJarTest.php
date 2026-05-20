@@ -175,6 +175,7 @@ class SessionCookieJarTest extends TestCase
             [[]],
             [new \stdClass()],
             ['[1]'],
+            ['[{"Name":false,"Value":"bar"}]'],
         ];
     }
 }

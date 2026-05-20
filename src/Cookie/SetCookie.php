@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Cookie;
 
 /**
@@ -95,7 +97,7 @@ class SetCookie
         $this->data = self::DEFAULTS;
 
         if (\array_key_exists('HostOnly', $data)) {
-            $this->setHostOnly((bool) $data['HostOnly']);
+            $this->setHostOnly($data['HostOnly']);
             unset($data['HostOnly']);
         }
 

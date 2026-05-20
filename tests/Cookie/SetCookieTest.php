@@ -90,6 +90,55 @@ class SetCookieTest extends TestCase
         self::assertFalse($cookie->getHttpOnly());
     }
 
+    /**
+     * @dataProvider invalidCookieFieldProvider
+     *
+     * @param mixed[] $data
+     */
+    public function testRejectsInvalidCookieFieldTypes(array $data): void
+    {
+        $this->expectException(\TypeError::class);
+
+        new SetCookie($data);
+    }
+
+    public static function invalidCookieFieldProvider(): array
+    {
+        return [
+            [['Name' => false]],
+            [['Value' => false]],
+            [['Domain' => false]],
+            [['Path' => false]],
+            [['Max-Age' => '10']],
+            [['Expires' => false]],
+            [['Secure' => 'true']],
+            [['Discard' => 'true']],
+            [['HttpOnly' => 'true']],
+            [['HostOnly' => 'true']],
+        ];
+    }
+
+    public function testAllowsZeroNameAndValue(): void
+    {
+        $cookie = new SetCookie([
+            'Name' => '0',
+            'Value' => '0',
+            'Domain' => 'example.com',
+        ]);
+
+        self::assertSame('0', $cookie->getName());
+        self::assertSame('0', $cookie->getValue());
+    }
+
+    public function testFromStringStillNormalizesFlagsAndMaxAge(): void
+    {
+        $cookie = SetCookie::fromString('foo=bar; Max-Age=10; Secure; HttpOnly');
+
+        self::assertSame(10, $cookie->getMaxAge());
+        self::assertTrue($cookie->getSecure());
+        self::assertTrue($cookie->getHttpOnly());
+    }
+
     public function testDeterminesIfExpired()
     {
         $c = new SetCookie();

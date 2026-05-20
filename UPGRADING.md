@@ -175,6 +175,31 @@ $jar->clear();
 
 If you pass a path or name, that value is now treated as provided.
 
+#### SetCookie constructor field validation
+
+`SetCookie` constructor arrays no longer coerce invalid field values. Cookie
+names, values, domains, paths, max-age values, expiry values, and boolean flags
+must use the documented types. Invalid constructor values now throw `TypeError`.
+
+```php
+// Valid:
+new SetCookie([
+    'Name' => 'foo',
+    'Value' => 'bar',
+    'Domain' => 'example.com',
+    'Secure' => true,
+]);
+
+// Invalid in 8.0:
+new SetCookie([
+    'Name' => false,
+    'Value' => 'bar',
+]);
+```
+
+Cookies parsed from normal `Set-Cookie` headers continue to be normalized by
+`SetCookie::fromString()`.
+
 6.0 to 7.0
 ----------
 

@@ -18,6 +18,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added `string` return types to `__toString()` methods
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Pass the request as the second argument to `on_headers` callbacks
+- Reject invalid `SetCookie` constructor field types instead of coercing them
 - Support retry delay callbacks with retry count only or full retry context
 - Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays
