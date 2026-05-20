@@ -34,4 +34,15 @@ class HeaderProcessorTest extends TestCase
             'HTTP/1.1 200abc Weird',
         ]);
     }
+
+    public function testRejectsMalformedHeaderLine(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('HTTP header line is invalid');
+
+        HeaderProcessor::parseHeaders([
+            'HTTP/1.1 200 OK',
+            'X-Foo',
+        ]);
+    }
 }

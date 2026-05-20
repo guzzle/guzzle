@@ -23,7 +23,7 @@ use GuzzleHttp\Exception\RequestException;
 // Create a mock and queue two responses.
 $mock = new MockHandler([
     new Response(200, ['X-Foo' => 'Bar'], 'Hello, World'),
-    new Response(202, ['Content-Length' => 0]),
+    new Response(202, ['Content-Length' => '0']),
     new RequestException('Error Communicating with Server', new Request('GET', 'test'))
 ]);
 
@@ -137,7 +137,7 @@ use GuzzleHttp\Server\Server;
 
 // Start the server and queue a response
 Server::enqueue([
-    new Response(200, ['Content-Length' => 0])
+    new Response(200, ['Content-Length' => '0'])
 ]);
 
 $client = new Client(['base_uri' => Server::$url]);

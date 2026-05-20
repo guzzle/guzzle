@@ -48,6 +48,12 @@ final class HeaderProcessor
             throw new \RuntimeException('HTTP status code is invalid');
         }
 
+        foreach ($headers as $header) {
+            if (\strpos($header, ':') === false) {
+                throw new \RuntimeException('HTTP header line is invalid');
+            }
+        }
+
         return [$version, (int) $status, $parts[2] ?? null, Utils::headersFromLines($headers)];
     }
 
