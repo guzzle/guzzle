@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.10.3 - Upcoming
+
+### Fixed
+
+- Fail clearly when an HTTP response header line is invalid
+
+
 ## 7.10.2 - 2026-05-20
 
 ### Fixed
