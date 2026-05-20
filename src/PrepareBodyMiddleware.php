@@ -52,7 +52,7 @@ class PrepareBodyMiddleware
         ) {
             $size = $request->getBody()->getSize();
             if ($size !== null) {
-                $modify['set_headers']['Content-Length'] = $size;
+                $modify['set_headers']['Content-Length'] = (string) $size;
             } else {
                 $modify['set_headers']['Transfer-Encoding'] = 'chunked';
             }

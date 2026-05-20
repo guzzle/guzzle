@@ -42,7 +42,7 @@ class CurlFactoryTest extends TestCase
             new Psr7\Response(200, [
                 'Foo' => 'Bar',
                 'Baz' => 'bam',
-                'Content-Length' => 2,
+                'Content-Length' => '2',
             ], 'hi'),
         ]);
         $stream = Psr7\Utils::streamFor();
@@ -279,7 +279,7 @@ class CurlFactoryTest extends TestCase
             new Psr7\Response(200, [
                 'Foo' => 'Bar',
                 'Baz' => 'bam',
-                'Content-Length' => 2,
+                'Content-Length' => '2',
             ], 'hi'),
         ]);
 
@@ -531,7 +531,7 @@ class CurlFactoryTest extends TestCase
     private function addDecodeResponse($withEncoding = true)
     {
         $content = \gzencode('test');
-        $headers = ['Content-Length' => \strlen($content)];
+        $headers = ['Content-Length' => (string) \strlen($content)];
         if ($withEncoding) {
             $headers['Content-Encoding'] = 'gzip';
         }
@@ -763,7 +763,7 @@ class CurlFactoryTest extends TestCase
     {
         $this->addDecodeResponse();
         $handler = new Handler\CurlMultiHandler();
-        $request = new Psr7\Request('PUT', Server::$url, ['Content-Length' => 3], 'foo');
+        $request = new Psr7\Request('PUT', Server::$url, ['Content-Length' => '3'], 'foo');
         $response = $handler($request, []);
         $response->wait();
         $sent = Server::received()[0];
@@ -857,7 +857,7 @@ class CurlFactoryTest extends TestCase
     {
         Server::flush();
         Server::enqueue([
-            new Psr7\Response(200, ['Test' => 'Hello', 'Content-Length' => 4], 'test'),
+            new Psr7\Response(200, ['Test' => 'Hello', 'Content-Length' => '4'], 'test'),
         ]);
         $request = new Psr7\Request('PUT', Server::$url, [
             'Expect' => '100-Continue',
@@ -1178,7 +1178,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame(1024 * 1024, $body->tell());
 
         $req = new Psr7\Request('POST', 'https://www.example.com', [
-            'Content-Length' => 1024 * 1024 * 2,
+            'Content-Length' => (string) (1024 * 1024 * 2),
         ], $body);
         $factory = new CurlFactory(1);
         $factory->create($req, []);
@@ -1194,7 +1194,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame(1024 * 1024, $body->tell());
 
         $req = new Psr7\Request('POST', 'https://www.example.com', [
-            'Content-Length' => 1024 * 1024,
+            'Content-Length' => (string) (1024 * 1024),
         ], $body);
         $factory = new CurlFactory(1);
         $factory->create($req, []);
@@ -1221,7 +1221,7 @@ class CurlFactoryTest extends TestCase
         Server::flush();
         Server::enqueue([
             new Psr7\Response(200, [
-                'Content-Length' => $expectedLength,
+                'Content-Length' => (string) $expectedLength,
             ], \str_repeat('x', $expectedLength)),
         ]);
 
