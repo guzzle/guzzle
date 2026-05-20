@@ -50,6 +50,8 @@ class CurlFactory implements CurlFactoryInterface
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Sending a request with an empty protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject empty protocol versions.');
+
             $protocolVersion = '1.1';
             $request = \GuzzleHttp\Psr7\Utils::modifyRequest($request, ['version' => $protocolVersion]);
         }
