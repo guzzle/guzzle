@@ -163,6 +163,69 @@ $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
 $client = new Client(['handler' => $stack]);
 ```
 
+## Retry Middleware
+
+Use `GuzzleHttp\Middleware::retry()` to retry requests when a custom decider
+returns `true`. The decider receives the current retry count, the request, the
+response if one was received, and the rejection reason if the request failed
+before a response was returned.
+
+```php
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+$stack = HandlerStack::create();
+
+$stack->push(Middleware::retry(
+    function (
+        int $retries,
+        RequestInterface $request,
+        ?ResponseInterface $response = null,
+        $reason = null
+    ): bool {
+        if ($retries >= 3) {
+            return false;
+        }
+
+        if ($reason instanceof ConnectException) {
+            return true;
+        }
+
+        return $response !== null && $response->getStatusCode() >= 500;
+    },
+    function (
+        int $retries,
+        ?ResponseInterface $response,
+        RequestInterface $request
+    ): int {
+        return 1000 * $retries;
+    }
+));
+
+$client = new Client(['handler' => $stack]);
+$response = $client->request('GET', 'https://example.com');
+```
+
+The retry middleware keeps track of the current retry count in the `retries`
+request option. The option is initialized to `0` before the first attempt and
+incremented before each retry. You can read this option in custom middleware or
+seed it on a per-request basis:
+
+```php
+$response = $client->request('GET', 'https://example.com', [
+    'retries' => 1,
+]);
+```
+
+If you do not provide a delay callback, the middleware uses an exponential
+backoff delay. When a retry is scheduled, the middleware writes the computed wait
+time in milliseconds to the `delay` request option before invoking the next
+attempt.
+
 ## HandlerStack
 
 A handler stack represents a stack of middleware to apply to a base handler function. You can push middleware to the stack to add to the top of the stack, and unshift middleware onto the stack to add to the bottom of the stack. When the stack is resolved, the handler is pushed onto the stack. Each value is then popped off of the stack, wrapping the previous value popped off of the stack.
