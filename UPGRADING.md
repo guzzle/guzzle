@@ -118,6 +118,28 @@ $client->request('GET', '/', [
 ]);
 ```
 
+#### Auth option validation
+
+The `auth` request option now validates array values before applying them. Auth
+arrays must contain username and password strings at indexes `0` and `1`. If an
+auth type is provided at index `2`, it must be one of `basic`, `digest`, or
+`ntlm`.
+
+Invalid auth arrays that previously emitted warnings, coerced values, or did
+nothing now throw `GuzzleHttp\Exception\InvalidArgumentException`.
+
+```php
+// Valid:
+$client->request('GET', '/', [
+    'auth' => ['username', 'password', 'basic'],
+]);
+
+// Invalid in 8.0:
+$client->request('GET', '/', [
+    'auth' => ['username'],
+]);
+```
+
 6.0 to 7.0
 ----------
 
