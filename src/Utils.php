@@ -11,6 +11,8 @@ use Psr\Http\Message\UriInterface;
 
 final class Utils
 {
+    private const MIN_CURL_VERSION = '7.34.0';
+
     /**
      * Debug function used to describe the provided value type and class.
      *
@@ -86,8 +88,17 @@ final class Utils
     public static function chooseHandler(): callable
     {
         $handler = null;
+        $curlVersion = null;
 
-        if (\defined('CURLOPT_CUSTOMREQUEST') && \function_exists('curl_version') && version_compare(curl_version()['version'], '7.21.2') >= 0) {
+        if (\function_exists('curl_version')) {
+            $curlVersionInfo = \curl_version();
+
+            if (\is_array($curlVersionInfo) && isset($curlVersionInfo['version']) && \is_string($curlVersionInfo['version'])) {
+                $curlVersion = $curlVersionInfo['version'];
+            }
+        }
+
+        if (null !== $curlVersion && version_compare($curlVersion, self::MIN_CURL_VERSION, '>=')) {
             if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
                 $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
             } elseif (\function_exists('curl_exec')) {
@@ -102,7 +113,7 @@ final class Utils
                 ? Proxy::wrapStreaming($handler, new StreamHandler())
                 : new StreamHandler();
         } elseif (!$handler) {
-            throw new \RuntimeException('GuzzleHttp requires cURL, the allow_url_fopen ini setting, or a custom HTTP handler.');
+            throw new \RuntimeException(\sprintf('GuzzleHttp requires cURL %s or higher, the allow_url_fopen ini setting, or a custom HTTP handler.', self::MIN_CURL_VERSION));
         }
 
         return $handler;

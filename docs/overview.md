@@ -4,7 +4,7 @@
 
 1.  PHP 7.4
 2.  To use the PHP stream handler, `allow_url_fopen` must be enabled in your system's php.ini.
-3.  To use the cURL handler, you must have a recent version of cURL >= 7.19.4 compiled with OpenSSL and zlib.
+3.  To use the cURL handler, you must have cURL >= 7.34.0 compiled with OpenSSL and zlib.
 
 > [!NOTE]
 > Guzzle no longer requires cURL in order to send HTTP requests. Guzzle will use the PHP stream wrapper to send HTTP requests if cURL is not installed. Alternatively, you can provide your own HTTP handler used to send requests. Keep in mind that cURL is still required for sending concurrent requests.

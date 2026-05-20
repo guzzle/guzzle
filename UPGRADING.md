@@ -33,6 +33,28 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
+#### cURL minimum version
+
+Guzzle 8 requires libcurl 7.34.0 or higher when using the built-in cURL
+handlers. If the default handler stack detects an older libcurl version, it will
+not select the cURL handler automatically. Manually configured cURL handlers also
+reject requests when the linked libcurl version is lower than 7.34.0.
+
+#### TLS minimum version
+
+The built-in cURL and stream handlers now default HTTPS requests to TLS 1.2 or
+newer. Applications that must connect to legacy TLS 1.0 or TLS 1.1 endpoints can
+explicitly lower the minimum version with the `crypto_method` request option:
+
+```php
+$client->request('GET', 'https://legacy.example.com', [
+    'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+]);
+```
+
+Handler-specific overrides through the `curl` and `stream_context` request
+options remain available for applications that need finer transport control.
+
 #### Native type declarations
 
 Guzzle 8 adds native parameter and return types where PHP 7.4 allows. Code

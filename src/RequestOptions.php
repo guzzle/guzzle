@@ -74,13 +74,13 @@ final class RequestOptions
 
     /**
      * crypto_method: (int) A value describing the minimum TLS protocol
-     * version to use.
+     * version to use. The built-in cURL and stream handlers default HTTPS
+     * requests to TLS 1.2 or newer.
      *
      * This setting must be set to one of the
      * ``STREAM_CRYPTO_METHOD_TLS*_CLIENT`` constants. PHP 7.4 or higher is
-     * required in order to use TLS 1.3, and cURL 7.34.0 or higher is required
-     * in order to specify a crypto method, with cURL 7.52.0 or higher being
-     * required to use TLS 1.3.
+     * required in order to use TLS 1.3, and cURL 7.52.0 or higher is required
+     * to use TLS 1.3 with the cURL handler.
      */
     public const CRYPTO_METHOD = 'crypto_method';
 
