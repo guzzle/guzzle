@@ -168,9 +168,9 @@ final class Middleware
      * If no delay function is provided, a simple implementation of exponential
      * backoff will be utilized.
      *
-     * @param callable                                                                                 $decider Function that accepts the number of retries,
-     *                                                                                                          a request, [response], and [exception] and
-     *                                                                                                          returns true if the request is to be retried.
+     * @param callable(int, RequestInterface, ResponseInterface|null, mixed): bool                     $decider Function that accepts the number of retries,
+     *                                                                                                          a request, [response], and [rejection reason]
+     *                                                                                                          and returns true if the request is to be retried.
      * @param (callable(int): int)|(callable(int, ResponseInterface|null, RequestInterface): int)|null $delay   Function that accepts the number of retries
      *                                                                                                          or retry context and returns the number of
      *                                                                                                          milliseconds to delay.
