@@ -52,7 +52,7 @@ class CookieJar implements CookieJarInterface
         $cookieJar = new self();
         foreach ($cookies as $name => $value) {
             if (!\is_scalar($value) && !(\is_object($value) && \method_exists($value, '__toString'))) {
-                throw new \TypeError('Cookie value must be scalar or stringable');
+                throw new \InvalidArgumentException('Cookie value must be scalar or stringable');
             }
 
             $cookieJar->setCookie(new SetCookie([

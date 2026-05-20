@@ -87,7 +87,7 @@ class SessionCookieJar extends CookieJar
 
                 try {
                     $this->setCookie(new SetCookie($cookie));
-                } catch (\TypeError $e) {
+                } catch (\InvalidArgumentException $e) {
                     throw new \RuntimeException('Invalid cookie data', 0, $e);
                 }
             }

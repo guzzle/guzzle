@@ -97,7 +97,7 @@ class SetCookieTest extends TestCase
      */
     public function testRejectsInvalidCookieFieldTypes(array $data): void
     {
-        $this->expectException(\TypeError::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         new SetCookie($data);
     }

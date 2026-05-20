@@ -119,7 +119,7 @@ class FileCookieJar extends CookieJar
 
                 try {
                     $this->setCookie(new SetCookie($cookie));
-                } catch (\TypeError $e) {
+                } catch (\InvalidArgumentException $e) {
                     throw new \RuntimeException("Invalid cookie file: {$filename}", 0, $e);
                 }
             }

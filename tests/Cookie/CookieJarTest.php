@@ -64,7 +64,7 @@ class CookieJarTest extends TestCase
 
     public function testRejectsNonScalarCookieValuesFromArray(): void
     {
-        $this->expectException(\TypeError::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         CookieJar::fromArray(['foo' => []], 'example.com');
     }

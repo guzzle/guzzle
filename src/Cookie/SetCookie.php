@@ -95,6 +95,7 @@ class SetCookie
     public function __construct(array $data = [])
     {
         $this->data = self::DEFAULTS;
+        self::validateFieldTypes($data);
 
         if (\array_key_exists('HostOnly', $data)) {
             $this->setHostOnly($data['HostOnly']);
@@ -511,5 +512,35 @@ class SetCookie
         }
 
         return $domain;
+    }
+
+    /**
+     * @param mixed[] $data
+     */
+    private static function validateFieldTypes(array $data): void
+    {
+        foreach (['Name', 'Value', 'Domain', 'Path'] as $field) {
+            if (isset($data[$field]) && !\is_string($data[$field])) {
+                throw new \InvalidArgumentException(\sprintf('Cookie field "%s" must be a string', $field));
+            }
+        }
+
+        if (isset($data['Max-Age']) && !\is_int($data['Max-Age'])) {
+            throw new \InvalidArgumentException('Cookie field "Max-Age" must be an integer');
+        }
+
+        if (isset($data['Expires']) && !\is_int($data['Expires']) && !\is_string($data['Expires'])) {
+            throw new \InvalidArgumentException('Cookie field "Expires" must be an integer or string');
+        }
+
+        foreach (['Secure', 'Discard', 'HttpOnly'] as $field) {
+            if (isset($data[$field]) && !\is_bool($data[$field])) {
+                throw new \InvalidArgumentException(\sprintf('Cookie field "%s" must be a boolean', $field));
+            }
+        }
+
+        if (\array_key_exists('HostOnly', $data) && !\is_bool($data['HostOnly'])) {
+            throw new \InvalidArgumentException('Cookie field "HostOnly" must be a boolean');
+        }
     }
 }

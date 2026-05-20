@@ -179,7 +179,8 @@ If you pass a path or name, that value is now treated as provided.
 
 `SetCookie` constructor arrays no longer coerce invalid field values. Cookie
 names, values, domains, paths, max-age values, expiry values, and boolean flags
-must use the documented types. Invalid constructor values now throw `TypeError`.
+must use the documented types. Invalid constructor values now throw
+`InvalidArgumentException`.
 
 ```php
 // Valid:
