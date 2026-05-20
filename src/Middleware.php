@@ -127,8 +127,8 @@ final class Middleware
      * before listener accepts a request and options array, and the after
      * listener accepts a request, options array, and response promise.
      *
-     * @param callable $before Function to invoke before forwarding the request.
-     * @param callable $after  Function invoked after forwarding.
+     * @param (callable(RequestInterface, array): mixed)|null                   $before Function to invoke before forwarding the request.
+     * @param (callable(RequestInterface, array, PromiseInterface): mixed)|null $after  Function invoked after forwarding.
      *
      * @return callable Returns a function that accepts the next handler.
      */
@@ -239,8 +239,8 @@ final class Middleware
      * Middleware that applies a map function to the request before passing to
      * the next handler.
      *
-     * @param callable $fn Function that accepts a RequestInterface and returns
-     *                     a RequestInterface.
+     * @param callable(RequestInterface): RequestInterface $fn Function that accepts a RequestInterface and returns
+     *                                                         a RequestInterface.
      */
     public static function mapRequest(callable $fn): callable
     {
@@ -255,8 +255,8 @@ final class Middleware
      * Middleware that applies a map function to the resolved promise's
      * response.
      *
-     * @param callable $fn Function that accepts a ResponseInterface and
-     *                     returns a ResponseInterface.
+     * @param callable(ResponseInterface): ResponseInterface $fn Function that accepts a ResponseInterface and
+     *                                                           returns a ResponseInterface.
      */
     public static function mapResponse(callable $fn): callable
     {
