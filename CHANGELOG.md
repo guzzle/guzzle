@@ -27,6 +27,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fail clearly when an HTTP response header line is invalid
+- Remove middleware by name when the name is also a callable string
 - Treat empty request protocol versions as HTTP/1.1
 
 
