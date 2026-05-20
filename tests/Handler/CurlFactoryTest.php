@@ -633,6 +633,16 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
     }
 
+    public function testEmptyProtocolVersionDefaultsToHttp11()
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response()]);
+        $a = new Handler\CurlMultiHandler();
+        $request = new Psr7\Request('GET', Server::$url, [], null, '');
+        $a($request, []);
+        self::assertEquals(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+    }
+
     public function testThrowsWhenHttp3IsUnsupported()
     {
         $previousVersionInfo = self::setCurlVersionInfo([

@@ -49,6 +49,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Deprecated
 
+- Deprecated empty request protocol versions, which will be rejected in 8.0
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
 ### Fixed
@@ -61,6 +62,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fail clearly when an HTTP response header line is invalid
+- Treat empty request protocol versions as HTTP/1.1
 
 
 ## 7.10.2 - 2026-05-20

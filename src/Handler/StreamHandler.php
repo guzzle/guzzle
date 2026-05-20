@@ -42,6 +42,13 @@ class StreamHandler
 
         $protocolVersion = $request->getProtocolVersion();
 
+        if ('' === $protocolVersion) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Sending a request with an empty protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject empty protocol versions.');
+
+            $protocolVersion = '1.1';
+            $request = Psr7\Utils::modifyRequest($request, ['version' => $protocolVersion]);
+        }
+
         if ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
             throw new ConnectException(sprintf('HTTP/%s is not supported by the stream handler.', $protocolVersion), $request);
         }

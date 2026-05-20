@@ -51,6 +51,27 @@ class ClientTest extends TestCase
         self::assertSame(200, $r->getStatusCode());
     }
 
+    public function testEmptyProtocolVersionRequestOptionDefaultsToHttp11()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $client->get('http://example.com', ['version' => '']);
+
+        self::assertSame('1.1', $mock->getLastRequest()->getProtocolVersion());
+    }
+
+    public function testEmptyRequestProtocolVersionDefaultsToHttp11()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('GET', 'http://example.com', [], null, '');
+
+        $client->send($request);
+
+        self::assertSame('1.1', $mock->getLastRequest()->getProtocolVersion());
+    }
+
     public function testClientHasOptions()
     {
         $client = new Client([

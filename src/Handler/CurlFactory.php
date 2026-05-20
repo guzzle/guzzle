@@ -46,6 +46,13 @@ class CurlFactory implements CurlFactoryInterface
 
         $protocolVersion = $request->getProtocolVersion();
 
+        if ('' === $protocolVersion) {
+            trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Sending a request with an empty protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject empty protocol versions.');
+
+            $protocolVersion = '1.1';
+            $request = \GuzzleHttp\Psr7\Utils::modifyRequest($request, ['version' => $protocolVersion]);
+        }
+
         if ('3' === $protocolVersion || '3.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp3()) {
                 throw new ConnectException('HTTP/3 is supported by the cURL handler, however the installed PHP cURL extension or libcurl does not support HTTP/3.', $request);
