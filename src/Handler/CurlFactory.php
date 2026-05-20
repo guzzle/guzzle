@@ -22,9 +22,6 @@ class CurlFactory implements CurlFactoryInterface
 {
     public const CURL_VERSION_STR = 'curl_version';
 
-    private const MIN_CURL_VERSION = '7.34.0';
-    private const CURL_VERSION_TLS_13 = '7.52.0';
-
     /**
      * @var resource[]|\CurlHandle[]
      */
@@ -45,12 +42,12 @@ class CurlFactory implements CurlFactoryInterface
 
     public function create(RequestInterface $request, array $options): EasyHandle
     {
-        self::ensureSupportedCurlVersion($request);
+        CurlVersion::ensureSupported($request);
 
         $protocolVersion = $request->getProtocolVersion();
 
         if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
-            if (!self::supportsHttp2()) {
+            if (!CurlVersion::supportsHttp2()) {
                 throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
             }
         } elseif ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
@@ -161,59 +158,6 @@ class CurlFactory implements CurlFactoryInterface
         return (string) $option;
     }
 
-    private static function supportsHttp2(): bool
-    {
-        static $supportsHttp2 = null;
-
-        if (null === $supportsHttp2) {
-            $supportsHttp2 = self::supportsTls12()
-                && (\CURL_VERSION_HTTP2 & self::getCurlVersionInfo()['features']);
-        }
-
-        return $supportsHttp2;
-    }
-
-    private static function ensureSupportedCurlVersion(RequestInterface $request): void
-    {
-        if (version_compare(self::getCurlVersion(), self::MIN_CURL_VERSION, '<')) {
-            throw new ConnectException(\sprintf(
-                'cURL %s or higher is required by the cURL handler; %s is installed.',
-                self::MIN_CURL_VERSION,
-                self::getCurlVersion()
-            ), $request);
-        }
-
-        if (!\defined('CURL_SSLVERSION_TLSv1_2')) {
-            throw new ConnectException(\sprintf(
-                'The PHP cURL extension must be built against cURL %s or higher to use the cURL handler.',
-                self::MIN_CURL_VERSION
-            ), $request);
-        }
-    }
-
-    private static function supportsTls12(): bool
-    {
-        static $supportsTls12 = null;
-
-        if (null === $supportsTls12) {
-            $supportsTls12 = version_compare(self::getCurlVersion(), self::MIN_CURL_VERSION, '>=');
-        }
-
-        return $supportsTls12;
-    }
-
-    private static function supportsTls13(): bool
-    {
-        static $supportsTls13 = null;
-
-        if (null === $supportsTls13) {
-            $supportsTls13 = defined('CURL_SSLVERSION_TLSv1_3')
-                && version_compare(self::getCurlVersion(), self::CURL_VERSION_TLS_13, '>=');
-        }
-
-        return $supportsTls13;
-    }
-
     public function release(EasyHandle $easy): void
     {
         $resource = $easy->handle;
@@ -317,37 +261,9 @@ class CurlFactory implements CurlFactoryInterface
             $ctx += \curl_getinfo($easy->handle);
         }
 
-        $ctx[self::CURL_VERSION_STR] = self::getCurlVersion();
+        CurlVersion::addToHandlerContext($ctx);
 
         return $ctx;
-    }
-
-    private static function getCurlVersion(): string
-    {
-        return self::getCurlVersionInfo()['version'];
-    }
-
-    /**
-     * @return array{version: string, features: int}
-     */
-    private static function getCurlVersionInfo(): array
-    {
-        static $curlVersionInfo = null;
-
-        if (null === $curlVersionInfo) {
-            $curlVersionInfo = \curl_version();
-
-            if (
-                !\is_array($curlVersionInfo)
-                || !isset($curlVersionInfo['version'], $curlVersionInfo['features'])
-                || !\is_string($curlVersionInfo['version'])
-                || !\is_int($curlVersionInfo['features'])
-            ) {
-                throw new \RuntimeException('Unable to determine cURL version.');
-            }
-        }
-
-        return $curlVersionInfo;
     }
 
     private static function createRejection(EasyHandle $easy, array $ctx): PromiseInterface
@@ -703,7 +619,7 @@ class CurlFactory implements CurlFactoryInterface
                 ) {
                     $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
                 } elseif (\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $cryptoMethod) {
-                    if (!self::supportsTls13()) {
+                    if (!CurlVersion::supportsTls13()) {
                         throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
                     }
                     $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
@@ -715,12 +631,9 @@ class CurlFactory implements CurlFactoryInterface
             } elseif (\STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $cryptoMethod) {
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_1;
             } elseif (\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $cryptoMethod) {
-                if (!self::supportsTls12()) {
-                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.2 not supported by your version of cURL');
-                }
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
             } elseif (\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $cryptoMethod) {
-                if (!self::supportsTls13()) {
+                if (!CurlVersion::supportsTls13()) {
                     throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
                 }
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
