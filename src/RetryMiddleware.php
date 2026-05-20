@@ -55,16 +55,12 @@ class RetryMiddleware
             $options['retries'] = 0;
         }
 
-        $fn = $this->nextHandler;
-
         /** @var PromiseInterface<ResponseInterface, mixed> */
-        $promise = $fn($request, $options)
+        return ($this->nextHandler)($request, $options)
             ->then(
                 $this->onFulfilled($request, $options),
                 $this->onRejected($request, $options)
             );
-
-        return $promise;
     }
 
     /**
