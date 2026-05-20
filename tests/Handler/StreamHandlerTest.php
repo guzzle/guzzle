@@ -52,6 +52,17 @@ class StreamHandlerTest extends TestCase
         self::assertSame('Bar', $sent->getHeaderLine('foo'));
     }
 
+    public function testEmptyProtocolVersionDefaultsToHttp11()
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+
+        $response = $handler(new Request('GET', Server::$url, [], null, ''), [])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('1.1', Server::received()[0]->getProtocolVersion());
+    }
+
     public function testAddsErrorToResponse()
     {
         $handler = new StreamHandler();

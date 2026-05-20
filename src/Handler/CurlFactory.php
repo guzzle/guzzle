@@ -49,6 +49,11 @@ class CurlFactory implements CurlFactoryInterface
     {
         $protocolVersion = $request->getProtocolVersion();
 
+        if ('' === $protocolVersion) {
+            $protocolVersion = '1.1';
+            $request = \GuzzleHttp\Psr7\Utils::modifyRequest($request, ['version' => $protocolVersion]);
+        }
+
         if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!self::supportsHttp2()) {
                 throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
