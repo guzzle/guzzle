@@ -469,6 +469,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $request;
     }
 
+    /**
+     * @param string|float $version
+     */
     private static function normalizeProtocolVersion($version): string
     {
         return \is_float($version) ? \number_format($version, 1, '.', '') : (string) $version;
