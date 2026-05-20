@@ -388,11 +388,29 @@ class ClientTest extends TestCase
         self::assertFalse($last->hasHeader('Authorization'));
     }
 
+    public function testAuthCanBeNull()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock, 'auth' => ['a', 'b']]);
+        $client->get('http://foo.com', ['auth' => null]);
+        $last = $mock->getLastRequest();
+        self::assertFalse($last->hasHeader('Authorization'));
+    }
+
     public function testAuthCanBeArrayForBasicAuth()
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $client->get('http://foo.com', ['auth' => ['a', 'b']]);
+        $last = $mock->getLastRequest();
+        self::assertSame('Basic YTpi', $last->getHeaderLine('Authorization'));
+    }
+
+    public function testAuthCanBeArrayForExplicitBasicAuth()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => ['a', 'b', 'basic']]);
         $last = $mock->getLastRequest();
         self::assertSame('Basic YTpi', $last->getHeaderLine('Authorization'));
     }
@@ -428,6 +446,34 @@ class ClientTest extends TestCase
         $client->get('http://foo.com', ['auth' => 'foo']);
         $last = $mock->getLastOptions();
         self::assertSame('foo', $last['auth']);
+    }
+
+    /**
+     * @dataProvider invalidAuthOptionProvider
+     *
+     * @param mixed[] $auth
+     */
+    public function testValidatesAuthOptionArray(array $auth)
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $client->get('http://foo.com', ['auth' => $auth]);
+    }
+
+    public static function invalidAuthOptionProvider(): array
+    {
+        return [
+            [[]],
+            [['user']],
+            [[['user'], 'pass']],
+            [['user', ['pass']]],
+            [['user', 'pass', null]],
+            [['user', 'pass', 1]],
+            [['user', 'pass', []]],
+            [['user', 'pass', 'unknown']],
+        ];
     }
 
     public function testCanAddFormParams()

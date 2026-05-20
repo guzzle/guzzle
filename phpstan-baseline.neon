@@ -25,24 +25,6 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$str of function strtolower expects string, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
-			message: '#^Part \$value\[0\] \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 3
-			path: src/Client.php
-
-		-
-			message: '#^Part \$value\[1\] \(mixed\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 3
-			path: src/Client.php
-
-		-
 			message: '#^Result of && is always false\.$#'
 			identifier: booleanAnd.alwaysFalse
 			count: 1

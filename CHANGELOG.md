@@ -18,6 +18,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added `string` return types to `__toString()` methods
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Pass the request as the second argument to `on_headers` callbacks
+- Validate malformed `auth` request option arrays
 - Reject invalid `HandlerStack::remove()` arguments
 - Raised the minimum supported libcurl version for the built-in cURL handlers to 7.34.0
 - Store response cookies without a `Domain` attribute as host-only cookies

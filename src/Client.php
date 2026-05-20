@@ -375,25 +375,46 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             unset($options['body']);
         }
 
-        if (!empty($options['auth']) && \is_array($options['auth'])) {
+        if (isset($options['auth']) && \is_array($options['auth'])) {
             $value = $options['auth'];
-            $type = isset($value[2]) ? \strtolower($value[2]) : 'basic';
-            switch ($type) {
+
+            if (!\array_key_exists(0, $value) || !\array_key_exists(1, $value)) {
+                throw new InvalidArgumentException('auth must contain username and password strings');
+            }
+
+            $username = $value[0];
+            $password = $value[1];
+
+            if (!\is_string($username) || !\is_string($password)) {
+                throw new InvalidArgumentException('auth must contain username and password strings');
+            }
+
+            $type = 'basic';
+            if (\array_key_exists(2, $value)) {
+                $type = $value[2];
+                if (!\is_string($type)) {
+                    throw new InvalidArgumentException('auth type must be a string');
+                }
+            }
+
+            switch (\strtolower($type)) {
                 case 'basic':
                     // Ensure that we don't have the header in different case and set the new value.
                     $modify['set_headers'] = Psr7\Utils::caselessRemove(['Authorization'], $modify['set_headers']);
                     $modify['set_headers']['Authorization'] = 'Basic '
-                        .\base64_encode("$value[0]:$value[1]");
+                        .\base64_encode($username.':'.$password);
                     break;
                 case 'digest':
                     // @todo: Do not rely on curl
                     $options['curl'][\CURLOPT_HTTPAUTH] = \CURLAUTH_DIGEST;
-                    $options['curl'][\CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    $options['curl'][\CURLOPT_USERPWD] = $username.':'.$password;
                     break;
                 case 'ntlm':
                     $options['curl'][\CURLOPT_HTTPAUTH] = \CURLAUTH_NTLM;
-                    $options['curl'][\CURLOPT_USERPWD] = "$value[0]:$value[1]";
+                    $options['curl'][\CURLOPT_USERPWD] = $username.':'.$password;
                     break;
+                default:
+                    throw new InvalidArgumentException(\sprintf('Unsupported auth type "%s"', $type));
             }
         }
 
