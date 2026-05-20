@@ -581,7 +581,7 @@ class StreamHandler
             return;
         }
 
-        if (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && $value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT) {
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT) {
             $options['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_3;
 
             return;

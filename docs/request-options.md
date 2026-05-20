@@ -284,7 +284,7 @@ $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2
 ```
 
 > [!NOTE]
-> This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. It controls the minimum TLS protocol version. PHP 7.4 or higher is required in order to use TLS 1.3, and cURL 7.52.0 or higher is required to use TLS 1.3 with the cURL handler.
+> This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. It controls the minimum TLS protocol version. cURL 7.52.0 or higher is required to use TLS 1.3 with the cURL handler.
 
 ## debug
 

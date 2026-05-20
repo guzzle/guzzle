@@ -517,9 +517,6 @@ class StreamHandlerTest extends TestCase
         self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $opts['ssl']['min_proto_version']);
     }
 
-    /**
-     * @requires PHP >=7.4
-     */
     public function testSetsCryptoMethodTls13()
     {
         $res = $this->getSendResult(['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);

@@ -350,9 +350,6 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
-    /**
-     * @requires PHP >= 7.4
-     */
     public function testAddsCryptoMethodTls13()
     {
         $f = new CurlFactory(3);
