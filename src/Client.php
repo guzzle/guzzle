@@ -386,7 +386,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         ) {
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Accept-Encoding'], $options['_conditional']);
-            $modify['set_headers']['Accept-Encoding'] = $options['decode_content'];
+            $modify['set_headers']['Accept-Encoding'] = (string) $options['decode_content'];
         }
 
         if (isset($options['body'])) {
