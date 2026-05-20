@@ -30,7 +30,7 @@ class Pool implements PromisorInterface
 
     /**
      * @param ClientInterface $client   Client used to send the requests.
-     * @param mixed           $requests Requests or functions that return
+     * @param array|\Iterator $requests Requests or functions that return
      *                                  requests to send concurrently.
      * @param array           $config   Associative array of options
      *                                  - concurrency: (int) Maximum number of requests to send concurrently

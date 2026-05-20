@@ -289,6 +289,12 @@ parameters:
 			path: src/Middleware.php
 
 		-
+			message: '#^Call to function is_iterable\(\) with array\|Iterator will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Pool.php
+
+		-
 			message: '#^PHPDoc tag @var has invalid value \(callable\(int\)\)\: Unexpected token "\(", expected TOKEN_HORIZONTAL_WS at offset 24 on line 2$#'
 			identifier: phpDoc.parseError
 			count: 1
