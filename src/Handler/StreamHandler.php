@@ -192,7 +192,7 @@ class StreamHandler
                         if ($length === 0) {
                             unset($headers[$normalizedKeys['content-length']]);
                         } else {
-                            $headers[$normalizedKeys['content-length']] = [$length];
+                            $headers[$normalizedKeys['content-length']] = [(string) $length];
                         }
                     }
                 }
