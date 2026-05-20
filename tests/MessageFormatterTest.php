@@ -41,13 +41,7 @@ class MessageFormatterTest extends TestCase
         $f = new MessageFormatter($format);
         $request = new Request('GET', '/');
         $result = $f->format($request);
-        if (method_exists($this, 'assertMatchesRegularExpression')) {
-            // PHPUnit 9
-            self::assertMatchesRegularExpression($pattern, $result);
-        } else {
-            // PHPUnit 8
-            self::assertRegExp($pattern, $result);
-        }
+        self::assertMatchesRegularExpression($pattern, $result);
     }
 
     public static function formatProvider()
