@@ -109,14 +109,14 @@ class CookieJar implements CookieJarInterface
             $this->cookies = [];
 
             return;
-        } elseif (!$path) {
+        } elseif ($path === null) {
             $this->cookies = \array_filter(
                 $this->cookies,
                 static function (SetCookie $cookie) use ($domain): bool {
                     return $cookie->getDomain() === null || !$cookie->matchesDomain($domain);
                 }
             );
-        } elseif (!$name) {
+        } elseif ($name === null) {
             $this->cookies = \array_filter(
                 $this->cookies,
                 static function (SetCookie $cookie) use ($path, $domain): bool {
@@ -128,9 +128,9 @@ class CookieJar implements CookieJarInterface
         } else {
             $this->cookies = \array_filter(
                 $this->cookies,
-                static function (SetCookie $cookie) use ($path, $domain, $name) {
+                static function (SetCookie $cookie) use ($path, $domain, $name): bool {
                     return !($cookie->getDomain() !== null
-                        && $cookie->getName() == $name
+                        && $cookie->getName() === $name
                         && $cookie->matchesPath($path)
                         && $cookie->matchesDomain($domain));
                 }

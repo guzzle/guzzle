@@ -126,8 +126,72 @@ class CookieJarTest extends TestCase
         self::assertCount(1, $this->jar);
 
         // Remove cookie by name
-        $this->jar->clear(null, null, 'test');
+        $this->jar->clear('baz.com', '/foo', 'test');
         self::assertCount(0, $this->jar);
+    }
+
+    public function testDeletesCookieNamedZero(): void
+    {
+        $jar = new CookieJar();
+        $jar->setCookie(new SetCookie([
+            'Name' => '0',
+            'Value' => 'zero',
+            'Domain' => 'bar.com',
+            'Path' => '/boo',
+        ]));
+        $jar->setCookie(new SetCookie([
+            'Name' => 'other',
+            'Value' => '123',
+            'Domain' => 'bar.com',
+            'Path' => '/boo',
+        ]));
+
+        $jar->clear('bar.com', '/boo', '0');
+
+        $names = \array_map(static function (SetCookie $cookie) {
+            return $cookie->getName();
+        }, $jar->getIterator()->getArrayCopy());
+
+        self::assertSame(['other'], $names);
+    }
+
+    public static function falsyCookiePathProvider(): array
+    {
+        return [['0'], ['']];
+    }
+
+    /**
+     * @dataProvider falsyCookiePathProvider
+     */
+    public function testClearsFalsyPathAsProvided(string $path): void
+    {
+        $jar = new CookieJar();
+        $jar->setCookie(new SetCookie([
+            'Name' => 'target',
+            'Value' => '123',
+            'Domain' => 'bar.com',
+            'Path' => $path,
+        ]));
+        $jar->setCookie(new SetCookie([
+            'Name' => 'other-path',
+            'Value' => '123',
+            'Domain' => 'bar.com',
+            'Path' => '/boo',
+        ]));
+        $jar->setCookie(new SetCookie([
+            'Name' => 'other-domain',
+            'Value' => '123',
+            'Domain' => 'baz.com',
+            'Path' => $path,
+        ]));
+
+        $jar->clear('bar.com', $path);
+
+        $names = \array_map(static function (SetCookie $cookie) {
+            return $cookie->getName();
+        }, $jar->getIterator()->getArrayCopy());
+
+        self::assertSame(['other-path', 'other-domain'], $names);
     }
 
     public static function domainClearProvider(): array
