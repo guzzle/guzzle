@@ -48,6 +48,15 @@ applying them. `timeout`, `connect_timeout`, and `read_timeout` must be `0` or a
 least `0.001` seconds when provided. Positive values below 1 millisecond now
 throw `InvalidArgumentException` instead of being converted to no timeout.
 
+#### Protocol version validation
+
+Empty request protocol versions are no longer treated as omitted. Passing
+`'version' => ''` in request options or sending a PSR-7 request whose protocol
+version is `''` now throws an exception before the request is sent.
+
+Omit the `version` request option to use Guzzle's default HTTP/1.1 behavior, or
+pass an explicit supported protocol version such as `'1.1'`.
+
 #### TLS minimum version
 
 The built-in cURL and stream handlers now default HTTPS requests to TLS 1.2 or
