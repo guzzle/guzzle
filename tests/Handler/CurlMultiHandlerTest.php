@@ -128,8 +128,19 @@ class CurlMultiHandlerTest extends TestCase
 
     public function testUsesTimeoutEnvironmentVariables()
     {
+        $deprecations = [];
+
         unset($_SERVER['GUZZLE_CURL_SELECT_TIMEOUT']);
         \putenv('GUZZLE_CURL_SELECT_TIMEOUT=');
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecations): bool {
+            if ($severity !== \E_USER_DEPRECATED) {
+                return false;
+            }
+
+            $deprecations[] = $message;
+
+            return true;
+        });
 
         try {
             $a = new CurlMultiHandler();
@@ -141,8 +152,13 @@ class CurlMultiHandlerTest extends TestCase
             // Handler reads from the environment if no options are given
             self::assertEquals(3, Helpers::readObjectAttribute($a, 'selectTimeout'));
         } finally {
+            \restore_error_handler();
             \putenv('GUZZLE_CURL_SELECT_TIMEOUT=');
         }
+
+        self::assertSame([
+            'Since guzzlehttp/guzzle 7.2: The GUZZLE_CURL_SELECT_TIMEOUT environment variable is deprecated; use the "select_timeout" option instead.',
+        ], $deprecations);
     }
 
     public function throwsWhenAccessingInvalidProperty()

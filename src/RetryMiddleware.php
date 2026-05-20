@@ -58,7 +58,7 @@ class RetryMiddleware
      */
     public static function exponentialDelay(int $retries): int
     {
-        trigger_deprecation('guzzlehttp/guzzle', '7.11', '%s::%s() is deprecated and will be removed in 8.0.', __CLASS__, __FUNCTION__);
+        \trigger_deprecation('guzzlehttp/guzzle', '7.11', '%s::%s() is deprecated and will be removed in 8.0.', __CLASS__, __FUNCTION__);
 
         return (int) 2 ** ($retries - 1) * 1000;
     }
