@@ -93,6 +93,8 @@ overriding affected methods must update method signatures accordingly.
 `HandlerStack::remove()` now throws `TypeError` when passed a value that is
 neither a callable nor a middleware name string.
 
+`Pool::__construct()` and `Pool::batch()` now require iterable request collections.
+
 `SetCookie::setSecure()`, `SetCookie::setDiscard()`, and
 `SetCookie::setHttpOnly()` now require boolean parameters. Calls from files that
 declare strict types will throw `TypeError` for non-boolean values.

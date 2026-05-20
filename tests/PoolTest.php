@@ -21,14 +21,6 @@ use Psr\Http\Message\ResponseInterface;
 
 class PoolTest extends TestCase
 {
-    public function testValidatesIterable()
-    {
-        $p = new Pool(new Client(), 'foo');
-
-        $this->expectException(\InvalidArgumentException::class);
-        $p->promise()->wait();
-    }
-
     public function testValidatesEachElement()
     {
         $c = new Client();
