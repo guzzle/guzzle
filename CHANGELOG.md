@@ -54,10 +54,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated empty request protocol versions, which will be rejected in 8.0
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
-### Fixed
-
-- Remove middleware by name when the name is also a callable string
-
 
 ## 7.10.3 - Upcoming
 
