@@ -46,7 +46,11 @@ class CurlFactory implements CurlFactoryInterface
 
         $protocolVersion = $request->getProtocolVersion();
 
-        if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
+        if ('3' === $protocolVersion || '3.0' === $protocolVersion) {
+            if (!CurlVersion::supportsHttp3()) {
+                throw new ConnectException('HTTP/3 is supported by the cURL handler, however the installed PHP cURL extension or libcurl does not support HTTP/3.', $request);
+            }
+        } elseif ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp2()) {
                 throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
             }
@@ -71,6 +75,10 @@ class CurlFactory implements CurlFactoryInterface
         // Add handler options from the request configuration options
         if (isset($options['curl'])) {
             $conf = \array_replace($conf, $options['curl']);
+        }
+
+        if ('3' === $protocolVersion || '3.0' === $protocolVersion) {
+            $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
         }
 
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
@@ -364,7 +372,12 @@ class CurlFactory implements CurlFactoryInterface
 
         $version = $easy->request->getProtocolVersion();
 
-        if ('2' === $version || '2.0' === $version) {
+        if ('3' === $version || '3.0' === $version) {
+            if (!\defined('CURL_HTTP_VERSION_3')) {
+                throw new \RuntimeException('HTTP/3 is not supported by this cURL installation.');
+            }
+            $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_3');
+        } elseif ('2' === $version || '2.0' === $version) {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
         } elseif ('1.1' === $version) {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_1;
@@ -609,9 +622,23 @@ class CurlFactory implements CurlFactoryInterface
 
         if (null !== $cryptoMethod) {
             $protocolVersion = $easy->request->getProtocolVersion();
+            $isHttp3 = '3' === $protocolVersion || '3.0' === $protocolVersion;
+            $isHttp2 = '2' === $protocolVersion || '2.0' === $protocolVersion;
 
-            // If HTTP/2, upgrade TLS 1.0 and 1.1 to 1.2
-            if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
+            if ($isHttp3) {
+                // HTTP/3 runs over QUIC and requires TLS 1.3.
+                if (
+                    \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $cryptoMethod
+                    || \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $cryptoMethod
+                    || \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $cryptoMethod
+                    || \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $cryptoMethod
+                ) {
+                    $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
+                } else {
+                    throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
+                }
+            } elseif ($isHttp2) {
+                // If HTTP/2, upgrade TLS 1.0 and 1.1 to 1.2.
                 if (
                     \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $cryptoMethod
                     || \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $cryptoMethod

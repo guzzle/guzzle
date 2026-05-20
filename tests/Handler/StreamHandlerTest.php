@@ -66,6 +66,16 @@ class StreamHandlerTest extends TestCase
         )->wait();
     }
 
+    public function testRejectsHttp3()
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('HTTP/3.0 is not supported by the stream handler.');
+
+        $handler(new Request('GET', 'https://example.com', [], null, '3.0'), []);
+    }
+
     public function testStreamAttributeKeepsStreamOpen()
     {
         $this->queueRes();

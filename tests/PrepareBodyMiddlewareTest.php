@@ -158,6 +158,44 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+    public static function noExpectProtocolProvider()
+    {
+        return [
+            ['1.0'],
+            ['2'],
+            ['2.0'],
+            ['3'],
+            ['3.0'],
+        ];
+    }
+
+    /**
+     * @dataProvider noExpectProtocolProvider
+     */
+    public function testDoesNotAddExpectForProtocolsThatDoNotSupportIt(string $protocolVersion)
+    {
+        $bd = Psr7\Utils::streamFor(\fopen(__DIR__.'/../composer.json', 'r'));
+
+        $h = new MockHandler([
+            static function (RequestInterface $request) {
+                self::assertFalse($request->hasHeader('Expect'));
+
+                return new Response(200);
+            },
+        ]);
+
+        $m = Middleware::prepareBody();
+        $stack = new HandlerStack($h);
+        $stack->push($m);
+        $comp = $stack->resolve();
+        $p = $comp(new Request('PUT', 'http://www.google.com', [], $bd, $protocolVersion), [
+            'expect' => true,
+        ]);
+        self::assertInstanceOf(PromiseInterface::class, $p);
+        $response = $p->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
     public function testPreservesCustomRequestWhenAddingExpect()
     {
         $h = new MockHandler([

@@ -266,7 +266,11 @@ final class RequestOptions
     public const READ_TIMEOUT = 'read_timeout';
 
     /**
-     * version: (float) Specifies the HTTP protocol version to attempt to use.
+     * version: (string|float) Specifies the HTTP protocol version to attempt
+     * to use.
+     *
+     * HTTP/3 is supported by the built-in cURL handler when the PHP cURL
+     * extension and linked libcurl support HTTP/3 and TLS 1.3.
      */
     public const VERSION = 'version';
 
