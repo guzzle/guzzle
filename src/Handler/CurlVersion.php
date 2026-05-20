@@ -19,6 +19,10 @@ final class CurlVersion
      */
     private static $versionInfo = null;
 
+    private function __construct()
+    {
+    }
+
     public static function supportsTls12(): bool
     {
         $version = self::get();
