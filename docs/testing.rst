@@ -33,7 +33,7 @@ a response or exception by shifting return values off of a queue.
     // Create a mock and queue two responses.
     $mock = new MockHandler([
         new Response(200, ['X-Foo' => 'Bar'], 'Hello, World'),
-        new Response(202, ['Content-Length' => 0]),
+        new Response(202, ['Content-Length' => '0']),
         new RequestException('Error Communicating with Server', new Request('GET', 'test'))
     ]);
 
@@ -177,7 +177,7 @@ can queue an HTTP response or an array of responses by calling
 
     // Start the server and queue a response
     Server::enqueue([
-        new Response(200, ['Content-Length' => 0])
+        new Response(200, ['Content-Length' => '0'])
     ]);
 
     $client = new Client(['base_uri' => Server::$url]);
