@@ -22,7 +22,7 @@ class ClientTest extends TestCase
     public function testUsesDefaultHandler()
     {
         $client = new Client();
-        Server::enqueue([new Response(200, ['Content-Length' => 0])]);
+        Server::enqueue([new Response(200, ['Content-Length' => '0'])]);
         $response = $client->get(Server::$url);
         self::assertSame(200, $response->getStatusCode());
     }
@@ -40,7 +40,7 @@ class ClientTest extends TestCase
     {
         $client = new Client();
         Server::flush();
-        Server::enqueue([new Response(200, ['Content-Length' => 2], 'hi')]);
+        Server::enqueue([new Response(200, ['Content-Length' => '2'], 'hi')]);
         $p = $client->getAsync(Server::$url, ['query' => ['test' => 'foo']]);
         self::assertInstanceOf(PromiseInterface::class, $p);
         self::assertSame(200, $p->wait()->getStatusCode());

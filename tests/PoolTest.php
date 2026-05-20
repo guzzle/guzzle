@@ -118,7 +118,7 @@ class PoolTest extends TestCase
             new Request('GET', 'http://foo.com/404'),
         ];
         $fn = static function (RequestInterface $request) {
-            return new Response(\substr($request->getUri()->getPath(), 1));
+            return new Response((int) \substr($request->getUri()->getPath(), 1));
         };
         $mock = new MockHandler([$fn, $fn, $fn, $fn]);
         $handler = HandlerStack::create($mock);
@@ -140,7 +140,7 @@ class PoolTest extends TestCase
         ];
         $mock = new MockHandler([
             static function (RequestInterface $request) {
-                return new Response(\substr($request->getUri()->getPath(), 1));
+                return new Response((int) \substr($request->getUri()->getPath(), 1));
             },
         ]);
         $client = new Client(['handler' => $mock]);
