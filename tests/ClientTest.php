@@ -51,25 +51,27 @@ class ClientTest extends TestCase
         self::assertSame(200, $r->getStatusCode());
     }
 
-    public function testEmptyProtocolVersionRequestOptionDefaultsToHttp11()
+    public function testRejectsEmptyProtocolVersionRequestOption()
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
 
-        $client->get('http://example.com', ['version' => '']);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('HTTP protocol version must not be empty.');
 
-        self::assertSame('1.1', $mock->getLastRequest()->getProtocolVersion());
+        $client->get('http://example.com', ['version' => '']);
     }
 
-    public function testEmptyRequestProtocolVersionDefaultsToHttp11()
+    public function testRejectsEmptyRequestProtocolVersion()
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $request = new Request('GET', 'http://example.com', [], null, '');
 
-        $client->send($request);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('HTTP protocol version must not be empty.');
 
-        self::assertSame('1.1', $mock->getLastRequest()->getProtocolVersion());
+        $client->send($request);
     }
 
     public function testClientHasOptions()
