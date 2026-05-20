@@ -709,24 +709,36 @@ class ClientTest extends TestCase
         );
     }
 
-    public function testThatVersionIsOverwrittenWhenSendingARequest()
+    /**
+     * @dataProvider versionProvider
+     */
+    public function testNormalizesVersionOption($version, string $expected)
     {
         $mockHandler = new MockHandler([new Response(), new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $request = new Request('get', '/bar', [], null, '1.1');
-        $client->send($request, [RequestOptions::VERSION => '1.0']);
+        $client->request('GET', 'http://example.com', [RequestOptions::VERSION => $version]);
         self::assertSame(
-            '1.0',
+            $expected,
             $mockHandler->getLastRequest()->getProtocolVersion()
         );
 
-        $request = new Request('get', '/bar', [], null, '1.0');
-        $client->send($request, [RequestOptions::VERSION => '1.1']);
+        $request = new Request('GET', 'http://example.com');
+        $client->send($request, [RequestOptions::VERSION => $version]);
         self::assertSame(
-            '1.1',
+            $expected,
             $mockHandler->getLastRequest()->getProtocolVersion()
         );
+    }
+
+    public static function versionProvider(): iterable
+    {
+        yield ['1.0', '1.0'];
+        yield [1.0, '1.0'];
+        yield ['1.1', '1.1'];
+        yield [1.1, '1.1'];
+        yield ['2', '2'];
+        yield [2.0, '2.0'];
     }
 
     public function testHandlerIsCallable()

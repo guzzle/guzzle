@@ -156,7 +156,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         // Remove request modifying parameter because it can be done up-front.
         $headers = $options['headers'] ?? [];
         $body = $options['body'] ?? null;
-        $version = $options['version'] ?? '1.1';
+        $version = self::normalizeProtocolVersion($options['version'] ?? '1.1');
         // Merge the URI into the base URI.
         $uri = $this->buildUri(Psr7\Utils::uriFor($uri), $options);
         if (\is_array($body)) {
@@ -440,7 +440,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (isset($options['version'])) {
-            $modify['version'] = $options['version'];
+            $modify['version'] = self::normalizeProtocolVersion($options['version']);
         }
 
         $request = Psr7\Utils::modifyRequest($request, $modify);
@@ -467,6 +467,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         return $request;
+    }
+
+    private static function normalizeProtocolVersion($version): string
+    {
+        return \is_float($version) ? \number_format($version, 1, '.', '') : (string) $version;
     }
 
     /**
