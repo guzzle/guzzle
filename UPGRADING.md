@@ -161,6 +161,20 @@ $client->request('GET', '/', [
 ]);
 ```
 
+#### CookieJar::clear null semantics
+
+`CookieJar::clear()` now treats only `null` as an omitted path or name.
+Previously, falsy path or name values such as `'0'` or `''` could be interpreted
+as omitted and clear a broader set of cookies than intended.
+
+If you call `clear()` to clear all cookies, continue passing no arguments:
+
+```php
+$jar->clear();
+```
+
+If you pass a path or name, that value is now treated as provided.
+
 6.0 to 7.0
 ----------
 

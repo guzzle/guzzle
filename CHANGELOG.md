@@ -19,6 +19,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Pass the request as the second argument to `on_headers` callbacks
 - Support retry delay callbacks with retry count only or full retry context
+- Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays
 - Reject invalid `HandlerStack::remove()` arguments
 - Raised the minimum supported libcurl version for the built-in cURL handlers to 7.34.0
