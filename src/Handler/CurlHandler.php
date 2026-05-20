@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * HTTP handler that uses cURL easy handles as a transport layer.
@@ -34,6 +35,9 @@ class CurlHandler
             ?? new CurlFactory(3);
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         if (isset($options['delay'])) {

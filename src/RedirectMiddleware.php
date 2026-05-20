@@ -35,18 +35,21 @@ class RedirectMiddleware
     ];
 
     /**
-     * @var callable(RequestInterface, array): PromiseInterface
+     * @var callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>
      */
     private $nextHandler;
 
     /**
-     * @param callable(RequestInterface, array): PromiseInterface $nextHandler Next handler to invoke.
+     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $nextHandler Next handler to invoke.
      */
     public function __construct(callable $nextHandler)
     {
         $this->nextHandler = $nextHandler;
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $fn = $this->nextHandler;
@@ -75,7 +78,7 @@ class RedirectMiddleware
     }
 
     /**
-     * @return ResponseInterface|PromiseInterface
+     * @return ResponseInterface|PromiseInterface<ResponseInterface, mixed>
      */
     public function checkRedirect(RequestInterface $request, array $options, ResponseInterface $response)
     {
@@ -120,6 +123,10 @@ class RedirectMiddleware
 
     /**
      * Enable tracking on promise.
+     *
+     * @param PromiseInterface<ResponseInterface, mixed> $promise
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     private function withTracking(PromiseInterface $promise, string $uri, int $statusCode): PromiseInterface
     {

@@ -140,6 +140,8 @@ trait ClientTrait
      * @param string              $method  HTTP method
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     abstract public function requestAsync(string $method, $uri, array $options = []): PromiseInterface;
 
@@ -153,6 +155,8 @@ trait ClientTrait
      *
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function getAsync($uri, array $options = []): PromiseInterface
     {
@@ -169,6 +173,8 @@ trait ClientTrait
      *
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function headAsync($uri, array $options = []): PromiseInterface
     {
@@ -185,6 +191,8 @@ trait ClientTrait
      *
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function putAsync($uri, array $options = []): PromiseInterface
     {
@@ -201,6 +209,8 @@ trait ClientTrait
      *
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function postAsync($uri, array $options = []): PromiseInterface
     {
@@ -217,6 +227,8 @@ trait ClientTrait
      *
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function patchAsync($uri, array $options = []): PromiseInterface
     {
@@ -233,6 +245,8 @@ trait ClientTrait
      *
      * @param string|UriInterface $uri     URI object or string.
      * @param array               $options Request options to apply.
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public function deleteAsync($uri, array $options = []): PromiseInterface
     {

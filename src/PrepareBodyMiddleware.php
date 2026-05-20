@@ -4,6 +4,7 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Prepares requests that contain a body, adding the Content-Length,
@@ -14,18 +15,21 @@ use Psr\Http\Message\RequestInterface;
 class PrepareBodyMiddleware
 {
     /**
-     * @var callable(RequestInterface, array): PromiseInterface
+     * @var callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>
      */
     private $nextHandler;
 
     /**
-     * @param callable(RequestInterface, array): PromiseInterface $nextHandler Next handler to invoke.
+     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $nextHandler Next handler to invoke.
      */
     public function __construct(callable $nextHandler)
     {
         $this->nextHandler = $nextHandler;
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $fn = $this->nextHandler;

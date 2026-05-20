@@ -77,6 +77,9 @@ class MockHandler implements \Countable
         }
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         if (!$this->queue) {
@@ -111,8 +114,9 @@ class MockHandler implements \Countable
             ? P\Create::rejectionFor($response)
             : P\Create::promiseFor($response);
 
-        return $response->then(
-            function (?ResponseInterface $value) use ($request, $options) {
+        $promise = $response->then(
+            function ($value) use ($request, $options) {
+                /** @var ResponseInterface|null $value */
                 $this->invokeStats($request, $options, $value);
                 if ($this->onFulfilled) {
                     ($this->onFulfilled)($value);
@@ -142,6 +146,9 @@ class MockHandler implements \Countable
                 return P\Create::rejectionFor($reason);
             }
         );
+
+        /** @var PromiseInterface<ResponseInterface, mixed> $promise */
+        return $promise;
     }
 
     /**

@@ -8,6 +8,7 @@ use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Returns an asynchronous response using curl_multi_* functions.
@@ -122,15 +123,19 @@ class CurlMultiHandler
         }
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $easy = $this->factory->create($request, $options);
         $id = (int) $easy->handle;
 
+        /** @var Promise<ResponseInterface, mixed> $promise */
         $promise = new Promise(
             [$this, 'execute'],
-            function () use ($id) {
-                return $this->cancel($id);
+            function () use ($id): void {
+                $this->cancel($id);
             }
         );
 

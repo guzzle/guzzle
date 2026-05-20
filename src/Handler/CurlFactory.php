@@ -5,12 +5,12 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise as P;
-use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -197,8 +197,10 @@ class CurlFactory implements CurlFactoryInterface
      * Completes a cURL transaction, either returning a response promise or a
      * rejected promise.
      *
-     * @param callable(RequestInterface, array): PromiseInterface $handler
-     * @param CurlFactoryInterface                                $factory Dictates how the handle is released
+     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
+     * @param CurlFactoryInterface                                                          $factory Dictates how the handle is released
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     public static function finish(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
@@ -213,13 +215,17 @@ class CurlFactory implements CurlFactoryInterface
         // Return the response if it is present and there is no error.
         $factory->release($easy);
 
+        /** @var ResponseInterface $response */
+        $response = $easy->response;
+
         // Rewind the body of the response if possible.
-        $body = $easy->response->getBody();
+        $body = $response->getBody();
         if ($body->isSeekable()) {
             $body->rewind();
         }
 
-        return new FulfilledPromise($easy->response);
+        /** @var PromiseInterface<ResponseInterface, mixed> */
+        return P\Create::promiseFor($response);
     }
 
     private static function invokeStats(EasyHandle $easy): void
@@ -245,7 +251,9 @@ class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @param callable(RequestInterface, array): PromiseInterface $handler
+     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
@@ -278,6 +286,9 @@ class CurlFactory implements CurlFactoryInterface
         return $ctx;
     }
 
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
     private static function createRejection(EasyHandle $easy, array $ctx): PromiseInterface
     {
         static $connectionErrors = [
@@ -289,6 +300,7 @@ class CurlFactory implements CurlFactoryInterface
         ];
 
         if ($easy->createResponseException) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor(
                 new RequestException(
                     'An error was encountered while creating the response',
@@ -303,6 +315,7 @@ class CurlFactory implements CurlFactoryInterface
         // If an exception was encountered during the onHeaders event, then
         // return a rejected promise that wraps that exception.
         if ($easy->onHeadersException) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor(
                 new RequestException(
                     'An error was encountered during the on_headers event',
@@ -337,6 +350,7 @@ class CurlFactory implements CurlFactoryInterface
             ? new ConnectException($message, $easy->request, null, $ctx)
             : new RequestException($message, $easy->request, $easy->response, null, $ctx);
 
+        /** @var PromiseInterface<ResponseInterface, mixed> */
         return P\Create::rejectionFor($error);
     }
 
@@ -747,7 +761,9 @@ class CurlFactory implements CurlFactoryInterface
      * error, causing the request to be sent through curl_multi_info_read()
      * without an error status.
      *
-     * @param callable(RequestInterface, array): PromiseInterface $handler
+     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
      */
     private static function retryFailedRewind(callable $handler, EasyHandle $easy, array $ctx): PromiseInterface
     {

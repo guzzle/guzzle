@@ -127,8 +127,8 @@ final class Middleware
      * before listener accepts a request and options array, and the after
      * listener accepts a request, options array, and response promise.
      *
-     * @param (callable(RequestInterface, array): mixed)|null                   $before Function to invoke before forwarding the request.
-     * @param (callable(RequestInterface, array, PromiseInterface): mixed)|null $after  Function invoked after forwarding.
+     * @param (callable(RequestInterface, array): mixed)|null                                             $before Function to invoke before forwarding the request.
+     * @param (callable(RequestInterface, array, PromiseInterface<ResponseInterface, mixed>): mixed)|null $after  Function invoked after forwarding.
      *
      * @return callable Returns a function that accepts the next handler.
      */
@@ -212,6 +212,9 @@ final class Middleware
 
                         return $response;
                     },
+                    /**
+                     * @return PromiseInterface<ResponseInterface, mixed>
+                     */
                     static function ($reason) use ($logger, $request, $formatter): PromiseInterface {
                         $response = $reason instanceof RequestException ? $reason->getResponse() : null;
                         $message = $formatter->format($request, $response, P\Create::exceptionFor($reason));
