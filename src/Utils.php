@@ -164,8 +164,7 @@ final class Utils
                 return true;
             }
 
-            if (empty($area)) {
-                // Don't match on empty values.
+            if ($area === '') {
                 continue;
             }
 
@@ -183,6 +182,52 @@ final class Utils
                 && \strpos($area, ':') === false
                 && \substr($host, -\strlen($area)) === $area
             ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if the provided URI matches any of the no proxy areas.
+     *
+     * @param array<array-key, mixed> $noProxyArray An array of host patterns.
+     *
+     * @internal
+     */
+    public static function isUriInNoProxy(UriInterface $uri, array $noProxyArray): bool
+    {
+        $host = $uri->getHost();
+        if ($host === '') {
+            return false;
+        }
+
+        $port = $uri->getPort();
+        if ($port === null) {
+            $port = self::getDefaultPort($uri->getScheme());
+        }
+
+        foreach ($noProxyArray as $area) {
+            if (!\is_string($area)) {
+                continue;
+            }
+
+            // Always match on wildcards.
+            if ($area === '*') {
+                return true;
+            }
+
+            if ($area === '') {
+                continue;
+            }
+
+            [$area, $areaPort] = self::splitNoProxyHostAndPort($area);
+            if ($areaPort !== null && $areaPort !== $port) {
+                continue;
+            }
+
+            if (self::isHostInNoProxy($host, [$area])) {
                 return true;
             }
         }
@@ -217,6 +262,69 @@ final class Utils
         }
 
         return $host;
+    }
+
+    /**
+     * @return array{0: string, 1: int|null}
+     */
+    private static function splitNoProxyHostAndPort(string $area): array
+    {
+        if ($area !== '' && $area[0] === '[') {
+            $closingBracket = \strpos($area, ']');
+
+            if ($closingBracket !== false) {
+                $tail = \substr($area, $closingBracket + 1);
+                if ($tail !== '' && $tail[0] === ':') {
+                    $port = self::parseNoProxyPort(\substr($tail, 1));
+
+                    if ($port !== null) {
+                        return [\substr($area, 0, $closingBracket + 1), $port];
+                    }
+                }
+            }
+
+            return [$area, null];
+        }
+
+        if (\filter_var($area, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6)) {
+            return [$area, null];
+        }
+
+        $colon = \strrpos($area, ':');
+        if ($colon === false) {
+            return [$area, null];
+        }
+
+        $port = self::parseNoProxyPort(\substr($area, $colon + 1));
+        if ($port === null) {
+            return [$area, null];
+        }
+
+        return [\substr($area, 0, $colon), $port];
+    }
+
+    private static function parseNoProxyPort(string $port): ?int
+    {
+        if ($port === '' || !\ctype_digit($port)) {
+            return null;
+        }
+
+        $port = (int) $port;
+
+        return $port <= 65535 ? $port : null;
+    }
+
+    private static function getDefaultPort(string $scheme): ?int
+    {
+        if ($scheme === 'http') {
+            return 80;
+        }
+
+        if ($scheme === 'https') {
+            return 443;
+        }
+
+        return null;
     }
 
     /**

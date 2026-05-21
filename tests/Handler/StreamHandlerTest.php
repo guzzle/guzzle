@@ -426,6 +426,28 @@ class StreamHandlerTest extends TestCase
         ];
     }
 
+    public function testAddsProxyButHonorsNoProxyPorts(): void
+    {
+        $proxy = [
+            'http' => 'http://proxy.example.com:8125',
+            'https' => 'http://proxy.example.com:8125',
+            'no' => ['example.com:80'],
+        ];
+
+        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://example.com')['http']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'https://example.com')['http']['proxy']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://example.com:8080')['http']['proxy']);
+
+        $proxy['no'] = ['.example.com:8080'];
+        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://foo.example.com:8080')['http']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://example.com:8080')['http']['proxy']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://foo.example.com:8081')['http']['proxy']);
+
+        $proxy['no'] = ['[::1]:8080'];
+        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://[::1]:8080')['http']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://[::1]:8081')['http']['proxy']);
+    }
+
     public function testUsesProxy(): void
     {
         $this->queueRes();

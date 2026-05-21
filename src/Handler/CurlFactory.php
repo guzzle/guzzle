@@ -621,9 +621,10 @@ class CurlFactory implements CurlFactoryInterface
                         throw new \InvalidArgumentException('proxy values must be strings');
                     }
 
-                    $host = $easy->request->getUri()->getHost();
+                    $uri = $easy->request->getUri();
+                    $host = $uri->getHost();
                     $noProxy = isset($proxy['no']) ? Utils::normalizeNoProxy($proxy['no']) : [];
-                    if ($noProxy !== [] && Utils::isHostInNoProxy($host, $noProxy)) {
+                    if ($noProxy !== [] && Utils::isUriInNoProxy($uri, $noProxy)) {
                         $conf[\CURLOPT_PROXY] = '';
                         $conf[\CURLOPT_NOPROXY] = $host;
                     } else {

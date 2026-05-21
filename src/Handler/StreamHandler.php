@@ -516,7 +516,7 @@ class StreamHandler
                 }
 
                 $noProxy = isset($value['no']) ? Utils::normalizeNoProxy($value['no']) : [];
-                if ($noProxy === [] || !Utils::isHostInNoProxy($request->getUri()->getHost(), $noProxy)) {
+                if ($noProxy === [] || !Utils::isUriInNoProxy($request->getUri(), $noProxy)) {
                     $uri = $value[$scheme];
                 }
             }
