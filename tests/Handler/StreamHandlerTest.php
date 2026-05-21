@@ -11,6 +11,7 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
+use GuzzleHttp\Tests\Helpers;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
@@ -57,10 +58,28 @@ class StreamHandlerTest extends TestCase
         $this->queueRes();
         $handler = new StreamHandler();
 
-        $response = $handler(new Request('GET', Server::$url, [], null, ''), [])->wait();
+        $response = $handler(Helpers::requestWithProtocolVersion('', Server::$url), [])->wait();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('1.1', Server::received()[0]->getProtocolVersion());
+    }
+
+    public function testMalformedProtocolVersionIsDeprecated()
+    {
+        $handler = new StreamHandler();
+
+        $deprecations = Helpers::captureDeprecations(static function () use ($handler): void {
+            try {
+                $handler(Helpers::requestWithProtocolVersion('HTTP/1.1', Server::$url), []);
+                self::fail('Expected ConnectException.');
+            } catch (ConnectException $e) {
+                self::assertStringContainsString('is not supported by the stream handler', $e->getMessage());
+            }
+        });
+
+        self::assertSame([
+            'Since guzzlehttp/guzzle 7.11: Sending a request with a malformed protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject malformed protocol versions.',
+        ], $deprecations);
     }
 
     public function testAddsErrorToResponse()

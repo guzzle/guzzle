@@ -266,6 +266,8 @@ final class RequestOptions
 
     /**
      * version: (string|float) Specifies the HTTP protocol version to attempt to use.
+     * The value must be an HTTP version number such as "1.1", "2", or "2.0".
+     * Do not include the "HTTP/" prefix.
      */
     public const VERSION = 'version';
 

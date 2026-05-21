@@ -72,11 +72,60 @@ class ClientTest extends TestCase
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
-        $request = new Request('GET', 'http://example.com', [], null, '');
+        $request = Helpers::requestWithProtocolVersion('');
 
         $client->send($request);
 
         self::assertSame('1.1', $mock->getLastRequest()->getProtocolVersion());
+    }
+
+    /**
+     * @dataProvider malformedProtocolVersionProvider
+     *
+     * @param string $version
+     */
+    public function testMalformedProtocolVersionRequestOptionIsDeprecated($version)
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $deprecations = Helpers::captureDeprecations(static function () use ($client, $version): void {
+            $client->get('http://example.com', ['version' => $version]);
+        });
+
+        self::assertSame([
+            'Since guzzlehttp/guzzle 7.11: Sending a request with a malformed protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject malformed protocol versions.',
+        ], $deprecations);
+    }
+
+    /**
+     * @dataProvider malformedProtocolVersionProvider
+     *
+     * @param string $version
+     */
+    public function testMalformedRequestProtocolVersionIsDeprecated($version)
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $deprecations = Helpers::captureDeprecations(static function () use ($client, $version): void {
+            $client->send(Helpers::requestWithProtocolVersion($version));
+        });
+
+        self::assertSame([
+            'Since guzzlehttp/guzzle 7.11: Sending a request with a malformed protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject malformed protocol versions.',
+        ], $deprecations);
+    }
+
+    public static function malformedProtocolVersionProvider(): iterable
+    {
+        yield ['HTTP/1.1'];
+        yield ['1.1 '];
+        yield [' 1.1'];
+        yield ['1.'];
+        yield ['.1'];
+        yield ['1.1.1'];
+        yield ['foo'];
     }
 
     public function testClientHasOptions()

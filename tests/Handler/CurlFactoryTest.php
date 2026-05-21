@@ -586,9 +586,28 @@ class CurlFactoryTest extends TestCase
         Server::flush();
         Server::enqueue([new Psr7\Response()]);
         $a = new Handler\CurlMultiHandler();
-        $request = new Psr7\Request('GET', Server::$url, [], null, '');
+        $request = Helpers::requestWithProtocolVersion('', Server::$url);
         $a($request, []);
         self::assertEquals(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+    }
+
+    public function testMalformedProtocolVersionIsDeprecated()
+    {
+        $factory = new CurlFactory(3);
+        $request = Helpers::requestWithProtocolVersion('HTTP/1.1', Server::$url);
+
+        $deprecations = Helpers::captureDeprecations(static function () use ($factory, $request): void {
+            try {
+                $factory->create($request, []);
+                self::fail('Expected ConnectException.');
+            } catch (ConnectException $e) {
+                self::assertStringContainsString('is not supported by the cURL handler', $e->getMessage());
+            }
+        });
+
+        self::assertSame([
+            'Since guzzlehttp/guzzle 7.11: Sending a request with a malformed protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject malformed protocol versions.',
+        ], $deprecations);
     }
 
     public function testSavesToStream()

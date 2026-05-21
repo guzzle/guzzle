@@ -1024,3 +1024,5 @@ Constant
 // Force HTTP/1.0
 $request = $client->request('GET', '/get', ['version' => 1.0]);
 ```
+
+The value must be an HTTP version number such as `1.1`, `2`, or `2.0`. Do not include the `HTTP/` prefix. Empty and malformed protocol versions are deprecated in Guzzle 7.11 and will be rejected in Guzzle 8.
