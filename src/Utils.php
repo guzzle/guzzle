@@ -270,7 +270,7 @@ EOT
                 $tail = \substr($host, $closingBracket + 1);
 
                 if (
-                    ($tail === '' || \preg_match('/^:\d+$/', $tail))
+                    ($tail === '' || ($stripPort && \preg_match('/^:\d+$/', $tail)))
                     && \filter_var($address, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6)
                 ) {
                     return \strtolower($address);
