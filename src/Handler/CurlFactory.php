@@ -50,6 +50,10 @@ class CurlFactory implements CurlFactoryInterface
             throw new ConnectException('HTTP protocol version must not be empty.', $request);
         }
 
+        if (1 !== \preg_match('/^\d+(?:\.\d+)?$/D', $protocolVersion)) {
+            throw new ConnectException('HTTP protocol version must be a valid HTTP version number.', $request);
+        }
+
         if ('3' === $protocolVersion || '3.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp3()) {
                 throw new ConnectException('HTTP/3 is supported by the cURL handler, however the installed PHP cURL extension or libcurl does not support HTTP/3.', $request);

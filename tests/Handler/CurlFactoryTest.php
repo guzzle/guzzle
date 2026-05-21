@@ -15,6 +15,7 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -650,10 +651,21 @@ class CurlFactoryTest extends TestCase
     public function testRejectsEmptyProtocolVersion(): void
     {
         $factory = new CurlFactory(3);
-        $request = new Psr7\Request('GET', Server::$url, [], null, '');
+        $request = self::requestWithProtocolVersion('');
 
         $this->expectException(ConnectException::class);
         $this->expectExceptionMessage('HTTP protocol version must not be empty.');
+
+        $factory->create($request, []);
+    }
+
+    public function testRejectsMalformedProtocolVersion(): void
+    {
+        $factory = new CurlFactory(3);
+        $request = self::requestWithProtocolVersion('HTTP/1.1');
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('HTTP protocol version must be a valid HTTP version number.');
 
         $factory->create($request, []);
     }
@@ -1372,5 +1384,37 @@ class CurlFactoryTest extends TestCase
         }, null, CurlFactory::class);
 
         return $readHandles($factory);
+    }
+
+    private static function requestWithProtocolVersion(string $protocolVersion): RequestInterface
+    {
+        return new class($protocolVersion) extends Psr7\Request {
+            /** @var string */
+            private $protocolVersion;
+
+            public function __construct(string $protocolVersion)
+            {
+                parent::__construct('GET', Server::$url);
+
+                $this->protocolVersion = $protocolVersion;
+            }
+
+            public function getProtocolVersion(): string
+            {
+                return $this->protocolVersion;
+            }
+
+            public function withProtocolVersion(string $version): MessageInterface
+            {
+                if ($this->protocolVersion === $version) {
+                    return $this;
+                }
+
+                $new = clone $this;
+                $new->protocolVersion = $version;
+
+                return $new;
+            }
+        };
     }
 }

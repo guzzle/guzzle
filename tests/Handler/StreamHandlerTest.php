@@ -16,6 +16,7 @@ use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -62,7 +63,17 @@ class StreamHandlerTest extends TestCase
         $this->expectException(ConnectException::class);
         $this->expectExceptionMessage('HTTP protocol version must not be empty.');
 
-        $handler(new Request('GET', Server::$url, [], null, ''), []);
+        $handler(self::requestWithProtocolVersion(''), []);
+    }
+
+    public function testRejectsMalformedProtocolVersion(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('HTTP protocol version must be a valid HTTP version number.');
+
+        $handler(self::requestWithProtocolVersion('HTTP/1.1'), []);
     }
 
     public function testAddsErrorToResponse(): void
@@ -1134,5 +1145,37 @@ class StreamHandlerTest extends TestCase
                 RequestOptions::STREAM => true,
             ]
         )->wait();
+    }
+
+    private static function requestWithProtocolVersion(string $protocolVersion): RequestInterface
+    {
+        return new class($protocolVersion) extends Request {
+            /** @var string */
+            private $protocolVersion;
+
+            public function __construct(string $protocolVersion)
+            {
+                parent::__construct('GET', Server::$url);
+
+                $this->protocolVersion = $protocolVersion;
+            }
+
+            public function getProtocolVersion(): string
+            {
+                return $this->protocolVersion;
+            }
+
+            public function withProtocolVersion(string $version): MessageInterface
+            {
+                if ($this->protocolVersion === $version) {
+                    return $this;
+                }
+
+                $new = clone $this;
+                $new->protocolVersion = $version;
+
+                return $new;
+            }
+        };
     }
 }
