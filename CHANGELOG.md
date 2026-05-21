@@ -10,6 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
 - Add generic PHPDoc annotations to async HTTP and handler APIs
 - Add CIDR notation support for IP no-proxy rules
+- Add network and timeout exception types
 
 ### Changed
 
@@ -37,6 +38,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Apply the stream handler `crypto_method` option through the SSL context so it consistently controls the minimum TLS version
 - Validate built-in handler timeout options before applying them
 - Reject empty or malformed request protocol versions
+- Throw `TimeoutException` for reliably detected transfer timeouts
 
 ### Removed
 

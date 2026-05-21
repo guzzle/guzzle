@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
@@ -85,14 +86,16 @@ class StreamHandler
             // Determine if the error was a networking error.
             $message = $e->getMessage();
             // This list can probably get more comprehensive.
-            if (false !== \strpos($message, 'getaddrinfo') // DNS lookup failed
-                || false !== \strpos($message, 'Connection refused')
-                || false !== \strpos($message, "couldn't connect to host") // error on HHVM
-                || false !== \strpos($message, 'connection attempt failed')
-            ) {
-                $e = new ConnectException($e->getMessage(), $request, $e);
-            } else {
-                $e = RequestException::wrapException($request, $e);
+            if (!$e instanceof ConnectException) {
+                if (false !== \strpos($message, 'getaddrinfo') // DNS lookup failed
+                    || false !== \strpos($message, 'Connection refused')
+                    || false !== \strpos($message, "couldn't connect to host") // error on HHVM
+                    || false !== \strpos($message, 'connection attempt failed')
+                ) {
+                    $e = new ConnectException($e->getMessage(), $request, $e);
+                } else {
+                    $e = RequestException::wrapException($request, $e);
+                }
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
 
@@ -158,7 +161,7 @@ class StreamHandler
         // Do not drain when the request is a HEAD request because they have
         // no body.
         if ($sink !== $stream) {
-            $this->drain($stream, $sink, $response->getHeaderLine('Content-Length'));
+            $this->drain($request, $stream, $sink, $response->getHeaderLine('Content-Length'));
         }
 
         $this->invokeStats($options, $request, $startTime, $response, null);
@@ -242,17 +245,43 @@ class StreamHandler
      *
      * @throws \RuntimeException when the sink option is invalid.
      */
-    private function drain(StreamInterface $source, StreamInterface $sink, string $contentLength): StreamInterface
-    {
+    private function drain(
+        RequestInterface $request,
+        StreamInterface $source,
+        StreamInterface $sink,
+        string $contentLength
+    ): StreamInterface {
         // If a content-length header is provided, then stop reading once
         // that number of bytes has been read. This can prevent infinitely
         // reading from a stream when dealing with servers that do not honor
         // Connection: Close headers.
-        Psr7\Utils::copyToStream(
-            $source,
-            $sink,
-            (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
-        );
+        try {
+            Psr7\Utils::copyToStream(
+                $source,
+                $sink,
+                (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
+            );
+        } catch (\RuntimeException $e) {
+            if ($source->getMetadata('timed_out') === true) {
+                throw new TimeoutException(
+                    'The stream handler timed out while reading the response body',
+                    $request,
+                    $e,
+                    ['timed_out' => true]
+                );
+            }
+
+            throw $e;
+        }
+
+        if ($source->getMetadata('timed_out') === true) {
+            throw new TimeoutException(
+                'The stream handler timed out while reading the response body',
+                $request,
+                null,
+                ['timed_out' => true]
+            );
+        }
 
         $sink->seek(0);
         $source->close();
