@@ -13,11 +13,11 @@ use PHPUnit\Framework\TestCase;
 
 class HandlerStackTest extends TestCase
 {
-    public function testSetsHandlerInCtor()
+    public function testSetsHandlerInCtor(): void
     {
-        $f = static function () {
+        $f = static function (): void {
         };
-        $m1 = static function () {
+        $m1 = static function (): void {
         };
         $h = new HandlerStack($f, [$m1]);
         self::assertTrue($h->hasHandler());
@@ -26,16 +26,16 @@ class HandlerStackTest extends TestCase
     /**
      * @doesNotPerformAssertions
      */
-    public function testCanSetDifferentHandlerAfterConstruction()
+    public function testCanSetDifferentHandlerAfterConstruction(): void
     {
-        $f = static function () {
+        $f = static function (): void {
         };
         $h = new HandlerStack();
         $h->setHandler($f);
         $h->resolve();
     }
 
-    public function testEnsuresHandlerIsSet()
+    public function testEnsuresHandlerIsSet(): void
     {
         $this->expectException(\LogicException::class);
 
@@ -43,7 +43,7 @@ class HandlerStackTest extends TestCase
         $h->resolve();
     }
 
-    public function testPushInOrder()
+    public function testPushInOrder(): void
     {
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
@@ -59,7 +59,7 @@ class HandlerStackTest extends TestCase
         );
     }
 
-    public function testUnshiftsInReverseOrder()
+    public function testUnshiftsInReverseOrder(): void
     {
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
@@ -75,7 +75,7 @@ class HandlerStackTest extends TestCase
         );
     }
 
-    public function testCanRemoveMiddlewareByInstance()
+    public function testCanRemoveMiddlewareByInstance(): void
     {
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
@@ -90,7 +90,7 @@ class HandlerStackTest extends TestCase
         self::assertSame('Hello - test1131', $composed('test'));
     }
 
-    public function testCanRemoveMiddlewareByCallableStringName()
+    public function testCanRemoveMiddlewareByCallableStringName(): void
     {
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
@@ -104,10 +104,10 @@ class HandlerStackTest extends TestCase
         self::assertSame([], $meths[0]);
     }
 
-    public function testCanRemoveMiddlewareByCallableStringInstance()
+    public function testCanRemoveMiddlewareByCallableStringInstance(): void
     {
         $builder = new HandlerStack();
-        $builder->setHandler(static function ($value) {
+        $builder->setHandler(static function (string $value): string {
             return 'Hello - '.$value;
         });
         $builder->push(__CLASS__.'::addSuffixMiddleware');
@@ -118,7 +118,7 @@ class HandlerStackTest extends TestCase
         self::assertSame('Hello - test', $composed('test'));
     }
 
-    public function testRemovePrefersNameWhenStringIsAlsoCallable()
+    public function testRemovePrefersNameWhenStringIsAlsoCallable(): void
     {
         $meths = $this->getFunctions();
         $name = __CLASS__.'::addSuffixMiddleware';
@@ -135,7 +135,7 @@ class HandlerStackTest extends TestCase
         self::assertSame([], $meths[0]);
     }
 
-    public function testCanPrintMiddleware()
+    public function testCanPrintMiddleware(): void
     {
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
@@ -156,7 +156,7 @@ class HandlerStackTest extends TestCase
         self::assertStringContainsString("< 4) Name: 'a', Function: callable(", $lines[8]);
     }
 
-    public function testCanAddBeforeByName()
+    public function testCanAddBeforeByName(): void
     {
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
@@ -172,16 +172,16 @@ class HandlerStackTest extends TestCase
         self::assertStringContainsString('> 1) Name: \'foo\'', $lines[3]);
     }
 
-    public function testEnsuresHandlerExistsByName()
+    public function testEnsuresHandlerExistsByName(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
         $builder = new HandlerStack();
-        $builder->before('foo', static function () {
+        $builder->before('foo', static function (): void {
         });
     }
 
-    public function testCanAddAfterByName()
+    public function testCanAddAfterByName(): void
     {
         $meths = $this->getFunctions();
         $builder = new HandlerStack();
@@ -197,7 +197,7 @@ class HandlerStackTest extends TestCase
         self::assertStringContainsString('1) Name: \'d\'', $lines[3]);
     }
 
-    public function testPicksUpCookiesFromRedirects()
+    public function testPicksUpCookiesFromRedirects(): void
     {
         $mock = new MockHandler([
             new Response(301, [
@@ -219,53 +219,56 @@ class HandlerStackTest extends TestCase
         self::assertSame('foo=bar', $lastRequest->getHeaderLine('Cookie'));
     }
 
-    private function getFunctions()
+    /**
+     * @return array{0: array<int, array{string, string}>, 1: callable, 2: callable, 3: callable, 4: callable}
+     */
+    private function getFunctions(): array
     {
         $calls = [];
 
-        $a = static function (callable $next) use (&$calls) {
-            return static function ($v) use ($next, &$calls) {
+        $a = static function (callable $next) use (&$calls): callable {
+            return static function (string $v) use ($next, &$calls): string {
                 $calls[] = ['a', $v];
 
                 return $next($v.'1');
             };
         };
 
-        $b = static function (callable $next) use (&$calls) {
-            return static function ($v) use ($next, &$calls) {
+        $b = static function (callable $next) use (&$calls): callable {
+            return static function (string $v) use ($next, &$calls): string {
                 $calls[] = ['b', $v];
 
                 return $next($v.'2');
             };
         };
 
-        $c = static function (callable $next) use (&$calls) {
-            return static function ($v) use ($next, &$calls) {
+        $c = static function (callable $next) use (&$calls): callable {
+            return static function (string $v) use ($next, &$calls): string {
                 $calls[] = ['c', $v];
 
                 return $next($v.'3');
             };
         };
 
-        $handler = static function ($v) {
+        $handler = static function (string $v): string {
             return 'Hello - '.$v;
         };
 
         return [&$calls, $handler, $a, $b, $c];
     }
 
-    public static function foo()
+    public static function foo(): void
     {
     }
 
-    public static function addSuffixMiddleware(callable $handler)
+    public static function addSuffixMiddleware(callable $handler): callable
     {
-        return static function ($value) use ($handler) {
+        return static function (string $value) use ($handler): string {
             return $handler($value.'x');
         };
     }
 
-    public function bar()
+    public function bar(): void
     {
     }
 }

@@ -9,19 +9,20 @@ use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\Proxy
  */
 class ProxyTest extends TestCase
 {
-    public function testSendsToNonSync()
+    public function testSendsToNonSync(): void
     {
         $a = $b = null;
-        $m1 = new MockHandler([static function ($v) use (&$a) {
+        $m1 = new MockHandler([static function (RequestInterface $v, array $options) use (&$a): void {
             $a = $v;
         }]);
-        $m2 = new MockHandler([static function ($v) use (&$b) {
+        $m2 = new MockHandler([static function (RequestInterface $v, array $options) use (&$b): void {
             $b = $v;
         }]);
         $h = Proxy::wrapSync($m1, $m2);
@@ -30,13 +31,13 @@ class ProxyTest extends TestCase
         self::assertNull($b);
     }
 
-    public function testSendsToSync()
+    public function testSendsToSync(): void
     {
         $a = $b = null;
-        $m1 = new MockHandler([static function ($v) use (&$a) {
+        $m1 = new MockHandler([static function (RequestInterface $v, array $options) use (&$a): void {
             $a = $v;
         }]);
-        $m2 = new MockHandler([static function ($v) use (&$b) {
+        $m2 = new MockHandler([static function (RequestInterface $v, array $options) use (&$b): void {
             $b = $v;
         }]);
         $h = Proxy::wrapSync($m1, $m2);
@@ -45,13 +46,13 @@ class ProxyTest extends TestCase
         self::assertNotNull($b);
     }
 
-    public function testSendsToStreaming()
+    public function testSendsToStreaming(): void
     {
         $a = $b = null;
-        $m1 = new MockHandler([static function ($v) use (&$a) {
+        $m1 = new MockHandler([static function (RequestInterface $v, array $options) use (&$a): void {
             $a = $v;
         }]);
-        $m2 = new MockHandler([static function ($v) use (&$b) {
+        $m2 = new MockHandler([static function (RequestInterface $v, array $options) use (&$b): void {
             $b = $v;
         }]);
         $h = Proxy::wrapStreaming($m1, $m2);
@@ -60,13 +61,13 @@ class ProxyTest extends TestCase
         self::assertNull($b);
     }
 
-    public function testSendsToNonStreaming()
+    public function testSendsToNonStreaming(): void
     {
         $a = $b = null;
-        $m1 = new MockHandler([static function ($v) use (&$a) {
+        $m1 = new MockHandler([static function (RequestInterface $v, array $options) use (&$a): void {
             $a = $v;
         }]);
-        $m2 = new MockHandler([static function ($v) use (&$b) {
+        $m2 = new MockHandler([static function (RequestInterface $v, array $options) use (&$b): void {
             $b = $v;
         }]);
         $h = Proxy::wrapStreaming($m1, $m2);

@@ -19,7 +19,7 @@ use Psr\Http\Client\RequestExceptionInterface;
  */
 class RequestExceptionTest extends TestCase
 {
-    public function testHasRequestAndResponse()
+    public function testHasRequestAndResponse(): void
     {
         $req = new Request('GET', '/');
         $res = new Response(200);
@@ -32,14 +32,14 @@ class RequestExceptionTest extends TestCase
         self::assertSame('foo', $e->getMessage());
     }
 
-    public function testCreatesGenerateException()
+    public function testCreatesGenerateException(): void
     {
         $e = RequestException::create(new Request('GET', '/'));
         self::assertSame('Error completing request', $e->getMessage());
         self::assertInstanceOf(RequestException::class, $e);
     }
 
-    public function testCreatesClientErrorResponseException()
+    public function testCreatesClientErrorResponseException(): void
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(400));
         self::assertStringContainsString(
@@ -53,7 +53,7 @@ class RequestExceptionTest extends TestCase
         self::assertInstanceOf(ClientException::class, $e);
     }
 
-    public function testCreatesServerErrorResponseException()
+    public function testCreatesServerErrorResponseException(): void
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(500));
         self::assertStringContainsString(
@@ -67,7 +67,7 @@ class RequestExceptionTest extends TestCase
         self::assertInstanceOf(ServerException::class, $e);
     }
 
-    public function testCreatesGenericErrorResponseException()
+    public function testCreatesGenericErrorResponseException(): void
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(300));
         self::assertStringContainsString(
@@ -81,7 +81,7 @@ class RequestExceptionTest extends TestCase
         self::assertInstanceOf(RequestException::class, $e);
     }
 
-    public function testThrowsInvalidArgumentExceptionOnOutOfBoundsResponseCode()
+    public function testThrowsInvalidArgumentExceptionOnOutOfBoundsResponseCode(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Status code must be an integer value between 1xx and 5xx.');
@@ -89,7 +89,7 @@ class RequestExceptionTest extends TestCase
         throw RequestException::create(new Request('GET', '/'), new Response(600));
     }
 
-    public static function dataPrintableResponses()
+    public static function dataPrintableResponses(): array
     {
         return [
             ['You broke the test!'],
@@ -104,7 +104,7 @@ class RequestExceptionTest extends TestCase
     /**
      * @dataProvider dataPrintableResponses
      */
-    public function testCreatesExceptionWithPrintableBodySummary($content)
+    public function testCreatesExceptionWithPrintableBodySummary(string $content): void
     {
         $response = new Response(
             500,
@@ -119,7 +119,7 @@ class RequestExceptionTest extends TestCase
         self::assertInstanceOf(RequestException::class, $e);
     }
 
-    public function testCreatesExceptionWithTruncatedSummary()
+    public function testCreatesExceptionWithTruncatedSummary(): void
     {
         $content = \str_repeat('+', 121);
         $response = new Response(500, [], $content);
@@ -128,19 +128,19 @@ class RequestExceptionTest extends TestCase
         self::assertStringContainsString($expected, $e->getMessage());
     }
 
-    public function testExceptionMessageIgnoresEmptyBody()
+    public function testExceptionMessageIgnoresEmptyBody(): void
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(500));
         self::assertStringEndsWith('response', $e->getMessage());
     }
 
-    public function testHasStatusCodeAsExceptionCode()
+    public function testHasStatusCodeAsExceptionCode(): void
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(442));
         self::assertSame(442, $e->getCode());
     }
 
-    public function testWrapsRequestExceptions()
+    public function testWrapsRequestExceptions(): void
     {
         $e = new \Exception('foo');
         $r = new Request('GET', 'http://www.oo.com');
@@ -149,7 +149,7 @@ class RequestExceptionTest extends TestCase
         self::assertSame($e, $ex->getPrevious());
     }
 
-    public function testDoesNotWrapExistingRequestExceptions()
+    public function testDoesNotWrapExistingRequestExceptions(): void
     {
         $r = new Request('GET', 'http://www.oo.com');
         $e = new RequestException('foo', $r);
@@ -157,21 +157,21 @@ class RequestExceptionTest extends TestCase
         self::assertSame($e, $e2);
     }
 
-    public function testCanProvideHandlerContext()
+    public function testCanProvideHandlerContext(): void
     {
         $r = new Request('GET', 'http://www.oo.com');
         $e = new RequestException('foo', $r, null, null, ['bar' => 'baz']);
         self::assertSame(['bar' => 'baz'], $e->getHandlerContext());
     }
 
-    public function testObfuscateUrlWithUsername()
+    public function testObfuscateUrlWithUsername(): void
     {
         $r = new Request('GET', 'http://username@www.oo.com');
         $e = RequestException::create($r, new Response(500));
         self::assertStringContainsString('http://username@www.oo.com', $e->getMessage());
     }
 
-    public function testObfuscateUrlWithUsernameAndPassword()
+    public function testObfuscateUrlWithUsernameAndPassword(): void
     {
         $r = new Request('GET', 'http://user:password@www.oo.com');
         $e = RequestException::create($r, new Response(500));

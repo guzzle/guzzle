@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 class InternalUtilsTest extends TestCase
 {
-    public function testCurrentTime()
+    public function testCurrentTime(): void
     {
         self::assertGreaterThan(0, Utils::currentTime());
     }
@@ -18,7 +18,7 @@ class InternalUtilsTest extends TestCase
     /**
      * @requires extension idn
      */
-    public function testIdnConvert()
+    public function testIdnConvert(): void
     {
         $uri = Psr7\Utils::uriFor('https://яндекс.рф/images');
         $uri = Utils::idnUriConvert($uri);

@@ -15,7 +15,7 @@ use Psr\Http\Client\RequestExceptionInterface;
  */
 class ConnectExceptionTest extends TestCase
 {
-    public function testHasRequest()
+    public function testHasRequest(): void
     {
         $req = new Request('GET', '/');
         $prev = new \Exception();

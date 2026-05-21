@@ -14,27 +14,31 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class PrepareBodyMiddlewareTest extends TestCase
 {
-    public static function methodProvider()
+    public static function methodProvider(): array
     {
+        $cases = [];
         $methods = ['GET', 'PUT', 'POST'];
         $bodies = ['Test', ''];
         foreach ($methods as $method) {
             foreach ($bodies as $body) {
-                yield [$method, $body];
+                $cases[] = [$method, $body];
             }
         }
+
+        return $cases;
     }
 
     /**
      * @dataProvider methodProvider
      */
-    public function testAddsContentLengthWhenMissingAndPossible($method, $body)
+    public function testAddsContentLengthWhenMissingAndPossible(string $method, string $body): void
     {
         $h = new MockHandler([
-            static function (RequestInterface $request) use ($body) {
+            static function (RequestInterface $request) use ($body): ResponseInterface {
                 $length = \strlen($body);
                 if ($length > 0) {
                     self::assertSame((string) $length, $request->getHeaderLine('Content-Length'));
@@ -55,10 +59,10 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testPreservesCustomRequestWhenAddingContentLength()
+    public function testPreservesCustomRequestWhenAddingContentLength(): void
     {
         $h = new MockHandler([
-            static function (RequestInterface $request) {
+            static function (RequestInterface $request): ResponseInterface {
                 self::assertInstanceOf(PrepareBodyTestRequest::class, $request);
                 self::assertSame('7', $request->getHeaderLine('Content-Length'));
 
@@ -75,15 +79,15 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testAddsTransferEncodingWhenNoContentLength()
+    public function testAddsTransferEncodingWhenNoContentLength(): void
     {
         $body = FnStream::decorate(Psr7\Utils::streamFor('foo'), [
-            'getSize' => static function () {
+            'getSize' => static function (): ?int {
                 return null;
             },
         ]);
         $h = new MockHandler([
-            static function (RequestInterface $request) {
+            static function (RequestInterface $request): ResponseInterface {
                 self::assertFalse($request->hasHeader('Content-Length'));
                 self::assertSame('chunked', $request->getHeaderLine('Transfer-Encoding'));
 
@@ -100,11 +104,11 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testAddsContentTypeWhenMissingAndPossible()
+    public function testAddsContentTypeWhenMissingAndPossible(): void
     {
         $bd = Psr7\Utils::streamFor(\fopen(__DIR__.'/../composer.json', 'r'));
         $h = new MockHandler([
-            static function (RequestInterface $request) {
+            static function (RequestInterface $request): ResponseInterface {
                 self::assertSame('application/json', $request->getHeaderLine('Content-Type'));
                 self::assertTrue($request->hasHeader('Content-Length'));
 
@@ -121,7 +125,7 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public static function expectProvider()
+    public static function expectProvider(): array
     {
         return [
             [true, ['100-Continue']],
@@ -133,13 +137,16 @@ class PrepareBodyMiddlewareTest extends TestCase
 
     /**
      * @dataProvider expectProvider
+     *
+     * @param bool|int $value
+     * @param string[] $result
      */
-    public function testAddsExpect($value, $result)
+    public function testAddsExpect($value, array $result): void
     {
         $bd = Psr7\Utils::streamFor(\fopen(__DIR__.'/../composer.json', 'r'));
 
         $h = new MockHandler([
-            static function (RequestInterface $request) use ($result) {
+            static function (RequestInterface $request) use ($result): ResponseInterface {
                 self::assertSame($result, $request->getHeader('Expect'));
 
                 return new Response(200);
@@ -158,7 +165,7 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public static function noExpectProtocolProvider()
+    public static function noExpectProtocolProvider(): array
     {
         return [
             ['1.0'],
@@ -172,12 +179,12 @@ class PrepareBodyMiddlewareTest extends TestCase
     /**
      * @dataProvider noExpectProtocolProvider
      */
-    public function testDoesNotAddExpectForProtocolsThatDoNotSupportIt(string $protocolVersion)
+    public function testDoesNotAddExpectForProtocolsThatDoNotSupportIt(string $protocolVersion): void
     {
         $bd = Psr7\Utils::streamFor(\fopen(__DIR__.'/../composer.json', 'r'));
 
         $h = new MockHandler([
-            static function (RequestInterface $request) {
+            static function (RequestInterface $request): ResponseInterface {
                 self::assertFalse($request->hasHeader('Expect'));
 
                 return new Response(200);
@@ -196,10 +203,10 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testPreservesCustomRequestWhenAddingExpect()
+    public function testPreservesCustomRequestWhenAddingExpect(): void
     {
         $h = new MockHandler([
-            static function (RequestInterface $request) {
+            static function (RequestInterface $request): ResponseInterface {
                 self::assertInstanceOf(PrepareBodyTestRequest::class, $request);
                 self::assertSame('100-Continue', $request->getHeaderLine('Expect'));
 
@@ -220,11 +227,11 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testIgnoresIfExpectIsPresent()
+    public function testIgnoresIfExpectIsPresent(): void
     {
         $bd = Psr7\Utils::streamFor(\fopen(__DIR__.'/../composer.json', 'r'));
         $h = new MockHandler([
-            static function (RequestInterface $request) {
+            static function (RequestInterface $request): ResponseInterface {
                 self::assertSame(['Foo'], $request->getHeader('Expect'));
 
                 return new Response(200);

@@ -18,17 +18,14 @@ use PHPUnit\Framework\TestCase;
  */
 class CookieJarTest extends TestCase
 {
-    /**
-     * @var CookieJar
-     */
-    private $jar;
+    private CookieJar $jar;
 
     public function setUp(): void
     {
         $this->jar = new CookieJar();
     }
 
-    protected function getTestCookies()
+    protected function getTestCookies(): array
     {
         return [
             new SetCookie(['Name' => 'foo',  'Value' => 'bar', 'Domain' => 'foo.com', 'Path' => '/',    'Discard' => true]),
@@ -37,7 +34,7 @@ class CookieJarTest extends TestCase
         ];
     }
 
-    public function testCreatesFromArray()
+    public function testCreatesFromArray(): void
     {
         $jar = CookieJar::fromArray([
             'foo' => 'bar',
@@ -69,12 +66,12 @@ class CookieJarTest extends TestCase
         CookieJar::fromArray(['foo' => []], 'example.com');
     }
 
-    public function testEmptyJarIsCountable()
+    public function testEmptyJarIsCountable(): void
     {
         self::assertCount(0, new CookieJar());
     }
 
-    public function testGetsCookiesByName()
+    public function testGetsCookiesByName(): void
     {
         $cookies = $this->getTestCookies();
         foreach ($this->getTestCookies() as $cookie) {
@@ -90,7 +87,7 @@ class CookieJarTest extends TestCase
     /**
      * Provides test data for cookie cookieJar retrieval
      */
-    public static function getCookiesDataProvider()
+    public static function getCookiesDataProvider(): array
     {
         return [
             [['foo', 'baz', 'test', 'muppet', 'googoo'], '', '', '', false],
@@ -106,7 +103,7 @@ class CookieJarTest extends TestCase
         ];
     }
 
-    public function testStoresAndRetrievesCookies()
+    public function testStoresAndRetrievesCookies(): void
     {
         $cookies = $this->getTestCookies();
         foreach ($cookies as $cookie) {
@@ -118,7 +115,7 @@ class CookieJarTest extends TestCase
         self::assertEquals($cookies, $this->jar->getIterator()->getArrayCopy());
     }
 
-    public function testRemovesTemporaryCookies()
+    public function testRemovesTemporaryCookies(): void
     {
         $cookies = $this->getTestCookies();
         foreach ($this->getTestCookies() as $cookie) {
@@ -131,7 +128,7 @@ class CookieJarTest extends TestCase
         );
     }
 
-    public function testRemovesSelectively()
+    public function testRemovesSelectively(): void
     {
         foreach ($this->getTestCookies() as $cookie) {
             $this->jar->setCookie($cookie);
@@ -171,7 +168,7 @@ class CookieJarTest extends TestCase
 
         $jar->clear('bar.com', '/boo', '0');
 
-        $names = \array_map(static function (SetCookie $cookie) {
+        $names = \array_map(static function (SetCookie $cookie): ?string {
             return $cookie->getName();
         }, $jar->getIterator()->getArrayCopy());
 
@@ -210,7 +207,7 @@ class CookieJarTest extends TestCase
 
         $jar->clear('bar.com', $path);
 
-        $names = \array_map(static function (SetCookie $cookie) {
+        $names = \array_map(static function (SetCookie $cookie): ?string {
             return $cookie->getName();
         }, $jar->getIterator()->getArrayCopy());
 
@@ -300,7 +297,7 @@ class CookieJarTest extends TestCase
     /**
      * @dataProvider providesIncompleteCookies
      */
-    public function testDoesNotAddIncompleteCookies(array $cookie)
+    public function testDoesNotAddIncompleteCookies(array $cookie): void
     {
         self::assertFalse($this->jar->setCookie(new SetCookie($cookie)));
     }
@@ -328,7 +325,7 @@ class CookieJarTest extends TestCase
     /**
      * @dataProvider providesEmptyCookies
      */
-    public function testDoesNotAddEmptyCookies(array $cookie)
+    public function testDoesNotAddEmptyCookies(array $cookie): void
     {
         self::assertFalse($this->jar->setCookie(new SetCookie($cookie)));
     }
@@ -370,7 +367,7 @@ class CookieJarTest extends TestCase
     /**
      * @dataProvider providesValidCookies
      */
-    public function testDoesAddValidCookies(array $cookie)
+    public function testDoesAddValidCookies(array $cookie): void
     {
         self::assertTrue($this->jar->setCookie(new SetCookie($cookie)));
     }
@@ -400,7 +397,7 @@ class CookieJarTest extends TestCase
         self::assertFalse($request->hasHeader('Cookie'));
     }
 
-    public function testOverwritesCookiesThatAreOlderOrDiscardable()
+    public function testOverwritesCookiesThatAreOlderOrDiscardable(): void
     {
         $t = \time() + 1000;
         $data = [
@@ -437,7 +434,7 @@ class CookieJarTest extends TestCase
         self::assertNotEquals($t, $c[0]->getExpires());
     }
 
-    public function testOverwritesCookiesThatHaveChanged()
+    public function testOverwritesCookiesThatHaveChanged(): void
     {
         $t = \time() + 1000;
         $data = [
@@ -468,7 +465,7 @@ class CookieJarTest extends TestCase
         self::assertSame('zoo', $c[0]->getValue());
     }
 
-    public function testAddsCookiesFromResponseWithRequest()
+    public function testAddsCookiesFromResponseWithRequest(): void
     {
         $response = new Response(200, [
             'Set-Cookie' => 'fpc=d=.Hm.yh4.1XmJWjJfs4orLQzKzPImxklQoxXSHOZATHUSEFciRueW_7704iYUtsXNEXq0M92Px2glMdWypmJ7HIQl6XIUvrZimWjQ3vIdeuRbI.FNQMAfcxu_XN1zSx7l.AcPdKL6guHc2V7hIQFhnjRW0rxm2oHY1P4bGQxFNz7f.tHm12ZD3DbdMDiDy7TBXsuP4DM-&v=2; expires=Fri, 02-Mar-2019 02:17:40 GMT;',
@@ -576,7 +573,7 @@ class CookieJarTest extends TestCase
         self::assertSame('sid=host', $request->getHeaderLine('Cookie'));
     }
 
-    public static function getMatchingCookiesDataProvider()
+    public static function getMatchingCookiesDataProvider(): array
     {
         return [
             ['https://example.com', 'foo=bar; baz=foobar'],
@@ -590,7 +587,7 @@ class CookieJarTest extends TestCase
     /**
      * @dataProvider getMatchingCookiesDataProvider
      */
-    public function testReturnsCookiesMatchingRequests(string $url, string $cookies)
+    public function testReturnsCookiesMatchingRequests(string $url, string $cookies): void
     {
         $bag = [
             new SetCookie([
@@ -641,7 +638,7 @@ class CookieJarTest extends TestCase
         self::assertSame($cookies, $request->getHeaderLine('Cookie'));
     }
 
-    public function testThrowsExceptionWithStrictMode()
+    public function testThrowsExceptionWithStrictMode(): void
     {
         $a = new CookieJar(true);
         $this->expectException(\RuntimeException::class);
@@ -649,7 +646,7 @@ class CookieJarTest extends TestCase
         $a->setCookie(new SetCookie(['Name' => "abc\n", 'Value' => 'foo', 'Domain' => 'bar']));
     }
 
-    public function testDeletesCookiesByName()
+    public function testDeletesCookiesByName(): void
     {
         $cookies = $this->getTestCookies();
         $cookies[] = new SetCookie([
@@ -666,13 +663,13 @@ class CookieJarTest extends TestCase
         self::assertCount(4, $jar);
         $jar->clear('bar.com', '/boo', 'other');
         self::assertCount(3, $jar);
-        $names = \array_map(static function (SetCookie $c) {
+        $names = \array_map(static function (SetCookie $c): ?string {
             return $c->getName();
         }, $jar->getIterator()->getArrayCopy());
         self::assertSame(['foo', 'test', 'you'], $names);
     }
 
-    public function testCanConvertToAndLoadFromArray()
+    public function testCanConvertToAndLoadFromArray(): void
     {
         $jar = new CookieJar(true);
         foreach ($this->getTestCookies() as $cookie) {
@@ -686,7 +683,7 @@ class CookieJarTest extends TestCase
         self::assertSame($jar->toArray(), $newCookieJar->toArray());
     }
 
-    public function testAddsCookiesWithEmptyPathFromResponse()
+    public function testAddsCookiesWithEmptyPathFromResponse(): void
     {
         $response = new Response(200, [
             'Set-Cookie' => "fpc=foobar; expires={$this->futureExpirationDate()}; path=;",
@@ -700,7 +697,7 @@ class CookieJarTest extends TestCase
         self::assertFalse($subdomainRequest->hasHeader('Cookie'));
     }
 
-    public static function getCookiePathsDataProvider()
+    public static function getCookiePathsDataProvider(): array
     {
         return [
             ['', '/'],
@@ -714,7 +711,7 @@ class CookieJarTest extends TestCase
     /**
      * @dataProvider getCookiePathsDataProvider
      */
-    public function testCookiePathWithEmptySetCookiePath(string $uriPath, string $cookiePath)
+    public function testCookiePathWithEmptySetCookiePath(string $uriPath, string $cookiePath): void
     {
         $response = (new Response(200))
             ->withAddedHeader(
@@ -733,7 +730,7 @@ class CookieJarTest extends TestCase
         self::assertSame($cookiePath, $this->jar->toArray()[1]['Path']);
     }
 
-    public static function getDomainMatchesProvider()
+    public static function getDomainMatchesProvider(): array
     {
         return [
             ['www.example.com', 'www.example.com', true],
@@ -751,7 +748,7 @@ class CookieJarTest extends TestCase
     /**
      * @dataProvider getDomainMatchesProvider
      */
-    public function testIgnoresCookiesForMismatchingDomains(string $requestHost, string $domainAttribute, bool $matches)
+    public function testIgnoresCookiesForMismatchingDomains(string $requestHost, string $domainAttribute, bool $matches): void
     {
         $response = (new Response(200))
             ->withAddedHeader(
@@ -765,7 +762,7 @@ class CookieJarTest extends TestCase
         self::assertCount($matches ? 1 : 0, $this->jar->toArray());
     }
 
-    private function futureExpirationDate()
+    private function futureExpirationDate(): string
     {
         return (new DateTimeImmutable())->add(new DateInterval('P1D'))->format(DateTime::COOKIE);
     }

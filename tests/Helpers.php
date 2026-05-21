@@ -6,6 +6,9 @@ namespace GuzzleHttp\Tests;
 
 class Helpers
 {
+    /**
+     * @return mixed
+     */
     public static function readObjectAttribute(object $object, string $attributeName)
     {
         $reflector = new \ReflectionObject($object);

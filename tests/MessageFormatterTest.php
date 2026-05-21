@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
  */
 class MessageFormatterTest extends TestCase
 {
-    public function testCreatesWithClfByDefault()
+    public function testCreatesWithClfByDefault(): void
     {
         $f = new MessageFormatter();
         self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
@@ -24,7 +24,7 @@ class MessageFormatterTest extends TestCase
         self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
     }
 
-    public static function dateProvider()
+    public static function dateProvider(): array
     {
         return [
             ['{ts}', '/^[0-9]{4}\-[0-9]{2}\-[0-9]{2}/'],
@@ -36,7 +36,7 @@ class MessageFormatterTest extends TestCase
     /**
      * @dataProvider dateProvider
      */
-    public function testFormatsTimestamps(string $format, string $pattern)
+    public function testFormatsTimestamps(string $format, string $pattern): void
     {
         $f = new MessageFormatter($format);
         $request = new Request('GET', '/');
@@ -44,7 +44,7 @@ class MessageFormatterTest extends TestCase
         self::assertMatchesRegularExpression($pattern, $result);
     }
 
-    public static function formatProvider()
+    public static function formatProvider(): array
     {
         $request = new Request('PUT', '/', ['x-test' => 'abc'], Psr7\Utils::streamFor('foo'));
         $response = new Response(200, ['X-Baz' => 'Bar'], Psr7\Utils::streamFor('baz'));
@@ -87,8 +87,10 @@ class MessageFormatterTest extends TestCase
 
     /**
      * @dataProvider formatProvider
+     *
+     * @param mixed $result
      */
-    public function testFormatsMessages(string $template, array $args, $result)
+    public function testFormatsMessages(string $template, array $args, $result): void
     {
         $f = new MessageFormatter($template);
         self::assertSame((string) $result, $f->format(...$args));

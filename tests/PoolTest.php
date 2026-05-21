@@ -21,7 +21,7 @@ use Psr\Http\Message\ResponseInterface;
 
 class PoolTest extends TestCase
 {
-    public function testValidatesEachElement()
+    public function testValidatesEachElement(): void
     {
         $c = new Client();
         $requests = ['foo'];
@@ -34,7 +34,7 @@ class PoolTest extends TestCase
     /**
      * @doesNotPerformAssertions
      */
-    public function testSendsAndRealizesFuture()
+    public function testSendsAndRealizesFuture(): void
     {
         $c = $this->getClient();
         $p = new Pool($c, [new Request('GET', 'http://example.com')]);
@@ -44,15 +44,15 @@ class PoolTest extends TestCase
     /**
      * @doesNotPerformAssertions
      */
-    public function testExecutesPendingWhenWaiting()
+    public function testExecutesPendingWhenWaiting(): void
     {
-        $r1 = new Promise(static function () use (&$r1) {
+        $r1 = new Promise(static function () use (&$r1): void {
             $r1->resolve(new Response());
         });
-        $r2 = new Promise(static function () use (&$r2) {
+        $r2 = new Promise(static function () use (&$r2): void {
             $r2->resolve(new Response());
         });
-        $r3 = new Promise(static function () use (&$r3) {
+        $r3 = new Promise(static function () use (&$r3): void {
             $r3->resolve(new Response());
         });
         $handler = new MockHandler([$r1, $r2, $r3]);
@@ -65,11 +65,11 @@ class PoolTest extends TestCase
         $p->promise()->wait();
     }
 
-    public function testUsesRequestOptions()
+    public function testUsesRequestOptions(): void
     {
         $h = [];
         $handler = new MockHandler([
-            static function (RequestInterface $request) use (&$h) {
+            static function (RequestInterface $request) use (&$h): ResponseInterface {
                 $h[] = $request;
 
                 return new Response();
@@ -83,7 +83,7 @@ class PoolTest extends TestCase
         self::assertTrue($h[0]->hasHeader('x-foo'));
     }
 
-    public function testOnHeadersOptionReceivesCurrentPoolRequest()
+    public function testOnHeadersOptionReceivesCurrentPoolRequest(): void
     {
         $requests = [
             new Request('GET', 'http://example.com/one'),
@@ -119,11 +119,11 @@ class PoolTest extends TestCase
         ], $seen);
     }
 
-    public function testCanProvideCallablesThatReturnResponses()
+    public function testCanProvideCallablesThatReturnResponses(): void
     {
         $h = [];
         $handler = new MockHandler([
-            static function (RequestInterface $request) use (&$h) {
+            static function (RequestInterface $request) use (&$h): ResponseInterface {
                 $h[] = $request;
 
                 return new Response();
@@ -131,7 +131,7 @@ class PoolTest extends TestCase
         ]);
         $c = new Client(['handler' => $handler]);
         $optHistory = [];
-        $fn = static function (array $opts) use (&$optHistory, $c) {
+        $fn = static function (array $opts) use (&$optHistory, $c): ResponseInterface {
             $optHistory = $opts;
 
             return $c->request('GET', 'http://example.com', $opts);
@@ -143,7 +143,7 @@ class PoolTest extends TestCase
         self::assertTrue($h[0]->hasHeader('x-foo'));
     }
 
-    public function testBatchesResults()
+    public function testBatchesResults(): void
     {
         $requests = [
             new Request('GET', 'http://foo.com/200'),
@@ -151,7 +151,7 @@ class PoolTest extends TestCase
             new Request('GET', 'http://foo.com/202'),
             new Request('GET', 'http://foo.com/404'),
         ];
-        $fn = static function (RequestInterface $request) {
+        $fn = static function (RequestInterface $request): ResponseInterface {
             return new Response((int) \substr($request->getUri()->getPath(), 1));
         };
         $mock = new MockHandler([$fn, $fn, $fn, $fn]);
@@ -166,20 +166,20 @@ class PoolTest extends TestCase
         self::assertInstanceOf(ClientException::class, $results[3]);
     }
 
-    public function testBatchesResultsWithCallbacks()
+    public function testBatchesResultsWithCallbacks(): void
     {
         $requests = [
             new Request('GET', 'http://foo.com/200'),
             new Request('GET', 'http://foo.com/201'),
         ];
         $mock = new MockHandler([
-            static function (RequestInterface $request) {
+            static function (RequestInterface $request): ResponseInterface {
                 return new Response((int) \substr($request->getUri()->getPath(), 1));
             },
         ]);
         $client = new Client(['handler' => $mock]);
         $results = Pool::batch($client, $requests, [
-            'fulfilled' => static function ($value) use (&$called) {
+            'fulfilled' => static function (ResponseInterface $value) use (&$called): void {
                 $called = true;
             },
         ]);
@@ -187,15 +187,15 @@ class PoolTest extends TestCase
         self::assertTrue($called);
     }
 
-    public function testUsesYieldedKeyInFulfilledCallback()
+    public function testUsesYieldedKeyInFulfilledCallback(): void
     {
-        $r1 = new Promise(static function () use (&$r1) {
+        $r1 = new Promise(static function () use (&$r1): void {
             $r1->resolve(new Response());
         });
-        $r2 = new Promise(static function () use (&$r2) {
+        $r2 = new Promise(static function () use (&$r2): void {
             $r2->resolve(new Response());
         });
-        $r3 = new Promise(static function () use (&$r3) {
+        $r3 = new Promise(static function () use (&$r3): void {
             $r3->resolve(new Response());
         });
         $handler = new MockHandler([$r1, $r2, $r3]);
@@ -208,7 +208,7 @@ class PoolTest extends TestCase
         ];
         $p = new Pool($c, $requests, [
             'pool_size' => 2,
-            'fulfilled' => static function ($res, $index) use (&$keys) {
+            'fulfilled' => static function (ResponseInterface $res, string $index) use (&$keys): void {
                 $keys[] = $index;
             },
         ]);
@@ -217,7 +217,7 @@ class PoolTest extends TestCase
         self::assertSame($keys, \array_keys($requests));
     }
 
-    public function testPoolHandlesInvalidResponseStatusAsResponseLessRejection()
+    public function testPoolHandlesInvalidResponseStatusAsResponseLessRejection(): void
     {
         $client = new Client([
             'handler' => HandlerStack::create(new CurlMultiHandler()),
@@ -254,7 +254,7 @@ class PoolTest extends TestCase
         }
     }
 
-    private function getClient($total = 1)
+    private function getClient(int $total = 1): Client
     {
         $queue = [];
         for ($i = 0; $i < $total; ++$i) {

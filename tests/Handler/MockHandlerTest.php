@@ -20,7 +20,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class MockHandlerTest extends TestCase
 {
-    public function testReturnsMockResponse()
+    public function testReturnsMockResponse(): void
     {
         $res = new Response();
         $mock = new MockHandler([$res]);
@@ -29,32 +29,32 @@ class MockHandlerTest extends TestCase
         self::assertSame($res, $p->wait());
     }
 
-    public function testIsCountable()
+    public function testIsCountable(): void
     {
         $res = new Response();
         $mock = new MockHandler([$res, $res]);
         self::assertCount(2, $mock);
     }
 
-    public function testEmptyHandlerIsCountable()
+    public function testEmptyHandlerIsCountable(): void
     {
         self::assertCount(0, new MockHandler());
     }
 
-    public function testEnsuresEachAppendOnCreationIsValid()
+    public function testEnsuresEachAppendOnCreationIsValid(): void
     {
         $this->expectException(\TypeError::class);
         new MockHandler(['a']);
     }
 
-    public function testEnsuresEachAppendIsValid()
+    public function testEnsuresEachAppendIsValid(): void
     {
         $mock = new MockHandler();
         $this->expectException(\TypeError::class);
         $mock->append(['a']);
     }
 
-    public function testCanQueueExceptions()
+    public function testCanQueueExceptions(): void
     {
         $e = new \Exception('a');
         $mock = new MockHandler([$e]);
@@ -68,7 +68,7 @@ class MockHandlerTest extends TestCase
         }
     }
 
-    public function testCanGetLastRequestAndOptions()
+    public function testCanGetLastRequestAndOptions(): void
     {
         $res = new Response();
         $mock = new MockHandler([$res]);
@@ -78,7 +78,7 @@ class MockHandlerTest extends TestCase
         self::assertSame(['foo' => 'bar'], $mock->getLastOptions());
     }
 
-    public function testSinkFilename()
+    public function testSinkFilename(): void
     {
         $filename = \sys_get_temp_dir().'/mock_test_'.\uniqid();
 
@@ -98,7 +98,7 @@ class MockHandlerTest extends TestCase
         }
     }
 
-    public function testSinkResource()
+    public function testSinkResource(): void
     {
         $file = \tmpfile();
         $meta = \stream_get_meta_data($file);
@@ -112,7 +112,7 @@ class MockHandlerTest extends TestCase
         self::assertStringEqualsFile($meta['uri'], 'TEST CONTENT');
     }
 
-    public function testSinkStream()
+    public function testSinkStream(): void
     {
         $stream = new Stream(\tmpfile());
         $res = new Response(200, [], 'TEST CONTENT');
@@ -125,10 +125,10 @@ class MockHandlerTest extends TestCase
         self::assertStringEqualsFile($stream->getMetadata('uri'), 'TEST CONTENT');
     }
 
-    public function testCanEnqueueCallables()
+    public function testCanEnqueueCallables(): void
     {
         $r = new Response();
-        $fn = static function ($req, $o) use ($r) {
+        $fn = static function (RequestInterface $req, array $o) use ($r): ResponseInterface {
             return $r;
         };
         $mock = new MockHandler([$fn]);
@@ -137,7 +137,7 @@ class MockHandlerTest extends TestCase
         self::assertSame($r, $p->wait());
     }
 
-    public function testEnsuresOnHeadersIsCallable()
+    public function testEnsuresOnHeadersIsCallable(): void
     {
         $res = new Response();
         $mock = new MockHandler([$res]);
@@ -147,13 +147,13 @@ class MockHandlerTest extends TestCase
         $mock($request, ['on_headers' => 'error!']);
     }
 
-    public function testRejectsPromiseWhenOnHeadersFails()
+    public function testRejectsPromiseWhenOnHeadersFails(): void
     {
         $res = new Response();
         $mock = new MockHandler([$res]);
         $request = new Request('GET', 'http://example.com');
         $promise = $mock($request, [
-            'on_headers' => static function () {
+            'on_headers' => static function (): void {
                 throw new \Exception('test');
             },
         ]);
@@ -163,7 +163,7 @@ class MockHandlerTest extends TestCase
         $promise->wait();
     }
 
-    public function testRejectsPromiseWhenOnHeadersThrowsThrowable()
+    public function testRejectsPromiseWhenOnHeadersThrowsThrowable(): void
     {
         $res = new Response();
         $mock = new MockHandler([$res]);
@@ -183,7 +183,7 @@ class MockHandlerTest extends TestCase
         }
     }
 
-    public function testInvokesOnHeadersWithResponseAndRequest()
+    public function testInvokesOnHeadersWithResponseAndRequest(): void
     {
         $res = new Response(201, ['X-Foo' => 'bar']);
         $mock = new MockHandler([$res]);
@@ -207,10 +207,10 @@ class MockHandlerTest extends TestCase
         self::assertSame($request, $gotRequest);
     }
 
-    public function testInvokesOnFulfilled()
+    public function testInvokesOnFulfilled(): void
     {
         $res = new Response();
-        $mock = new MockHandler([$res], static function ($v) use (&$c) {
+        $mock = new MockHandler([$res], static function (ResponseInterface $v) use (&$c): void {
             $c = $v;
         });
         $request = new Request('GET', 'http://example.com');
@@ -218,11 +218,11 @@ class MockHandlerTest extends TestCase
         self::assertSame($res, $c);
     }
 
-    public function testInvokesOnRejected()
+    public function testInvokesOnRejected(): void
     {
         $e = new \Exception('a');
         $c = null;
-        $mock = new MockHandler([$e], null, static function ($v) use (&$c) {
+        $mock = new MockHandler([$e], null, static function (\Exception $v) use (&$c): void {
             $c = $v;
         });
         $request = new Request('GET', 'http://example.com');
@@ -230,7 +230,7 @@ class MockHandlerTest extends TestCase
         self::assertSame($e, $c);
     }
 
-    public function testLateRejectedHandlerReceivesRejectedReason()
+    public function testLateRejectedHandlerReceivesRejectedReason(): void
     {
         $e = new \Exception('a');
         $mock = new MockHandler([$e]);
@@ -240,7 +240,7 @@ class MockHandlerTest extends TestCase
         $promise->wait(false);
 
         $reason = null;
-        $promise->then(null, static function ($value) use (&$reason): void {
+        $promise->then(null, static function (\Exception $value) use (&$reason): void {
             $reason = $value;
         });
 
@@ -249,7 +249,7 @@ class MockHandlerTest extends TestCase
         self::assertSame($e, $reason);
     }
 
-    public function testThrowsWhenNoMoreResponses()
+    public function testThrowsWhenNoMoreResponses(): void
     {
         $mock = new MockHandler();
         $request = new Request('GET', 'http://example.com');
@@ -258,7 +258,7 @@ class MockHandlerTest extends TestCase
         $mock($request, []);
     }
 
-    public function testCanCreateWithDefaultMiddleware()
+    public function testCanCreateWithDefaultMiddleware(): void
     {
         $r = new Response(500);
         $mock = MockHandler::createWithMiddleware([$r]);
@@ -268,14 +268,14 @@ class MockHandlerTest extends TestCase
         $mock($request, ['http_errors' => true])->wait();
     }
 
-    public function testInvokesOnStatsFunctionForResponse()
+    public function testInvokesOnStatsFunctionForResponse(): void
     {
         $res = new Response();
         $mock = new MockHandler([$res]);
         $request = new Request('GET', 'http://example.com');
         /** @var TransferStats|null $stats */
         $stats = null;
-        $onStats = static function (TransferStats $s) use (&$stats) {
+        $onStats = static function (TransferStats $s) use (&$stats): void {
             $stats = $s;
         };
         $p = $mock($request, ['on_stats' => $onStats]);
@@ -284,18 +284,18 @@ class MockHandlerTest extends TestCase
         self::assertSame($request, $stats->getRequest());
     }
 
-    public function testInvokesOnStatsFunctionForError()
+    public function testInvokesOnStatsFunctionForError(): void
     {
         $e = new \Exception('a');
         $c = null;
-        $mock = new MockHandler([$e], null, static function ($v) use (&$c) {
+        $mock = new MockHandler([$e], null, static function (\Exception $v) use (&$c): void {
             $c = $v;
         });
         $request = new Request('GET', 'http://example.com');
 
         /** @var TransferStats|null $stats */
         $stats = null;
-        $onStats = static function (TransferStats $s) use (&$stats) {
+        $onStats = static function (TransferStats $s) use (&$stats): void {
             $stats = $s;
         };
         $mock($request, ['on_stats' => $onStats])->wait(false);
@@ -304,23 +304,23 @@ class MockHandlerTest extends TestCase
         self::assertSame($request, $stats->getRequest());
     }
 
-    public function testTransferTime()
+    public function testTransferTime(): void
     {
         $e = new \Exception('a');
         $c = null;
-        $mock = new MockHandler([$e], null, static function ($v) use (&$c) {
+        $mock = new MockHandler([$e], null, static function (\Exception $v) use (&$c): void {
             $c = $v;
         });
         $request = new Request('GET', 'http://example.com');
         $stats = null;
-        $onStats = static function (TransferStats $s) use (&$stats) {
+        $onStats = static function (TransferStats $s) use (&$stats): void {
             $stats = $s;
         };
         $mock($request, ['on_stats' => $onStats, 'transfer_time' => 0.4])->wait(false);
         self::assertEquals(0.4, $stats->getTransferTime());
     }
 
-    public function testResetQueue()
+    public function testResetQueue(): void
     {
         $mock = new MockHandler([new Response(200), new Response(204)]);
         self::assertCount(2, $mock);

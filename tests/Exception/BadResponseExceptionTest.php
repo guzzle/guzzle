@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 class BadResponseExceptionTest extends TestCase
 {
-    public function testHasNoResponse()
+    public function testHasNoResponse(): void
     {
         $req = new Request('GET', '/');
         $prev = new \Exception();

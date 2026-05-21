@@ -12,7 +12,7 @@ namespace GuzzleHttp\Test {
     use GuzzleHttp\Server\Server;
 
     Server::start();
-    \register_shutdown_function(static function () {
+    \register_shutdown_function(static function (): void {
         Server::stop();
     });
 }
@@ -20,7 +20,7 @@ namespace GuzzleHttp\Test {
 // Override curl_setopt(), curl_setopt_array(), and curl_multi_setopt() to get the last set curl options
 
 namespace GuzzleHttp\Handler {
-    function curl_setopt($handle, int $option, $value)
+    function curl_setopt($handle, int $option, $value): bool
     {
         if (!empty($_SERVER['curl_test'])) {
             if ($option === \CURLOPT_CUSTOMREQUEST) {
@@ -38,7 +38,7 @@ namespace GuzzleHttp\Handler {
         return \curl_setopt($handle, $option, $value);
     }
 
-    function curl_setopt_array($handle, array $options)
+    function curl_setopt_array($handle, array $options): bool
     {
         if (!empty($_SERVER['curl_test'])) {
             $_SERVER['_curl'] = $options;
@@ -49,7 +49,7 @@ namespace GuzzleHttp\Handler {
         return \curl_setopt_array($handle, $options);
     }
 
-    function curl_multi_setopt($handle, $option, $value)
+    function curl_multi_setopt($handle, int $option, $value): bool
     {
         if (!empty($_SERVER['curl_test'])) {
             $_SERVER['_curl_multi'][$option] = $value;
