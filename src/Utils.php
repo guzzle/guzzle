@@ -224,6 +224,10 @@ final class Utils
                 return true;
             }
 
+            if (\strpos($area, '/') !== false) {
+                continue;
+            }
+
             [$area, $areaPort] = self::splitNoProxyHostAndPort($area);
             if ($areaPort !== null && $areaPort !== $port) {
                 continue;
