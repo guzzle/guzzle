@@ -47,6 +47,34 @@ class HeaderProcessorTest extends TestCase
         ]);
     }
 
+    public function testRejectsMissingProtocolVersion(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('HTTP version missing from header data');
+
+        HeaderProcessor::parseHeaders([
+            'FTP/1.1 200 OK',
+        ]);
+    }
+
+    /**
+     * @dataProvider invalidProtocolVersionProvider
+     */
+    public function testRejectsMalformedProtocolVersion(string $statusLine): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('HTTP version is invalid');
+
+        HeaderProcessor::parseHeaders([$statusLine]);
+    }
+
+    public static function invalidProtocolVersionProvider(): iterable
+    {
+        yield ['HTTP/foo 200 OK'];
+        yield ['HTTP/ 200 OK'];
+        yield ['HTTP/1.1.1 200 OK'];
+    }
+
     public function testParsesBoundaryStatusCodes(): void
     {
         [, $informationalStatus] = HeaderProcessor::parseHeaders(['HTTP/1.1 100 Continue']);
@@ -63,6 +91,16 @@ class HeaderProcessorTest extends TestCase
 
         HeaderProcessor::parseHeaders([
             'HTTP/1.1 200abc Weird',
+        ]);
+    }
+
+    public function testRejectsMalformedReasonPhrase(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('HTTP reason phrase is invalid');
+
+        HeaderProcessor::parseHeaders([
+            "HTTP/1.1 200 OK\x00",
         ]);
     }
 

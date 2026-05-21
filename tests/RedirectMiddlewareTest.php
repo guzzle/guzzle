@@ -159,6 +159,26 @@ class RedirectMiddlewareTest extends TestCase
         $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
     }
 
+    public function testRejectsMalformedRedirectUri(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://[::1']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com');
+
+        try {
+            $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
+            self::fail('Expected BadResponseException.');
+        } catch (BadResponseException $e) {
+            self::assertSame(302, $e->getResponse()->getStatusCode());
+            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+            self::assertStringStartsWith('Redirect URI,', $e->getMessage());
+        }
+    }
+
     public function testAddsRefererHeader(): void
     {
         $mock = new MockHandler([

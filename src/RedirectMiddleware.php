@@ -220,10 +220,16 @@ class RedirectMiddleware
         ResponseInterface $response,
         array $protocols
     ): UriInterface {
-        $location = Psr7\UriResolver::resolve(
-            $request->getUri(),
-            new Psr7\Uri($response->getHeaderLine('Location'))
-        );
+        $location = $response->getHeaderLine('Location');
+
+        try {
+            $location = Psr7\UriResolver::resolve(
+                $request->getUri(),
+                new Psr7\Uri($location)
+            );
+        } catch (\InvalidArgumentException $e) {
+            throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid: %s', $location, $e->getMessage()), $request, $response, $e);
+        }
 
         // Ensure that the redirect URI is allowed based on the protocols.
         if (!\in_array($location->getScheme(), $protocols)) {
