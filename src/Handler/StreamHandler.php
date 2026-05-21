@@ -455,7 +455,11 @@ class StreamHandler
         } else {
             $scheme = $request->getUri()->getScheme();
             if (isset($value[$scheme])) {
-                if (!isset($value['no']) || !Utils::isHostInNoProxy($request->getUri()->getHost(), $value['no'])) {
+                if (
+                    !isset($value['no'])
+                    || !\is_array($value['no'])
+                    || !Utils::isUriInNoProxy($request->getUri(), $value['no'])
+                ) {
                     $uri = $value[$scheme];
                 }
             }

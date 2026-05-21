@@ -217,6 +217,14 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('http://bar.com', $_SERVER['_curl'][\CURLOPT_PROXY]);
         $this->checkNoProxyForHost('http://test.test.com', ['test.test.com'], false);
         $this->checkNoProxyForHost('http://test.test.com', ['.test.com'], false);
+        $this->checkNoProxyForHost('http://test.test.com', ['test.test.com:80'], false);
+        $this->checkNoProxyForHost('https://test.test.com', ['test.test.com:443'], false);
+        $this->checkNoProxyForHost('http://test.test.com:8080', ['test.test.com:8080'], false);
+        $this->checkNoProxyForHost('http://test.test.com:8081', ['test.test.com:8080'], true);
+        $this->checkNoProxyForHost('http://foo.test.com:8080', ['.test.com:8080'], false);
+        $this->checkNoProxyForHost('http://test.com:8080', ['.test.com:8080'], true);
+        $this->checkNoProxyForHost('http://[::1]:8080', ['[::1]:8080'], false);
+        $this->checkNoProxyForHost('http://[::1]:8081', ['[::1]:8080'], true);
         $this->checkNoProxyForHost('http://test.test.com', ['*.test.com'], true);
         $this->checkNoProxyForHost('http://test.test.com', ['*'], false);
         $this->checkNoProxyForHost('http://127.0.0.1', ['127.0.0.*'], true);
