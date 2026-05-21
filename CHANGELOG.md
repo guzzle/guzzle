@@ -9,6 +9,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
 - Add generic PHPDoc annotations to async HTTP and handler APIs
+- Add CIDR notation support for IP no-proxy rules
 
 ### Changed
 

@@ -202,8 +202,9 @@ final class RequestOptions
      * proxy: (string|array) Pass a string to specify an HTTP proxy, or an
      * array to specify different proxies for different protocols (where the
      * key is the protocol and the value is a proxy string). Provide a "no"
-     * key as a string or array of strings to specify hosts or
-     * host-and-port pairs that should not be proxied.
+     * key as a string or array of strings to specify hosts, host-and-port
+     * pairs, or IP CIDR rules that should not be proxied. CIDR rules match
+     * IP literals only and are not port-specific.
      */
     public const PROXY = 'proxy';
 

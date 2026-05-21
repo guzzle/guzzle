@@ -446,6 +446,14 @@ class StreamHandlerTest extends TestCase
         $proxy['no'] = ['[::1]:8080'];
         self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://[::1]:8080')['http']);
         self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://[::1]:8081')['http']['proxy']);
+
+        $proxy['no'] = ['192.168.0.0/16'];
+        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://192.168.1.10')['http']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://192.169.1.10')['http']['proxy']);
+
+        $proxy['no'] = ['fd00::/8'];
+        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://[fd00::1]')['http']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://[fe80::1]')['http']['proxy']);
     }
 
     public function testUsesProxy(): void

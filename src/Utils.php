@@ -144,9 +144,11 @@ final class Utils
      * 2. An exact match.
      * 3. The area starts with "." and the area is the last part of the host. e.g.
      *    '.mit.edu' will match any host that ends with '.mit.edu'.
+     * 4. IP CIDR entries match IP literal hosts. e.g. '192.168.0.0/16' will
+     *    match '192.168.1.10' and 'fd00::/8' will match '[fd00::1]'.
      *
      * @param string   $host         Host to check against the patterns.
-     * @param string[] $noProxyArray An array of host patterns.
+     * @param string[] $noProxyArray An array of host or CIDR patterns.
      *
      * @throws InvalidArgumentException
      */
@@ -165,6 +167,10 @@ final class Utils
 
             if ($area === '') {
                 continue;
+            }
+
+            if (self::matchesNoProxyCidr($host, $area)) {
+                return true;
             }
 
             $area = self::normalizeNoProxyHost($area, false);
@@ -191,7 +197,7 @@ final class Utils
     /**
      * Returns true if the provided URI matches any of the no proxy areas.
      *
-     * @param string[] $noProxyArray An array of host patterns.
+     * @param string[] $noProxyArray An array of host, host-and-port, or CIDR patterns.
      *
      * @internal
      */
@@ -213,6 +219,14 @@ final class Utils
             }
 
             if ($area === '') {
+                continue;
+            }
+
+            if (self::matchesNoProxyCidr($host, $area)) {
+                return true;
+            }
+
+            if (\strpos($area, '/') !== false) {
                 continue;
             }
 
@@ -319,6 +333,59 @@ final class Utils
         }
 
         return null;
+    }
+
+    private static function matchesNoProxyCidr(string $host, string $area): bool
+    {
+        $slash = \strpos($area, '/');
+        if ($slash === false) {
+            return false;
+        }
+
+        $prefix = \substr($area, $slash + 1);
+        if ($prefix === '' || !\ctype_digit($prefix)) {
+            return false;
+        }
+
+        $network = \substr($area, 0, $slash);
+        if ($network !== '' && $network[0] === '[' && \substr($network, -1) === ']') {
+            $network = \substr($network, 1, -1);
+        }
+
+        $network = @\inet_pton($network);
+        if ($network === false) {
+            return false;
+        }
+
+        $host = @\inet_pton(self::normalizeNoProxyHost($host, true));
+        if ($host === false || \strlen($host) !== \strlen($network)) {
+            return false;
+        }
+
+        $prefix = (int) $prefix;
+        if ($prefix > \strlen($network) * 8) {
+            return false;
+        }
+
+        return self::matchesIpPrefix($host, $network, $prefix);
+    }
+
+    private static function matchesIpPrefix(string $address, string $network, int $prefix): bool
+    {
+        $fullBytes = \intdiv($prefix, 8);
+        $remainingBits = $prefix % 8;
+
+        if ($fullBytes > 0 && \substr($address, 0, $fullBytes) !== \substr($network, 0, $fullBytes)) {
+            return false;
+        }
+
+        if ($remainingBits === 0) {
+            return true;
+        }
+
+        $mask = (0xFF << (8 - $remainingBits)) & 0xFF;
+
+        return (\ord($address[$fullBytes]) & $mask) === (\ord($network[$fullBytes]) & $mask);
     }
 
     /**

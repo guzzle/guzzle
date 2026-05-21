@@ -236,6 +236,10 @@ class CurlFactoryTest extends TestCase
         $this->checkNoProxyForHost('http://test.test.com', ['*.test.com'], true);
         $this->checkNoProxyForHost('http://test.test.com', ['*'], false);
         $this->checkNoProxyForHost('http://127.0.0.1', ['127.0.0.*'], true);
+        $this->checkNoProxyForHost('http://192.168.1.10', ['192.168.0.0/16'], false);
+        $this->checkNoProxyForHost('http://192.169.1.10', ['192.168.0.0/16'], true);
+        $this->checkNoProxyForHost('http://[fd00::1]', ['fd00::/8'], false);
+        $this->checkNoProxyForHost('http://[fe80::1]', ['fd00::/8'], true);
     }
 
     /**
