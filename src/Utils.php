@@ -159,7 +159,6 @@ final class Utils
         $host = self::normalizeNoProxyHost($host, true);
 
         foreach ($noProxyArray as $area) {
-            // Always match on wildcards.
             if ($area === '*') {
                 return true;
             }
@@ -192,7 +191,7 @@ final class Utils
     /**
      * Returns true if the provided URI matches any of the no proxy areas.
      *
-     * @param array<array-key, mixed> $noProxyArray An array of host patterns.
+     * @param string[] $noProxyArray An array of host patterns.
      *
      * @internal
      */
@@ -209,11 +208,6 @@ final class Utils
         }
 
         foreach ($noProxyArray as $area) {
-            if (!\is_string($area)) {
-                continue;
-            }
-
-            // Always match on wildcards.
             if ($area === '*') {
                 return true;
             }
