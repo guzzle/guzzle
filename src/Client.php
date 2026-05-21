@@ -459,8 +459,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             // Use a multipart/form-data POST if a Content-Type is not set.
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Content-Type'], $options['_conditional']);
-            $options['_conditional']['Content-Type'] = 'multipart/form-data; boundary='
-                .$request->getBody()->getBoundary();
+            $options['_conditional']['Content-Type'] = self::getMultipartContentType($request->getBody());
         }
 
         // Merge in conditional headers if they are not present.
@@ -501,6 +500,17 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (1 !== \preg_match('/^\d+(?:\.\d+)?$/D', $version)) {
             throw new InvalidArgumentException('HTTP protocol version must be a valid HTTP version number.');
         }
+    }
+
+    private static function getMultipartContentType(Psr7\MultipartStream $body): string
+    {
+        $boundary = $body->getBoundary();
+
+        if (false !== \strpbrk($boundary, '()<>@,;:\"/[]?= ')) {
+            $boundary = '"'.$boundary.'"';
+        }
+
+        return 'multipart/form-data; boundary='.$boundary;
     }
 
     /**
