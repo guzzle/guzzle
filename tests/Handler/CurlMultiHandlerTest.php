@@ -8,7 +8,6 @@ use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Server\Server;
-use GuzzleHttp\Tests\Helpers;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 
@@ -58,7 +57,7 @@ class CurlMultiHandlerTest extends TestCase
     public function testCanSetSelectTimeout()
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
-        self::assertEquals(2, Helpers::readObjectAttribute($a, 'selectTimeout'));
+        self::assertEquals(2, self::readSelectTimeout($a));
     }
 
     public function testDestructorDoesNotThrowWhenCurlMultiCloseFails()
@@ -134,12 +133,12 @@ class CurlMultiHandlerTest extends TestCase
         try {
             $a = new CurlMultiHandler();
             // Default if no options are given and no environment variable is set
-            self::assertEquals(1, Helpers::readObjectAttribute($a, 'selectTimeout'));
+            self::assertEquals(1, self::readSelectTimeout($a));
 
             \putenv('GUZZLE_CURL_SELECT_TIMEOUT=3');
             $a = new CurlMultiHandler();
             // Handler reads from the environment if no options are given
-            self::assertEquals(3, Helpers::readObjectAttribute($a, 'selectTimeout'));
+            self::assertEquals(3, self::readSelectTimeout($a));
         } finally {
             \putenv('GUZZLE_CURL_SELECT_TIMEOUT=');
         }
@@ -151,5 +150,14 @@ class CurlMultiHandlerTest extends TestCase
 
         $this->expectException(\BadMethodCallException::class);
         $h->foo;
+    }
+
+    private static function readSelectTimeout(CurlMultiHandler $handler)
+    {
+        $readSelectTimeout = \Closure::bind(static function (CurlMultiHandler $handler) {
+            return $handler->selectTimeout;
+        }, null, CurlMultiHandler::class);
+
+        return $readSelectTimeout($handler);
     }
 }

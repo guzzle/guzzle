@@ -17,9 +17,9 @@ class MessageFormatterTest extends TestCase
     public function testCreatesWithClfByDefault()
     {
         $f = new MessageFormatter();
-        self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
+        self::assertEquals(MessageFormatter::CLF, self::readTemplate($f));
         $f = new MessageFormatter(null);
-        self::assertEquals(MessageFormatter::CLF, Helpers::readObjectAttribute($f, 'template'));
+        self::assertEquals(MessageFormatter::CLF, self::readTemplate($f));
     }
 
     public static function dateProvider()
@@ -96,5 +96,14 @@ class MessageFormatterTest extends TestCase
     {
         $f = new MessageFormatter($template);
         self::assertSame((string) $result, $f->format(...$args));
+    }
+
+    private static function readTemplate(MessageFormatter $formatter): string
+    {
+        $readTemplate = \Closure::bind(static function (MessageFormatter $formatter): string {
+            return $formatter->template;
+        }, null, MessageFormatter::class);
+
+        return $readTemplate($formatter);
     }
 }
