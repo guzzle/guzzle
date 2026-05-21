@@ -33,12 +33,22 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
-#### Multipart request part headers
+#### Multipart request serialization
 
 Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts
 created through the `multipart` request option no longer include generated
 per-part `Content-Length` headers by default. If your tests compare raw
 multipart payloads, remove those generated part headers from expected strings.
+
+Generated multipart `Content-Disposition` header `name` and `filename`
+parameters now escape double quotes, carriage returns, and line feeds as `%22`,
+`%0D`, and `%0A`. Custom multipart part header names and values, and explicit
+PSR-7 multipart boundaries, are also validated by PSR-7.
+
+Guzzle now quotes the `boundary` parameter in generated
+`Content-Type: multipart/form-data` headers when an explicit PSR-7
+`MultipartStream` boundary contains characters that require quoting.
+Automatically generated boundaries are unchanged.
 
 You can still pass an explicit `Content-Length` header in a multipart element's
 `headers` array if a non-standard peer requires it.

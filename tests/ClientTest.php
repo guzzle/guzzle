@@ -679,6 +679,86 @@ class ClientTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider multipartBoundaryRequiringQuotesProvider
+     */
+    public function testQuotesMultipartBoundaryParameterWhenRequired(string $boundary): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->send(new Request(
+            'POST',
+            'http://foo.com',
+            [],
+            new Psr7\MultipartStream([], $boundary)
+        ));
+
+        $last = $mock->getLastRequest();
+        self::assertSame(
+            'multipart/form-data; boundary="'.$boundary.'"',
+            $last->getHeaderLine('Content-Type')
+        );
+    }
+
+    public static function multipartBoundaryRequiringQuotesProvider(): iterable
+    {
+        yield 'colon' => ['abc:def'];
+        yield 'slash' => ['abc/def'];
+        yield 'parentheses' => ['abc(def)'];
+        yield 'space' => ['abc def'];
+        yield 'question mark' => ['abc?def'];
+        yield 'equals' => ['abc=def'];
+        yield 'comma' => ['abc,def'];
+    }
+
+    /**
+     * @dataProvider unquotedMultipartBoundaryProvider
+     */
+    public function testLeavesMultipartBoundaryParameterUnquotedWhenPossible(string $boundary): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->send(new Request(
+            'POST',
+            'http://foo.com',
+            [],
+            new Psr7\MultipartStream([], $boundary)
+        ));
+
+        $last = $mock->getLastRequest();
+        self::assertSame(
+            'multipart/form-data; boundary='.$boundary,
+            $last->getHeaderLine('Content-Type')
+        );
+    }
+
+    public static function unquotedMultipartBoundaryProvider(): iterable
+    {
+        yield 'letters and digits' => ['abc123'];
+        yield 'hyphen and underscore' => ['abc-def_123'];
+        yield 'apostrophe' => ["abc'def"];
+        yield 'plus' => ['abc+def'];
+        yield 'period' => ['abc.def'];
+    }
+
+    public function testPreservesExistingMultipartContentTypeHeader(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->send(new Request(
+            'POST',
+            'http://foo.com',
+            ['Content-Type' => 'multipart/form-data; boundary=provided'],
+            new Psr7\MultipartStream([], 'abc:def')
+        ));
+
+        $last = $mock->getLastRequest();
+        self::assertSame(
+            'multipart/form-data; boundary=provided',
+            $last->getHeaderLine('Content-Type')
+        );
+    }
+
     public function testUsesProxyEnvironmentVariables(): void
     {
         unset($_SERVER['HTTP_PROXY'], $_SERVER['HTTPS_PROXY'], $_SERVER['NO_PROXY']);
