@@ -626,11 +626,10 @@ class CurlFactory implements CurlFactoryInterface
                     }
 
                     $uri = $easy->request->getUri();
-                    $host = $uri->getHost();
                     $noProxy = isset($proxy['no']) ? Utils::normalizeNoProxy($proxy['no']) : [];
                     if ($noProxy !== [] && Utils::isUriInNoProxy($uri, $noProxy)) {
                         $conf[\CURLOPT_PROXY] = '';
-                        $conf[\CURLOPT_NOPROXY] = $host;
+                        $conf[\CURLOPT_NOPROXY] = '*';
                     } else {
                         $conf[\CURLOPT_PROXY] = $proxy[$scheme];
                         $conf[\CURLOPT_NOPROXY] = '';

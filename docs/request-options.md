@@ -780,17 +780,17 @@ Pass a string to specify a proxy for all protocols.
 $client->request('GET', '/', ['proxy' => 'http://localhost:8125']);
 ```
 
-Pass an associative array to specify HTTP proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair to provide a list of host names that should not be proxied to. No-proxy entries may include ports, for example `example.com:8080` or `[::1]:8080`. IP no-proxy entries may use CIDR notation, for example `192.168.0.0/16` or `fd00::/8`. CIDR entries match IP literals only and are not port-specific.
+Pass an associative array to specify HTTP proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair to provide a list of entries that should not be proxied to. No-proxy entries may include host names, host-and-port pairs, IP literals, or IP CIDR rules. The wildcard entry `*` matches all hosts, and a port-specific wildcard such as `*:80` matches any host using effective port `80`. Domain entries are matched case-insensitively. A bare domain such as `example.com` matches both `example.com` and `foo.example.com`; a leading-dot domain such as `.example.com` matches subdomains but not `example.com` itself. No-proxy entries may include ports, for example `example.com:8080` or `[::1]:8080`. IP literals are normalized before matching, so equivalent IPv6 spellings such as `::1` and `0:0:0:0:0:0:0:1` match. CIDR entries match IP literals only and are not port-specific.
 
 > [!NOTE]
-> Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value parsed from the `NO_PROXY` environment variable (e.g., `explode(',', getenv('NO_PROXY'))`).
+> Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
 
 ```php
 $client->request('GET', '/', [
     'proxy' => [
         'http'  => 'http://localhost:8125', // Use this proxy with "http"
         'https' => 'http://localhost:9124', // Use this proxy with "https",
-        'no' => ['.mit.edu', 'foo.com', 'example.com:8080', '10.0.0.0/8'] // Don't use a proxy with these
+        'no' => ['.mit.edu', 'foo.com', 'example.com:8080', '::1', '[fd00::1]:8080', '10.0.0.0/8', 'fd00::/8'] // Don't use a proxy with these
     ]
 ]);
 ```

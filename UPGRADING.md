@@ -167,15 +167,23 @@ strings, and the `proxy['no']` value may be either an array of strings or a
 comma-delimited string such as the value from the `NO_PROXY` environment
 variable. Other values now throw `InvalidArgumentException`.
 
+No-proxy matching is normalized more consistently. Domain entries are matched
+case-insensitively, exact IP literal entries compare normalized IP addresses,
+and `NO_PROXY` environment entries are trimmed with the same parser used for
+request options. Internal spaces in `NO_PROXY` entries are preserved instead of
+removed.
+
 Explicit proxy options also override environment no-proxy settings. If you pass
 a `proxy` request option and want to exclude hosts, provide the `no` value
 explicitly:
 
 ```php
+$noProxy = getenv('NO_PROXY');
+
 $client->request('GET', '/', [
     'proxy' => [
         'http' => 'http://localhost:8125',
-        'no' => getenv('NO_PROXY') ?: '',
+        'no' => $noProxy === false ? '' : $noProxy,
     ],
 ]);
 ```

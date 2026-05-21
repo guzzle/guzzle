@@ -495,7 +495,7 @@ Note: because the HTTP_PROXY variable may contain arbitrary user input on some (
 Defines the proxy to use when sending requests using the "https" protocol.
 
 `NO_PROXY`
-Defines URLs for which a proxy should not be used. See the [`proxy` option](request-options.md#proxy).
+Defines hosts and IP rules for which a proxy should not be used. See the [`proxy` option](request-options.md#proxy).
 
 ### Relevant ini Settings
 
