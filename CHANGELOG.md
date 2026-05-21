@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.10.4 - TBD
+
+### Fixed
+
+- Fix IPv6 literal matching in no-proxy rules
+
+
 ## 7.10.3 - 2025-05-20
 
 ### Fixed
