@@ -33,6 +33,16 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
+#### Multipart request part headers
+
+Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts
+created through the `multipart` request option no longer include generated
+per-part `Content-Length` headers by default. If your tests compare raw
+multipart payloads, remove those generated part headers from expected strings.
+
+You can still pass an explicit `Content-Length` header in a multipart element's
+`headers` array if a non-standard peer requires it.
+
 #### Generic Promise PHPDoc Types
 
 Guzzle's async client APIs, handlers, and middleware callable annotations now use
