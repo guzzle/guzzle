@@ -235,7 +235,6 @@ EOT
             }
 
             if ($area === '') {
-                // Don't match on empty values.
                 continue;
             }
 
@@ -290,7 +289,6 @@ EOT
             }
 
             if ($area === '') {
-                // Don't match on empty values.
                 continue;
             }
 
