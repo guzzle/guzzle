@@ -144,9 +144,11 @@ final class Utils
      * 2. An exact match.
      * 3. The area starts with "." and the area is the last part of the host. e.g.
      *    '.mit.edu' will match any host that ends with '.mit.edu'.
+     * 4. IP CIDR entries match IP literal hosts. e.g. '192.168.0.0/16' will
+     *    match '192.168.1.10' and 'fd00::/8' will match '[fd00::1]'.
      *
      * @param string   $host         Host to check against the patterns.
-     * @param string[] $noProxyArray An array of host patterns.
+     * @param string[] $noProxyArray An array of host or CIDR patterns.
      *
      * @throws InvalidArgumentException
      */
@@ -195,7 +197,7 @@ final class Utils
     /**
      * Returns true if the provided URI matches any of the no proxy areas.
      *
-     * @param string[] $noProxyArray An array of host patterns.
+     * @param string[] $noProxyArray An array of host, host-and-port, or CIDR patterns.
      *
      * @internal
      */
