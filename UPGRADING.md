@@ -33,6 +33,23 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
+#### Request method casing
+
+Guzzle 8 uses Guzzle PSR-7 3.x, whose `Request` implementation no longer
+uppercases request methods. Request method names are case-sensitive and are now
+preserved as provided.
+
+If you previously relied on `new Request('get', ...)` or
+`$client->request('get', ...)` being sent as `GET`, normalize the method before
+constructing or sending the request:
+
+```php
+$client->request('GET', 'https://example.com');
+```
+
+The convenience methods such as `$client->get()`, `$client->post()`, and their
+async variants continue to use uppercase standard methods.
+
 #### Multipart request serialization
 
 Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts
