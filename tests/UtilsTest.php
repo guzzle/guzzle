@@ -122,6 +122,7 @@ class UtilsTest extends TestCase
             ['mit.edu', ['baz', 'mit.edu'], true],
             ['mit.edu', ['', '', 'mit.edu'], true],
             ['mit.edu', ['baz', '*'], true],
+            ['0', ['0'], true],
             ['foo.example.com', ['example.com'], true],
             ['example.com', ['example.com:443'], false],
             ['[::1]', ['[::1]'], true],
@@ -145,6 +146,38 @@ class UtilsTest extends TestCase
     {
         self::assertSame($result, Utils::isHostInNoProxy($host, $list));
         self::assertSame($result, \GuzzleHttp\is_host_in_noproxy($host, $list));
+    }
+
+    public static function uriNoProxyProvider()
+    {
+        return [
+            ['http://example.com', ['example.com:80'], true],
+            ['https://example.com', ['example.com:443'], true],
+            ['http://example.com:8080', ['example.com:8080'], true],
+            ['http://example.com:8081', ['example.com:8080'], false],
+            ['http://foo.example.com:8080', ['example.com:8080'], true],
+            ['http://foo.example.com:8080', ['.example.com:8080'], true],
+            ['http://example.com:8080', ['.example.com:8080'], false],
+            ['http://[::1]:8080', ['[::1]:8080'], true],
+            ['http://[::1]:8081', ['[::1]:8080'], false],
+            ['http://[::1]', ['[::1]:80'], true],
+            ['https://[::1]', ['[::1]:443'], true],
+            ['http://[::1]', ['::1:80'], false],
+            ['http://test.test.com', ['*.test.com'], false],
+            ['http://127.0.0.1', ['127.0.0.*'], false],
+            ['http://0', ['0'], true],
+            ['http://anything.test', ['*'], true],
+            ['http://example.com', ['example.com:abc'], false],
+            ['http://example.com', ['example.com:99999'], false],
+        ];
+    }
+
+    /**
+     * @dataProvider uriNoProxyProvider
+     */
+    public function testChecksUriNoProxyList($uri, $list, $result)
+    {
+        self::assertSame($result, Utils::isUriInNoProxy(GuzzleHttp\Psr7\Utils::uriFor($uri), $list));
     }
 
     public function testEnsuresNoProxyCheckHostIsSet()

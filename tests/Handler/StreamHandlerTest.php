@@ -339,6 +339,28 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('proxy', $opts['http']);
     }
 
+    public function testAddsProxyButHonorsNoProxyPorts()
+    {
+        $proxy = [
+            'http' => 'http://proxy.example.com:8125',
+            'https' => 'http://proxy.example.com:8125',
+            'no' => ['example.com:80'],
+        ];
+
+        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://example.com')['http']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'https://example.com')['http']['proxy']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://example.com:8080')['http']['proxy']);
+
+        $proxy['no'] = ['.example.com:8080'];
+        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://foo.example.com:8080')['http']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://example.com:8080')['http']['proxy']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://foo.example.com:8081')['http']['proxy']);
+
+        $proxy['no'] = ['[::1]:8080'];
+        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://[::1]:8080')['http']);
+        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://[::1]:8081')['http']['proxy']);
+    }
+
     public function testUsesProxy()
     {
         $this->queueRes();
@@ -352,6 +374,22 @@ class StreamHandlerTest extends TestCase
         self::assertSame('Bar', $response->getHeaderLine('Foo'));
         self::assertSame('8', $response->getHeaderLine('Content-Length'));
         self::assertSame('hi there', (string) $response->getBody());
+    }
+
+    private function getProxyContext($proxy, $uri = 'http://example.com')
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', $uri);
+        $options = ['http' => []];
+        $params = [];
+        $method = new \ReflectionMethod(StreamHandler::class, 'add_proxy');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs($handler, [$request, &$options, $proxy, &$params]);
+
+        return $options;
     }
 
     public function testAddsTimeout()
