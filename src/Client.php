@@ -309,9 +309,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         $request = $this->applyOptions($request, $options);
 
-        if ('' === $request->getProtocolVersion()) {
-            throw new InvalidArgumentException('HTTP protocol version must not be empty.');
-        }
+        self::assertProtocolVersion($request->getProtocolVersion());
 
         /** @var HandlerStack $handler */
         $handler = $options['handler'];
@@ -484,11 +482,22 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     private static function normalizeProtocolVersion($version): string
     {
+        $version = \is_float($version) ? \number_format($version, 1, '.', '') : (string) $version;
+
+        self::assertProtocolVersion($version);
+
+        return $version;
+    }
+
+    private static function assertProtocolVersion(string $version): void
+    {
         if ('' === $version) {
             throw new InvalidArgumentException('HTTP protocol version must not be empty.');
         }
 
-        return \is_float($version) ? \number_format($version, 1, '.', '') : (string) $version;
+        if (1 !== \preg_match('/^\d+(?:\.\d+)?$/D', $version)) {
+            throw new InvalidArgumentException('HTTP protocol version must be a valid HTTP version number.');
+        }
     }
 
     /**

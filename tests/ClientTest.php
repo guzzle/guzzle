@@ -17,6 +17,8 @@ use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\MessageInterface;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ClientTest extends TestCase
@@ -66,12 +68,51 @@ class ClientTest extends TestCase
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
-        $request = new Request('GET', 'http://example.com', [], null, '');
+        $request = self::requestWithProtocolVersion('');
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('HTTP protocol version must not be empty.');
 
         $client->send($request);
+    }
+
+    /**
+     * @dataProvider malformedProtocolVersionProvider
+     */
+    public function testRejectsMalformedProtocolVersionRequestOption(string $version): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('HTTP protocol version must be a valid HTTP version number.');
+
+        $client->get('http://example.com', ['version' => $version]);
+    }
+
+    /**
+     * @dataProvider malformedProtocolVersionProvider
+     */
+    public function testRejectsMalformedRequestProtocolVersion(string $version): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('HTTP protocol version must be a valid HTTP version number.');
+
+        $client->send(self::requestWithProtocolVersion($version));
+    }
+
+    public static function malformedProtocolVersionProvider(): iterable
+    {
+        yield ['HTTP/1.1'];
+        yield ['1.1 '];
+        yield [' 1.1'];
+        yield ['1.'];
+        yield ['.1'];
+        yield ['1.1.1'];
+        yield ['foo'];
     }
 
     public function testClientHasOptions(): void
@@ -999,6 +1040,41 @@ class ClientTest extends TestCase
         }, null, Client::class);
 
         return $readConfig($client);
+    }
+
+    private static function requestWithProtocolVersion(string $protocolVersion): RequestInterface
+    {
+        return new ClientTestRequestWithProtocolVersion($protocolVersion);
+    }
+}
+
+final class ClientTestRequestWithProtocolVersion extends Request
+{
+    /** @var string */
+    private $protocolVersion;
+
+    public function __construct(string $protocolVersion)
+    {
+        parent::__construct('GET', 'http://example.com');
+
+        $this->protocolVersion = $protocolVersion;
+    }
+
+    public function getProtocolVersion(): string
+    {
+        return $this->protocolVersion;
+    }
+
+    public function withProtocolVersion(string $version): MessageInterface
+    {
+        if ($this->protocolVersion === $version) {
+            return $this;
+        }
+
+        $new = clone $this;
+        $new->protocolVersion = $version;
+
+        return $new;
     }
 }
 
