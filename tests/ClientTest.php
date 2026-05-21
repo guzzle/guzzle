@@ -698,14 +698,41 @@ class ClientTest extends TestCase
             self::assertSame(['http' => '127.0.0.1'], $config['proxy']);
 
             \putenv('HTTPS_PROXY=127.0.0.2');
-            \putenv('NO_PROXY=127.0.0.3, 127.0.0.4');
+            \putenv('NO_PROXY= 127.0.0.3 , 127.0.0.4 , [::1]:8080 ');
             $client = new Client();
             $config = self::readClientConfig($client);
             self::assertArrayHasKey('proxy', $config);
             self::assertSame(
-                ['http' => '127.0.0.1', 'https' => '127.0.0.2', 'no' => ['127.0.0.3', '127.0.0.4']],
+                ['http' => '127.0.0.1', 'https' => '127.0.0.2', 'no' => ['127.0.0.3', '127.0.0.4', '[::1]:8080']],
                 $config['proxy']
             );
+
+            \putenv('HTTP_PROXY=');
+            \putenv('HTTPS_PROXY=');
+            \putenv('NO_PROXY=0');
+            $client = new Client();
+            $config = self::readClientConfig($client);
+            self::assertArrayHasKey('proxy', $config);
+            self::assertSame(['no' => ['0']], $config['proxy']);
+
+            \putenv('NO_PROXY= , , ');
+            $client = new Client();
+            $config = self::readClientConfig($client);
+            self::assertArrayNotHasKey('proxy', $config);
+
+            \putenv('HTTP_PROXY=127.0.0.1');
+            $client = new Client();
+            $config = self::readClientConfig($client);
+            self::assertArrayHasKey('proxy', $config);
+            self::assertSame(['http' => '127.0.0.1'], $config['proxy']);
+
+            \putenv('HTTP_PROXY=');
+
+            \putenv('NO_PROXY=exa mple.com, foo.com');
+            $client = new Client();
+            $config = self::readClientConfig($client);
+            self::assertArrayHasKey('proxy', $config);
+            self::assertSame(['no' => ['exa mple.com', 'foo.com']], $config['proxy']);
         } finally {
             \putenv('HTTP_PROXY=');
             \putenv('HTTPS_PROXY=');

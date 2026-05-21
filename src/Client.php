@@ -230,9 +230,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $defaults['proxy']['https'] = $proxy;
         }
 
-        if ($noProxy = Utils::getenv('NO_PROXY')) {
-            $cleanedNoProxy = \str_replace(' ', '', $noProxy);
-            $defaults['proxy']['no'] = \explode(',', $cleanedNoProxy);
+        $noProxy = Utils::getenv('NO_PROXY');
+        if ($noProxy !== null) {
+            $noProxy = Utils::normalizeNoProxy($noProxy);
+            if ($noProxy !== []) {
+                $defaults['proxy']['no'] = $noProxy;
+            }
         }
 
         $this->config = $config + $defaults;

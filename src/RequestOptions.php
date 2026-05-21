@@ -203,8 +203,10 @@ final class RequestOptions
      * array to specify different proxies for different protocols (where the
      * key is the protocol and the value is a proxy string). Provide a "no"
      * key as a string or array of strings to specify hosts, host-and-port
-     * pairs, or IP CIDR rules that should not be proxied. CIDR rules match
-     * IP literals only and are not port-specific.
+     * pairs, IP literals, IP CIDR rules, or wildcard rules that should not be
+     * proxied. Domain rules are matched case-insensitively. Exact IP literals
+     * are normalized before matching. CIDR rules match IP literals only and
+     * are not port-specific.
      */
     public const PROXY = 'proxy';
 
