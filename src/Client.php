@@ -333,7 +333,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $request = Psr7\Utils::modifyRequest($request, ['version' => '1.1']);
         } elseif (!self::isProtocolVersionValid($protocolVersion)) {
             \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Sending a request with a malformed protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject malformed protocol versions.');
-            $options['_guzzle_malformed_protocol_version_deprecated'] = true;
         }
 
         /** @var HandlerStack $handler */

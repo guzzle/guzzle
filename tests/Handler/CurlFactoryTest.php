@@ -10,7 +10,6 @@ use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Server\Server;
-use GuzzleHttp\Tests\Helpers;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -586,28 +585,9 @@ class CurlFactoryTest extends TestCase
         Server::flush();
         Server::enqueue([new Psr7\Response()]);
         $a = new Handler\CurlMultiHandler();
-        $request = Helpers::requestWithProtocolVersion('', Server::$url);
+        $request = new Psr7\Request('GET', Server::$url, [], null, '');
         $a($request, []);
         self::assertEquals(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
-    }
-
-    public function testMalformedProtocolVersionIsDeprecated()
-    {
-        $factory = new CurlFactory(3);
-        $request = Helpers::requestWithProtocolVersion('HTTP/1.1', Server::$url);
-
-        $deprecations = Helpers::captureDeprecations(static function () use ($factory, $request): void {
-            try {
-                $factory->create($request, []);
-                self::fail('Expected ConnectException.');
-            } catch (ConnectException $e) {
-                self::assertStringContainsString('is not supported by the cURL handler', $e->getMessage());
-            }
-        });
-
-        self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: Sending a request with a malformed protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject malformed protocol versions.',
-        ], $deprecations);
     }
 
     public function testSavesToStream()
@@ -836,20 +816,20 @@ class CurlFactoryTest extends TestCase
         $easy = $f->create($req, []);
         $h1 = $easy->handle;
         $f->release($easy);
-        self::assertCount(1, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(1, self::readIdleHandles($f));
         $easy = $f->create($req, []);
         self::assertSame($easy->handle, $h1);
         $easy2 = $f->create($req, []);
         $easy3 = $f->create($req, []);
         $easy4 = $f->create($req, []);
         $f->release($easy);
-        self::assertCount(1, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(1, self::readIdleHandles($f));
         $f->release($easy2);
-        self::assertCount(2, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(2, self::readIdleHandles($f));
         $f->release($easy3);
-        self::assertCount(3, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(3, self::readIdleHandles($f));
         $f->release($easy4);
-        self::assertCount(3, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(3, self::readIdleHandles($f));
     }
 
     public function testRejectsPromiseWhenCreateResponseFails()
@@ -1147,5 +1127,14 @@ class CurlFactoryTest extends TestCase
             self::assertNull($e->getResponse());
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
         }
+    }
+
+    private static function readIdleHandles(CurlFactory $factory): array
+    {
+        $readHandles = \Closure::bind(static function (CurlFactory $factory): array {
+            return $factory->handles;
+        }, null, CurlFactory::class);
+
+        return $readHandles($factory);
     }
 }

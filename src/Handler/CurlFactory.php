@@ -54,10 +54,7 @@ class CurlFactory implements CurlFactoryInterface
 
             $protocolVersion = '1.1';
             $request = \GuzzleHttp\Psr7\Utils::modifyRequest($request, ['version' => $protocolVersion]);
-        } elseif (
-            empty($options['_guzzle_malformed_protocol_version_deprecated'])
-            && 1 !== \preg_match('/^\d+(?:\.\d+)?$/D', $protocolVersion)
-        ) {
+        } elseif (1 !== \preg_match('/^\d+(?:\.\d+)?$/D', $protocolVersion)) {
             \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Sending a request with a malformed protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject malformed protocol versions.');
         }
 

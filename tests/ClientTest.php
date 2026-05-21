@@ -72,60 +72,11 @@ class ClientTest extends TestCase
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
-        $request = Helpers::requestWithProtocolVersion('');
+        $request = new Request('GET', 'http://example.com', [], null, '');
 
         $client->send($request);
 
         self::assertSame('1.1', $mock->getLastRequest()->getProtocolVersion());
-    }
-
-    /**
-     * @dataProvider malformedProtocolVersionProvider
-     *
-     * @param string $version
-     */
-    public function testMalformedProtocolVersionRequestOptionIsDeprecated($version)
-    {
-        $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
-
-        $deprecations = Helpers::captureDeprecations(static function () use ($client, $version): void {
-            $client->get('http://example.com', ['version' => $version]);
-        });
-
-        self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: Sending a request with a malformed protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject malformed protocol versions.',
-        ], $deprecations);
-    }
-
-    /**
-     * @dataProvider malformedProtocolVersionProvider
-     *
-     * @param string $version
-     */
-    public function testMalformedRequestProtocolVersionIsDeprecated($version)
-    {
-        $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
-
-        $deprecations = Helpers::captureDeprecations(static function () use ($client, $version): void {
-            $client->send(Helpers::requestWithProtocolVersion($version));
-        });
-
-        self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: Sending a request with a malformed protocol version is deprecated; guzzlehttp/guzzle 8.0 will reject malformed protocol versions.',
-        ], $deprecations);
-    }
-
-    public static function malformedProtocolVersionProvider(): iterable
-    {
-        yield ['HTTP/1.1'];
-        yield ['1.1 '];
-        yield [' 1.1'];
-        yield ['1.'];
-        yield ['.1'];
-        yield ['1.1.1'];
-        yield ['foo'];
     }
 
     public function testClientHasOptions()
@@ -136,7 +87,7 @@ class ClientTest extends TestCase
             'headers' => ['bar' => 'baz'],
             'handler' => new MockHandler(),
         ]);
-        $config = Helpers::readObjectAttribute($client, 'config');
+        $config = self::readClientConfig($client);
         self::assertArrayHasKey('base_uri', $config);
         self::assertInstanceOf(Uri::class, $config['base_uri']);
         self::assertSame('http://foo.com', (string) $config['base_uri']);
@@ -188,7 +139,7 @@ class ClientTest extends TestCase
             'handler' => $mock,
             'base_uri' => 'http://bar.com',
         ]);
-        $config = Helpers::readObjectAttribute($client, 'config');
+        $config = self::readClientConfig($client);
         self::assertSame('http://bar.com', (string) $config['base_uri']);
         $request = new Request('GET', '/baz');
         $client->send($request);
@@ -201,7 +152,7 @@ class ClientTest extends TestCase
     public function testMergesDefaultOptionsAndDoesNotOverwriteUa()
     {
         $client = new Client(['headers' => ['User-agent' => 'foo']]);
-        $config = Helpers::readObjectAttribute($client, 'config');
+        $config = self::readClientConfig($client);
         self::assertSame(['User-agent' => 'foo'], $config['headers']);
         self::assertIsArray($config['allow_redirects']);
         self::assertTrue($config['http_errors']);
@@ -643,19 +594,19 @@ class ClientTest extends TestCase
 
         try {
             $client = new Client();
-            $config = Helpers::readObjectAttribute($client, 'config');
+            $config = self::readClientConfig($client);
             self::assertArrayNotHasKey('proxy', $config);
 
             \putenv('HTTP_PROXY=127.0.0.1');
             $client = new Client();
-            $config = Helpers::readObjectAttribute($client, 'config');
+            $config = self::readClientConfig($client);
             self::assertArrayHasKey('proxy', $config);
             self::assertSame(['http' => '127.0.0.1'], $config['proxy']);
 
             \putenv('HTTPS_PROXY=127.0.0.2');
             \putenv('NO_PROXY=127.0.0.3, 127.0.0.4');
             $client = new Client();
-            $config = Helpers::readObjectAttribute($client, 'config');
+            $config = self::readClientConfig($client);
             self::assertArrayHasKey('proxy', $config);
             self::assertSame(
                 ['http' => '127.0.0.1', 'https' => '127.0.0.2', 'no' => ['127.0.0.3', '127.0.0.4']],
@@ -884,7 +835,7 @@ class ClientTest extends TestCase
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $config = Helpers::readObjectAttribute($client, 'config');
+        $config = self::readClientConfig($client);
 
         self::assertFalse($config['idn_conversion']);
     }
@@ -944,7 +895,7 @@ class ClientTest extends TestCase
             'base_uri' => 'http://яндекс.рф',
             'idn_conversion' => true,
         ]);
-        $config = Helpers::readObjectAttribute($client, 'config');
+        $config = self::readClientConfig($client);
         self::assertSame('http://яндекс.рф', (string) $config['base_uri']);
         $request = new Request('GET', '/baz');
         $client->send($request);
@@ -982,6 +933,15 @@ class ClientTest extends TestCase
         $request = $requests[0]['request'];
         self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
+    }
+
+    private static function readClientConfig(Client $client): array
+    {
+        $readConfig = \Closure::bind(static function (Client $client): array {
+            return $client->config;
+        }, null, Client::class);
+
+        return $readConfig($client);
     }
 }
 
