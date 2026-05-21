@@ -32,10 +32,16 @@ final class HeaderProcessor
         }
 
         $parts = \explode(' ', $statusLine, 3);
-        $version = \explode('/', $parts[0])[1] ?? null;
+        $protocol = $parts[0];
 
-        if ($version === null) {
+        if (0 !== \strncasecmp($protocol, 'HTTP/', 5)) {
             throw new \RuntimeException('HTTP version missing from header data');
+        }
+
+        $version = \substr($protocol, 5);
+
+        if (!\preg_match('/^\d+(?:\.\d+)?$/D', $version)) {
+            throw new \RuntimeException('HTTP version is invalid');
         }
 
         $status = $parts[1] ?? null;
@@ -48,13 +54,19 @@ final class HeaderProcessor
             throw new \RuntimeException('HTTP status code is invalid');
         }
 
+        $reason = $parts[2] ?? null;
+
+        if ($reason !== null && !\preg_match('/^[\x09\x20-\x7E\x80-\xFF]*$/D', $reason)) {
+            throw new \RuntimeException('HTTP reason phrase is invalid');
+        }
+
         foreach ($headers as $header) {
             if (\strpos($header, ':') === false) {
                 throw new \RuntimeException('HTTP header line is invalid');
             }
         }
 
-        return [$version, (int) $status, $parts[2] ?? null, Utils::headersFromLines($headers)];
+        return [$version, (int) $status, $reason, Utils::headersFromLines($headers)];
     }
 
     /**
