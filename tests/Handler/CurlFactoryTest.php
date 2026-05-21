@@ -13,7 +13,6 @@ use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Server\Server;
-use GuzzleHttp\Tests\Helpers;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -1009,20 +1008,20 @@ class CurlFactoryTest extends TestCase
         $easy = $f->create($req, []);
         $h1 = $easy->handle;
         $f->release($easy);
-        self::assertCount(1, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(1, self::readIdleHandles($f));
         $easy = $f->create($req, []);
         self::assertSame($easy->handle, $h1);
         $easy2 = $f->create($req, []);
         $easy3 = $f->create($req, []);
         $easy4 = $f->create($req, []);
         $f->release($easy);
-        self::assertCount(1, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(1, self::readIdleHandles($f));
         $f->release($easy2);
-        self::assertCount(2, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(2, self::readIdleHandles($f));
         $f->release($easy3);
-        self::assertCount(3, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(3, self::readIdleHandles($f));
         $f->release($easy4);
-        self::assertCount(3, Helpers::readObjectAttribute($f, 'handles'));
+        self::assertCount(3, self::readIdleHandles($f));
     }
 
     public function testRejectsPromiseWhenCreateResponseFails(): void
@@ -1364,5 +1363,14 @@ class CurlFactoryTest extends TestCase
         $property->setValue(null, $versionInfo);
 
         return $previousVersionInfo;
+    }
+
+    private static function readIdleHandles(CurlFactory $factory): array
+    {
+        $readHandles = \Closure::bind(static function (CurlFactory $factory): array {
+            return $factory->handles;
+        }, null, CurlFactory::class);
+
+        return $readHandles($factory);
     }
 }
