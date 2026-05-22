@@ -903,11 +903,20 @@ Pass a `Psr\Http\Message\StreamInterface` object to stream the response body to 
 ```php
 $resource = \GuzzleHttp\Psr7\Utils::tryFopen('/path/to/file', 'w');
 $stream = \GuzzleHttp\Psr7\Utils::streamFor($resource);
-$client->request('GET', '/stream/20', ['save_to' => $stream]);
+$client->request('GET', '/stream/20', ['sink' => $stream]);
+```
+
+With Guzzle's built-in cURL and PHP stream handlers, non-streaming responses use the sink stream as the response body. If you pass a PHP resource, Guzzle wraps it in a PSR-7 stream before writing to it. Closing or garbage-collecting the response body can close that wrapped resource.
+
+If you need to keep using a resource after the response is no longer referenced, keep the response body alive or detach the resource before the body is destroyed:
+
+```php
+$response = $client->request('GET', '/stream/20', ['sink' => $resource]);
+$resource = $response->getBody()->detach();
 ```
 
 > [!NOTE]
-> The `save_to` request option has been deprecated in favor of the `sink` request option. Providing the `save_to` option is now an alias of `sink`.
+> `save_to` was deprecated in Guzzle 6 and removed in Guzzle 7. Use `sink`.
 
 ## ssl_key
 
