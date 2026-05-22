@@ -249,6 +249,25 @@ class ClientTest extends TestCase
         self::assertSame('2', $request->getProtocolVersion());
     }
 
+    public function testRequestUsesDefaultProtocolVersionWithConfiguredRequestFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new class implements RequestFactoryInterface {
+            public function createRequest(string $method, $uri): RequestInterface
+            {
+                return new Request($method, $uri, [], null, '2.0');
+            }
+        };
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::REQUEST_FACTORY => $factory,
+        ]);
+
+        $client->request('GET', 'http://example.com/path');
+
+        self::assertSame('1.1', $mock->getLastRequest()->getProtocolVersion());
+    }
+
     public function testBodyUsesConfiguredStreamFactory(): void
     {
         $mock = new MockHandler([new Response()]);

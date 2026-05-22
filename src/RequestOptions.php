@@ -43,8 +43,9 @@ final class RequestOptions
 
     /**
      * body: (resource|string|null|int|float|StreamInterface|callable|\Iterator)
-     * Body to send in the request. Supported non-stream values are converted
-     * using the configured stream_factory.
+     * Body to send in the request. Scalar, resource, and stringable object
+     * values are converted using the configured stream_factory. Callable and
+     * iterator bodies use Guzzle's existing stream handling.
      */
     public const BODY = 'body';
 

@@ -244,19 +244,27 @@ class RedirectMiddleware
         $location = $response->getHeaderLine('Location');
 
         try {
-            $location = Psr7\UriResolver::resolve(
+            $locationUri = $uriFactory->createUri($location);
+            $resolvedUri = Psr7\UriResolver::resolve(
                 $request->getUri(),
-                $uriFactory->createUri($location)
+                $locationUri
             );
+
+            if (!$uriFactory instanceof HttpFactory
+                && $locationUri->getScheme() === ''
+                && $locationUri->getAuthority() === ''
+            ) {
+                $resolvedUri = $uriFactory->createUri((string) $resolvedUri);
+            }
         } catch (\InvalidArgumentException $e) {
             throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid: %s', $location, $e->getMessage()), $request, $response, $e);
         }
 
         // Ensure that the redirect URI is allowed based on the protocols.
-        if (!\in_array($location->getScheme(), $protocols)) {
-            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', $location, \implode(', ', $protocols)), $request, $response);
+        if (!\in_array($resolvedUri->getScheme(), $protocols)) {
+            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', $resolvedUri, \implode(', ', $protocols)), $request, $response);
         }
 
-        return $location;
+        return $resolvedUri;
     }
 }

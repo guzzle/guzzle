@@ -159,6 +159,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         $options = $this->prepareDefaults($options);
 
+        $version = self::normalizeProtocolVersion($options['version'] ?? '1.1');
+        unset($options['version']);
+
         if (isset($options['body']) && \is_array($options['body'])) {
             throw $this->invalidBody();
         }
@@ -177,6 +180,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         $uri = $builtUri;
         $request = $requestFactory->createRequest($method, $uri);
+        $request = Psr7\Utils::modifyRequest($request, ['version' => $version]);
 
         return $this->transfer($request, $options);
     }

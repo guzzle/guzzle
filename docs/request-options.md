@@ -204,7 +204,7 @@ This setting can be set to any of the following types:
   $client->request('POST', '/post', ['body' => $stream]);
   ```
 
-Supported non-stream body values are converted to PSR-7 streams using the configured `stream_factory`. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+Scalar, resource, and object values with `__toString()` are converted to PSR-7 streams using the configured `stream_factory`. Callable and iterator bodies use Guzzle's existing stream handling because PSR-17 does not define factories for those stream types. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
 
 > [!NOTE]
 > This option cannot be used with `form_params`, `multipart`, or `json`

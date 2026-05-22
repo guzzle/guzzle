@@ -128,7 +128,8 @@ class RedirectMiddlewareTest extends TestCase
             RequestOptions::URI_FACTORY => $factory,
         ])->wait();
 
-        self::assertSame(['/foo'], $factory->uriCalls());
+        self::assertSame(['/foo', 'http://example.com/foo'], $factory->uriCalls());
+        self::assertInstanceOf(RedirectTestUri::class, $mock->getLastRequest()->getUri());
         self::assertSame('http://example.com/foo', (string) $mock->getLastRequest()->getUri());
     }
 
@@ -280,6 +281,24 @@ class RedirectMiddlewareTest extends TestCase
 
         $lastRequest = $mock->getLastRequest();
         self::assertSame(200, $response->getStatusCode());
+        self::assertInstanceOf(RedirectTestRequest::class, $lastRequest);
+        self::assertInstanceOf(RedirectTestUri::class, $lastRequest->getUri());
+        self::assertSame('http://example.com/foo', (string) $lastRequest->getUri());
+    }
+
+    public function testSendPreservesCustomUriImplementationForRelativeRedirectsWithDefaultUriFactory(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => '/foo']),
+            new Response(200),
+        ]);
+        $client = new Client([
+            'handler' => HandlerStack::create($mock),
+        ]);
+
+        $client->send(new RedirectTestRequest('GET', new RedirectTestUri('http://example.com?a=b')));
+
+        $lastRequest = $mock->getLastRequest();
         self::assertInstanceOf(RedirectTestRequest::class, $lastRequest);
         self::assertInstanceOf(RedirectTestUri::class, $lastRequest->getUri());
         self::assertSame('http://example.com/foo', (string) $lastRequest->getUri());

@@ -297,7 +297,7 @@ Guzzle uses the `guzzlehttp/psr7` package to provide stream support. More inform
 
 The best way to create a stream is using the `GuzzleHttp\Psr7\Utils::streamFor` method. This method accepts strings, resources returned from `fopen()`, an object that implements `__toString()`, iterators, callables, and instances of `Psr\Http\Message\StreamInterface`.
 
-When Guzzle creates request body streams from options such as `body`, `form_params`, or `json`, the `stream_factory` request option can replace the default PSR-17 stream factory. Streams supplied directly as `Psr\Http\Message\StreamInterface` instances are used as provided.
+When Guzzle creates request body streams from supported `body`, `form_params`, or `json` option values, the `stream_factory` request option can replace the default PSR-17 stream factory. Streams supplied directly as `Psr\Http\Message\StreamInterface` instances are used as provided, while callable and iterator bodies use Guzzle's existing stream handling.
 
 ```php
 use GuzzleHttp\Psr7;
