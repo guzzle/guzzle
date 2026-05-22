@@ -12,6 +12,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Changed no-proxy matching to account for request ports when evaluating host-and-port rules
 - Prevent `CurlMultiHandler` destructors from throwing during cleanup
 - Improve invalid response handling across handlers
+- Clarified cross-origin redirect credential behavior in the documentation
 
 ### Deprecated
 
