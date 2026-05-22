@@ -169,6 +169,12 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
+			message: '#^Parameter \#1 \$ch of function curl_close expects resource, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
 			message: '#^Parameter \#1 \$mh of function curl_multi_add_handle expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 2
@@ -202,6 +208,12 @@ parameters:
 			message: '#^Parameter \#1 \$mh of function curl_multi_select expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 3
+			path: src/Handler/CurlMultiHandler.php
+
+		-
+			message: '#^Parameter \#2 \$ch of function curl_multi_remove_handle expects resource, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
