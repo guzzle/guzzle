@@ -16,6 +16,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Deprecated
 
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
+- Deprecated passing `CURLOPT_SHARE` through the `curl` request option, which will be rejected in 8.0
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
 
