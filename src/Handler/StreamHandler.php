@@ -65,13 +65,7 @@ class StreamHandler
 
             // Append a content-length header if body size is zero to match
             // the behavior of `CurlHandler`
-            if (
-                (
-                    0 === \strcasecmp('PUT', $request->getMethod())
-                    || 0 === \strcasecmp('POST', $request->getMethod())
-                )
-                && 0 === $request->getBody()->getSize()
-            ) {
+            if (($request->getMethod() === 'PUT' || $request->getMethod() === 'POST') && 0 === $request->getBody()->getSize()) {
                 $request = $request->withHeader('Content-Length', '0');
             }
 
@@ -138,7 +132,7 @@ class StreamHandler
         $stream = Psr7\Utils::streamFor($stream);
         $sink = $stream;
 
-        if (\strcasecmp('HEAD', $request->getMethod())) {
+        if ($request->getMethod() !== 'HEAD') {
             $sink = $this->createSink($stream, $options);
         }
 

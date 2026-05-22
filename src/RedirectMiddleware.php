@@ -179,7 +179,7 @@ class RedirectMiddleware
             $safeMethods = ['GET', 'HEAD', 'OPTIONS'];
             $requestMethod = $request->getMethod();
 
-            $modify['method'] = in_array($requestMethod, $safeMethods) ? $requestMethod : 'GET';
+            $modify['method'] = \in_array($requestMethod, $safeMethods, true) ? $requestMethod : 'GET';
             $modify['body'] = '';
         }
 

@@ -39,6 +39,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Validate built-in handler timeout options before applying them
 - Reject empty or malformed request protocol versions
 - Throw `TimeoutException` for reliably detected transfer timeouts
+- Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 
 ### Removed
 
