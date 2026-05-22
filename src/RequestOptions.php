@@ -281,7 +281,8 @@ final class RequestOptions
 
     /**
      * uri_factory: (Psr\Http\Message\UriFactoryInterface) PSR-17 URI factory
-     * used when creating URI objects from string request URI and base_uri values.
+     * used when creating URI objects from string request URI, base_uri, and
+     * redirect Location values.
      */
     public const URI_FACTORY = 'uri_factory';
 
