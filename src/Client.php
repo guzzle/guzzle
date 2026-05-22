@@ -11,6 +11,8 @@ use GuzzleHttp\Psr7\HttpFactory;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -75,7 +77,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $config[RequestOptions::URI_FACTORY] = $factory;
         }
 
+        if (!isset($config[RequestOptions::STREAM_FACTORY])) {
+            $config[RequestOptions::STREAM_FACTORY] = $factory;
+        }
+
         self::requireRequestFactory($config[RequestOptions::REQUEST_FACTORY]);
+        self::requireStreamFactory($config[RequestOptions::STREAM_FACTORY]);
         $uriFactory = self::requireUriFactory($config[RequestOptions::URI_FACTORY]);
 
         // Convert the base_uri to a UriInterface using the configured URI factory.
@@ -256,6 +263,22 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
+     * @param mixed $factory
+     */
+    private static function requireStreamFactory($factory): StreamFactoryInterface
+    {
+        if (!$factory instanceof StreamFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::STREAM_FACTORY,
+                StreamFactoryInterface::class
+            ));
+        }
+
+        return $factory;
+    }
+
+    /**
      * @param mixed $uri
      */
     private static function createUri($uri, UriFactoryInterface $uriFactory): UriInterface
@@ -269,6 +292,38 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         throw new InvalidArgumentException(\sprintf('URI must be a string or %s', UriInterface::class));
+    }
+
+    /**
+     * @param mixed $body
+     */
+    private static function createBodyStream($body, StreamFactoryInterface $streamFactory): StreamInterface
+    {
+        if ($body instanceof StreamInterface) {
+            return $body;
+        }
+
+        if (\is_resource($body)) {
+            return $streamFactory->createStreamFromResource($body);
+        }
+
+        if ($body === null) {
+            return $streamFactory->createStream();
+        }
+
+        if (\is_scalar($body)) {
+            return $streamFactory->createStream((string) $body);
+        }
+
+        if ($body instanceof \Iterator || \is_callable($body)) {
+            return Psr7\Utils::streamFor($body);
+        }
+
+        if (\is_object($body) && \method_exists($body, '__toString')) {
+            return $streamFactory->createStream((string) $body);
+        }
+
+        throw new InvalidArgumentException('Invalid resource type: '.\gettype($body));
     }
 
     /**
@@ -451,7 +506,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (\is_array($options['body'])) {
                 throw $this->invalidBody();
             }
-            $modify['body'] = Psr7\Utils::streamFor($options['body']);
+            $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory());
+            $modify['body'] = self::createBodyStream($options['body'], $streamFactory);
             unset($options['body']);
         }
 

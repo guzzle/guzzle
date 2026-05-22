@@ -21,6 +21,8 @@ use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -197,6 +199,8 @@ class ClientTest extends TestCase
         self::assertInstanceOf(RequestFactoryInterface::class, $config[RequestOptions::REQUEST_FACTORY]);
         self::assertArrayHasKey(RequestOptions::URI_FACTORY, $config);
         self::assertInstanceOf(UriFactoryInterface::class, $config[RequestOptions::URI_FACTORY]);
+        self::assertArrayHasKey(RequestOptions::STREAM_FACTORY, $config);
+        self::assertInstanceOf(StreamFactoryInterface::class, $config[RequestOptions::STREAM_FACTORY]);
     }
 
     public function testRequestUsesConfiguredRequestAndUriFactories(): void
@@ -243,6 +247,155 @@ class ClientTest extends TestCase
         self::assertSame('payload', (string) $request->getBody());
         self::assertSame('a=b', $request->getUri()->getQuery());
         self::assertSame('2', $request->getProtocolVersion());
+    }
+
+    public function testBodyUsesConfiguredStreamFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::BODY => 'payload',
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('payload', (string) $request->getBody());
+        self::assertSame(['payload'], $factory->streamCalls());
+    }
+
+    public function testResourceBodyUsesConfiguredStreamFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+        $resource = Psr7\Utils::tryFopen('php://temp', 'r+');
+        \fwrite($resource, 'payload');
+        \rewind($resource);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::BODY => $resource,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('payload', (string) $request->getBody());
+        self::assertSame(1, $factory->streamResourceCalls());
+    }
+
+    public function testStringableBodyUsesConfiguredStreamFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+        $body = new class {
+            public function __toString(): string
+            {
+                return 'payload';
+            }
+        };
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::BODY => $body,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('payload', (string) $request->getBody());
+        self::assertSame(['payload'], $factory->streamCalls());
+    }
+
+    public function testStreamBodyIsPreservedWithConfiguredStreamFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $stream = Psr7\Utils::streamFor('payload');
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::BODY => $stream,
+        ]);
+
+        self::assertSame($stream, $mock->getLastRequest()->getBody());
+        self::assertSame([], $factory->streamCalls());
+        self::assertSame(0, $factory->streamResourceCalls());
+    }
+
+    public function testJsonUsesConfiguredStreamFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::JSON => ['foo' => 'bar'],
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('{"foo":"bar"}', (string) $request->getBody());
+        self::assertSame('application/json', $request->getHeaderLine('Content-Type'));
+        self::assertSame(['{"foo":"bar"}'], $factory->streamCalls());
+    }
+
+    public function testFormParamsUseConfiguredStreamFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::FORM_PARAMS => ['foo' => 'bar baz'],
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('foo=bar+baz', (string) $request->getBody());
+        self::assertSame('application/x-www-form-urlencoded', $request->getHeaderLine('Content-Type'));
+        self::assertSame(['foo=bar+baz'], $factory->streamCalls());
+    }
+
+    public function testSendUsesConfiguredStreamFactoryForBodyOption(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::REQUEST_FACTORY => $factory,
+            RequestOptions::URI_FACTORY => $factory,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+
+        $client->send(new Request('POST', 'http://example.com/path'), [
+            RequestOptions::BODY => 'payload',
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(Request::class, $request);
+        self::assertInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('payload', (string) $request->getBody());
+        self::assertSame([], $factory->requestCalls());
+        self::assertSame([], $factory->uriCalls());
+        self::assertSame(['payload'], $factory->streamCalls());
     }
 
     public function testRequestPreservesMethodCasingWithConfiguredRequestFactory(): void
@@ -422,6 +575,115 @@ class ClientTest extends TestCase
         self::assertSame(['http://example.com/base/'], $factory->uriCalls());
     }
 
+    public function testPerRequestStreamFactoryOverridesClientStreamFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $clientFactory = new ClientTestFactory();
+        $requestFactory = new ClientTestFactory(ClientTestRequest::class, ClientTestUri::class, ClientTestAlternateStream::class);
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $clientFactory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::BODY => 'payload',
+            RequestOptions::STREAM_FACTORY => $requestFactory,
+        ]);
+
+        self::assertSame([], $clientFactory->streamCalls());
+        self::assertSame(['payload'], $requestFactory->streamCalls());
+        self::assertInstanceOf(ClientTestAlternateStream::class, $mock->getLastRequest()->getBody());
+    }
+
+    public function testNullPerRequestStreamFactoryFallsBackToDefaultFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::BODY => 'payload',
+            RequestOptions::STREAM_FACTORY => null,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertNotInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('payload', (string) $request->getBody());
+        self::assertSame([], $factory->streamCalls());
+    }
+
+    public function testCallableBodyFallsBackToGuzzleStreamHandling(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $called = false;
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::BODY => static function (int $length) use (&$called) {
+                if ($called) {
+                    return false;
+                }
+
+                $called = true;
+
+                return 'payload';
+            },
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertNotInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('payload', (string) $request->getBody());
+        self::assertSame([], $factory->streamCalls());
+    }
+
+    public function testIteratorBodyFallsBackToGuzzleStreamHandling(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::BODY => new \ArrayIterator(['pay', 'load']),
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertNotInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('payload', (string) $request->getBody());
+        self::assertSame([], $factory->streamCalls());
+    }
+
+    public function testMultipartBodyDoesNotUseConfiguredStreamFactoryForAggregateBody(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::MULTIPART => [
+                [
+                    'name' => 'foo',
+                    'contents' => 'bar',
+                ],
+            ],
+        ]);
+
+        self::assertInstanceOf(Psr7\MultipartStream::class, $mock->getLastRequest()->getBody());
+        self::assertSame([], $factory->streamCalls());
+    }
+
     public function testInvalidRequestFactoryIsRejected(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -439,6 +701,16 @@ class ClientTest extends TestCase
 
         new Client([
             RequestOptions::URI_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testInvalidStreamFactoryIsRejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_factory must be an instance of Psr\\Http\\Message\\StreamFactoryInterface');
+
+        new Client([
+            RequestOptions::STREAM_FACTORY => new \stdClass(),
         ]);
     }
 
@@ -467,6 +739,21 @@ class ClientTest extends TestCase
 
         $client->request('GET', 'http://example.com', [
             RequestOptions::URI_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testInvalidPerRequestStreamFactoryIsRejected(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_factory must be an instance of Psr\\Http\\Message\\StreamFactoryInterface');
+
+        $client->request('POST', 'http://example.com', [
+            RequestOptions::BODY => 'payload',
+            RequestOptions::STREAM_FACTORY => new \stdClass(),
         ]);
     }
 
@@ -1520,7 +1807,15 @@ final class ClientTestAlternateUri extends Uri
 {
 }
 
-final class ClientTestFactory implements RequestFactoryInterface, UriFactoryInterface
+final class ClientTestStream extends Psr7\Stream
+{
+}
+
+final class ClientTestAlternateStream extends Psr7\Stream
+{
+}
+
+final class ClientTestFactory implements RequestFactoryInterface, StreamFactoryInterface, UriFactoryInterface
 {
     /** @var class-string<Request> */
     private $requestClass;
@@ -1528,20 +1823,34 @@ final class ClientTestFactory implements RequestFactoryInterface, UriFactoryInte
     /** @var class-string<Uri> */
     private $uriClass;
 
+    /** @var class-string<Psr7\Stream> */
+    private $streamClass;
+
     /** @var array<int, array{0: string, 1: mixed}> */
     private $requestCalls = [];
 
     /** @var string[] */
     private $uriCalls = [];
 
+    /** @var string[] */
+    private $streamCalls = [];
+
+    /** @var int */
+    private $streamResourceCalls = 0;
+
     /**
-     * @param class-string<Request> $requestClass
-     * @param class-string<Uri>     $uriClass
+     * @param class-string<Request>     $requestClass
+     * @param class-string<Uri>         $uriClass
+     * @param class-string<Psr7\Stream> $streamClass
      */
-    public function __construct(string $requestClass = ClientTestRequest::class, string $uriClass = ClientTestUri::class)
-    {
+    public function __construct(
+        string $requestClass = ClientTestRequest::class,
+        string $uriClass = ClientTestUri::class,
+        string $streamClass = ClientTestStream::class
+    ) {
         $this->requestClass = $requestClass;
         $this->uriClass = $uriClass;
+        $this->streamClass = $streamClass;
     }
 
     public function createRequest(string $method, $uri): RequestInterface
@@ -1562,6 +1871,33 @@ final class ClientTestFactory implements RequestFactoryInterface, UriFactoryInte
         return new $class($uri);
     }
 
+    public function createStream(string $content = ''): StreamInterface
+    {
+        $this->streamCalls[] = $content;
+
+        $resource = Psr7\Utils::tryFopen('php://temp', 'r+');
+        \fwrite($resource, $content);
+        \rewind($resource);
+        $class = $this->streamClass;
+
+        return new $class($resource);
+    }
+
+    public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
+    {
+        $class = $this->streamClass;
+
+        return new $class(Psr7\Utils::tryFopen($filename, $mode));
+    }
+
+    public function createStreamFromResource($resource): StreamInterface
+    {
+        ++$this->streamResourceCalls;
+        $class = $this->streamClass;
+
+        return new $class($resource);
+    }
+
     /**
      * @return array<int, array{0: string, 1: mixed}>
      */
@@ -1576,5 +1912,18 @@ final class ClientTestFactory implements RequestFactoryInterface, UriFactoryInte
     public function uriCalls(): array
     {
         return $this->uriCalls;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function streamCalls(): array
+    {
+        return $this->streamCalls;
+    }
+
+    public function streamResourceCalls(): int
+    {
+        return $this->streamResourceCalls;
     }
 }

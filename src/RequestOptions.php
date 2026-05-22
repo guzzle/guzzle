@@ -43,7 +43,8 @@ final class RequestOptions
 
     /**
      * body: (resource|string|null|int|float|StreamInterface|callable|\Iterator)
-     * Body to send in the request.
+     * Body to send in the request. Supported non-stream values are converted
+     * using the configured stream_factory.
      */
     public const BODY = 'body';
 
@@ -225,6 +226,13 @@ final class RequestOptions
      * requestAsync().
      */
     public const REQUEST_FACTORY = 'request_factory';
+
+    /**
+     * stream_factory: (Psr\Http\Message\StreamFactoryInterface) PSR-17
+     * stream factory used when creating request body streams from body,
+     * form_params, and json request options.
+     */
+    public const STREAM_FACTORY = 'stream_factory';
 
     /**
      * sink: (resource|string|StreamInterface) Where the data of the

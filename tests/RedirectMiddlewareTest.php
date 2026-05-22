@@ -10,6 +10,7 @@ use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
@@ -18,6 +19,8 @@ use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -218,6 +221,47 @@ class RedirectMiddlewareTest extends TestCase
         ]);
 
         self::assertTrue($called);
+    }
+
+    public function testRedirectBodyResetUsesConfiguredStreamFactory(): void
+    {
+        $redirectMiddleware = new RedirectMiddleware(static function (): void {
+        });
+        $factory = new RedirectTestStreamFactory();
+        $request = new Request('POST', 'http://example.com/', [], 'payload');
+
+        $modifiedRequest = $redirectMiddleware->modifyRequest($request, [
+            'allow_redirects' => [
+                'protocols' => ['http', 'https'],
+                'strict' => false,
+                'referer' => false,
+            ],
+            RequestOptions::STREAM_FACTORY => $factory,
+        ], new Response(302, ['Location' => 'http://example.com/redirected']));
+
+        self::assertSame('GET', $modifiedRequest->getMethod());
+        self::assertInstanceOf(RedirectTestStream::class, $modifiedRequest->getBody());
+        self::assertSame('', (string) $modifiedRequest->getBody());
+        self::assertSame([''], $factory->streamCalls());
+    }
+
+    public function testInvalidStreamFactoryOptionForRedirectBodyResetIsRejected(): void
+    {
+        $redirectMiddleware = new RedirectMiddleware(static function (): void {
+        });
+        $request = new Request('POST', 'http://example.com/', [], 'payload');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_factory must be an instance of Psr\\Http\\Message\\StreamFactoryInterface');
+
+        $redirectMiddleware->modifyRequest($request, [
+            'allow_redirects' => [
+                'protocols' => ['http', 'https'],
+                'strict' => false,
+                'referer' => false,
+            ],
+            RequestOptions::STREAM_FACTORY => new \stdClass(),
+        ], new Response(302, ['Location' => 'http://example.com/redirected']));
     }
 
     public function testRelativeRedirectPreservesCustomRequestAndUriImplementations(): void
@@ -864,5 +908,43 @@ final class RedirectTestFailingUriFactory implements UriFactoryInterface
     public function createUri(string $uri = ''): UriInterface
     {
         throw new \InvalidArgumentException('Factory could not create URI.');
+    }
+}
+
+final class RedirectTestStream extends Psr7\Stream
+{
+}
+
+final class RedirectTestStreamFactory implements StreamFactoryInterface
+{
+    /** @var string[] */
+    private $streamCalls = [];
+
+    public function createStream(string $content = ''): StreamInterface
+    {
+        $this->streamCalls[] = $content;
+        $resource = Psr7\Utils::tryFopen('php://temp', 'r+');
+        \fwrite($resource, $content);
+        \rewind($resource);
+
+        return new RedirectTestStream($resource);
+    }
+
+    public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
+    {
+        return new RedirectTestStream(Psr7\Utils::tryFopen($filename, $mode));
+    }
+
+    public function createStreamFromResource($resource): StreamInterface
+    {
+        return new RedirectTestStream($resource);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function streamCalls(): array
+    {
+        return $this->streamCalls;
     }
 }

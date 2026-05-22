@@ -8,6 +8,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\HttpFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -180,9 +181,17 @@ class RedirectMiddleware
         ) {
             $safeMethods = ['GET', 'HEAD', 'OPTIONS'];
             $requestMethod = $request->getMethod();
+            $streamFactory = $options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory();
+            if (!$streamFactory instanceof StreamFactoryInterface) {
+                throw new \InvalidArgumentException(\sprintf(
+                    '%s must be an instance of %s',
+                    RequestOptions::STREAM_FACTORY,
+                    StreamFactoryInterface::class
+                ));
+            }
 
             $modify['method'] = \in_array($requestMethod, $safeMethods, true) ? $requestMethod : 'GET';
-            $modify['body'] = '';
+            $modify['body'] = $streamFactory->createStream('');
         }
 
         $uriFactory = $options[RequestOptions::URI_FACTORY] ?? new HttpFactory();
