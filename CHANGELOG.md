@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fix IPv6 literal matching in no-proxy rules
+- Fix magic client request methods such as `options()` to uppercase inferred HTTP methods
 
 
 ## 7.10.3 - 2025-05-20

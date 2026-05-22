@@ -7,6 +7,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
@@ -34,6 +35,53 @@ class ClientTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Magic request methods require a URI and optional options array');
         $client->options();
+    }
+
+    /**
+     * @dataProvider magicRequestMethodProvider
+     */
+    public function testMagicRequestMethodsNormalizeInferredMethodName($method, $expectedMethod)
+    {
+        $client = new ClientTestMagicClient();
+        $options = ['headers' => ['X-Test' => '1']];
+
+        $client->{$method}('/resource', $options);
+
+        self::assertSame([
+            ['request', $expectedMethod, '/resource', $options],
+        ], $client->calls);
+    }
+
+    /**
+     * @dataProvider magicAsyncRequestMethodProvider
+     */
+    public function testMagicAsyncRequestMethodsNormalizeInferredMethodName($method, $expectedMethod)
+    {
+        $client = new ClientTestMagicClient();
+        $options = ['headers' => ['X-Test' => '1']];
+
+        $promise = $client->{$method}('/resource', $options);
+
+        self::assertInstanceOf(PromiseInterface::class, $promise);
+        self::assertSame([
+            ['requestAsync', $expectedMethod, '/resource', $options],
+        ], $client->calls);
+    }
+
+    public static function magicRequestMethodProvider()
+    {
+        return [
+            ['options', 'OPTIONS'],
+            ['purge', 'PURGE'],
+        ];
+    }
+
+    public static function magicAsyncRequestMethodProvider()
+    {
+        return [
+            ['optionsAsync', 'OPTIONS'],
+            ['purgeAsync', 'PURGE'],
+        ];
     }
 
     public function testCanSendAsyncGetRequests()
@@ -894,5 +942,24 @@ class ClientTest extends TestCase
         $request = $requests[0]['request'];
         self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
+    }
+}
+
+final class ClientTestMagicClient extends Client
+{
+    public $calls = [];
+
+    public function request(string $method, $uri = '', array $options = []): ResponseInterface
+    {
+        $this->calls[] = ['request', $method, $uri, $options];
+
+        return new Response();
+    }
+
+    public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
+    {
+        $this->calls[] = ['requestAsync', $method, $uri, $options];
+
+        return new FulfilledPromise(new Response());
     }
 }
