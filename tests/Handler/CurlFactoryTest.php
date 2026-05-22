@@ -107,6 +107,23 @@ class CurlFactoryTest extends TestCase
         self::assertSame([], self::readIdleHandles($factory));
     }
 
+    public function testReleaseClearsCallbacksBeforeDiscardingHandle(): void
+    {
+        $factory = new CurlFactory(0);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'progress' => static function (): void {
+            },
+        ]);
+
+        $factory->release($easy);
+
+        self::assertArrayNotHasKey(\CURLOPT_HEADERFUNCTION, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_READFUNCTION, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_WRITEFUNCTION, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_PROGRESSFUNCTION, $_SERVER['_curl']);
+        self::assertSame([], self::readIdleHandles($factory));
+    }
+
     public function testCloseIsIdempotent(): void
     {
         $factory = new CurlFactory(3);

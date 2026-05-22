@@ -393,10 +393,10 @@ class CurlMultiHandler
      */
     private function clearEasyHandleCallbacks($handle): void
     {
-        \curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
-        \curl_setopt($handle, \CURLOPT_READFUNCTION, null);
-        \curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
-        \curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
+        curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
+        curl_setopt($handle, \CURLOPT_READFUNCTION, null);
+        curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
+        curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
     }
 
     /**

@@ -19,12 +19,6 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
-			message: '#^Parameter \#1 \$ch of function curl_close expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Parameter \#1 \$ch of function curl_error expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1

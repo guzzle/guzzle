@@ -247,6 +247,27 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testCloseActiveTransferLeavesResourceSinkOpen(): void
+    {
+        $sink = \fopen('php://temp', 'w+');
+        self::assertIsResource($sink);
+
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), ['sink' => $sink]);
+
+        try {
+            $handler->close();
+
+            self::assertTrue(P\Is::rejected($promise));
+            self::assertIsResource($sink);
+            self::assertNotFalse(\fwrite($sink, 'still open'));
+        } finally {
+            if (\is_resource($sink)) {
+                \fclose($sink);
+            }
+        }
+    }
+
     public function testCanCancel(): void
     {
         Server::flush();

@@ -192,9 +192,7 @@ class CurlFactory implements CurlFactoryInterface
         unset($easy->handle);
 
         if (\count($this->handles) >= $this->maxHandles) {
-            if (PHP_VERSION_ID < 80000) {
-                \curl_close($resource);
-            }
+            $this->discardHandle($resource);
         } else {
             // Remove all callback functions as they can hold onto references
             // and are not cleaned up by curl_reset. Using curl_setopt_array
@@ -282,10 +280,10 @@ class CurlFactory implements CurlFactoryInterface
      */
     private function clearEasyHandleCallbacks($handle): void
     {
-        \curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
-        \curl_setopt($handle, \CURLOPT_READFUNCTION, null);
-        \curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
-        \curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
+        curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
+        curl_setopt($handle, \CURLOPT_READFUNCTION, null);
+        curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
+        curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
     }
 
     /**
