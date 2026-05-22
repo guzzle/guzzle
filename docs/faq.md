@@ -54,6 +54,8 @@ $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler([
 ]))]);
 ```
 
+Custom cURL request options remain active during redirects unless Guzzle documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects) for cross-origin redirect credential behavior.
+
 ## How can I add custom stream context options?
 
 You can pass custom [stream context options](https://www.php.net/manual/en/context.php) using the **stream_context** key of the request option. The **stream_context** array is an associative array where each key is a PHP transport, and each value is an associative array of transport options.
@@ -73,6 +75,8 @@ $client->request('GET', '/', [
     ]
 ]);
 ```
+
+Custom stream context options remain active during redirects unless Guzzle documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects) for cross-origin redirect credential behavior.
 
 ## Why am I getting an SSL verification error?
 
