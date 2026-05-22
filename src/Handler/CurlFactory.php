@@ -416,6 +416,12 @@ class CurlFactory implements CurlFactoryInterface
                 'CURLE_HTTP2',
                 'CURLE_HTTP2_STREAM',
                 'CURLE_HTTP3',
+                'CURLE_PEER_FAILED_VERIFICATION',
+                'CURLE_SSL_CACERT',
+                'CURLE_SSL_PEER_CERTIFICATE',
+                'CURLE_SSL_PINNEDPUBKEYNOTMATCH',
+                'CURLE_SSL_INVALIDCERTSTATUS',
+                'CURLE_SSL_CLIENTCERT',
             ] as $constant) {
                 if (\defined($constant)) {
                     $networkErrorsWithoutResponse[(int) \constant($constant)] = true;
