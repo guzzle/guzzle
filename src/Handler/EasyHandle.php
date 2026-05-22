@@ -56,6 +56,16 @@ final class EasyHandle
     public $onHeadersException;
 
     /**
+     * @var \Throwable|null Exception during progress callback (if any)
+     */
+    public $progressException;
+
+    /**
+     * @var bool Whether the progress callback requested abort
+     */
+    public $progressAborted = false;
+
+    /**
      * @var \Throwable|null Exception during createResponse (if any)
      */
     public $createResponseException;

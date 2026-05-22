@@ -20,12 +20,12 @@ class CurlMultiHandlerTest extends TestCase
     public function setUp(): void
     {
         $_SERVER['curl_test'] = true;
-        unset($_SERVER['_curl_multi']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_multi']);
     }
 
     public function tearDown(): void
     {
-        unset($_SERVER['_curl_multi'], $_SERVER['curl_test']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_multi'], $_SERVER['curl_test']);
     }
 
     public function testCanAddCustomCurlOptions(): void
@@ -268,6 +268,25 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testCloseActiveTransferClearsProgressCallbacks(): void
+    {
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), [
+            'progress' => static function (): void {
+            },
+        ]);
+
+        self::assertArrayHasKey(self::progressCallbackOption(), $_SERVER['_curl']);
+
+        $handler->close();
+
+        self::assertTrue(P\Is::rejected($promise));
+        self::assertArrayNotHasKey(\CURLOPT_PROGRESSFUNCTION, $_SERVER['_curl']);
+        if (\defined('CURLOPT_XFERINFOFUNCTION')) {
+            self::assertArrayNotHasKey((int) \constant('CURLOPT_XFERINFOFUNCTION'), $_SERVER['_curl']);
+        }
+    }
+
     public function testCanCancel(): void
     {
         Server::flush();
@@ -283,6 +302,25 @@ class CurlMultiHandlerTest extends TestCase
 
         foreach ($responses as $r) {
             self::assertTrue(P\Is::rejected($r));
+        }
+    }
+
+    public function testCancelClearsProgressCallbacks(): void
+    {
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), [
+            'progress' => static function (): void {
+            },
+        ]);
+
+        self::assertArrayHasKey(self::progressCallbackOption(), $_SERVER['_curl']);
+
+        $promise->cancel();
+
+        self::assertTrue(P\Is::rejected($promise));
+        self::assertArrayNotHasKey(\CURLOPT_PROGRESSFUNCTION, $_SERVER['_curl']);
+        if (\defined('CURLOPT_XFERINFOFUNCTION')) {
+            self::assertArrayNotHasKey((int) \constant('CURLOPT_XFERINFOFUNCTION'), $_SERVER['_curl']);
         }
     }
 
@@ -344,5 +382,14 @@ class CurlMultiHandlerTest extends TestCase
         self::assertInstanceOf(CurlFactory::class, $factory);
 
         return $factory;
+    }
+
+    private static function progressCallbackOption(): int
+    {
+        if (\defined('CURLOPT_XFERINFOFUNCTION')) {
+            return (int) \constant('CURLOPT_XFERINFOFUNCTION');
+        }
+
+        return \CURLOPT_PROGRESSFUNCTION;
     }
 }

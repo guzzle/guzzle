@@ -177,7 +177,9 @@ final class RequestOptions
      * of the response have been received but the body has not yet begun to
      * download. The callable is passed the response and request as
      * {@see \Psr\Http\Message\ResponseInterface} and
-     * {@see \Psr\Http\Message\RequestInterface} objects, respectively.
+     * {@see \Psr\Http\Message\RequestInterface} objects, respectively. If it
+     * throws, the request promise is rejected with a RequestException wrapping
+     * the thrown exception.
      */
     public const ON_HEADERS = 'on_headers';
 
@@ -188,7 +190,9 @@ final class RequestOptions
      * when a handler has finished sending a request. The callback is invoked
      * with transfer statistics about the request, the response received, or
      * the error encountered. Included in the data is the total amount of time
-     * taken to send the request.
+     * taken to send the request. Exceptions thrown by on_stats are not wrapped
+     * by Guzzle. The built-in cURL handlers release native easy handles before
+     * invoking on_stats and invoke it per low-level transfer attempt.
      */
     public const ON_STATS = 'on_stats';
 
@@ -197,7 +201,10 @@ final class RequestOptions
      * progress is made. The function accepts the following positional
      * arguments: the total number of bytes expected to be downloaded, the
      * number of bytes downloaded so far, the number of bytes expected to be
-     * uploaded, the number of bytes uploaded so far.
+     * uploaded, the number of bytes uploaded so far. With the built-in cURL
+     * handlers, returning a truthy value aborts the transfer and throwing
+     * rejects the promise with a RequestException. The built-in stream handler
+     * ignores return values.
      */
     public const PROGRESS = 'progress';
 

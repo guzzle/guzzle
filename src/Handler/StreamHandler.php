@@ -146,10 +146,11 @@ class StreamHandler
             try {
                 $options['on_headers']($response, $request);
             } catch (\Throwable $e) {
+                $reason = new RequestException('An error was encountered during the on_headers event', $request, $response, $e);
+                $this->invokeStats($options, $request, $startTime, $response, $reason);
+
                 /** @var PromiseInterface<ResponseInterface, mixed> */
-                return P\Create::rejectionFor(
-                    new RequestException('An error was encountered during the on_headers event', $request, $response, $e)
-                );
+                return P\Create::rejectionFor($reason);
             }
         }
 

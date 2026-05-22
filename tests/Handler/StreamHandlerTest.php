@@ -815,6 +815,20 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(0, $called[0][1]);
     }
 
+    public function testProgressReturnValueDoesNotAbortTransfer(): void
+    {
+        $this->queueRes();
+
+        $response = $this->getSendResult([
+            'progress' => static function (): bool {
+                return true;
+            },
+        ]);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('hi there', (string) $response->getBody());
+    }
+
     public function testEmitsProgressInformationAndDebugInformation(): void
     {
         $called = [];
@@ -1002,6 +1016,36 @@ class StreamHandlerTest extends TestCase
                 $e->getMessage()
             );
             self::assertInstanceOf(\Error::class, $e->getPrevious());
+        }
+    }
+
+    public function testInvokesOnStatsWhenOnHeadersFails(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $req = new Request('GET', Server::$url);
+        $gotStats = null;
+        $handler = new StreamHandler();
+        $promise = $handler($req, [
+            'on_headers' => static function (): void {
+                throw new \RuntimeException('test');
+            },
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats): void {
+                $gotStats = $stats;
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('An error was encountered during the on_headers event', $e->getMessage());
+            self::assertInstanceOf(TransferStats::class, $gotStats);
+            self::assertTrue($gotStats->hasResponse());
+            self::assertSame(200, $gotStats->getResponse()->getStatusCode());
+            self::assertSame($e, $gotStats->getHandlerErrorData());
         }
     }
 

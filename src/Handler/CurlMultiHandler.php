@@ -397,6 +397,10 @@ class CurlMultiHandler
         curl_setopt($handle, \CURLOPT_READFUNCTION, null);
         curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
         curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
+
+        if (\defined('CURLOPT_XFERINFOFUNCTION')) {
+            curl_setopt($handle, (int) \constant('CURLOPT_XFERINFOFUNCTION'), null);
+        }
     }
 
     /**
@@ -450,14 +454,7 @@ class CurlMultiHandler
             $this->removeHandleFromMulti($easy->handle);
         }
 
-        if (self::hasEasyHandle($easy)) {
-            $handle = $easy->handle;
-            unset($easy->handle);
-
-            if (PHP_VERSION_ID < 80000 && \is_resource($handle)) {
-                \curl_close($handle);
-            }
-        }
+        $this->disposeEasyHandle($easy);
 
         return true;
     }
