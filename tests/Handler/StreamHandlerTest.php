@@ -6,6 +6,7 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
@@ -1100,6 +1101,38 @@ class StreamHandlerTest extends TestCase
         self::assertFalse($line);
         self::assertTrue(\stream_get_meta_data($body)['timed_out']);
         self::assertFalse(\feof($body));
+    }
+
+    public function testThrowsTimeoutExceptionWhenDrainingResponseBodyTimesOut(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'guzzle-server/read-timeout');
+        $stats = null;
+        $exception = null;
+
+        try {
+            $handler(
+                $request,
+                [
+                    RequestOptions::READ_TIMEOUT => 0.05,
+                    'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                        $stats = $transferStats;
+                    },
+                ]
+            )->wait();
+            self::fail('Expected TimeoutException');
+        } catch (TimeoutException $e) {
+            $exception = $e;
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
+            self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
+            self::assertSame(['timed_out' => true], $e->getHandlerContext());
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertFalse($stats->hasResponse());
+        self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
     public function testHandlesGarbageHttpServerGracefully(): void

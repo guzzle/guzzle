@@ -2,7 +2,6 @@
 
 namespace GuzzleHttp\Exception;
 
-use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -10,7 +9,7 @@ use Psr\Http\Message\RequestInterface;
  *
  * Note that no response is present for a ConnectException
  */
-class ConnectException extends TransferException implements NetworkExceptionInterface
+class ConnectException extends NetworkException
 {
     /**
      * @var RequestInterface

@@ -6,6 +6,7 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlVersion;
@@ -938,8 +939,43 @@ class CurlFactoryTest extends TestCase
             $factory
         );
 
-        $this->expectException(ConnectException::class);
-        $response->wait();
+        try {
+            $response->wait();
+            self::fail('Expected ConnectException');
+        } catch (TimeoutException $e) {
+            self::fail('Expected non-timeout ConnectException');
+        } catch (ConnectException $e) {
+            self::assertSame(\CURLE_COULDNT_CONNECT, $e->getHandlerContext()['errno']);
+        }
+    }
+
+    public function testCreatesTimeoutException(): void
+    {
+        $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
+
+        if (PHP_VERSION_ID < 80100) {
+            $m->setAccessible(true);
+        }
+
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, []);
+        $easy->errno = \CURLE_OPERATION_TIMEOUTED;
+        $response = $m->invoke(
+            null,
+            static function (): void {
+            },
+            $easy,
+            $factory
+        );
+
+        try {
+            $response->wait();
+            self::fail('Expected TimeoutException');
+        } catch (TimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
+        }
     }
 
     public function testAddsTimeouts(): void

@@ -50,6 +50,17 @@ $client->request('GET', 'https://example.com');
 The convenience methods such as `$client->get()`, `$client->post()`, and their
 async variants continue to use uppercase standard methods.
 
+#### Network and timeout exceptions
+
+`ConnectException` now extends `GuzzleHttp\Exception\NetworkException`, which
+extends `GuzzleHttp\Exception\TransferException` and implements PSR-18's
+`NetworkExceptionInterface`.
+
+When a built-in handler can reliably identify a transfer timeout, it now throws
+`GuzzleHttp\Exception\TimeoutException`. `TimeoutException` extends
+`ConnectException`, so existing `catch (ConnectException $e)` and
+`catch (TransferException $e)` blocks continue to catch timeout failures.
+
 #### Multipart request serialization
 
 Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts

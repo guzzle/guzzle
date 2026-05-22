@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\LazyOpenStream;
@@ -296,7 +297,6 @@ class CurlFactory implements CurlFactoryInterface
     private static function createRejection(EasyHandle $easy, array $ctx): PromiseInterface
     {
         static $connectionErrors = [
-            \CURLE_OPERATION_TIMEOUTED => true,
             \CURLE_COULDNT_RESOLVE_HOST => true,
             \CURLE_COULDNT_CONNECT => true,
             \CURLE_SSL_CONNECT_ERROR => true,
@@ -349,10 +349,13 @@ class CurlFactory implements CurlFactoryInterface
             }
         }
 
-        // Create a connection exception if it was a specific error code.
-        $error = isset($connectionErrors[$easy->errno])
-            ? new ConnectException($message, $easy->request, null, $ctx)
-            : new RequestException($message, $easy->request, $easy->response, null, $ctx);
+        if ($easy->errno === \CURLE_OPERATION_TIMEOUTED) {
+            $error = new TimeoutException($message, $easy->request, null, $ctx);
+        } elseif (isset($connectionErrors[$easy->errno])) {
+            $error = new ConnectException($message, $easy->request, null, $ctx);
+        } else {
+            $error = new RequestException($message, $easy->request, $easy->response, null, $ctx);
+        }
 
         /** @var PromiseInterface<ResponseInterface, mixed> */
         return P\Create::rejectionFor($error);
