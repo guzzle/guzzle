@@ -238,7 +238,9 @@ final class RequestOptions
     /**
      * sink: (resource|string|StreamInterface) Where the data of the
      * response is written to. Defaults to a PHP temp stream. Providing a
-     * string will write data to a file by the given name.
+     * string will write data to a file by the given name. Built-in handlers
+     * treat PHP resources as caller-owned; callers are responsible for closing
+     * resource sinks.
      */
     public const SINK = 'sink';
 

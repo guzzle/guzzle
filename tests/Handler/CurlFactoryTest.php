@@ -775,6 +775,64 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('test', \stream_get_contents($stream));
     }
 
+    public function testDoesNotCloseResourceSinkWhenResponseIsDestroyed(): void
+    {
+        $stream = (function () {
+            $stream = \tmpfile();
+            self::assertIsResource($stream);
+
+            $this->addDecodeResponse();
+            $handler = new Handler\CurlHandler();
+            $request = new Psr7\Request('GET', Server::$url);
+            $response = $handler($request, [
+                'decode_content' => true,
+                'sink' => $stream,
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+
+            return $stream;
+        })();
+
+        \gc_collect_cycles();
+
+        try {
+            self::assertIsResource($stream);
+            \rewind($stream);
+            self::assertSame('test', \stream_get_contents($stream));
+        } finally {
+            if (\is_resource($stream)) {
+                \fclose($stream);
+            }
+        }
+    }
+
+    public function testDoesNotCloseResourceSinkWhenResponseBodyIsClosed(): void
+    {
+        $stream = \tmpfile();
+        self::assertIsResource($stream);
+
+        try {
+            $this->addDecodeResponse();
+            $handler = new Handler\CurlHandler();
+            $request = new Psr7\Request('GET', Server::$url);
+            $response = $handler($request, [
+                'decode_content' => true,
+                'sink' => $stream,
+            ])->wait();
+
+            $response->getBody()->close();
+
+            self::assertIsResource($stream);
+            \rewind($stream);
+            self::assertSame('test', \stream_get_contents($stream));
+        } finally {
+            if (\is_resource($stream)) {
+                \fclose($stream);
+            }
+        }
+    }
+
     public function testSavesToGuzzleStream(): void
     {
         $stream = Psr7\Utils::streamFor();
