@@ -921,7 +921,7 @@ $client->request('POST', '/post', [
 ]);
 ```
 
-This option can be set on a client or per request. It is used when Guzzle converts the `body`, `form_params`, or `json` request options into `Psr\Http\Message\StreamInterface` instances, and when redirect handling resets a request body. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+This option can be set on a client or per request. It is used when Guzzle converts supported `body`, `form_params`, or `json` request option values into `Psr\Http\Message\StreamInterface` instances, and when redirect handling resets a request body. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
 
 > [!NOTE]
 > This option affects request-side body stream creation only. It does not affect response body implementations returned by handlers, response sinks, callable or iterator bodies, or multipart internals.
