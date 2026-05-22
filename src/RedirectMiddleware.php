@@ -180,9 +180,11 @@ class RedirectMiddleware
         ) {
             $safeMethods = ['GET', 'HEAD', 'OPTIONS'];
             $requestMethod = $request->getMethod();
+            $factory = new HttpFactory();
+            $streamFactory = Utils::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? $factory);
 
             $modify['method'] = \in_array($requestMethod, $safeMethods, true) ? $requestMethod : 'GET';
-            $modify['body'] = '';
+            $modify['body'] = Utils::createBodyStream('', $streamFactory);
         }
 
         $uriFactory = Utils::requireUriFactory($options[RequestOptions::URI_FACTORY] ?? new HttpFactory());

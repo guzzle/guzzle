@@ -6,6 +6,8 @@ Guzzle is an HTTP client that sends HTTP requests to a server and receives HTTP 
 
 Guzzle relies on the `guzzlehttp/psr7` Composer package for its message implementation of PSR-7.
 
+By default, Guzzle uses `GuzzleHttp\Psr7\HttpFactory` as its PSR-17 request, URI, and stream factory when it creates requests through a client. Applications that need another PSR-7 implementation can provide PSR-17 factories with the `request_factory`, `uri_factory`, and `stream_factory` request options.
+
 You can create a request using the `GuzzleHttp\Psr7\Request` class:
 
 ```php
@@ -294,6 +296,8 @@ Guzzle uses the `guzzlehttp/psr7` package to provide stream support. More inform
 ### Creating Streams
 
 The best way to create a stream is using the `GuzzleHttp\Psr7\Utils::streamFor` method. This method accepts strings, resources returned from `fopen()`, an object that implements `__toString()`, iterators, callables, and instances of `Psr\Http\Message\StreamInterface`.
+
+When Guzzle creates request body streams from options such as `body`, `form_params`, or `json`, the `stream_factory` request option can replace the default PSR-17 stream factory. Streams supplied directly as `Psr\Http\Message\StreamInterface` instances are used as provided.
 
 ```php
 use GuzzleHttp\Psr7;

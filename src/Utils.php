@@ -9,6 +9,8 @@ use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -661,6 +663,24 @@ final class Utils
     }
 
     /**
+     * @param mixed $factory
+     *
+     * @internal
+     */
+    public static function requireStreamFactory($factory): StreamFactoryInterface
+    {
+        if (!$factory instanceof StreamFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::STREAM_FACTORY,
+                StreamFactoryInterface::class
+            ));
+        }
+
+        return $factory;
+    }
+
+    /**
      * @param mixed $uri
      *
      * @internal
@@ -676,6 +696,40 @@ final class Utils
         }
 
         throw new InvalidArgumentException(\sprintf('URI must be a string or %s', UriInterface::class));
+    }
+
+    /**
+     * @param mixed $body
+     *
+     * @internal
+     */
+    public static function createBodyStream($body, StreamFactoryInterface $streamFactory): StreamInterface
+    {
+        if ($body instanceof StreamInterface) {
+            return $body;
+        }
+
+        if (\is_resource($body)) {
+            return $streamFactory->createStreamFromResource($body);
+        }
+
+        if ($body === null) {
+            return $streamFactory->createStream();
+        }
+
+        if (\is_scalar($body)) {
+            return $streamFactory->createStream((string) $body);
+        }
+
+        if ($body instanceof \Iterator || \is_callable($body)) {
+            return Psr7\Utils::streamFor($body);
+        }
+
+        if (\is_object($body) && \method_exists($body, '__toString')) {
+            return $streamFactory->createStream((string) $body);
+        }
+
+        throw new InvalidArgumentException('Invalid resource type: '.\gettype($body));
     }
 
     /**

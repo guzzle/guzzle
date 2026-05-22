@@ -73,7 +73,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $config[RequestOptions::URI_FACTORY] = $factory;
         }
 
+        if (!isset($config[RequestOptions::STREAM_FACTORY])) {
+            $config[RequestOptions::STREAM_FACTORY] = $factory;
+        }
+
         Utils::requireRequestFactory($config[RequestOptions::REQUEST_FACTORY]);
+        Utils::requireStreamFactory($config[RequestOptions::STREAM_FACTORY]);
         $uriFactory = Utils::requireUriFactory($config[RequestOptions::URI_FACTORY]);
 
         // Convert the base_uri to a UriInterface using the configured URI factory.
@@ -401,7 +406,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (\is_array($options['body'])) {
                 throw $this->invalidBody();
             }
-            $modify['body'] = Psr7\Utils::streamFor($options['body']);
+            $streamFactory = Utils::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory());
+            $modify['body'] = Utils::createBodyStream($options['body'], $streamFactory);
             unset($options['body']);
         }
 

@@ -204,6 +204,8 @@ This setting can be set to any of the following types:
   $client->request('POST', '/post', ['body' => $stream]);
   ```
 
+Supported non-stream body values are converted to PSR-7 streams using the configured `stream_factory`. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+
 > [!NOTE]
 > This option cannot be used with `form_params`, `multipart`, or `json`
 
@@ -895,6 +897,34 @@ This option can be set on a client or per request. It affects request-side objec
 
 > [!NOTE]
 > This option only affects requests created by `request()`, `requestAsync()`, and shortcut methods such as `get()` and `post()`. Requests passed to `send()`, `sendAsync()`, or `sendRequest()` are used as provided.
+
+## stream_factory
+
+Summary
+PSR-17 stream factory used when Guzzle creates request body streams.
+
+Types
+`Psr\Http\Message\StreamFactoryInterface`
+
+Default
+`GuzzleHttp\Psr7\HttpFactory`
+
+Constant
+`GuzzleHttp\RequestOptions::STREAM_FACTORY`
+
+```php
+$factory = new \GuzzleHttp\Psr7\HttpFactory();
+
+$client->request('POST', '/post', [
+    'body' => 'payload',
+    'stream_factory' => $factory,
+]);
+```
+
+This option can be set on a client or per request. It is used when Guzzle converts the `body`, `form_params`, or `json` request options into `Psr\Http\Message\StreamInterface` instances, and when redirect handling resets a request body. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+
+> [!NOTE]
+> This option affects request-side body stream creation only. It does not affect response body implementations returned by handlers, response sinks, callable or iterator bodies, or multipart internals.
 
 ## uri_factory
 
