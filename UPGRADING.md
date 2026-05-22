@@ -71,22 +71,17 @@ When a built-in handler can reliably identify a transfer timeout, it now throws
 
 #### cURL handler lifecycle
 
-`GuzzleHttp\Handler\CurlHandler`, `GuzzleHttp\Handler\CurlMultiHandler`, and
-`GuzzleHttp\Handler\CurlFactory` now expose `close()` for deterministic cleanup
-of native cURL resources.
+Applications that manage built-in cURL handlers or factories directly should
+treat closed instances as unusable. Reusing a closed `CurlHandler`,
+`CurlMultiHandler`, or `CurlFactory` throws `BadMethodCallException`; create a
+new instance instead.
 
-After a cURL handler or factory is closed, it is terminal and cannot be reused.
-Calling a closed handler or factory throws `BadMethodCallException`.
+If `CurlMultiHandler::close()` is called while transfers are pending, those
+promises are rejected with `GuzzleHttp\Exception\HandlerClosedException`.
+Destructor cleanup remains best-effort and does not reject pending promises.
 
-Calling `CurlMultiHandler::close()` rejects pending transfers with
-`GuzzleHttp\Exception\HandlerClosedException`. Destructor cleanup remains
-best-effort and does not reject pending promises. Explicit `close()` calls may
-throw if native cleanup fails.
-
-Closing a cURL handler closes only the `CurlFactory` that Guzzle created for
-that handler. If your application passes a custom `handle_factory`, that factory
-remains caller-owned and must be closed by your application if it exposes its own
-lifecycle API.
+A custom `handle_factory` passed to a built-in cURL handler remains caller-owned.
+Closing the handler does not close an injected factory.
 
 #### Multipart request serialization
 
