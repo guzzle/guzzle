@@ -919,10 +919,10 @@ $client = new GuzzleHttp\Client([
 ]);
 ```
 
-This option can be set on a client or per request. It is used for string request URI values and string `base_uri` values. URI objects implementing `Psr\Http\Message\UriInterface` are used as provided.
+This option can be set on a client or per request. It is used for string request URI values, string `base_uri` values, and redirect `Location` header parsing when redirects are enabled. URI objects implementing `Psr\Http\Message\UriInterface` are used as provided.
 
 > [!NOTE]
-> This option affects request-side URI creation only. It does not affect response implementations returned by handlers or redirect `Location` parsing.
+> This option affects request-side URI creation only. It does not affect response implementations returned by handlers. `GuzzleHttp\Client::sendRequest()` still returns redirect responses as-is for PSR-18 compliance.
 
 ## sink
 

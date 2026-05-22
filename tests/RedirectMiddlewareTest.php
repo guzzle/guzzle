@@ -14,9 +14,11 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RedirectMiddleware;
+use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -82,6 +84,140 @@ class RedirectMiddlewareTest extends TestCase
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('http://example.com/foo', (string) $mock->getLastRequest()->getUri());
+    }
+
+    public function testAbsoluteRedirectUsesConfiguredUriFactory(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $factory = new RedirectTestUriFactory();
+        $request = new Request('GET', 'http://example.com');
+
+        $handler($request, [
+            'allow_redirects' => ['max' => 2],
+            RequestOptions::URI_FACTORY => $factory,
+        ])->wait();
+
+        self::assertSame(['http://test.com/foo'], $factory->uriCalls());
+        self::assertInstanceOf(RedirectTestUri::class, $mock->getLastRequest()->getUri());
+        self::assertSame('http://test.com/foo', (string) $mock->getLastRequest()->getUri());
+    }
+
+    public function testRelativeRedirectUsesConfiguredUriFactory(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => '/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $factory = new RedirectTestUriFactory();
+        $request = new Request('GET', 'http://example.com?a=b');
+
+        $handler($request, [
+            'allow_redirects' => ['max' => 2],
+            RequestOptions::URI_FACTORY => $factory,
+        ])->wait();
+
+        self::assertSame(['/foo'], $factory->uriCalls());
+        self::assertSame('http://example.com/foo', (string) $mock->getLastRequest()->getUri());
+    }
+
+    public function testSendUsesClientUriFactoryForRedirects(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com/foo']),
+            new Response(200),
+        ]);
+        $factory = new RedirectTestUriFactory();
+        $client = new Client([
+            'handler' => HandlerStack::create($mock),
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $client->send(new Request('GET', 'http://example.com'));
+
+        self::assertSame(['http://test.com/foo'], $factory->uriCalls());
+        self::assertInstanceOf(RedirectTestUri::class, $mock->getLastRequest()->getUri());
+        self::assertSame('http://test.com/foo', (string) $mock->getLastRequest()->getUri());
+    }
+
+    public function testPerRequestUriFactoryOverridesClientUriFactoryForRedirects(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com/foo']),
+            new Response(200),
+        ]);
+        $clientFactory = new RedirectTestUriFactory();
+        $requestFactory = new RedirectTestUriFactory();
+        $client = new Client([
+            'handler' => HandlerStack::create($mock),
+            RequestOptions::URI_FACTORY => $clientFactory,
+        ]);
+
+        $client->send(new Request('GET', 'http://example.com'), [
+            RequestOptions::URI_FACTORY => $requestFactory,
+        ]);
+
+        self::assertSame([], $clientFactory->uriCalls());
+        self::assertSame(['http://test.com/foo'], $requestFactory->uriCalls());
+        self::assertInstanceOf(RedirectTestUri::class, $mock->getLastRequest()->getUri());
+        self::assertSame('http://test.com/foo', (string) $mock->getLastRequest()->getUri());
+    }
+
+    public function testNullPerRequestUriFactoryFallsBackForRedirects(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com/foo']),
+            new Response(200),
+        ]);
+        $clientFactory = new RedirectTestUriFactory();
+        $client = new Client([
+            'handler' => HandlerStack::create($mock),
+            RequestOptions::URI_FACTORY => $clientFactory,
+        ]);
+
+        $client->send(new Request('GET', 'http://example.com'), [
+            RequestOptions::URI_FACTORY => null,
+        ]);
+
+        self::assertSame([], $clientFactory->uriCalls());
+        self::assertNotInstanceOf(RedirectTestUri::class, $mock->getLastRequest()->getUri());
+        self::assertSame('http://test.com/foo', (string) $mock->getLastRequest()->getUri());
+    }
+
+    public function testOnRedirectReceivesUriFromConfiguredFactory(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com/foo']),
+            new Response(200),
+        ]);
+        $factory = new RedirectTestUriFactory();
+        $client = new Client([
+            'handler' => HandlerStack::create($mock),
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+        $called = false;
+
+        $client->send(new Request('GET', 'http://example.com'), [
+            'allow_redirects' => [
+                'on_redirect' => static function (RequestInterface $request, ResponseInterface $response, UriInterface $uri) use (&$called): void {
+                    self::assertSame(302, $response->getStatusCode());
+                    self::assertSame('GET', $request->getMethod());
+                    self::assertInstanceOf(RedirectTestUri::class, $uri);
+                    self::assertSame('http://test.com/foo', (string) $uri);
+                    $called = true;
+                },
+            ],
+        ]);
+
+        self::assertTrue($called);
     }
 
     public function testRelativeRedirectPreservesCustomRequestAndUriImplementations(): void
@@ -162,7 +298,7 @@ class RedirectMiddlewareTest extends TestCase
     public function testRejectsMalformedRedirectUri(): void
     {
         $mock = new MockHandler([
-            new Response(302, ['Location' => 'http://[::1']),
+            new Response(302, ['Location' => 'http://example.com:99999/path']),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
@@ -177,6 +313,49 @@ class RedirectMiddlewareTest extends TestCase
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
             self::assertStringStartsWith('Redirect URI,', $e->getMessage());
         }
+    }
+
+    public function testWrapsUriFactoryExceptionsForRedirects(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com/foo']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com');
+
+        try {
+            $handler($request, [
+                'allow_redirects' => ['max' => 2],
+                RequestOptions::URI_FACTORY => new RedirectTestFailingUriFactory(),
+            ])->wait();
+            self::fail('Expected BadResponseException.');
+        } catch (BadResponseException $e) {
+            self::assertSame(302, $e->getResponse()->getStatusCode());
+            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+            self::assertSame('Factory could not create URI.', $e->getPrevious()->getMessage());
+            self::assertStringStartsWith('Redirect URI,', $e->getMessage());
+        }
+    }
+
+    public function testRejectsInvalidUriFactoryOptionForRedirects(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://test.com/foo']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('uri_factory must be an instance of Psr\\Http\\Message\\UriFactoryInterface');
+
+        $handler($request, [
+            'allow_redirects' => ['max' => 2],
+            RequestOptions::URI_FACTORY => new \stdClass(),
+        ])->wait();
     }
 
     public function testAddsRefererHeader(): void
@@ -555,11 +734,11 @@ class RedirectMiddlewareTest extends TestCase
     {
         return [
             'DELETE' => [
-                'request' => new Request('DELETE', 'http://example.com/'),
+                'request' => new RedirectTestMethodRequest('DELETE', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'GET',
             ],
             'GET' => [
-                'request' => new Request('GET', 'http://example.com/'),
+                'request' => new RedirectTestMethodRequest('GET', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'GET',
             ],
             'get' => [
@@ -571,7 +750,7 @@ class RedirectMiddlewareTest extends TestCase
                 'expectedFollowRequestMethod' => 'GET',
             ],
             'HEAD' => [
-                'request' => new Request('HEAD', 'http://example.com/'),
+                'request' => new RedirectTestMethodRequest('HEAD', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'HEAD',
             ],
             'head' => [
@@ -583,7 +762,7 @@ class RedirectMiddlewareTest extends TestCase
                 'expectedFollowRequestMethod' => 'GET',
             ],
             'OPTIONS' => [
-                'request' => new Request('OPTIONS', 'http://example.com/'),
+                'request' => new RedirectTestMethodRequest('OPTIONS', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'OPTIONS',
             ],
             'options' => [
@@ -595,15 +774,27 @@ class RedirectMiddlewareTest extends TestCase
                 'expectedFollowRequestMethod' => 'GET',
             ],
             'PATCH' => [
-                'request' => new Request('PATCH', 'http://example.com/'),
+                'request' => new RedirectTestMethodRequest('PATCH', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'patch' => [
+                'request' => new RedirectTestMethodRequest('patch', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'GET',
             ],
             'POST' => [
-                'request' => new Request('POST', 'http://example.com/'),
+                'request' => new RedirectTestMethodRequest('POST', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'post' => [
+                'request' => new RedirectTestMethodRequest('post', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'GET',
             ],
             'PUT' => [
-                'request' => new Request('PUT', 'http://example.com/'),
+                'request' => new RedirectTestMethodRequest('PUT', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'put' => [
+                'request' => new RedirectTestMethodRequest('put', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'GET',
             ],
         ];
@@ -628,7 +819,7 @@ final class RedirectTestMethodRequest extends Request
      */
     public function __construct(string $method, $uri)
     {
-        parent::__construct('GET', $uri);
+        parent::__construct($method, $uri);
 
         $this->method = $method;
     }
@@ -644,5 +835,34 @@ final class RedirectTestMethodRequest extends Request
         $new->method = $method;
 
         return $new;
+    }
+}
+
+final class RedirectTestUriFactory implements UriFactoryInterface
+{
+    /** @var string[] */
+    private $uriCalls = [];
+
+    public function createUri(string $uri = ''): UriInterface
+    {
+        $this->uriCalls[] = $uri;
+
+        return new RedirectTestUri($uri);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function uriCalls(): array
+    {
+        return $this->uriCalls;
+    }
+}
+
+final class RedirectTestFailingUriFactory implements UriFactoryInterface
+{
+    public function createUri(string $uri = ''): UriInterface
+    {
+        throw new \InvalidArgumentException('Factory could not create URI.');
     }
 }

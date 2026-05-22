@@ -5,8 +5,10 @@ namespace GuzzleHttp;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\HttpFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -183,7 +185,8 @@ class RedirectMiddleware
             $modify['body'] = '';
         }
 
-        $uri = self::redirectUri($request, $response, $protocols);
+        $uriFactory = Utils::requireUriFactory($options[RequestOptions::URI_FACTORY] ?? new HttpFactory());
+        $uri = self::redirectUri($uriFactory, $request, $response, $protocols);
         if (isset($options['idn_conversion']) && ($options['idn_conversion'] !== false)) {
             $idnOptions = ($options['idn_conversion'] === true) ? \IDNA_DEFAULT : $options['idn_conversion'];
             $uri = Utils::idnUriConvert($uri, $idnOptions);
@@ -216,6 +219,7 @@ class RedirectMiddleware
      * Set the appropriate URL on the request based on the location header.
      */
     private static function redirectUri(
+        UriFactoryInterface $uriFactory,
         RequestInterface $request,
         ResponseInterface $response,
         array $protocols
@@ -225,7 +229,7 @@ class RedirectMiddleware
         try {
             $location = Psr7\UriResolver::resolve(
                 $request->getUri(),
-                new Psr7\Uri($location)
+                $uriFactory->createUri($location)
             );
         } catch (\InvalidArgumentException $e) {
             throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid: %s', $location, $e->getMessage()), $request, $response, $e);
