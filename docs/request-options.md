@@ -679,14 +679,17 @@ Types
 Constant
 `GuzzleHttp\RequestOptions::ON_HEADERS`
 
-The callable accepts a `Psr\Http\Message\ResponseInterface` object. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\RequestException` that wraps the exception that was thrown.
+The callable accepts a `Psr\Http\Message\ResponseInterface` object and the corresponding `Psr\Http\Message\RequestInterface` object. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\RequestException` that wraps the exception that was thrown.
 
 You may need to know what headers and status codes were received before data can be written to the sink.
 
 ```php
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
 // Reject responses that are greater than 1024 bytes.
 $client->request('GET', 'http://httpbin.org/stream/1024', [
-    'on_headers' => function (ResponseInterface $response) {
+    'on_headers' => function (ResponseInterface $response, RequestInterface $request) {
         if ($response->getHeaderLine('Content-Length') > 1024) {
             throw new \Exception('The file is too big!');
         }
@@ -709,6 +712,8 @@ Constant
 `GuzzleHttp\RequestOptions::ON_STATS`
 
 The callable accepts a `GuzzleHttp\TransferStats` object.
+
+Exceptions thrown by `on_stats` are not wrapped by Guzzle and may escape from the handler wait path. With the built-in cURL handlers, native cURL handles are released before `on_stats` is invoked. cURL handlers emit `on_stats` per low-level transfer attempt, so retries may invoke it more than once for one logical request.
 
 ```php
 use GuzzleHttp\TransferStats;
@@ -755,6 +760,8 @@ The function accepts the following positional arguments:
 - the number of bytes downloaded so far
 - the total number of bytes expected to be uploaded
 - the number of bytes uploaded so far
+
+With the built-in cURL handlers, returning a truthy value aborts the transfer and rejects the request promise with a `GuzzleHttp\Exception\RequestException`. If the callable throws, the built-in cURL handlers abort the transfer and reject the promise with a `RequestException` wrapping the thrown exception. The built-in stream handler treats progress callbacks as notifications only and ignores return values.
 
 ```php
 // Send a GET request to /get?foo=bar

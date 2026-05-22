@@ -83,6 +83,25 @@ Destructor cleanup remains best-effort and does not reject pending promises.
 A custom `handle_factory` passed to a built-in cURL handler remains caller-owned.
 Closing the handler does not close an injected factory.
 
+#### Callback semantics
+
+If you use the `progress` request option with the built-in cURL handlers, audit
+callbacks for return values. Any truthy return value now aborts the transfer and
+rejects the request with `RequestException`. Return `0`, `false`, or nothing to
+keep the transfer running.
+
+If a cURL `progress` callback throws, catch `RequestException` and inspect
+`getPrevious()` for the original throwable. The throwable no longer escapes
+directly from the native cURL callback.
+
+The stream handler still ignores `progress` return values.
+
+Exceptions thrown by `on_stats` remain unwrapped, so existing catch logic for
+`on_stats` exceptions does not need to change. The built-in cURL handlers now
+release native easy handles before invoking `on_stats`. Raw callbacks passed
+through the `curl` request option remain low-level cURL callbacks and are not
+normalized by Guzzle.
+
 #### Multipart request serialization
 
 Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts

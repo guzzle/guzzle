@@ -56,6 +56,8 @@ $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler([
 
 Custom cURL request options remain active during redirects unless Guzzle documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects) for cross-origin redirect credential behavior.
 
+Callbacks supplied directly through the `curl` request option are passed to PHP's cURL extension as low-level callbacks. Guzzle does not normalize exception or abort behavior for raw cURL callbacks. Prefer Guzzle's `progress`, `on_headers`, and `on_stats` request options when you want Guzzle's documented callback semantics.
+
 ## How can I close cURL resources in long-running applications?
 
 If your application creates a cURL handler directly and needs deterministic cleanup, keep a reference to the handler and call `close()` when the handler is no longer needed.

@@ -121,6 +121,9 @@ class CurlFactoryTest extends TestCase
         self::assertArrayNotHasKey(\CURLOPT_READFUNCTION, $_SERVER['_curl']);
         self::assertArrayNotHasKey(\CURLOPT_WRITEFUNCTION, $_SERVER['_curl']);
         self::assertArrayNotHasKey(\CURLOPT_PROGRESSFUNCTION, $_SERVER['_curl']);
+        if (\defined('CURLOPT_XFERINFOFUNCTION')) {
+            self::assertArrayNotHasKey((int) \constant('CURLOPT_XFERINFOFUNCTION'), $_SERVER['_curl']);
+        }
         self::assertSame([], self::readIdleHandles($factory));
     }
 
@@ -824,6 +827,255 @@ class CurlFactoryTest extends TestCase
         $f->create(new Psr7\Request('GET', Server::$url), ['progress' => 'foo']);
     }
 
+    public function testUsesXferInfoFunctionForProgressWhenAvailable(): void
+    {
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url), [
+            'progress' => static function (): void {
+            },
+        ]);
+
+        try {
+            if (\defined('CURLOPT_XFERINFOFUNCTION')) {
+                self::assertArrayHasKey((int) \constant('CURLOPT_XFERINFOFUNCTION'), $_SERVER['_curl']);
+                self::assertArrayNotHasKey(\CURLOPT_PROGRESSFUNCTION, $_SERVER['_curl']);
+            } else {
+                self::assertArrayHasKey(\CURLOPT_PROGRESSFUNCTION, $_SERVER['_curl']);
+            }
+        } finally {
+            $f->release($easy);
+        }
+    }
+
+    public function testProgressReturnValueControlsCurlAbort(): void
+    {
+        $f = new CurlFactory(3);
+        $called = [];
+        $easy = $f->create(new Psr7\Request('GET', Server::$url), [
+            'progress' => static function ($downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes) use (&$called): bool {
+                $called = [$downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes];
+
+                return $downloadedBytes > 0;
+            },
+        ]);
+
+        try {
+            $callback = $_SERVER['_curl'][self::progressCallbackOption()];
+
+            self::assertSame(0, $callback($easy->handle, 10, 0, 2, 0));
+            self::assertFalse($easy->progressAborted);
+            self::assertSame([10, 0, 2, 0], $called);
+
+            self::assertSame(1, $callback($easy->handle, 10, 1, 2, 0));
+            self::assertTrue($easy->progressAborted);
+            self::assertSame([10, 1, 2, 0], $called);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testProgressTruthyReturnRejectsThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200, [], 'abc')]);
+        $handler = $handlerFactory();
+
+        try {
+            $handler(new Psr7\Request('GET', Server::$url), [
+                'progress' => static function (): bool {
+                    return true;
+                },
+            ])->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('The transfer was aborted by the progress callback', $e->getMessage());
+            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testProgressThrowableRejectsThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200, [], 'abc')]);
+        $handler = $handlerFactory();
+        $previous = new \RuntimeException('progress failed');
+
+        try {
+            $handler(new Psr7\Request('GET', Server::$url), [
+                'progress' => static function () use ($previous): void {
+                    throw $previous;
+                },
+            ])->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('An error was encountered during the progress event', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+    }
+
+    public function testProgressAbortRejectsWithRequestException(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'progress' => static function (): bool {
+                return true;
+            },
+        ]);
+
+        $callback = $_SERVER['_curl'][self::progressCallbackOption()];
+        self::assertSame(1, $callback($easy->handle, 0, 0, 0, 0));
+        $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
+
+        try {
+            CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $factory
+            )->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('The transfer was aborted by the progress callback', $e->getMessage());
+            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
+        }
+    }
+
+    public function testProgressThrowableRejectsWithRequestException(): void
+    {
+        $factory = new CurlFactory(1);
+        $previous = new \RuntimeException('boom');
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'progress' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+
+        $callback = $_SERVER['_curl'][self::progressCallbackOption()];
+        self::assertSame(1, $callback($easy->handle, 0, 0, 0, 0));
+        $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
+
+        try {
+            CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $factory
+            )->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('An error was encountered during the progress event', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
+        }
+    }
+
+    public function testProgressExceptionWinsOverAbortMarker(): void
+    {
+        $factory = new CurlFactory(1);
+        $previous = new \RuntimeException('boom');
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy->progressAborted = true;
+        $easy->progressException = $previous;
+        $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
+
+        try {
+            CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $factory
+            )->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('An error was encountered during the progress event', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+        }
+    }
+
+    public function testAbortedByCallbackWithoutProgressMarkerUsesGenericCurlError(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
+
+        try {
+            CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $factory
+            )->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringStartsWith('cURL error '.\CURLE_ABORTED_BY_CALLBACK.':', $e->getMessage());
+        }
+    }
+
+    public function testReleaseClearsRawXferInfoCallbackBeforeDiscardingHandle(): void
+    {
+        if (!\defined('CURLOPT_XFERINFOFUNCTION')) {
+            self::markTestSkipped('CURLOPT_XFERINFOFUNCTION is not available.');
+        }
+
+        $option = (int) \constant('CURLOPT_XFERINFOFUNCTION');
+        $factory = new CurlFactory(0);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [
+                $option => static function (): int {
+                    return 0;
+                },
+            ],
+        ]);
+
+        $factory->release($easy);
+
+        self::assertArrayNotHasKey($option, $_SERVER['_curl']);
+        self::assertSame([], self::readIdleHandles($factory));
+    }
+
+    public function testReleaseClearsRawXferInfoCallbackBeforeReusingHandle(): void
+    {
+        if (!\defined('CURLOPT_XFERINFOFUNCTION')) {
+            self::markTestSkipped('CURLOPT_XFERINFOFUNCTION is not available.');
+        }
+
+        $option = (int) \constant('CURLOPT_XFERINFOFUNCTION');
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [
+                $option => static function (): int {
+                    return 0;
+                },
+            ],
+        ]);
+
+        $factory->release($easy);
+
+        self::assertArrayNotHasKey($option, $_SERVER['_curl']);
+        self::assertCount(1, self::readIdleHandles($factory));
+    }
+
     public function testEmitsDebugInfoToStream(): void
     {
         $res = \fopen('php://temp', 'r+');
@@ -1297,7 +1549,9 @@ class CurlFactoryTest extends TestCase
             static function (): void {
             },
             $easy,
-            $factory
+            $factory,
+            null,
+            null
         );
 
         try {
@@ -1327,7 +1581,9 @@ class CurlFactoryTest extends TestCase
             static function (): void {
             },
             $easy,
-            $factory
+            $factory,
+            null,
+            null
         );
 
         try {
@@ -1568,6 +1824,38 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testInvokesOnStatsWhenOnHeadersFails(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $req = new Psr7\Request('GET', Server::$url);
+        $gotStats = null;
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'on_headers' => static function (): void {
+                throw new \RuntimeException('test');
+            },
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats): void {
+                $gotStats = $stats;
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('An error was encountered during the on_headers event', $e->getMessage());
+            self::assertInstanceOf(TransferStats::class, $gotStats);
+            self::assertTrue($gotStats->hasResponse());
+            self::assertSame(200, $gotStats->getResponse()->getStatusCode());
+            self::assertSame($req, $gotStats->getRequest());
+            self::assertSame(Server::$url, (string) $gotStats->getEffectiveUri());
+            self::assertIsInt($gotStats->getHandlerErrorData());
+        }
+    }
+
     public function testSuccessfullyCallsOnHeadersBeforeWritingToSink(): void
     {
         Server::flush();
@@ -1660,6 +1948,89 @@ class CurlFactoryTest extends TestCase
         self::assertIsFloat($gotStats->getTransferTime());
         self::assertIsInt($gotStats->getHandlerErrorData());
         self::assertArrayHasKey('appconnect_time', $gotStats->getHandlerStats());
+    }
+
+    public function testInvokesOnStatsAfterSuccessHandleRelease(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = null;
+        $called = false;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_stats' => static function (TransferStats $stats) use (&$easy, $factory, &$called): void {
+                $called = true;
+                self::assertInstanceOf(EasyHandle::class, $easy);
+                self::assertTrue($stats->hasResponse());
+                self::assertArrayNotHasKey('handle', \get_object_vars($easy));
+                self::assertCount(1, self::readIdleHandles($factory));
+            },
+        ]);
+        $easy->response = new Psr7\Response(200);
+
+        $promise = CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        );
+
+        self::assertTrue($called);
+        self::assertSame(200, $promise->wait()->getStatusCode());
+    }
+
+    public function testInvokesOnStatsAfterErrorHandleRelease(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = null;
+        $called = false;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_stats' => static function (TransferStats $stats) use (&$easy, $factory, &$called): void {
+                $called = true;
+                self::assertInstanceOf(EasyHandle::class, $easy);
+                self::assertFalse($stats->hasResponse());
+                self::assertSame(\CURLE_COULDNT_CONNECT, $stats->getHandlerErrorData());
+                self::assertArrayNotHasKey('handle', \get_object_vars($easy));
+                self::assertCount(1, self::readIdleHandles($factory));
+            },
+        ]);
+        $easy->errno = \CURLE_COULDNT_CONNECT;
+
+        CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        )->wait(false);
+
+        self::assertTrue($called);
+    }
+
+    public function testOnStatsExceptionEscapesAfterHandleRelease(): void
+    {
+        $factory = new CurlFactory(1);
+        $previous = new \RuntimeException('stats failed');
+        $easy = null;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_stats' => static function () use (&$easy, $factory, $previous): void {
+                self::assertInstanceOf(EasyHandle::class, $easy);
+                self::assertArrayNotHasKey('handle', \get_object_vars($easy));
+                self::assertCount(1, self::readIdleHandles($factory));
+
+                throw $previous;
+            },
+        ]);
+        $easy->response = new Psr7\Response(200);
+
+        try {
+            CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $factory
+            );
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($previous, $e);
+        }
     }
 
     public function testRewindsBodyIfPossible(): void
@@ -1797,6 +2168,27 @@ class CurlFactoryTest extends TestCase
         }
 
         return (int) \constant('CURLOPT_PROXYHEADER');
+    }
+
+    public static function curlHandlerProvider(): array
+    {
+        return [
+            'curl' => [static function (): callable {
+                return new Handler\CurlHandler();
+            }],
+            'curl_multi' => [static function (): callable {
+                return new Handler\CurlMultiHandler();
+            }],
+        ];
+    }
+
+    private static function progressCallbackOption(): int
+    {
+        if (\defined('CURLOPT_XFERINFOFUNCTION')) {
+            return (int) \constant('CURLOPT_XFERINFOFUNCTION');
+        }
+
+        return \CURLOPT_PROGRESSFUNCTION;
     }
 
     /**

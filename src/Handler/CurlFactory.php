@@ -284,6 +284,10 @@ class CurlFactory implements CurlFactoryInterface
         curl_setopt($handle, \CURLOPT_READFUNCTION, null);
         curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
         curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
+
+        if (\defined('CURLOPT_XFERINFOFUNCTION')) {
+            curl_setopt($handle, (int) \constant('CURLOPT_XFERINFOFUNCTION'), null);
+        }
     }
 
     /**
@@ -297,19 +301,23 @@ class CurlFactory implements CurlFactoryInterface
      */
     public static function finish(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
-        if (isset($easy->options['on_stats'])) {
-            self::invokeStats($easy);
-        }
+        /** @var callable|null $onStats */
+        $onStats = $easy->options['on_stats'] ?? null;
+        $stats = $onStats !== null ? self::createStats($easy) : null;
 
         if (!$easy->response || $easy->errno) {
-            return self::finishError($handler, $easy, $factory);
+            return self::finishError($handler, $easy, $factory, $stats, $onStats);
         }
+
+        /** @var ResponseInterface $response */
+        $response = $easy->response;
 
         // Return the response if it is present and there is no error.
         $factory->release($easy);
 
-        /** @var ResponseInterface $response */
-        $response = $easy->response;
+        if ($onStats !== null) {
+            $onStats($stats);
+        }
 
         // Rewind the body of the response if possible.
         $body = $response->getBody();
@@ -321,7 +329,7 @@ class CurlFactory implements CurlFactoryInterface
         return P\Create::promiseFor($response);
     }
 
-    private static function invokeStats(EasyHandle $easy): void
+    private static function createStats(EasyHandle $easy): TransferStats
     {
         $curlStats = \curl_getinfo($easy->handle);
         $curlStats['appconnect_time'] = \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME);
@@ -333,26 +341,30 @@ class CurlFactory implements CurlFactoryInterface
             ];
         }
 
-        $stats = new TransferStats(
+        return new TransferStats(
             $easy->request,
             $easy->response,
             $curlStats['total_time'],
             $easy->errno,
             $curlStats
         );
-        ($easy->options['on_stats'])($stats);
     }
 
     /**
      * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
+     * @param callable|null                                                                 $onStats
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
+    private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory, ?TransferStats $stats, $onStats): PromiseInterface
     {
         // Get error information and release the handle to the factory.
         $ctx = self::createErrorContext($easy);
         $factory->release($easy);
+
+        if ($onStats !== null) {
+            $onStats($stats);
+        }
 
         // Retry when nothing is present or when curl failed to rewind.
         if (empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
@@ -414,6 +426,32 @@ class CurlFactory implements CurlFactoryInterface
                     $easy->request,
                     $easy->response,
                     $easy->onHeadersException,
+                    $ctx
+                )
+            );
+        }
+
+        if ($easy->progressException) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new RequestException(
+                    'An error was encountered during the progress event',
+                    $easy->request,
+                    $easy->response,
+                    $easy->progressException,
+                    $ctx
+                )
+            );
+        }
+
+        if ($easy->progressAborted && $easy->errno === \CURLE_ABORTED_BY_CALLBACK) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new RequestException(
+                    'The transfer was aborted by the progress callback',
+                    $easy->request,
+                    $easy->response,
+                    null,
                     $ctx
                 )
             );
@@ -1000,9 +1038,27 @@ class CurlFactory implements CurlFactoryInterface
                 throw new \InvalidArgumentException('progress client option must be callable');
             }
             $conf[\CURLOPT_NOPROGRESS] = false;
-            $conf[\CURLOPT_PROGRESSFUNCTION] = static function ($resource, int $downloadSize, int $downloaded, int $uploadSize, int $uploaded) use ($progress) {
-                $progress($downloadSize, $downloaded, $uploadSize, $uploaded);
+            $progressCallback = static function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($easy, $progress): int {
+                try {
+                    if ($progress($downloadSize, $downloaded, $uploadSize, $uploaded)) {
+                        $easy->progressAborted = true;
+
+                        return 1;
+                    }
+
+                    return 0;
+                } catch (\Throwable $e) {
+                    $easy->progressException = $e;
+
+                    return 1;
+                }
             };
+
+            if (\defined('CURLOPT_XFERINFOFUNCTION')) {
+                $conf[(int) \constant('CURLOPT_XFERINFOFUNCTION')] = $progressCallback;
+            } else {
+                $conf[\CURLOPT_PROGRESSFUNCTION] = $progressCallback;
+            }
         }
 
         if (!empty($options['debug'])) {

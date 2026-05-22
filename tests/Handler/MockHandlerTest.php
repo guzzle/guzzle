@@ -183,6 +183,34 @@ class MockHandlerTest extends TestCase
         }
     }
 
+    public function testInvokesOnStatsWhenOnHeadersFails(): void
+    {
+        $res = new Response(200);
+        $mock = new MockHandler([$res]);
+        $request = new Request('GET', 'http://example.com');
+        $stats = null;
+        $promise = $mock($request, [
+            'on_headers' => static function (): void {
+                throw new \RuntimeException('test');
+            },
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
+            self::assertInstanceOf(TransferStats::class, $stats);
+            self::assertSame($request, $stats->getRequest());
+            self::assertTrue($stats->hasResponse());
+            self::assertSame($res, $stats->getResponse());
+            self::assertSame($e, $stats->getHandlerErrorData());
+        }
+    }
+
     public function testInvokesOnHeadersWithResponseAndRequest(): void
     {
         $res = new Response(201, ['X-Foo' => 'bar']);
