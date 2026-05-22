@@ -103,6 +103,58 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testCanCancelFromProgressCallback()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $promise = null;
+        $progressCalls = 0;
+        $cancelled = false;
+
+        $promise = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'progress' => static function (
+                $downloadSize,
+                $downloaded,
+                $uploadSize,
+                $uploaded
+            ) use (&$promise, &$progressCalls, &$cancelled): void {
+                ++$progressCalls;
+
+                if (!$cancelled) {
+                    $cancelled = true;
+                    $promise->cancel();
+                }
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+
+            while (P\Is::pending($promise)) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for cURL progress cancellation.');
+                }
+
+                $handler->tick();
+            }
+
+            self::assertGreaterThan(0, $progressCalls);
+            self::assertTrue($cancelled);
+            self::assertTrue(P\Is::rejected($promise));
+        } finally {
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+
+            Server::flush();
+        }
+    }
+
     public function testCannotCancelFinished()
     {
         Server::flush();
