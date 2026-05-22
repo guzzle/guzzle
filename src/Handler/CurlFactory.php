@@ -383,7 +383,7 @@ class CurlFactory implements CurlFactoryInterface
 
     private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $options): bool
     {
-        if ('https' !== $request->getUri()->getScheme() || CurlVersion::supportsProxyCredentialAwareConnectionReuse()) {
+        if (!self::usesProxyTunnel($request, $options) || CurlVersion::supportsProxyCredentialAwareConnectionReuse()) {
             return false;
         }
 
@@ -401,6 +401,27 @@ class CurlFactory implements CurlFactoryInterface
         return \array_key_exists('user', $proxyParts)
             || \array_key_exists('pass', $proxyParts)
             || self::hasCurlProxyCredentials($options);
+    }
+
+    private static function usesProxyTunnel(RequestInterface $request, array $options): bool
+    {
+        return 'https' === $request->getUri()->getScheme()
+            || (
+                isset($options['curl'])
+                && \array_key_exists(\CURLOPT_HTTPPROXYTUNNEL, $options['curl'])
+                && (bool) $options['curl'][\CURLOPT_HTTPPROXYTUNNEL]
+            );
+    }
+
+    private static function getEffectiveProxyForConnectionReuse(?string $selectedProxy, array $options): ?string
+    {
+        if (!isset($options['curl']) || !\array_key_exists(\CURLOPT_PROXY, $options['curl'])) {
+            return $selectedProxy;
+        }
+
+        $proxy = $options['curl'][\CURLOPT_PROXY];
+
+        return \is_string($proxy) && $proxy !== '' ? $proxy : null;
     }
 
     private static function hasCurlProxyCredentials(array $options): bool
@@ -668,9 +689,10 @@ class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_NOSIGNAL] = true;
         }
 
+        $selectedProxy = null;
+
         if (isset($options['proxy'])) {
             $proxy = $options['proxy'];
-            $selectedProxy = null;
             if (!\is_array($proxy)) {
                 if (!\is_string($proxy)) {
                     throw new \InvalidArgumentException('proxy must be a string or array');
@@ -698,11 +720,12 @@ class CurlFactory implements CurlFactoryInterface
                     }
                 }
             }
+        }
 
-            if ($selectedProxy !== null && self::requiresFreshConnectionForAuthenticatedProxy($easy->request, $selectedProxy, $options)) {
-                $conf[\CURLOPT_FRESH_CONNECT] = true;
-                $conf[\CURLOPT_FORBID_REUSE] = true;
-            }
+        $proxyForConnectionReuse = self::getEffectiveProxyForConnectionReuse($selectedProxy, $options);
+        if ($proxyForConnectionReuse !== null && self::requiresFreshConnectionForAuthenticatedProxy($easy->request, $proxyForConnectionReuse, $options)) {
+            $conf[\CURLOPT_FRESH_CONNECT] = true;
+            $conf[\CURLOPT_FORBID_REUSE] = true;
         }
 
         $cryptoMethod = $options['crypto_method'] ?? null;

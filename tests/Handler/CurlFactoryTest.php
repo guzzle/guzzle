@@ -274,6 +274,74 @@ class CurlFactoryTest extends TestCase
         self::assertAuthenticatedProxyConnectionReuseOptions();
     }
 
+    public function testAuthenticatedHttpsProxyReuseDependsOnCurlVersionWithRawCurlProxyUrl(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'curl' => [
+                \CURLOPT_PROXY => 'http://username:password@proxy.example.com:8080',
+            ],
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testAuthenticatedHttpsProxyReuseDependsOnCurlVersionWithRawCurlProxyCredentials(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'curl' => [
+                \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+                \CURLOPT_PROXYUSERPWD => 'username:password',
+            ],
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testAuthenticatedHttpProxyTunnelReuseDependsOnCurlVersion(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'http://example.com'), [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+            'curl' => [
+                \CURLOPT_HTTPPROXYTUNNEL => true,
+            ],
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testRawCurlProxyOverrideControlsAuthenticatedProxyReuseDetection(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'http://username:password@proxy-one.example.com:8080',
+            'curl' => [
+                \CURLOPT_PROXY => 'http://proxy-two.example.com:8080',
+            ],
+        ]);
+
+        self::assertSame('http://proxy-two.example.com:8080', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testRawCurlProxyDisableControlsAuthenticatedProxyReuseDetection(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+            'curl' => [
+                \CURLOPT_PROXY => '',
+            ],
+        ]);
+
+        self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
     public function testDoesNotForceFreshConnectionForAuthenticatedHttpProxyRequest(): void
     {
         $f = new CurlFactory(3);
