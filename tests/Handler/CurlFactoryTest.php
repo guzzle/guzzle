@@ -258,15 +258,20 @@ class CurlFactoryTest extends TestCase
             'proxy' => 'http://username:password@proxy.example.com:8080',
         ]);
 
-        if (CurlVersion::supportsProxyCredentialAwareReuse()) {
-            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
 
-            return;
-        }
+    public function testAuthenticatedHttpsProxyReuseDependsOnCurlVersionWithCurlProxyCredentials(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                \CURLOPT_PROXYUSERPWD => 'username:password',
+            ],
+        ]);
 
-        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
-        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+        self::assertAuthenticatedProxyConnectionReuseOptions();
     }
 
     public function testDoesNotForceFreshConnectionForAuthenticatedHttpProxyRequest(): void
@@ -1543,6 +1548,19 @@ class CurlFactoryTest extends TestCase
         self::assertArrayNotHasKey('http_code', $context);
         self::assertArrayNotHasKey('header_size', $context);
         self::assertArrayNotHasKey('content_type', $context);
+    }
+
+    private static function assertAuthenticatedProxyConnectionReuseOptions(): void
+    {
+        if (CurlVersion::supportsProxyCredentialAwareConnectionReuse()) {
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+
+            return;
+        }
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
     }
 
     /**

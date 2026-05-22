@@ -67,7 +67,7 @@ final class CurlVersion
             && 0 !== ((int) \constant('CURL_VERSION_HTTP3') & $versionInfo['features']);
     }
 
-    public static function supportsProxyCredentialAwareReuse(): bool
+    public static function supportsProxyCredentialAwareConnectionReuse(): bool
     {
         $version = self::get();
 
