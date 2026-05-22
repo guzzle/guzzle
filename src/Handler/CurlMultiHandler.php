@@ -255,6 +255,12 @@ class CurlMultiHandler
                 // if it's not done, then it would be premature to remove the handle. ref https://github.com/guzzle/guzzle/pull/2892#issuecomment-945150216
                 continue;
             }
+            if (!isset($done['handle'])) {
+                // Work around a PHP issue where cancelled transfers may omit the handle.
+                // Remove this once we no longer support PHP versions before the fix in
+                // https://github.com/php/php-src/pull/16302.
+                continue;
+            }
             $id = (int) $done['handle'];
             \curl_multi_remove_handle($this->_mh, $done['handle']);
 
