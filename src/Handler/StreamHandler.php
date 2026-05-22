@@ -46,15 +46,15 @@ class StreamHandler
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {
-            throw new ConnectException('HTTP protocol version must not be empty.', $request);
+            throw new RequestException('HTTP protocol version must not be empty.', $request);
         }
 
         if (1 !== \preg_match('/^\d+(?:\.\d+)?$/D', $protocolVersion)) {
-            throw new ConnectException('HTTP protocol version must be a valid HTTP version number.', $request);
+            throw new RequestException('HTTP protocol version must be a valid HTTP version number.', $request);
         }
 
         if ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
-            throw new ConnectException(sprintf('HTTP/%s is not supported by the stream handler.', $protocolVersion), $request);
+            throw new RequestException(sprintf('HTTP/%s is not supported by the stream handler.', $protocolVersion), $request);
         }
 
         $startTime = isset($options['on_stats']) ? Utils::currentTime() : null;

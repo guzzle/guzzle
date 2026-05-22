@@ -52,28 +52,28 @@ class CurlFactory implements CurlFactoryInterface
     {
         $this->assertOpen();
 
-        CurlVersion::ensureSupported($request);
-
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {
-            throw new ConnectException('HTTP protocol version must not be empty.', $request);
+            throw new RequestException('HTTP protocol version must not be empty.', $request);
         }
 
         if (1 !== \preg_match('/^\d+(?:\.\d+)?$/D', $protocolVersion)) {
-            throw new ConnectException('HTTP protocol version must be a valid HTTP version number.', $request);
+            throw new RequestException('HTTP protocol version must be a valid HTTP version number.', $request);
         }
+
+        CurlVersion::ensureSupported($request);
 
         if ('3' === $protocolVersion || '3.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp3()) {
-                throw new ConnectException('HTTP/3 is supported by the cURL handler, however the installed PHP cURL extension or libcurl does not support HTTP/3.', $request);
+                throw new RequestException('HTTP/3 is supported by the cURL handler, however the installed PHP cURL extension or libcurl does not support HTTP/3.', $request);
             }
         } elseif ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp2()) {
-                throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
+                throw new RequestException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
             }
         } elseif ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
-            throw new ConnectException(sprintf('HTTP/%s is not supported by the cURL handler.', $protocolVersion), $request);
+            throw new RequestException(sprintf('HTTP/%s is not supported by the cURL handler.', $protocolVersion), $request);
         }
 
         if (isset($options['curl']['body_as_string'])) {

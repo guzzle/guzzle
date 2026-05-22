@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -17,6 +18,7 @@ use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
@@ -69,16 +71,21 @@ class ClientTest extends TestCase
         $client->get('http://example.com', ['version' => '']);
     }
 
-    public function testRejectsEmptyRequestProtocolVersion(): void
+    public function testSendRequestRejectsEmptyRequestProtocolVersion(): void
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $request = self::requestWithProtocolVersion('');
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('HTTP protocol version must not be empty.');
+        try {
+            $client->sendRequest($request);
+            self::fail('Expected request exception.');
+        } catch (RequestExceptionInterface $e) {
+            self::assertSame('', $e->getRequest()->getProtocolVersion());
+            self::assertSame('HTTP protocol version must not be empty.', $e->getMessage());
+        }
 
-        $client->send($request);
+        self::assertCount(1, $mock);
     }
 
     /**
@@ -102,11 +109,18 @@ class ClientTest extends TestCase
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
+        $request = self::requestWithProtocolVersion($version);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('HTTP protocol version must be a valid HTTP version number.');
+        try {
+            $client->send($request);
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($version, $e->getRequest()->getProtocolVersion());
+            self::assertFalse($e->hasResponse());
+            self::assertSame('HTTP protocol version must be a valid HTTP version number.', $e->getMessage());
+        }
 
-        $client->send(self::requestWithProtocolVersion($version));
+        self::assertCount(1, $mock);
     }
 
     public static function malformedProtocolVersionProvider(): iterable

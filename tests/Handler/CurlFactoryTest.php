@@ -968,10 +968,14 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3);
         $request = self::requestWithProtocolVersion('');
 
-        $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('HTTP protocol version must not be empty.');
-
-        $factory->create($request, []);
+        try {
+            $factory->create($request, []);
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertFalse($e->hasResponse());
+            self::assertSame('HTTP protocol version must not be empty.', $e->getMessage());
+        }
     }
 
     public function testRejectsMalformedProtocolVersion(): void
@@ -979,10 +983,37 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3);
         $request = self::requestWithProtocolVersion('HTTP/1.1');
 
-        $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('HTTP protocol version must be a valid HTTP version number.');
+        try {
+            $factory->create($request, []);
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertFalse($e->hasResponse());
+            self::assertSame('HTTP protocol version must be a valid HTTP version number.', $e->getMessage());
+        }
+    }
 
-        $factory->create($request, []);
+    public function testThrowsWhenHttp2IsUnsupported(): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => 0,
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+            $request = new Psr7\Request('GET', Server::$url, [], null, '2.0');
+
+            try {
+                $factory->create($request, []);
+                self::fail('Expected request exception.');
+            } catch (RequestException $e) {
+                self::assertSame($request, $e->getRequest());
+                self::assertStringContainsString('HTTP/2 is supported by the cURL handler', $e->getMessage());
+            }
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     public function testThrowsWhenHttp3IsUnsupported(): void
@@ -994,11 +1025,15 @@ class CurlFactoryTest extends TestCase
 
         try {
             $factory = new CurlFactory(3);
+            $request = new Psr7\Request('GET', Server::$url, [], null, '3.0');
 
-            $this->expectException(ConnectException::class);
-            $this->expectExceptionMessage('HTTP/3 is supported by the cURL handler');
-
-            $factory->create(new Psr7\Request('GET', Server::$url, [], null, '3.0'), []);
+            try {
+                $factory->create($request, []);
+                self::fail('Expected request exception.');
+            } catch (RequestException $e) {
+                self::assertSame($request, $e->getRequest());
+                self::assertStringContainsString('HTTP/3 is supported by the cURL handler', $e->getMessage());
+            }
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }

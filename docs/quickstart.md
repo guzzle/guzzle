@@ -456,7 +456,7 @@ The following tree view describes how the Guzzle Exceptions depend on each other
     ├── NetworkException (implements NetworkExceptionInterface)
     │   └── ConnectException
     │       └── TimeoutException
-    └── RequestException
+    └── RequestException (implements RequestExceptionInterface)
         ├── BadResponseException
         │   ├── ServerException
         │   └── ClientException
@@ -469,7 +469,9 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
 - `GuzzleHttp\Exception\HandlerClosedException` is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
 
-- A `GuzzleHttp\Exception\ConnectException` exception is thrown when a connection cannot be established. This exception extends from `GuzzleHttp\Exception\NetworkException`.
+- `GuzzleHttp\Exception\RequestException` is the base class for request-related transfer failures that are not network failures. It implements PSR-18's `RequestExceptionInterface`, exposes the request with `getRequest()`, and may expose a response with `getResponse()` when one was received.
+
+- A `GuzzleHttp\Exception\ConnectException` exception is thrown when a connection cannot be established. This exception extends from `GuzzleHttp\Exception\NetworkException`. Invalid or handler-unsupported HTTP request protocol versions are reported as `RequestException`, not `ConnectException`.
 
 - A `GuzzleHttp\Exception\TimeoutException` exception is thrown when a transfer timeout can be reliably identified. This exception extends from `GuzzleHttp\Exception\ConnectException`.
 
@@ -491,7 +493,9 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
 - A `GuzzleHttp\Exception\TooManyRedirectsException` is thrown when too many redirects are followed. This exception extends from `GuzzleHttp\Exception\RequestException`.
 
-All of the above exceptions extend from `GuzzleHttp\Exception\TransferException`.
+`Client::sendRequest()` returns redirect, 4xx, and 5xx responses as normal PSR-18 responses. These response-status exceptions are used by Guzzle request methods when the corresponding middleware options are enabled.
+
+All of the above exceptions extend from `GuzzleHttp\Exception\TransferException`. `TransferException` implements `GuzzleHttp\Exception\GuzzleException`, which extends PSR-18's `ClientExceptionInterface`.
 
 ## Environment Variables
 

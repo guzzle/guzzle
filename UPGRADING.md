@@ -69,6 +69,19 @@ When a built-in handler can reliably identify a transfer timeout, it now throws
 `ConnectException`, so existing `catch (ConnectException $e)` and
 `catch (TransferException $e)` blocks continue to catch timeout failures.
 
+#### Request protocol version exceptions
+
+Empty or malformed HTTP protocol versions returned by a `RequestInterface` now
+fail with `GuzzleHttp\Exception\RequestException`. Built-in handlers also
+report well-formed but unsupported request protocol versions, such as HTTP/3
+with the stream handler, as `RequestException`.
+
+Invalid `version` request option values are still rejected as
+`GuzzleHttp\Exception\InvalidArgumentException` before a request is sent. If you
+previously caught `InvalidArgumentException` or `ConnectException` for request
+protocol version failures, catch `RequestException` or `GuzzleException`
+instead.
+
 #### cURL handler lifecycle
 
 Applications that manage built-in cURL handlers or factories directly should
