@@ -373,6 +373,130 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testCanCloseFromProgressCallback(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $progressCalls = 0;
+        $closed = false;
+
+        $promise = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'progress' => static function (
+                $downloadSize,
+                $downloaded,
+                $uploadSize,
+                $uploaded
+            ) use ($handler, &$progressCalls, &$closed): void {
+                ++$progressCalls;
+
+                if (!$closed) {
+                    $closed = true;
+                    $handler->close();
+                }
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+
+            while (P\Is::pending($promise)) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for cURL progress close.');
+                }
+
+                $handler->tick();
+            }
+
+            self::assertGreaterThan(0, $progressCalls);
+            self::assertTrue($closed);
+            self::assertTrue(P\Is::rejected($promise));
+
+            try {
+                $promise->wait();
+                self::fail('Expected HandlerClosedException.');
+            } catch (HandlerClosedException $e) {
+                self::assertSame('The cURL multi handler was closed before the transfer completed.', $e->getMessage());
+            }
+
+            try {
+                $handler->tick();
+                self::fail('Expected BadMethodCallException.');
+            } catch (\BadMethodCallException $e) {
+                self::assertSame('Cannot use the cURL multi handler after it has been closed.', $e->getMessage());
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testCanCloseFromProgressCallbackWithDelayedTransfer(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $progressCalls = 0;
+        $closed = false;
+
+        $activePromise = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'progress' => static function (
+                $downloadSize,
+                $downloaded,
+                $uploadSize,
+                $uploaded
+            ) use ($handler, &$progressCalls, &$closed): void {
+                ++$progressCalls;
+
+                if (!$closed) {
+                    $closed = true;
+                    $handler->close();
+                }
+            },
+        ]);
+
+        $delayedPromise = $handler(new Request('GET', Server::$url), [
+            'delay' => 10000,
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+
+            while (P\Is::pending($activePromise)) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for cURL progress close.');
+                }
+
+                $handler->tick();
+            }
+
+            self::assertGreaterThan(0, $progressCalls);
+            self::assertTrue($closed);
+            self::assertTrue(P\Is::rejected($activePromise));
+            self::assertTrue(P\Is::rejected($delayedPromise));
+
+            foreach ([$activePromise, $delayedPromise] as $promise) {
+                try {
+                    $promise->wait();
+                    self::fail('Expected HandlerClosedException.');
+                } catch (HandlerClosedException $e) {
+                    self::assertSame('The cURL multi handler was closed before the transfer completed.', $e->getMessage());
+                }
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
     public function testCannotCancelFinished(): void
     {
         Server::flush();

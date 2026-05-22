@@ -85,6 +85,16 @@ class CurlMultiHandler
     private $deferredCancels = [];
 
     /**
+     * @var bool
+     */
+    private $deferredClose = false;
+
+    /**
+     * @var bool
+     */
+    private $deferredCloseExplicit = false;
+
+    /**
      * This handler accepts the following options:
      *
      * - handle_factory: An optional factory  used to create curl handles
@@ -214,13 +224,10 @@ class CurlMultiHandler
         }
 
         do {
-            $this->executingMulti = true;
+            $exec = $this->executeMulti();
 
-            try {
-                $exec = \curl_multi_exec($this->_mh, $this->active);
-            } finally {
-                $this->executingMulti = false;
-                $this->cleanupDeferredCancels();
+            if ($this->closed || $this->closing || !$this->hasMultiHandle()) {
+                return;
             }
 
             // Prevent busy looping for slow HTTP requests.
@@ -241,13 +248,10 @@ class CurlMultiHandler
             return;
         }
 
-        $this->executingMulti = true;
+        $exec = $this->executeMulti();
 
-        try {
-            $exec = \curl_multi_exec($this->_mh, $this->active);
-        } finally {
-            $this->executingMulti = false;
-            $this->cleanupDeferredCancels();
+        if ($this->closed || $this->closing || !$this->hasMultiHandle()) {
+            return;
         }
 
         if ($exec === \CURLM_CALL_MULTI_PERFORM) {
@@ -301,21 +305,64 @@ class CurlMultiHandler
         $this->closing = true;
         $failure = null;
 
+        if ($this->executingMulti) {
+            $this->deferClose($explicit, $failure);
+
+            if ($explicit && $failure !== null) {
+                throw $failure;
+            }
+
+            return;
+        }
+
         try {
             $this->cleanupPendingTransfers($explicit, $failure);
             $this->closeMultiHandle($failure);
             $this->closeOwnedFactory($failure);
         } finally {
-            $this->handles = [];
-            $this->delays = [];
-            $this->active = 0;
-            $this->closed = true;
-            $this->closing = false;
+            $this->finishClose();
         }
 
         if ($explicit && $failure !== null) {
             throw $failure;
         }
+    }
+
+    private function deferClose(bool $explicit, ?\Throwable &$failure): void
+    {
+        $this->deferredClose = true;
+        $this->deferredCloseExplicit = $this->deferredCloseExplicit || $explicit;
+
+        $entries = $this->handles;
+        $delays = $this->delays;
+
+        $this->handles = [];
+        $this->delays = [];
+
+        foreach ($entries as $id => $entry) {
+            $this->deferredCancels[$id] = [
+                'easy' => $entry['easy'],
+                'attached' => !isset($delays[$id]),
+            ];
+
+            if ($explicit) {
+                $this->captureFailure($failure, function () use ($entry): void {
+                    $entry['deferred']->reject(new HandlerClosedException('The cURL multi handler was closed before the transfer completed.'));
+                });
+            }
+        }
+    }
+
+    private function finishClose(): void
+    {
+        $this->handles = [];
+        $this->delays = [];
+        $this->deferredCancels = [];
+        $this->active = 0;
+        $this->deferredClose = false;
+        $this->deferredCloseExplicit = false;
+        $this->closed = true;
+        $this->closing = false;
     }
 
     private function captureFailure(?\Throwable &$failure, callable $callback): void
@@ -384,6 +431,39 @@ class CurlMultiHandler
         $this->captureFailure($failure, static function () use ($factory): void {
             $factory->close();
         });
+    }
+
+    /**
+     * @phpstan-impure
+     */
+    private function executeMulti(): int
+    {
+        $this->executingMulti = true;
+        $failure = null;
+
+        try {
+            return \curl_multi_exec($this->_mh, $this->active);
+        } finally {
+            $this->executingMulti = false;
+            $this->cleanupDeferredCancels($failure);
+
+            if ($this->deferredClose) {
+                $explicit = $this->deferredCloseExplicit;
+
+                try {
+                    $this->closeMultiHandle($failure);
+                    $this->closeOwnedFactory($failure);
+                } finally {
+                    $this->finishClose();
+                }
+
+                if ($explicit && $failure !== null) {
+                    throw $failure;
+                }
+            } elseif ($failure !== null) {
+                throw $failure;
+            }
+        }
     }
 
     private function disposeEasyHandle(EasyHandle $easy): void
@@ -496,7 +576,7 @@ class CurlMultiHandler
         return true;
     }
 
-    private function cleanupDeferredCancels(): void
+    private function cleanupDeferredCancels(?\Throwable &$failure): void
     {
         if ($this->deferredCancels === []) {
             return;
@@ -509,10 +589,14 @@ class CurlMultiHandler
             $easy = $entry['easy'];
 
             if ($entry['attached'] && $this->hasMultiHandle() && self::hasEasyHandle($easy)) {
-                $this->removeHandleFromMulti($easy->handle);
+                $this->captureFailure($failure, function () use ($easy): void {
+                    $this->removeHandleFromMulti($easy->handle);
+                });
             }
 
-            $this->disposeEasyHandle($easy);
+            $this->captureFailure($failure, function () use ($easy): void {
+                $this->disposeEasyHandle($easy);
+            });
         }
     }
 
