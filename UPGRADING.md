@@ -70,8 +70,10 @@ multipart payloads, remove those generated part headers from expected strings.
 
 Generated multipart `Content-Disposition` header `name` and `filename`
 parameters now escape double quotes, carriage returns, and line feeds as `%22`,
-`%0D`, and `%0A`. Custom multipart part header names and values, and explicit
-PSR-7 multipart boundaries, are also validated by PSR-7.
+`%0D`, and `%0A`. Literal backslashes and other characters are serialized
+unchanged, matching browser multipart form submission behavior. Custom multipart
+part header names and values, and explicit PSR-7 multipart boundaries, are also
+validated by PSR-7.
 
 Guzzle now quotes the `boundary` parameter in generated
 `Content-Type: multipart/form-data` headers when an explicit PSR-7
