@@ -8,6 +8,8 @@ use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
 final class Utils
@@ -620,6 +622,60 @@ final class Utils
         }
 
         return $milliseconds;
+    }
+
+    /**
+     * @param mixed $factory
+     *
+     * @internal
+     */
+    public static function requireRequestFactory($factory): RequestFactoryInterface
+    {
+        if (!$factory instanceof RequestFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::REQUEST_FACTORY,
+                RequestFactoryInterface::class
+            ));
+        }
+
+        return $factory;
+    }
+
+    /**
+     * @param mixed $factory
+     *
+     * @internal
+     */
+    public static function requireUriFactory($factory): UriFactoryInterface
+    {
+        if (!$factory instanceof UriFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::URI_FACTORY,
+                UriFactoryInterface::class
+            ));
+        }
+
+        return $factory;
+    }
+
+    /**
+     * @param mixed $uri
+     *
+     * @internal
+     */
+    public static function createUri($uri, UriFactoryInterface $uriFactory): UriInterface
+    {
+        if ($uri instanceof UriInterface) {
+            return $uri;
+        }
+
+        if (\is_string($uri)) {
+            return $uriFactory->createUri($uri);
+        }
+
+        throw new InvalidArgumentException(\sprintf('URI must be a string or %s', UriInterface::class));
     }
 
     /**

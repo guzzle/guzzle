@@ -869,6 +869,61 @@ $data = $body->read(1024);
 $line = fgets($body->detach());
 ```
 
+## request_factory
+
+Summary
+PSR-17 request factory used when Guzzle creates requests.
+
+Types
+`Psr\Http\Message\RequestFactoryInterface`
+
+Default
+`GuzzleHttp\Psr7\HttpFactory`
+
+Constant
+`GuzzleHttp\RequestOptions::REQUEST_FACTORY`
+
+```php
+$factory = new \GuzzleHttp\Psr7\HttpFactory();
+
+$client->request('GET', '/get', [
+    'request_factory' => $factory,
+]);
+```
+
+This option can be set on a client or per request. It affects request-side object creation only and does not affect response implementations returned by handlers.
+
+> [!NOTE]
+> This option only affects requests created by `request()`, `requestAsync()`, and shortcut methods such as `get()` and `post()`. Requests passed to `send()`, `sendAsync()`, or `sendRequest()` are used as provided.
+
+## uri_factory
+
+Summary
+PSR-17 URI factory used when Guzzle creates URI objects from strings.
+
+Types
+`Psr\Http\Message\UriFactoryInterface`
+
+Default
+`GuzzleHttp\Psr7\HttpFactory`
+
+Constant
+`GuzzleHttp\RequestOptions::URI_FACTORY`
+
+```php
+$factory = new \GuzzleHttp\Psr7\HttpFactory();
+
+$client = new GuzzleHttp\Client([
+    'base_uri' => 'https://api.example.com',
+    'uri_factory' => $factory,
+]);
+```
+
+This option can be set on a client or per request. It is used for string request URI values and string `base_uri` values. URI objects implementing `Psr\Http\Message\UriInterface` are used as provided.
+
+> [!NOTE]
+> This option affects request-side URI creation only. It does not affect response implementations returned by handlers or redirect `Location` parsing.
+
 ## sink
 
 Summary

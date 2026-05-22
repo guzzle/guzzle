@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\HttpFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
@@ -62,9 +63,22 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             throw new InvalidArgumentException('handler must be a callable');
         }
 
-        // Convert the base_uri to a UriInterface
+        $factory = new HttpFactory();
+
+        if (!isset($config[RequestOptions::REQUEST_FACTORY])) {
+            $config[RequestOptions::REQUEST_FACTORY] = $factory;
+        }
+
+        if (!isset($config[RequestOptions::URI_FACTORY])) {
+            $config[RequestOptions::URI_FACTORY] = $factory;
+        }
+
+        Utils::requireRequestFactory($config[RequestOptions::REQUEST_FACTORY]);
+        $uriFactory = Utils::requireUriFactory($config[RequestOptions::URI_FACTORY]);
+
+        // Convert the base_uri to a UriInterface using the configured URI factory.
         if (isset($config['base_uri'])) {
-            $config['base_uri'] = Psr7\Utils::uriFor($config['base_uri']);
+            $config['base_uri'] = Utils::createUri($config['base_uri'], $uriFactory);
         }
 
         $this->configureDefaults($config);
@@ -135,18 +149,21 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
         $options = $this->prepareDefaults($options);
-        // Remove request modifying parameter because it can be done up-front.
-        $headers = $options['headers'] ?? [];
-        $body = $options['body'] ?? null;
-        $version = self::normalizeProtocolVersion($options['version'] ?? '1.1');
+
+        $factory = new HttpFactory();
+        $uriFactory = Utils::requireUriFactory($options[RequestOptions::URI_FACTORY] ?? $factory);
+        $requestFactory = Utils::requireRequestFactory($options[RequestOptions::REQUEST_FACTORY] ?? $factory);
+
         // Merge the URI into the base URI.
-        $uri = $this->buildUri(Psr7\Utils::uriFor($uri), $options);
-        if (\is_array($body)) {
-            throw $this->invalidBody();
+        $uriIsString = \is_string($uri);
+        $uri = Utils::createUri($uri, $uriFactory);
+        $builtUri = $this->buildUri($uri, $options);
+        if ($uriIsString && $builtUri !== $uri) {
+            $builtUri = Utils::createUri((string) $builtUri, $uriFactory);
         }
-        $request = new Psr7\Request($method, $uri, $headers, $body, $version);
-        // Remove the option so that they are not doubly-applied.
-        unset($options['headers'], $options['body'], $options['version']);
+
+        $uri = $builtUri;
+        $request = $requestFactory->createRequest($method, $uri);
 
         return $this->transfer($request, $options);
     }
@@ -192,7 +209,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     private function buildUri(UriInterface $uri, array $config): UriInterface
     {
         if (isset($config['base_uri'])) {
-            $uri = Psr7\UriResolver::resolve(Psr7\Utils::uriFor($config['base_uri']), $uri);
+            $uriFactory = Utils::requireUriFactory($config[RequestOptions::URI_FACTORY] ?? new HttpFactory());
+            $uri = Psr7\UriResolver::resolve(Utils::createUri($config['base_uri'], $uriFactory), $uri);
         }
 
         if (isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {

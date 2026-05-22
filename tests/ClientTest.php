@@ -18,8 +18,11 @@ use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\MessageInterface;
+use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriFactoryInterface;
+use Psr\Http\Message\UriInterface;
 
 class ClientTest extends TestCase
 {
@@ -183,6 +186,306 @@ class ClientTest extends TestCase
             'http://bar.com/baz',
             (string) $mock->getLastRequest()->getUri()
         );
+    }
+
+    public function testClientHasDefaultPsr17Factories(): void
+    {
+        $client = new Client(['handler' => new MockHandler()]);
+        $config = self::readClientConfig($client);
+
+        self::assertArrayHasKey(RequestOptions::REQUEST_FACTORY, $config);
+        self::assertInstanceOf(RequestFactoryInterface::class, $config[RequestOptions::REQUEST_FACTORY]);
+        self::assertArrayHasKey(RequestOptions::URI_FACTORY, $config);
+        self::assertInstanceOf(UriFactoryInterface::class, $config[RequestOptions::URI_FACTORY]);
+    }
+
+    public function testRequestUsesConfiguredRequestAndUriFactories(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::REQUEST_FACTORY => $factory,
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $client->request('GET', 'http://example.com/path');
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestRequest::class, $request);
+        self::assertInstanceOf(ClientTestUri::class, $request->getUri());
+        self::assertSame('http://example.com/path', (string) $request->getUri());
+        self::assertSame(['http://example.com/path'], $factory->uriCalls());
+        self::assertSame('GET', $factory->requestCalls()[0][0]);
+        self::assertInstanceOf(ClientTestUri::class, $factory->requestCalls()[0][1]);
+    }
+
+    public function testRequestAppliesHeadersBodyQueryAndVersionAfterFactoryCreation(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::REQUEST_FACTORY => $factory,
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::HEADERS => ['X-Test' => '1'],
+            RequestOptions::BODY => 'payload',
+            RequestOptions::QUERY => ['a' => 'b'],
+            RequestOptions::VERSION => '2',
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestRequest::class, $request);
+        self::assertSame('1', $request->getHeaderLine('X-Test'));
+        self::assertSame('payload', (string) $request->getBody());
+        self::assertSame('a=b', $request->getUri()->getQuery());
+        self::assertSame('2', $request->getProtocolVersion());
+    }
+
+    public function testRequestPreservesMethodCasingWithConfiguredRequestFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::REQUEST_FACTORY => $factory,
+        ]);
+
+        $client->request('gEt', 'http://example.com/path');
+
+        self::assertSame('gEt', $factory->requestCalls()[0][0]);
+        self::assertSame('gEt', $mock->getLastRequest()->getMethod());
+    }
+
+    public function testStringBaseUriUsesConfiguredUriFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            'base_uri' => 'http://example.com/base/',
+            RequestOptions::REQUEST_FACTORY => $factory,
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $config = self::readClientConfig($client);
+        self::assertInstanceOf(ClientTestUri::class, $config['base_uri']);
+
+        $client->request('GET', 'relative');
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestUri::class, $request->getUri());
+        self::assertSame('http://example.com/base/relative', (string) $request->getUri());
+        self::assertSame(
+            ['http://example.com/base/', 'relative', 'http://example.com/base/relative'],
+            $factory->uriCalls()
+        );
+    }
+
+    public function testPerRequestFactoriesOverrideClientFactories(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $clientFactory = new ClientTestFactory();
+        $requestFactory = new ClientTestFactory(ClientTestAlternateRequest::class, ClientTestAlternateUri::class);
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::REQUEST_FACTORY => $clientFactory,
+            RequestOptions::URI_FACTORY => $clientFactory,
+        ]);
+
+        $client->request('GET', 'http://example.com/path', [
+            RequestOptions::REQUEST_FACTORY => $requestFactory,
+            RequestOptions::URI_FACTORY => $requestFactory,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestAlternateRequest::class, $request);
+        self::assertInstanceOf(ClientTestAlternateUri::class, $request->getUri());
+        self::assertSame([], $clientFactory->requestCalls());
+        self::assertSame([], $clientFactory->uriCalls());
+    }
+
+    public function testPerRequestBaseUriUsesPerRequestUriFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $clientFactory = new ClientTestFactory();
+        $requestFactory = new ClientTestFactory(ClientTestAlternateRequest::class, ClientTestAlternateUri::class);
+        $client = new Client([
+            'handler' => $mock,
+            'base_uri' => 'http://client.example/base/',
+            RequestOptions::REQUEST_FACTORY => $clientFactory,
+            RequestOptions::URI_FACTORY => $clientFactory,
+        ]);
+
+        $client->request('GET', 'relative', [
+            'base_uri' => 'http://request.example/base/',
+            RequestOptions::REQUEST_FACTORY => $requestFactory,
+            RequestOptions::URI_FACTORY => $requestFactory,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestAlternateUri::class, $request->getUri());
+        self::assertSame('http://request.example/base/relative', (string) $request->getUri());
+        self::assertSame(['http://client.example/base/'], $clientFactory->uriCalls());
+        self::assertSame(
+            ['relative', 'http://request.example/base/', 'http://request.example/base/relative'],
+            $requestFactory->uriCalls()
+        );
+    }
+
+    public function testPerRequestUriFactoryControlsResolvedUriWithClientBaseUriString(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            'base_uri' => 'http://example.com/base/',
+        ]);
+
+        $client->request('GET', 'relative', [
+            RequestOptions::REQUEST_FACTORY => $factory,
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestRequest::class, $request);
+        self::assertInstanceOf(ClientTestUri::class, $request->getUri());
+        self::assertSame('http://example.com/base/relative', (string) $request->getUri());
+        self::assertSame(['relative', 'http://example.com/base/relative'], $factory->uriCalls());
+    }
+
+    public function testNullPerRequestRequestFactoryFallsBackToDefaultFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::REQUEST_FACTORY => $factory,
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $client->request('GET', 'http://example.com/path', [
+            RequestOptions::REQUEST_FACTORY => null,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(Request::class, $request);
+        self::assertNotInstanceOf(ClientTestRequest::class, $request);
+        self::assertInstanceOf(ClientTestUri::class, $request->getUri());
+        self::assertSame([], $factory->requestCalls());
+    }
+
+    public function testNullPerRequestUriFactoryFallsBackToDefaultFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::REQUEST_FACTORY => $factory,
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $client->request('GET', 'http://example.com/path', [
+            RequestOptions::URI_FACTORY => null,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestRequest::class, $request);
+        self::assertInstanceOf(Uri::class, $request->getUri());
+        self::assertNotInstanceOf(ClientTestUri::class, $request->getUri());
+        self::assertSame([], $factory->uriCalls());
+    }
+
+    public function testNullPerRequestUriFactoryFallsBackToDefaultFactoryWhenResolvingClientBaseUri(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            'base_uri' => 'http://example.com/base/',
+            RequestOptions::REQUEST_FACTORY => $factory,
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $client->request('GET', 'relative', [
+            RequestOptions::URI_FACTORY => null,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertInstanceOf(ClientTestRequest::class, $request);
+        self::assertInstanceOf(Uri::class, $request->getUri());
+        self::assertNotInstanceOf(ClientTestUri::class, $request->getUri());
+        self::assertSame('http://example.com/base/relative', (string) $request->getUri());
+        self::assertSame(['http://example.com/base/'], $factory->uriCalls());
+    }
+
+    public function testInvalidRequestFactoryIsRejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('request_factory must be an instance of Psr\\Http\\Message\\RequestFactoryInterface');
+
+        new Client([
+            RequestOptions::REQUEST_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testInvalidUriFactoryIsRejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('uri_factory must be an instance of Psr\\Http\\Message\\UriFactoryInterface');
+
+        new Client([
+            RequestOptions::URI_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testInvalidPerRequestRequestFactoryIsRejected(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('request_factory must be an instance of Psr\\Http\\Message\\RequestFactoryInterface');
+
+        $client->request('GET', 'http://example.com', [
+            RequestOptions::REQUEST_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testInvalidPerRequestUriFactoryIsRejected(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('uri_factory must be an instance of Psr\\Http\\Message\\UriFactoryInterface');
+
+        $client->request('GET', 'http://example.com', [
+            RequestOptions::URI_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testSendDoesNotUseRequestFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::REQUEST_FACTORY => $factory,
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $client->send(new Request('GET', 'http://example.com/path'));
+
+        self::assertInstanceOf(Request::class, $mock->getLastRequest());
+        self::assertNotInstanceOf(ClientTestRequest::class, $mock->getLastRequest());
+        self::assertSame([], $factory->requestCalls());
+        self::assertSame([], $factory->uriCalls());
     }
 
     public function testMergesDefaultOptionsAndDoesNotOverwriteUa(): void
@@ -1191,4 +1494,71 @@ final class ClientTestRequest extends Request
 
 final class ClientTestUri extends Uri
 {
+}
+
+final class ClientTestAlternateRequest extends Request
+{
+}
+
+final class ClientTestAlternateUri extends Uri
+{
+}
+
+final class ClientTestFactory implements RequestFactoryInterface, UriFactoryInterface
+{
+    /** @var class-string<Request> */
+    private $requestClass;
+
+    /** @var class-string<Uri> */
+    private $uriClass;
+
+    /** @var array<int, array{0: string, 1: mixed}> */
+    private $requestCalls = [];
+
+    /** @var string[] */
+    private $uriCalls = [];
+
+    /**
+     * @param class-string<Request> $requestClass
+     * @param class-string<Uri>     $uriClass
+     */
+    public function __construct(string $requestClass = ClientTestRequest::class, string $uriClass = ClientTestUri::class)
+    {
+        $this->requestClass = $requestClass;
+        $this->uriClass = $uriClass;
+    }
+
+    public function createRequest(string $method, $uri): RequestInterface
+    {
+        $this->requestCalls[] = [$method, $uri];
+
+        $class = $this->requestClass;
+
+        return new $class($method, $uri);
+    }
+
+    public function createUri(string $uri = ''): UriInterface
+    {
+        $this->uriCalls[] = $uri;
+
+        $class = $this->uriClass;
+
+        return new $class($uri);
+    }
+
+    /**
+     * @return array<int, array{0: string, 1: mixed}>
+     */
+    public function requestCalls(): array
+    {
+        return $this->requestCalls;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function uriCalls(): array
+    {
+        return $this->uriCalls;
+    }
 }
