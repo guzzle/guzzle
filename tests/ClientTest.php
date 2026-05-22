@@ -315,6 +315,49 @@ class ClientTest extends TestCase
         self::assertSame(['payload'], $factory->streamCalls());
     }
 
+    public function testStringableCallableBodyUsesConfiguredStreamFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ]);
+        $body = new class {
+            /** @var bool */
+            public $called = false;
+
+            public function __toString(): string
+            {
+                return 'stringable';
+            }
+
+            /**
+             * @return string|false
+             */
+            public function __invoke(int $length)
+            {
+                if ($this->called) {
+                    return false;
+                }
+
+                $this->called = true;
+
+                return 'callable';
+            }
+        };
+
+        $client->request('POST', 'http://example.com/path', [
+            RequestOptions::BODY => $body,
+        ]);
+
+        $request = $mock->getLastRequest();
+        self::assertFalse($body->called);
+        self::assertInstanceOf(ClientTestStream::class, $request->getBody());
+        self::assertSame('stringable', (string) $request->getBody());
+        self::assertSame(['stringable'], $factory->streamCalls());
+    }
+
     public function testStreamBodyIsPreservedWithConfiguredStreamFactory(): void
     {
         $mock = new MockHandler([new Response()]);
@@ -682,6 +725,44 @@ class ClientTest extends TestCase
 
         self::assertInstanceOf(Psr7\MultipartStream::class, $mock->getLastRequest()->getBody());
         self::assertSame([], $factory->streamCalls());
+    }
+
+    /**
+     * @dataProvider arrayBodyWithDerivedBodyOptionsProvider
+     *
+     * @param array<string, mixed> $options
+     */
+    public function testArrayBodyIsRejectedBeforeDerivedBodyOptions(array $options): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+        ]);
+        $options[RequestOptions::BODY] = ['invalid'];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing in the "body" request option as an array');
+
+        $client->request('POST', 'http://example.com/path', $options);
+    }
+
+    public static function arrayBodyWithDerivedBodyOptionsProvider(): array
+    {
+        return [
+            'json' => [
+                [RequestOptions::JSON => ['foo' => 'bar']],
+            ],
+            'form_params' => [
+                [RequestOptions::FORM_PARAMS => ['foo' => 'bar']],
+            ],
+            'multipart' => [
+                [RequestOptions::MULTIPART => [
+                    [
+                        'name' => 'foo',
+                        'contents' => 'bar',
+                    ],
+                ]],
+            ],
+        ];
     }
 
     public function testInvalidRequestFactoryIsRejected(): void

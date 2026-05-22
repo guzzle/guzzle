@@ -159,6 +159,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         $options = $this->prepareDefaults($options);
 
+        if (isset($options['body']) && \is_array($options['body'])) {
+            throw $this->invalidBody();
+        }
+
         $factory = new HttpFactory();
         $uriFactory = self::requireUriFactory($options[RequestOptions::URI_FACTORY] ?? $factory);
         $requestFactory = self::requireRequestFactory($options[RequestOptions::REQUEST_FACTORY] ?? $factory);
@@ -315,12 +319,16 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             return $streamFactory->createStream((string) $body);
         }
 
-        if ($body instanceof \Iterator || \is_callable($body)) {
+        if ($body instanceof \Iterator) {
             return Psr7\Utils::streamFor($body);
         }
 
         if (\is_object($body) && \method_exists($body, '__toString')) {
             return $streamFactory->createStream((string) $body);
+        }
+
+        if (\is_callable($body)) {
+            return Psr7\Utils::streamFor($body);
         }
 
         throw new InvalidArgumentException('Invalid resource type: '.\gettype($body));
