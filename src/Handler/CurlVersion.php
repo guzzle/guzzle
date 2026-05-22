@@ -72,12 +72,7 @@ final class CurlVersion
         $version = self::get();
 
         return null !== $version
-            && self::isProxyCredentialAwareReuseFixed($version);
-    }
-
-    public static function isProxyCredentialAwareReuseFixed(string $version): bool
-    {
-        return version_compare($version, self::PROXY_CREDENTIAL_REUSE_VERSION, '>=');
+            && version_compare($version, self::PROXY_CREDENTIAL_REUSE_VERSION, '>=');
     }
 
     public static function ensureSupported(RequestInterface $request): void

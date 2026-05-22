@@ -70,23 +70,6 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsHttp3());
     }
 
-    /**
-     * @dataProvider proxyCredentialAwareReuseVersionProvider
-     */
-    public function testDetectsProxyCredentialAwareReuseFix(string $version, bool $expected): void
-    {
-        self::assertSame($expected, CurlVersion::isProxyCredentialAwareReuseFixed($version));
-    }
-
-    public static function proxyCredentialAwareReuseVersionProvider(): array
-    {
-        return [
-            ['8.18.0', false],
-            ['8.19.0', true],
-            ['8.20.0', true],
-        ];
-    }
-
     private static function requiresHttp3Constants(): void
     {
         if (!\defined('CURL_VERSION_HTTP3') || !\defined('CURL_HTTP_VERSION_3')) {
