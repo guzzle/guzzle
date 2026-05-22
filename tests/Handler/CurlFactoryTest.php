@@ -94,6 +94,59 @@ class CurlFactoryTest extends TestCase
         self::assertContains('Host: 127.0.0.1:8126', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
     }
 
+    public function testCloseClearsIdleHandles(): void
+    {
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        $factory->release($easy);
+        self::assertCount(1, self::readIdleHandles($factory));
+
+        $factory->close();
+
+        self::assertSame([], self::readIdleHandles($factory));
+    }
+
+    public function testCloseIsIdempotent(): void
+    {
+        $factory = new CurlFactory(3);
+
+        $factory->close();
+        $factory->close();
+
+        self::assertSame([], self::readIdleHandles($factory));
+    }
+
+    public function testCreateAfterCloseThrows(): void
+    {
+        $factory = new CurlFactory(3);
+        $factory->close();
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Cannot use the cURL factory after it has been closed.');
+
+        $factory->create(new Psr7\Request('GET', Server::$url), []);
+    }
+
+    public function testReleaseAfterCloseThrows(): void
+    {
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            $factory->close();
+
+            $this->expectException(\BadMethodCallException::class);
+            $this->expectExceptionMessage('Cannot use the cURL factory after it has been closed.');
+
+            $factory->release($easy);
+        } finally {
+            if (isset($easy->handle) && \PHP_VERSION_ID < 80000) {
+                \curl_close($easy->handle);
+            }
+        }
+    }
+
     public function testSendsHeadRequests(): void
     {
         Server::flush();

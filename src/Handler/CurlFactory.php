@@ -36,6 +36,11 @@ class CurlFactory implements CurlFactoryInterface
     private $maxHandles;
 
     /**
+     * @var bool
+     */
+    private $closed = false;
+
+    /**
      * @param int $maxHandles Maximum number of idle handles.
      */
     public function __construct(int $maxHandles)
@@ -45,6 +50,8 @@ class CurlFactory implements CurlFactoryInterface
 
     public function create(RequestInterface $request, array $options): EasyHandle
     {
+        $this->assertOpen();
+
         CurlVersion::ensureSupported($request);
 
         $protocolVersion = $request->getProtocolVersion();
@@ -179,6 +186,8 @@ class CurlFactory implements CurlFactoryInterface
 
     public function release(EasyHandle $easy): void
     {
+        $this->assertOpen();
+
         $resource = $easy->handle;
         unset($easy->handle);
 
@@ -191,13 +200,92 @@ class CurlFactory implements CurlFactoryInterface
             // and are not cleaned up by curl_reset. Using curl_setopt_array
             // does not work for some reason, so removing each one
             // individually.
-            \curl_setopt($resource, \CURLOPT_HEADERFUNCTION, null);
-            \curl_setopt($resource, \CURLOPT_READFUNCTION, null);
-            \curl_setopt($resource, \CURLOPT_WRITEFUNCTION, null);
-            \curl_setopt($resource, \CURLOPT_PROGRESSFUNCTION, null);
+            $this->clearEasyHandleCallbacks($resource);
             \curl_reset($resource);
             $this->handles[] = $resource;
         }
+    }
+
+    /**
+     * Closes idle cURL handles owned by this factory.
+     *
+     * After closing, the factory is terminal and must not be reused.
+     */
+    public function close(): void
+    {
+        $this->doClose(true);
+    }
+
+    private function assertOpen(): void
+    {
+        if ($this->closed) {
+            throw new \BadMethodCallException('Cannot use the cURL factory after it has been closed.');
+        }
+    }
+
+    private function doClose(bool $explicit): void
+    {
+        if ($this->closed) {
+            return;
+        }
+
+        $this->closed = true;
+        $failure = null;
+
+        foreach ($this->handles as $id => $handle) {
+            try {
+                $this->discardHandle($handle);
+            } catch (\Throwable $e) {
+                if ($failure === null) {
+                    $failure = $e;
+                }
+            } finally {
+                unset($this->handles[$id]);
+            }
+        }
+
+        if ($explicit && $failure !== null) {
+            throw $failure;
+        }
+    }
+
+    /**
+     * @param resource|\CurlHandle $handle
+     */
+    private function discardHandle($handle): void
+    {
+        $failure = null;
+
+        try {
+            $this->clearEasyHandleCallbacks($handle);
+        } catch (\Throwable $e) {
+            $failure = $e;
+        }
+
+        try {
+            if (PHP_VERSION_ID < 80000 && \is_resource($handle)) {
+                \curl_close($handle);
+            }
+        } catch (\Throwable $e) {
+            if ($failure === null) {
+                $failure = $e;
+            }
+        }
+
+        if ($failure !== null) {
+            throw $failure;
+        }
+    }
+
+    /**
+     * @param resource|\CurlHandle $handle
+     */
+    private function clearEasyHandleCallbacks($handle): void
+    {
+        \curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
+        \curl_setopt($handle, \CURLOPT_READFUNCTION, null);
+        \curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
+        \curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
     }
 
     /**
@@ -1026,12 +1114,10 @@ class CurlFactory implements CurlFactoryInterface
 
     public function __destruct()
     {
-        foreach ($this->handles as $id => $handle) {
-            if (PHP_VERSION_ID < 80000) {
-                \curl_close($handle);
-            }
-
-            unset($this->handles[$id]);
+        try {
+            $this->doClose(false);
+        } catch (\Throwable $e) {
+            // Destructors must not throw.
         }
     }
 }

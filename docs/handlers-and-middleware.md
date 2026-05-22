@@ -40,6 +40,49 @@ When provided no `$handler` argument, `GuzzleHttp\HandlerStack::create()` will c
 > [!IMPORTANT]
 > The handler provided to a client determines how request options are applied and utilized for each request sent by a client. For example, if you do not have a cookie middleware associated with a client, then setting the `cookies` request option will have no effect on the request.
 
+### Closing cURL Handlers
+
+The cURL handlers own native cURL resources. These resources are normally released automatically when the handler is garbage collected. Applications that need deterministic cleanup may call `close()` on `GuzzleHttp\Handler\CurlHandler` or `GuzzleHttp\Handler\CurlMultiHandler`. Applications that construct `GuzzleHttp\Handler\CurlFactory` directly may also call `close()` on the factory to close idle easy handles.
+
+After `close()` has been called, the handler must not be reused. Create a new handler and handler stack for future requests.
+
+If `CurlMultiHandler::close()` is called while transfers are pending, those promises are rejected with `GuzzleHttp\Exception\HandlerClosedException`. Destructors perform best-effort cleanup and do not reject pending promises. Explicit `close()` calls may throw if native cleanup fails.
+
+`Client` and `HandlerStack` do not expose `close()`. Keep a reference to the cURL handler if your application needs deterministic cleanup. Closing a cURL handler closes only the `CurlFactory` instance that Guzzle created for that handler. If you pass a custom `handle_factory`, Guzzle treats that factory as caller-owned and does not close it.
+
+```php
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\HandlerStack;
+
+$handler = new CurlMultiHandler();
+$stack = HandlerStack::create($handler);
+$client = new Client(['handler' => $stack]);
+
+try {
+    $client->request('GET', 'https://example.com');
+} finally {
+    $handler->close();
+}
+```
+
+When closing a multi handler with in-flight work, handle `HandlerClosedException` like any other transfer failure if the pending promises may still be observed:
+
+```php
+use GuzzleHttp\Exception\HandlerClosedException;
+use GuzzleHttp\Psr7\Request;
+
+$promise = $handler(new Request('GET', 'https://example.com'), []);
+
+$handler->close();
+
+try {
+    $promise->wait();
+} catch (HandlerClosedException $e) {
+    // The handler was closed before this transfer completed.
+}
+```
+
 ## Middleware
 
 Middleware augments the functionality of handlers by invoking them in the process of generating responses. Middleware is implemented as a higher order function that takes the following form.
