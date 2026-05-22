@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\Psr7\Exception\TimeoutException as Psr7TimeoutException;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
@@ -261,24 +262,11 @@ class StreamHandler
                 $sink,
                 (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
             );
-        } catch (\RuntimeException $e) {
-            if ($source->getMetadata('timed_out') === true) {
-                throw new TimeoutException(
-                    'The stream handler timed out while reading the response body',
-                    $request,
-                    $e,
-                    ['timed_out' => true]
-                );
-            }
-
-            throw $e;
-        }
-
-        if ($source->getMetadata('timed_out') === true) {
+        } catch (Psr7TimeoutException $e) {
             throw new TimeoutException(
-                'The stream handler timed out while reading the response body',
+                'The stream handler timed out while transferring the response body',
                 $request,
-                null,
+                $e,
                 ['timed_out' => true]
             );
         }

@@ -1125,7 +1125,8 @@ class StreamHandlerTest extends TestCase
         } catch (TimeoutException $e) {
             $exception = $e;
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The stream handler timed out while reading the response body', $e->getMessage());
+            self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
+            self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
             self::assertSame(['timed_out' => true], $e->getHandlerContext());
         }
 
