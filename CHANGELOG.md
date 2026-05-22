@@ -12,6 +12,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add CIDR notation support for IP no-proxy rules
 - Add network and timeout exception types
 - Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
+- Add explicit `close()` lifecycle methods to the built-in cURL handlers and concrete cURL factory
+- Add `HandlerClosedException` for pending transfers rejected by `CurlMultiHandler::close()`
 
 ### Changed
 

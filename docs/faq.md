@@ -56,6 +56,27 @@ $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler([
 
 Custom cURL request options remain active during redirects unless Guzzle documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects) for cross-origin redirect credential behavior.
 
+## How can I close cURL resources in long-running applications?
+
+If your application creates a cURL handler directly and needs deterministic cleanup, keep a reference to the handler and call `close()` when the handler is no longer needed.
+
+```php
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\HandlerStack;
+
+$handler = new CurlMultiHandler();
+$client = new Client(['handler' => HandlerStack::create($handler)]);
+
+try {
+    $client->request('GET', 'https://example.com');
+} finally {
+    $handler->close();
+}
+```
+
+After a cURL handler has been closed, it cannot be reused. `Client` and `HandlerStack` do not expose `close()`, so applications that need deterministic cleanup should keep the handler reference. If `CurlMultiHandler::close()` closes pending transfers, their promises are rejected with `GuzzleHttp\Exception\HandlerClosedException`. Explicit `close()` calls may throw if native cleanup fails; destructor cleanup remains best-effort and non-throwing.
+
 ## How can I add custom stream context options?
 
 You can pass custom [stream context options](https://www.php.net/manual/en/context.php) using the **stream_context** key of the request option. The **stream_context** array is an associative array where each key is a PHP transport, and each value is an associative array of transport options.

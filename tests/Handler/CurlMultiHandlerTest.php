@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\HandlerClosedException;
+use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
@@ -87,6 +89,185 @@ class CurlMultiHandlerTest extends TestCase
         self::assertFalse($hasMultiHandle($handler));
     }
 
+    public function testCloseRejectsActiveTransfer(): void
+    {
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), []);
+
+        $handler->close();
+
+        self::assertTrue(P\Is::rejected($promise));
+
+        $this->expectException(HandlerClosedException::class);
+        $this->expectExceptionMessage('The cURL multi handler was closed before the transfer completed.');
+
+        $promise->wait();
+    }
+
+    public function testCloseRejectsDelayedTransferWithoutInitializingMultiHandle(): void
+    {
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), ['delay' => 10000]);
+
+        self::assertFalse(self::hasMultiHandle($handler));
+
+        $handler->close();
+
+        self::assertFalse(self::hasMultiHandle($handler));
+        self::assertTrue(P\Is::rejected($promise));
+    }
+
+    public function testCloseDoesNotRunPromiseQueue(): void
+    {
+        $handler = new CurlMultiHandler();
+        $called = false;
+
+        $promise = $handler(new Request('GET', Server::$url), []);
+        $promise->otherwise(static function () use (&$called): void {
+            $called = true;
+        });
+
+        try {
+            $handler->close();
+
+            self::assertTrue(P\Is::rejected($promise));
+            self::assertFalse($called);
+        } finally {
+            P\Utils::queue()->run();
+        }
+    }
+
+    public function testDestructorDoesNotRejectPendingPromise(): void
+    {
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), ['delay' => 10000]);
+
+        $handler->__destruct();
+
+        self::assertTrue(P\Is::pending($promise));
+    }
+
+    public function testClosePreventsReuse(): void
+    {
+        $handler = new CurlMultiHandler();
+        $handler->close();
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Cannot use the cURL multi handler after it has been closed.');
+
+        $handler(new Request('GET', Server::$url), []);
+    }
+
+    public function testTickAfterCloseThrows(): void
+    {
+        $handler = new CurlMultiHandler();
+        $handler->close();
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Cannot use the cURL multi handler after it has been closed.');
+
+        $handler->tick();
+    }
+
+    public function testExecuteAfterCloseThrows(): void
+    {
+        $handler = new CurlMultiHandler();
+        $handler->close();
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Cannot use the cURL multi handler after it has been closed.');
+
+        $handler->execute();
+    }
+
+    public function testCloseIsIdempotent(): void
+    {
+        $handler = new CurlMultiHandler();
+
+        $handler->close();
+        $handler->close();
+
+        self::assertFalse(self::hasMultiHandle($handler));
+    }
+
+    public function testCloseClosesInternallyCreatedFactory(): void
+    {
+        $handler = new CurlMultiHandler();
+        $factory = self::readFactory($handler);
+
+        $handler->close();
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Cannot use the cURL factory after it has been closed.');
+
+        $factory->create(new Request('GET', Server::$url), []);
+    }
+
+    public function testCloseDoesNotCloseInjectedFactory(): void
+    {
+        $factory = new class(3) extends CurlFactory {
+            /** @var bool */
+            public $closeCalled = false;
+
+            public function close(): void
+            {
+                $this->closeCalled = true;
+
+                parent::close();
+            }
+        };
+        $handler = new CurlMultiHandler(['handle_factory' => $factory]);
+
+        $handler->close();
+
+        self::assertFalse($factory->closeCalled);
+    }
+
+    public function testClosePendingTransferLeavesResourceSinkOpen(): void
+    {
+        $sink = \fopen('php://temp', 'w+');
+        self::assertIsResource($sink);
+
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), [
+            'delay' => 10000,
+            'sink' => $sink,
+        ]);
+
+        try {
+            $handler->close();
+
+            self::assertTrue(P\Is::rejected($promise));
+            self::assertIsResource($sink);
+            self::assertNotFalse(\fwrite($sink, 'still open'));
+        } finally {
+            if (\is_resource($sink)) {
+                \fclose($sink);
+            }
+        }
+    }
+
+    public function testCloseActiveTransferLeavesResourceSinkOpen(): void
+    {
+        $sink = \fopen('php://temp', 'w+');
+        self::assertIsResource($sink);
+
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), ['sink' => $sink]);
+
+        try {
+            $handler->close();
+
+            self::assertTrue(P\Is::rejected($promise));
+            self::assertIsResource($sink);
+            self::assertNotFalse(\fwrite($sink, 'still open'));
+        } finally {
+            if (\is_resource($sink)) {
+                \fclose($sink);
+            }
+        }
+    }
+
     public function testCanCancel(): void
     {
         Server::flush();
@@ -142,5 +323,26 @@ class CurlMultiHandlerTest extends TestCase
         }, null, CurlMultiHandler::class);
 
         return $readSelectTimeout($handler);
+    }
+
+    private static function hasMultiHandle(CurlMultiHandler $handler): bool
+    {
+        $hasMultiHandle = \Closure::bind(static function (CurlMultiHandler $handler): bool {
+            return isset($handler->_mh);
+        }, null, CurlMultiHandler::class);
+
+        return $hasMultiHandle($handler);
+    }
+
+    private static function readFactory(CurlMultiHandler $handler): CurlFactory
+    {
+        $readFactory = \Closure::bind(static function (CurlMultiHandler $handler) {
+            return $handler->factory;
+        }, null, CurlMultiHandler::class);
+
+        $factory = $readFactory($handler);
+        self::assertInstanceOf(CurlFactory::class, $factory);
+
+        return $factory;
     }
 }

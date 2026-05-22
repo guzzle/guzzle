@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
@@ -58,6 +59,50 @@ class CurlHandlerTest extends TestCase
         self::assertInstanceOf(FulfilledPromise::class, $a($request, []));
     }
 
+    public function testClosePreventsReuse(): void
+    {
+        $handler = new CurlHandler();
+        $handler->close();
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Cannot use the cURL handler after it has been closed.');
+
+        $handler(new Request('GET', Server::$url), []);
+    }
+
+    public function testCloseClosesInternallyCreatedFactory(): void
+    {
+        $handler = new CurlHandler();
+        $factory = self::readFactory($handler);
+
+        $handler->close();
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Cannot use the cURL factory after it has been closed.');
+
+        $factory->create(new Request('GET', Server::$url), []);
+    }
+
+    public function testCloseDoesNotCloseInjectedFactory(): void
+    {
+        $factory = new class(3) extends CurlFactory {
+            /** @var bool */
+            public $closeCalled = false;
+
+            public function close(): void
+            {
+                $this->closeCalled = true;
+
+                parent::close();
+            }
+        };
+        $handler = new CurlHandler(['handle_factory' => $factory]);
+
+        $handler->close();
+
+        self::assertFalse($factory->closeCalled);
+    }
+
     public function testDoesSleep(): void
     {
         $response = new Response(200);
@@ -99,5 +144,17 @@ class CurlHandlerTest extends TestCase
         $received = Server::received()[0];
         self::assertEquals(1000000, $received->getHeaderLine('Content-Length'));
         self::assertFalse($received->hasHeader('Transfer-Encoding'));
+    }
+
+    private static function readFactory(CurlHandler $handler): CurlFactory
+    {
+        $readFactory = \Closure::bind(static function (CurlHandler $handler) {
+            return $handler->factory;
+        }, null, CurlHandler::class);
+
+        $factory = $readFactory($handler);
+        self::assertInstanceOf(CurlFactory::class, $factory);
+
+        return $factory;
     }
 }

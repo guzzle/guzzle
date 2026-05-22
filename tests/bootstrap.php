@@ -26,7 +26,11 @@ namespace GuzzleHttp\Handler {
             if ($option === \CURLOPT_CUSTOMREQUEST) {
                 $_SERVER['_curl'] = [];
             }
-            $_SERVER['_curl'][$option] = $value;
+            if ($value === null) {
+                unset($_SERVER['_curl'][$option]);
+            } else {
+                $_SERVER['_curl'][$option] = $value;
+            }
         } else {
             unset($_SERVER['_curl']);
         }

@@ -69,6 +69,20 @@ When a built-in handler can reliably identify a transfer timeout, it now throws
 `ConnectException`, so existing `catch (ConnectException $e)` and
 `catch (TransferException $e)` blocks continue to catch timeout failures.
 
+#### cURL handler lifecycle
+
+Applications that manage built-in cURL handlers or factories directly should
+treat closed instances as unusable. Reusing a closed `CurlHandler`,
+`CurlMultiHandler`, or `CurlFactory` throws `BadMethodCallException`; create a
+new instance instead.
+
+If `CurlMultiHandler::close()` is called while transfers are pending, those
+promises are rejected with `GuzzleHttp\Exception\HandlerClosedException`.
+Destructor cleanup remains best-effort and does not reject pending promises.
+
+A custom `handle_factory` passed to a built-in cURL handler remains caller-owned.
+Closing the handler does not close an injected factory.
+
 #### Multipart request serialization
 
 Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts
