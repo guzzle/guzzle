@@ -251,6 +251,239 @@ class CurlFactoryTest extends TestCase
         $this->checkNoProxyForHost('http://[fe80::1]', ['fd00::/8'], true);
     }
 
+    public function testForcesFreshConnectionForAuthenticatedHttpsProxyOnAffectedCurlVersion(): void
+    {
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testDoesNotForceFreshConnectionForAuthenticatedHttpsProxyOnFixedCurlVersion(): void
+    {
+        self::createWithCurlVersion('8.19.0', 'https://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+        ]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testDoesNotForceFreshConnectionForCurlProxyCredentialsOnFixedCurlVersion(): void
+    {
+        self::createWithCurlVersion('8.19.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                \CURLOPT_PROXYUSERPWD => 'username:password',
+            ],
+        ]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testForcesFreshConnectionForAuthenticatedHttpsProxyWithCurlProxyCredentialsOnAffectedCurlVersion(): void
+    {
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                \CURLOPT_PROXYUSERPWD => 'username:password',
+            ],
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testForcesFreshConnectionForAuthenticatedHttpsProxyWithRawCurlProxyUrlOnAffectedCurlVersion(): void
+    {
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'curl' => [
+                \CURLOPT_PROXY => 'http://username:password@proxy.example.com:8080',
+            ],
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testForcesFreshConnectionForAuthenticatedHttpsProxyWithRawCurlProxyCredentialsOnAffectedCurlVersion(): void
+    {
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'curl' => [
+                \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+                \CURLOPT_PROXYUSERPWD => 'username:password',
+            ],
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testForcesFreshConnectionForAuthenticatedHttpProxyTunnelOnAffectedCurlVersion(): void
+    {
+        self::createWithCurlVersion('8.18.0', 'http://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+            'curl' => [
+                \CURLOPT_HTTPPROXYTUNNEL => true,
+            ],
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testForcesFreshConnectionForProxyAuthorizationProxyHeaderOnFixedCurlVersion(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        self::createWithCurlVersion('8.19.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                $proxyHeaderOption => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+            ],
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testDoesNotForceFreshConnectionForUnrelatedProxyHeader(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                $proxyHeaderOption => ['X-Proxy-Header: value'],
+            ],
+        ]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testDoesNotForceFreshConnectionForEmptyProxyAuthorizationProxyHeader(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                $proxyHeaderOption => ['Proxy-Authorization:'],
+            ],
+        ]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testDoesNotForceFreshConnectionForAuthenticatedRawSocksProxyType(): void
+    {
+        if (!\defined('CURLPROXY_SOCKS5')) {
+            self::markTestSkipped('CURLPROXY_SOCKS5 is not available.');
+        }
+
+        $proxyType = (int) \constant('CURLPROXY_SOCKS5');
+
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'curl' => [
+                \CURLOPT_PROXY => 'proxy.example.com:1080',
+                \CURLOPT_PROXYTYPE => $proxyType,
+                \CURLOPT_PROXYUSERPWD => 'username:password',
+            ],
+        ]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testRawCurlProxyOverrideControlsAuthenticatedProxyReuseDetection(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'http://username:password@proxy-one.example.com:8080',
+            'curl' => [
+                \CURLOPT_PROXY => 'http://proxy-two.example.com:8080',
+            ],
+        ]);
+
+        self::assertSame('http://proxy-two.example.com:8080', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testRawCurlProxyDisableControlsAuthenticatedProxyReuseDetection(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+            'curl' => [
+                \CURLOPT_PROXY => '',
+            ],
+        ]);
+
+        self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testDoesNotForceFreshConnectionForAuthenticatedHttpProxyRequest(): void
+    {
+        self::createWithCurlVersion('8.18.0', 'http://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+        ]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testDoesNotForceFreshConnectionForUnauthenticatedHttpsProxy(): void
+    {
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testDoesNotForceFreshConnectionForAuthenticatedSocksProxy(): void
+    {
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'proxy' => 'socks5://username:password@proxy.example.com:1080',
+        ]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testDoesNotForceFreshConnectionWhenNoProxyMatches(): void
+    {
+        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+            'proxy' => [
+                'https' => 'http://username:password@proxy.example.com:8080',
+                'no' => ['example.com'],
+            ],
+        ]);
+
+        self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testAuthenticatedHttpsProxyReuseOptionsCanBeOverridden(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+            'curl' => [
+                \CURLOPT_FRESH_CONNECT => false,
+                \CURLOPT_FORBID_REUSE => false,
+            ],
+        ]);
+
+        self::assertFalse($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertFalse($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
     /**
      * @dataProvider invalidProxyOptionProvider
      *
@@ -1461,6 +1694,39 @@ class CurlFactoryTest extends TestCase
         self::assertArrayNotHasKey('http_code', $context);
         self::assertArrayNotHasKey('header_size', $context);
         self::assertArrayNotHasKey('content_type', $context);
+    }
+
+    private static function assertAuthenticatedProxyConnectionReuseOptions(): void
+    {
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    /**
+     * @param array<int|string, mixed> $options
+     */
+    private static function createWithCurlVersion(string $version, string $uri, array $options): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => $version,
+            'features' => 0,
+        ]);
+
+        try {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', $uri), $options);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    private static function proxyHeaderOption(): int
+    {
+        if (!\defined('CURLOPT_PROXYHEADER')) {
+            self::markTestSkipped('CURLOPT_PROXYHEADER is not available.');
+        }
+
+        return (int) \constant('CURLOPT_PROXYHEADER');
     }
 
     /**

@@ -381,6 +381,138 @@ class CurlFactory implements CurlFactoryInterface
         return str_replace($baseUriString, $redactedUriString, $error);
     }
 
+    private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $options): bool
+    {
+        if (!self::usesProxyTunnel($request, $options) || !self::isHttpProxyForConnectionReuse($proxy, $options)) {
+            return false;
+        }
+
+        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
+        $proxyParts = \parse_url($proxyForParsing);
+        if (!\is_array($proxyParts)) {
+            return false;
+        }
+
+        if (self::hasCurlProxyAuthorizationHeader($options)) {
+            return true;
+        }
+
+        return !CurlVersion::supportsProxyCredentialAwareConnectionReuse()
+            && (
+                \array_key_exists('user', $proxyParts)
+                || \array_key_exists('pass', $proxyParts)
+                || self::hasCurlProxyCredentials($options)
+            );
+    }
+
+    private static function usesProxyTunnel(RequestInterface $request, array $options): bool
+    {
+        return 'https' === $request->getUri()->getScheme()
+            || (
+                isset($options['curl'])
+                && \array_key_exists(\CURLOPT_HTTPPROXYTUNNEL, $options['curl'])
+                && (bool) $options['curl'][\CURLOPT_HTTPPROXYTUNNEL]
+            );
+    }
+
+    private static function getEffectiveProxyForConnectionReuse(?string $selectedProxy, array $options): ?string
+    {
+        if (!isset($options['curl']) || !\array_key_exists(\CURLOPT_PROXY, $options['curl'])) {
+            return $selectedProxy;
+        }
+
+        $proxy = $options['curl'][\CURLOPT_PROXY];
+
+        return \is_string($proxy) && $proxy !== '' ? $proxy : null;
+    }
+
+    private static function isHttpProxyForConnectionReuse(string $proxy, array $options): bool
+    {
+        if (\strpos($proxy, '://') !== false) {
+            $proxyParts = \parse_url($proxy);
+            if (!\is_array($proxyParts) || !isset($proxyParts['scheme'])) {
+                return false;
+            }
+
+            $proxyScheme = \strtolower($proxyParts['scheme']);
+
+            return $proxyScheme === 'http' || $proxyScheme === 'https';
+        }
+
+        return !self::isSocksProxyType($options['curl'][\CURLOPT_PROXYTYPE] ?? null);
+    }
+
+    /**
+     * @param mixed $proxyType
+     */
+    private static function isSocksProxyType($proxyType): bool
+    {
+        if (!\is_int($proxyType)) {
+            return false;
+        }
+
+        foreach ([
+            'CURLPROXY_SOCKS4' => 4,
+            'CURLPROXY_SOCKS5' => 5,
+            'CURLPROXY_SOCKS4A' => 6,
+            'CURLPROXY_SOCKS5_HOSTNAME' => 7,
+        ] as $name => $fallback) {
+            $value = \defined($name) ? (int) \constant($name) : $fallback;
+            if ($proxyType === $value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function hasCurlProxyCredentials(array $options): bool
+    {
+        return isset($options['curl'])
+            && (
+                \array_key_exists(\CURLOPT_PROXYUSERPWD, $options['curl'])
+                || \array_key_exists(\CURLOPT_PROXYUSERNAME, $options['curl'])
+                || \array_key_exists(\CURLOPT_PROXYPASSWORD, $options['curl'])
+            );
+    }
+
+    private static function hasCurlProxyAuthorizationHeader(array $options): bool
+    {
+        if (!\defined('CURLOPT_PROXYHEADER')) {
+            return false;
+        }
+
+        $option = (int) \constant('CURLOPT_PROXYHEADER');
+        if (!isset($options['curl']) || !\array_key_exists($option, $options['curl'])) {
+            return false;
+        }
+
+        $headers = $options['curl'][$option];
+        if (!\is_array($headers)) {
+            return false;
+        }
+
+        foreach ($headers as $header) {
+            if (!\is_string($header)) {
+                continue;
+            }
+
+            $parts = \explode(':', $header, 2);
+            if (\count($parts) !== 2) {
+                continue;
+            }
+
+            if (
+                0 === \strcasecmp(\trim($parts[0]), 'Proxy-Authorization')
+                && \trim($parts[1]) !== ''
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @return array<int|string, mixed>
      */
@@ -636,6 +768,8 @@ class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_NOSIGNAL] = true;
         }
 
+        $selectedProxy = null;
+
         if (isset($options['proxy'])) {
             $proxy = $options['proxy'];
             if (!\is_array($proxy)) {
@@ -643,6 +777,7 @@ class CurlFactory implements CurlFactoryInterface
                     throw new \InvalidArgumentException('proxy must be a string or array');
                 }
 
+                $selectedProxy = $proxy;
                 $conf[\CURLOPT_PROXY] = $proxy;
                 $conf[\CURLOPT_NOPROXY] = '';
             } else {
@@ -658,11 +793,18 @@ class CurlFactory implements CurlFactoryInterface
                         $conf[\CURLOPT_PROXY] = '';
                         $conf[\CURLOPT_NOPROXY] = '*';
                     } else {
+                        $selectedProxy = $proxy[$scheme];
                         $conf[\CURLOPT_PROXY] = $proxy[$scheme];
                         $conf[\CURLOPT_NOPROXY] = '';
                     }
                 }
             }
+        }
+
+        $proxyForConnectionReuse = self::getEffectiveProxyForConnectionReuse($selectedProxy, $options);
+        if ($proxyForConnectionReuse !== null && self::requiresFreshConnectionForAuthenticatedProxy($easy->request, $proxyForConnectionReuse, $options)) {
+            $conf[\CURLOPT_FRESH_CONNECT] = true;
+            $conf[\CURLOPT_FORBID_REUSE] = true;
         }
 
         $cryptoMethod = $options['crypto_method'] ?? null;

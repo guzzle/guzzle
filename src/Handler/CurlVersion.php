@@ -16,6 +16,8 @@ final class CurlVersion
 
     private const HTTP_3_VERSION = '7.66.0';
 
+    private const PROXY_CREDENTIAL_REUSE_VERSION = '8.19.0';
+
     /**
      * @var array{version: string, features: int}|false|null
      */
@@ -63,6 +65,14 @@ final class CurlVersion
 
         return version_compare($versionInfo['version'], self::HTTP_3_VERSION, '>=')
             && 0 !== ((int) \constant('CURL_VERSION_HTTP3') & $versionInfo['features']);
+    }
+
+    public static function supportsProxyCredentialAwareConnectionReuse(): bool
+    {
+        $version = self::get();
+
+        return null !== $version
+            && version_compare($version, self::PROXY_CREDENTIAL_REUSE_VERSION, '>=');
     }
 
     public static function ensureSupported(RequestInterface $request): void
