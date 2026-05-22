@@ -11,6 +11,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add generic PHPDoc annotations to async HTTP and handler APIs
 - Add CIDR notation support for IP no-proxy rules
 - Add network and timeout exception types
+- Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
 
 ### Changed
 
@@ -40,6 +41,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject empty or malformed request protocol versions
 - Throw `TimeoutException` for reliably detected transfer timeouts
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
+- Use the configured PSR-17 URI factory when parsing redirect `Location` headers
 
 ### Removed
 

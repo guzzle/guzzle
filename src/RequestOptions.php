@@ -43,7 +43,9 @@ final class RequestOptions
 
     /**
      * body: (resource|string|null|int|float|StreamInterface|callable|\Iterator)
-     * Body to send in the request.
+     * Body to send in the request. Scalar, resource, and stringable object
+     * values are converted using the configured stream_factory. Callable and
+     * iterator bodies use Guzzle's existing stream handling.
      */
     public const BODY = 'body';
 
@@ -220,6 +222,20 @@ final class RequestOptions
     public const QUERY = 'query';
 
     /**
+     * request_factory: (Psr\Http\Message\RequestFactoryInterface) PSR-17
+     * request factory used when creating requests through request() and
+     * requestAsync().
+     */
+    public const REQUEST_FACTORY = 'request_factory';
+
+    /**
+     * stream_factory: (Psr\Http\Message\StreamFactoryInterface) PSR-17
+     * stream factory used when creating request body streams from body,
+     * form_params, and json request options.
+     */
+    public const STREAM_FACTORY = 'stream_factory';
+
+    /**
      * sink: (resource|string|StreamInterface) Where the data of the
      * response is written to. Defaults to a PHP temp stream. Providing a
      * string will write data to a file by the given name.
@@ -271,6 +287,13 @@ final class RequestOptions
      * seconds are rejected by the built-in stream handler.
      */
     public const READ_TIMEOUT = 'read_timeout';
+
+    /**
+     * uri_factory: (Psr\Http\Message\UriFactoryInterface) PSR-17 URI factory
+     * used when creating URI objects from string request URI, base_uri, and
+     * redirect Location values.
+     */
+    public const URI_FACTORY = 'uri_factory';
 
     /**
      * version: (string|float) Specifies the HTTP protocol version to attempt

@@ -5,8 +5,11 @@ namespace GuzzleHttp;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\HttpFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -178,12 +181,29 @@ class RedirectMiddleware
         ) {
             $safeMethods = ['GET', 'HEAD', 'OPTIONS'];
             $requestMethod = $request->getMethod();
+            $streamFactory = $options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory();
+            if (!$streamFactory instanceof StreamFactoryInterface) {
+                throw new \InvalidArgumentException(\sprintf(
+                    '%s must be an instance of %s',
+                    RequestOptions::STREAM_FACTORY,
+                    StreamFactoryInterface::class
+                ));
+            }
 
             $modify['method'] = \in_array($requestMethod, $safeMethods, true) ? $requestMethod : 'GET';
-            $modify['body'] = '';
+            $modify['body'] = $streamFactory->createStream('');
         }
 
-        $uri = self::redirectUri($request, $response, $protocols);
+        $uriFactory = $options[RequestOptions::URI_FACTORY] ?? new HttpFactory();
+        if (!$uriFactory instanceof UriFactoryInterface) {
+            throw new \InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::URI_FACTORY,
+                UriFactoryInterface::class
+            ));
+        }
+
+        $uri = self::redirectUri($uriFactory, $request, $response, $protocols);
         if (isset($options['idn_conversion']) && ($options['idn_conversion'] !== false)) {
             $idnOptions = ($options['idn_conversion'] === true) ? \IDNA_DEFAULT : $options['idn_conversion'];
             $uri = Utils::idnUriConvert($uri, $idnOptions);
@@ -216,6 +236,7 @@ class RedirectMiddleware
      * Set the appropriate URL on the request based on the location header.
      */
     private static function redirectUri(
+        UriFactoryInterface $uriFactory,
         RequestInterface $request,
         ResponseInterface $response,
         array $protocols
@@ -223,19 +244,27 @@ class RedirectMiddleware
         $location = $response->getHeaderLine('Location');
 
         try {
-            $location = Psr7\UriResolver::resolve(
+            $locationUri = $uriFactory->createUri($location);
+            $resolvedUri = Psr7\UriResolver::resolve(
                 $request->getUri(),
-                new Psr7\Uri($location)
+                $locationUri
             );
+
+            if (!$uriFactory instanceof HttpFactory
+                && $locationUri->getScheme() === ''
+                && $locationUri->getAuthority() === ''
+            ) {
+                $resolvedUri = $uriFactory->createUri((string) $resolvedUri);
+            }
         } catch (\InvalidArgumentException $e) {
             throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid: %s', $location, $e->getMessage()), $request, $response, $e);
         }
 
         // Ensure that the redirect URI is allowed based on the protocols.
-        if (!\in_array($location->getScheme(), $protocols)) {
-            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', $location, \implode(', ', $protocols)), $request, $response);
+        if (!\in_array($resolvedUri->getScheme(), $protocols)) {
+            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', $resolvedUri, \implode(', ', $protocols)), $request, $response);
         }
 
-        return $location;
+        return $resolvedUri;
     }
 }
