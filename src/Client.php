@@ -5,6 +5,7 @@ namespace GuzzleHttp;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -450,7 +451,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         $request = $this->applyOptions($request, $options);
 
-        self::assertProtocolVersion($request->getProtocolVersion());
+        self::assertRequestProtocolVersion($request);
 
         /** @var HandlerStack $handler */
         $handler = $options['handler'];
@@ -638,6 +639,19 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         if (1 !== \preg_match('/^\d+(?:\.\d+)?$/D', $version)) {
             throw new InvalidArgumentException('HTTP protocol version must be a valid HTTP version number.');
+        }
+    }
+
+    private static function assertRequestProtocolVersion(RequestInterface $request): void
+    {
+        $version = $request->getProtocolVersion();
+
+        if ('' === $version) {
+            throw new RequestException('HTTP protocol version must not be empty.', $request);
+        }
+
+        if (1 !== \preg_match('/^\d+(?:\.\d+)?$/D', $version)) {
+            throw new RequestException('HTTP protocol version must be a valid HTTP version number.', $request);
         }
     }
 

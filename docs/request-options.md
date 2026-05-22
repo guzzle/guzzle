@@ -1148,6 +1148,8 @@ The built-in cURL handler supports HTTP versions `1.0`, `1.1`, `2.0`, and `3.0`,
 
 The built-in stream handler supports only HTTP versions `1.0` and `1.1`.
 
+Empty or malformed `version` request option values are rejected before the request is sent. If a request uses a well-formed HTTP version that a built-in handler cannot send, the transfer fails with `GuzzleHttp\Exception\RequestException`.
+
 HTTP/3 requests sent by the built-in cURL handler use TLS 1.3 or newer. Lower TLS versions requested through `crypto_method` or `curl` options are upgraded to TLS 1.3 for HTTP/3 requests.
 
 > [!NOTE]

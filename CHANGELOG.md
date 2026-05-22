@@ -40,7 +40,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Default HTTPS requests sent by the built-in cURL and stream handlers to TLS 1.2 or newer
 - Apply the stream handler `crypto_method` option through the SSL context so it consistently controls the minimum TLS version
 - Validate built-in handler timeout options before applying them
-- Reject empty or malformed request protocol versions
+- Classify empty, malformed, or handler-unsupported request protocol versions as request exceptions
 - Throw `TimeoutException` for reliably detected transfer timeouts
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers

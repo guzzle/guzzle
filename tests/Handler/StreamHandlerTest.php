@@ -60,21 +60,31 @@ class StreamHandlerTest extends TestCase
     public function testRejectsEmptyProtocolVersion(): void
     {
         $handler = new StreamHandler();
+        $request = self::requestWithProtocolVersion('');
 
-        $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('HTTP protocol version must not be empty.');
-
-        $handler(self::requestWithProtocolVersion(''), []);
+        try {
+            $handler($request, []);
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertFalse($e->hasResponse());
+            self::assertSame('HTTP protocol version must not be empty.', $e->getMessage());
+        }
     }
 
     public function testRejectsMalformedProtocolVersion(): void
     {
         $handler = new StreamHandler();
+        $request = self::requestWithProtocolVersion('HTTP/1.1');
 
-        $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('HTTP protocol version must be a valid HTTP version number.');
-
-        $handler(self::requestWithProtocolVersion('HTTP/1.1'), []);
+        try {
+            $handler($request, []);
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertFalse($e->hasResponse());
+            self::assertSame('HTTP protocol version must be a valid HTTP version number.', $e->getMessage());
+        }
     }
 
     public function testAddsErrorToResponse(): void
@@ -91,11 +101,15 @@ class StreamHandlerTest extends TestCase
     public function testRejectsHttp3(): void
     {
         $handler = new StreamHandler();
+        $request = new Request('GET', 'https://example.com', [], null, '3.0');
 
-        $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('HTTP/3.0 is not supported by the stream handler.');
-
-        $handler(new Request('GET', 'https://example.com', [], null, '3.0'), []);
+        try {
+            $handler($request, []);
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('HTTP/3.0 is not supported by the stream handler.', $e->getMessage());
+        }
     }
 
     public function testStreamAttributeKeepsStreamOpen(): void
