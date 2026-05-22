@@ -81,6 +81,14 @@ class CurlFactory implements CurlFactoryInterface
             unset($options['curl']['body_as_string']);
         }
 
+        if (
+            isset($options['curl'])
+            && \is_array($options['curl'])
+            && \array_key_exists(\CURLOPT_SHARE, $options['curl'])
+        ) {
+            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing CURLOPT_SHARE in the "curl" request option is deprecated; guzzlehttp/guzzle 8.0 will reject request-level CURLOPT_SHARE because pooled easy handles can retain share state.');
+        }
+
         $easy = new EasyHandle();
         $easy->request = $request;
         $easy->options = $options;
