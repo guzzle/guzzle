@@ -874,6 +874,66 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testProgressTruthyReturnRejectsThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200, [], 'abc')]);
+        $handler = $handlerFactory();
+
+        try {
+            $handler(new Psr7\Request('GET', Server::$url), [
+                'progress' => static function (): bool {
+                    return true;
+                },
+            ])->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('The transfer was aborted by the progress callback', $e->getMessage());
+            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testProgressThrowableRejectsThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200, [], 'abc')]);
+        $handler = $handlerFactory();
+        $previous = new \RuntimeException('progress failed');
+
+        try {
+            $handler(new Psr7\Request('GET', Server::$url), [
+                'progress' => static function () use ($previous): void {
+                    throw $previous;
+                },
+            ])->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('An error was encountered during the progress event', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+    }
+
     public function testProgressAbortRejectsWithRequestException(): void
     {
         $factory = new CurlFactory(1);
@@ -992,6 +1052,28 @@ class CurlFactoryTest extends TestCase
 
         self::assertArrayNotHasKey($option, $_SERVER['_curl']);
         self::assertSame([], self::readIdleHandles($factory));
+    }
+
+    public function testReleaseClearsRawXferInfoCallbackBeforeReusingHandle(): void
+    {
+        if (!\defined('CURLOPT_XFERINFOFUNCTION')) {
+            self::markTestSkipped('CURLOPT_XFERINFOFUNCTION is not available.');
+        }
+
+        $option = (int) \constant('CURLOPT_XFERINFOFUNCTION');
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [
+                $option => static function (): int {
+                    return 0;
+                },
+            ],
+        ]);
+
+        $factory->release($easy);
+
+        self::assertArrayNotHasKey($option, $_SERVER['_curl']);
+        self::assertCount(1, self::readIdleHandles($factory));
     }
 
     public function testEmitsDebugInfoToStream(): void
@@ -1768,6 +1850,9 @@ class CurlFactoryTest extends TestCase
             self::assertInstanceOf(TransferStats::class, $gotStats);
             self::assertTrue($gotStats->hasResponse());
             self::assertSame(200, $gotStats->getResponse()->getStatusCode());
+            self::assertSame($req, $gotStats->getRequest());
+            self::assertSame(Server::$url, (string) $gotStats->getEffectiveUri());
+            self::assertIsInt($gotStats->getHandlerErrorData());
         }
     }
 
@@ -2083,6 +2168,18 @@ class CurlFactoryTest extends TestCase
         }
 
         return (int) \constant('CURLOPT_PROXYHEADER');
+    }
+
+    public static function curlHandlerProvider(): array
+    {
+        return [
+            'curl' => [static function (): callable {
+                return new Handler\CurlHandler();
+            }],
+            'curl_multi' => [static function (): callable {
+                return new Handler\CurlMultiHandler();
+            }],
+        ];
     }
 
     private static function progressCallbackOption(): int

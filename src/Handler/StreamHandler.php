@@ -29,6 +29,11 @@ class StreamHandler
     private $lastHeaders = [];
 
     /**
+     * @var \Throwable|null
+     */
+    private $onStatsException;
+
+    /**
      * Sends an HTTP request.
      *
      * @param RequestInterface $request Request to send.
@@ -38,6 +43,8 @@ class StreamHandler
      */
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
+        $this->onStatsException = null;
+
         // Sleep if there is a delay specified.
         if (isset($options['delay'])) {
             \usleep($options['delay'] * 1000);
@@ -78,6 +85,10 @@ class StreamHandler
         } catch (\InvalidArgumentException $e) {
             throw $e;
         } catch (\Exception $e) {
+            if ($this->isOnStatsException($e)) {
+                throw $e;
+            }
+
             // Determine if the error was a networking error.
             $message = $e->getMessage();
             // This list can probably get more comprehensive.
@@ -99,6 +110,17 @@ class StreamHandler
         }
     }
 
+    private function isOnStatsException(\Throwable $e): bool
+    {
+        if ($this->onStatsException !== $e) {
+            return false;
+        }
+
+        $this->onStatsException = null;
+
+        return true;
+    }
+
     private function invokeStats(
         array $options,
         RequestInterface $request,
@@ -108,7 +130,13 @@ class StreamHandler
     ): void {
         if (isset($options['on_stats'])) {
             $stats = new TransferStats($request, $response, Utils::currentTime() - $startTime, $error, []);
-            ($options['on_stats'])($stats);
+            try {
+                ($options['on_stats'])($stats);
+            } catch (\Throwable $e) {
+                $this->onStatsException = $e;
+
+                throw $e;
+            }
         }
     }
 

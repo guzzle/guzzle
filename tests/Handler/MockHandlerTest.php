@@ -205,7 +205,8 @@ class MockHandlerTest extends TestCase
             self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
             self::assertInstanceOf(TransferStats::class, $stats);
             self::assertSame($request, $stats->getRequest());
-            self::assertNull($stats->getResponse());
+            self::assertTrue($stats->hasResponse());
+            self::assertSame($res, $stats->getResponse());
             self::assertSame($e, $stats->getHandlerErrorData());
         }
     }

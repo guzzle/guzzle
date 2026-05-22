@@ -93,6 +93,7 @@ class MockHandler implements \Countable
         $this->lastRequest = $request;
         $this->lastOptions = $options;
         $response = \array_shift($this->queue);
+        $onHeadersResponse = null;
 
         if (isset($options['on_headers'])) {
             if (!\is_callable($options['on_headers'])) {
@@ -102,7 +103,8 @@ class MockHandler implements \Countable
                 $options['on_headers']($response, $request);
             } catch (\Throwable $e) {
                 $msg = 'An error was encountered during the on_headers event';
-                $response = new RequestException($msg, $request, $response, $e);
+                $onHeadersResponse = $response instanceof ResponseInterface ? $response : null;
+                $response = new RequestException($msg, $request, $onHeadersResponse, $e);
             }
         }
 
@@ -137,8 +139,8 @@ class MockHandler implements \Countable
 
                 return $value;
             },
-            function ($reason) use ($request, $options) {
-                $this->invokeStats($request, $options, null, $reason);
+            function ($reason) use ($request, $options, $onHeadersResponse) {
+                $this->invokeStats($request, $options, $onHeadersResponse, $reason);
                 if ($this->onRejected) {
                     ($this->onRejected)($reason);
                 }

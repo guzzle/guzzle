@@ -1115,6 +1115,61 @@ class StreamHandlerTest extends TestCase
         self::assertGreaterThan(0, $gotStats->getTransferTime());
     }
 
+    public function testOnStatsExceptionEscapesOnSuccessWithoutWrapping(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $req = new Request('GET', Server::$url);
+        $handler = new StreamHandler();
+        $previous = new \RuntimeException('stats failed');
+        $called = 0;
+
+        try {
+            $handler($req, [
+                'on_stats' => static function (TransferStats $stats) use (&$called, $previous): void {
+                    ++$called;
+                    self::assertTrue($stats->hasResponse());
+
+                    throw $previous;
+                },
+            ]);
+
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($previous, $e);
+            self::assertSame(1, $called);
+        }
+    }
+
+    public function testOnStatsExceptionEscapesWhenOnHeadersFails(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200, ['X-Foo' => 'bar'], 'abc 123')]);
+        $req = new Request('GET', Server::$url);
+        $handler = new StreamHandler();
+        $previous = new \RuntimeException('stats failed');
+        $called = 0;
+
+        try {
+            $handler($req, [
+                'on_headers' => static function (): void {
+                    throw new \RuntimeException('headers failed');
+                },
+                'on_stats' => static function (TransferStats $stats) use (&$called, $previous): void {
+                    ++$called;
+                    self::assertTrue($stats->hasResponse());
+
+                    throw $previous;
+                },
+            ]);
+
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($previous, $e);
+            self::assertSame(1, $called);
+        }
+    }
+
     public function testInvokesOnStatsOnError(): void
     {
         $req = new Request('GET', 'http://127.0.0.1:123');
