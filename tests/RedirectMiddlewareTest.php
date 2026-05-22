@@ -562,13 +562,37 @@ class RedirectMiddlewareTest extends TestCase
                 'request' => new Request('GET', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'GET',
             ],
+            'get' => [
+                'request' => new RedirectTestMethodRequest('get', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'gEt' => [
+                'request' => new RedirectTestMethodRequest('gEt', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
             'HEAD' => [
                 'request' => new Request('HEAD', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'HEAD',
             ],
+            'head' => [
+                'request' => new RedirectTestMethodRequest('head', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'Head' => [
+                'request' => new RedirectTestMethodRequest('Head', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
             'OPTIONS' => [
                 'request' => new Request('OPTIONS', 'http://example.com/'),
                 'expectedFollowRequestMethod' => 'OPTIONS',
+            ],
+            'options' => [
+                'request' => new RedirectTestMethodRequest('options', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
+            ],
+            'OpTiOnS' => [
+                'request' => new RedirectTestMethodRequest('OpTiOnS', 'http://example.com/'),
+                'expectedFollowRequestMethod' => 'GET',
             ],
             'PATCH' => [
                 'request' => new Request('PATCH', 'http://example.com/'),
@@ -592,4 +616,33 @@ final class RedirectTestRequest extends Request
 
 final class RedirectTestUri extends Uri
 {
+}
+
+final class RedirectTestMethodRequest extends Request
+{
+    /** @var string */
+    private $method;
+
+    /**
+     * @param string|UriInterface $uri
+     */
+    public function __construct(string $method, $uri)
+    {
+        parent::__construct('GET', $uri);
+
+        $this->method = $method;
+    }
+
+    public function getMethod(): string
+    {
+        return $this->method;
+    }
+
+    public function withMethod($method): RequestInterface
+    {
+        $new = clone $this;
+        $new->method = $method;
+
+        return $new;
+    }
 }

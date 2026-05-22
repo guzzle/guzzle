@@ -150,6 +150,11 @@ echo $request->getMethod();
 // MOVE
 ```
 
+HTTP method names are case-sensitive. Guzzle sends the method string exactly as
+provided by the request. Use uppercase standard methods such as `GET`, `POST`,
+and `HEAD` when you want standard method-specific behavior from Guzzle's
+middleware and handlers.
+
 You can create and send a request using methods on a client that map to the HTTP method you wish to use.
 
 GET

@@ -35,13 +35,14 @@ your application uses those packages directly, review their upgrade guides.
 
 #### Request method casing
 
-Guzzle 8 uses Guzzle PSR-7 3.x, whose `Request` implementation no longer
-uppercases request methods. Request method names are case-sensitive and are now
-preserved as provided.
+Guzzle 8 uses Guzzle PSR-7 3.x, whose request implementations preserve method
+casing. HTTP method names are case-sensitive, so Guzzle now sends the method
+exactly as provided and applies built-in method-specific behavior only to exact
+standard method names such as `GET`, `HEAD`, `POST`, and `PUT`.
 
 If you previously relied on `new Request('get', ...)` or
-`$client->request('get', ...)` being sent as `GET`, normalize the method before
-constructing or sending the request:
+`$client->request('get', ...)` being sent or treated as `GET`, normalize the
+method before constructing or sending the request:
 
 ```php
 $client->request('GET', 'https://example.com');
