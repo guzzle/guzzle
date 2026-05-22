@@ -579,7 +579,7 @@ Enables/disables IDN support, can also be used for precise control by combining 
 ## json
 
 Summary
-The `json` option is used to easily upload JSON encoded data as the body of a request. A Content-Type header of `application/json` will be added if no Content-Type header is already present on the message.
+The `json` option is used to easily upload JSON encoded data as the body of a request. A Content-Type header of `application/json` will be added if no Content-Type header is already present on the message. An Accept header is not added automatically; pass one explicitly if the server requires JSON response content negotiation.
 
 Types
 Any PHP type that can be operated on by PHP's `json_encode()` function.

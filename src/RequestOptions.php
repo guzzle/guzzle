@@ -154,7 +154,8 @@ final class RequestOptions
     /**
      * json: (mixed) Adds JSON data to a request. The provided value is JSON
      * encoded and a Content-Type header of application/json will be added to
-     * the request if no Content-Type header is already present.
+     * the request if no Content-Type header is already present. An Accept
+     * header is not added automatically.
      */
     public const JSON = 'json';
 

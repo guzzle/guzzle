@@ -413,6 +413,22 @@ class ClientTest extends TestCase
         $last = $mock->getLastRequest();
         self::assertSame('{"foo":"bar"}', (string) $mock->getLastRequest()->getBody());
         self::assertSame('application/json', $last->getHeaderLine('Content-Type'));
+        self::assertFalse($last->hasHeader('Accept'));
+    }
+
+    public function testCanAddJsonDataWithAcceptHeader(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('PUT', 'http://foo.com');
+        $client->send($request, [
+            'headers' => ['Accept' => 'application/vnd.api+json'],
+            'json' => ['foo' => 'bar'],
+        ]);
+        $last = $mock->getLastRequest();
+        self::assertSame('{"foo":"bar"}', (string) $last->getBody());
+        self::assertSame('application/json', $last->getHeaderLine('Content-Type'));
+        self::assertSame('application/vnd.api+json', $last->getHeaderLine('Accept'));
     }
 
     public function testCanAddJsonDataWithoutOverwritingContentType(): void
