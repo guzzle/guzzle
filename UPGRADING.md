@@ -69,6 +69,14 @@ When a built-in handler can reliably identify a transfer timeout, it now throws
 `ConnectException`, so existing `catch (ConnectException $e)` and
 `catch (TransferException $e)` blocks continue to catch timeout failures.
 
+Audit `catch (RequestException $e)` blocks that retry, log, or classify cURL
+transport failures. Proxy resolution, send, receive, and TLS verification
+failures before any response is received now throw `ConnectException`, so catch
+`ConnectException`, `NetworkExceptionInterface`, or `TransferException` for
+those network failures. Keep handling `RequestException` when you need to inspect
+a response, because failures after a response object is created still use
+`RequestException`.
+
 #### Request protocol version exceptions
 
 Empty or malformed HTTP protocol versions returned by a `RequestInterface` now
