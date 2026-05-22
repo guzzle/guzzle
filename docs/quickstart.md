@@ -452,6 +452,7 @@ The following tree view describes how the Guzzle Exceptions depend on each other
 ```
 . \RuntimeException
 └── TransferException (implements GuzzleException)
+    ├── HandlerClosedException
     ├── NetworkException (implements NetworkExceptionInterface)
     │   └── ConnectException
     │       └── TimeoutException
@@ -465,6 +466,8 @@ The following tree view describes how the Guzzle Exceptions depend on each other
 Guzzle throws exceptions for errors that occur during a transfer.
 
 - `GuzzleHttp\Exception\NetworkException` is the base class for networking errors. This exception extends from `GuzzleHttp\Exception\TransferException`.
+
+- `GuzzleHttp\Exception\HandlerClosedException` is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
 
 - A `GuzzleHttp\Exception\ConnectException` exception is thrown when a connection cannot be established. This exception extends from `GuzzleHttp\Exception\NetworkException`.
 
