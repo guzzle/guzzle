@@ -85,16 +85,20 @@ Closing the handler does not close an injected factory.
 
 #### Callback semantics
 
-The built-in cURL handlers now treat truthy `progress` callback return values as
-an abort signal. If your progress callback accidentally returns a truthy value,
-return `0`, `false`, or nothing to keep the transfer running. Throwing from a
-cURL `progress` callback now rejects the request with `RequestException` instead
-of letting the throwable escape from the native callback.
+If you use the `progress` request option with the built-in cURL handlers, audit
+callbacks for return values. Any truthy return value now aborts the transfer and
+rejects the request with `RequestException`. Return `0`, `false`, or nothing to
+keep the transfer running.
+
+If a cURL `progress` callback throws, catch `RequestException` and inspect
+`getPrevious()` for the original throwable. The throwable no longer escapes
+directly from the native cURL callback.
 
 The stream handler still ignores `progress` return values.
 
-Exceptions thrown by `on_stats` remain unwrapped, but the built-in cURL handlers
-now release native easy handles before invoking `on_stats`. Raw callbacks passed
+Exceptions thrown by `on_stats` remain unwrapped, so existing catch logic for
+`on_stats` exceptions does not need to change. The built-in cURL handlers now
+release native easy handles before invoking `on_stats`. Raw callbacks passed
 through the `curl` request option remain low-level cURL callbacks and are not
 normalized by Guzzle.
 
