@@ -383,7 +383,7 @@ class CurlFactory implements CurlFactoryInterface
 
     private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $options): bool
     {
-        if (!self::usesProxyTunnel($request, $options) || CurlVersion::supportsProxyCredentialAwareConnectionReuse()) {
+        if (!self::usesProxyTunnel($request, $options) || !self::isHttpProxyForConnectionReuse($proxy, $options)) {
             return false;
         }
 
@@ -393,14 +393,16 @@ class CurlFactory implements CurlFactoryInterface
             return false;
         }
 
-        $proxyScheme = isset($proxyParts['scheme']) ? \strtolower($proxyParts['scheme']) : 'http';
-        if ($proxyScheme !== 'http' && $proxyScheme !== 'https') {
-            return false;
+        if (self::hasCurlProxyAuthorizationHeader($options)) {
+            return true;
         }
 
-        return \array_key_exists('user', $proxyParts)
-            || \array_key_exists('pass', $proxyParts)
-            || self::hasCurlProxyCredentials($options);
+        return !CurlVersion::supportsProxyCredentialAwareConnectionReuse()
+            && (
+                \array_key_exists('user', $proxyParts)
+                || \array_key_exists('pass', $proxyParts)
+                || self::hasCurlProxyCredentials($options)
+            );
     }
 
     private static function usesProxyTunnel(RequestInterface $request, array $options): bool
@@ -424,6 +426,46 @@ class CurlFactory implements CurlFactoryInterface
         return \is_string($proxy) && $proxy !== '' ? $proxy : null;
     }
 
+    private static function isHttpProxyForConnectionReuse(string $proxy, array $options): bool
+    {
+        if (\strpos($proxy, '://') !== false) {
+            $proxyParts = \parse_url($proxy);
+            if (!\is_array($proxyParts) || !isset($proxyParts['scheme'])) {
+                return false;
+            }
+
+            $proxyScheme = \strtolower($proxyParts['scheme']);
+
+            return $proxyScheme === 'http' || $proxyScheme === 'https';
+        }
+
+        return !self::isSocksProxyType($options['curl'][\CURLOPT_PROXYTYPE] ?? null);
+    }
+
+    /**
+     * @param mixed $proxyType
+     */
+    private static function isSocksProxyType($proxyType): bool
+    {
+        if (!\is_int($proxyType)) {
+            return false;
+        }
+
+        foreach ([
+            'CURLPROXY_SOCKS4' => 4,
+            'CURLPROXY_SOCKS5' => 5,
+            'CURLPROXY_SOCKS4A' => 6,
+            'CURLPROXY_SOCKS5_HOSTNAME' => 7,
+        ] as $name => $fallback) {
+            $value = \defined($name) ? (int) \constant($name) : $fallback;
+            if ($proxyType === $value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static function hasCurlProxyCredentials(array $options): bool
     {
         return isset($options['curl'])
@@ -432,6 +474,43 @@ class CurlFactory implements CurlFactoryInterface
                 || \array_key_exists(\CURLOPT_PROXYUSERNAME, $options['curl'])
                 || \array_key_exists(\CURLOPT_PROXYPASSWORD, $options['curl'])
             );
+    }
+
+    private static function hasCurlProxyAuthorizationHeader(array $options): bool
+    {
+        if (!\defined('CURLOPT_PROXYHEADER')) {
+            return false;
+        }
+
+        $option = (int) \constant('CURLOPT_PROXYHEADER');
+        if (!isset($options['curl']) || !\array_key_exists($option, $options['curl'])) {
+            return false;
+        }
+
+        $headers = $options['curl'][$option];
+        if (!\is_array($headers)) {
+            return false;
+        }
+
+        foreach ($headers as $header) {
+            if (!\is_string($header)) {
+                continue;
+            }
+
+            $parts = \explode(':', $header, 2);
+            if (\count($parts) !== 2) {
+                continue;
+            }
+
+            if (
+                0 === \strcasecmp(\trim($parts[0]), 'Proxy-Authorization')
+                && \trim($parts[1]) !== ''
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
