@@ -87,8 +87,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $uri = $args[0];
         $opts = $args[1] ?? [];
 
-        return \substr($method, -5) === 'Async'
-            ? $this->requestAsync(\substr($method, 0, -5), $uri, $opts)
+        $isAsync = \substr($method, -5) === 'Async';
+        $method = $isAsync ? \substr($method, 0, -5) : $method;
+        $method = \strtoupper($method);
+
+        return $isAsync
+            ? $this->requestAsync($method, $uri, $opts)
             : $this->request($method, $uri, $opts);
     }
 
