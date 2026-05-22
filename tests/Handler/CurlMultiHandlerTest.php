@@ -346,6 +346,66 @@ class CurlMultiHandlerTest extends TestCase
         self::assertGreaterThanOrEqual($expected, Utils::currentTime());
     }
 
+    public function testManualTickRejectsPromiseWhenFinishThrows(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $previous = new \RuntimeException('stats failed');
+        $promise = $handler(new Request('GET', Server::$url), [
+            'on_stats' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+
+        try {
+            self::tickUntilSettled($handler, $promise);
+
+            self::assertTrue(P\Is::rejected($promise));
+
+            try {
+                $promise->wait();
+                self::fail('Expected RuntimeException');
+            } catch (\RuntimeException $e) {
+                self::assertSame($previous, $e);
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testWaitFalseRejectsPromiseWhenFinishThrows(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $previous = new \RuntimeException('stats failed');
+        $promise = $handler(new Request('GET', Server::$url), [
+            'on_stats' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $promise->wait(false);
+
+            self::assertTrue(P\Is::rejected($promise));
+
+            try {
+                $promise->wait();
+                self::fail('Expected RuntimeException');
+            } catch (\RuntimeException $e) {
+                self::assertSame($previous, $e);
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
     public function throwsWhenAccessingInvalidProperty(): void
     {
         $h = new CurlMultiHandler();
@@ -382,6 +442,15 @@ class CurlMultiHandlerTest extends TestCase
         self::assertInstanceOf(CurlFactory::class, $factory);
 
         return $factory;
+    }
+
+    private static function tickUntilSettled(CurlMultiHandler $handler, P\PromiseInterface $promise): void
+    {
+        for ($i = 0; $i < 1000 && P\Is::pending($promise); ++$i) {
+            $handler->tick();
+        }
+
+        self::assertFalse(P\Is::pending($promise), 'Promise was not settled after ticking the handler.');
     }
 
     private static function progressCallbackOption(): int
