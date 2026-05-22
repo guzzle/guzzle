@@ -381,6 +381,26 @@ class CurlFactory implements CurlFactoryInterface
         return str_replace($baseUriString, $redactedUriString, $error);
     }
 
+    private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy): bool
+    {
+        if ('https' !== $request->getUri()->getScheme() || CurlVersion::supportsProxyCredentialAwareReuse()) {
+            return false;
+        }
+
+        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
+        $proxyParts = \parse_url($proxyForParsing);
+        if (!\is_array($proxyParts)) {
+            return false;
+        }
+
+        $proxyScheme = isset($proxyParts['scheme']) ? \strtolower($proxyParts['scheme']) : 'http';
+        if ($proxyScheme !== 'http' && $proxyScheme !== 'https') {
+            return false;
+        }
+
+        return \array_key_exists('user', $proxyParts) || \array_key_exists('pass', $proxyParts);
+    }
+
     /**
      * @return array<int|string, mixed>
      */
@@ -638,11 +658,13 @@ class CurlFactory implements CurlFactoryInterface
 
         if (isset($options['proxy'])) {
             $proxy = $options['proxy'];
+            $selectedProxy = null;
             if (!\is_array($proxy)) {
                 if (!\is_string($proxy)) {
                     throw new \InvalidArgumentException('proxy must be a string or array');
                 }
 
+                $selectedProxy = $proxy;
                 $conf[\CURLOPT_PROXY] = $proxy;
                 $conf[\CURLOPT_NOPROXY] = '';
             } else {
@@ -658,10 +680,16 @@ class CurlFactory implements CurlFactoryInterface
                         $conf[\CURLOPT_PROXY] = '';
                         $conf[\CURLOPT_NOPROXY] = '*';
                     } else {
+                        $selectedProxy = $proxy[$scheme];
                         $conf[\CURLOPT_PROXY] = $proxy[$scheme];
                         $conf[\CURLOPT_NOPROXY] = '';
                     }
                 }
+            }
+
+            if ($selectedProxy !== null && self::requiresFreshConnectionForAuthenticatedProxy($easy->request, $selectedProxy)) {
+                $conf[\CURLOPT_FRESH_CONNECT] = true;
+                $conf[\CURLOPT_FORBID_REUSE] = true;
             }
         }
 

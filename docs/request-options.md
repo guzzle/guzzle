@@ -813,6 +813,9 @@ $client->request('GET', '/', [
 > [!NOTE]
 > You can provide proxy URLs that contain a scheme, username, and password. For example, `"http://username:password@192.168.16.1:10"`.
 
+> [!NOTE]
+> When sending HTTPS requests through an authenticated HTTP or HTTPS proxy, libcurl versions before 8.19.0 could reuse an existing proxy tunnel even after proxy credentials changed. Guzzle avoids that reuse on affected libcurl versions. Fixed libcurl versions keep normal connection reuse behavior. Advanced users can still control cURL connection reuse explicitly with the `curl` request option and `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`.
+
 ## query
 
 Summary

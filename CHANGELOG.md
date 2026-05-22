@@ -43,6 +43,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers
+- Avoid stale authenticated proxy tunnels on affected libcurl versions
 
 ### Removed
 
