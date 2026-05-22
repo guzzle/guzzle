@@ -256,8 +256,9 @@ class CurlMultiHandler
                 continue;
             }
             if (!isset($done['handle'])) {
-                // PHP may omit the handle after a cancelled transfer on affected versions.
-                // See https://github.com/php/php-src/pull/16302.
+                // Work around a PHP issue where cancelled transfers may omit the handle.
+                // Remove this once we no longer support PHP versions before the fix in
+                // https://github.com/php/php-src/pull/16302.
                 continue;
             }
             $id = (int) $done['handle'];
