@@ -166,9 +166,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             throw $this->invalidBody();
         }
 
-        $factory = new HttpFactory();
-        $uriFactory = self::requireUriFactory($options[RequestOptions::URI_FACTORY] ?? $factory);
-        $requestFactory = self::requireRequestFactory($options[RequestOptions::REQUEST_FACTORY] ?? $factory);
+        $uriFactory = isset($options[RequestOptions::URI_FACTORY])
+            ? self::requireUriFactory($options[RequestOptions::URI_FACTORY])
+            : new HttpFactory();
+        $requestFactory = isset($options[RequestOptions::REQUEST_FACTORY])
+            ? self::requireRequestFactory($options[RequestOptions::REQUEST_FACTORY])
+            : new HttpFactory();
 
         // Merge the URI into the base URI.
         $uriIsString = \is_string($uri);
