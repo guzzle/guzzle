@@ -55,7 +55,8 @@
         "ext-json": "*",
         "guzzlehttp/promises": "^3.0@dev",
         "guzzlehttp/psr7": "^3.0@dev",
-        "psr/http-client": "^1.0"
+        "psr/http-client": "^1.0",
+        "psr/http-factory": "^1.0"
     },
     "require-dev": {
         "ext-curl": "*",

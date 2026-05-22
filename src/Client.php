@@ -7,8 +7,11 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\HttpFactory;
+use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -62,9 +65,22 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             throw new InvalidArgumentException('handler must be a callable');
         }
 
-        // Convert the base_uri to a UriInterface
+        $factory = new HttpFactory();
+
+        if (!isset($config[RequestOptions::REQUEST_FACTORY])) {
+            $config[RequestOptions::REQUEST_FACTORY] = $factory;
+        }
+
+        if (!isset($config[RequestOptions::URI_FACTORY])) {
+            $config[RequestOptions::URI_FACTORY] = $factory;
+        }
+
+        self::requireRequestFactory($config[RequestOptions::REQUEST_FACTORY]);
+        $uriFactory = self::requireUriFactory($config[RequestOptions::URI_FACTORY]);
+
+        // Convert the base_uri to a UriInterface using the configured URI factory.
         if (isset($config['base_uri'])) {
-            $config['base_uri'] = Psr7\Utils::uriFor($config['base_uri']);
+            $config['base_uri'] = self::createUri($config['base_uri'], $uriFactory);
         }
 
         $this->configureDefaults($config);
@@ -135,18 +151,21 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
         $options = $this->prepareDefaults($options);
-        // Remove request modifying parameter because it can be done up-front.
-        $headers = $options['headers'] ?? [];
-        $body = $options['body'] ?? null;
-        $version = self::normalizeProtocolVersion($options['version'] ?? '1.1');
+
+        $factory = new HttpFactory();
+        $uriFactory = self::requireUriFactory($options[RequestOptions::URI_FACTORY] ?? $factory);
+        $requestFactory = self::requireRequestFactory($options[RequestOptions::REQUEST_FACTORY] ?? $factory);
+
         // Merge the URI into the base URI.
-        $uri = $this->buildUri(Psr7\Utils::uriFor($uri), $options);
-        if (\is_array($body)) {
-            throw $this->invalidBody();
+        $uriIsString = \is_string($uri);
+        $uri = self::createUri($uri, $uriFactory);
+        $builtUri = $this->buildUri($uri, $options);
+        if ($uriIsString && $builtUri !== $uri) {
+            $builtUri = self::createUri((string) $builtUri, $uriFactory);
         }
-        $request = new Psr7\Request($method, $uri, $headers, $body, $version);
-        // Remove the option so that they are not doubly-applied.
-        unset($options['headers'], $options['body'], $options['version']);
+
+        $uri = $builtUri;
+        $request = $requestFactory->createRequest($method, $uri);
 
         return $this->transfer($request, $options);
     }
@@ -192,7 +211,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     private function buildUri(UriInterface $uri, array $config): UriInterface
     {
         if (isset($config['base_uri'])) {
-            $uri = Psr7\UriResolver::resolve(Psr7\Utils::uriFor($config['base_uri']), $uri);
+            $uriFactory = self::requireUriFactory($config[RequestOptions::URI_FACTORY] ?? new HttpFactory());
+            $uri = Psr7\UriResolver::resolve(self::createUri($config['base_uri'], $uriFactory), $uri);
         }
 
         if (isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
@@ -201,6 +221,54 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         return $uri->getScheme() === '' && $uri->getHost() !== '' ? $uri->withScheme('http') : $uri;
+    }
+
+    /**
+     * @param mixed $factory
+     */
+    private static function requireRequestFactory($factory): RequestFactoryInterface
+    {
+        if (!$factory instanceof RequestFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::REQUEST_FACTORY,
+                RequestFactoryInterface::class
+            ));
+        }
+
+        return $factory;
+    }
+
+    /**
+     * @param mixed $factory
+     */
+    private static function requireUriFactory($factory): UriFactoryInterface
+    {
+        if (!$factory instanceof UriFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::URI_FACTORY,
+                UriFactoryInterface::class
+            ));
+        }
+
+        return $factory;
+    }
+
+    /**
+     * @param mixed $uri
+     */
+    private static function createUri($uri, UriFactoryInterface $uriFactory): UriInterface
+    {
+        if ($uri instanceof UriInterface) {
+            return $uri;
+        }
+
+        if (\is_string($uri)) {
+            return $uriFactory->createUri($uri);
+        }
+
+        throw new InvalidArgumentException(\sprintf('URI must be a string or %s', UriInterface::class));
     }
 
     /**

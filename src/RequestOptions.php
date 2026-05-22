@@ -220,6 +220,13 @@ final class RequestOptions
     public const QUERY = 'query';
 
     /**
+     * request_factory: (Psr\Http\Message\RequestFactoryInterface) PSR-17
+     * request factory used when creating requests through request() and
+     * requestAsync().
+     */
+    public const REQUEST_FACTORY = 'request_factory';
+
+    /**
      * sink: (resource|string|StreamInterface) Where the data of the
      * response is written to. Defaults to a PHP temp stream. Providing a
      * string will write data to a file by the given name.
@@ -271,6 +278,12 @@ final class RequestOptions
      * seconds are rejected by the built-in stream handler.
      */
     public const READ_TIMEOUT = 'read_timeout';
+
+    /**
+     * uri_factory: (Psr\Http\Message\UriFactoryInterface) PSR-17 URI factory
+     * used when creating URI objects from string request URI and base_uri values.
+     */
+    public const URI_FACTORY = 'uri_factory';
 
     /**
      * version: (string|float) Specifies the HTTP protocol version to attempt
