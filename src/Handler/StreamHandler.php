@@ -193,9 +193,33 @@ class StreamHandler
             return $stream;
         }
 
-        $sink = $options['sink'] ?? Psr7\Utils::tryFopen('php://temp', 'r+');
+        $hasSink = isset($options['sink']);
+        $sink = $hasSink ? $options['sink'] : Psr7\Utils::tryFopen('php://temp', 'r+');
+
+        if ($hasSink && \is_resource($sink)) {
+            return self::streamForResourceSink($sink);
+        }
 
         return \is_string($sink) ? new Psr7\LazyOpenStream($sink, 'w+') : Psr7\Utils::streamFor($sink);
+    }
+
+    /**
+     * Creates a response body stream for a caller-owned sink resource.
+     *
+     * Closing the response body must detach Guzzle's wrapper without closing
+     * the original PHP resource.
+     *
+     * @param resource $resource
+     */
+    private static function streamForResourceSink($resource): StreamInterface
+    {
+        $stream = Psr7\Utils::streamFor($resource);
+
+        return Psr7\FnStream::decorate($stream, [
+            'close' => static function () use ($stream): void {
+                $stream->detach();
+            },
+        ]);
     }
 
     /**

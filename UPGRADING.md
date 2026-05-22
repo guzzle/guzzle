@@ -33,6 +33,13 @@ Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
 your application uses those packages directly, review their upgrade guides.
 
+#### Sink resource ownership
+
+PHP resources passed as the `sink` request option are no longer closed when the
+response body is closed or garbage-collected by the built-in cURL and stream
+handlers. Applications that relied on Guzzle closing a raw resource sink should
+close the resource explicitly or pass a string path instead.
+
 #### Request method casing
 
 Guzzle 8 uses Guzzle PSR-7 3.x, whose request implementations preserve method

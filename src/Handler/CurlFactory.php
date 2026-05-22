@@ -7,11 +7,13 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -518,6 +520,25 @@ class CurlFactory implements CurlFactoryInterface
         }
     }
 
+    /**
+     * Creates a response body stream for a caller-owned sink resource.
+     *
+     * Closing the response body must detach Guzzle's wrapper without closing
+     * the original PHP resource.
+     *
+     * @param resource $resource
+     */
+    private static function streamForResourceSink($resource): StreamInterface
+    {
+        $stream = \GuzzleHttp\Psr7\Utils::streamFor($resource);
+
+        return FnStream::decorate($stream, [
+            'close' => static function () use ($stream): void {
+                $stream->detach();
+            },
+        ]);
+    }
+
     private function applyHandlerOptions(EasyHandle $easy, array &$conf): void
     {
         $options = $easy->options;
@@ -568,12 +589,15 @@ class CurlFactory implements CurlFactoryInterface
             }
         }
 
-        if (!isset($options['sink'])) {
+        $hasSink = isset($options['sink']);
+        if (!$hasSink) {
             // Use a default temp stream if no sink was set.
             $options['sink'] = \GuzzleHttp\Psr7\Utils::tryFopen('php://temp', 'w+');
         }
         $sink = $options['sink'];
-        if (!\is_string($sink)) {
+        if ($hasSink && \is_resource($sink)) {
+            $sink = self::streamForResourceSink($sink);
+        } elseif (!\is_string($sink)) {
             $sink = \GuzzleHttp\Psr7\Utils::streamFor($sink);
         } elseif (!\is_dir(\dirname($sink))) {
             // Ensure that the directory exists before failing in curl.

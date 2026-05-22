@@ -152,6 +152,58 @@ class StreamHandlerTest extends TestCase
         \fclose($r);
     }
 
+    public function testDoesNotCloseResourceSinkWhenResponseIsDestroyed(): void
+    {
+        $stream = (function () {
+            $stream = \tmpfile();
+            self::assertIsResource($stream);
+
+            $this->queueRes();
+            $handler = new StreamHandler();
+            $request = new Request('GET', Server::$url);
+            $response = $handler($request, ['sink' => $stream])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+
+            return $stream;
+        })();
+
+        \gc_collect_cycles();
+
+        try {
+            self::assertIsResource($stream);
+            \rewind($stream);
+            self::assertSame('hi there', \stream_get_contents($stream));
+        } finally {
+            if (\is_resource($stream)) {
+                \fclose($stream);
+            }
+        }
+    }
+
+    public function testDoesNotCloseResourceSinkWhenResponseBodyIsClosed(): void
+    {
+        $stream = \tmpfile();
+        self::assertIsResource($stream);
+
+        try {
+            $this->queueRes();
+            $handler = new StreamHandler();
+            $request = new Request('GET', Server::$url);
+            $response = $handler($request, ['sink' => $stream])->wait();
+
+            $response->getBody()->close();
+
+            self::assertIsResource($stream);
+            \rewind($stream);
+            self::assertSame('hi there', \stream_get_contents($stream));
+        } finally {
+            if (\is_resource($stream)) {
+                \fclose($stream);
+            }
+        }
+    }
+
     public function testDrainsResponseIntoSaveToBodyAtPath(): void
     {
         $tmpfname = \tempnam(\sys_get_temp_dir(), 'save_to_path');
