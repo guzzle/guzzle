@@ -425,6 +425,8 @@ Guzzle will automatically follow redirects unless you tell it not to. You can cu
 - Set to `false` to disable redirects.
 - Pass an associative array containing the 'max' key to specify the maximum number of redirects and optionally provide a 'strict' key value to specify whether or not to use strict RFC compliant redirects (meaning redirect POST requests with POST requests vs. doing what most browsers do which is redirect POST requests with GET requests).
 
+See the [`allow_redirects` option](request-options.md#allow_redirects) for cross-origin redirect credential behavior.
+
 ```php
 $response = $client->request('GET', 'http://github.com');
 echo $response->getStatusCode();

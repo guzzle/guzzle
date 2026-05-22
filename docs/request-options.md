@@ -104,6 +104,16 @@ echo $res->getHeaderLine('X-Guzzle-Redirect-Status-History');
 > [!NOTE]
 > This option has **no** effect when making requests using `GuzzleHttp\Client::sendRequest()`. In order to stay compliant with PSR-18 any redirect response is returned as is.
 
+### Cross-Origin Redirects
+
+Guzzle considers a redirect cross-origin when the scheme, host, or effective port changes.
+
+On cross-origin redirects, Guzzle removes the `Authorization` and `Cookie` headers and clears cURL HTTP authentication options such as `CURLOPT_HTTPAUTH` and `CURLOPT_USERPWD`.
+
+Guzzle does not automatically remove other request options or headers solely because the redirect is cross-origin. This matches curl's redirect model. In particular, TLS client authentication options such as `cert`, `ssl_key`, custom cURL TLS options, and stream context TLS options are not removed automatically on cross-origin redirects.
+
+If TLS client credentials are only trusted for the original origin, disable automatic redirects and handle redirect responses manually, or use separate clients and request options for trusted origins.
+
 ## auth
 
 Summary
@@ -215,6 +225,9 @@ Constant
 ```php
 $client->request('GET', '/', ['cert' => ['/path/server.pem', 'password']]);
 ```
+
+> [!NOTE]
+> TLS client certificate options remain active during redirects. See [Cross-Origin Redirects](#cross-origin-redirects) for details.
 
 ## cookies
 
@@ -913,6 +926,9 @@ Constant
 
 > [!NOTE]
 > `ssl_key` is implemented by HTTP handlers. This is currently only supported by the cURL handler, but might be supported by other third-part handlers.
+
+> [!NOTE]
+> TLS client key options remain active during redirects. See [Cross-Origin Redirects](#cross-origin-redirects) for details.
 
 ## stream
 
