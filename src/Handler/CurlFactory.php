@@ -398,10 +398,30 @@ class CurlFactory implements CurlFactoryInterface
     {
         static $connectionErrors = [
             \CURLE_COULDNT_RESOLVE_HOST => true,
+            \CURLE_COULDNT_RESOLVE_PROXY => true,
             \CURLE_COULDNT_CONNECT => true,
             \CURLE_SSL_CONNECT_ERROR => true,
             \CURLE_GOT_NOTHING => true,
         ];
+        static $networkErrorsWithoutResponse;
+        if ($networkErrorsWithoutResponse === null) {
+            $networkErrorsWithoutResponse = [
+                \CURLE_SEND_ERROR => true,
+                \CURLE_RECV_ERROR => true,
+            ];
+
+            foreach ([
+                'CURLE_PROXY',
+                'CURLE_QUIC_CONNECT_ERROR',
+                'CURLE_HTTP2',
+                'CURLE_HTTP2_STREAM',
+                'CURLE_HTTP3',
+            ] as $constant) {
+                if (\defined($constant)) {
+                    $networkErrorsWithoutResponse[(int) \constant($constant)] = true;
+                }
+            }
+        }
 
         if ($easy->createResponseException) {
             /** @var PromiseInterface<ResponseInterface, mixed> */
@@ -475,9 +495,12 @@ class CurlFactory implements CurlFactoryInterface
             }
         }
 
+        $isNetworkError = isset($connectionErrors[$easy->errno])
+            || (!$easy->response && isset($networkErrorsWithoutResponse[$easy->errno]));
+
         if ($easy->errno === \CURLE_OPERATION_TIMEOUTED) {
             $error = new TimeoutException($message, $easy->request, null, $ctx);
-        } elseif (isset($connectionErrors[$easy->errno])) {
+        } elseif ($isNetworkError) {
             $error = new ConnectException($message, $easy->request, null, $ctx);
         } else {
             $error = new RequestException($message, $easy->request, $easy->response, null, $ctx);

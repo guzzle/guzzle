@@ -1568,7 +1568,19 @@ class CurlFactoryTest extends TestCase
         self::assertSame('test', (string) $response->getBody());
     }
 
-    public function testCreatesConnectException(): void
+    public static function curlConnectionErrorProvider(): iterable
+    {
+        yield 'resolve host' => [\CURLE_COULDNT_RESOLVE_HOST];
+        yield 'resolve proxy' => [\CURLE_COULDNT_RESOLVE_PROXY];
+        yield 'connect' => [\CURLE_COULDNT_CONNECT];
+        yield 'ssl connect' => [\CURLE_SSL_CONNECT_ERROR];
+        yield 'got nothing' => [\CURLE_GOT_NOTHING];
+    }
+
+    /**
+     * @dataProvider curlConnectionErrorProvider
+     */
+    public function testCreatesConnectExceptionForConnectionErrors(int $errno): void
     {
         $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
 
@@ -1578,7 +1590,7 @@ class CurlFactoryTest extends TestCase
 
         $factory = new CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
-        $easy->errno = \CURLE_COULDNT_CONNECT;
+        $easy->errno = $errno;
         $response = $m->invoke(
             null,
             static function (): void {
@@ -1595,7 +1607,83 @@ class CurlFactoryTest extends TestCase
         } catch (TimeoutException $e) {
             self::fail('Expected non-timeout ConnectException');
         } catch (ConnectException $e) {
-            self::assertSame(\CURLE_COULDNT_CONNECT, $e->getHandlerContext()['errno']);
+            self::assertSame($errno, $e->getHandlerContext()['errno']);
+        }
+    }
+
+    public static function curlResponseSensitiveNetworkErrorProvider(): iterable
+    {
+        yield 'send' => [\CURLE_SEND_ERROR];
+        yield 'receive' => [\CURLE_RECV_ERROR];
+
+        foreach ([
+            'CURLE_PROXY',
+            'CURLE_QUIC_CONNECT_ERROR',
+            'CURLE_HTTP2',
+            'CURLE_HTTP2_STREAM',
+            'CURLE_HTTP3',
+        ] as $constant) {
+            if (\defined($constant)) {
+                yield $constant => [(int) \constant($constant)];
+            }
+        }
+    }
+
+    /**
+     * @dataProvider curlResponseSensitiveNetworkErrorProvider
+     */
+    public function testCreatesConnectExceptionForNetworkErrorsWithoutResponse(int $errno): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, []);
+        $easy->errno = $errno;
+        $easy->response = null;
+
+        $promise = CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        );
+
+        try {
+            $promise->wait();
+            self::fail('Expected ConnectException');
+        } catch (TimeoutException $e) {
+            self::fail('Expected non-timeout ConnectException');
+        } catch (ConnectException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($errno, $e->getHandlerContext()['errno']);
+        }
+    }
+
+    /**
+     * @dataProvider curlResponseSensitiveNetworkErrorProvider
+     */
+    public function testNetworkErrorsWithResponseStayRequestExceptions(int $errno): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $response = new Psr7\Response(200);
+        $easy = $factory->create($request, []);
+        $easy->errno = $errno;
+        $easy->response = $response;
+
+        $promise = CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        );
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
+            self::assertSame($errno, $e->getHandlerContext()['errno']);
         }
     }
 
