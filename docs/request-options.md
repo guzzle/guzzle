@@ -916,7 +916,7 @@ $resource = $response->getBody()->detach();
 ```
 
 > [!NOTE]
-> `save_to` was deprecated in Guzzle 6.0 and removed in Guzzle 7.0. Use `sink`.
+> `save_to` was deprecated in Guzzle 6 and removed in Guzzle 7. Use `sink`.
 
 ## ssl_key
 
