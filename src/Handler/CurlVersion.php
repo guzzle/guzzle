@@ -16,6 +16,8 @@ final class CurlVersion
 
     private const HTTP_3_VERSION = '7.66.0';
 
+    private const PROTOCOLS_STR_VERSION = '7.85.0';
+
     private const PROXY_CREDENTIAL_REUSE_VERSION = '8.19.0';
 
     /**
@@ -73,6 +75,15 @@ final class CurlVersion
 
         return null !== $version
             && version_compare($version, self::PROXY_CREDENTIAL_REUSE_VERSION, '>=');
+    }
+
+    public static function supportsProtocolsStr(): bool
+    {
+        $version = self::get();
+
+        return \defined('CURLOPT_PROTOCOLS_STR')
+            && null !== $version
+            && version_compare($version, self::PROTOCOLS_STR_VERSION, '>=');
     }
 
     public static function ensureSupported(RequestInterface $request): void

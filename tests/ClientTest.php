@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -1008,8 +1009,7 @@ class ClientTest extends TestCase
         if (
             !\function_exists('curl_share_init')
             || !\function_exists('curl_exec')
-            || !\function_exists('curl_version')
-            || version_compare(curl_version()['version'], '7.34.0') < 0
+            || !CurlVersion::supportsTls12()
         ) {
             self::markTestSkipped('Default cURL handler with share handles is unavailable.');
         }

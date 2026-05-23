@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Test;
 
 use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
@@ -373,8 +374,7 @@ class UtilsTest extends TestCase
         if (
             !\function_exists('curl_share_init')
             || !\function_exists('curl_exec')
-            || !\function_exists('curl_version')
-            || version_compare(curl_version()['version'], '7.34.0') < 0
+            || !CurlVersion::supportsTls12()
         ) {
             self::markTestSkipped('Default cURL handler with share handles is unavailable.');
         }
