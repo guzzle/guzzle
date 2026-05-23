@@ -4,48 +4,52 @@ Guzzle Upgrade Guide
 7.0 to 8.0
 ----------
 
-#### FileCookieJar serialization
-
-`FileCookieJar` instances restored with `unserialize()` no longer save cookies
-automatically on destruction. If your application intentionally unserializes a
-`FileCookieJar` and expects changes to persist, call `save()` explicitly.
-
-Saved cookie files now JSON-escape tag characters. Existing cookie files remain
-readable, and cookie values are unchanged when loaded.
-
-#### Host-only cookies
-
-Cookies extracted from responses without a `Domain` attribute are now stored as
-host-only cookies. They are sent only to the exact host that set them.
-
-Previously, Guzzle stored these cookies with the request host as a normal domain
-cookie, so they could also be sent to subdomains. Applications relying on that
-behavior should use an explicit `Domain` attribute.
-
-`SetCookie::toArray()` may include `HostOnly => true` for host-only cookies.
-Existing persisted cookie files without this key load as non-host-only cookies.
+Guzzle 8 is a major release that raises the minimum PHP version, updates the
+Guzzle dependency stack, adopts stricter PSR-7 header and request method
+behavior, changes some network exception classification, and tightens validation
+for request options, protocols, transport settings, cookies, and native method
+signatures.
 
 #### PHP Version and Dependencies
 
 Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 `^7.2.5 || ^8.0`.
 
-Guzzle 8 also requires `guzzlehttp/promises` 3.x and `guzzlehttp/psr7` 3.x. If
-your application uses those packages directly, review their upgrade guides.
+Guzzle 8 also requires
+[Guzzle Promises 3.x](https://github.com/guzzle/promises/blob/3.0/UPGRADING.md)
+and [Guzzle PSR-7 3.x](https://github.com/guzzle/psr7/blob/3.0/UPGRADING.md).
+Guzzle 7 supported Guzzle Promises `^2.3` and Guzzle PSR-7 `^2.8`.
 
-#### Sink resource ownership
+Guzzle 8 now requires `psr/http-factory:^1.0` directly and no longer depends on
+`symfony/deprecation-contracts`.
 
-PHP resources passed as the `sink` request option are no longer closed when the
-response body is closed or garbage-collected by the built-in cURL and stream
-handlers. Applications that relied on Guzzle closing a raw resource sink should
-close the resource explicitly or pass a string path instead.
+#### PSR-7 Header Values and Request Methods
 
-#### Request method casing
+Guzzle 8 uses Guzzle PSR-7 3.x, which validates header values more strictly.
+Header values passed through the `headers` request option or PSR-7 request APIs
+must now be strings or non-empty arrays of strings. Empty strings remain valid
+explicit header values, but empty arrays, `null`, `false`, integers, floats, and
+other non-string values are no longer cast or accepted.
 
-Guzzle 8 uses Guzzle PSR-7 3.x, whose request implementations preserve method
-casing. HTTP method names are case-sensitive, so Guzzle now sends the method
-exactly as provided and applies built-in method-specific behavior only to exact
-standard method names such as `GET`, `HEAD`, `POST`, and `PUT`.
+If your application builds headers from configuration, user input, or typed
+domain values, normalize them before creating or sending requests:
+
+```php
+// 7.x, no longer accepted in 8.0
+$client->request('GET', '/', [
+    'headers' => ['Api-Version' => 1],
+]);
+
+// 8.0
+$client->request('GET', '/', [
+    'headers' => ['Api-Version' => '1'],
+]);
+```
+
+Guzzle 8 also preserves explicitly provided request method casing. HTTP method
+names are case-sensitive, so Guzzle now sends the method exactly as provided and
+applies built-in method-specific behavior only to exact standard method names
+such as `GET`, `HEAD`, `POST`, and `PUT`.
 
 If you previously relied on `new Request('get', ...)` or
 `$client->request('get', ...)` being sent or treated as `GET`, normalize the
@@ -90,6 +94,17 @@ previously caught `InvalidArgumentException` or `ConnectException` for request
 protocol version failures, catch `RequestException` or `GuzzleException`
 instead.
 
+#### Protocol version validation
+
+Empty or malformed request protocol versions are no longer treated as omitted.
+Passing `'version' => ''`, `'version' => 'HTTP/1.1'`, or sending a PSR-7
+request whose protocol version is empty or malformed now throws an exception
+before the request is sent.
+
+Omit the `version` request option to use Guzzle's default HTTP/1.1 behavior, or
+pass an explicit supported protocol version such as `'1.1'`. Do not include the
+`HTTP/` prefix.
+
 #### cURL handler lifecycle
 
 Applications that manage built-in cURL handlers or factories directly should
@@ -123,64 +138,12 @@ release native easy handles before invoking `on_stats`. Raw callbacks passed
 through the `curl` request option remain low-level cURL callbacks and are not
 normalized by Guzzle.
 
-#### Multipart request serialization
+#### Sink resource ownership
 
-Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts
-created through the `multipart` request option no longer include generated
-per-part `Content-Length` headers by default. If your tests compare raw
-multipart payloads, remove those generated part headers from expected strings.
-
-Generated multipart `Content-Disposition` header `name` and `filename`
-parameters now escape double quotes, carriage returns, and line feeds as `%22`,
-`%0D`, and `%0A`. Literal backslashes and other characters are serialized
-unchanged, matching browser multipart form submission behavior. Custom multipart
-part header names and values, and explicit PSR-7 multipart boundaries, are also
-validated by PSR-7.
-
-Guzzle now quotes the `boundary` parameter in generated
-`Content-Type: multipart/form-data` headers when an explicit PSR-7
-`MultipartStream` boundary contains characters that require quoting.
-Automatically generated boundaries are unchanged.
-
-You can still pass an explicit `Content-Length` header in a multipart element's
-`headers` array if a non-standard peer requires it.
-
-#### Generic Promise PHPDoc Types
-
-Guzzle's async client APIs, handlers, and middleware callable annotations now use
-generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a
-static-analysis-only change and does not alter runtime behavior.
-
-Code using unparameterized promise types continues to work. If your project
-implements Guzzle client interfaces, provides custom handlers or middleware, or
-uses stricter static analysis, you may need to update your PHPDoc annotations to
-include promise fulfillment and rejection types.
-
-#### cURL minimum version
-
-Guzzle 8 requires libcurl 7.34.0 or higher when using the built-in cURL
-handlers. If the default handler stack detects an older libcurl version, it will
-not select the cURL handler automatically. Manually configured cURL handlers also
-reject requests when the linked libcurl version is lower than 7.34.0 or the PHP
-cURL extension does not expose TLS 1.2 support.
-
-#### Timeout option validation
-
-The built-in cURL and stream handlers now validate timeout option values before
-applying them. `timeout`, `connect_timeout`, and `read_timeout` must be `0` or at
-least `0.001` seconds when provided. Positive values below 1 millisecond now
-throw `InvalidArgumentException` instead of being converted to no timeout.
-
-#### Protocol version validation
-
-Empty or malformed request protocol versions are no longer treated as omitted.
-Passing `'version' => ''`, `'version' => 'HTTP/1.1'`, or sending a PSR-7
-request whose protocol version is empty or malformed now throws an exception
-before the request is sent.
-
-Omit the `version` request option to use Guzzle's default HTTP/1.1 behavior, or
-pass an explicit supported protocol version such as `'1.1'`. Do not include the
-`HTTP/` prefix.
+PHP resources passed as the `sink` request option are no longer closed when the
+response body is closed or garbage-collected by the built-in cURL and stream
+handlers. Applications that relied on Guzzle closing a raw resource sink should
+close the resource explicitly or pass a string path instead.
 
 #### TLS minimum version
 
@@ -202,6 +165,71 @@ progress/debug callbacks, sink handling, cookies, protocols, or cURL share
 handles. Use first-class Guzzle request options for those settings.
 The cURL handlers also reject stream-only `stream_context` and `read_timeout`
 options, while the stream handler rejects cURL-only options it cannot honor.
+
+#### cURL minimum version
+
+Guzzle 8 requires libcurl 7.34.0 or higher when using the built-in cURL
+handlers. If the default handler stack detects an older libcurl version, it will
+not select the cURL handler automatically. Manually configured cURL handlers also
+reject requests when the linked libcurl version is lower than 7.34.0 or the PHP
+cURL extension does not expose TLS 1.2 support.
+
+#### Timeout option validation
+
+The built-in cURL and stream handlers now validate timeout option values before
+applying them. `timeout`, `connect_timeout`, and `read_timeout` must be `0` or at
+least `0.001` seconds when provided. Positive values below 1 millisecond now
+throw `InvalidArgumentException` instead of being converted to no timeout.
+
+#### Proxy option validation
+
+The `proxy` request option is validated more strictly. Proxy values must be
+strings, and the `proxy['no']` value may be either an array of strings or a
+comma-delimited string such as the value from the `NO_PROXY` environment
+variable. Other values now throw `InvalidArgumentException`.
+
+No-proxy matching is normalized more consistently. Domain entries are matched
+case-insensitively, exact IP literal entries compare normalized IP addresses,
+and `NO_PROXY` environment entries are trimmed with the same parser used for
+request options. Internal spaces in `NO_PROXY` entries are preserved instead of
+removed.
+
+Explicit proxy options also override environment no-proxy settings. If you pass
+a `proxy` request option and want to exclude hosts, provide the `no` value
+explicitly:
+
+```php
+$noProxy = getenv('NO_PROXY');
+
+$client->request('GET', '/', [
+    'proxy' => [
+        'http' => 'http://localhost:8125',
+        'no' => $noProxy === false ? '' : $noProxy,
+    ],
+]);
+```
+
+#### Auth option validation
+
+The `auth` request option now validates array values before applying them. Auth
+arrays must contain username and password strings at indexes `0` and `1`. If an
+auth type is provided at index `2`, it must be one of `basic`, `digest`, or
+`ntlm`.
+
+Invalid auth arrays that previously emitted warnings, coerced values, or did
+nothing now throw `GuzzleHttp\Exception\InvalidArgumentException`.
+
+```php
+// Valid:
+$client->request('GET', '/', [
+    'auth' => ['username', 'password', 'basic'],
+]);
+
+// Invalid in 8.0:
+$client->request('GET', '/', [
+    'auth' => ['username'],
+]);
+```
 
 #### Native type declarations
 
@@ -268,55 +296,48 @@ work, but callbacks that inspect all arguments, for example with
 `func_get_args()` or a variadic parameter, will observe the additional
 `Psr\Http\Message\RequestInterface` argument.
 
-#### Proxy option validation
+#### Multipart request serialization
 
-The `proxy` request option is validated more strictly. Proxy values must be
-strings, and the `proxy['no']` value may be either an array of strings or a
-comma-delimited string such as the value from the `NO_PROXY` environment
-variable. Other values now throw `InvalidArgumentException`.
+Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts
+created through the `multipart` request option no longer include generated
+per-part `Content-Length` headers by default. If your tests compare raw
+multipart payloads, remove those generated part headers from expected strings.
 
-No-proxy matching is normalized more consistently. Domain entries are matched
-case-insensitively, exact IP literal entries compare normalized IP addresses,
-and `NO_PROXY` environment entries are trimmed with the same parser used for
-request options. Internal spaces in `NO_PROXY` entries are preserved instead of
-removed.
+Generated multipart `Content-Disposition` header `name` and `filename`
+parameters now escape double quotes, carriage returns, and line feeds as `%22`,
+`%0D`, and `%0A`. Literal backslashes and other characters are serialized
+unchanged, matching browser multipart form submission behavior. Custom multipart
+part header names and values, and explicit PSR-7 multipart boundaries, are also
+validated by PSR-7.
 
-Explicit proxy options also override environment no-proxy settings. If you pass
-a `proxy` request option and want to exclude hosts, provide the `no` value
-explicitly:
+Guzzle now quotes the `boundary` parameter in generated
+`Content-Type: multipart/form-data` headers when an explicit PSR-7
+`MultipartStream` boundary contains characters that require quoting.
+Automatically generated boundaries are unchanged.
 
-```php
-$noProxy = getenv('NO_PROXY');
+You can still pass an explicit `Content-Length` header in a multipart element's
+`headers` array if a non-standard peer requires it.
 
-$client->request('GET', '/', [
-    'proxy' => [
-        'http' => 'http://localhost:8125',
-        'no' => $noProxy === false ? '' : $noProxy,
-    ],
-]);
-```
+#### FileCookieJar serialization
 
-#### Auth option validation
+`FileCookieJar` instances restored with `unserialize()` no longer save cookies
+automatically on destruction. If your application intentionally unserializes a
+`FileCookieJar` and expects changes to persist, call `save()` explicitly.
 
-The `auth` request option now validates array values before applying them. Auth
-arrays must contain username and password strings at indexes `0` and `1`. If an
-auth type is provided at index `2`, it must be one of `basic`, `digest`, or
-`ntlm`.
+Saved cookie files now JSON-escape tag characters. Existing cookie files remain
+readable, and cookie values are unchanged when loaded.
 
-Invalid auth arrays that previously emitted warnings, coerced values, or did
-nothing now throw `GuzzleHttp\Exception\InvalidArgumentException`.
+#### Host-only cookies
 
-```php
-// Valid:
-$client->request('GET', '/', [
-    'auth' => ['username', 'password', 'basic'],
-]);
+Cookies extracted from responses without a `Domain` attribute are now stored as
+host-only cookies. They are sent only to the exact host that set them.
 
-// Invalid in 8.0:
-$client->request('GET', '/', [
-    'auth' => ['username'],
-]);
-```
+Previously, Guzzle stored these cookies with the request host as a normal domain
+cookie, so they could also be sent to subdomains. Applications relying on that
+behavior should use an explicit `Domain` attribute.
+
+`SetCookie::toArray()` may include `HostOnly => true` for host-only cookies.
+Existing persisted cookie files without this key load as non-host-only cookies.
 
 #### CookieJar::clear null semantics
 
@@ -357,6 +378,17 @@ new SetCookie([
 
 Cookies parsed from normal `Set-Cookie` headers continue to be normalized by
 `SetCookie::fromString()`.
+
+#### Generic Promise PHPDoc Types
+
+Guzzle's async client APIs, handlers, and middleware callable annotations now use
+generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a
+static-analysis-only change and does not alter runtime behavior.
+
+Code using unparameterized promise types continues to work. If your project
+implements Guzzle client interfaces, provides custom handlers or middleware, or
+uses stricter static analysis, you may need to update your PHPDoc annotations to
+include promise fulfillment and rejection types.
 
 6.0 to 7.0
 ----------
