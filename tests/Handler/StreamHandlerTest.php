@@ -760,14 +760,14 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('passphrase', $options['ssl']);
     }
 
-    public function testCanSetCertTypeToPem()
+    public function testCanSetCertTypeToPem(): void
     {
         $response = $this->getSendResult(['cert_type' => 'pem']);
 
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testRejectsNonPemCertType()
+    public function testRejectsNonPemCertType(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('The stream handler only supports "PEM" for the cert_type request option.');
@@ -775,7 +775,7 @@ class StreamHandlerTest extends TestCase
         $this->getSendResult(['cert_type' => 'DER']);
     }
 
-    public function testCanSetSslKey()
+    public function testCanSetSslKey(): void
     {
         $path = __FILE__;
         $res = $this->getSendResult(['ssl_key' => $path]);
@@ -783,7 +783,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame($path, $opts['ssl']['local_pk']);
     }
 
-    public function testCanSetPasswordWhenSettingSslKey()
+    public function testCanSetPasswordWhenSettingSslKey(): void
     {
         $path = __FILE__;
         $res = $this->getSendResult(['ssl_key' => [$path, 'foo']]);
@@ -792,7 +792,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('foo', $opts['ssl']['passphrase']);
     }
 
-    public function testCanSetCertAndSslKeyWithSamePassword()
+    public function testCanSetCertAndSslKeyWithSamePassword(): void
     {
         $path = __FILE__;
         $res = $this->getSendResult([
@@ -805,7 +805,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('foo', $opts['ssl']['passphrase']);
     }
 
-    public function testRejectsCertAndSslKeyWithDifferentPasswords()
+    public function testRejectsCertAndSslKeyWithDifferentPasswords(): void
     {
         $path = __FILE__;
 
@@ -818,7 +818,7 @@ class StreamHandlerTest extends TestCase
         ]);
     }
 
-    public function testCanSetSslKeyWithArrayPathOnly()
+    public function testCanSetSslKeyWithArrayPathOnly(): void
     {
         $path = __FILE__;
         $handler = new StreamHandler();
@@ -835,14 +835,14 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('passphrase', $options['ssl']);
     }
 
-    public function testCanSetSslKeyTypeToPem()
+    public function testCanSetSslKeyTypeToPem(): void
     {
         $response = $this->getSendResult(['ssl_key_type' => 'pem']);
 
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testRejectsNonPemSslKeyType()
+    public function testRejectsNonPemSslKeyType(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('The stream handler only supports "PEM" for the ssl_key_type request option.');
@@ -1367,6 +1367,55 @@ class StreamHandlerTest extends TestCase
         ])->wait();
 
         self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testStreamRejectsEnabledCurlShareOption(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('curl_share');
+
+        $handler(new Request('GET', Server::$url), [
+            'curl_share' => CurlShare::HANDLER,
+        ]);
+    }
+
+    public function testStreamRejectsCurlOption(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('curl');
+
+        $handler(new Request('GET', Server::$url), [
+            'curl' => [\CURLOPT_LOW_SPEED_LIMIT => 10],
+        ]);
+    }
+
+    public function testStreamRejectsDigestAuth(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Digest authentication');
+
+        $handler(new Request('GET', Server::$url), [
+            'auth' => ['user', 'pass', 'digest'],
+        ]);
+    }
+
+    public function testStreamRejectsExpectOptionWhenHeaderIsPresent(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('PUT', Server::$url, ['Expect' => '100-Continue'], 'test');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('expect');
+
+        $handler($request, [
+            'expect' => true,
+        ]);
     }
 
     public function testDrainsResponseAndReadsAllContentWhenContentLengthIsZero(): void

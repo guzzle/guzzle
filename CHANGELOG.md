@@ -27,6 +27,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Normalize no-proxy domain and IP literal matching consistently
 - Pass the request as the second argument to `on_headers` callbacks
 - Reject invalid `SetCookie` constructor field types instead of coercing them
+- Reject conflicting raw cURL request options, including request-level `CURLOPT_SHARE`
+- Reject selected request options ignored by incompatible built-in handlers
 - Support retry delay callbacks with retry count only or full retry context
 - Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays

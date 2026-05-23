@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Test;
 
-use GuzzleHttp\Psr7;
 use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\Psr7;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 

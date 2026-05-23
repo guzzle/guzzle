@@ -372,6 +372,7 @@ class CurlMultiHandler
         $this->delays = [];
         $this->deferredCancels = [];
         $this->active = 0;
+        $this->shareHandleState = null;
         $this->deferredClose = false;
         $this->deferredCloseExplicit = false;
         $this->closed = true;

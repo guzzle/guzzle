@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -105,6 +106,21 @@ class CurlMultiHandlerTest extends TestCase
         ]);
 
         self::assertInstanceOf(CurlMultiHandler::class, $handler);
+    }
+
+    public function testCloseReleasesShareHandleState(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $handler = new CurlMultiHandler([
+            'share' => CurlShare::HANDLER,
+        ]);
+
+        self::assertNotNull(self::readShareHandleState($handler));
+
+        $handler->close();
+
+        self::assertNull(self::readShareHandleState($handler));
     }
 
     public function testDestructorDoesNotThrowWhenCurlMultiCloseFails(): void
@@ -658,6 +674,15 @@ class CurlMultiHandlerTest extends TestCase
         self::assertInstanceOf(CurlFactory::class, $factory);
 
         return $factory;
+    }
+
+    private static function readShareHandleState(CurlMultiHandler $handler): ?CurlShareHandleState
+    {
+        $readShareHandleState = \Closure::bind(static function (CurlMultiHandler $handler): ?CurlShareHandleState {
+            return $handler->shareHandleState;
+        }, null, CurlMultiHandler::class);
+
+        return $readShareHandleState($handler);
     }
 
     private static function tickUntilSettled(CurlMultiHandler $handler, P\PromiseInterface $promise): void

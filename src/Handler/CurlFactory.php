@@ -119,9 +119,9 @@ class CurlFactory implements CurlFactoryInterface
             unset($options['curl']['body_as_string']);
         }
 
-        self::triggerUnsupportedRequestOptionDeprecations($options);
+        self::rejectUnsupportedRequestOptions($options);
         $this->rejectRequestLevelShareConflict($options);
-        self::triggerConflictingCurlOptionDeprecations($options);
+        self::rejectConflictingCurlOptions($options);
 
         $easy = new EasyHandle();
         $easy->request = $request;
@@ -252,7 +252,7 @@ class CurlFactory implements CurlFactoryInterface
         return (string) $option;
     }
 
-    private static function triggerConflictingCurlOptionDeprecations(array $options): void
+    private static function rejectConflictingCurlOptions(array $options): void
     {
         if (!isset($options['curl']) || !\is_array($options['curl']) || $options['curl'] === []) {
             return;
@@ -268,45 +268,35 @@ class CurlFactory implements CurlFactoryInterface
             $name = self::formatCurlOption($option);
             $replacement = $conflictingOptions[$option];
             if ($replacement !== null) {
-                \trigger_deprecation(
-                    'guzzlehttp/guzzle',
-                    '7.11',
-                    \sprintf(
-                        'Passing %s in the "curl" request option is deprecated; guzzlehttp/guzzle 8.0 will reject this option because it conflicts with Guzzle-managed request handling. Use %s instead.',
-                        $name,
-                        $replacement
-                    )
-                );
-
-                continue;
+                throw new \InvalidArgumentException(\sprintf(
+                    'Passing %s in the "curl" request option is not supported because it conflicts with Guzzle-managed request handling. Use %s instead.',
+                    $name,
+                    $replacement
+                ));
             }
 
-            \trigger_deprecation(
-                'guzzlehttp/guzzle',
-                '7.11',
-                \sprintf(
-                    'Passing %s in the "curl" request option is deprecated; guzzlehttp/guzzle 8.0 will reject this option because it conflicts with Guzzle-managed cURL internals.',
-                    $name
-                )
-            );
+            throw new \InvalidArgumentException(\sprintf(
+                'Passing %s in the "curl" request option is not supported because it conflicts with Guzzle-managed cURL internals.',
+                $name
+            ));
         }
     }
 
-    private static function triggerUnsupportedRequestOptionDeprecations(array $options): void
+    private static function rejectUnsupportedRequestOptions(array $options): void
     {
         if (
             \array_key_exists('curl_share', $options)
             && CurlShareHandleState::normalizeMode($options['curl_share'], 'curl_share') !== CurlShare::NONE
         ) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "curl_share" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL sharing must be configured when creating the Client, CurlHandler, or CurlMultiHandler.');
+            throw new \InvalidArgumentException('The "curl_share" option is a client constructor option, not a request option. Configure cURL sharing when creating the Client, CurlHandler, or CurlMultiHandler.');
         }
 
         if (\array_key_exists('stream_context', $options)) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "stream_context" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL handlers ignore PHP stream context options.');
+            throw new \InvalidArgumentException('Passing the "stream_context" request option to a cURL handler is not supported because cURL handlers ignore PHP stream context options.');
         }
 
         if (\array_key_exists('read_timeout', $options)) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "read_timeout" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL handlers ignore stream read timeouts. Use the "timeout" request option instead.');
+            throw new \InvalidArgumentException('Passing the "read_timeout" request option to a cURL handler is not supported because cURL handlers ignore stream read timeouts. Use the "timeout" request option instead.');
         }
     }
 
@@ -380,6 +370,7 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYPASSWD', 'the "ssl_key" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_KEYPASSWD', 'the "ssl_key" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYTYPE', 'the "ssl_key_type" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_COOKIE', 'the "Cookie" request header or Guzzle cookie middleware');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIEFILE', 'Guzzle cookie middleware');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIEJAR', 'Guzzle cookie middleware');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIELIST', 'Guzzle cookie middleware');
@@ -449,16 +440,21 @@ class CurlFactory implements CurlFactoryInterface
         $this->closed = true;
         $failure = null;
 
-        foreach ($this->handles as $id => $handle) {
-            try {
-                $this->discardHandle($handle);
-            } catch (\Throwable $e) {
-                if ($failure === null) {
-                    $failure = $e;
+        try {
+            foreach ($this->handles as $id => $handle) {
+                try {
+                    $this->discardHandle($handle);
+                } catch (\Throwable $e) {
+                    if ($failure === null) {
+                        $failure = $e;
+                    }
+                } finally {
+                    unset($this->handles[$id]);
                 }
-            } finally {
-                unset($this->handles[$id]);
             }
+        } finally {
+            $this->shareMode = CurlShare::NONE;
+            $this->shareHandle = null;
         }
 
         if ($explicit && $failure !== null) {

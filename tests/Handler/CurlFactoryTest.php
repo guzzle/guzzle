@@ -276,17 +276,127 @@ class CurlFactoryTest extends TestCase
         new CurlFactory(3, CurlShare::HANDLER, false);
     }
 
-    public function testCanChangeCurlOptions(): void
+    public function testCloseReleasesConfiguredCurlShareHandle(): void
     {
-        Server::flush();
-        Server::enqueue([new Psr7\Response()]);
-        $a = new Handler\CurlMultiHandler();
-        $req = new Psr7\Request('GET', Server::$url);
-        $a($req, ['curl' => [\CURLOPT_HTTP_VERSION => \CURL_HTTP_VERSION_1_0]]);
-        self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
+
+        self::assertSame($shareHandle, self::readShareHandle($factory));
+
+        $factory->close();
+
+        self::assertNull(self::readShareHandle($factory));
     }
 
-    public function testProtocolsOptionCanRestrictCurlProtocols()
+    public function testRejectsConflictingCurlOptions(): void
+    {
+        $a = new Handler\CurlMultiHandler();
+        $req = new Psr7\Request('GET', Server::$url);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_HTTP_VERSION');
+        $this->expectExceptionMessage('request protocol version');
+
+        $a($req, ['curl' => [\CURLOPT_HTTP_VERSION => \CURL_HTTP_VERSION_1_0]]);
+    }
+
+    /**
+     * @dataProvider additionalConflictingCurlOptionProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsAdditionalConflictingCurlOptions(string $constant, int $option, $value, string $replacement): void
+    {
+        try {
+            (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+                'curl' => [
+                    $option => $value,
+                ],
+            ]);
+
+            self::fail('Expected InvalidArgumentException.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString($constant, $e->getMessage());
+            self::assertStringContainsString($replacement, $e->getMessage());
+        }
+    }
+
+    public static function additionalConflictingCurlOptionProvider(): array
+    {
+        $cases = [
+            'cookie header' => ['CURLOPT_COOKIE', 'name=value', 'the "Cookie" request header or Guzzle cookie middleware'],
+        ];
+
+        $available = [];
+        foreach ($cases as $name => $case) {
+            [$constant, $value, $replacement] = $case;
+            if (\defined($constant)) {
+                $available[$name] = [$constant, (int) \constant($constant), $value, $replacement];
+            }
+        }
+
+        return $available;
+    }
+
+    public function testRejectsRequestLevelCurlShareOption(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_SHARE');
+            $this->expectExceptionMessage('curl_share');
+
+            (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+                'curl' => [
+                    \CURLOPT_SHARE => $shareHandle,
+                ],
+            ]);
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_share_close($shareHandle);
+            }
+        }
+    }
+
+    public function testRejectsRequestLevelCurlShareClientOption(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('curl_share');
+        $this->expectExceptionMessage('client constructor option');
+
+        (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+            'curl_share' => CurlShare::HANDLER,
+        ]);
+    }
+
+    public function testRejectsStreamContextOption(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_context');
+
+        (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+            'stream_context' => [],
+        ]);
+    }
+
+    public function testRejectsReadTimeoutOption(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('read_timeout');
+
+        (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+            'read_timeout' => 1,
+        ]);
+    }
+
+    public function testProtocolsOptionCanRestrictCurlProtocols(): void
     {
         if (!\defined('CURLOPT_PROTOCOLS')) {
             self::markTestSkipped('CURLOPT_PROTOCOLS is not available.');
@@ -298,7 +408,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame(\CURLPROTO_HTTPS, $_SERVER['_curl'][\CURLOPT_PROTOCOLS]);
     }
 
-    public function testProtocolsOptionRejectsDisallowedCurlScheme()
+    public function testProtocolsOptionRejectsDisallowedCurlScheme(): void
     {
         $f = new CurlFactory(3);
 
@@ -313,7 +423,7 @@ class CurlFactoryTest extends TestCase
      *
      * @param mixed $protocols
      */
-    public function testProtocolsOptionRejectsInvalidValues($protocols)
+    public function testProtocolsOptionRejectsInvalidValues($protocols): void
     {
         $f = new CurlFactory(3);
 
@@ -499,27 +609,29 @@ class CurlFactoryTest extends TestCase
         self::assertAuthenticatedProxyConnectionReuseOptions();
     }
 
-    public function testForcesFreshConnectionForAuthenticatedHttpsProxyWithRawCurlProxyUrlOnAffectedCurlVersion(): void
+    public function testRejectsRawCurlProxyUrl(): void
     {
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXY');
+
+        (new CurlFactory(3))->create(new Psr7\Request('GET', 'https://example.com'), [
             'curl' => [
                 \CURLOPT_PROXY => 'http://username:password@proxy.example.com:8080',
             ],
         ]);
-
-        self::assertAuthenticatedProxyConnectionReuseOptions();
     }
 
-    public function testForcesFreshConnectionForAuthenticatedHttpsProxyWithRawCurlProxyCredentialsOnAffectedCurlVersion(): void
+    public function testRejectsRawCurlProxyUrlWithCredentials(): void
     {
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXY');
+
+        (new CurlFactory(3))->create(new Psr7\Request('GET', 'https://example.com'), [
             'curl' => [
                 \CURLOPT_PROXY => 'http://proxy.example.com:8080',
                 \CURLOPT_PROXYUSERPWD => 'username:password',
             ],
         ]);
-
-        self::assertAuthenticatedProxyConnectionReuseOptions();
     }
 
     public function testForcesFreshConnectionForAuthenticatedHttpProxyTunnelOnAffectedCurlVersion(): void
@@ -578,7 +690,7 @@ class CurlFactoryTest extends TestCase
         self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
-    public function testDoesNotForceFreshConnectionForAuthenticatedRawSocksProxyType(): void
+    public function testRejectsRawCurlSocksProxyTypeWithProxyUrl(): void
     {
         if (!\defined('CURLPROXY_SOCKS5')) {
             self::markTestSkipped('CURLPROXY_SOCKS5 is not available.');
@@ -586,46 +698,46 @@ class CurlFactoryTest extends TestCase
 
         $proxyType = (int) \constant('CURLPROXY_SOCKS5');
 
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXY');
+
+        (new CurlFactory(3))->create(new Psr7\Request('GET', 'https://example.com'), [
             'curl' => [
                 \CURLOPT_PROXY => 'proxy.example.com:1080',
                 \CURLOPT_PROXYTYPE => $proxyType,
                 \CURLOPT_PROXYUSERPWD => 'username:password',
             ],
         ]);
-
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
-    public function testRawCurlProxyOverrideControlsAuthenticatedProxyReuseDetection(): void
+    public function testRejectsRawCurlProxyOverride(): void
     {
         $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXY');
+
         $f->create(new Psr7\Request('GET', 'https://example.com'), [
             'proxy' => 'http://username:password@proxy-one.example.com:8080',
             'curl' => [
                 \CURLOPT_PROXY => 'http://proxy-two.example.com:8080',
             ],
         ]);
-
-        self::assertSame('http://proxy-two.example.com:8080', $_SERVER['_curl'][\CURLOPT_PROXY]);
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
-    public function testRawCurlProxyDisableControlsAuthenticatedProxyReuseDetection(): void
+    public function testRejectsRawCurlProxyDisable(): void
     {
         $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXY');
+
         $f->create(new Psr7\Request('GET', 'https://example.com'), [
             'proxy' => 'http://username:password@proxy.example.com:8080',
             'curl' => [
                 \CURLOPT_PROXY => '',
             ],
         ]);
-
-        self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
     public function testDoesNotForceFreshConnectionForAuthenticatedHttpProxyRequest(): void
@@ -775,14 +887,16 @@ class CurlFactoryTest extends TestCase
         self::assertArrayNotHasKey(\CURLOPT_SSLVERSION, $_SERVER['_curl']);
     }
 
-    public function testCurlSslVersionOptionOverridesDefaultTlsMinimum(): void
+    public function testRejectsRawCurlSslVersionOption(): void
     {
         $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_SSLVERSION');
+
         $f->create(new Psr7\Request('GET', 'https://example.com'), [
             'curl' => [\CURLOPT_SSLVERSION => \CURL_SSLVERSION_TLSv1_1],
         ]);
-
-        self::assertEquals(\CURL_SSLVERSION_TLSv1_1, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
     public function testValidatesCryptoMethodInvalidMethod(): void
@@ -858,7 +972,7 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(__FILE__, $_SERVER['_curl'][\CURLOPT_SSLKEY]);
     }
 
-    public function testAddsSslKeyType()
+    public function testAddsSslKeyType(): void
     {
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), [
@@ -869,7 +983,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame('PEM', $_SERVER['_curl'][\CURLOPT_SSLKEYTYPE]);
     }
 
-    public function testAllowsEngineSslKeyIdentifiers()
+    public function testAllowsEngineSslKeyIdentifiers(): void
     {
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), [
@@ -886,7 +1000,7 @@ class CurlFactoryTest extends TestCase
      *
      * @param mixed $sslKeyType
      */
-    public function testValidatesSslKeyType($sslKeyType)
+    public function testValidatesSslKeyType($sslKeyType): void
     {
         $f = new CurlFactory(3);
 
@@ -909,7 +1023,7 @@ class CurlFactoryTest extends TestCase
      *
      * @param mixed $sslKey
      */
-    public function testValidatesSslKeyOptionShape($sslKey)
+    public function testValidatesSslKeyOptionShape($sslKey): void
     {
         $f = new CurlFactory(3);
 
@@ -967,7 +1081,7 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testAddsCertType()
+    public function testAddsCertType(): void
     {
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), [
@@ -983,7 +1097,7 @@ class CurlFactoryTest extends TestCase
      *
      * @param mixed $certType
      */
-    public function testValidatesCertType($certType)
+    public function testValidatesCertType($certType): void
     {
         $f = new CurlFactory(3);
 
@@ -1284,7 +1398,7 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testReleaseClearsRawXferInfoCallbackBeforeDiscardingHandle(): void
+    public function testReleaseClearsXferInfoCallbackBeforeDiscardingHandle(): void
     {
         if (!\defined('CURLOPT_XFERINFOFUNCTION')) {
             self::markTestSkipped('CURLOPT_XFERINFOFUNCTION is not available.');
@@ -1293,11 +1407,8 @@ class CurlFactoryTest extends TestCase
         $option = (int) \constant('CURLOPT_XFERINFOFUNCTION');
         $factory = new CurlFactory(0);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
-            'curl' => [
-                $option => static function (): int {
-                    return 0;
-                },
-            ],
+            'progress' => static function (): void {
+            },
         ]);
 
         $factory->release($easy);
@@ -1306,7 +1417,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame([], self::readIdleHandles($factory));
     }
 
-    public function testReleaseClearsRawXferInfoCallbackBeforeReusingHandle(): void
+    public function testReleaseClearsXferInfoCallbackBeforeReusingHandle(): void
     {
         if (!\defined('CURLOPT_XFERINFOFUNCTION')) {
             self::markTestSkipped('CURLOPT_XFERINFOFUNCTION is not available.');
@@ -1315,11 +1426,8 @@ class CurlFactoryTest extends TestCase
         $option = (int) \constant('CURLOPT_XFERINFOFUNCTION');
         $factory = new CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
-            'curl' => [
-                $option => static function (): int {
-                    return 0;
-                },
-            ],
+            'progress' => static function (): void {
+            },
         ]);
 
         $factory->release($easy);
@@ -1580,18 +1688,20 @@ class CurlFactoryTest extends TestCase
         self::assertSame(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
-    public function testHttp3UpgradesCurlSslVersionOptionToTls13Minimum(): void
+    public function testHttp3RejectsRawCurlSslVersionOption(): void
     {
         if (!CurlVersion::supportsHttp3()) {
             self::markTestSkipped('HTTP/3 is not supported by this cURL installation.');
         }
 
         $factory = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_SSLVERSION');
+
         $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
             'curl' => [\CURLOPT_SSLVERSION => \CURL_SSLVERSION_TLSv1_2],
         ]);
-
-        self::assertSame(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
     public static function http3ProtocolVersionProvider(): array
@@ -2598,6 +2708,15 @@ class CurlFactoryTest extends TestCase
         }, null, CurlFactory::class);
 
         return $readHandles($factory);
+    }
+
+    private static function readShareHandle(CurlFactory $factory)
+    {
+        $readShareHandle = \Closure::bind(static function (CurlFactory $factory) {
+            return $factory->shareHandle;
+        }, null, CurlFactory::class);
+
+        return $readShareHandle($factory);
     }
 
     private static function requestWithProtocolVersion(string $protocolVersion): RequestInterface
