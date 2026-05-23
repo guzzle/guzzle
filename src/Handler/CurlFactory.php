@@ -316,7 +316,6 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_SHARE', 'the "curl_share" client option or the "share" cURL handler option');
         self::addConflictingCurlOption($options, 'CURLOPT_URL', 'the request URI');
         self::addConflictingCurlOption($options, 'CURLOPT_PORT', 'the request URI');
-        self::addConflictingCurlOption($options, 'CURLOPT_REQUEST_TARGET', 'the request URI');
         self::addConflictingCurlOption($options, 'CURLOPT_CUSTOMREQUEST', 'the request method');
         self::addConflictingCurlOption($options, 'CURLOPT_HTTPGET', 'the request method');
         self::addConflictingCurlOption($options, 'CURLOPT_POST', 'the request method and body');
@@ -371,7 +370,7 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYPASSWD', 'the "ssl_key" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_KEYPASSWD', 'the "ssl_key" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYTYPE', 'the "ssl_key_type" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_COOKIE', 'Guzzle cookie middleware');
+        self::addConflictingCurlOption($options, 'CURLOPT_COOKIE', 'the "Cookie" request header or Guzzle cookie middleware');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIEFILE', 'Guzzle cookie middleware');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIEJAR', 'Guzzle cookie middleware');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIELIST', 'Guzzle cookie middleware');

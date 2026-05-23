@@ -839,9 +839,9 @@ $client->request('GET', 'https://example.com', [
 > `protocols` replaces raw cURL `CURLOPT_PROTOCOLS` when restricting request
 > schemes. Raw cURL options that conflict with Guzzle-managed request handling
 > are rejected. Use Guzzle request options instead when configuring the request
-> method, URI, body, headers, timeouts, redirects, proxy, TLS, progress, debug
-> output, sinks, cookies, and protocols. Redirect middleware
-> also validates redirect targets with `allow_redirects.protocols` before
+> method, URI, body, headers, timeouts, redirects, proxy, TLS, progress,
+> debug output, sinks, cookies, and protocols. Redirect middleware also
+> validates redirect targets with `allow_redirects.protocols` before
 > creating each redirect request.
 
 ## proxy

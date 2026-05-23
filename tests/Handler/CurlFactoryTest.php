@@ -327,8 +327,7 @@ class CurlFactoryTest extends TestCase
     public static function additionalConflictingCurlOptionProvider(): array
     {
         $cases = [
-            'request target' => ['CURLOPT_REQUEST_TARGET', '/', 'the request URI'],
-            'cookie header' => ['CURLOPT_COOKIE', 'name=value', 'Guzzle cookie middleware'],
+            'cookie header' => ['CURLOPT_COOKIE', 'name=value', 'the "Cookie" request header or Guzzle cookie middleware'],
         ];
 
         $available = [];
