@@ -48,13 +48,19 @@ final class RequestOptions
     public const BODY = 'body';
 
     /**
-     * cert: (string|array) Set to a string to specify the path to a file
-     * containing a PEM formatted SSL client side certificate. If a password
-     * is required, then set cert to an array containing the path to the PEM
-     * file in the first array element followed by the certificate password
-     * in the second array element.
+     * cert: (string|array) Set to a string to specify the path to a client
+     * certificate file. PEM is the default certificate format. If a password
+     * is required, set cert to an array containing the certificate path in
+     * the first array element followed by the certificate password in the
+     * second array element. Use cert_type to specify another supported
+     * certificate format.
      */
     public const CERT = 'cert';
+
+    /**
+     * cert_type: (string) Specify the SSL client certificate file type.
+     */
+    public const CERT_TYPE = 'cert_type';
 
     /**
      * cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
@@ -197,6 +203,11 @@ final class RequestOptions
     public const PROGRESS = 'progress';
 
     /**
+     * protocols: (array, default=['http', 'https']) Allowed URI schemes.
+     */
+    public const PROTOCOLS = 'protocols';
+
+    /**
      * proxy: (string|array) Pass a string to specify an HTTP proxy, or an
      * array to specify different proxies for different protocols (where the
      * key is the protocol and the value is a proxy string). Provide a "no"
@@ -229,12 +240,18 @@ final class RequestOptions
     public const SYNCHRONOUS = 'synchronous';
 
     /**
-     * ssl_key: (array|string) Specify the path to a file containing a private
-     * SSL key in PEM format. If a password is required, then set to an array
-     * containing the path to the SSL key in the first array element followed
-     * by the password required for the certificate in the second element.
+     * ssl_key: (array|string) Specify the path to a private SSL key file. PEM
+     * is the default private key format. If a password is required, set
+     * ssl_key to an array containing the key path in the first array element
+     * followed by the key password in the second element. Use ssl_key_type to
+     * specify another supported key format.
      */
     public const SSL_KEY = 'ssl_key';
+
+    /**
+     * ssl_key_type: (string) Specify the SSL private key file type.
+     */
+    public const SSL_KEY_TYPE = 'ssl_key_type';
 
     /**
      * stream: Set to true to attempt to stream a response rather than

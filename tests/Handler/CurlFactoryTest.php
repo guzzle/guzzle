@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
@@ -22,12 +23,12 @@ class CurlFactoryTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         $_SERVER['curl_test'] = true;
-        unset($_SERVER['_curl']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
     }
 
     public static function tearDownAfterClass(): void
     {
-        unset($_SERVER['_curl'], $_SERVER['curl_test'], $_SERVER['curl_setopt_fail']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count'], $_SERVER['curl_test'], $_SERVER['curl_setopt_fail']);
     }
 
     public function testCreatesCurlHandle()
@@ -115,6 +116,89 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(10, $_SERVER['_curl'][\CURLOPT_LOW_SPEED_LIMIT]);
     }
 
+    public function testAppliesConfiguredCurlShareHandle(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        unset($_SERVER['_curl']);
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
+
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::assertSame($shareHandle, $_SERVER['_curl'][\CURLOPT_SHARE]);
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_close($easy->handle);
+                \curl_share_close($shareHandle);
+            }
+        }
+    }
+
+    public function testRejectsRequestLevelShareWhenConfiguredCurlShareHandleExists(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        $requestShareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        self::assertNotFalse($requestShareHandle);
+        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_SHARE');
+
+            $factory->create(new Psr7\Request('GET', Server::$url), [
+                'curl' => [
+                    \CURLOPT_SHARE => $requestShareHandle,
+                ],
+            ]);
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_share_close($shareHandle);
+                \curl_share_close($requestShareHandle);
+            }
+        }
+    }
+
+    public function testRejectsEnabledShareModeWithoutShareHandle(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('share handle is required');
+
+        new CurlFactory(3, CurlShare::HANDLER);
+    }
+
+    public function testRejectsShareHandleWhenSharingIsDisabled(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('cannot be provided');
+
+            new CurlFactory(3, CurlShare::NONE, $shareHandle);
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_share_close($shareHandle);
+            }
+        }
+    }
+
+    public function testRejectsInvalidShareHandle(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('cURL share handle');
+
+        new CurlFactory(3, CurlShare::HANDLER, false);
+    }
+
     public function testCanChangeCurlOptions()
     {
         Server::flush();
@@ -123,6 +207,53 @@ class CurlFactoryTest extends TestCase
         $req = new Psr7\Request('GET', Server::$url);
         $a($req, ['curl' => [\CURLOPT_HTTP_VERSION => \CURL_HTTP_VERSION_1_0]]);
         self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+    }
+
+    public function testProtocolsOptionCanRestrictCurlProtocols()
+    {
+        if (!\defined('CURLOPT_PROTOCOLS')) {
+            self::markTestSkipped('CURLOPT_PROTOCOLS is not available.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), ['protocols' => ['https']]);
+
+        self::assertSame(\CURLPROTO_HTTPS, $_SERVER['_curl'][\CURLOPT_PROTOCOLS]);
+    }
+
+    public function testProtocolsOptionRejectsDisallowedCurlScheme()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('not allowed by the protocols request option');
+
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['protocols' => ['https']]);
+    }
+
+    /**
+     * @dataProvider invalidProtocolsProvider
+     *
+     * @param mixed $protocols
+     */
+    public function testProtocolsOptionRejectsInvalidValues($protocols)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('protocols');
+
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['protocols' => $protocols]);
+    }
+
+    public static function invalidProtocolsProvider(): array
+    {
+        return [
+            'empty' => [[]],
+            'non-array' => ['https'],
+            'non-string' => [[123]],
+            'unsupported' => [['ftp']],
+        ];
     }
 
     public function testThrowsWhenCurlOptionCannotBeApplied()
@@ -341,6 +472,77 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(__FILE__, $_SERVER['_curl'][\CURLOPT_SSLKEY]);
     }
 
+    public function testAddsSslKeyType()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'ssl_key' => __FILE__,
+            'ssl_key_type' => 'pem',
+        ]);
+
+        self::assertSame('PEM', $_SERVER['_curl'][\CURLOPT_SSLKEYTYPE]);
+    }
+
+    public function testAllowsEngineSslKeyIdentifiers()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'ssl_key' => 'engine-key-id',
+            'ssl_key_type' => 'ENG',
+        ]);
+
+        self::assertSame('engine-key-id', $_SERVER['_curl'][\CURLOPT_SSLKEY]);
+        self::assertSame('ENG', $_SERVER['_curl'][\CURLOPT_SSLKEYTYPE]);
+    }
+
+    /**
+     * @dataProvider invalidSslKeyTypeProvider
+     *
+     * @param mixed $sslKeyType
+     */
+    public function testValidatesSslKeyType($sslKeyType)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('ssl_key_type must be a non-empty string');
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key_type' => $sslKeyType]);
+    }
+
+    public static function invalidSslKeyTypeProvider(): array
+    {
+        return [
+            [[]],
+            [''],
+            [false],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidSslKeyOptionProvider
+     *
+     * @param mixed $sslKey
+     */
+    public function testValidatesSslKeyOptionShape($sslKey)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid ssl_key request option');
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['ssl_key' => $sslKey]);
+    }
+
+    public static function invalidSslKeyOptionProvider(): array
+    {
+        return [
+            [[]],
+            [['passphrase' => 'test']],
+            [[new \stdClass(), 'test']],
+            [[__FILE__, new \stdClass()]],
+            [new \stdClass()],
+        ];
+    }
+
     public function testValidatesCert()
     {
         $f = new CurlFactory(3);
@@ -379,6 +581,40 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testAddsCertType()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'cert' => __FILE__,
+            'cert_type' => 'p12',
+        ]);
+
+        self::assertSame('P12', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
+    }
+
+    /**
+     * @dataProvider invalidCertTypeProvider
+     *
+     * @param mixed $certType
+     */
+    public function testValidatesCertType($certType)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('cert_type must be a non-empty string');
+        $f->create(new Psr7\Request('GET', Server::$url), ['cert_type' => $certType]);
+    }
+
+    public static function invalidCertTypeProvider(): array
+    {
+        return [
+            [[]],
+            [''],
+            [false],
+        ];
+    }
+
     /**
      * @dataProvider invalidCertOptionProvider
      *
@@ -413,6 +649,22 @@ class CurlFactoryTest extends TestCase
             $f->create(new Psr7\Request('GET', Server::$url), ['cert' => $certFile]);
             self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
             self::assertEquals('DER', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
+        } finally {
+            @\unlink($certFile);
+        }
+    }
+
+    public function testExplicitCertTypeOverridesCertExtension()
+    {
+        $certFile = tempnam(sys_get_temp_dir(), 'mock_test_cert');
+        rename($certFile, $certFile .= '.der');
+        try {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', Server::$url), [
+                'cert' => $certFile,
+                'cert_type' => 'PEM',
+            ]);
+            self::assertSame('PEM', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
         } finally {
             @\unlink($certFile);
         }
@@ -1136,5 +1388,12 @@ class CurlFactoryTest extends TestCase
         }, null, CurlFactory::class);
 
         return $readHandles($factory);
+    }
+
+    private static function skipIfCurlShareIsUnavailable(): void
+    {
+        if (!\function_exists('curl_share_init') || !\defined('CURLOPT_SHARE')) {
+            self::markTestSkipped('cURL share handles are unavailable.');
+        }
     }
 }

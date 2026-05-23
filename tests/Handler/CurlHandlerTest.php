@@ -3,7 +3,9 @@
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlHandler;
+use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
@@ -81,6 +83,54 @@ class CurlHandlerTest extends TestCase
         self::assertTrue($called);
     }
 
+    public function testShareOptionAppliesCurlShare(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        try {
+            $handler = new CurlHandler([
+                'share' => CurlShare::HANDLER,
+            ]);
+
+            $handler(new Request('GET', Server::$url), [])->wait();
+
+            self::assertArrayHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
+            self::assertSame(1, $_SERVER['_curl_share_init_count']);
+            self::assertSame([
+                \CURL_LOCK_DATA_DNS,
+                \CURL_LOCK_DATA_SSL_SESSION,
+            ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+        }
+    }
+
+    public function testShareOptionCannotBeUsedWithCustomFactory(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('handle_factory');
+
+        new CurlHandler([
+            'handle_factory' => new CurlFactory(0),
+            'share' => CurlShare::HANDLER,
+        ]);
+    }
+
+    public function testDisabledShareOptionCanBeUsedWithCustomFactory(): void
+    {
+        $handler = new CurlHandler([
+            'handle_factory' => new CurlFactory(0),
+            'share' => CurlShare::NONE,
+        ]);
+
+        self::assertInstanceOf(CurlHandler::class, $handler);
+    }
+
     public function testUsesContentLengthWhenOverInMemorySize()
     {
         Server::flush();
@@ -97,5 +147,12 @@ class CurlHandlerTest extends TestCase
         $received = Server::received()[0];
         self::assertEquals(1000000, $received->getHeaderLine('Content-Length'));
         self::assertFalse($received->hasHeader('Transfer-Encoding'));
+    }
+
+    private static function skipIfCurlShareIsUnavailable(): void
+    {
+        if (!\function_exists('curl_share_init') || !\defined('CURLOPT_SHARE')) {
+            self::markTestSkipped('cURL share handles are unavailable.');
+        }
     }
 }

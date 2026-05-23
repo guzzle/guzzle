@@ -5,8 +5,11 @@ namespace GuzzleHttp;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 
 final class Utils
@@ -79,33 +82,71 @@ final class Utils
      *
      * The returned handler is not wrapped by any default middlewares.
      *
-     * @return callable(\Psr\Http\Message\RequestInterface, array): Promise\PromiseInterface Returns the best handler for the given system.
+     * @param array{share?: mixed} $curlOptions cURL handler constructor options.
+     *
+     * @return callable(RequestInterface, array): Promise\PromiseInterface Returns the best handler for the given system.
      *
      * @throws \RuntimeException if no viable Handler is available.
      */
-    public static function chooseHandler(): callable
+    public static function chooseHandler(array $curlOptions = []): callable
     {
         $handler = null;
+        $shareMode = CurlShareHandleState::normalizeMode($curlOptions['share'] ?? null, 'share');
+        $shareRequested = $shareMode !== CurlShare::NONE;
+        $curlHandlerOptions = [];
+        $curlSupported = \defined('CURLOPT_CUSTOMREQUEST')
+            && \function_exists('curl_version')
+            && version_compare(curl_version()['version'], '7.21.2') >= 0
+            && (\function_exists('curl_multi_exec') || \function_exists('curl_exec'));
 
-        if (\defined('CURLOPT_CUSTOMREQUEST') && \function_exists('curl_version') && version_compare(curl_version()['version'], '7.21.2') >= 0) {
+        if ($shareRequested && !$curlSupported) {
+            throw new \RuntimeException('cURL sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and libcurl 7.21.2 or higher.');
+        }
+
+        if ($curlSupported) {
+            if ($shareRequested) {
+                $shareState = CurlShareHandleState::fromOption($shareMode);
+                if ($shareState !== null) {
+                    $curlHandlerOptions['share'] = $shareState;
+                }
+            }
+
             if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
-                $handler = Proxy::wrapSync(new CurlMultiHandler(), new CurlHandler());
+                $handler = Proxy::wrapSync(new CurlMultiHandler($curlHandlerOptions), new CurlHandler($curlHandlerOptions));
             } elseif (\function_exists('curl_exec')) {
-                $handler = new CurlHandler();
+                $handler = new CurlHandler($curlHandlerOptions);
             } elseif (\function_exists('curl_multi_exec')) {
-                $handler = new CurlMultiHandler();
+                $handler = new CurlMultiHandler($curlHandlerOptions);
             }
         }
 
         if (\ini_get('allow_url_fopen')) {
+            $streamHandler = new StreamHandler();
+            if ($shareRequested) {
+                $streamHandler = self::wrapStreamHandlerCurlShare($streamHandler, $shareMode);
+            }
+
             $handler = $handler
-                ? Proxy::wrapStreaming($handler, new StreamHandler())
-                : new StreamHandler();
+                ? Proxy::wrapStreaming($handler, $streamHandler)
+                : $streamHandler;
         } elseif (!$handler) {
             throw new \RuntimeException('GuzzleHttp requires cURL, the allow_url_fopen ini setting, or a custom HTTP handler.');
         }
 
         return $handler;
+    }
+
+    private static function wrapStreamHandlerCurlShare(callable $handler, string $shareMode): callable
+    {
+        return static function (RequestInterface $request, array $options) use ($handler, $shareMode): Promise\PromiseInterface {
+            if (\array_key_exists('curl_share', $options)) {
+                CurlShareHandleState::normalizeMode($options['curl_share'], 'curl_share');
+            }
+
+            $options['curl_share'] = $shareMode;
+
+            return $handler($request, $options);
+        };
     }
 
     /**
@@ -199,6 +240,37 @@ EOT
         }
 
         return $result;
+    }
+
+    /**
+     * @param mixed $protocols
+     *
+     * @return string[]
+     *
+     * @throws InvalidArgumentException
+     */
+    public static function normalizeProtocols($protocols): array
+    {
+        if (!\is_array($protocols) || $protocols === []) {
+            throw new InvalidArgumentException('protocols must be a non-empty array of "http" and/or "https"');
+        }
+
+        $normalized = [];
+
+        foreach ($protocols as $protocol) {
+            if (!\is_string($protocol)) {
+                throw new InvalidArgumentException('protocols must contain only strings');
+            }
+
+            $protocol = \strtolower($protocol);
+            if ($protocol !== 'http' && $protocol !== 'https') {
+                throw new InvalidArgumentException('protocols may only contain "http" and "https"');
+            }
+
+            $normalized[$protocol] = true;
+        }
+
+        return \array_keys($normalized);
     }
 
     /**
