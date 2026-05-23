@@ -388,6 +388,77 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(__FILE__, $_SERVER['_curl'][\CURLOPT_SSLKEY]);
     }
 
+    public function testAddsSslKeyType()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'ssl_key' => __FILE__,
+            'ssl_key_type' => 'pem',
+        ]);
+
+        self::assertSame('PEM', $_SERVER['_curl'][\CURLOPT_SSLKEYTYPE]);
+    }
+
+    public function testAllowsEngineSslKeyIdentifiers()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'ssl_key' => 'engine-key-id',
+            'ssl_key_type' => 'ENG',
+        ]);
+
+        self::assertSame('engine-key-id', $_SERVER['_curl'][\CURLOPT_SSLKEY]);
+        self::assertSame('ENG', $_SERVER['_curl'][\CURLOPT_SSLKEYTYPE]);
+    }
+
+    /**
+     * @dataProvider invalidSslKeyTypeProvider
+     *
+     * @param mixed $sslKeyType
+     */
+    public function testValidatesSslKeyType($sslKeyType)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('ssl_key_type must be a non-empty string');
+        $f->create(new Psr7\Request('GET', Server::$url), ['ssl_key_type' => $sslKeyType]);
+    }
+
+    public static function invalidSslKeyTypeProvider(): array
+    {
+        return [
+            [[]],
+            [''],
+            [false],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidSslKeyOptionProvider
+     *
+     * @param mixed $sslKey
+     */
+    public function testValidatesSslKeyOptionShape($sslKey)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid ssl_key request option');
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['ssl_key' => $sslKey]);
+    }
+
+    public static function invalidSslKeyOptionProvider(): array
+    {
+        return [
+            [[]],
+            [['passphrase' => 'test']],
+            [[new \stdClass(), 'test']],
+            [[__FILE__, new \stdClass()]],
+            [new \stdClass()],
+        ];
+    }
+
     public function testValidatesCert()
     {
         $f = new CurlFactory(3);
@@ -426,6 +497,40 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testAddsCertType()
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'cert' => __FILE__,
+            'cert_type' => 'p12',
+        ]);
+
+        self::assertSame('P12', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
+    }
+
+    /**
+     * @dataProvider invalidCertTypeProvider
+     *
+     * @param mixed $certType
+     */
+    public function testValidatesCertType($certType)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('cert_type must be a non-empty string');
+        $f->create(new Psr7\Request('GET', Server::$url), ['cert_type' => $certType]);
+    }
+
+    public static function invalidCertTypeProvider(): array
+    {
+        return [
+            [[]],
+            [''],
+            [false],
+        ];
+    }
+
     /**
      * @dataProvider invalidCertOptionProvider
      *
@@ -460,6 +565,22 @@ class CurlFactoryTest extends TestCase
             $f->create(new Psr7\Request('GET', Server::$url), ['cert' => $certFile]);
             self::assertArrayHasKey(\CURLOPT_SSLCERTTYPE, $_SERVER['_curl']);
             self::assertEquals('DER', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
+        } finally {
+            @\unlink($certFile);
+        }
+    }
+
+    public function testExplicitCertTypeOverridesCertExtension()
+    {
+        $certFile = tempnam(sys_get_temp_dir(), 'mock_test_cert');
+        rename($certFile, $certFile .= '.der');
+        try {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', Server::$url), [
+                'cert' => $certFile,
+                'cert_type' => 'PEM',
+            ]);
+            self::assertSame('PEM', $_SERVER['_curl'][\CURLOPT_SSLCERTTYPE]);
         } finally {
             @\unlink($certFile);
         }

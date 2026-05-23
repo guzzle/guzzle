@@ -57,6 +57,11 @@ final class RequestOptions
     public const CERT = 'cert';
 
     /**
+     * cert_type: (string) Specify the SSL client certificate file type.
+     */
+    public const CERT_TYPE = 'cert_type';
+
+    /**
      * cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
      * Specifies whether or not cookies are used in a request or what cookie
      * jar to use or what cookies to send. This option only works if your
@@ -240,6 +245,11 @@ final class RequestOptions
      * by the password required for the certificate in the second element.
      */
     public const SSL_KEY = 'ssl_key';
+
+    /**
+     * ssl_key_type: (string) Specify the SSL private key file type.
+     */
+    public const SSL_KEY_TYPE = 'ssl_key_type';
 
     /**
      * stream: Set to true to attempt to stream a response rather than

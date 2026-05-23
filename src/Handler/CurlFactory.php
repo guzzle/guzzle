@@ -69,6 +69,7 @@ class CurlFactory implements CurlFactoryInterface
             unset($options['curl']['body_as_string']);
         }
 
+        self::triggerUnsupportedRequestOptionDeprecations($options);
         self::triggerConflictingCurlOptionDeprecations($options);
 
         $easy = new EasyHandle();
@@ -216,6 +217,17 @@ class CurlFactory implements CurlFactoryInterface
         }
     }
 
+    private static function triggerUnsupportedRequestOptionDeprecations(array $options): void
+    {
+        if (\array_key_exists('stream_context', $options)) {
+            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "stream_context" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL handlers ignore PHP stream context options.');
+        }
+
+        if (\array_key_exists('read_timeout', $options)) {
+            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "read_timeout" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL handlers ignore stream read timeouts. Use the "timeout" request option instead.');
+        }
+    }
+
     /**
      * @return array<int, string|null>
      */
@@ -279,9 +291,11 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_SSLVERSION', 'the "crypto_method" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLCERT', 'the "cert" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLCERTPASSWD', 'the "cert" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLCERTTYPE', 'the "cert_type" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLKEY', 'the "ssl_key" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYPASSWD', 'the "ssl_key" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_KEYPASSWD', 'the "ssl_key" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYTYPE', 'the "ssl_key_type" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIEFILE', 'Guzzle cookie middleware');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIEJAR', 'Guzzle cookie middleware');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIELIST', 'Guzzle cookie middleware');
@@ -575,6 +589,23 @@ class CurlFactory implements CurlFactoryInterface
         return $mask;
     }
 
+    /**
+     * @param mixed $type
+     */
+    private static function normalizeTlsFileType(string $option, $type): string
+    {
+        if (!\is_string($type) || $type === '') {
+            throw new \InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
+        }
+
+        return \strtoupper($type);
+    }
+
+    private static function shouldValidateSslKeyFile(?string $type): bool
+    {
+        return $type !== 'ENG' && $type !== 'PROV';
+    }
+
     private function applyMethod(EasyHandle $easy, array &$conf): void
     {
         $body = $easy->request->getBody();
@@ -829,6 +860,12 @@ class CurlFactory implements CurlFactoryInterface
             }
         }
 
+        $certType = null;
+        if (isset($options['cert_type'])) {
+            $certType = self::normalizeTlsFileType('cert_type', $options['cert_type']);
+            $conf[\CURLOPT_SSLCERTTYPE] = $certType;
+        }
+
         if (isset($options['cert'])) {
             $cert = $options['cert'];
             if (\is_array($cert)) {
@@ -852,24 +889,39 @@ class CurlFactory implements CurlFactoryInterface
             // OpenSSL (versions 0.9.3 and later) also support "P12" for PKCS#12-encoded files.
             // see https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
             $ext = pathinfo($cert, \PATHINFO_EXTENSION);
-            if (preg_match('#^(der|p12)$#i', $ext)) {
+            if ($certType === null && preg_match('#^(der|p12)$#i', $ext)) {
                 $conf[\CURLOPT_SSLCERTTYPE] = strtoupper($ext);
             }
             $conf[\CURLOPT_SSLCERT] = $cert;
         }
 
+        $sslKeyType = null;
+        if (isset($options['ssl_key_type'])) {
+            $sslKeyType = self::normalizeTlsFileType('ssl_key_type', $options['ssl_key_type']);
+            $conf[\CURLOPT_SSLKEYTYPE] = $sslKeyType;
+        }
+
         if (isset($options['ssl_key'])) {
             if (\is_array($options['ssl_key'])) {
-                if (\count($options['ssl_key']) === 2) {
-                    [$sslKey, $conf[\CURLOPT_SSLKEYPASSWD]] = $options['ssl_key'];
-                } else {
-                    [$sslKey] = $options['ssl_key'];
+                if (!isset($options['ssl_key'][0]) || !\is_string($options['ssl_key'][0])) {
+                    throw new \InvalidArgumentException('Invalid ssl_key request option');
                 }
+                if (isset($options['ssl_key'][1])) {
+                    if (!\is_string($options['ssl_key'][1])) {
+                        throw new \InvalidArgumentException('Invalid ssl_key request option');
+                    }
+                    $conf[\CURLOPT_SSLKEYPASSWD] = $options['ssl_key'][1];
+                }
+                $sslKey = $options['ssl_key'][0];
             }
 
             $sslKey = $sslKey ?? $options['ssl_key'];
 
-            if (!\file_exists($sslKey)) {
+            if (!\is_string($sslKey)) {
+                throw new \InvalidArgumentException('Invalid ssl_key request option');
+            }
+
+            if (self::shouldValidateSslKeyFile($sslKeyType) && !\file_exists($sslKey)) {
                 throw new \InvalidArgumentException("SSL private key not found: {$sslKey}");
             }
             $conf[\CURLOPT_SSLKEY] = $sslKey;
