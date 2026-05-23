@@ -157,15 +157,61 @@ class CurlHandlerTest extends TestCase
         }
     }
 
-    public function testShareOptionCannotBeUsedWithCustomFactory(): void
+    public function testPersistentPreferShareOptionAppliesCurlShare(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $_SERVER['curl_test'] = true;
+        unset(
+            $_SERVER['_curl'],
+            $_SERVER['_curl_share'],
+            $_SERVER['_curl_share_init_count'],
+            $_SERVER['_curl_share_init_persistent_count'],
+            $_SERVER['_curl_share_persistent_options']
+        );
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        try {
+            $handler = new CurlHandler([
+                'share' => CurlShare::PERSISTENT_PREFER,
+            ]);
+
+            $handler(new Request('GET', Server::$url), [])->wait();
+
+            self::assertArrayHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
+            self::assertPersistentPreferShareWasCreated();
+        } finally {
+            unset(
+                $_SERVER['curl_test'],
+                $_SERVER['_curl'],
+                $_SERVER['_curl_share'],
+                $_SERVER['_curl_share_init_count'],
+                $_SERVER['_curl_share_init_persistent_count'],
+                $_SERVER['_curl_share_persistent_options']
+            );
+        }
+    }
+
+    /**
+     * @dataProvider enabledShareModeProvider
+     */
+    public function testShareOptionCannotBeUsedWithCustomFactory(string $shareMode): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('handle_factory');
 
         new CurlHandler([
             'handle_factory' => new CurlFactory(0),
-            'share' => CurlShare::HANDLER,
+            'share' => $shareMode,
         ]);
+    }
+
+    public static function enabledShareModeProvider(): iterable
+    {
+        yield 'handler' => [CurlShare::HANDLER];
+        yield 'persistent prefer' => [CurlShare::PERSISTENT_PREFER];
+        yield 'persistent require' => [CurlShare::PERSISTENT_REQUIRE];
     }
 
     public function testDisabledShareOptionCanBeUsedWithCustomFactory(): void
@@ -234,8 +280,38 @@ class CurlHandlerTest extends TestCase
 
     private static function skipIfCurlShareIsUnavailable(): void
     {
-        if (!\function_exists('curl_share_init') || !\defined('CURLOPT_SHARE')) {
+        if (
+            !\function_exists('curl_share_init')
+            || !\function_exists('curl_share_setopt')
+            || !\defined('CURLOPT_SHARE')
+        ) {
             self::markTestSkipped('cURL share handles are unavailable.');
         }
+    }
+
+    private static function assertPersistentPreferShareWasCreated(): void
+    {
+        if (
+            \function_exists('curl_share_init_persistent')
+            && \class_exists('CurlSharePersistentHandle')
+            && \defined('CURL_LOCK_DATA_DNS')
+            && \defined('CURL_LOCK_DATA_CONNECT')
+            && \defined('CURL_LOCK_DATA_SSL_SESSION')
+        ) {
+            self::assertSame(1, $_SERVER['_curl_share_init_persistent_count']);
+            self::assertSame([
+                \CURL_LOCK_DATA_DNS,
+                \CURL_LOCK_DATA_CONNECT,
+                \CURL_LOCK_DATA_SSL_SESSION,
+            ], $_SERVER['_curl_share_persistent_options']);
+
+            return;
+        }
+
+        self::assertSame(1, $_SERVER['_curl_share_init_count']);
+        self::assertSame([
+            \CURL_LOCK_DATA_DNS,
+            \CURL_LOCK_DATA_SSL_SESSION,
+        ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
     }
 }

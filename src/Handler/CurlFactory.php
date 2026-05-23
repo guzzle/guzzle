@@ -41,7 +41,7 @@ class CurlFactory implements CurlFactoryInterface
     private $closed = false;
 
     /**
-     * @var resource|\CurlShareHandle|null
+     * @var resource|\CurlShareHandle|\CurlSharePersistentHandle|null
      */
     private $shareHandle;
 
@@ -51,8 +51,8 @@ class CurlFactory implements CurlFactoryInterface
     private $shareMode;
 
     /**
-     * @param int                            $maxHandles  Maximum number of idle handles.
-     * @param resource|\CurlShareHandle|null $shareHandle
+     * @param int                                                       $maxHandles  Maximum number of idle handles.
+     * @param resource|\CurlShareHandle|\CurlSharePersistentHandle|null $shareHandle
      */
     public function __construct(int $maxHandles, string $shareMode = CurlShare::NONE, $shareHandle = null)
     {
@@ -68,7 +68,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if ($shareHandle !== null && !self::isCurlShareHandle($shareHandle)) {
-            throw new \InvalidArgumentException('A cURL share handle must be an instance of CurlShareHandle or a curl_share resource.');
+            throw new \InvalidArgumentException('A cURL share handle must be an instance of CurlShareHandle, CurlSharePersistentHandle, or a curl_share resource.');
         }
 
         $this->shareHandle = $shareHandle;
@@ -83,7 +83,12 @@ class CurlFactory implements CurlFactoryInterface
             return \is_resource($value) && \get_resource_type($value) === 'curl_share';
         }
 
-        return $value instanceof \CurlShareHandle;
+        if ($value instanceof \CurlShareHandle) {
+            return true;
+        }
+
+        return \class_exists('CurlSharePersistentHandle')
+            && $value instanceof \CurlSharePersistentHandle;
     }
 
     public function create(RequestInterface $request, array $options): EasyHandle
@@ -121,6 +126,7 @@ class CurlFactory implements CurlFactoryInterface
 
         self::rejectUnsupportedRequestOptions($options);
         $this->rejectRequestLevelShareConflict($options);
+        $this->rejectPersistentRequireConnectionReuseConflicts($options);
         self::rejectConflictingCurlOptions($options);
 
         $easy = new EasyHandle();
@@ -209,7 +215,7 @@ class CurlFactory implements CurlFactoryInterface
 
     private function rejectRequestLevelShareConflict(array $options): void
     {
-        if ($this->shareHandle === null || $this->shareMode !== CurlShare::HANDLER) {
+        if ($this->shareHandle === null) {
             return;
         }
 
@@ -223,6 +229,25 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with the "curl_share" client option or the "share" cURL handler option.');
+    }
+
+    private function rejectPersistentRequireConnectionReuseConflicts(array $options): void
+    {
+        if (
+            $this->shareMode !== CurlShare::PERSISTENT_REQUIRE
+            || !isset($options['curl'])
+            || !\is_array($options['curl'])
+        ) {
+            return;
+        }
+
+        if (!empty($options['curl'][\CURLOPT_FRESH_CONNECT])) {
+            throw new \InvalidArgumentException('The CURLOPT_FRESH_CONNECT cURL option cannot be used when persistent cURL sharing is required because it disables connection reuse.');
+        }
+
+        if (!empty($options['curl'][\CURLOPT_FORBID_REUSE])) {
+            throw new \InvalidArgumentException('The CURLOPT_FORBID_REUSE cURL option cannot be used when persistent cURL sharing is required because it disables connection reuse.');
+        }
     }
 
     /**
@@ -1216,6 +1241,10 @@ class CurlFactory implements CurlFactoryInterface
 
         $proxyForConnectionReuse = self::getEffectiveProxyForConnectionReuse($selectedProxy, $options);
         if ($proxyForConnectionReuse !== null && self::requiresFreshConnectionForAuthenticatedProxy($easy->request, $proxyForConnectionReuse, $options)) {
+            if ($this->shareMode === CurlShare::PERSISTENT_REQUIRE) {
+                throw new \InvalidArgumentException('Persistent cURL sharing is required, but this request requires a fresh proxy tunnel connection.');
+            }
+
             $conf[\CURLOPT_FRESH_CONNECT] = true;
             $conf[\CURLOPT_FORBID_REUSE] = true;
         }

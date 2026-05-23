@@ -15,3 +15,16 @@ if (!\class_exists('CurlShareHandle')) {
     {
     }
 }
+
+if (!\class_exists('CurlSharePersistentHandle')) {
+    class CurlSharePersistentHandle
+    {
+    }
+}
+
+if (!\function_exists('curl_share_init_persistent')) {
+    function curl_share_init_persistent(array $share_options): CurlSharePersistentHandle
+    {
+        return new CurlSharePersistentHandle();
+    }
+}

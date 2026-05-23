@@ -10,7 +10,7 @@ use GuzzleHttp\Utils;
 final class CurlShareHandleState
 {
     /**
-     * @var resource|\CurlShareHandle|null
+     * @var resource|\CurlShareHandle|\CurlSharePersistentHandle|null
      */
     public $handle;
 
@@ -20,7 +20,7 @@ final class CurlShareHandleState
     public $mode;
 
     /**
-     * @param resource|\CurlShareHandle|null $handle
+     * @param resource|\CurlShareHandle|\CurlSharePersistentHandle|null $handle
      */
     private function __construct(string $mode, $handle)
     {
@@ -42,7 +42,15 @@ final class CurlShareHandleState
             return null;
         }
 
-        return self::createHandlerShare($mode);
+        if ($mode === CurlShare::HANDLER) {
+            return self::createHandlerShare($mode);
+        }
+
+        if ($mode === CurlShare::PERSISTENT_PREFER) {
+            return self::createPersistentShareOrFallback();
+        }
+
+        return self::createPersistentShare($mode);
     }
 
     /**
@@ -58,12 +66,16 @@ final class CurlShareHandleState
             return CurlShare::NONE;
         }
 
-        if ($share === CurlShare::HANDLER) {
-            return CurlShare::HANDLER;
+        if (
+            $share === CurlShare::HANDLER
+            || $share === CurlShare::PERSISTENT_PREFER
+            || $share === CurlShare::PERSISTENT_REQUIRE
+        ) {
+            return $share;
         }
 
         throw new \InvalidArgumentException(\sprintf(
-            'The "%s" option must be null, GuzzleHttp\\Handler\\CurlShare::NONE, or GuzzleHttp\\Handler\\CurlShare::HANDLER; received %s.',
+            'The "%s" option must be null or a GuzzleHttp\\Handler\\CurlShare::* constant; received %s.',
             $option,
             Utils::describeType($share)
         ));
@@ -121,6 +133,49 @@ final class CurlShareHandleState
         return new self($mode, $handle);
     }
 
+    private static function createPersistentShareOrFallback(): self
+    {
+        if (!self::supportsPersistentShare()) {
+            return self::createHandlerShare(CurlShare::HANDLER);
+        }
+
+        try {
+            return self::createPersistentShare(CurlShare::PERSISTENT_PREFER);
+        } catch (\Throwable $e) {
+            return self::createHandlerShare(CurlShare::HANDLER);
+        }
+    }
+
+    private static function createPersistentShare(string $mode): self
+    {
+        if (!self::supportsPersistentShare()) {
+            throw new \InvalidArgumentException('The cURL handler option "share" requires persistent cURL share handle support.');
+        }
+
+        self::requireCurlConstant('CURLOPT_SHARE');
+
+        try {
+            $handle = curl_share_init_persistent(self::persistentLocks());
+        } catch (\Throwable $e) {
+            throw new \InvalidArgumentException(
+                'Unable to create persistent cURL share handle: '.$e->getMessage(),
+                0,
+                $e
+            );
+        }
+
+        return new self($mode, $handle);
+    }
+
+    private static function supportsPersistentShare(): bool
+    {
+        return \function_exists('curl_share_init_persistent')
+            && \class_exists('CurlSharePersistentHandle')
+            && \defined('CURL_LOCK_DATA_DNS')
+            && \defined('CURL_LOCK_DATA_CONNECT')
+            && \defined('CURL_LOCK_DATA_SSL_SESSION');
+    }
+
     /**
      * @return int[]
      */
@@ -128,6 +183,18 @@ final class CurlShareHandleState
     {
         return [
             self::requireCurlConstant('CURL_LOCK_DATA_DNS'),
+            self::requireCurlConstant('CURL_LOCK_DATA_SSL_SESSION'),
+        ];
+    }
+
+    /**
+     * @return int[]
+     */
+    private static function persistentLocks(): array
+    {
+        return [
+            self::requireCurlConstant('CURL_LOCK_DATA_DNS'),
+            self::requireCurlConstant('CURL_LOCK_DATA_CONNECT'),
             self::requireCurlConstant('CURL_LOCK_DATA_SSL_SESSION'),
         ];
     }

@@ -96,4 +96,21 @@ namespace GuzzleHttp\Handler {
 
         \curl_share_close($handle);
     }
+
+    if (\function_exists('curl_share_init_persistent')) {
+        function curl_share_init_persistent(array $share_options)
+        {
+            if (!empty($_SERVER['curl_test'])) {
+                $count = $_SERVER['_curl_share_init_persistent_count'] ?? 0;
+                $_SERVER['_curl_share_init_persistent_count'] = $count + 1;
+                $_SERVER['_curl_share_persistent_options'] = $share_options;
+            }
+
+            if (!empty($_SERVER['curl_share_init_persistent_fail'])) {
+                throw new \ValueError('curl_share_init_persistent failed');
+            }
+
+            return \curl_share_init_persistent($share_options);
+        }
+    }
 }

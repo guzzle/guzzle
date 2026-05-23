@@ -108,6 +108,22 @@ class UtilsTest extends TestCase
         }
     }
 
+    public function testChooseHandlerAcceptsPersistentPreferCurlShareOption(): void
+    {
+        self::skipIfDefaultCurlHandlerIsUnavailable();
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_share_init_count'], $_SERVER['_curl_share_init_persistent_count']);
+
+        try {
+            $handler = Utils::chooseHandler(['share' => CurlShare::PERSISTENT_PREFER]);
+
+            self::assertIsCallable($handler);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_share_init_count'], $_SERVER['_curl_share_init_persistent_count']);
+        }
+    }
+
     public function testChooseHandlerAcceptsDisabledCurlShareOption(): void
     {
         $_SERVER['curl_test'] = true;
@@ -373,6 +389,7 @@ class UtilsTest extends TestCase
     {
         if (
             !\function_exists('curl_share_init')
+            || !\function_exists('curl_share_setopt')
             || !\function_exists('curl_exec')
             || !CurlVersion::supportsTls12()
         ) {

@@ -20,7 +20,10 @@ class CurlShareHandleStateTest extends TestCase
             $_SERVER['_curl_share'],
             $_SERVER['_curl_share_init_count'],
             $_SERVER['_curl_share_close_count'],
-            $_SERVER['curl_share_setopt_fail']
+            $_SERVER['_curl_share_init_persistent_count'],
+            $_SERVER['_curl_share_persistent_options'],
+            $_SERVER['curl_share_setopt_fail'],
+            $_SERVER['curl_share_init_persistent_fail']
         );
     }
 
@@ -31,7 +34,10 @@ class CurlShareHandleStateTest extends TestCase
             $_SERVER['_curl_share'],
             $_SERVER['_curl_share_init_count'],
             $_SERVER['_curl_share_close_count'],
-            $_SERVER['curl_share_setopt_fail']
+            $_SERVER['_curl_share_init_persistent_count'],
+            $_SERVER['_curl_share_persistent_options'],
+            $_SERVER['curl_share_setopt_fail'],
+            $_SERVER['curl_share_init_persistent_fail']
         );
     }
 
@@ -64,6 +70,83 @@ class CurlShareHandleStateTest extends TestCase
         }
     }
 
+    public function testPersistentPreferFallsBackToHandlerSharingWhenPersistentSharingIsUnavailable(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        if (self::persistentCurlShareIsAvailable()) {
+            $_SERVER['curl_share_init_persistent_fail'] = true;
+        }
+
+        $state = CurlShareHandleState::fromOption(CurlShare::PERSISTENT_PREFER);
+
+        self::assertInstanceOf(CurlShareHandleState::class, $state);
+        self::assertSame(CurlShare::HANDLER, $state->mode);
+        self::assertHandlerShareWasCreated();
+    }
+
+    public function testPersistentPreferStillFailsWhenHandlerSharingFallbackFails(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        if (self::persistentCurlShareIsAvailable()) {
+            $_SERVER['curl_share_init_persistent_fail'] = true;
+        }
+        $_SERVER['curl_share_setopt_fail'] = \CURL_LOCK_DATA_DNS;
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unable to configure cURL share handle');
+
+        CurlShareHandleState::fromOption(CurlShare::PERSISTENT_PREFER);
+    }
+
+    public function testPersistentPreferUsesPersistentSharingWhenAvailable(): void
+    {
+        self::skipIfPersistentCurlShareIsUnavailable();
+
+        $state = CurlShareHandleState::fromOption(CurlShare::PERSISTENT_PREFER);
+
+        self::assertInstanceOf(CurlShareHandleState::class, $state);
+        self::assertSame(CurlShare::PERSISTENT_PREFER, $state->mode);
+        self::assertPersistentShareWasCreated();
+        self::assertArrayNotHasKey('_curl_share_init_count', $_SERVER);
+    }
+
+    public function testPersistentRequireRejectsWhenPersistentSharingIsUnavailable(): void
+    {
+        if (\function_exists('curl_share_init_persistent') && \class_exists('CurlSharePersistentHandle')) {
+            self::markTestSkipped('Persistent cURL share handles are available.');
+        }
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('persistent cURL share handle support');
+
+        CurlShareHandleState::fromOption(CurlShare::PERSISTENT_REQUIRE);
+    }
+
+    public function testPersistentRequireRejectsWhenPersistentInitializationFails(): void
+    {
+        self::skipIfPersistentCurlShareIsUnavailable();
+
+        $_SERVER['curl_share_init_persistent_fail'] = true;
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unable to create persistent cURL share handle');
+
+        CurlShareHandleState::fromOption(CurlShare::PERSISTENT_REQUIRE);
+    }
+
+    public function testPersistentRequireUsesPersistentSharingWhenAvailable(): void
+    {
+        self::skipIfPersistentCurlShareIsUnavailable();
+
+        $state = CurlShareHandleState::fromOption(CurlShare::PERSISTENT_REQUIRE);
+
+        self::assertInstanceOf(CurlShareHandleState::class, $state);
+        self::assertSame(CurlShare::PERSISTENT_REQUIRE, $state->mode);
+        self::assertPersistentShareWasCreated();
+    }
+
     /**
      * @dataProvider invalidShareOptions
      *
@@ -84,15 +167,25 @@ class CurlShareHandleStateTest extends TestCase
         yield 'string' => ['dns'];
     }
 
-    public function testRejectsShareWithCustomFactory(): void
+    /**
+     * @dataProvider enabledShareModes
+     */
+    public function testRejectsShareWithCustomFactory(string $shareMode): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('handle_factory');
 
         CurlShareHandleState::assertNoCustomFactoryConflict([
             'handle_factory' => new CurlFactory(0),
-            'share' => CurlShare::HANDLER,
+            'share' => $shareMode,
         ], 'CurlHandler');
+    }
+
+    public static function enabledShareModes(): iterable
+    {
+        yield 'handler' => [CurlShare::HANDLER];
+        yield 'persistent prefer' => [CurlShare::PERSISTENT_PREFER];
+        yield 'persistent require' => [CurlShare::PERSISTENT_REQUIRE];
     }
 
     public function testAllowsDisabledShareWithCustomFactory(): void
@@ -122,5 +215,40 @@ class CurlShareHandleStateTest extends TestCase
         if (!\function_exists('curl_share_init') || !\function_exists('curl_share_setopt')) {
             self::markTestSkipped('cURL share handles are unavailable.');
         }
+    }
+
+    private static function skipIfPersistentCurlShareIsUnavailable(): void
+    {
+        if (!self::persistentCurlShareIsAvailable()) {
+            self::markTestSkipped('Persistent cURL share handles are unavailable.');
+        }
+    }
+
+    private static function persistentCurlShareIsAvailable(): bool
+    {
+        return \function_exists('curl_share_init_persistent')
+            && \class_exists('CurlSharePersistentHandle')
+            && \defined('CURL_LOCK_DATA_DNS')
+            && \defined('CURL_LOCK_DATA_CONNECT')
+            && \defined('CURL_LOCK_DATA_SSL_SESSION');
+    }
+
+    private static function assertHandlerShareWasCreated(): void
+    {
+        self::assertSame(1, $_SERVER['_curl_share_init_count']);
+        self::assertSame([
+            \CURL_LOCK_DATA_DNS,
+            \CURL_LOCK_DATA_SSL_SESSION,
+        ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+    }
+
+    private static function assertPersistentShareWasCreated(): void
+    {
+        self::assertSame(1, $_SERVER['_curl_share_init_persistent_count']);
+        self::assertSame([
+            \CURL_LOCK_DATA_DNS,
+            \CURL_LOCK_DATA_CONNECT,
+            \CURL_LOCK_DATA_SSL_SESSION,
+        ], $_SERVER['_curl_share_persistent_options']);
     }
 }

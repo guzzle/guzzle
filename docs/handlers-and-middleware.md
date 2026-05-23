@@ -340,8 +340,8 @@ $stack->remove('add_foo');
 
 By default, Guzzle does not configure cURL share handles.
 
-Use the `curl_share` client constructor option to share selected cURL cache state
-for the lifetime of Guzzle's cURL handlers:
+Use the `curl_share` client constructor option to share selected cURL cache
+state with Guzzle's built-in cURL handlers:
 
 ```php
 use GuzzleHttp\Client;
@@ -352,11 +352,22 @@ $client = new Client([
 ]);
 ```
 
-`CurlShare::HANDLER` shares cURL DNS and SSL session cache state. It does not
-share cURL connection cache state. Enabling `CurlShare::HANDLER` requires the
-PHP cURL extension with `curl_share_init()` and `curl_share_setopt()`, and a
-libcurl version supported by Guzzle's cURL handler. Pass `null` or
-`CurlShare::NONE` to disable sharing.
+`CurlShare::HANDLER` shares cURL DNS and SSL session cache state for the
+lifetime of Guzzle's cURL handlers. It does not share cURL connection cache
+state.
+
+`CurlShare::PERSISTENT_PREFER` uses PHP persistent cURL share handles when
+available. Persistent sharing shares DNS, connection, and SSL session cache
+state. When persistent cURL share handles are unavailable, it falls back to
+`CurlShare::HANDLER`.
+
+`CurlShare::PERSISTENT_REQUIRE` requires PHP persistent cURL share handles and
+fails if they are unavailable.
+
+Pass `null` or `CurlShare::NONE` to disable sharing. Guzzle does not enable
+cURL cookie sharing because cookies are managed through Guzzle middleware.
+All enabled modes require the PHP cURL extension with share-handle support and a
+libcurl version supported by Guzzle's cURL handler.
 
 When constructing cURL handlers manually, configure sharing with the handler
 `share` option:
