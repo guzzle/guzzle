@@ -398,10 +398,6 @@ class CurlFactoryTest extends TestCase
 
     public function testProtocolsOptionCanRestrictCurlProtocols(): void
     {
-        if (!\defined('CURLOPT_PROTOCOLS')) {
-            self::markTestSkipped('CURLOPT_PROTOCOLS is not available.');
-        }
-
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', 'https://example.com'), ['protocols' => ['https']]);
 
