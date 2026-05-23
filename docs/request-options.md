@@ -299,6 +299,26 @@ $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2
 > [!NOTE]
 > This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. PHP 7.4 or higher is required in order to use TLS 1.3, and cURL 7.34.0 or higher is required in order to specify a crypto method, with cURL 7.52.0 or higher being required to use TLS 1.3.
 
+## curl
+
+Summary
+Associative array of raw cURL options passed to the built-in cURL handlers.
+
+Types
+- array
+
+Default
+None
+
+Constant
+None
+
+Raw cURL options are advanced handler-specific settings. Starting in Guzzle 7.11,
+raw cURL options that conflict with Guzzle-managed request handling trigger
+deprecation warnings. Use Guzzle request options instead when configuring the
+request method, URI, body, headers, timeouts, redirects, proxy, TLS,
+authentication, progress, debug output, sinks, and cookies.
+
 ## debug
 
 Summary

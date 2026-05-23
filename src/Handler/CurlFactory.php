@@ -69,13 +69,7 @@ class CurlFactory implements CurlFactoryInterface
             unset($options['curl']['body_as_string']);
         }
 
-        if (
-            isset($options['curl'])
-            && \is_array($options['curl'])
-            && \array_key_exists(\CURLOPT_SHARE, $options['curl'])
-        ) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing CURLOPT_SHARE in the "curl" request option is deprecated; guzzlehttp/guzzle 8.0 will reject request-level CURLOPT_SHARE because pooled easy handles can retain share state.');
-        }
+        self::triggerConflictingCurlOptionDeprecations($options);
 
         $easy = new EasyHandle();
         $easy->request = $request;
@@ -174,6 +168,133 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         return (string) $option;
+    }
+
+    private static function triggerConflictingCurlOptionDeprecations(array $options): void
+    {
+        if (!isset($options['curl']) || !\is_array($options['curl'])) {
+            return;
+        }
+
+        foreach (self::conflictingCurlOptions() as $option => $replacement) {
+            if (!\array_key_exists($option, $options['curl'])) {
+                continue;
+            }
+
+            $name = self::formatCurlOption($option);
+            if ($replacement !== null) {
+                \trigger_deprecation(
+                    'guzzlehttp/guzzle',
+                    '7.11',
+                    \sprintf(
+                        'Passing %s in the "curl" request option is deprecated; guzzlehttp/guzzle 8.0 will reject this option because it conflicts with Guzzle-managed request handling. Use %s instead.',
+                        $name,
+                        $replacement
+                    )
+                );
+
+                continue;
+            }
+
+            \trigger_deprecation(
+                'guzzlehttp/guzzle',
+                '7.11',
+                \sprintf(
+                    'Passing %s in the "curl" request option is deprecated; guzzlehttp/guzzle 8.0 will reject this option because it conflicts with Guzzle-managed cURL internals.',
+                    $name
+                )
+            );
+        }
+    }
+
+    /**
+     * @return array<int, string|null>
+     */
+    private static function conflictingCurlOptions(): array
+    {
+        $options = [];
+
+        self::addConflictingCurlOption($options, 'CURLOPT_SHARE', 'Guzzle 8 cURL sharing options');
+        self::addConflictingCurlOption($options, 'CURLOPT_URL', 'the request URI');
+        self::addConflictingCurlOption($options, 'CURLOPT_PORT', 'the request URI');
+        self::addConflictingCurlOption($options, 'CURLOPT_CUSTOMREQUEST', 'the request method');
+        self::addConflictingCurlOption($options, 'CURLOPT_HTTPGET', 'the request method');
+        self::addConflictingCurlOption($options, 'CURLOPT_POST', 'the request method and body');
+        self::addConflictingCurlOption($options, 'CURLOPT_PUT', 'the request method and body');
+        self::addConflictingCurlOption($options, 'CURLOPT_NOBODY', 'the request method');
+        self::addConflictingCurlOption($options, 'CURLOPT_UPLOAD', 'the request body');
+        self::addConflictingCurlOption($options, 'CURLOPT_POSTFIELDS', 'the request body');
+        self::addConflictingCurlOption($options, 'CURLOPT_READFUNCTION', 'the request body');
+        self::addConflictingCurlOption($options, 'CURLOPT_READDATA', 'the request body');
+        self::addConflictingCurlOption($options, 'CURLOPT_INFILE', 'the request body');
+        self::addConflictingCurlOption($options, 'CURLOPT_INFILESIZE', 'the request body');
+        self::addConflictingCurlOption($options, 'CURLOPT_INFILESIZE_LARGE', 'the request body');
+        self::addConflictingCurlOption($options, 'CURLOPT_HTTPHEADER', 'the request headers');
+        self::addConflictingCurlOption($options, 'CURLOPT_USERAGENT', 'the request headers');
+        self::addConflictingCurlOption($options, 'CURLOPT_REFERER', 'the request headers');
+        self::addConflictingCurlOption($options, 'CURLOPT_HTTPAUTH', 'the "auth" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_USERPWD', 'the "auth" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_HEADERFUNCTION', 'the "on_headers" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_WRITEFUNCTION', 'the "sink" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_FILE', 'the "sink" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_RETURNTRANSFER', null);
+        self::addConflictingCurlOption($options, 'CURLOPT_HEADER', null);
+        self::addConflictingCurlOption($options, 'CURLOPT_TIMEOUT', 'the "timeout" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_TIMEOUT_MS', 'the "timeout" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_CONNECTTIMEOUT', 'the "connect_timeout" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_CONNECTTIMEOUT_MS', 'the "connect_timeout" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_NOSIGNAL', 'the "timeout" or "connect_timeout" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_NOPROGRESS', 'the "progress" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_PROGRESSFUNCTION', 'the "progress" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_XFERINFOFUNCTION', 'the "progress" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_VERBOSE', 'the "debug" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_STDERR', 'the "debug" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_PROXY', 'the "proxy" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_NOPROXY', 'the "proxy" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_FOLLOWLOCATION', 'the "allow_redirects" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_MAXREDIRS', 'the "allow_redirects" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_POSTREDIR', 'the "allow_redirects" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_REDIR_PROTOCOLS', 'the "allow_redirects" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS', null);
+        self::addConflictingCurlOption($options, 'CURLOPT_HTTP09_ALLOWED', null);
+        self::addConflictingCurlOption($options, 'CURLOPT_HTTP_VERSION', 'the request protocol version');
+        self::addConflictingCurlOption($options, 'CURLOPT_IPRESOLVE', 'the "force_ip_resolve" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_DNS_USE_GLOBAL_CACHE', null);
+        self::addConflictingCurlOption($options, 'CURLOPT_HEADEROPT', null);
+        self::addConflictingCurlOption($options, 'CURLOPT_PRIVATE', null);
+        self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYPEER', 'the "verify" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYHOST', 'the "verify" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_CAINFO', 'the "verify" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_CAPATH', 'the "verify" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLVERSION', 'the "crypto_method" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLCERT', 'the "cert" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLCERTPASSWD', 'the "cert" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLCERTTYPE', 'the "cert" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLKEY', 'the "ssl_key" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYPASSWD', 'the "ssl_key" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYTYPE', 'the "ssl_key" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_KEYPASSWD', 'the "ssl_key" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_COOKIEFILE', 'Guzzle cookie middleware');
+        self::addConflictingCurlOption($options, 'CURLOPT_COOKIEJAR', 'Guzzle cookie middleware');
+        self::addConflictingCurlOption($options, 'CURLOPT_COOKIELIST', 'Guzzle cookie middleware');
+        self::addConflictingCurlOption($options, 'CURLOPT_COOKIESESSION', 'Guzzle cookie middleware');
+
+        return $options;
+    }
+
+    /**
+     * @param array<int, string|null> $options
+     */
+    private static function addConflictingCurlOption(array &$options, string $constant, ?string $replacement): void
+    {
+        if (!\defined($constant)) {
+            return;
+        }
+
+        $value = \constant($constant);
+        if (\is_int($value)) {
+            $options[$value] = $replacement;
+        }
     }
 
     private static function supportsHttp2(): bool

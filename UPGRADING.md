@@ -1,6 +1,15 @@
 Guzzle Upgrade Guide
 ====================
 
+7.11 to 8.0
+-----------
+
+Passing raw cURL options that Guzzle manages internally is deprecated. Use the
+corresponding Guzzle request options for request method, URI, body, headers,
+timeout, proxy, redirect, TLS, authentication, progress, debug, sink, and cookie
+handling. Guzzle 8.0 will reject conflicting raw cURL options before applying
+them to a cURL handle.
+
 6.0 to 7.0
 ----------
 
