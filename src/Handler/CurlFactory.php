@@ -288,10 +288,6 @@ class CurlFactory implements CurlFactoryInterface
         if (\array_key_exists('stream_context', $options)) {
             \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "stream_context" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL handlers ignore PHP stream context options.');
         }
-
-        if (\array_key_exists('read_timeout', $options)) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "read_timeout" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL handlers ignore stream read timeouts. Use the "timeout" request option instead.');
-        }
     }
 
     /**
