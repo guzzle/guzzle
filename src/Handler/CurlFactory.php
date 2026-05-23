@@ -901,7 +901,11 @@ class CurlFactory implements CurlFactoryInterface
             throw new RequestException(\sprintf('The scheme "%s" is not allowed by the protocols request option.', $scheme), $easy->request);
         }
 
-        $conf[\CURLOPT_PROTOCOLS] = self::curlProtocolMask($protocols);
+        if (CurlVersion::supportsProtocolsStr()) {
+            $conf[(int) \constant('CURLOPT_PROTOCOLS_STR')] = \implode(',', $protocols);
+        } else {
+            $conf[\CURLOPT_PROTOCOLS] = self::curlProtocolMask($protocols);
+        }
 
         $version = $easy->request->getProtocolVersion();
 

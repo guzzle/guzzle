@@ -84,10 +84,7 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(0, $_SERVER['_curl'][\CURLOPT_HEADER]);
         self::assertSame(300, $_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT]);
         self::assertInstanceOf('Closure', $_SERVER['_curl'][\CURLOPT_HEADERFUNCTION]);
-        self::assertSame(
-            \CURLPROTO_HTTP | \CURLPROTO_HTTPS,
-            $_SERVER['_curl'][\CURLOPT_PROTOCOLS]
-        );
+        self::assertCurlProtocols(['http', 'https']);
         self::assertContains('Expect:', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
         self::assertContains('Accept:', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
         self::assertContains('Content-Type:', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
@@ -401,7 +398,49 @@ class CurlFactoryTest extends TestCase
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', 'https://example.com'), ['protocols' => ['https']]);
 
-        self::assertSame(\CURLPROTO_HTTPS, $_SERVER['_curl'][\CURLOPT_PROTOCOLS]);
+        self::assertCurlProtocols(['https']);
+    }
+
+    public function testProtocolsOptionFallsBackToCurlProtocolsWhenRuntimeDoesNotSupportProtocolsStr(): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.84.0',
+            'features' => 0,
+        ]);
+
+        try {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), ['protocols' => ['https']]);
+
+            self::assertSame(\CURLPROTO_HTTPS, $_SERVER['_curl'][\CURLOPT_PROTOCOLS]);
+            if (\defined('CURLOPT_PROTOCOLS_STR')) {
+                self::assertArrayNotHasKey((int) \constant('CURLOPT_PROTOCOLS_STR'), $_SERVER['_curl']);
+            }
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testProtocolsOptionUsesProtocolsStrWhenRuntimeSupportsIt(): void
+    {
+        if (!\defined('CURLOPT_PROTOCOLS_STR')) {
+            self::markTestSkipped('CURLOPT_PROTOCOLS_STR is not available.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.85.0',
+            'features' => 0,
+        ]);
+
+        try {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), ['protocols' => ['https']]);
+
+            self::assertSame('https', $_SERVER['_curl'][(int) \constant('CURLOPT_PROTOCOLS_STR')]);
+            self::assertArrayNotHasKey(\CURLOPT_PROTOCOLS, $_SERVER['_curl']);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     public function testProtocolsOptionRejectsDisallowedCurlScheme(): void
@@ -2628,6 +2667,42 @@ class CurlFactoryTest extends TestCase
     {
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    /**
+     * @param string[] $expectedProtocols
+     */
+    private static function assertCurlProtocols(array $expectedProtocols): void
+    {
+        if (CurlVersion::supportsProtocolsStr()) {
+            self::assertSame(
+                \implode(',', $expectedProtocols),
+                $_SERVER['_curl'][(int) \constant('CURLOPT_PROTOCOLS_STR')]
+            );
+            self::assertArrayNotHasKey(\CURLOPT_PROTOCOLS, $_SERVER['_curl']);
+
+            return;
+        }
+
+        self::assertSame(self::curlProtocolMask($expectedProtocols), $_SERVER['_curl'][\CURLOPT_PROTOCOLS]);
+    }
+
+    /**
+     * @param string[] $protocols
+     */
+    private static function curlProtocolMask(array $protocols): int
+    {
+        $mask = 0;
+
+        if (\in_array('http', $protocols, true)) {
+            $mask |= \CURLPROTO_HTTP;
+        }
+
+        if (\in_array('https', $protocols, true)) {
+            $mask |= \CURLPROTO_HTTPS;
+        }
+
+        return $mask;
     }
 
     /**

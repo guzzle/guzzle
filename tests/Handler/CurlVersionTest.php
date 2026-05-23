@@ -70,10 +70,48 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsHttp3());
     }
 
+    public function testSupportsProtocolsStrReturnsFalseWhenVersionInfoIsUnavailable(): void
+    {
+        self::setVersionInfo(false);
+
+        self::assertFalse(CurlVersion::supportsProtocolsStr());
+    }
+
+    public function testSupportsProtocolsStrRequiresRuntimeVersion(): void
+    {
+        self::requiresProtocolsStrConstant();
+
+        self::setVersionInfo([
+            'version' => '7.84.0',
+            'features' => 0,
+        ]);
+
+        self::assertFalse(CurlVersion::supportsProtocolsStr());
+    }
+
+    public function testSupportsProtocolsStrWhenRuntimeAndConstantAreAvailable(): void
+    {
+        self::requiresProtocolsStrConstant();
+
+        self::setVersionInfo([
+            'version' => '7.85.0',
+            'features' => 0,
+        ]);
+
+        self::assertTrue(CurlVersion::supportsProtocolsStr());
+    }
+
     private static function requiresHttp3Constants(): void
     {
         if (!\defined('CURL_VERSION_HTTP3') || !\defined('CURL_HTTP_VERSION_3')) {
             self::markTestSkipped('HTTP/3 cURL constants are not available.');
+        }
+    }
+
+    private static function requiresProtocolsStrConstant(): void
+    {
+        if (!\defined('CURLOPT_PROTOCOLS_STR')) {
+            self::markTestSkipped('CURLOPT_PROTOCOLS_STR is not available.');
         }
     }
 
