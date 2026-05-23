@@ -340,17 +340,19 @@ $stack->remove('add_foo');
 
 By default, Guzzle does not configure cURL share handles.
 
-Use the `curl_share` client constructor option to share selected cURL cache
-state with Guzzle's built-in cURL handlers:
+Use the `curl_share` client constructor option when Guzzle creates the default
+handler:
 
 ```php
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\CurlShare;
 
 $client = new Client([
-    'curl_share' => CurlShare::HANDLER,
+    'curl_share' => CurlShare::PERSISTENT_PREFER,
 ]);
 ```
+
+`CurlShare::NONE` disables cURL sharing. This is the default.
 
 `CurlShare::HANDLER` shares cURL DNS and SSL session cache state for the
 lifetime of Guzzle's cURL handlers. It does not share cURL connection cache
@@ -358,16 +360,22 @@ state.
 
 `CurlShare::PERSISTENT_PREFER` uses PHP persistent cURL share handles when
 available. Persistent sharing shares DNS, connection, and SSL session cache
-state. When persistent cURL share handles are unavailable, it falls back to
-`CurlShare::HANDLER`.
+state. When persistent cURL share handles are unavailable or cannot be created,
+Guzzle falls back to `CurlShare::HANDLER`. This fallback still requires normal
+cURL share support; if handler-lifetime sharing cannot be configured, Guzzle
+fails with the same error as `CurlShare::HANDLER`.
 
 `CurlShare::PERSISTENT_REQUIRE` requires PHP persistent cURL share handles and
-fails if they are unavailable.
+does not fall back to handler-lifetime sharing. If persistent sharing is
+unavailable or cannot be created, Guzzle fails while creating the handler.
 
-Pass `null` or `CurlShare::NONE` to disable sharing. Guzzle does not enable
-cURL cookie sharing because cookies are managed through Guzzle middleware.
-All enabled modes require the PHP cURL extension with share-handle support and a
-libcurl version supported by Guzzle's cURL handler.
+Guzzle chooses the shared cURL cache state for each mode. The shared data is not
+configurable. Guzzle never enables cURL cookie sharing because cookies are
+managed through Guzzle middleware.
+
+Because `CurlShare::PERSISTENT_REQUIRE` requires connection cache sharing,
+Guzzle rejects request-level cURL options or proxy tunnel cases that require a
+fresh connection for safety.
 
 When constructing cURL handlers manually, configure sharing with the handler
 `share` option:
@@ -381,10 +389,13 @@ $handler = new CurlHandler([
 ]);
 ```
 
-The `curl_share` client option can only be used when Guzzle creates the default
-handler. If you provide a custom handler, configure sharing on `CurlHandler` or
-`CurlMultiHandler` directly. Do not pass `CURLOPT_SHARE` in the `curl` request
-option. The PHP stream handler does not support cURL sharing.
+The `share` option is supported by `CurlHandler` and `CurlMultiHandler`. The
+`curl_share` client option can only be used when Guzzle creates the default
+handler. If you provide a custom handler, configure sharing on that handler
+directly.
+
+Do not pass `CURLOPT_SHARE` in the `curl` request option. The PHP stream handler
+does not support cURL sharing.
 
 ## Creating a Handler
 
