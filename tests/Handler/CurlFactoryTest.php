@@ -211,7 +211,10 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testRejectsRequestLevelShareWhenConfiguredCurlShareHandleExists(): void
+    /**
+     * @dataProvider enabledShareModeProvider
+     */
+    public function testRejectsRequestLevelShareWhenConfiguredCurlShareHandleExists(string $shareMode): void
     {
         self::skipIfCurlShareIsUnavailable();
 
@@ -219,7 +222,7 @@ class CurlFactoryTest extends TestCase
         $requestShareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
         self::assertNotFalse($requestShareHandle);
-        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
+        $factory = new CurlFactory(3, $shareMode, $shareHandle);
 
         try {
             $this->expectException(\InvalidArgumentException::class);
@@ -236,6 +239,13 @@ class CurlFactoryTest extends TestCase
                 \curl_share_close($requestShareHandle);
             }
         }
+    }
+
+    public static function enabledShareModeProvider(): iterable
+    {
+        yield 'handler' => [CurlShare::HANDLER];
+        yield 'persistent prefer' => [CurlShare::PERSISTENT_PREFER];
+        yield 'persistent require' => [CurlShare::PERSISTENT_REQUIRE];
     }
 
     public function testRejectsEnabledShareModeWithoutShareHandle(): void
@@ -271,6 +281,97 @@ class CurlFactoryTest extends TestCase
         $this->expectExceptionMessage('cURL share handle');
 
         new CurlFactory(3, CurlShare::HANDLER, false);
+    }
+
+    public function testPersistentRequireRejectsFreshConnect(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, CurlShare::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_FRESH_CONNECT');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+                'curl' => [
+                    \CURLOPT_FRESH_CONNECT => true,
+                ],
+            ]);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public function testPersistentRequireRejectsForbidReuse(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, CurlShare::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_FORBID_REUSE');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+                'curl' => [
+                    \CURLOPT_FORBID_REUSE => true,
+                ],
+            ]);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public function testPersistentRequireAllowsExplicitReuseOptionsSetToFalse(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, CurlShare::PERSISTENT_REQUIRE, $shareHandle);
+        $easy = $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+            'curl' => [
+                \CURLOPT_FRESH_CONNECT => false,
+                \CURLOPT_FORBID_REUSE => false,
+            ],
+        ]);
+
+        try {
+            self::assertFalse($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+            self::assertFalse($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+        } finally {
+            $factory->release($easy);
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public function testPersistentRequireRejectsRequestsThatRequireFreshProxyTunnelConnections(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, CurlShare::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('fresh proxy tunnel connection');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => 'http://proxy.example.com:8080',
+                'curl' => [
+                    $proxyHeaderOption => ['Proxy-Authorization: Basic abc'],
+                ],
+            ]);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
     }
 
     public function testCloseReleasesConfiguredCurlShareHandle(): void
@@ -2824,8 +2925,22 @@ class CurlFactoryTest extends TestCase
 
     private static function skipIfCurlShareIsUnavailable(): void
     {
-        if (!\function_exists('curl_share_init') || !\defined('CURLOPT_SHARE')) {
+        if (
+            !\function_exists('curl_share_init')
+            || !\function_exists('curl_share_setopt')
+            || !\defined('CURLOPT_SHARE')
+        ) {
             self::markTestSkipped('cURL share handles are unavailable.');
+        }
+    }
+
+    /**
+     * @param resource|\CurlShareHandle $shareHandle
+     */
+    private static function closeShareHandleOnPhp7($shareHandle): void
+    {
+        if (PHP_VERSION_ID < 80000 && \is_resource($shareHandle)) {
+            \curl_share_close($shareHandle);
         }
     }
 }

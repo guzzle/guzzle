@@ -56,8 +56,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *   default middleware to the handler.
      * - base_uri: (string|UriInterface) Base URI of the client that is merged
      *   into relative URIs. Can be a string or instance of UriInterface.
-     * - curl_share: (string|null) cURL share-handle configuration for the
-     *   default cURL handler. Defaults to null.
+     * - curl_share: (string|null) cURL share-handle mode for the default cURL
+     *   handler. Accepts CurlShare::NONE, CurlShare::HANDLER,
+     *   CurlShare::PERSISTENT_PREFER, or CurlShare::PERSISTENT_REQUIRE.
+     *   Defaults to null.
      * - **: any request option
      *
      * @param array $config Client configuration settings.
