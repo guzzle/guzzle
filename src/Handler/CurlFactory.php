@@ -64,7 +64,23 @@ class CurlFactory implements CurlFactoryInterface
             throw new \InvalidArgumentException('A cURL share handle is required when cURL sharing is enabled.');
         }
 
+        if ($shareHandle !== null && !self::isCurlShareHandle($shareHandle)) {
+            throw new \InvalidArgumentException('A cURL share handle must be an instance of CurlShareHandle or a curl_share resource.');
+        }
+
         $this->shareHandle = $shareHandle;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function isCurlShareHandle($value): bool
+    {
+        if (\PHP_VERSION_ID < 80000) {
+            return \is_resource($value) && \get_resource_type($value) === 'curl_share';
+        }
+
+        return $value instanceof \CurlShareHandle;
     }
 
     public function create(RequestInterface $request, array $options): EasyHandle
@@ -330,7 +346,9 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_MAXREDIRS', 'the "allow_redirects" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_POSTREDIR', 'the "allow_redirects" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_REDIR_PROTOCOLS', 'the "allow_redirects" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_REDIR_PROTOCOLS_STR', 'the "allow_redirects" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS', 'the "protocols" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS_STR', 'the "protocols" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_HTTP09_ALLOWED', null);
         self::addConflictingCurlOption($options, 'CURLOPT_HTTP_VERSION', 'the request protocol version');
         self::addConflictingCurlOption($options, 'CURLOPT_IPRESOLVE', 'the "force_ip_resolve" request option');

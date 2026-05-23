@@ -191,6 +191,14 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testRejectsInvalidShareHandle(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('cURL share handle');
+
+        new CurlFactory(3, CurlShare::HANDLER, false);
+    }
+
     public function testCanChangeCurlOptions()
     {
         Server::flush();
