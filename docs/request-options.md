@@ -212,7 +212,7 @@ Scalar, resource, and object values with `__toString()` are converted to PSR-7 s
 ## cert
 
 Summary
-Set to a string to specify the path to a file containing a PEM formatted client side certificate. If a password is required, then set to an array containing the path to the PEM file in the first array element followed by the password required for the certificate in the second array element.
+Set to a string to specify the path to a file containing a client side certificate. PEM is the default certificate format. If a password is required, then set to an array containing the path to the certificate file in the first array element followed by the password required for the certificate in the second array element. Use [`cert_type`](#cert_type) to specify another supported certificate format.
 
 Types
 - string
@@ -230,6 +230,32 @@ $client->request('GET', '/', ['cert' => ['/path/server.pem', 'password']]);
 
 > [!NOTE]
 > TLS client certificate options remain active during redirects. See [Cross-Origin Redirects](#cross-origin-redirects) for details.
+
+## cert_type
+
+Summary
+Specify the SSL client certificate file type.
+
+Types
+- string
+
+Default
+`PEM`
+
+Constant
+`GuzzleHttp\RequestOptions::CERT_TYPE`
+
+```php
+$client->request('GET', '/', [
+    'cert' => '/path/client.p12',
+    'cert_type' => 'P12',
+]);
+```
+
+The cURL handler passes this value to `CURLOPT_SSLCERTTYPE`. Supported values depend on libcurl and its TLS backend.
+
+> [!NOTE]
+> The stream handler supports only `PEM` certificate files.
 
 ## cookies
 
@@ -278,7 +304,11 @@ $client->request('GET', '/delay/5', ['connect_timeout' => 3.14]);
 ```
 
 > [!NOTE]
-> This setting must be supported by the HTTP handler used to send a request. `connect_timeout` is currently only supported by the built-in cURL handler.
+> `connect_timeout` is implemented by cURL handlers. The PHP stream handler
+> does not provide a separate connection-timeout control; it accepts this option
+> without effect so shared request configuration can enable a cURL connection
+> timeout when cURL is available. Use `timeout` to configure the stream handler's
+> overall stream timeout.
 
 ## crypto_method
 
@@ -781,6 +811,40 @@ $result = $client->request(
 );
 ```
 
+## protocols
+
+Summary
+Allowed URI schemes for request transfers.
+
+Types
+- array
+
+Default
+`['http', 'https']`
+
+Constant
+`GuzzleHttp\RequestOptions::PROTOCOLS`
+
+This option accepts a non-empty array containing `http`, `https`, or both. It
+applies to each request transfer Guzzle sends, including redirect requests that
+reuse the same request options.
+
+```php
+$client->request('GET', 'https://example.com', [
+    'protocols' => ['https'],
+]);
+```
+
+> [!NOTE]
+> `protocols` replaces raw cURL `CURLOPT_PROTOCOLS` when restricting request
+> schemes. Starting in Guzzle 7.11, raw cURL options that conflict with
+> Guzzle-managed request handling trigger deprecation warnings. Use Guzzle
+> request options instead when configuring the request method, URI, body,
+> headers, timeouts, redirects, proxy, TLS, authentication, progress, debug
+> output, sinks, cookies, and protocols. Redirect middleware also validates
+> redirect targets with `allow_redirects.protocols` before creating each
+> redirect request.
+
 ## proxy
 
 Summary
@@ -1012,7 +1076,7 @@ If `sink` is a `Psr\Http\Message\StreamInterface`, Guzzle uses that stream objec
 ## ssl_key
 
 Summary
-Specify the path to a file containing a private SSL key in PEM format. If a password is required, then set to an array containing the path to the SSL key in the first array element followed by the password required for the certificate in the second element.
+Specify the path to a file containing a private SSL key. PEM is the default private key format. If a password is required, then set to an array containing the path to the SSL key in the first array element followed by the password required for the key in the second element. Use [`ssl_key_type`](#ssl_key_type) to specify another supported key format.
 
 Types
 - string
@@ -1025,10 +1089,36 @@ Constant
 `GuzzleHttp\RequestOptions::SSL_KEY`
 
 > [!NOTE]
-> `ssl_key` is implemented by HTTP handlers. This is currently only supported by the cURL handler, but might be supported by other third-part handlers.
+> With the stream handler, `cert` and `ssl_key` must use the same passphrase when both options specify one because PHP streams expose only one SSL context passphrase.
 
 > [!NOTE]
 > TLS client key options remain active during redirects. See [Cross-Origin Redirects](#cross-origin-redirects) for details.
+
+## ssl_key_type
+
+Summary
+Specify the SSL private key file type.
+
+Types
+- string
+
+Default
+`PEM`
+
+Constant
+`GuzzleHttp\RequestOptions::SSL_KEY_TYPE`
+
+```php
+$client->request('GET', '/', [
+    'ssl_key' => '/path/client.key',
+    'ssl_key_type' => 'DER',
+]);
+```
+
+The cURL handler passes this value to `CURLOPT_SSLKEYTYPE`. Supported values depend on libcurl and its TLS backend.
+
+> [!NOTE]
+> The stream handler supports only `PEM` private key files.
 
 ## stream
 

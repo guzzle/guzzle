@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -20,12 +21,12 @@ class CurlMultiHandlerTest extends TestCase
     public function setUp(): void
     {
         $_SERVER['curl_test'] = true;
-        unset($_SERVER['_curl'], $_SERVER['_curl_multi']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_multi'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
     }
 
     public function tearDown(): void
     {
-        unset($_SERVER['_curl'], $_SERVER['_curl_multi'], $_SERVER['curl_test']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_multi'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count'], $_SERVER['curl_test']);
     }
 
     public function testCanAddCustomCurlOptions(): void
@@ -62,6 +63,48 @@ class CurlMultiHandlerTest extends TestCase
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
         self::assertEquals(2, self::readSelectTimeout($a));
+    }
+
+    public function testShareOptionAppliesCurlShare(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler([
+            'share' => CurlShare::HANDLER,
+        ]);
+
+        $handler(new Request('GET', Server::$url), [])->wait();
+
+        self::assertArrayHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
+        self::assertSame(1, $_SERVER['_curl_share_init_count']);
+        self::assertSame([
+            \CURL_LOCK_DATA_DNS,
+            \CURL_LOCK_DATA_SSL_SESSION,
+        ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+    }
+
+    public function testShareOptionCannotBeUsedWithCustomFactory(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('handle_factory');
+
+        new CurlMultiHandler([
+            'handle_factory' => new CurlFactory(0),
+            'share' => CurlShare::HANDLER,
+        ]);
+    }
+
+    public function testDisabledShareOptionCanBeUsedWithCustomFactory(): void
+    {
+        $handler = new CurlMultiHandler([
+            'handle_factory' => new CurlFactory(0),
+            'share' => CurlShare::NONE,
+        ]);
+
+        self::assertInstanceOf(CurlMultiHandler::class, $handler);
     }
 
     public function testDestructorDoesNotThrowWhenCurlMultiCloseFails(): void
@@ -633,5 +676,12 @@ class CurlMultiHandlerTest extends TestCase
         }
 
         return \CURLOPT_PROGRESSFUNCTION;
+    }
+
+    private static function skipIfCurlShareIsUnavailable(): void
+    {
+        if (!\function_exists('curl_share_init') || !\defined('CURLOPT_SHARE')) {
+            self::markTestSkipped('cURL share handles are unavailable.');
+        }
     }
 }

@@ -336,6 +336,45 @@ $stack->after('add_baz', Middleware::mapRequest(function (RequestInterface $r) {
 $stack->remove('add_foo');
 ```
 
+## cURL Sharing
+
+By default, Guzzle does not configure cURL share handles.
+
+Use the `curl_share` client constructor option to share selected cURL cache state
+for the lifetime of Guzzle's cURL handlers:
+
+```php
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\CurlShare;
+
+$client = new Client([
+    'curl_share' => CurlShare::HANDLER,
+]);
+```
+
+`CurlShare::HANDLER` shares cURL DNS and SSL session cache state. It does not
+share cURL connection cache state. Enabling `CurlShare::HANDLER` requires the
+PHP cURL extension with `curl_share_init()` and `curl_share_setopt()`, and a
+libcurl version supported by Guzzle's cURL handler. Pass `null` or
+`CurlShare::NONE` to disable sharing.
+
+When constructing cURL handlers manually, configure sharing with the handler
+`share` option:
+
+```php
+use GuzzleHttp\Handler\CurlHandler;
+use GuzzleHttp\Handler\CurlShare;
+
+$handler = new CurlHandler([
+    'share' => CurlShare::HANDLER,
+]);
+```
+
+The `curl_share` client option can only be used when Guzzle creates the default
+handler. If you provide a custom handler, configure sharing on `CurlHandler` or
+`CurlMultiHandler` directly. Do not pass `CURLOPT_SHARE` in the `curl` request
+option. The PHP stream handler does not support cURL sharing.
+
 ## Creating a Handler
 
 As stated earlier, a handler is a function accepts a `Psr\Http\Message\RequestInterface` and array of request options and returns a `GuzzleHttp\Promise\PromiseInterface` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with an exception.
@@ -343,15 +382,22 @@ As stated earlier, a handler is a function accepts a `Psr\Http\Message\RequestIn
 A handler is responsible for applying the following request options. These request options are a subset of request options called "transfer options".
 
 - [`cert`](request-options.md#cert)
+- [`cert_type`](request-options.md#cert_type)
 - [`connect_timeout`](request-options.md#connect_timeout)
+- [`crypto_method`](request-options.md#crypto_method)
 - [`debug`](request-options.md#debug)
 - [`delay`](request-options.md#delay)
 - [`decode_content`](request-options.md#decode_content)
 - [`expect`](request-options.md#expect)
+- [`force_ip_resolve`](request-options.md#force_ip_resolve)
 - [`on_headers`](request-options.md#on_headers)
+- [`progress`](request-options.md#progress)
+- [`protocols`](request-options.md#protocols)
 - [`proxy`](request-options.md#proxy)
+- [`read_timeout`](request-options.md#read_timeout)
 - [`sink`](request-options.md#sink)
 - [`timeout`](request-options.md#timeout)
 - [`ssl_key`](request-options.md#ssl_key)
+- [`ssl_key_type`](request-options.md#ssl_key_type)
 - [`stream`](request-options.md#stream)
 - [`verify`](request-options.md#verify)

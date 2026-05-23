@@ -17,7 +17,7 @@ namespace GuzzleHttp\Test {
     });
 }
 
-// Override curl_setopt(), curl_setopt_array(), and curl_multi_setopt() to get the last set curl options
+// Override curl_setopt(), curl_setopt_array(), curl_multi_setopt(), and curl_share_*() to get the last set curl options
 
 namespace GuzzleHttp\Handler {
     function curl_setopt($handle, int $option, $value): bool
@@ -62,5 +62,38 @@ namespace GuzzleHttp\Handler {
         }
 
         return \curl_multi_setopt($handle, $option, $value);
+    }
+
+    function curl_share_init()
+    {
+        if (!empty($_SERVER['curl_test'])) {
+            $_SERVER['_curl_share_init_count'] = ($_SERVER['_curl_share_init_count'] ?? 0) + 1;
+        }
+
+        return \curl_share_init();
+    }
+
+    function curl_share_setopt($handle, int $option, $value)
+    {
+        if (!empty($_SERVER['curl_test'])) {
+            $_SERVER['_curl_share'][$option][] = $value;
+        } else {
+            unset($_SERVER['_curl_share']);
+        }
+
+        if (isset($_SERVER['curl_share_setopt_fail']) && (int) $_SERVER['curl_share_setopt_fail'] === $value) {
+            return false;
+        }
+
+        return \curl_share_setopt($handle, $option, $value);
+    }
+
+    function curl_share_close($handle): void
+    {
+        if (!empty($_SERVER['curl_test'])) {
+            $_SERVER['_curl_share_close_count'] = ($_SERVER['_curl_share_close_count'] ?? 0) + 1;
+        }
+
+        \curl_share_close($handle);
     }
 }

@@ -7,6 +7,7 @@ namespace GuzzleHttp\Test\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\TimeoutException;
+use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
@@ -759,6 +760,96 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('passphrase', $options['ssl']);
     }
 
+    public function testCanSetCertTypeToPem()
+    {
+        $response = $this->getSendResult(['cert_type' => 'pem']);
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testRejectsNonPemCertType()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The stream handler only supports "PEM" for the cert_type request option.');
+
+        $this->getSendResult(['cert_type' => 'DER']);
+    }
+
+    public function testCanSetSslKey()
+    {
+        $path = __FILE__;
+        $res = $this->getSendResult(['ssl_key' => $path]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertSame($path, $opts['ssl']['local_pk']);
+    }
+
+    public function testCanSetPasswordWhenSettingSslKey()
+    {
+        $path = __FILE__;
+        $res = $this->getSendResult(['ssl_key' => [$path, 'foo']]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertSame($path, $opts['ssl']['local_pk']);
+        self::assertSame('foo', $opts['ssl']['passphrase']);
+    }
+
+    public function testCanSetCertAndSslKeyWithSamePassword()
+    {
+        $path = __FILE__;
+        $res = $this->getSendResult([
+            'cert' => [$path, 'foo'],
+            'ssl_key' => [$path, 'foo'],
+        ]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertSame($path, $opts['ssl']['local_cert']);
+        self::assertSame($path, $opts['ssl']['local_pk']);
+        self::assertSame('foo', $opts['ssl']['passphrase']);
+    }
+
+    public function testRejectsCertAndSslKeyWithDifferentPasswords()
+    {
+        $path = __FILE__;
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cannot use different passphrases for cert and ssl_key with the stream handler');
+
+        $this->getSendResult([
+            'cert' => [$path, 'foo'],
+            'ssl_key' => [$path, 'bar'],
+        ]);
+    }
+
+    public function testCanSetSslKeyWithArrayPathOnly()
+    {
+        $path = __FILE__;
+        $handler = new StreamHandler();
+        $options = [];
+        $params = [];
+        $method = new \ReflectionMethod(StreamHandler::class, 'add_ssl_key');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs($handler, [new Request('GET', 'http://example.com'), &$options, [$path], &$params]);
+
+        self::assertSame($path, $options['ssl']['local_pk']);
+        self::assertArrayNotHasKey('passphrase', $options['ssl']);
+    }
+
+    public function testCanSetSslKeyTypeToPem()
+    {
+        $response = $this->getSendResult(['ssl_key_type' => 'pem']);
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testRejectsNonPemSslKeyType()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The stream handler only supports "PEM" for the ssl_key_type request option.');
+
+        $this->getSendResult(['ssl_key_type' => 'DER']);
+    }
+
     /**
      * @dataProvider invalidCertOptionProvider
      *
@@ -774,6 +865,31 @@ class StreamHandlerTest extends TestCase
     }
 
     public static function invalidCertOptionProvider(): array
+    {
+        return [
+            [[]],
+            [['passphrase' => 'test']],
+            [[new \stdClass(), 'test']],
+            [[__FILE__, new \stdClass()]],
+            [new \stdClass()],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidSslKeyOptionProvider
+     *
+     * @param mixed $sslKey
+     */
+    public function testEnsuresSslKeyOptionShapeIsValid($sslKey): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid ssl_key request option');
+        $handler(new Request('GET', 'http://example.com'), ['ssl_key' => $sslKey]);
+    }
+
+    public static function invalidSslKeyOptionProvider(): array
     {
         return [
             [[]],
@@ -1218,13 +1334,38 @@ class StreamHandlerTest extends TestCase
         Server::flush();
         Server::enqueue([new Response(200)]);
         $req = new Request('GET', Server::$url);
-        $gotStats = null;
         $handler = new StreamHandler();
         $promise = $handler($req, [
             'connect_timeout' => 10,
             'timeout' => 0,
         ]);
         $response = $promise->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testStreamAcceptsDisabledCurlShareOption(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), [
+            'curl_share' => CurlShare::NONE,
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testStreamAcceptsNullCurlShareOption(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), [
+            'curl_share' => null,
+        ])->wait();
+
         self::assertSame(200, $response->getStatusCode());
     }
 
@@ -1400,5 +1541,21 @@ class StreamHandlerTest extends TestCase
                 return $new;
             }
         };
+    }
+
+    public function testProtocolsOptionRejectsDisallowedStreamScheme(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('not allowed by the protocols request option');
+
+        $handler(
+            new Request('GET', Server::$url),
+            [
+                RequestOptions::STREAM => true,
+                RequestOptions::PROTOCOLS => ['https'],
+            ]
+        )->wait();
     }
 }
