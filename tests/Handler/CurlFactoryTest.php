@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
@@ -22,12 +23,12 @@ class CurlFactoryTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         $_SERVER['curl_test'] = true;
-        unset($_SERVER['_curl']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
     }
 
     public static function tearDownAfterClass(): void
     {
-        unset($_SERVER['_curl'], $_SERVER['curl_test'], $_SERVER['curl_setopt_fail']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count'], $_SERVER['curl_test'], $_SERVER['curl_setopt_fail']);
     }
 
     public function testCreatesCurlHandle()
@@ -113,6 +114,54 @@ class CurlFactoryTest extends TestCase
         $req = new Psr7\Request('GET', Server::$url);
         $a($req, ['curl' => [\CURLOPT_LOW_SPEED_LIMIT => 10]]);
         self::assertEquals(10, $_SERVER['_curl'][\CURLOPT_LOW_SPEED_LIMIT]);
+    }
+
+    public function testAppliesConfiguredCurlShareHandle(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        unset($_SERVER['_curl']);
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, $shareHandle, CurlShare::HANDLER);
+
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::assertSame($shareHandle, $_SERVER['_curl'][\CURLOPT_SHARE]);
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_close($easy->handle);
+                \curl_share_close($shareHandle);
+            }
+        }
+    }
+
+    public function testRejectsRequestLevelShareWhenConfiguredCurlShareHandleExists(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        $requestShareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        self::assertNotFalse($requestShareHandle);
+        $factory = new CurlFactory(3, $shareHandle, CurlShare::HANDLER);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_SHARE');
+
+            $factory->create(new Psr7\Request('GET', Server::$url), [
+                'curl' => [
+                    \CURLOPT_SHARE => $requestShareHandle,
+                ],
+            ]);
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_share_close($shareHandle);
+                \curl_share_close($requestShareHandle);
+            }
+        }
     }
 
     public function testCanChangeCurlOptions()
@@ -1304,5 +1353,12 @@ class CurlFactoryTest extends TestCase
         }, null, CurlFactory::class);
 
         return $readHandles($factory);
+    }
+
+    private static function skipIfCurlShareIsUnavailable(): void
+    {
+        if (!\function_exists('curl_share_init') || !\defined('CURLOPT_SHARE')) {
+            self::markTestSkipped('cURL share handles are unavailable.');
+        }
     }
 }

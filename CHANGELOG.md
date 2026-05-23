@@ -10,6 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added the `protocols` request option to restrict URI schemes for request transfers
 - Added the `cert_type` and `ssl_key_type` request options for configuring TLS file types
 - Added PHP stream handler support for the `ssl_key` request option
+- Added handler-lifetime cURL sharing support through the `curl_share` client option and the cURL handler `share` option
 
 ### Changed
 
@@ -23,6 +24,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
 - Deprecated raw cURL options that conflict with Guzzle-managed request handling, which will be rejected in 8.0
+- Deprecated request-level `CURLOPT_SHARE`; use the `curl_share` client option or cURL handler `share` option instead
 - Deprecated selected request options that are ignored by incompatible built-in handlers, which will be rejected in 8.0
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 

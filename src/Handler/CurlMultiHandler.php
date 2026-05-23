@@ -26,6 +26,11 @@ class CurlMultiHandler
     private $factory;
 
     /**
+     * @var CurlShareHandleState|null
+     */
+    private $shareHandleState;
+
+    /**
      * @var int
      */
     private $selectTimeout;
@@ -71,6 +76,7 @@ class CurlMultiHandler
      * This handler accepts the following options:
      *
      * - handle_factory: An optional factory  used to create curl handles
+     * - share: Optional cURL share-handle configuration.
      * - select_timeout: Optional timeout (in seconds) to block before timing
      *   out while selecting curl handles. Defaults to 1 second.
      * - options: An associative array of CURLMOPT_* options and
@@ -78,7 +84,15 @@ class CurlMultiHandler
      */
     public function __construct(array $options = [])
     {
-        $this->factory = $options['handle_factory'] ?? new CurlFactory(50);
+        CurlShareHandleState::assertNoCustomFactoryConflict($options, 'CurlMultiHandler');
+
+        $this->shareHandleState = CurlShareHandleState::fromOption($options['share'] ?? null);
+
+        $this->factory = $options['handle_factory'] ?? new CurlFactory(
+            50,
+            $this->shareHandleState !== null ? $this->shareHandleState->handle : null,
+            $this->shareHandleState !== null ? $this->shareHandleState->mode : null
+        );
 
         if (isset($options['select_timeout'])) {
             $this->selectTimeout = $options['select_timeout'];

@@ -230,6 +230,47 @@ $stack->after('add_baz', Middleware::mapRequest(function (RequestInterface $r) {
 $stack->remove('add_foo');
 ```
 
+## cURL Sharing
+
+By default, Guzzle does not configure cURL share handles.
+
+Use the `curl_share` client constructor option to enable Guzzle-managed
+handler-lifetime cURL sharing with the default cURL handler:
+
+```php
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\CurlShare;
+
+$client = new Client([
+    'curl_share' => CurlShare::HANDLER,
+]);
+```
+
+`CurlShare::HANDLER` shares cURL DNS and SSL session cache state for the
+lifetime of the Guzzle-managed cURL handlers. It does not share cURL connection
+cache state. Pass `null` or `CurlShare::NONE` to disable sharing.
+
+This option requires PHP's cURL extension with `curl_share_init()` and
+`curl_share_setopt()`, and a libcurl version supported by Guzzle's cURL handler
+(`7.21.2` or higher).
+
+When constructing cURL handlers manually, configure sharing with the handler
+`share` option:
+
+```php
+use GuzzleHttp\Handler\CurlHandler;
+use GuzzleHttp\Handler\CurlShare;
+
+$handler = new CurlHandler([
+    'share' => CurlShare::HANDLER,
+]);
+```
+
+The `curl_share` client option can only be used when Guzzle creates the default
+handler. If you provide a custom handler, configure sharing on `CurlHandler` or
+`CurlMultiHandler` directly. The PHP stream handler does not support cURL
+sharing.
+
 ## Creating a Handler
 
 As stated earlier, a handler is a function accepts a `Psr\Http\Message\RequestInterface` and array of request options and returns a `GuzzleHttp\Promise\PromiseInterface` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with an exception.

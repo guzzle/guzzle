@@ -38,11 +38,24 @@ class CurlFactory implements CurlFactoryInterface
     private $maxHandles;
 
     /**
-     * @param int $maxHandles Maximum number of idle handles.
+     * @var resource|\CurlShareHandle|null
      */
-    public function __construct(int $maxHandles)
+    private $shareHandle;
+
+    /**
+     * @var string|null
+     */
+    private $shareMode;
+
+    /**
+     * @param int                            $maxHandles  Maximum number of idle handles.
+     * @param resource|\CurlShareHandle|null $shareHandle
+     */
+    public function __construct(int $maxHandles, $shareHandle = null, ?string $shareMode = null)
     {
         $this->maxHandles = $maxHandles;
+        $this->shareHandle = $shareHandle;
+        $this->shareMode = $shareHandle === null ? null : ($shareMode ?? CurlShare::HANDLER);
     }
 
     public function create(RequestInterface $request, array $options): EasyHandle
@@ -70,6 +83,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         self::triggerUnsupportedRequestOptionDeprecations($options);
+        $this->rejectRequestLevelShareConflict($options);
         self::triggerConflictingCurlOptionDeprecations($options);
 
         $easy = new EasyHandle();
@@ -87,6 +101,14 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
+        if ($this->shareHandle !== null) {
+            if (!\defined('CURLOPT_SHARE')) {
+                throw new \InvalidArgumentException('The configured cURL share handle requires CURLOPT_SHARE, but it is not available in the installed PHP cURL extension.');
+            }
+
+            $conf[(int) \constant('CURLOPT_SHARE')] = $this->shareHandle;
+        }
+
         $handle = $this->handles ? \array_pop($this->handles) : \curl_init();
         if (false === $handle) {
             throw new \RuntimeException('Can not initialize cURL handle.');
@@ -144,6 +166,24 @@ class CurlFactory implements CurlFactoryInterface
         }
     }
 
+    private function rejectRequestLevelShareConflict(array $options): void
+    {
+        if ($this->shareHandle === null || $this->shareMode !== CurlShare::HANDLER) {
+            return;
+        }
+
+        if (
+            !\defined('CURLOPT_SHARE')
+            || !isset($options['curl'])
+            || !\is_array($options['curl'])
+            || !\array_key_exists((int) \constant('CURLOPT_SHARE'), $options['curl'])
+        ) {
+            return;
+        }
+
+        throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with the "curl_share" client option or the "share" cURL handler option.');
+    }
+
     /**
      * @param int|string $option
      */
@@ -185,12 +225,6 @@ class CurlFactory implements CurlFactoryInterface
             }
 
             $name = self::formatCurlOption($option);
-            if (\defined('CURLOPT_SHARE') && $option === \constant('CURLOPT_SHARE')) {
-                \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing CURLOPT_SHARE in the "curl" request option is deprecated; guzzlehttp/guzzle 8.0 will reject request-level CURLOPT_SHARE because pooled easy handles can retain share state. There is no Guzzle 7.x request-level replacement.');
-
-                continue;
-            }
-
             $replacement = $conflictingOptions[$option];
             if ($replacement !== null) {
                 \trigger_deprecation(
@@ -219,6 +253,13 @@ class CurlFactory implements CurlFactoryInterface
 
     private static function triggerUnsupportedRequestOptionDeprecations(array $options): void
     {
+        if (
+            \array_key_exists('curl_share', $options)
+            && CurlShareHandleState::normalizeMode($options['curl_share'], 'curl_share') !== CurlShare::NONE
+        ) {
+            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "curl_share" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL sharing must be configured when creating the Client, CurlHandler, or CurlMultiHandler.');
+        }
+
         if (\array_key_exists('stream_context', $options)) {
             \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "stream_context" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL handlers ignore PHP stream context options.');
         }
@@ -241,7 +282,7 @@ class CurlFactory implements CurlFactoryInterface
 
         $options = [];
 
-        self::addConflictingCurlOption($options, 'CURLOPT_SHARE', null);
+        self::addConflictingCurlOption($options, 'CURLOPT_SHARE', 'the "curl_share" client option or the "share" cURL handler option');
         self::addConflictingCurlOption($options, 'CURLOPT_URL', 'the request URI');
         self::addConflictingCurlOption($options, 'CURLOPT_PORT', 'the request URI');
         self::addConflictingCurlOption($options, 'CURLOPT_CUSTOMREQUEST', 'the request method');

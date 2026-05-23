@@ -4,6 +4,7 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
@@ -986,6 +987,32 @@ class StreamHandlerTest extends TestCase
             'timeout' => 0,
         ]);
         $response = $promise->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testStreamAcceptsDisabledCurlShareOption()
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), [
+            'curl_share' => CurlShare::NONE,
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testStreamAcceptsNullCurlShareOption()
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), [
+            'curl_share' => null,
+        ])->wait();
+
         self::assertSame(200, $response->getStatusCode());
     }
 

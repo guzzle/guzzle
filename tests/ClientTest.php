@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -146,6 +147,96 @@ class ClientTest extends TestCase
         self::assertSame(['http', 'https'], $config['protocols']);
     }
 
+    public function testCurlShareIsDisabledByDefault(): void
+    {
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_share_init_count']);
+
+        try {
+            new Client();
+
+            self::assertArrayNotHasKey('_curl_share_init_count', $_SERVER);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_share_init_count']);
+        }
+    }
+
+    public function testCurlShareHandlerModeCreatesDefaultShareHandle(): void
+    {
+        self::skipIfDefaultCurlHandlerIsUnavailable();
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+
+        try {
+            new Client([
+                'curl_share' => CurlShare::HANDLER,
+            ]);
+
+            self::assertSame(1, $_SERVER['_curl_share_init_count']);
+            self::assertSame([
+                \CURL_LOCK_DATA_DNS,
+                \CURL_LOCK_DATA_SSL_SESSION,
+            ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+        }
+    }
+
+    public function testCurlShareCannotBeUsedWithCustomHandler(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('curl_share');
+
+        new Client([
+            'handler' => new MockHandler(),
+            'curl_share' => CurlShare::HANDLER,
+        ]);
+    }
+
+    public function testCurlShareNullCanBeUsedWithCustomHandler(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler(),
+            'curl_share' => null,
+        ]);
+
+        self::assertNull($client->getConfig('curl_share'));
+    }
+
+    public function testCurlShareNoneCanBeUsedWithCustomHandler(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler(),
+            'curl_share' => CurlShare::NONE,
+        ]);
+
+        self::assertNull($client->getConfig('curl_share'));
+    }
+
+    /**
+     * @dataProvider invalidCurlShareOptions
+     *
+     * @param mixed $curlShare
+     */
+    public function testCurlShareRejectsInvalidValues($curlShare): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('curl_share');
+
+        new Client([
+            'curl_share' => $curlShare,
+        ]);
+    }
+
+    public static function invalidCurlShareOptions(): iterable
+    {
+        yield 'true' => [true];
+        yield 'false' => [false];
+        yield 'array' => [[]];
+        yield 'string' => ['dns'];
+    }
+
     public function testCanMergeOnBaseUri()
     {
         $mock = new MockHandler([new Response()]);
@@ -218,6 +309,18 @@ class ClientTest extends TestCase
         ]);
         $c->get('http://example.com', ['headers' => ['User-Agent' => 'bar']]);
         self::assertSame('bar', $mock->getLastRequest()->getHeaderLine('User-Agent'));
+    }
+
+    private static function skipIfDefaultCurlHandlerIsUnavailable(): void
+    {
+        if (
+            !\function_exists('curl_share_init')
+            || !\function_exists('curl_exec')
+            || !\function_exists('curl_version')
+            || version_compare(curl_version()['version'], '7.21.2') < 0
+        ) {
+            self::markTestSkipped('Default cURL handler with share handles is unavailable.');
+        }
     }
 
     public function testDoesNotOverwriteHeaderWithDefaultInRequest()

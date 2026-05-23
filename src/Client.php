@@ -5,6 +5,8 @@ namespace GuzzleHttp;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
@@ -48,6 +50,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *   default middleware to the handler.
      * - base_uri: (string|UriInterface) Base URI of the client that is merged
      *   into relative URIs. Can be a string or instance of UriInterface.
+     * - curl_share: (string|null) cURL share-handle configuration for the
+     *   default cURL handler. Defaults to null.
      * - **: any request option
      *
      * @param array $config Client configuration settings.
@@ -56,10 +60,18 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     public function __construct(array $config = [])
     {
+        $curlShare = \array_key_exists('curl_share', $config) ? $config['curl_share'] : null;
+        $curlShareMode = CurlShareHandleState::normalizeMode($curlShare, 'curl_share');
+        unset($config['curl_share']);
+
         if (!isset($config['handler'])) {
-            $config['handler'] = HandlerStack::create();
+            $config['handler'] = $curlShareMode === CurlShare::NONE
+                ? HandlerStack::create()
+                : HandlerStack::create(Utils::chooseHandler(['share' => $curlShareMode]));
         } elseif (!\is_callable($config['handler'])) {
             throw new InvalidArgumentException('handler must be a callable');
+        } elseif ($curlShareMode !== CurlShare::NONE) {
+            throw new InvalidArgumentException('The "curl_share" client option can only be used when Guzzle creates the default handler. Configure the "share" option on CurlHandler or CurlMultiHandler when providing a custom cURL handler.');
         }
 
         // Convert the base_uri to a UriInterface
