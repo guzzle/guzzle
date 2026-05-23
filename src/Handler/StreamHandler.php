@@ -66,7 +66,7 @@ class StreamHandler
 
         $startTime = isset($options['on_stats']) ? Utils::currentTime() : null;
 
-        self::triggerUnsupportedRequestOptionDeprecations($request, $options);
+        self::rejectUnsupportedRequestOptions($request, $options);
 
         try {
             // Does not support the expect header.
@@ -571,13 +571,13 @@ class StreamHandler
         return $context;
     }
 
-    private static function triggerUnsupportedRequestOptionDeprecations(RequestInterface $request, array $options): void
+    private static function rejectUnsupportedRequestOptions(RequestInterface $request, array $options): void
     {
         if (
             \array_key_exists('curl_share', $options)
             && CurlShareHandleState::normalizeMode($options['curl_share'], 'curl_share') !== CurlShare::NONE
         ) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "curl_share" option to the stream handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because the stream handler does not support cURL sharing.');
+            throw new \InvalidArgumentException('The "curl_share" option is not supported by the stream handler because the stream handler does not support cURL sharing.');
         }
 
         if (
@@ -586,15 +586,15 @@ class StreamHandler
             && $options['curl'] !== []
             && !self::isCurlOptionGeneratedByAuth($options)
         ) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "curl" request option to the stream handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because the stream handler ignores cURL options.');
+            throw new \InvalidArgumentException('Passing the "curl" request option to the stream handler is not supported because the stream handler ignores cURL options.');
         }
 
         if (self::usesDigestAuth($options)) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing digest authentication to the stream handler is deprecated; guzzlehttp/guzzle 8.0 will reject digest authentication with the stream handler because it is only supported by cURL handlers.');
+            throw new \InvalidArgumentException('Digest authentication is not supported by the stream handler because it is only supported by cURL handlers.');
         }
 
         if (\array_key_exists('expect', $options) && $options['expect'] !== false && $request->hasHeader('Expect')) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "expect" request option to the stream handler is deprecated when it adds an Expect header; guzzlehttp/guzzle 8.0 will reject this option because the stream handler does not support Expect: 100-Continue.');
+            throw new \InvalidArgumentException('Passing the "expect" request option to the stream handler is not supported when it adds an Expect header because the stream handler does not support Expect: 100-Continue.');
         }
     }
 

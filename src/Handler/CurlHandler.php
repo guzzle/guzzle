@@ -123,6 +123,8 @@ class CurlHandler
             if ($explicit) {
                 throw $e;
             }
+        } finally {
+            $this->shareHandleState = null;
         }
     }
 }

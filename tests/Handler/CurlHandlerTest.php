@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
@@ -177,6 +178,21 @@ class CurlHandlerTest extends TestCase
         self::assertInstanceOf(CurlHandler::class, $handler);
     }
 
+    public function testCloseReleasesShareHandleState(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $handler = new CurlHandler([
+            'share' => CurlShare::HANDLER,
+        ]);
+
+        self::assertNotNull(self::readShareHandleState($handler));
+
+        $handler->close();
+
+        self::assertNull(self::readShareHandleState($handler));
+    }
+
     public function testUsesContentLengthWhenOverInMemorySize(): void
     {
         Server::flush();
@@ -205,6 +221,15 @@ class CurlHandlerTest extends TestCase
         self::assertInstanceOf(CurlFactory::class, $factory);
 
         return $factory;
+    }
+
+    private static function readShareHandleState(CurlHandler $handler): ?CurlShareHandleState
+    {
+        $readShareHandleState = \Closure::bind(static function (CurlHandler $handler): ?CurlShareHandleState {
+            return $handler->shareHandleState;
+        }, null, CurlHandler::class);
+
+        return $readShareHandleState($handler);
     }
 
     private static function skipIfCurlShareIsUnavailable(): void

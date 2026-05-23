@@ -837,13 +837,12 @@ $client->request('GET', 'https://example.com', [
 
 > [!NOTE]
 > `protocols` replaces raw cURL `CURLOPT_PROTOCOLS` when restricting request
-> schemes. Starting in Guzzle 7.11, raw cURL options that conflict with
-> Guzzle-managed request handling trigger deprecation warnings. Use Guzzle
-> request options instead when configuring the request method, URI, body,
-> headers, timeouts, redirects, proxy, TLS, authentication, progress, debug
-> output, sinks, cookies, and protocols. Redirect middleware also validates
-> redirect targets with `allow_redirects.protocols` before creating each
-> redirect request.
+> schemes. Raw cURL options that conflict with Guzzle-managed request handling
+> are rejected. Use Guzzle request options instead when configuring the request
+> method, URI, body, headers, timeouts, redirects, proxy, TLS, authentication,
+> progress, debug output, sinks, cookies, and protocols. Redirect middleware
+> also validates redirect targets with `allow_redirects.protocols` before
+> creating each redirect request.
 
 ## proxy
 
@@ -885,7 +884,21 @@ $client->request('GET', '/', [
 > You can provide proxy URLs that contain a scheme, username, and password. For example, `"http://username:password@192.168.16.1:10"`.
 
 > [!NOTE]
-> When sending HTTPS requests, or requests explicitly tunneled with `CURLOPT_HTTPPROXYTUNNEL`, through an authenticated HTTP or HTTPS proxy, libcurl versions before 8.19.0 could reuse an existing proxy tunnel even after proxy credentials changed. Guzzle avoids that reuse on affected libcurl versions when the proxy is configured through the `proxy` option or raw cURL `CURLOPT_PROXY` option, including cURL proxy credential options. Custom proxy authentication sent with `CURLOPT_PROXYHEADER` also avoids tunnel reuse because libcurl does not include those header values in its connection matching. Fixed libcurl versions keep normal connection reuse behavior for proxy URL and cURL proxy credential options. Advanced users can still control cURL connection reuse explicitly with the `curl` request option and `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`; raw `CURLOPT_PROXYTYPE` is respected when deciding whether a scheme-less raw cURL proxy is an HTTP(S) proxy.
+> When sending HTTPS requests, or requests explicitly tunneled with
+> `CURLOPT_HTTPPROXYTUNNEL`, through an authenticated HTTP or HTTPS proxy,
+> libcurl versions before 8.19.0 could reuse an existing proxy tunnel even
+> after proxy credentials changed. Guzzle avoids that reuse on affected libcurl
+> versions when the proxy URL is configured through the `proxy` option,
+> including cURL proxy credential options supplied through the `curl` request
+> option. Raw `CURLOPT_PROXY` is rejected; use the `proxy` request option for
+> the proxy URL. Custom proxy authentication sent with `CURLOPT_PROXYHEADER`
+> also avoids tunnel reuse because libcurl does not include those header values
+> in its connection matching. Fixed libcurl versions keep normal connection
+> reuse behavior for proxy URL and cURL proxy credential options. Advanced
+> users can still control cURL connection reuse explicitly with the `curl`
+> request option and `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`; raw
+> `CURLOPT_PROXYTYPE` is respected when deciding whether a scheme-less `proxy`
+> option value is an HTTP(S) proxy.
 
 ## query
 

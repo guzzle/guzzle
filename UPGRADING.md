@@ -194,8 +194,14 @@ $client->request('GET', 'https://legacy.example.com', [
 ]);
 ```
 
-Handler-specific overrides through the `curl` and `stream_context` request
-options remain available for applications that need finer transport control.
+Handler-specific overrides remain available for finer transport control when
+they do not conflict with Guzzle-managed behavior. The built-in cURL handlers
+now reject raw cURL options that override request method, URI, body, headers,
+authentication, timeouts, redirects, proxy URLs, TLS verification or client
+credentials, progress/debug callbacks, sink handling, cookies, protocols, or
+cURL share handles. Use first-class Guzzle request options for those settings.
+The cURL handlers also reject stream-only `stream_context` and `read_timeout`
+options, while the stream handler rejects cURL-only options it cannot honor.
 
 #### Native type declarations
 
