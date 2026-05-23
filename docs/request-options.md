@@ -831,8 +831,8 @@ $client->request('GET', 'https://example.com', [
 > schemes. Starting in Guzzle 7.11, raw cURL options that conflict with
 > Guzzle-managed request handling trigger deprecation warnings. Use Guzzle
 > request options instead when configuring the request method, URI, body,
-> headers, timeouts, redirects, proxy, TLS, authentication, progress, debug
-> output, sinks, cookies, and protocols. Redirect middleware also validates
+> headers, timeouts, redirects, proxy, TLS, progress, debug output, sinks,
+> cookie storage, and protocols. Redirect middleware also validates
 > redirect targets with `allow_redirects.protocols` before creating each
 > redirect request.
 
