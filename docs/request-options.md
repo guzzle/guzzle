@@ -832,9 +832,8 @@ $client->request('GET', 'https://example.com', [
 > Guzzle-managed request handling trigger deprecation warnings. Use Guzzle
 > request options instead when configuring the request method, URI, body,
 > headers, timeouts, redirects, proxy, TLS, progress, debug output, sinks,
-> cookies, and protocols. Redirect middleware also validates
-> redirect targets with `allow_redirects.protocols` before creating each
-> redirect request.
+> cookies, and protocols. Redirect middleware also validates redirect targets
+> with `allow_redirects.protocols` before creating each redirect request.
 
 ## proxy
 
