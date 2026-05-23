@@ -319,10 +319,6 @@ class CurlFactory implements CurlFactoryInterface
         if (\array_key_exists('stream_context', $options)) {
             throw new \InvalidArgumentException('Passing the "stream_context" request option to a cURL handler is not supported because cURL handlers ignore PHP stream context options.');
         }
-
-        if (\array_key_exists('read_timeout', $options)) {
-            throw new \InvalidArgumentException('Passing the "read_timeout" request option to a cURL handler is not supported because cURL handlers ignore stream read timeouts. Use the "timeout" request option instead.');
-        }
     }
 
     /**
