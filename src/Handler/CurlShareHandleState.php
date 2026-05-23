@@ -22,10 +22,10 @@ final class CurlShareHandleState
     /**
      * @param resource|\CurlShareHandle|null $handle
      */
-    private function __construct($handle, string $mode)
+    private function __construct(string $mode, $handle)
     {
-        $this->handle = $handle;
         $this->mode = $mode;
+        $this->handle = $handle;
     }
 
     /**
@@ -95,12 +95,15 @@ final class CurlShareHandleState
             throw new \InvalidArgumentException('The cURL handler option "share" requires cURL share support.');
         }
 
+        self::requireCurlConstant('CURLOPT_SHARE');
+        $shareOption = self::requireCurlConstant('CURLSHOPT_SHARE');
+        $locks = self::handlerLocks();
         $handle = curl_share_init();
 
         try {
-            foreach (self::handlerLocks() as $lock) {
+            foreach ($locks as $lock) {
                 try {
-                    $success = curl_share_setopt($handle, \CURLSHOPT_SHARE, $lock);
+                    $success = curl_share_setopt($handle, $shareOption, $lock);
                 } catch (\Throwable $e) {
                     throw new \InvalidArgumentException('Unable to configure cURL share handle: '.$e->getMessage(), 0, $e);
                 }
@@ -115,7 +118,7 @@ final class CurlShareHandleState
             throw $e;
         }
 
-        return new self($handle, $mode);
+        return new self($mode, $handle);
     }
 
     /**
@@ -124,12 +127,12 @@ final class CurlShareHandleState
     private static function handlerLocks(): array
     {
         return [
-            self::requireCurlLockConstant('CURL_LOCK_DATA_DNS'),
-            self::requireCurlLockConstant('CURL_LOCK_DATA_SSL_SESSION'),
+            self::requireCurlConstant('CURL_LOCK_DATA_DNS'),
+            self::requireCurlConstant('CURL_LOCK_DATA_SSL_SESSION'),
         ];
     }
 
-    private static function requireCurlLockConstant(string $constant): int
+    private static function requireCurlConstant(string $constant): int
     {
         if (!\defined($constant)) {
             throw new \InvalidArgumentException(\sprintf(

@@ -234,8 +234,8 @@ $stack->remove('add_foo');
 
 By default, Guzzle does not configure cURL share handles.
 
-Use the `curl_share` client constructor option to enable Guzzle-managed
-handler-lifetime cURL sharing with the default cURL handler:
+Use the `curl_share` client constructor option to share selected cURL cache state
+for the lifetime of Guzzle's cURL handlers:
 
 ```php
 use GuzzleHttp\Client;
@@ -246,13 +246,10 @@ $client = new Client([
 ]);
 ```
 
-`CurlShare::HANDLER` shares cURL DNS and SSL session cache state for the
-lifetime of the Guzzle-managed cURL handlers. It does not share cURL connection
-cache state. Pass `null` or `CurlShare::NONE` to disable sharing.
-
-This option requires PHP's cURL extension with `curl_share_init()` and
-`curl_share_setopt()`, and a libcurl version supported by Guzzle's cURL handler
-(`7.21.2` or higher).
+`CurlShare::HANDLER` shares cURL DNS and SSL session cache state. It does not
+share cURL connection cache state. Enabling `CurlShare::HANDLER` requires the
+PHP cURL extension with `curl_share_init()` and `curl_share_setopt()`, and
+libcurl `7.21.2` or higher. Pass `null` or `CurlShare::NONE` to disable sharing.
 
 When constructing cURL handlers manually, configure sharing with the handler
 `share` option:
@@ -268,8 +265,8 @@ $handler = new CurlHandler([
 
 The `curl_share` client option can only be used when Guzzle creates the default
 handler. If you provide a custom handler, configure sharing on `CurlHandler` or
-`CurlMultiHandler` directly. The PHP stream handler does not support cURL
-sharing.
+`CurlMultiHandler` directly. Do not pass `CURLOPT_SHARE` in the `curl` request
+option. The PHP stream handler does not support cURL sharing.
 
 ## Creating a Handler
 

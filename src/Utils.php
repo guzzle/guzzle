@@ -94,13 +94,16 @@ final class Utils
         $shareMode = CurlShareHandleState::normalizeMode($curlOptions['share'] ?? null, 'share');
         $shareRequested = $shareMode !== CurlShare::NONE;
         $curlHandlerOptions = [];
-
-        if (
-            \defined('CURLOPT_CUSTOMREQUEST')
+        $curlSupported = \defined('CURLOPT_CUSTOMREQUEST')
             && \function_exists('curl_version')
             && version_compare(curl_version()['version'], '7.21.2') >= 0
-            && (\function_exists('curl_multi_exec') || \function_exists('curl_exec'))
-        ) {
+            && (\function_exists('curl_multi_exec') || \function_exists('curl_exec'));
+
+        if ($shareRequested && !$curlSupported) {
+            throw new \RuntimeException('cURL sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and libcurl 7.21.2 or higher.');
+        }
+
+        if ($curlSupported) {
             if ($shareRequested) {
                 $shareState = CurlShareHandleState::fromOption($shareMode);
                 if ($shareState !== null) {

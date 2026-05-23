@@ -123,7 +123,7 @@ class CurlFactoryTest extends TestCase
 
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
-        $factory = new CurlFactory(3, $shareHandle, CurlShare::HANDLER);
+        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
 
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
 
@@ -145,7 +145,7 @@ class CurlFactoryTest extends TestCase
         $requestShareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
         self::assertNotFalse($requestShareHandle);
-        $factory = new CurlFactory(3, $shareHandle, CurlShare::HANDLER);
+        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
 
         try {
             $this->expectException(\InvalidArgumentException::class);
@@ -160,6 +160,33 @@ class CurlFactoryTest extends TestCase
             if (PHP_VERSION_ID < 80000) {
                 \curl_share_close($shareHandle);
                 \curl_share_close($requestShareHandle);
+            }
+        }
+    }
+
+    public function testRejectsEnabledShareModeWithoutShareHandle(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('share handle is required');
+
+        new CurlFactory(3, CurlShare::HANDLER);
+    }
+
+    public function testRejectsShareHandleWhenSharingIsDisabled(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('cannot be provided');
+
+            new CurlFactory(3, CurlShare::NONE, $shareHandle);
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_share_close($shareHandle);
             }
         }
     }

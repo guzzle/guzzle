@@ -40,12 +40,13 @@ class CurlHandler
 
         $this->shareHandleState = CurlShareHandleState::fromOption($options['share'] ?? null);
 
-        $this->factory = $options['handle_factory']
-            ?? new CurlFactory(
-                3,
-                $this->shareHandleState !== null ? $this->shareHandleState->handle : null,
-                $this->shareHandleState !== null ? $this->shareHandleState->mode : null
-            );
+        if (\array_key_exists('handle_factory', $options) && $options['handle_factory'] !== null) {
+            $this->factory = $options['handle_factory'];
+        } elseif ($this->shareHandleState !== null) {
+            $this->factory = new CurlFactory(3, $this->shareHandleState->mode, $this->shareHandleState->handle);
+        } else {
+            $this->factory = new CurlFactory(3);
+        }
     }
 
     public function __invoke(RequestInterface $request, array $options): PromiseInterface

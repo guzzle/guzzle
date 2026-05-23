@@ -43,7 +43,7 @@ class CurlFactory implements CurlFactoryInterface
     private $shareHandle;
 
     /**
-     * @var string|null
+     * @var string
      */
     private $shareMode;
 
@@ -51,11 +51,20 @@ class CurlFactory implements CurlFactoryInterface
      * @param int                            $maxHandles  Maximum number of idle handles.
      * @param resource|\CurlShareHandle|null $shareHandle
      */
-    public function __construct(int $maxHandles, $shareHandle = null, ?string $shareMode = null)
+    public function __construct(int $maxHandles, string $shareMode = CurlShare::NONE, $shareHandle = null)
     {
         $this->maxHandles = $maxHandles;
+        $this->shareMode = CurlShareHandleState::normalizeMode($shareMode, 'share');
+
+        if ($this->shareMode === CurlShare::NONE && $shareHandle !== null) {
+            throw new \InvalidArgumentException('A cURL share handle cannot be provided when cURL sharing is disabled.');
+        }
+
+        if ($this->shareMode !== CurlShare::NONE && $shareHandle === null) {
+            throw new \InvalidArgumentException('A cURL share handle is required when cURL sharing is enabled.');
+        }
+
         $this->shareHandle = $shareHandle;
-        $this->shareMode = $shareHandle === null ? null : ($shareMode ?? CurlShare::HANDLER);
     }
 
     public function create(RequestInterface $request, array $options): EasyHandle
