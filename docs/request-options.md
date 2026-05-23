@@ -299,26 +299,6 @@ $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2
 > [!NOTE]
 > This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. PHP 7.4 or higher is required in order to use TLS 1.3, and cURL 7.34.0 or higher is required in order to specify a crypto method, with cURL 7.52.0 or higher being required to use TLS 1.3.
 
-## curl
-
-Summary
-Associative array of raw cURL options passed to the built-in cURL handlers.
-
-Types
-- array
-
-Default
-None
-
-Constant
-None
-
-Raw cURL options are advanced handler-specific settings. Starting in Guzzle 7.11,
-raw cURL options that conflict with Guzzle-managed request handling trigger
-deprecation warnings. Use Guzzle request options instead when configuring the
-request method, URI, body, headers, timeouts, redirects, proxy, TLS,
-authentication, progress, debug output, sinks, and cookies.
-
 ## debug
 
 Summary
@@ -791,6 +771,40 @@ $result = $client->request(
     ]
 );
 ```
+
+## protocols
+
+Summary
+Allowed URI schemes for request transfers.
+
+Types
+- array
+
+Default
+`['http', 'https']`
+
+Constant
+`GuzzleHttp\RequestOptions::PROTOCOLS`
+
+This option accepts a non-empty array containing `http`, `https`, or both. It
+applies to each request transfer Guzzle sends, including redirect requests that
+reuse the same request options.
+
+```php
+$client->request('GET', 'https://example.com', [
+    'protocols' => ['https'],
+]);
+```
+
+> [!NOTE]
+> `protocols` replaces raw cURL `CURLOPT_PROTOCOLS` when restricting request
+> schemes. Starting in Guzzle 7.11, raw cURL options that conflict with
+> Guzzle-managed request handling trigger deprecation warnings. Use Guzzle
+> request options instead when configuring the request method, URI, body,
+> headers, timeouts, redirects, proxy, TLS, authentication, progress, debug
+> output, sinks, cookies, and protocols. Redirect middleware also validates
+> redirect targets with `allow_redirects.protocols` before creating each
+> redirect request.
 
 ## proxy
 

@@ -125,6 +125,53 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
     }
 
+    public function testProtocolsOptionCanRestrictCurlProtocols()
+    {
+        if (!\defined('CURLOPT_PROTOCOLS')) {
+            self::markTestSkipped('CURLOPT_PROTOCOLS is not available.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), ['protocols' => ['https']]);
+
+        self::assertSame(\CURLPROTO_HTTPS, $_SERVER['_curl'][\CURLOPT_PROTOCOLS]);
+    }
+
+    public function testProtocolsOptionRejectsDisallowedCurlScheme()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('not allowed by the protocols request option');
+
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['protocols' => ['https']]);
+    }
+
+    /**
+     * @dataProvider invalidProtocolsProvider
+     *
+     * @param mixed $protocols
+     */
+    public function testProtocolsOptionRejectsInvalidValues($protocols)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('protocols');
+
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['protocols' => $protocols]);
+    }
+
+    public static function invalidProtocolsProvider(): array
+    {
+        return [
+            'empty' => [[]],
+            'non-array' => ['https'],
+            'non-string' => [[123]],
+            'unsupported' => [['ftp']],
+        ];
+    }
+
     public function testThrowsWhenCurlOptionCannotBeApplied()
     {
         $_SERVER['curl_setopt_fail'] = \CURLOPT_LOW_SPEED_LIMIT;

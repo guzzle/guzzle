@@ -143,6 +143,7 @@ class ClientTest extends TestCase
         self::assertNotNull($config['handler']);
         self::assertArrayHasKey('timeout', $config);
         self::assertSame(2, $config['timeout']);
+        self::assertSame(['http', 'https'], $config['protocols']);
     }
 
     public function testCanMergeOnBaseUri()

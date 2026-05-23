@@ -237,6 +237,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             'verify' => true,
             'cookies' => false,
             'idn_conversion' => false,
+            'protocols' => ['http', 'https'],
         ];
 
         // Use the standard Linux HTTP_PROXY and HTTPS_PROXY if set.

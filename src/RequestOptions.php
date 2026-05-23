@@ -197,6 +197,11 @@ final class RequestOptions
     public const PROGRESS = 'progress';
 
     /**
+     * protocols: (array, default=['http', 'https']) Allowed URI schemes.
+     */
+    public const PROTOCOLS = 'protocols';
+
+    /**
      * proxy: (string|array) Pass a string to specify an HTTP proxy, or an
      * array to specify different proxies for different protocols (where the
      * key is the protocol and the value is a proxy string). Provide a "no"

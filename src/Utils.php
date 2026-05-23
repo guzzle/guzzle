@@ -202,6 +202,37 @@ EOT
     }
 
     /**
+     * @param mixed $protocols
+     *
+     * @return string[]
+     *
+     * @throws InvalidArgumentException
+     */
+    public static function normalizeProtocols($protocols): array
+    {
+        if (!\is_array($protocols) || $protocols === []) {
+            throw new InvalidArgumentException('protocols must be a non-empty array of "http" and/or "https"');
+        }
+
+        $normalized = [];
+
+        foreach ($protocols as $protocol) {
+            if (!\is_string($protocol)) {
+                throw new InvalidArgumentException('protocols must contain only strings');
+            }
+
+            $protocol = \strtolower($protocol);
+            if ($protocol !== 'http' && $protocol !== 'https') {
+                throw new InvalidArgumentException('protocols may only contain "http" and "https"');
+            }
+
+            $normalized[$protocol] = true;
+        }
+
+        return \array_keys($normalized);
+    }
+
+    /**
      * Returns true if the provided host matches any of the no proxy areas.
      *
      * This method will strip a port from the host if it is present. Each pattern

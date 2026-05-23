@@ -984,4 +984,20 @@ class StreamHandlerTest extends TestCase
             ]
         )->wait();
     }
+
+    public function testProtocolsOptionRejectsDisallowedStreamScheme()
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('not allowed by the protocols request option');
+
+        $handler(
+            new Request('GET', Server::$url),
+            [
+                RequestOptions::STREAM => true,
+                RequestOptions::PROTOCOLS => ['https'],
+            ]
+        )->wait();
+    }
 }

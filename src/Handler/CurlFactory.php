@@ -172,16 +172,25 @@ class CurlFactory implements CurlFactoryInterface
 
     private static function triggerConflictingCurlOptionDeprecations(array $options): void
     {
-        if (!isset($options['curl']) || !\is_array($options['curl'])) {
+        if (!isset($options['curl']) || !\is_array($options['curl']) || $options['curl'] === []) {
             return;
         }
 
-        foreach (self::conflictingCurlOptions() as $option => $replacement) {
-            if (!\array_key_exists($option, $options['curl'])) {
+        $conflictingOptions = self::conflictingCurlOptions();
+
+        foreach ($options['curl'] as $option => $_) {
+            if (!\array_key_exists($option, $conflictingOptions)) {
                 continue;
             }
 
             $name = self::formatCurlOption($option);
+            if (\defined('CURLOPT_SHARE') && $option === \constant('CURLOPT_SHARE')) {
+                \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing CURLOPT_SHARE in the "curl" request option is deprecated; guzzlehttp/guzzle 8.0 will reject request-level CURLOPT_SHARE because pooled easy handles can retain share state. There is no Guzzle 7.x request-level replacement.');
+
+                continue;
+            }
+
+            $replacement = $conflictingOptions[$option];
             if ($replacement !== null) {
                 \trigger_deprecation(
                     'guzzlehttp/guzzle',
@@ -212,9 +221,15 @@ class CurlFactory implements CurlFactoryInterface
      */
     private static function conflictingCurlOptions(): array
     {
+        static $options = null;
+
+        if ($options !== null) {
+            return $options;
+        }
+
         $options = [];
 
-        self::addConflictingCurlOption($options, 'CURLOPT_SHARE', 'Guzzle 8 cURL sharing options');
+        self::addConflictingCurlOption($options, 'CURLOPT_SHARE', null);
         self::addConflictingCurlOption($options, 'CURLOPT_URL', 'the request URI');
         self::addConflictingCurlOption($options, 'CURLOPT_PORT', 'the request URI');
         self::addConflictingCurlOption($options, 'CURLOPT_CUSTOMREQUEST', 'the request method');
@@ -232,8 +247,6 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_HTTPHEADER', 'the request headers');
         self::addConflictingCurlOption($options, 'CURLOPT_USERAGENT', 'the request headers');
         self::addConflictingCurlOption($options, 'CURLOPT_REFERER', 'the request headers');
-        self::addConflictingCurlOption($options, 'CURLOPT_HTTPAUTH', 'the "auth" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_USERPWD', 'the "auth" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_HEADERFUNCTION', 'the "on_headers" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_WRITEFUNCTION', 'the "sink" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_FILE', 'the "sink" request option');
@@ -255,13 +268,10 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_MAXREDIRS', 'the "allow_redirects" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_POSTREDIR', 'the "allow_redirects" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_REDIR_PROTOCOLS', 'the "allow_redirects" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS', null);
+        self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS', 'the "protocols" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_HTTP09_ALLOWED', null);
         self::addConflictingCurlOption($options, 'CURLOPT_HTTP_VERSION', 'the request protocol version');
         self::addConflictingCurlOption($options, 'CURLOPT_IPRESOLVE', 'the "force_ip_resolve" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_DNS_USE_GLOBAL_CACHE', null);
-        self::addConflictingCurlOption($options, 'CURLOPT_HEADEROPT', null);
-        self::addConflictingCurlOption($options, 'CURLOPT_PRIVATE', null);
         self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYPEER', 'the "verify" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYHOST', 'the "verify" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_CAINFO', 'the "verify" request option');
@@ -269,10 +279,8 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_SSLVERSION', 'the "crypto_method" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLCERT', 'the "cert" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLCERTPASSWD', 'the "cert" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_SSLCERTTYPE', 'the "cert" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLKEY', 'the "ssl_key" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYPASSWD', 'the "ssl_key" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_SSLKEYTYPE', 'the "ssl_key" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_KEYPASSWD', 'the "ssl_key" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIEFILE', 'Guzzle cookie middleware');
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIEJAR', 'Guzzle cookie middleware');
@@ -526,8 +534,14 @@ class CurlFactory implements CurlFactoryInterface
             \CURLOPT_CONNECTTIMEOUT => 300,
         ];
 
+        $protocols = Utils::normalizeProtocols($easy->options['protocols'] ?? ['http', 'https']);
+        $scheme = $easy->request->getUri()->getScheme();
+        if (!\in_array($scheme, $protocols, true)) {
+            throw new RequestException(\sprintf('The scheme "%s" is not allowed by the protocols request option.', $scheme), $easy->request);
+        }
+
         if (\defined('CURLOPT_PROTOCOLS')) {
-            $conf[\CURLOPT_PROTOCOLS] = \CURLPROTO_HTTP | \CURLPROTO_HTTPS;
+            $conf[\CURLOPT_PROTOCOLS] = self::curlProtocolMask($protocols);
         }
 
         $version = $easy->request->getProtocolVersion();
@@ -541,6 +555,24 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         return $conf;
+    }
+
+    /**
+     * @param string[] $protocols
+     */
+    private static function curlProtocolMask(array $protocols): int
+    {
+        $mask = 0;
+
+        if (\in_array('http', $protocols, true)) {
+            $mask |= \CURLPROTO_HTTP;
+        }
+
+        if (\in_array('https', $protocols, true)) {
+            $mask |= \CURLPROTO_HTTPS;
+        }
+
+        return $mask;
     }
 
     private function applyMethod(EasyHandle $easy, array &$conf): void
