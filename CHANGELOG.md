@@ -7,25 +7,24 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Added
 
-- Added the `protocols` request option to restrict URI schemes for request transfers
-- Added the `cert_type` and `ssl_key_type` request options for configuring TLS file types
+- Added the `protocols` request option to restrict allowed URI schemes for request transfers
+- Added `cert_type` and `ssl_key_type` request options for TLS certificate and private-key file types
 - Added PHP stream handler support for the `ssl_key` request option
-- Added handler-lifetime cURL sharing support through the `curl_share` client option and the cURL handler `share` option
+- Added handler-lifetime cURL sharing through `curl_share` and cURL handler `share` options
 
 ### Changed
 
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.10`
-- Allow domainless `SetCookie` instances to be stored without using them as wildcard request cookies
-- Changed no-proxy matching to account for request ports when evaluating host-and-port rules
-- Prevent `CurlMultiHandler` destructors from throwing during cleanup
-- Improve invalid response handling across handlers
+- Allowed domainless `SetCookie` instances to be stored without wildcard request matching
+- Changed no-proxy matching to respect request ports for host-and-port rules
+- Prevented `CurlMultiHandler` destructors from throwing during cleanup
+- Improved invalid response handling across handlers
 
 ### Deprecated
 
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
-- Deprecated raw cURL options that conflict with Guzzle-managed request handling, which will be rejected in 8.0
-- Deprecated request-level `CURLOPT_SHARE`; use the `curl_share` client option or cURL handler `share` option instead
-- Deprecated selected request options that are ignored by incompatible built-in handlers, which will be rejected in 8.0
+- Deprecated conflicting raw cURL request options, including `CURLOPT_SHARE`, which will be rejected in 8.0
+- Deprecated selected request options ignored by incompatible built-in handlers, which will be rejected in 8.0
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
 
