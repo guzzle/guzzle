@@ -329,10 +329,6 @@ class CurlFactoryTest extends TestCase
         $cases = [
             'request target' => ['CURLOPT_REQUEST_TARGET', '/', 'the request URI'],
             'cookie header' => ['CURLOPT_COOKIE', 'name=value', 'Guzzle cookie middleware'],
-            'http auth type' => ['CURLOPT_HTTPAUTH', 1, 'the "auth" request option'],
-            'user password' => ['CURLOPT_USERPWD', 'user:pass', 'the "auth" request option'],
-            'username' => ['CURLOPT_USERNAME', 'user', 'the "auth" request option'],
-            'password' => ['CURLOPT_PASSWORD', 'pass', 'the "auth" request option'],
         ];
 
         $available = [];
@@ -344,39 +340,6 @@ class CurlFactoryTest extends TestCase
         }
 
         return $available;
-    }
-
-    /**
-     * @dataProvider generatedCurlAuthOptionProvider
-     */
-    public function testAllowsCurlAuthOptionsGeneratedByAuth(string $type, int $httpAuth): void
-    {
-        (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
-            'auth' => ['user', 'pass', $type],
-            'curl' => [
-                \CURLOPT_HTTPAUTH => $httpAuth,
-                \CURLOPT_USERPWD => 'user:pass',
-            ],
-        ]);
-
-        self::assertSame($httpAuth, $_SERVER['_curl'][\CURLOPT_HTTPAUTH]);
-        self::assertSame('user:pass', $_SERVER['_curl'][\CURLOPT_USERPWD]);
-    }
-
-    public static function generatedCurlAuthOptionProvider(): array
-    {
-        $cases = [];
-        if (\defined('CURLAUTH_DIGEST')) {
-            $cases['digest'] = ['digest', (int) \constant('CURLAUTH_DIGEST')];
-        }
-
-        $hasNtlmSupport = \defined('CURL_VERSION_NTLM')
-            && (((int) \curl_version()['features'] & (int) \constant('CURL_VERSION_NTLM')) !== 0);
-        if (\defined('CURLAUTH_NTLM') && $hasNtlmSupport) {
-            $cases['ntlm'] = ['ntlm', (int) \constant('CURLAUTH_NTLM')];
-        }
-
-        return $cases;
     }
 
     public function testRejectsRequestLevelCurlShareOption(): void

@@ -265,10 +265,6 @@ class CurlFactory implements CurlFactoryInterface
                 continue;
             }
 
-            if (self::isCurlAuthOptionGeneratedByAuth($options, $option)) {
-                continue;
-            }
-
             $name = self::formatCurlOption($option);
             $replacement = $conflictingOptions[$option];
             if ($replacement !== null) {
@@ -284,43 +280,6 @@ class CurlFactory implements CurlFactoryInterface
                 $name
             ));
         }
-    }
-
-    /**
-     * @param int|string $option
-     */
-    private static function isCurlAuthOptionGeneratedByAuth(array $options, $option): bool
-    {
-        if (!\is_int($option) || !\defined('CURLOPT_HTTPAUTH') || !\defined('CURLOPT_USERPWD')) {
-            return false;
-        }
-
-        if ($option !== \CURLOPT_HTTPAUTH && $option !== \CURLOPT_USERPWD) {
-            return false;
-        }
-
-        if (!isset($options['auth']) || !\is_array($options['auth']) || !isset($options['curl']) || !\is_array($options['curl'])) {
-            return false;
-        }
-
-        if (!isset($options['auth'][0], $options['auth'][1], $options['auth'][2]) || !\is_string($options['auth'][0]) || !\is_string($options['auth'][1]) || !\is_string($options['auth'][2])) {
-            return false;
-        }
-
-        $type = \strtolower($options['auth'][2]);
-        if ($type === 'digest') {
-            $httpAuth = \defined('CURLAUTH_DIGEST') ? \constant('CURLAUTH_DIGEST') : null;
-        } elseif ($type === 'ntlm') {
-            $httpAuth = \defined('CURLAUTH_NTLM') ? \constant('CURLAUTH_NTLM') : null;
-        } else {
-            return false;
-        }
-
-        return $httpAuth !== null
-            && \array_key_exists(\CURLOPT_HTTPAUTH, $options['curl'])
-            && \array_key_exists(\CURLOPT_USERPWD, $options['curl'])
-            && $options['curl'][\CURLOPT_HTTPAUTH] === $httpAuth
-            && $options['curl'][\CURLOPT_USERPWD] === $options['auth'][0].':'.$options['auth'][1];
     }
 
     private static function rejectUnsupportedRequestOptions(array $options): void
@@ -373,10 +332,6 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_HTTPHEADER', 'the request headers');
         self::addConflictingCurlOption($options, 'CURLOPT_USERAGENT', 'the request headers');
         self::addConflictingCurlOption($options, 'CURLOPT_REFERER', 'the request headers');
-        self::addConflictingCurlOption($options, 'CURLOPT_HTTPAUTH', 'the "auth" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_USERPWD', 'the "auth" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_USERNAME', 'the "auth" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_PASSWORD', 'the "auth" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_HEADERFUNCTION', 'the "on_headers" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_WRITEFUNCTION', 'the "sink" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_FILE', 'the "sink" request option');
