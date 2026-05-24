@@ -19,10 +19,8 @@ use Psr\Http\Message\UriInterface;
 
 /**
  * HTTP handler that uses PHP's HTTP stream wrapper.
- *
- * @final
  */
-class StreamHandler
+final class StreamHandler
 {
     /**
      * @var array

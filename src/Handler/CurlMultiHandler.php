@@ -17,10 +17,8 @@ use Psr\Http\Message\ResponseInterface;
  * When using the CurlMultiHandler, custom curl options can be specified as an
  * associative array of curl option constants mapping to values in the
  * **curl** key of the provided request options.
- *
- * @final
  */
-class CurlMultiHandler
+final class CurlMultiHandler
 {
     /**
      * @var CurlFactoryInterface

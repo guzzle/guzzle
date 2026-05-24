@@ -19,10 +19,8 @@ use Psr\Http\Message\UriInterface;
 
 /**
  * Creates curl resources from a request
- *
- * @final
  */
-class CurlFactory implements CurlFactoryInterface
+final class CurlFactory implements CurlFactoryInterface
 {
     public const CURL_VERSION_STR = 'curl_version';
 
