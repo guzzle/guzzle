@@ -870,6 +870,21 @@ Pass an associative array to specify HTTP proxies for specific URI schemes (i.e.
 > [!NOTE]
 > Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
 
+Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply Guzzle-compatible proxy selection. The helper resolves the documented `proxy` request option shape, including scheme-specific proxy entries and `no` exclusion rules. Handlers remain responsible for translating the selected proxy string into their transport-specific configuration.
+
+```php
+use GuzzleHttp\ProxyOptions;
+
+$selection = ProxyOptions::resolve($request->getUri(), $options['proxy'] ?? null);
+
+if ($selection->hasProxy()) {
+    $proxy = $selection->getProxy();
+    // Configure the transport to use $proxy.
+} elseif ($selection->shouldDisableProxy()) {
+    // Disable transport-level default or environment proxy behavior.
+}
+```
+
 ```php
 $client->request('GET', '/', [
     'proxy' => [

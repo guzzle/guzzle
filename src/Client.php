@@ -386,7 +386,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         $noProxy = Utils::getenv('NO_PROXY');
         if ($noProxy !== null) {
-            $noProxy = Utils::normalizeNoProxy($noProxy);
+            $noProxy = ProxyOptions::normalizeNoProxy($noProxy);
             if ($noProxy !== []) {
                 $defaults['proxy']['no'] = $noProxy;
             }

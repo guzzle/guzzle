@@ -474,6 +474,15 @@ pass a custom delay callable to `Middleware::retry()`.
 `RedirectMiddleware::$defaultSettings` has been removed. Use
 `RedirectMiddleware::DEFAULT_SETTINGS` instead.
 
+#### Removed proxy helper API
+
+`Utils::isHostInNoProxy()` has been removed. Use
+`ProxyOptions::isHostInNoProxy()` instead.
+
+The replacement uses Guzzle 8's normalized no-proxy matching. Domain matching is
+case-insensitive, IP literals are normalized before comparison, and CIDR entries
+match IP literal hosts.
+
 #### Non-instantiable utility classes
 
 Static utility and constant classes such as `GuzzleHttp\Middleware`,
