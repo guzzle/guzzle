@@ -476,10 +476,15 @@ pass a custom delay callable to `Middleware::retry()`.
 
 #### Removed proxy helper API
 
-`Utils::isHostInNoProxy()` has been removed. Use
-`ProxyOptions::isHostInNoProxy()` instead.
+`Utils::isHostInNoProxy()` has been removed.
 
-The replacement uses Guzzle 8's normalized no-proxy matching. Domain matching is
+Use `ProxyOptions::resolve()` when implementing Guzzle-compatible proxy handling
+in a custom handler. Use `ProxyOptions::isUriInNoProxy()` when checking whether a
+request URI matches a no-proxy list. Use `ProxyOptions::isHostInNoProxy()` only
+when checking a host string directly.
+
+These helpers use Guzzle 8's normalized no-proxy matching rather than preserving
+the old `Utils::isHostInNoProxy()` semantics. Domain matching is
 case-insensitive, IP literals are normalized before comparison, and CIDR entries
 match IP literal hosts.
 
