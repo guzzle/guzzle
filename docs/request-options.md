@@ -791,7 +791,7 @@ None
 Constant
 `GuzzleHttp\RequestOptions::PROGRESS`
 
-The function accepts the following integer byte-count positional arguments:
+The function accepts four integer byte counts:
 
 - the total number of bytes expected to be downloaded, zero if unknown
 - the number of bytes downloaded so far
