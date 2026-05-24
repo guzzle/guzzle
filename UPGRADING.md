@@ -141,12 +141,57 @@ may still observe.
 
 The main code to audit is code that used `catch (RequestException $e)` as its
 only catch block for cURL transport failures where no response was received.
-Some of those failures, including proxy resolution, send, receive, and TLS
-verification failures, are now classified as `ConnectException`. Catch
-`ConnectException`, `NetworkExceptionInterface`, `TransferException`, or
-`GuzzleException` for those network failures. Keep catching `RequestException`
-for response-aware handling, HTTP error responses, redirects, and other
-request-related failures that are not network failures.
+Guzzle 8 classifies more response-less built-in cURL failures as network
+failures. Catch `ConnectException`, `NetworkExceptionInterface`,
+`TransferException`, or `GuzzleException` for those failures. Keep catching
+`RequestException` for response-aware handling, HTTP error responses,
+redirects, callback failures, and request-related failures that are not network
+failures.
+
+For the built-in cURL handlers, the affected cURL error classifications are:
+
+- `CURLE_OPERATION_TIMEOUTED` now throws `TimeoutException`. Guzzle 7 threw
+  `ConnectException`; `TimeoutException` extends `ConnectException`, so
+  existing `ConnectException` catch blocks still catch cURL timeouts.
+- `CURLE_COULDNT_RESOLVE_PROXY` now throws `ConnectException`. Guzzle 7
+  classified this cURL error as `RequestException`.
+- `CURLE_SEND_ERROR` and `CURLE_RECV_ERROR` now throw `ConnectException` when
+  no response was created. If a response was created before the error, they
+  remain `RequestException`.
+- When the PHP cURL extension defines them, `CURLE_PROXY`,
+  `CURLE_QUIC_CONNECT_ERROR`, `CURLE_HTTP2`, `CURLE_HTTP2_STREAM`,
+  `CURLE_HTTP3`, `CURLE_PEER_FAILED_VERIFICATION`, `CURLE_SSL_CACERT`,
+  `CURLE_SSL_PEER_CERTIFICATE`, `CURLE_SSL_PINNEDPUBKEYNOTMATCH`,
+  `CURLE_SSL_INVALIDCERTSTATUS`, and `CURLE_SSL_CLIENTCERT` now throw
+  `ConnectException` when no response was created. If a response was created
+  before the error, they remain `RequestException`.
+
+The existing always-network cURL errors, including
+`CURLE_COULDNT_RESOLVE_HOST`, `CURLE_COULDNT_CONNECT`,
+`CURLE_SSL_CONNECT_ERROR`, and `CURLE_GOT_NOTHING`, still throw
+`ConnectException`.
+
+For example, code that previously treated `RequestException` as the only cURL
+transport failure type should add network-specific handling:
+
+```php
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
+
+try {
+    $client->request('GET', $uri);
+} catch (ConnectException $e) {
+    $errno = $e->getHandlerContext()['errno'] ?? null;
+
+    // Network failures without an HTTP response, including the reclassified
+    // built-in cURL transport errors.
+} catch (RequestException $e) {
+    $response = $e->getResponse();
+
+    // Response-aware failures, HTTP errors, redirects, callback failures, or
+    // request-related transfer failures that are not network failures.
+}
+```
 
 `GuzzleHttp\Exception\InvalidArgumentException` remains outside the transfer
 exception hierarchy and is still used for invalid configuration or request option
