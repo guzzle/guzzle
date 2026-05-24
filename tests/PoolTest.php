@@ -145,6 +145,31 @@ class PoolTest extends TestCase
         self::assertTrue($h[0]->hasHeader('x-foo'));
     }
 
+    public function testCanProvideCallablesThatReturnResponsePromises(): void
+    {
+        $h = [];
+        $handler = new MockHandler([
+            static function (RequestInterface $request) use (&$h): ResponseInterface {
+                $h[] = $request;
+
+                return new Response();
+            },
+        ]);
+        $c = new Client(['handler' => $handler]);
+        $optHistory = [];
+        $fn = static function (array $opts) use (&$optHistory, $c): PromiseInterface {
+            $optHistory = $opts;
+
+            return $c->requestAsync('GET', 'http://example.com', $opts);
+        };
+        $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
+        $p = new Pool($c, [$fn], $opts);
+        $p->promise()->wait();
+        self::assertSame($opts['options'], $optHistory);
+        self::assertCount(1, $h);
+        self::assertTrue($h[0]->hasHeader('x-foo'));
+    }
+
     public function testConstructorCallbacksCanReceiveAggregatePromise(): void
     {
         $reason = new \RuntimeException('failed');

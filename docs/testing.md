@@ -54,6 +54,8 @@ When no more responses are in the queue and a request is sent, an `OutOfBoundsEx
 
 Queued callables receive the `Psr\Http\Message\RequestInterface` and request options array passed to the mock handler. They may return a `Psr\Http\Message\ResponseInterface`, a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>`, or a throwable rejection reason.
 
+The `on_headers` request option is invoked when a queued response or fulfilled response promise is available. It is not invoked for queued throwables or rejected promises.
+
 The optional `MockHandler` constructor callbacks are invoked with the fulfilled response or rejected reason after the queued value has settled.
 
 ## History Middleware

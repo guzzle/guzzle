@@ -57,14 +57,14 @@ class Pool implements PromisorInterface
      *             1: string,
      *             2?: string
      *         }|null,
-     *         body?: mixed,
+     *         body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *         cert?: string|array{
      *             0: string,
      *             1?: string
      *         },
      *         cert_type?: string,
      *         connect_timeout?: int|float,
-     *         cookies?: bool|CookieJarInterface,
+     *         cookies?: false|CookieJarInterface,
      *         crypto_method?: int,
      *         debug?: bool|resource,
      *         decode_content?: bool|string,
@@ -77,9 +77,9 @@ class Pool implements PromisorInterface
      *         idn_conversion?: bool|int,
      *         json?: mixed,
      *         multipart?: array<array-key, array{
-     *             name: string,
+     *             name: string|int,
      *             contents: mixed,
-     *             headers?: array<array-key, string|array<array-key, string>>,
+     *             headers?: array<array-key, string>,
      *             filename?: string
      *         }>,
      *         on_headers?: callable(ResponseInterface, RequestInterface): mixed,
@@ -93,6 +93,7 @@ class Pool implements PromisorInterface
      *         },
      *         query?: array<array-key, mixed>|string,
      *         read_timeout?: int|float,
+     *         retries?: int,
      *         request_factory?: RequestFactoryInterface,
      *         sink?: resource|string|StreamInterface,
      *         ssl_key?: string|array{
@@ -181,14 +182,14 @@ class Pool implements PromisorInterface
      *             1: string,
      *             2?: string
      *         }|null,
-     *         body?: mixed,
+     *         body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *         cert?: string|array{
      *             0: string,
      *             1?: string
      *         },
      *         cert_type?: string,
      *         connect_timeout?: int|float,
-     *         cookies?: bool|CookieJarInterface,
+     *         cookies?: false|CookieJarInterface,
      *         crypto_method?: int,
      *         debug?: bool|resource,
      *         decode_content?: bool|string,
@@ -201,9 +202,9 @@ class Pool implements PromisorInterface
      *         idn_conversion?: bool|int,
      *         json?: mixed,
      *         multipart?: array<array-key, array{
-     *             name: string,
+     *             name: string|int,
      *             contents: mixed,
-     *             headers?: array<array-key, string|array<array-key, string>>,
+     *             headers?: array<array-key, string>,
      *             filename?: string
      *         }>,
      *         on_headers?: callable(ResponseInterface, RequestInterface): mixed,
@@ -217,6 +218,7 @@ class Pool implements PromisorInterface
      *         },
      *         query?: array<array-key, mixed>|string,
      *         read_timeout?: int|float,
+     *         retries?: int,
      *         request_factory?: RequestFactoryInterface,
      *         sink?: resource|string|StreamInterface,
      *         ssl_key?: string|array{

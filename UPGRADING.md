@@ -382,7 +382,7 @@ declare strict types will throw `TypeError` for non-boolean values.
 `SetCookie::getExpires()` now returns `int|null`. Invalid textual expiration
 dates are treated as `null`.
 
-#### Generic Promise PHPDoc Types
+#### Generic Promise And Structured PHPDoc Types
 
 Guzzle's async client APIs, handlers, and middleware callable annotations now use
 generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a

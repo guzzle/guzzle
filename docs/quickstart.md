@@ -207,7 +207,7 @@ $client = new Client();
 $requests = function ($total) use ($client) {
     $uri = 'http://127.0.0.1:8126/guzzle-server/perf';
     for ($i = 0; $i < $total; $i++) {
-        yield function(array $options) use ($client, $uri) {
+        yield function (array $options) use ($client, $uri) {
             return $client->getAsync($uri, $options);
         };
     }
@@ -268,7 +268,7 @@ You can set query string parameters in the request's URI:
 $response = $client->request('GET', 'http://httpbin.org?foo=bar');
 ```
 
-You can specify the query string parameters using the `query` request option as an array.
+You can specify the query string parameters using the `query` request option as an array. PHP stores numeric-string parameter names as integer array keys before building the query string.
 
 ```php
 $client->request('GET', 'http://httpbin.org', [
@@ -321,7 +321,7 @@ In addition to specifying the raw data of a request using the `body` request opt
 
 #### Sending form fields
 
-Sending `application/x-www-form-urlencoded` POST requests requires that you specify the POST fields as an array in the `form_params` request options.
+Sending `application/x-www-form-urlencoded` POST requests requires that you specify the POST fields as an array in the `form_params` request options. PHP stores numeric-string form field names as integer array keys before encoding the request body.
 
 ```php
 $response = $client->request('POST', 'http://httpbin.org/post', [
@@ -337,10 +337,10 @@ $response = $client->request('POST', 'http://httpbin.org/post', [
 
 #### Sending form files
 
-You can send files along with a form (`multipart/form-data` POST requests), using the `multipart` request option. `multipart` accepts an array of associative arrays, where each associative array contains the following keys:
+You can send files along with a form (`multipart/form-data` POST requests), using the `multipart` request option. `multipart` accepts an array of part arrays, where each part array contains the following keys:
 
-- name: (required, string) key mapping to the form field name.
-- contents: (required, mixed) Provide a string to send the contents of the file as a string, provide an fopen resource to stream the contents from a PHP stream, or provide a `Psr\Http\Message\StreamInterface` to stream the contents from a PSR-7 stream.
+- name: (required, string|int) key mapping to the form field name.
+- contents: (required, mixed) Provide a string to send the contents of the file as a string, provide an fopen resource to stream the contents from a PHP stream, provide a `Psr\Http\Message\StreamInterface` to stream the contents from a PSR-7 stream, or provide an array to expand nested multipart fields.
 
 ```php
 use GuzzleHttp\Psr7;

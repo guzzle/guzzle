@@ -9,7 +9,7 @@ No. Guzzle can use any HTTP handler to send requests. This means that Guzzle can
 
 ## Can Guzzle send asynchronous requests?
 
-Yes. You can use the `requestAsync`, `sendAsync`, `getAsync`, `headAsync`, `putAsync`, `postAsync`, `deleteAsync`, and `patchAsync` methods of a client to send an asynchronous request. The client will return a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` object. You can chain `then` functions off of the promise for fulfilled responses and rejected reasons.
+Yes. You can use the `requestAsync`, `sendAsync`, `getAsync`, `headAsync`, `putAsync`, `postAsync`, `deleteAsync`, `patchAsync`, and `optionsAsync` methods of a client to send an asynchronous request. The client will return a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` object. You can chain `then` functions off of the promise for fulfilled responses and rejected reasons.
 
 ```php
 $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
@@ -30,7 +30,7 @@ $response = $promise->wait();
 
 ## How can I add custom cURL options?
 
-cURL offers a huge number of [customizable options](https://www.php.net/curl_setopt). While Guzzle normalizes many of these options across different handlers, there are times when you need to set custom cURL options. This can be accomplished by passing an associative array of cURL settings in the **curl** key of a request.
+cURL offers a huge number of [customizable options](https://www.php.net/curl_setopt). While Guzzle normalizes many of these options across different handlers, there are times when you need to set custom cURL options. This can be accomplished by passing an array keyed by integer `CURLOPT_*` constants in the **curl** key of a request. The special `body_as_string` key is also recognized by Guzzle's cURL handler.
 
 For example, let's say you need to customize the outgoing network interface used with a client.
 
@@ -42,7 +42,7 @@ $client->request('GET', '/', [
 ]);
 ```
 
-If you use asynchronous requests with cURL multi handler and want to tweak it, additional options can be specified as an associative array in the **options** key of the `CurlMultiHandler` constructor.
+If you use asynchronous requests with cURL multi handler and want to tweak it, additional options can be specified as an array keyed by integer `CURLMOPT_*` constants in the **options** key of the `CurlMultiHandler` constructor.
 
 ```php
 use GuzzleHttp\Client;
@@ -152,8 +152,8 @@ $initialRequest = '/redirect/3'; // Store the request URI for later use
 $response = $client->request('GET', $initialRequest); // Make your request
 
 // Retrieve both Redirect History headers
-$redirectUriHistory = $response->getHeader('X-Guzzle-Redirect-History')[0]; // retrieve Redirect URI history
-$redirectCodeHistory = $response->getHeader('X-Guzzle-Redirect-Status-History')[0]; // retrieve Redirect HTTP Status history
+$redirectUriHistory = $response->getHeader('X-Guzzle-Redirect-History'); // retrieve Redirect URI history
+$redirectCodeHistory = $response->getHeader('X-Guzzle-Redirect-Status-History'); // retrieve Redirect HTTP Status history
 
 // Add the initial URI requested to the (beginning of) URI history
 array_unshift($redirectUriHistory, $initialRequest);

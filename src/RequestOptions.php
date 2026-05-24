@@ -56,11 +56,12 @@ final class RequestOptions
     public const AUTH = 'auth';
 
     /**
-     * body: (resource|string|null|int|float|bool|StreamInterface|callable|\Iterator|\Stringable)
+     * body: (resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable)
      * Body to send in the request. Scalar, resource, and stringable object
      * values are converted using the configured stream_factory. Callable and
      * iterator bodies use Guzzle's existing stream handling. Strings are used
-     * as literal body contents, even when they name a callable.
+     * as literal body contents, even when they name a callable. Callable bodies
+     * may be closures or invokable objects; arrays are not valid body values.
      */
     public const BODY = 'body';
 
@@ -80,7 +81,7 @@ final class RequestOptions
     public const CERT_TYPE = 'cert_type';
 
     /**
-     * cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
+     * cookies: (false|GuzzleHttp\Cookie\CookieJarInterface, default=false)
      * Specifies whether or not cookies are used in a request or what cookie
      * jar to use or what cookies to send. This option only works if your
      * handler has the `cookie` middleware. Valid values are `false` and
@@ -183,13 +184,13 @@ final class RequestOptions
     public const JSON = 'json';
 
     /**
-     * multipart: (array) Array of associative arrays, each containing a
-     * required "name" key mapping to the form field, name, a required
+     * multipart: (array) Array of part arrays, each containing a required
+     * "name" key mapping to the string or integer form field name, a required
      * "contents" key mapping to any non-array value accepted by PSR-7
-     * Utils::streamFor(), an optional "headers" associative array of custom headers, and an
-     * optional "filename" key mapping to a string to send as the filename in
-     * the part. If no "filename" key is present, then no "filename" attribute
-     * will be added to the part.
+     * Utils::streamFor() or a nested array of field values, an optional
+     * "headers" array of string custom header values, and an optional
+     * "filename" key mapping to a string to send as the filename in the part.
+     * "headers" and "filename" cannot be used when "contents" is an array.
      */
     public const MULTIPART = 'multipart';
 

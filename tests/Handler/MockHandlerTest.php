@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
@@ -265,6 +266,115 @@ class MockHandlerTest extends TestCase
         self::assertSame($res, $promise->wait());
         self::assertSame($res, $gotResponse);
         self::assertSame($request, $gotRequest);
+    }
+
+    public function testInvokesOnHeadersWithQueuedPromiseResponse(): void
+    {
+        $res = new Response(202, ['X-Foo' => 'bar']);
+        $mock = new MockHandler([Create::promiseFor($res)]);
+        $request = new Request('GET', 'http://example.com');
+        $gotResponse = null;
+
+        $promise = $mock($request, [
+            'on_headers' => static function (ResponseInterface $response) use (&$gotResponse): void {
+                $gotResponse = $response;
+            },
+        ]);
+
+        self::assertSame($res, $promise->wait());
+        self::assertSame($res, $gotResponse);
+    }
+
+    public function testInvokesOnHeadersAfterQueuedCallableReturnsResponse(): void
+    {
+        $res = new Response(203, ['X-Foo' => 'bar']);
+        $mock = new MockHandler([
+            static function () use ($res): ResponseInterface {
+                return $res;
+            },
+        ]);
+        $request = new Request('GET', 'http://example.com');
+        $gotResponse = null;
+
+        $promise = $mock($request, [
+            'on_headers' => static function (ResponseInterface $response) use (&$gotResponse): void {
+                $gotResponse = $response;
+            },
+        ]);
+
+        self::assertSame($res, $promise->wait());
+        self::assertSame($res, $gotResponse);
+    }
+
+    public function testInvokesOnHeadersAfterQueuedCallableReturnsPromise(): void
+    {
+        $res = new Response(204, ['X-Foo' => 'bar']);
+        $mock = new MockHandler([
+            static function () use ($res): PromiseInterface {
+                return Create::promiseFor($res);
+            },
+        ]);
+        $request = new Request('GET', 'http://example.com');
+        $gotResponse = null;
+
+        $promise = $mock($request, [
+            'on_headers' => static function (ResponseInterface $response) use (&$gotResponse): void {
+                $gotResponse = $response;
+            },
+        ]);
+
+        self::assertSame($res, $promise->wait());
+        self::assertSame($res, $gotResponse);
+    }
+
+    public function testDoesNotInvokeOnHeadersForQueuedThrowable(): void
+    {
+        $reason = new \RuntimeException('failed');
+        $mock = new MockHandler([$reason]);
+        $called = false;
+
+        $promise = $mock(new Request('GET', 'http://example.com'), [
+            'on_headers' => static function () use (&$called): void {
+                $called = true;
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($reason, $e);
+            self::assertFalse($called);
+        }
+    }
+
+    public function testInvokesOnStatsWhenPromiseOnHeadersFails(): void
+    {
+        $res = new Response(200);
+        $mock = new MockHandler([Create::promiseFor($res)]);
+        $request = new Request('GET', 'http://example.com');
+        $stats = null;
+        $promise = $mock($request, [
+            'on_headers' => static function (): void {
+                throw new \RuntimeException('test');
+            },
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
+            self::assertSame($res, $e->getResponse());
+            self::assertInstanceOf(TransferStats::class, $stats);
+            self::assertSame($request, $stats->getRequest());
+            self::assertTrue($stats->hasResponse());
+            self::assertSame($res, $stats->getResponse());
+            self::assertSame($e, $stats->getHandlerErrorData());
+        }
     }
 
     public function testInvokesOnFulfilled(): void

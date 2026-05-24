@@ -94,19 +94,15 @@ class MockHandler implements \Countable
         $this->lastRequest = $request;
         $this->lastOptions = $options;
         $response = \array_shift($this->queue);
+        $onHeaders = null;
         $onHeadersResponse = null;
 
         if (isset($options['on_headers'])) {
             if (!\is_callable($options['on_headers'])) {
                 throw new \InvalidArgumentException('on_headers must be callable');
             }
-            try {
-                $options['on_headers']($response, $request);
-            } catch (\Throwable $e) {
-                $msg = 'An error was encountered during the on_headers event';
-                $onHeadersResponse = $response instanceof ResponseInterface ? $response : null;
-                $response = new RequestException($msg, $request, $onHeadersResponse, $e);
-            }
+
+            $onHeaders = $options['on_headers'];
         }
 
         if (\is_callable($response)) {
@@ -116,6 +112,27 @@ class MockHandler implements \Countable
         $response = $response instanceof \Throwable
             ? P\Create::rejectionFor($response)
             : P\Create::promiseFor($response);
+
+        if (\is_callable($onHeaders)) {
+            $response = $response->then(
+                static function ($value) use ($onHeaders, $request, &$onHeadersResponse) {
+                    if (!$value instanceof ResponseInterface) {
+                        return $value;
+                    }
+
+                    try {
+                        $onHeaders($value, $request);
+                    } catch (\Throwable $e) {
+                        $msg = 'An error was encountered during the on_headers event';
+                        $onHeadersResponse = $value;
+
+                        throw new RequestException($msg, $request, $value, $e);
+                    }
+
+                    return $value;
+                }
+            );
+        }
 
         $promise = $response->then(
             function ($value) use ($request, $options) {
@@ -140,7 +157,7 @@ class MockHandler implements \Countable
 
                 return $value;
             },
-            function ($reason) use ($request, $options, $onHeadersResponse): PromiseInterface {
+            function ($reason) use ($request, $options, &$onHeadersResponse): PromiseInterface {
                 $this->invokeStats($request, $options, $onHeadersResponse, $reason);
                 if ($this->onRejected) {
                     ($this->onRejected)($reason);
