@@ -40,7 +40,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject malformed response protocol versions and reason phrases
 - Wrap malformed redirect `Location` values in `BadResponseException`
 - Default HTTPS requests sent by the built-in cURL and stream handlers to TLS 1.2 or newer
-- Adjust HTTP/3 cURL handling to avoid attempting HTTP/3 through effective proxies and to use a TLS 1.2 minimum so libcurl fallback to HTTP/2 or HTTP/1.1 remains viable
 - Apply the stream handler `crypto_method` option through the SSL context so it consistently controls the minimum TLS version
 - Validate built-in handler timeout options before applying them
 - Classify empty, malformed, or handler-unsupported request protocol versions as request exceptions
