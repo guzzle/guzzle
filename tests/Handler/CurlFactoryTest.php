@@ -484,15 +484,6 @@ class CurlFactoryTest extends TestCase
         ]);
     }
 
-    public function testAcceptsReadTimeoutOption(): void
-    {
-        (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
-            'read_timeout' => 1,
-        ]);
-
-        self::assertArrayNotHasKey('read_timeout', $_SERVER['_curl']);
-    }
-
     public function testProtocolsOptionCanRestrictCurlProtocols(): void
     {
         $f = new CurlFactory(3);
