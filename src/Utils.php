@@ -168,7 +168,7 @@ final class Utils
     {
         $result = [];
         foreach (\array_keys($headers) as $key) {
-            $result[\strtolower($key)] = $key;
+            $result[\strtolower((string) $key)] = $key;
         }
 
         return $result;

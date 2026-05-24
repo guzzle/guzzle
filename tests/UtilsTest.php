@@ -156,6 +156,14 @@ class UtilsTest extends TestCase
         self::assertSame($expected, Utils::normalizeHeaderKeys($input));
     }
 
+    public function testNormalizeHeaderKeysHandlesNumericKeys(): void
+    {
+        $input = [0 => 'zero', 'HelLo' => 'foo'];
+        $expected = [0 => 0, 'hello' => 'HelLo'];
+
+        self::assertSame($expected, Utils::normalizeHeaderKeys($input));
+    }
+
     public static function noProxyProvider(): array
     {
         return [
