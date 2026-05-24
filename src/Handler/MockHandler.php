@@ -139,7 +139,7 @@ class MockHandler implements \Countable
 
                 return $value;
             },
-            function ($reason) use ($request, $options, $onHeadersResponse) {
+            function ($reason) use ($request, $options, $onHeadersResponse): PromiseInterface {
                 $this->invokeStats($request, $options, $onHeadersResponse, $reason);
                 if ($this->onRejected) {
                     ($this->onRejected)($reason);

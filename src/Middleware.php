@@ -26,7 +26,7 @@ final class Middleware
     public static function cookies(): callable
     {
         return static function (callable $handler): callable {
-            return static function ($request, array $options) use ($handler) {
+            return static function ($request, array $options) use ($handler): PromiseInterface {
                 if (empty($options['cookies'])) {
                     return $handler($request, $options);
                 } elseif (!$options['cookies'] instanceof CookieJarInterface) {
@@ -58,13 +58,13 @@ final class Middleware
     public static function httpErrors(?BodySummarizerInterface $bodySummarizer = null): callable
     {
         return static function (callable $handler) use ($bodySummarizer): callable {
-            return static function ($request, array $options) use ($handler, $bodySummarizer) {
+            return static function ($request, array $options) use ($handler, $bodySummarizer): PromiseInterface {
                 if (empty($options['http_errors'])) {
                     return $handler($request, $options);
                 }
 
                 return $handler($request, $options)->then(
-                    static function (ResponseInterface $response) use ($request, $bodySummarizer) {
+                    static function (ResponseInterface $response) use ($request, $bodySummarizer): ResponseInterface {
                         $code = $response->getStatusCode();
                         if ($code < 400) {
                             return $response;
@@ -92,9 +92,9 @@ final class Middleware
         }
 
         return static function (callable $handler) use (&$container): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, &$container) {
+            return static function (RequestInterface $request, array $options) use ($handler, &$container): PromiseInterface {
                 return $handler($request, $options)->then(
-                    static function ($value) use ($request, &$container, $options) {
+                    static function ($value) use ($request, &$container, $options): ResponseInterface {
                         $container[] = [
                             'request' => $request,
                             'response' => $value,
@@ -104,7 +104,7 @@ final class Middleware
 
                         return $value;
                     },
-                    static function ($reason) use ($request, &$container, $options) {
+                    static function ($reason) use ($request, &$container, $options): PromiseInterface {
                         $container[] = [
                             'request' => $request,
                             'response' => null,
@@ -135,7 +135,7 @@ final class Middleware
     public static function tap(?callable $before = null, ?callable $after = null): callable
     {
         return static function (callable $handler) use ($before, $after): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, $before, $after) {
+            return static function (RequestInterface $request, array $options) use ($handler, $before, $after): PromiseInterface {
                 if ($before) {
                     $before($request, $options);
                 }
@@ -204,7 +204,7 @@ final class Middleware
         }
 
         return static function (callable $handler) use ($logger, $formatter, $logLevel): callable {
-            return static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel) {
+            return static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel): PromiseInterface {
                 return $handler($request, $options)->then(
                     static function ($response) use ($logger, $request, $formatter, $logLevel): ResponseInterface {
                         $message = $formatter->format($request, $response);
@@ -248,7 +248,7 @@ final class Middleware
     public static function mapRequest(callable $fn): callable
     {
         return static function (callable $handler) use ($fn): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, $fn) {
+            return static function (RequestInterface $request, array $options) use ($handler, $fn): PromiseInterface {
                 return $handler($fn($request), $options);
             };
         };
@@ -264,7 +264,7 @@ final class Middleware
     public static function mapResponse(callable $fn): callable
     {
         return static function (callable $handler) use ($fn): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, $fn) {
+            return static function (RequestInterface $request, array $options) use ($handler, $fn): PromiseInterface {
                 return $handler($request, $options)->then($fn);
             };
         };
