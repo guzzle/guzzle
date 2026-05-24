@@ -459,15 +459,15 @@ A handler is responsible for applying the following request options. These reque
 
 Transport-specific options such as `curl` and `stream_context` are intended for the handlers that understand them. A non-cURL handler should reject or document how it treats cURL-specific options, and a non-stream handler should do the same for PHP stream context options.
 
-Custom handlers do not need to support every handler-owned option, but they should not silently ignore options users reasonably expect to affect transport behavior. Prefer implementing the option, rejecting the request with a clear exception when the option is present, or documenting a deliberate no-op where the option has no meaningful transport equivalent.
+First-party handlers should not silently ignore documented handler-owned options users reasonably expect to affect transport behavior. They should implement the option, reject the request with a clear exception when the option is present, or document a deliberate no-op where the option has no meaningful transport equivalent. Custom handlers should follow the same pattern where practical.
 
 ### Callback Semantics
 
-The `on_headers` option is invoked after the response headers have been received and before response body bytes are written to the configured `sink`. In Guzzle 7, the callback receives the response object. If it throws, the request promise is rejected with a `GuzzleHttp\Exception\RequestException` that wraps the thrown exception.
+The `on_headers` option is invoked after the response headers have been received and before response body bytes are written to the configured `sink`. In Guzzle 8, the callback receives the response object and the corresponding request object. If it throws, the request promise is rejected with a `GuzzleHttp\Exception\RequestException` that wraps the thrown exception.
 
-The `on_stats` option is invoked when the handler has finished sending a request, with a `GuzzleHttp\TransferStats` object that describes the response received or the error encountered. Built-in cURL handlers may invoke `on_stats` per low-level transfer attempt.
+The `on_stats` option is invoked when the handler has finished sending a request, with a `GuzzleHttp\TransferStats` object that describes the response received or the error encountered. Exceptions thrown by `on_stats` are not wrapped by Guzzle and may escape from the handler wait path. Built-in cURL handlers release native cURL handles before invoking `on_stats` and may invoke it per low-level transfer attempt.
 
-The `progress` option is invoked with the documented argument order: the total number of bytes expected to be downloaded, the number of bytes downloaded so far, the total number of bytes expected to be uploaded, and the number of bytes uploaded so far. A handler that cannot provide progress information should reject the option or clearly document that progress reporting is unsupported.
+The `progress` option is invoked with the documented argument order: the total number of bytes expected to be downloaded, the number of bytes downloaded so far, the total number of bytes expected to be uploaded, and the number of bytes uploaded so far. With the built-in cURL handlers, returning a truthy value aborts the transfer and rejects the request promise with a `GuzzleHttp\Exception\RequestException`. If the callback throws, the cURL handlers reject the promise with a `RequestException` wrapping the thrown exception. The built-in stream handler treats progress callbacks as notifications and ignores return values. A handler that cannot provide progress information should reject the option or clearly document that progress reporting is unsupported.
 
 ### Promise Queue Integration
 
