@@ -474,6 +474,11 @@ pass a custom delay callable to `Middleware::retry()`.
 `RedirectMiddleware::$defaultSettings` has been removed. Use
 `RedirectMiddleware::DEFAULT_SETTINGS` instead.
 
+#### Removed proxy helper API
+
+`Utils::isHostInNoProxy()` has been removed. Use
+`ProxyOptions::isHostInNoProxy()` instead.
+
 #### Non-instantiable utility classes
 
 Static utility and constant classes such as `GuzzleHttp\Middleware`,
@@ -483,11 +488,6 @@ private constructors. `GuzzleHttp\Handler\Proxy` is also declared `final`.
 
 These classes only expose static members. Replace any accidental instantiation
 with static method calls or constant access.
-
-#### Removed proxy helper API
-
-`Utils::isHostInNoProxy()` has been removed. Use
-`ProxyOptions::isHostInNoProxy()` instead.
 
 6.0 to 7.0
 ----------
