@@ -727,6 +727,31 @@ $client->request('GET', 'http://httpbin.org/stream/1024', [
 ]);
 ```
 
+When using `Pool`, the callable also receives the iterable key that identified the request as a third argument:
+
+```php
+use GuzzleHttp\Pool;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+$requests = [
+    'image'  => new Request('GET', '/image'),
+    'avatar' => new Request('GET', '/image/png'),
+];
+
+$pool = new Pool($client, $requests, [
+    'options' => [
+        'on_headers' => function (ResponseInterface $response, RequestInterface $request, $key) {
+            // $key is 'image' or 'avatar'
+            if ($response->getHeaderLine('Content-Length') > 1024) {
+                throw new \Exception("Response for {$key} is too big!");
+            }
+        },
+    ],
+]);
+$pool->promise()->wait();
+```
+
 > [!NOTE]
 > When writing HTTP handlers, the `on_headers` function must be invoked before writing data to the body of the response.
 

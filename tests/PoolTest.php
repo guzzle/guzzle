@@ -119,6 +119,98 @@ class PoolTest extends TestCase
         ], $seen);
     }
 
+    public function testOnHeadersReceivesStringKeyFromPool(): void
+    {
+        $requests = [
+            'key_one' => new Request('GET', 'http://example.com/one'),
+            'key_two' => new Request('GET', 'http://example.com/two'),
+        ];
+        $handler = new MockHandler([
+            new Response(200, ['X-Num' => '1']),
+            new Response(200, ['X-Num' => '2']),
+        ]);
+        $client = new Client(['handler' => $handler]);
+        $seen = [];
+
+        $pool = new Pool($client, $requests, [
+            'concurrency' => 1,
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$seen): void {
+                    $seen[$key] = $response->getHeaderLine('X-Num');
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame(['key_one' => '1', 'key_two' => '2'], $seen);
+    }
+
+    public function testOnHeadersReceivesIntegerKeyFromPool(): void
+    {
+        $requests = [
+            new Request('GET', 'http://example.com/one'),
+            new Request('GET', 'http://example.com/two'),
+        ];
+        $handler = new MockHandler([
+            new Response(200),
+            new Response(200),
+        ]);
+        $client = new Client(['handler' => $handler]);
+        $seen = [];
+
+        $pool = new Pool($client, $requests, [
+            'concurrency' => 1,
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$seen): void {
+                    $seen[] = $key;
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame([0, 1], $seen);
+    }
+
+    public function testOnHeadersKeyWorksWithCustomHandler(): void
+    {
+        $capturedKey = null;
+        $customHandler = static function (RequestInterface $request, array $options): ResponseInterface {
+            if (isset($options['on_headers'])) {
+                ($options['on_headers'])(new Response(200), $request);
+            }
+
+            return new Response(200);
+        };
+        $client = new Client(['handler' => $customHandler]);
+
+        $requests = ['my_key' => new Request('GET', 'http://example.com')];
+        $pool = new Pool($client, $requests, [
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$capturedKey): void {
+                    $capturedKey = $key;
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame('my_key', $capturedKey);
+    }
+
     public function testCanProvideCallablesThatReturnResponses(): void
     {
         $h = [];

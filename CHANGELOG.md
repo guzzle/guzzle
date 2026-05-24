@@ -26,6 +26,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Normalize no-proxy domain and IP literal matching consistently
 - Pass the request as the second argument to `on_headers` callbacks
+- Pass the `Pool` iterable key as the third argument to `on_headers` callbacks when sending requests via `Pool`
 - Reject invalid `SetCookie` constructor field types instead of coercing them
 - Reject conflicting raw cURL request options, including request-level `CURLOPT_SHARE`
 - Reject selected request options ignored by incompatible built-in handlers

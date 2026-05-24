@@ -54,6 +54,12 @@ class Pool implements PromisorInterface
 
         $requestGenerator = static function () use ($requests, $client, $opts) {
             foreach ($requests as $key => $rfn) {
+                if (isset($opts['on_headers']) && \is_callable($opts['on_headers'])) {
+                    $userOnHeaders = $opts['on_headers'];
+                    $opts['on_headers'] = static function ($response, $request) use ($userOnHeaders, $key): void {
+                        $userOnHeaders($response, $request, $key);
+                    };
+                }
                 if ($rfn instanceof RequestInterface) {
                     yield $key => $client->sendAsync($rfn, $opts);
                 } elseif (\is_callable($rfn)) {
