@@ -32,6 +32,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Support retry delay callbacks with retry count only or full retry context
 - Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays
+- Stop forwarding the generic `auth` request option when following cross-origin redirects
 - Reject invalid `HandlerStack::remove()` arguments
 - Require `Pool` request collections to be iterable
 - Raised the minimum supported libcurl version for the built-in cURL handlers to 7.34.0
