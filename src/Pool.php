@@ -131,16 +131,17 @@ class Pool implements PromisorInterface
 
         $requestGenerator = static function () use ($requests, $client, $opts): \Generator {
             foreach ($requests as $key => $rfn) {
+                $keyedOpts = $opts;
                 if (isset($opts['on_headers']) && \is_callable($opts['on_headers'])) {
                     $userOnHeaders = $opts['on_headers'];
-                    $opts['on_headers'] = static function ($response, $request) use ($userOnHeaders, $key): void {
+                    $keyedOpts['on_headers'] = static function ($response, $request) use ($userOnHeaders, $key): void {
                         $userOnHeaders($response, $request, $key);
                     };
                 }
                 if ($rfn instanceof RequestInterface) {
-                    yield $key => $client->sendAsync($rfn, $opts);
+                    yield $key => $client->sendAsync($rfn, $keyedOpts);
                 } elseif (\is_callable($rfn)) {
-                    yield $key => $rfn($opts);
+                    yield $key => $rfn($keyedOpts);
                 } else {
                     throw new \InvalidArgumentException('Each value yielded by the iterator must be a Psr7\Http\Message\RequestInterface or a callable that returns a promise that fulfills with a Psr7\Message\Http\ResponseInterface object.');
                 }
