@@ -20,13 +20,17 @@ Guzzle 8 also requires
 and [Guzzle PSR-7 3.x](https://github.com/guzzle/psr7/blob/3.0/UPGRADING.md).
 Guzzle 7 supported Guzzle Promises `^2.3` and Guzzle PSR-7 `^2.8`.
 
-Most applications using Guzzle also interact with Guzzle PSR-7 request,
-response, URI, stream, header, or multipart APIs, either directly or through
-request options. Treat the Guzzle PSR-7 3.x upgrade guide as part of the
-Guzzle 8 upgrade, especially if your application constructs requests, modifies
-responses, sets headers, uploads files, builds multipart requests, or inspects
-streams. Applications using async requests, custom handlers, middleware, pools,
-or promise helpers should also account for the Guzzle Promises 3.x changes.
+Read the linked Guzzle PSR-7 3.x upgrade guide as part of every Guzzle 8
+upgrade. Guzzle's normal request and response APIs use Guzzle PSR-7, so PSR-7
+changes can affect applications even when they do not instantiate PSR-7 classes
+directly. This guide calls out the most common inherited PSR-7 changes, but it
+does not repeat every PSR-7 behavior change.
+
+Pay particular attention to the Guzzle PSR-7 3.x upgrade guide if your
+application constructs requests, modifies responses, sets headers, uploads
+files, builds multipart requests, works with URIs, or inspects streams.
+Applications using async requests, custom handlers, middleware, pools, or promise
+helpers should also account for the Guzzle Promises 3.x changes.
 
 Guzzle 8 now requires `psr/http-factory:^1.0` directly and no longer depends on
 `symfony/deprecation-contracts`.
@@ -34,12 +38,16 @@ Guzzle 8 now requires `psr/http-factory:^1.0` directly and no longer depends on
 #### PSR-7 Header Values and Request Methods
 
 Guzzle 8 uses Guzzle PSR-7 3.x, and several of its behavior changes surface
-through normal Guzzle client usage. The highest-impact inherited changes are
-stricter header value validation and preserved request method casing: header
-values passed through the `headers` request option or PSR-7 request APIs must
-now be strings or non-empty arrays of strings. Empty strings remain valid
-explicit header values, but empty arrays, `null`, `false`, integers, floats,
-and other non-string values are no longer cast or accepted.
+through normal Guzzle client usage. This section summarizes the inherited PSR-7
+changes most likely to affect Guzzle users; read the Guzzle PSR-7 3.x upgrade
+guide for the complete list.
+
+The highest-impact inherited changes are stricter header value validation and
+preserved request method casing. Header values passed through the `headers`
+request option or PSR-7 request APIs must now be strings or non-empty arrays of
+strings. Empty strings remain valid explicit header values, but empty arrays,
+`null`, `false`, integers, floats, and other non-string values are no longer cast
+or accepted.
 
 If your application builds headers from configuration, user input, or typed
 domain values, normalize them before creating or sending requests:
