@@ -32,10 +32,8 @@ use Psr\Http\Message\ResponseInterface;
  * - {res_headers}:    Response headers
  * - {req_body}:       Request body
  * - {res_body}:       Response body
- *
- * @final
  */
-class MessageFormatter implements MessageFormatterInterface
+final class MessageFormatter implements MessageFormatterInterface
 {
     /**
      * Apache Common Log Format.

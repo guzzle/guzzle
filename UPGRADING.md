@@ -81,6 +81,38 @@ $client->request('GET', 'https://example.com');
 The convenience methods such as `$client->get()`, `$client->post()`, and their
 async variants continue to use uppercase standard methods.
 
+#### Logging middleware formatter types
+
+`GuzzleHttp\MessageFormatter` is now final. Applications that extended
+`MessageFormatter` should implement `GuzzleHttp\MessageFormatterInterface`
+instead and pass the custom formatter to `GuzzleHttp\Middleware::log()`.
+
+`Middleware::log()` now requires its formatter argument to implement
+`MessageFormatterInterface`. Passing `new MessageFormatter()` still works
+because `MessageFormatter` implements `MessageFormatterInterface`. Passing any
+other value now fails with PHP's native `TypeError` instead of Guzzle's previous
+`LogicException`.
+
+```php
+use GuzzleHttp\MessageFormatterInterface;
+use GuzzleHttp\Middleware;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+final class RedactingFormatter implements MessageFormatterInterface
+{
+    public function format(
+        RequestInterface $request,
+        ?ResponseInterface $response = null,
+        ?\Throwable $error = null
+    ): string {
+        return $request->getMethod().' '.$request->getUri()->getPath();
+    }
+}
+
+$stack->push(Middleware::log($logger, new RedactingFormatter()));
+```
+
 #### Exception hierarchy and classification
 
 Except for the cURL transport reclassifications described below, the exception
