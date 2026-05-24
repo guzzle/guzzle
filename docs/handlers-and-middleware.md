@@ -279,14 +279,10 @@ As stated earlier, a handler is a function that accepts a `Psr\Http\Message\Requ
 ```php
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
-/**
- * @return PromiseInterface Fulfilled with ResponseInterface.
- */
 function handler(RequestInterface $request, array $options): PromiseInterface
 {
-    // Send the request and settle the returned promise.
+    // Send the request and settle the returned promise with a response.
 }
 ```
 
