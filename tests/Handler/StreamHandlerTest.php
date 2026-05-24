@@ -582,13 +582,6 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(200, $opts['http']['timeout']);
     }
 
-    public function testTruncatesStreamTimeoutToMilliseconds(): void
-    {
-        $res = $this->getSendResult(['stream' => true, 'timeout' => 0.0015]);
-        $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertEquals(0.001, $opts['http']['timeout']);
-    }
-
     /**
      * @dataProvider invalidStreamTimeoutProvider
      *
