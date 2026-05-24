@@ -1285,26 +1285,9 @@ class CurlFactory implements CurlFactoryInterface
             $isHttp3 = '3' === $protocolVersion || '3.0' === $protocolVersion;
             $isHttp2 = '2' === $protocolVersion || '2.0' === $protocolVersion;
 
-            if ($isHttp3) {
-                // CURLOPT_SSLVERSION also affects fallback HTTPS transfers, so
-                // keep the same TLS 1.2 minimum as HTTP/2 unless TLS 1.3 was
-                // explicitly requested.
-                if (
-                    \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $cryptoMethod
-                    || \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $cryptoMethod
-                    || \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $cryptoMethod
-                ) {
-                    $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
-                } elseif (\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $cryptoMethod) {
-                    if (!CurlVersion::supportsTls13()) {
-                        throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
-                    }
-                    $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
-                } else {
-                    throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
-                }
-            } elseif ($isHttp2) {
-                // If HTTP/2, upgrade TLS 1.0 and 1.1 to 1.2.
+            if ($isHttp3 || $isHttp2) {
+                // HTTP/2 requires TLS 1.2. HTTP/3 uses the same guard rail
+                // because CURLOPT_SSLVERSION also affects fallback transfers.
                 if (
                     \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $cryptoMethod
                     || \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $cryptoMethod
