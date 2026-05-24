@@ -8,7 +8,7 @@ Guzzle 8 is a major release that raises the minimum PHP version, updates the
 Guzzle dependency stack, adopts stricter PSR-7 header and request method
 behavior, changes some network exception classification, and tightens validation
 for request options, protocols, transport settings, cookies, and native method
-signatures.
+signatures. It also adds generic PHPDoc types to async APIs for static analysis.
 
 #### PHP Version and Dependencies
 
@@ -260,6 +260,18 @@ declare strict types will throw `TypeError` for non-boolean values.
 `SetCookie::getExpires()` now returns `int|null`. Invalid textual expiration
 dates are treated as `null`.
 
+#### Generic Promise PHPDoc Types
+
+Guzzle's async client APIs, handlers, and middleware callable annotations now use
+generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a
+static-analysis-only change at runtime, but projects with stricter static
+analysis may see new or different diagnostics.
+
+Code using unparameterized promise types continues to work. If your project
+implements Guzzle client interfaces, provides custom handlers or middleware, or
+uses stricter static analysis, you may need to update your PHPDoc annotations to
+include promise fulfillment and rejection types.
+
 #### CurlMultiHandler select timeout
 
 The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
@@ -388,17 +400,6 @@ new SetCookie([
 
 Cookies parsed from normal `Set-Cookie` headers continue to be normalized by
 `SetCookie::fromString()`.
-
-#### Generic Promise PHPDoc Types
-
-Guzzle's async client APIs, handlers, and middleware callable annotations now use
-generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a
-static-analysis-only change and does not alter runtime behavior.
-
-Code using unparameterized promise types continues to work. If your project
-implements Guzzle client interfaces, provides custom handlers or middleware, or
-uses stricter static analysis, you may need to update your PHPDoc annotations to
-include promise fulfillment and rejection types.
 
 6.0 to 7.0
 ----------
