@@ -15,6 +15,10 @@ use Psr\Log\LoggerInterface;
  */
 final class Middleware
 {
+    private function __construct()
+    {
+    }
+
     /**
      * Middleware that adds cookies to requests.
      *

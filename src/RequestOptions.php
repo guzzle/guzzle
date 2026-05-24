@@ -11,6 +11,10 @@ namespace GuzzleHttp;
  */
 final class RequestOptions
 {
+    private function __construct()
+    {
+    }
+
     /**
      * allow_redirects: (bool|array) Controls redirect behavior. Pass false
      * to disable redirects, pass true to enable redirects, pass an

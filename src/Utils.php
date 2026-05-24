@@ -15,6 +15,10 @@ use Psr\Http\Message\UriInterface;
 
 final class Utils
 {
+    private function __construct()
+    {
+    }
+
     /**
      * Debug function used to describe the provided value type and class.
      *

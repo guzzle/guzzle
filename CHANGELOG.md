@@ -55,6 +55,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Release built-in cURL easy handles before invoking `on_stats`
 - Prefer `CURLOPT_XFERINFOFUNCTION` for built-in cURL progress callbacks when available
 - Reject cURL multi handler promises when transfer completion callbacks throw during manual event-loop ticks
+- Made static utility classes non-instantiable and declared `GuzzleHttp\Handler\Proxy` final
 
 ### Removed
 
