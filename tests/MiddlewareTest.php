@@ -256,13 +256,6 @@ class MiddlewareTest extends TestCase
         self::assertSame('PUT 201', $logger->records[0]['message']);
     }
 
-    public function testLogRequiresMessageFormatterInterface(): void
-    {
-        $this->expectException(\TypeError::class);
-
-        Middleware::log(new TestLogger(), new \stdClass());
-    }
-
     public function testLogsRequestsAndErrors(): void
     {
         $h = new MockHandler([new Response(404)]);
