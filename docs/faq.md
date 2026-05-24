@@ -9,7 +9,7 @@ No. Guzzle can use any HTTP handler to send requests. This means that Guzzle can
 
 ## Can Guzzle send asynchronous requests?
 
-Yes. You can use the `requestAsync`, `sendAsync`, `getAsync`, `headAsync`, `putAsync`, `postAsync`, `deleteAsync`, `patchAsync`, and `optionsAsync` methods of a client to send an asynchronous request. The client will return a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` object. You can chain `then` functions off of the promise for fulfilled responses and rejected reasons.
+Yes. You can use the `requestAsync`, `sendAsync`, `getAsync`, `headAsync`, `putAsync`, `postAsync`, `deleteAsync`, and `patchAsync` methods of a client to send an asynchronous request. For asynchronous requests that do not have a named shortcut method, such as OPTIONS requests, use `requestAsync()` with the method name. The client will return a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` object. You can chain `then` functions off of the promise for fulfilled responses and rejected reasons.
 
 ```php
 $promise = $client->requestAsync('GET', 'http://httpbin.org/get');

@@ -157,7 +157,7 @@ provided by the request. Use uppercase standard methods such as `GET`, `POST`,
 and `HEAD` when you want standard method-specific behavior from Guzzle's
 middleware and handlers.
 
-You can create and send a request using methods on a client that map to the HTTP method you wish to use.
+You can create and send a request using named shortcut methods on a client for common HTTP methods.
 
 GET
 `$client->get('http://httpbin.org/get', [/** options **/])`
@@ -175,7 +175,7 @@ DELETE
 `$client->delete('http://httpbin.org/delete', [/** options **/])`
 
 OPTIONS
-`$client->options('http://httpbin.org/get', [/** options **/])`
+`$client->request('OPTIONS', 'http://httpbin.org/get', [/** options **/])`
 
 PATCH
 `$client->patch('http://httpbin.org/put', [/** options **/])`

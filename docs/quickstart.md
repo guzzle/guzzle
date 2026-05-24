@@ -55,16 +55,21 @@ Don't feel like reading RFC 3986? Here are some quick examples on how a `base_ur
 
 ### Sending Requests
 
-Magic methods on the client make it easy to send synchronous requests:
+Named shortcut methods on the client make common synchronous requests concise:
 
 ```php
 $response = $client->get('http://httpbin.org/get');
 $response = $client->delete('http://httpbin.org/delete');
 $response = $client->head('http://httpbin.org/get');
-$response = $client->options('http://httpbin.org/get');
 $response = $client->patch('http://httpbin.org/patch');
 $response = $client->post('http://httpbin.org/post');
 $response = $client->put('http://httpbin.org/put');
+```
+
+For other HTTP methods, use `request()` with the method name:
+
+```php
+$response = $client->request('OPTIONS', 'http://httpbin.org/get');
 ```
 
 You can create a request and then send the request with the client when you're ready:
@@ -82,19 +87,18 @@ You can find out more about client middleware in [Handlers and Middleware](handl
 
 ### Async Requests
 
-You can send asynchronous requests using the magic methods provided by a client:
+You can send asynchronous requests using the named async shortcut methods provided by a client:
 
 ```php
 $promise = $client->getAsync('http://httpbin.org/get');
 $promise = $client->deleteAsync('http://httpbin.org/delete');
 $promise = $client->headAsync('http://httpbin.org/get');
-$promise = $client->optionsAsync('http://httpbin.org/get');
 $promise = $client->patchAsync('http://httpbin.org/patch');
 $promise = $client->postAsync('http://httpbin.org/post');
 $promise = $client->putAsync('http://httpbin.org/put');
 ```
 
-You can also use the `sendAsync()` and `requestAsync()` methods of a client:
+You can also use the `sendAsync()` and `requestAsync()` methods of a client. Use `requestAsync()` for asynchronous requests that do not have a named shortcut method:
 
 ```php
 use GuzzleHttp\Psr7\Request;
@@ -107,6 +111,7 @@ $promise = $client->sendAsync($request);
 
 // Or, if you don't need to pass in a request instance:
 $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
+$promise = $client->requestAsync('OPTIONS', 'http://httpbin.org/get');
 ```
 
 The promise returned by these methods is a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` provided by the [Guzzle promises library](https://github.com/guzzle/promises). This means that you can chain `then()` calls off of the promise. These then calls are either fulfilled with a successful `Psr\Http\Message\ResponseInterface` or rejected with a reason. The reason is often an exception from Guzzle's exception hierarchy, but custom handlers can reject with other values.
