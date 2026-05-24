@@ -205,15 +205,9 @@ parameters:
 			path: src/Middleware.php
 
 		-
-			message: '#^Instanceof between GuzzleHttp\\MessageFormatterInterface and GuzzleHttp\\MessageFormatterInterface will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
-			path: src/Middleware.php
-
-		-
 			message: '#^Result of && is always false\.$#'
 			identifier: booleanAnd.alwaysFalse
-			count: 2
+			count: 1
 			path: src/Middleware.php
 
 		-

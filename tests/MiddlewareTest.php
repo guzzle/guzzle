@@ -13,6 +13,7 @@ use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
+use GuzzleHttp\MessageFormatterInterface;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -229,6 +230,37 @@ class MiddlewareTest extends TestCase
         self::assertCount(1, $logger->records);
         self::assertStringContainsString('"PUT / HTTP/1.1" 200', $logger->records[0]['message']);
         self::assertSame('debug', $logger->records[0]['level']);
+    }
+
+    public function testLogsWithCustomMessageFormatterInterface(): void
+    {
+        $h = new MockHandler([new Response(201)]);
+        $stack = new HandlerStack($h);
+        $logger = new TestLogger();
+        $formatter = new class implements MessageFormatterInterface {
+            public function format(
+                RequestInterface $request,
+                ?ResponseInterface $response = null,
+                ?\Throwable $error = null
+            ): string {
+                return $request->getMethod().' '.($response ? $response->getStatusCode() : 'NULL');
+            }
+        };
+
+        $stack->push(Middleware::log($logger, $formatter));
+        $comp = $stack->resolve();
+        $p = $comp(new Request('PUT', 'http://www.google.com'), []);
+        $p->wait();
+
+        self::assertCount(1, $logger->records);
+        self::assertSame('PUT 201', $logger->records[0]['message']);
+    }
+
+    public function testLogRequiresMessageFormatterInterface(): void
+    {
+        $this->expectException(\TypeError::class);
+
+        Middleware::log(new TestLogger(), new \stdClass());
     }
 
     public function testLogsRequestsAndErrors(): void

@@ -192,19 +192,14 @@ final class Middleware
      * Middleware that logs requests, responses, and errors using a message
      * formatter.
      *
-     * @param LoggerInterface                            $logger    Logs messages.
-     * @param MessageFormatterInterface|MessageFormatter $formatter Formatter used to create message strings.
-     * @param string                                     $logLevel  Level at which to log requests.
+     * @param LoggerInterface           $logger    Logs messages.
+     * @param MessageFormatterInterface $formatter Formatter used to create message strings.
+     * @param string                    $logLevel  Level at which to log requests.
      *
      * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
-    public static function log(LoggerInterface $logger, $formatter, string $logLevel = 'info'): callable
+    public static function log(LoggerInterface $logger, MessageFormatterInterface $formatter, string $logLevel = 'info'): callable
     {
-        // To be compatible with Guzzle 7.1.x we need to allow users to pass a MessageFormatter
-        if (!$formatter instanceof MessageFormatter && !$formatter instanceof MessageFormatterInterface) {
-            throw new \LogicException(sprintf('Argument 2 to %s::log() must be of type %s', self::class, MessageFormatterInterface::class));
-        }
-
         return static function (callable $handler) use ($logger, $formatter, $logLevel): callable {
             return static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel): PromiseInterface {
                 return $handler($request, $options)->then(

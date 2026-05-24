@@ -516,6 +516,38 @@ response that triggered the retry when one exists, and the request being retried
 One-argument callbacks are now called with only the retry count, which also
 allows internal PHP functions with a single-argument signature.
 
+#### Logging middleware formatter types
+
+`GuzzleHttp\MessageFormatter` is now final. Applications that extended
+`MessageFormatter` should implement `GuzzleHttp\MessageFormatterInterface`
+instead and pass the custom formatter to `GuzzleHttp\Middleware::log()`.
+
+`Middleware::log()` now requires its formatter argument to implement
+`MessageFormatterInterface`. Passing `new MessageFormatter()` still works
+because `MessageFormatter` implements `MessageFormatterInterface`. Passing any
+other value now fails with PHP's native `TypeError` instead of Guzzle's previous
+`LogicException`.
+
+```php
+use GuzzleHttp\MessageFormatterInterface;
+use GuzzleHttp\Middleware;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+final class RedactingFormatter implements MessageFormatterInterface
+{
+    public function format(
+        RequestInterface $request,
+        ?ResponseInterface $response = null,
+        ?\Throwable $error = null
+    ): string {
+        return $request->getMethod().' '.$request->getUri()->getPath();
+    }
+}
+
+$stack->push(Middleware::log($logger, new RedactingFormatter()));
+```
+
 #### CurlMultiHandler select timeout
 
 The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
