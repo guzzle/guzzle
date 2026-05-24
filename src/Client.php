@@ -282,7 +282,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         } else {
             // Add the User-Agent header if one was not already set.
             foreach (\array_keys($this->config['headers']) as $name) {
-                if (\strtolower($name) === 'user-agent') {
+                if (\strtolower((string) $name) === 'user-agent') {
                     return;
                 }
             }
@@ -483,8 +483,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             // Build up the changes so it's in a single clone of the message.
             $modify = [];
             foreach ($options['_conditional'] as $k => $v) {
-                if (!$request->hasHeader($k)) {
-                    $modify['set_headers'][$k] = $v;
+                $name = (string) $k;
+                if (!$request->hasHeader($name)) {
+                    $modify['set_headers'][$name] = $v;
                 }
             }
             $request = Psr7\Utils::modifyRequest($request, $modify);
