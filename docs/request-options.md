@@ -58,7 +58,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - protocols: (array, default=`['http', 'https']`) Specified which protocols are allowed for redirect requests.
 
-- on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request and the redirect response that was received. Any return value from the on_redirect function is ignored.
+- on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request, the redirect response that was received, and the effective URI. Any return value from the on_redirect function is ignored.
 
 - track_redirects: (bool) When set to `true`, each redirected URI and status code encountered will be tracked in the `X-Guzzle-Redirect-History` and `X-Guzzle-Redirect-Status-History` headers respectively. All URIs and status codes will be stored in the order which the redirects were encountered.
 
@@ -172,6 +172,13 @@ Types
 - string
 - `fopen()` resource
 - `Psr\Http\Message\StreamInterface`
+- callable
+- `Iterator`
+- object with `__toString()`
+- int
+- float
+- bool
+- null
 
 Default
 None
@@ -203,6 +210,8 @@ This setting can be set to any of the following types:
   $stream = GuzzleHttp\Psr7\Utils::streamFor('contents...');
   $client->request('POST', '/post', ['body' => $stream]);
   ```
+
+Values are converted to PSR-7 streams with `GuzzleHttp\Psr7\Utils::streamFor()`. Strings are always used as literal body contents, even when they name a callable. Callable bodies may be closures or invokable objects. Callable arrays are arrays, and arrays are not valid `body` values in Guzzle. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
 
 > [!NOTE]
 > This option cannot be used with `form_params`, `multipart`, or `json`
@@ -261,7 +270,8 @@ Summary
 Specifies whether or not cookies are used in a request or what cookie jar to use or what cookies to send.
 
 Types
-`GuzzleHttp\Cookie\CookieJarInterface`
+- `GuzzleHttp\Cookie\CookieJarInterface`
+- false
 
 Default
 None
@@ -487,7 +497,7 @@ array
 Constant
 `GuzzleHttp\RequestOptions::FORM_PARAMS`
 
-Associative array of form field names to values where each value is a string or array of strings. Sets the Content-Type header to application/x-www-form-urlencoded when no Content-Type header is already present.
+Array mapping form field names to values where each value is a string or array of strings. Sets the Content-Type header to application/x-www-form-urlencoded when no Content-Type header is already present.
 
 ```php
 $client->request('POST', '/post', [
@@ -506,7 +516,7 @@ $client->request('POST', '/post', [
 ## headers
 
 Summary
-Associative array of headers to add to the request. Each key is the name of a header, and each value is a string or array of strings representing the header field values.
+Array keyed by header names to add to the request. List-style header arrays are rejected. PHP stores numeric-string header names as integer keys; when such keys are accepted, Guzzle casts header keys back to strings while applying them. Each value is a string or array of strings representing the header field values.
 
 Types
 array
@@ -661,11 +671,11 @@ array
 Constant
 `GuzzleHttp\RequestOptions::MULTIPART`
 
-The value of `multipart` is an array of associative arrays, each containing the following key value pairs:
+The value of `multipart` is an array of part arrays, each containing the following key value pairs:
 
-- `name`: (string, required) the form field name
-- `contents`: (StreamInterface/resource/string, required) The data to use in the form element.
-- `headers`: (array) Optional associative array of custom headers to use with the form element.
+- `name`: (string|int, required) the form field name
+- `contents`: (mixed, required) Any non-array value accepted by `GuzzleHttp\Psr7\Utils::streamFor()`, including strings, resources, streams, iterators, closures, and invokable objects. Arrays are expanded as nested multipart fields; `headers` and `filename` cannot be used when `contents` is an array.
+- `headers`: (array) Optional array of custom string header values to use with the form element.
 - `filename`: (string) Optional string to send as the filename in the part.
 
 ```php
@@ -877,7 +887,7 @@ $client->request('GET', '/', [
 ## query
 
 Summary
-Associative array of query string values or query string to add to the request.
+Array of query string values or query string to add to the request.
 
 Types
 - array

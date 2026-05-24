@@ -120,7 +120,7 @@ echo $response->getBody();
 
 The body used in request and response objects is a `Psr\Http\Message\StreamInterface`. This stream is used for both uploading data and downloading data. Guzzle will, by default, store the body of a message in a stream that uses PHP temp streams. When the size of the body exceeds 2 MB, the stream will automatically switch to storing data on disk rather than in memory (protecting your application from memory exhaustion).
 
-The easiest way to create a body for a message is using the `streamFor` method from the `GuzzleHttp\Psr7\Utils` class -- `Utils::streamFor`. This method accepts strings, resources, callables, iterators, other streamables, and returns an instance of `Psr\Http\Message\StreamInterface`.
+The easiest way to create a body for a message is using the `streamFor` method from the `GuzzleHttp\Psr7\Utils` class -- `Utils::streamFor`. This method accepts strings, resources, callable arrays, closures, invokable objects, iterators, other streamables, and returns an instance of `Psr\Http\Message\StreamInterface`. Callable sources receive a suggested read length, may return fewer or more bytes, and end the stream by returning `false` or `null`. Strings remain literal body contents, even when they name a callable.
 
 The body of a request or response can be cast to a string or you can read and write bytes off of the stream as needed.
 
@@ -150,7 +150,7 @@ echo $request->getMethod();
 // MOVE
 ```
 
-You can create and send a request using methods on a client that map to the HTTP method you wish to use.
+You can create and send a request using named shortcut methods on a client for common HTTP methods.
 
 GET
 `$client->get('http://httpbin.org/get', [/** options **/])`
@@ -168,10 +168,13 @@ DELETE
 `$client->delete('http://httpbin.org/delete', [/** options **/])`
 
 OPTIONS
-`$client->options('http://httpbin.org/get', [/** options **/])`
+`$client->request('OPTIONS', 'http://httpbin.org/get', [/** options **/])`
 
 PATCH
 `$client->patch('http://httpbin.org/put', [/** options **/])`
+
+> [!NOTE]
+> In Guzzle 7, `$client->options(...)` still works through deprecated `Client::__call()` compatibility. This deprecation does not affect named shortcuts such as `get()` and `post()`, which are real client methods. Prefer `$client->request('OPTIONS', ...)` in new code. `Client::__call()` is removed in Guzzle 8.
 
 For example:
 
@@ -288,7 +291,7 @@ Guzzle uses the `guzzlehttp/psr7` package to provide stream support. More inform
 
 ### Creating Streams
 
-The best way to create a stream is using the `GuzzleHttp\Psr7\Utils::streamFor` method. This method accepts strings, resources returned from `fopen()`, an object that implements `__toString()`, iterators, callables, and instances of `Psr\Http\Message\StreamInterface`.
+The best way to create a stream is using the `GuzzleHttp\Psr7\Utils::streamFor` method. This method accepts strings, resources returned from `fopen()`, an object that implements `__toString()`, iterators, callable arrays, closures, invokable objects, and instances of `Psr\Http\Message\StreamInterface`. Callable sources receive a suggested read length, may return fewer or more bytes, and end the stream by returning `false` or `null`. Strings remain literal body contents, even when they name a callable.
 
 ```php
 use GuzzleHttp\Psr7;

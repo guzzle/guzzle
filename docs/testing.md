@@ -10,7 +10,7 @@ Guzzle provides several tools that will enable you to easily mock the HTTP layer
 
 When testing HTTP clients, you often need to simulate specific scenarios like returning a successful response, returning an error, or returning specific responses in a certain order. Because unit tests need to be predictable, easy to bootstrap, and fast, hitting an actual remote API is a test smell.
 
-Guzzle provides a mock handler that can be used to fulfill HTTP requests with a response or exception by shifting return values off of a queue.
+Guzzle provides a mock handler that can be used to fulfill HTTP requests with queued responses, response promises, request-aware callables, or reject them with queued throwables by shifting return values off of a queue.
 
 ```php
 use GuzzleHttp\Client;
@@ -52,6 +52,10 @@ echo $client->request('GET', '/')->getStatusCode();
 
 When no more responses are in the queue and a request is sent, an `OutOfBoundsException` is thrown.
 
+Queued callables receive the `Psr\Http\Message\RequestInterface` and request options array passed to the mock handler. They may return a `Psr\Http\Message\ResponseInterface`, a `GuzzleHttp\Promise\PromiseInterface`, or a throwable rejection reason.
+
+The optional `MockHandler` constructor callbacks are invoked with the fulfilled response or rejected reason after the queued value has settled.
+
 ## History Middleware
 
 When using things like the `Mock` handler, you often need to know if the requests you expected to send were sent exactly as you intended. While the mock handler responds with mocked responses, the history middleware maintains a history of the requests that were sent by a client.
@@ -79,7 +83,11 @@ $client->request('HEAD', 'http://httpbin.org/get');
 echo count($container);
 //> 2
 
-// Iterate over the requests and responses
+// Iterate over the transaction history. Each transaction contains:
+// - request: the request that was sent
+// - response: the response, or null when the transfer was rejected
+// - error: the rejection reason, or null when the transfer succeeded
+// - options: the request options used for the transfer
 foreach ($container as $transaction) {
     echo $transaction['request']->getMethod();
     //> GET, HEAD

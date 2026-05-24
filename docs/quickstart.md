@@ -55,17 +55,25 @@ Don't feel like reading RFC 3986? Here are some quick examples on how a `base_ur
 
 ### Sending Requests
 
-Magic methods on the client make it easy to send synchronous requests:
+Named shortcut methods on the client make common synchronous requests concise:
 
 ```php
 $response = $client->get('http://httpbin.org/get');
 $response = $client->delete('http://httpbin.org/delete');
 $response = $client->head('http://httpbin.org/get');
-$response = $client->options('http://httpbin.org/get');
 $response = $client->patch('http://httpbin.org/patch');
 $response = $client->post('http://httpbin.org/post');
 $response = $client->put('http://httpbin.org/put');
 ```
+
+For other HTTP methods, use `request()` with the method name:
+
+```php
+$response = $client->request('OPTIONS', 'http://httpbin.org/get');
+```
+
+> [!NOTE]
+> In Guzzle 7, `options()` still works through the deprecated `Client::__call()` compatibility path. This deprecation does not affect named shortcut methods such as `get()` and `post()`, which are real client methods. Prefer `request('OPTIONS', ...)` in new code. `Client::__call()` is removed in Guzzle 8.
 
 You can create a request and then send the request with the client when you're ready:
 
@@ -82,19 +90,18 @@ You can find out more about client middleware in [Handlers and Middleware](handl
 
 ### Async Requests
 
-You can send asynchronous requests using the magic methods provided by a client:
+You can send asynchronous requests using the named async shortcut methods provided by a client:
 
 ```php
 $promise = $client->getAsync('http://httpbin.org/get');
 $promise = $client->deleteAsync('http://httpbin.org/delete');
 $promise = $client->headAsync('http://httpbin.org/get');
-$promise = $client->optionsAsync('http://httpbin.org/get');
 $promise = $client->patchAsync('http://httpbin.org/patch');
 $promise = $client->postAsync('http://httpbin.org/post');
 $promise = $client->putAsync('http://httpbin.org/put');
 ```
 
-You can also use the `sendAsync()` and `requestAsync()` methods of a client:
+You can also use the `sendAsync()` and `requestAsync()` methods of a client. Use `requestAsync()` for asynchronous requests that do not have a named shortcut method:
 
 ```php
 use GuzzleHttp\Psr7\Request;
@@ -107,9 +114,13 @@ $promise = $client->sendAsync($request);
 
 // Or, if you don't need to pass in a request instance:
 $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
+$promise = $client->requestAsync('OPTIONS', 'http://httpbin.org/get');
 ```
 
-The promise returned by these methods implements the [Promises/A+ spec](https://promisesaplus.com/), provided by the [Guzzle promises library](https://github.com/guzzle/promises). This means that you can chain `then()` calls off of the promise. These then calls are either fulfilled with a successful `Psr\Http\Message\ResponseInterface` or rejected with an exception.
+> [!NOTE]
+> In Guzzle 7, `optionsAsync()` still works through the deprecated `Client::__call()` compatibility path. This deprecation does not affect named async shortcut methods such as `getAsync()` and `postAsync()`, which are real client methods. Prefer `requestAsync('OPTIONS', ...)` in new code. `Client::__call()` is removed in Guzzle 8.
+
+The promise returned by these methods implements the [Promises/A+ spec](https://promisesaplus.com/), provided by the [Guzzle promises library](https://github.com/guzzle/promises). This means that you can chain `then()` calls off of the promise. These then calls are either fulfilled with a successful `Psr\Http\Message\ResponseInterface` or rejected with a reason. The reason is often an exception from Guzzle's exception hierarchy, but custom handlers can reject with other values.
 
 ```php
 use Psr\Http\Message\ResponseInterface;
@@ -120,9 +131,11 @@ $promise->then(
     function (ResponseInterface $res) {
         echo $res->getStatusCode() . "\n";
     },
-    function (RequestException $e) {
-        echo $e->getMessage() . "\n";
-        echo $e->getRequest()->getMethod();
+    function ($reason) {
+        if ($reason instanceof RequestException) {
+            echo $reason->getMessage() . "\n";
+            echo $reason->getRequest()->getMethod();
+        }
     }
 );
 ```
@@ -145,8 +158,7 @@ $promises = [
     'webp'  => $client->getAsync('/image/webp')
 ];
 
-// Wait for the requests to complete; throws a ConnectException
-// if any of the requests fail
+// Wait for the requests to complete; throws if any request is rejected.
 $responses = Promise\Utils::unwrap($promises);
 
 // You can access each response using the key of the promise
@@ -156,7 +168,8 @@ echo $responses['png']->getHeader('Content-Length')[0];
 // Wait for the requests to complete, even if some of them fail
 $responses = Promise\Utils::settle($promises)->wait();
 
-// Values returned above are wrapped in an array with 2 keys: "state" (either fulfilled or rejected) and "value" (contains the response)
+// Values returned above are wrapped in an array with "state" (either fulfilled or rejected),
+// plus "value" for fulfilled responses or "reason" for rejected requests.
 echo $responses['image']['state']; // returns "fulfilled"
 echo $responses['image']['value']->getHeader('Content-Length')[0];
 echo $responses['png']['value']->getHeader('Content-Length')[0];
@@ -166,10 +179,10 @@ You can use the `GuzzleHttp\Pool` object when you have an indeterminate amount o
 
 ```php
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Pool;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 
 $client = new Client();
 
@@ -182,10 +195,10 @@ $requests = function ($total) {
 
 $pool = new Pool($client, $requests(100), [
     'concurrency' => 5,
-    'fulfilled' => function (Response $response, $index) {
+    'fulfilled' => function (ResponseInterface $response, $index, PromiseInterface $aggregate) {
         // this is delivered each successful response
     },
-    'rejected' => function (RequestException $reason, $index) {
+    'rejected' => function ($reason, $index, PromiseInterface $aggregate) {
         // this is delivered each failed request
     },
 ]);
@@ -197,7 +210,7 @@ $promise = $pool->promise();
 $promise->wait();
 ```
 
-Or using a closure that will return a promise once the pool calls the closure.
+Or using a closure that will receive the configured request options and return either a response or a promise once the pool calls the closure.
 
 ```php
 $client = new Client();
@@ -205,8 +218,8 @@ $client = new Client();
 $requests = function ($total) use ($client) {
     $uri = 'http://127.0.0.1:8126/guzzle-server/perf';
     for ($i = 0; $i < $total; $i++) {
-        yield function() use ($client, $uri) {
-            return $client->getAsync($uri);
+        yield function (array $options) use ($client, $uri) {
+            return $client->getAsync($uri, $options);
         };
     }
 };
@@ -335,10 +348,10 @@ $response = $client->request('POST', 'http://httpbin.org/post', [
 
 #### Sending form files
 
-You can send files along with a form (`multipart/form-data` POST requests), using the `multipart` request option. `multipart` accepts an array of associative arrays, where each associative array contains the following keys:
+You can send files along with a form (`multipart/form-data` POST requests), using the `multipart` request option. `multipart` accepts an array of part arrays, where each part array contains the following keys:
 
-- name: (required, string) key mapping to the form field name.
-- contents: (required, mixed) Provide a string to send the contents of the file as a string, provide an fopen resource to stream the contents from a PHP stream, or provide a `Psr\Http\Message\StreamInterface` to stream the contents from a PSR-7 stream.
+- name: (required, string|int) key mapping to the form field name.
+- contents: (required, mixed) Provide a string to send the contents of the file as a string, provide an fopen resource to stream the contents from a PHP stream, provide a `Psr\Http\Message\StreamInterface` to stream the contents from a PSR-7 stream, or provide an array to expand nested multipart fields.
 
 ```php
 use GuzzleHttp\Psr7;
