@@ -14,6 +14,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
 - Add explicit `close()` lifecycle methods to the built-in cURL handlers and concrete cURL factory
 - Add `HandlerClosedException` for pending transfers rejected by `CurlMultiHandler::close()`
+- Add `ProxyOptions` for proxy option resolution
 
 ### Changed
 
@@ -63,6 +64,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed support for the `GUZZLE_CURL_SELECT_TIMEOUT` environment variable; use `CurlMultiHandler`'s `select_timeout` option
 - Removed `RedirectMiddleware::$defaultSettings`; use `RedirectMiddleware::DEFAULT_SETTINGS`
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
+- Removed `Utils::isHostInNoProxy()`; use `ProxyOptions::isHostInNoProxy()`
 
 
 ## 7.11.0 - Upcoming

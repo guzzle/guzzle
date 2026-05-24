@@ -484,6 +484,11 @@ private constructors. `GuzzleHttp\Handler\Proxy` is also declared `final`.
 These classes only expose static members. Replace any accidental instantiation
 with static method calls or constant access.
 
+#### Removed proxy helper API
+
+`Utils::isHostInNoProxy()` has been removed. Use
+`ProxyOptions::isHostInNoProxy()` instead.
+
 6.0 to 7.0
 ----------
 
