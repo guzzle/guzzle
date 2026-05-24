@@ -91,29 +91,24 @@ those network failures. Keep handling `RequestException` when you need to inspec
 a response, because failures after a response object is created still use
 `RequestException`.
 
-#### Request protocol version exceptions
+#### Request Protocol Versions
 
-Empty or malformed HTTP protocol versions returned by a `RequestInterface` now
-fail with `GuzzleHttp\Exception\RequestException`. Built-in handlers also
-report well-formed but unsupported request protocol versions, such as HTTP/3
-with the stream handler, as `RequestException`.
-
-Invalid `version` request option values are still rejected as
-`GuzzleHttp\Exception\InvalidArgumentException` before a request is sent. If you
-previously caught `InvalidArgumentException` or `ConnectException` for request
-protocol version failures, catch `RequestException` or `GuzzleException`
-instead.
-
-#### Protocol version validation
-
-Empty or malformed request protocol versions are no longer treated as omitted.
-Passing `'version' => ''`, `'version' => 'HTTP/1.1'`, or sending a PSR-7
-request whose protocol version is empty or malformed now throws an exception
-before the request is sent.
+Invalid request protocol versions are no longer treated as omitted. Passing
+`'version' => ''`, `'version' => 'HTTP/1.1'`, or sending a PSR-7 request whose
+protocol version is empty or malformed now fails before the request is sent.
 
 Omit the `version` request option to use Guzzle's default HTTP/1.1 behavior, or
 pass an explicit supported protocol version such as `'1.1'`. Do not include the
 `HTTP/` prefix.
+
+Invalid `version` request option values are still rejected with
+`GuzzleHttp\Exception\InvalidArgumentException` before a request is sent.
+Empty or malformed protocol versions returned by a `RequestInterface`, and
+well-formed but unsupported protocol versions such as HTTP/3 with the stream
+handler, now fail with `GuzzleHttp\Exception\RequestException`. If you
+previously caught `InvalidArgumentException` or `ConnectException` for request
+protocol version failures, catch `RequestException` or `GuzzleException`
+instead.
 
 #### cURL handler lifecycle
 
@@ -148,6 +143,12 @@ release native easy handles before invoking `on_stats`. Raw callbacks passed
 through the `curl` request option remain low-level cURL callbacks and are not
 normalized by Guzzle.
 
+The `on_headers` request option callback now receives the request as its second
+argument. Existing userland callbacks that accept only the response continue to
+work, but callbacks that inspect all arguments, for example with
+`func_get_args()` or a variadic parameter, will observe the additional
+`Psr\Http\Message\RequestInterface` argument.
+
 #### Sink resource ownership
 
 PHP resources passed as the `sink` request option are no longer closed when the
@@ -166,15 +167,6 @@ $client->request('GET', 'https://legacy.example.com', [
     'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
 ]);
 ```
-
-Handler-specific overrides remain available for finer transport control when
-they do not conflict with Guzzle-managed behavior. The built-in cURL handlers
-now reject raw cURL options that override request method, URI, body, headers,
-timeouts, redirects, proxy URLs, TLS verification or client credentials,
-progress/debug callbacks, sink handling, cookies, protocols, or cURL share
-handles. Use first-class Guzzle request options for those settings.
-The cURL handlers also reject stream-only `stream_context` and `read_timeout`
-options, while the stream handler rejects cURL-only options it cannot honor.
 
 #### cURL minimum version
 
@@ -241,6 +233,18 @@ $client->request('GET', '/', [
 ]);
 ```
 
+#### Handler-specific option overrides
+
+Handler-specific overrides remain available for finer transport control when
+they do not conflict with Guzzle-managed behavior. The built-in cURL handlers
+now reject raw cURL options that override request method, URI, body, headers,
+timeouts, redirects, proxy URLs, TLS verification or client credentials,
+progress/debug callbacks, sink handling, cookies, protocols, or cURL share
+handles. Use first-class Guzzle request options for those settings.
+
+The cURL handlers also reject stream-only `stream_context` and `read_timeout`
+options, while the stream handler rejects cURL-only options it cannot honor.
+
 #### Native type declarations
 
 Guzzle 8 adds native parameter and return types where PHP 7.4 allows. Code
@@ -272,52 +276,6 @@ implements Guzzle client interfaces, provides custom handlers or middleware, or
 uses stricter static analysis, you may need to update your PHPDoc annotations to
 include promise fulfillment and rejection types.
 
-#### CurlMultiHandler select timeout
-
-The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
-the `select_timeout` option to `CurlMultiHandler` instead.
-
-#### RetryMiddleware::exponentialDelay
-
-`RetryMiddleware::exponentialDelay()` has been removed. The retry middleware
-continues to use the same exponential backoff calculation by default. If you
-called the static method directly, inline that calculation or pass a custom
-delay callable to `Middleware::retry()`.
-
-#### Retry delay callback arguments
-
-Retry delay callbacks may now explicitly use either the documented one-argument
-form or the existing three-argument form.
-
-```php
-// Retry count only:
-$delay = static function (int $retries): int {
-    return $retries * 1000;
-};
-
-// Full retry context:
-$delay = static function (int $retries, ?ResponseInterface $response, RequestInterface $request): int {
-    return $retries * 1000;
-};
-```
-
-Callbacks that accept three arguments continue to receive the response and
-request. One-argument callbacks are now called with only the retry count, which
-also allows internal PHP functions with a single-argument signature.
-
-#### RedirectMiddleware default settings
-
-`RedirectMiddleware::$defaultSettings` has been removed. Use
-`RedirectMiddleware::DEFAULT_SETTINGS` instead.
-
-#### on_headers callback arguments
-
-The `on_headers` request option callback now receives the request as its second
-argument. Existing userland callbacks that accept only the response continue to
-work, but callbacks that inspect all arguments, for example with
-`func_get_args()` or a variadic parameter, will observe the additional
-`Psr\Http\Message\RequestInterface` argument.
-
 #### Multipart request serialization
 
 Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts
@@ -340,15 +298,6 @@ Automatically generated boundaries are unchanged.
 You can still pass an explicit `Content-Length` header in a multipart element's
 `headers` array if a non-standard peer requires it.
 
-#### FileCookieJar serialization
-
-`FileCookieJar` instances restored with `unserialize()` no longer save cookies
-automatically on destruction. If your application intentionally unserializes a
-`FileCookieJar` and expects changes to persist, call `save()` explicitly.
-
-Saved cookie files now JSON-escape tag characters. Existing cookie files remain
-readable, and cookie values are unchanged when loaded.
-
 #### Host-only cookies
 
 Cookies extracted from responses without a `Domain` attribute are now stored as
@@ -360,20 +309,6 @@ behavior should use an explicit `Domain` attribute.
 
 `SetCookie::toArray()` may include `HostOnly => true` for host-only cookies.
 Existing persisted cookie files without this key load as non-host-only cookies.
-
-#### CookieJar::clear null semantics
-
-`CookieJar::clear()` now treats only `null` as an omitted path or name.
-Previously, falsy path or name values such as `'0'` or `''` could be interpreted
-as omitted and clear a broader set of cookies than intended.
-
-If you call `clear()` to clear all cookies, continue passing no arguments:
-
-```php
-$jar->clear();
-```
-
-If you pass a path or name, that value is now treated as provided.
 
 #### SetCookie constructor field validation
 
@@ -400,6 +335,71 @@ new SetCookie([
 
 Cookies parsed from normal `Set-Cookie` headers continue to be normalized by
 `SetCookie::fromString()`.
+
+#### CookieJar::clear null semantics
+
+`CookieJar::clear()` now treats only `null` as an omitted path or name.
+Previously, falsy path or name values such as `'0'` or `''` could be interpreted
+as omitted and clear a broader set of cookies than intended.
+
+If you call `clear()` to clear all cookies, continue passing no arguments:
+
+```php
+$jar->clear();
+```
+
+If you pass a path or name, that value is now treated as provided.
+
+#### FileCookieJar serialization
+
+`FileCookieJar` instances restored with `unserialize()` no longer save cookies
+automatically on destruction. If your application intentionally unserializes a
+`FileCookieJar` and expects changes to persist, call `save()` explicitly.
+
+Saved cookie files now JSON-escape tag characters. Existing cookie files remain
+readable, and cookie values are unchanged when loaded.
+
+#### Retry delay callbacks
+
+The retry middleware accepts an optional delay callback as the second argument to
+`Middleware::retry()` or the third constructor argument to `RetryMiddleware`. The
+callback returns the number of milliseconds to wait before the next retry
+attempt.
+
+Delay callbacks may now explicitly use either the retry-count-only signature or
+the full retry-context signature:
+
+```php
+// Retry count only:
+$delay = static function (int $retries): int {
+    return $retries * 1000;
+};
+
+// Full retry context:
+$delay = static function (int $retries, ?ResponseInterface $response, RequestInterface $request): int {
+    return $retries * 1000;
+};
+```
+
+Callbacks that accept three arguments continue to receive the retry count, the
+response that triggered the retry when one exists, and the request being retried.
+One-argument callbacks are now called with only the retry count, which also
+allows internal PHP functions with a single-argument signature.
+
+#### CurlMultiHandler select timeout
+
+The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
+the `select_timeout` option to `CurlMultiHandler` instead.
+
+#### Removed middleware helper APIs
+
+`RetryMiddleware::exponentialDelay()` has been removed. The retry middleware
+continues to use the same exponential backoff calculation by default. This only
+affects code that called the static helper directly; inline that calculation or
+pass a custom delay callable to `Middleware::retry()`.
+
+`RedirectMiddleware::$defaultSettings` has been removed. Use
+`RedirectMiddleware::DEFAULT_SETTINGS` instead.
 
 6.0 to 7.0
 ----------
