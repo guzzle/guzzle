@@ -143,10 +143,6 @@ class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
-        if ('3' === $protocolVersion || '3.0' === $protocolVersion) {
-            $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
-        }
-
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         if ($this->shareHandle !== null) {
             if (!\defined('CURLOPT_SHARE')) {
@@ -903,6 +899,61 @@ class CurlFactory implements CurlFactoryInterface
     }
 
     /**
+     * @return array{set: bool, proxy: string, no_proxy: string, effective: ?string}
+     */
+    private static function resolveProxy(RequestInterface $request, array $options): array
+    {
+        $resolved = [
+            'set' => false,
+            'proxy' => '',
+            'no_proxy' => '',
+            'effective' => null,
+        ];
+
+        if (!isset($options['proxy'])) {
+            return $resolved;
+        }
+
+        $proxy = $options['proxy'];
+        if (!\is_array($proxy)) {
+            if (!\is_string($proxy)) {
+                throw new \InvalidArgumentException('proxy must be a string or array');
+            }
+
+            $resolved['set'] = true;
+            $resolved['proxy'] = $proxy;
+            $resolved['effective'] = $proxy !== '' ? $proxy : null;
+
+            return $resolved;
+        }
+
+        $scheme = $request->getUri()->getScheme();
+        if (!isset($proxy[$scheme])) {
+            return $resolved;
+        }
+
+        if (!\is_string($proxy[$scheme])) {
+            throw new \InvalidArgumentException('proxy values must be strings');
+        }
+
+        $uri = $request->getUri();
+        $noProxy = isset($proxy['no']) ? Utils::normalizeNoProxy($proxy['no']) : [];
+        if ($noProxy !== [] && Utils::isUriInNoProxy($uri, $noProxy)) {
+            $resolved['set'] = true;
+            $resolved['proxy'] = '';
+            $resolved['no_proxy'] = '*';
+
+            return $resolved;
+        }
+
+        $resolved['set'] = true;
+        $resolved['proxy'] = $proxy[$scheme];
+        $resolved['effective'] = $proxy[$scheme] !== '' ? $proxy[$scheme] : null;
+
+        return $resolved;
+    }
+
+    /**
      * @return array<int|string, mixed>
      */
     private function getDefaultConf(EasyHandle $easy): array
@@ -934,7 +985,11 @@ class CurlFactory implements CurlFactoryInterface
             if (!\defined('CURL_HTTP_VERSION_3')) {
                 throw new \RuntimeException('HTTP/3 is not supported by this cURL installation.');
             }
-            $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_3');
+
+            $proxy = self::resolveProxy($easy->request, $easy->options);
+            $conf[\CURLOPT_HTTP_VERSION] = null !== $proxy['effective']
+                ? (CurlVersion::supportsHttp2() ? \CURL_HTTP_VERSION_2_0 : \CURL_HTTP_VERSION_1_1)
+                : (int) \constant('CURL_HTTP_VERSION_3');
         } elseif ('2' === $version || '2.0' === $version) {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
         } elseif ('1.1' === $version) {
@@ -1202,37 +1257,11 @@ class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_NOSIGNAL] = true;
         }
 
-        $selectedProxy = null;
-
-        if (isset($options['proxy'])) {
-            $proxy = $options['proxy'];
-            if (!\is_array($proxy)) {
-                if (!\is_string($proxy)) {
-                    throw new \InvalidArgumentException('proxy must be a string or array');
-                }
-
-                $selectedProxy = $proxy;
-                $conf[\CURLOPT_PROXY] = $proxy;
-                $conf[\CURLOPT_NOPROXY] = '';
-            } else {
-                $scheme = $easy->request->getUri()->getScheme();
-                if (isset($proxy[$scheme])) {
-                    if (!\is_string($proxy[$scheme])) {
-                        throw new \InvalidArgumentException('proxy values must be strings');
-                    }
-
-                    $uri = $easy->request->getUri();
-                    $noProxy = isset($proxy['no']) ? Utils::normalizeNoProxy($proxy['no']) : [];
-                    if ($noProxy !== [] && Utils::isUriInNoProxy($uri, $noProxy)) {
-                        $conf[\CURLOPT_PROXY] = '';
-                        $conf[\CURLOPT_NOPROXY] = '*';
-                    } else {
-                        $selectedProxy = $proxy[$scheme];
-                        $conf[\CURLOPT_PROXY] = $proxy[$scheme];
-                        $conf[\CURLOPT_NOPROXY] = '';
-                    }
-                }
-            }
+        $proxy = self::resolveProxy($easy->request, $options);
+        $selectedProxy = $proxy['effective'];
+        if ($proxy['set']) {
+            $conf[\CURLOPT_PROXY] = $proxy['proxy'];
+            $conf[\CURLOPT_NOPROXY] = $proxy['no_proxy'];
         }
 
         $proxyForConnectionReuse = self::getEffectiveProxyForConnectionReuse($selectedProxy, $options);
@@ -1256,20 +1285,9 @@ class CurlFactory implements CurlFactoryInterface
             $isHttp3 = '3' === $protocolVersion || '3.0' === $protocolVersion;
             $isHttp2 = '2' === $protocolVersion || '2.0' === $protocolVersion;
 
-            if ($isHttp3) {
-                // HTTP/3 runs over QUIC and requires TLS 1.3.
-                if (
-                    \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $cryptoMethod
-                    || \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $cryptoMethod
-                    || \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $cryptoMethod
-                    || \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $cryptoMethod
-                ) {
-                    $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
-                } else {
-                    throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
-                }
-            } elseif ($isHttp2) {
-                // If HTTP/2, upgrade TLS 1.0 and 1.1 to 1.2.
+            if ($isHttp3 || $isHttp2) {
+                // HTTP/2 requires TLS 1.2. HTTP/3 uses the same guard rail
+                // because CURLOPT_SSLVERSION also affects fallback transfers.
                 if (
                     \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $cryptoMethod
                     || \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $cryptoMethod

@@ -1786,21 +1786,159 @@ class CurlFactoryTest extends TestCase
             self::markTestSkipped('HTTP/3 cURL constants are not available.');
         }
 
-        $factory = new CurlFactory(3);
-        $easy = new EasyHandle();
-        $easy->request = new Psr7\Request('GET', 'https://example.com', [], null, $protocolVersion);
-
-        $method = new \ReflectionMethod(CurlFactory::class, 'getDefaultConf');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
-        }
-
-        $conf = $method->invoke($factory, $easy);
+        $conf = self::getDefaultCurlConf(
+            new Psr7\Request('GET', 'https://example.com', [], null, $protocolVersion),
+            []
+        );
 
         self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
     }
 
-    public function testHttp3UpgradesWeakCryptoMethodToTls13Minimum(): void
+    public function testHttp3WithEffectiveProxyFallsBackToHttp2WhenSupported(): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'proxy' => ['https' => 'http://proxy.example.com:8080'],
+            ]);
+
+            self::assertSame('http://proxy.example.com:8080', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+            self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+            self::assertSame(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testHttp3WithStringProxyFallsBackToHttp2WhenSupported(): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'proxy' => 'http://proxy.example.com:8080',
+            ]);
+
+            self::assertSame('http://proxy.example.com:8080', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+            self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testHttp3WithEffectiveProxyFallsBackToHttp11WhenHttp2IsUnsupported(): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => self::http3FeatureMask(false),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'proxy' => ['https' => 'http://proxy.example.com:8080'],
+            ]);
+
+            self::assertSame(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+            self::assertSame(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testHttp3WithMatchingNoProxyKeepsHttp3(): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                [
+                    'proxy' => [
+                        'https' => 'http://proxy.example.com:8080',
+                        'no' => ['example.com'],
+                    ],
+                ]
+            );
+
+            self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testHttp3WithEmptyProxyOptionKeepsHttp3(): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                ['proxy' => '']
+            );
+
+            self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testHttp3WithProxyStillRequiresHttp3SupportBeforeDowngrade(): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => 0,
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+            $request = new Psr7\Request('GET', 'https://example.com', [], null, '3.0');
+
+            try {
+                $factory->create($request, [
+                    'proxy' => ['https' => 'http://proxy.example.com:8080'],
+                ]);
+                self::fail('Expected request exception.');
+            } catch (RequestException $e) {
+                self::assertSame($request, $e->getRequest());
+                self::assertStringContainsString('HTTP/3 is supported by the cURL handler', $e->getMessage());
+            }
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider http3WeakCryptoMethodProvider
+     */
+    public function testHttp3UpgradesWeakCryptoMethodToTls12Minimum(int $cryptoMethod): void
     {
         if (!CurlVersion::supportsHttp3()) {
             self::markTestSkipped('HTTP/3 is not supported by this cURL installation.');
@@ -1808,10 +1946,52 @@ class CurlFactoryTest extends TestCase
 
         $factory = new CurlFactory(3);
         $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
-            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+            'crypto_method' => $cryptoMethod,
+        ]);
+
+        self::assertSame(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+    }
+
+    public function testHttp3PreservesExplicitTls13CryptoMethod(): void
+    {
+        if (!CurlVersion::supportsHttp3()) {
+            self::markTestSkipped('HTTP/3 is not supported by this cURL installation.');
+        }
+
+        $factory = new CurlFactory(3);
+        $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
         ]);
 
         self::assertSame(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+    }
+
+    public function testHttp3DefaultsHttpsToTls12Minimum(): void
+    {
+        if (!CurlVersion::supportsHttp3()) {
+            self::markTestSkipped('HTTP/3 is not supported by this cURL installation.');
+        }
+
+        $factory = new CurlFactory(3);
+        $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), []);
+
+        self::assertSame(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+    }
+
+    public function testHttp3ValidatesCryptoMethodInvalidMethod(): void
+    {
+        if (!CurlVersion::supportsHttp3()) {
+            self::markTestSkipped('HTTP/3 is not supported by this cURL installation.');
+        }
+
+        $factory = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid crypto_method request option: unknown version provided');
+
+        $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+            'crypto_method' => 123,
+        ]);
     }
 
     public function testHttp3RejectsRawCurlSslVersionOption(): void
@@ -1835,6 +2015,15 @@ class CurlFactoryTest extends TestCase
         return [
             ['3'],
             ['3.0'],
+        ];
+    }
+
+    public static function http3WeakCryptoMethodProvider(): array
+    {
+        return [
+            [\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT],
+            [\STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT],
+            [\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT],
         ];
     }
 
@@ -2821,6 +3010,51 @@ class CurlFactoryTest extends TestCase
         }
 
         return (int) \constant('CURLOPT_PROXYHEADER');
+    }
+
+    /**
+     * @param array<int|string, mixed> $options
+     *
+     * @return array<int|string, mixed>
+     */
+    private static function getDefaultCurlConf(RequestInterface $request, array $options): array
+    {
+        $factory = new CurlFactory(3);
+        $easy = new EasyHandle();
+        $easy->request = $request;
+        $easy->options = $options;
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'getDefaultConf');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        return $method->invoke($factory, $easy);
+    }
+
+    private static function requireHttp3TestConstants(): void
+    {
+        foreach (['CURL_VERSION_HTTP3', 'CURL_HTTP_VERSION_3', 'CURL_SSLVERSION_TLSv1_3'] as $constant) {
+            if (!\defined($constant)) {
+                self::markTestSkipped($constant.' is not available.');
+            }
+        }
+    }
+
+    private static function http3FeatureMask(bool $withHttp2): int
+    {
+        self::requireHttp3TestConstants();
+
+        $features = (int) \constant('CURL_VERSION_HTTP3');
+        if ($withHttp2) {
+            if (!\defined('CURL_VERSION_HTTP2')) {
+                self::markTestSkipped('CURL_VERSION_HTTP2 is not available.');
+            }
+
+            $features |= (int) \constant('CURL_VERSION_HTTP2');
+        }
+
+        return $features;
     }
 
     public static function curlHandlerProvider(): array
