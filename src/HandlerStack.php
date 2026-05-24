@@ -189,7 +189,7 @@ class HandlerStack
             $count = \count($this->stack);
             $this->stack = \array_values(\array_filter(
                 $this->stack,
-                static function ($tuple) use ($remove) {
+                static function ($tuple) use ($remove): bool {
                     return $tuple[1] !== $remove;
                 }
             ));
@@ -201,7 +201,7 @@ class HandlerStack
 
         $this->stack = \array_values(\array_filter(
             $this->stack,
-            static function ($tuple) use ($remove) {
+            static function ($tuple) use ($remove): bool {
                 return $tuple[0] !== $remove;
             }
         ));

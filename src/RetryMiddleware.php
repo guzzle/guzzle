@@ -87,7 +87,7 @@ class RetryMiddleware
      */
     private function onRejected(RequestInterface $req, array $options): callable
     {
-        return function ($reason) use ($req, $options) {
+        return function ($reason) use ($req, $options): PromiseInterface {
             if (!($this->decider)(
                 $options['retries'],
                 $req,

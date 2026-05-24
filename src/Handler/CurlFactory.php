@@ -1087,7 +1087,7 @@ class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body) {
+            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body): string {
                 return $body->read($length);
             };
         }
@@ -1485,7 +1485,7 @@ class CurlFactory implements CurlFactoryInterface
             $onHeaders,
             $easy,
             &$startingResponse
-        ) {
+        ): int {
             $value = \trim($h);
             if ($value === '') {
                 $startingResponse = true;

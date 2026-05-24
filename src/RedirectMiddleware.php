@@ -134,7 +134,7 @@ class RedirectMiddleware
     private function withTracking(PromiseInterface $promise, string $uri, int $statusCode): PromiseInterface
     {
         return $promise->then(
-            static function (ResponseInterface $response) use ($uri, $statusCode) {
+            static function (ResponseInterface $response) use ($uri, $statusCode): ResponseInterface {
                 // Note that we are pushing to the front of the list as this
                 // would be an earlier response than what is currently present
                 // in the history header.
