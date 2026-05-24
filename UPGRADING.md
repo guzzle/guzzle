@@ -294,6 +294,18 @@ $client->request('GET', '/', [
 ]);
 ```
 
+#### Cross-origin redirect auth cleanup
+
+Guzzle 8 no longer forwards the generic `auth` request option when automatic
+redirects cross origin. Guzzle already removed the `Authorization` and `Cookie`
+headers and cURL HTTP authentication options on cross-origin redirects; this now
+also applies to handler-visible `auth` state.
+
+Same-origin redirects continue to preserve `auth`. If an application or custom
+handler intentionally reused `auth` across redirected origins, disable automatic
+redirects or handle redirects manually so each origin receives explicit
+credentials.
+
 #### Handler-specific option overrides
 
 Handler-specific overrides remain available for finer transport control when

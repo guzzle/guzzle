@@ -108,9 +108,9 @@ echo $res->getHeaderLine('X-Guzzle-Redirect-Status-History');
 
 Guzzle considers a redirect cross-origin when the scheme, host, or effective port changes.
 
-On cross-origin redirects, Guzzle removes the `Authorization` and `Cookie` headers and clears cURL HTTP authentication options such as `CURLOPT_HTTPAUTH` and `CURLOPT_USERPWD`.
+On cross-origin redirects, Guzzle removes origin-scoped HTTP credentials before sending the redirected request. This includes the `Authorization` and `Cookie` headers, the generic `auth` request option, and cURL HTTP authentication options such as `CURLOPT_HTTPAUTH` and `CURLOPT_USERPWD`.
 
-Guzzle does not automatically remove other request options or headers solely because the redirect is cross-origin. This matches curl's redirect model. In particular, TLS client authentication options such as `cert`, `ssl_key`, custom cURL TLS options, and stream context TLS options are not removed automatically on cross-origin redirects.
+Same-origin redirects preserve those values. Guzzle does not automatically remove transport identity or TLS client credential options solely because the redirect is cross-origin. In particular, TLS client authentication options such as `cert`, `ssl_key`, custom cURL TLS options, and stream context TLS options are not removed automatically on cross-origin redirects.
 
 If TLS client credentials are only trusted for the original origin, disable automatic redirects and handle redirect responses manually, or use separate clients and request options for trusted origins.
 
