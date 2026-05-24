@@ -15,32 +15,34 @@ signatures. It also adds generic PHPDoc types to async APIs for static analysis.
 Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 `^7.2.5 || ^8.0`.
 
-Guzzle 8 also requires
-[Guzzle Promises 3.x](https://github.com/guzzle/promises/blob/3.0/UPGRADING.md)
-and [Guzzle PSR-7 3.x](https://github.com/guzzle/psr7/blob/3.0/UPGRADING.md).
-Guzzle 7 supported Guzzle Promises `^2.3` and Guzzle PSR-7 `^2.8`.
+Guzzle 8 also requires Guzzle Promises 3.x and Guzzle PSR-7 3.x. Guzzle 7
+supported Guzzle Promises `^2.3` and Guzzle PSR-7 `^2.8`.
 
-Read the linked Guzzle PSR-7 3.x upgrade guide as part of every Guzzle 8
-upgrade. Guzzle's normal request and response APIs use Guzzle PSR-7, so PSR-7
-changes can affect applications even when they do not instantiate PSR-7 classes
-directly. This guide calls out the most common inherited PSR-7 changes, but it
-does not repeat every PSR-7 behavior change.
+Read the [Guzzle PSR-7 3.x upgrade guide][psr7-upgrade-guide] as part of every
+Guzzle 8 upgrade. Guzzle's normal request and response APIs use Guzzle PSR-7, so
+PSR-7 changes can affect applications even when they do not instantiate PSR-7
+classes directly. This guide calls out the most common inherited PSR-7 changes,
+but it does not repeat every PSR-7 behavior change.
 
-Pay particular attention to the Guzzle PSR-7 3.x upgrade guide if your
-application constructs requests, modifies responses, sets headers, uploads
+Pay particular attention to [that PSR-7 upgrade guide][psr7-upgrade-guide] if
+your application constructs requests, modifies responses, sets headers, uploads
 files, builds multipart requests, works with URIs, or inspects streams.
-Applications using async requests, custom handlers, middleware, pools, or promise
-helpers should also account for the Guzzle Promises 3.x changes.
+
+Also read the [Guzzle Promises 3.x upgrade guide][promises-upgrade-guide] if you
+use async requests, custom handlers, middleware, pools, or promise helpers.
 
 Guzzle 8 now requires `psr/http-factory:^1.0` directly and no longer depends on
 `symfony/deprecation-contracts`.
+
+[psr7-upgrade-guide]: https://github.com/guzzle/psr7/blob/3.0/UPGRADING.md
+[promises-upgrade-guide]: https://github.com/guzzle/promises/blob/3.0/UPGRADING.md
 
 #### PSR-7 Header Values and Request Methods
 
 Guzzle 8 uses Guzzle PSR-7 3.x, and several of its behavior changes surface
 through normal Guzzle client usage. This section summarizes the inherited PSR-7
-changes most likely to affect Guzzle users; read the Guzzle PSR-7 3.x upgrade
-guide for the complete list.
+changes most likely to affect Guzzle users; read the
+[Guzzle PSR-7 3.x upgrade guide][psr7-upgrade-guide] for the complete list.
 
 The highest-impact inherited changes are stricter header value validation and
 preserved request method casing. Header values passed through the `headers`
