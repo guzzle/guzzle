@@ -141,12 +141,57 @@ may still observe.
 
 The main code to audit is code that used `catch (RequestException $e)` as its
 only catch block for cURL transport failures where no response was received.
-Some of those failures, including proxy resolution, send, receive, and TLS
-verification failures, are now classified as `ConnectException`. Catch
-`ConnectException`, `NetworkExceptionInterface`, `TransferException`, or
-`GuzzleException` for those network failures. Keep catching `RequestException`
-for response-aware handling, HTTP error responses, redirects, and other
-request-related failures that are not network failures.
+Guzzle 8 classifies more response-less built-in cURL failures as network
+failures. Catch `ConnectException`, `NetworkExceptionInterface`,
+`TransferException`, or `GuzzleException` for those failures. Keep catching
+`RequestException` for response-aware handling, HTTP error responses,
+redirects, callback failures, and request-related failures that are not network
+failures.
+
+For the built-in cURL handlers, the affected cURL error classifications are:
+
+- `CURLE_OPERATION_TIMEOUTED` now throws `TimeoutException`. Guzzle 7 threw
+  `ConnectException`; `TimeoutException` extends `ConnectException`, so
+  existing `ConnectException` catch blocks still catch cURL timeouts.
+- `CURLE_COULDNT_RESOLVE_PROXY` now throws `ConnectException`. Guzzle 7
+  classified this cURL error as `RequestException`.
+- `CURLE_SEND_ERROR` and `CURLE_RECV_ERROR` now throw `ConnectException` when
+  no response was created. If a response was created before the error, they
+  remain `RequestException`.
+- When the PHP cURL extension defines them, `CURLE_PROXY`,
+  `CURLE_QUIC_CONNECT_ERROR`, `CURLE_HTTP2`, `CURLE_HTTP2_STREAM`,
+  `CURLE_HTTP3`, `CURLE_PEER_FAILED_VERIFICATION`, `CURLE_SSL_CACERT`,
+  `CURLE_SSL_PEER_CERTIFICATE`, `CURLE_SSL_PINNEDPUBKEYNOTMATCH`,
+  `CURLE_SSL_INVALIDCERTSTATUS`, and `CURLE_SSL_CLIENTCERT` now throw
+  `ConnectException` when no response was created. If a response was created
+  before the error, they remain `RequestException`.
+
+The existing always-network cURL errors, including
+`CURLE_COULDNT_RESOLVE_HOST`, `CURLE_COULDNT_CONNECT`,
+`CURLE_SSL_CONNECT_ERROR`, and `CURLE_GOT_NOTHING`, still throw
+`ConnectException`.
+
+For example, code that previously treated `RequestException` as the only cURL
+transport failure type should add network-specific handling:
+
+```php
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
+
+try {
+    $client->request('GET', $uri);
+} catch (ConnectException $e) {
+    $errno = $e->getHandlerContext()['errno'] ?? null;
+
+    // Network failures without an HTTP response, including the reclassified
+    // built-in cURL transport errors.
+} catch (RequestException $e) {
+    $response = $e->getResponse();
+
+    // Response-aware failures, HTTP errors, redirects, callback failures, or
+    // request-related transfer failures that are not network failures.
+}
+```
 
 `GuzzleHttp\Exception\InvalidArgumentException` remains outside the transfer
 exception hierarchy and is still used for invalid configuration or request option
@@ -294,6 +339,18 @@ $client->request('GET', '/', [
 ]);
 ```
 
+#### Cross-origin redirect auth cleanup
+
+Guzzle 8 no longer forwards the generic `auth` request option when automatic
+redirects cross origin. Guzzle already removed the `Authorization` and `Cookie`
+headers and cURL HTTP authentication options on cross-origin redirects; this now
+also applies to handler-visible `auth` state.
+
+Same-origin redirects continue to preserve `auth`. If an application or custom
+handler intentionally reused `auth` across redirected origins, disable automatic
+redirects or handle redirects manually so each origin receives explicit
+credentials.
+
 #### Handler-specific option overrides
 
 Handler-specific overrides remain available for finer transport control when
@@ -325,7 +382,7 @@ declare strict types will throw `TypeError` for non-boolean values.
 `SetCookie::getExpires()` now returns `int|null`. Invalid textual expiration
 dates are treated as `null`.
 
-#### Generic Promise PHPDoc Types
+#### Generic Promise And Structured PHPDoc Types
 
 Guzzle's async client APIs, handlers, and middleware callable annotations now use
 generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a
@@ -336,6 +393,18 @@ Code using unparameterized promise types continues to work. If your project
 implements Guzzle client interfaces, provides custom handlers or middleware, or
 uses stricter static analysis, you may need to update your PHPDoc annotations to
 include promise fulfillment and rejection types.
+
+Public client config, request option, pool option, handler, middleware, mock
+handler, and history middleware PHPDoc now uses structured array and callable
+shapes. This does not change runtime behavior, but stricter static analysis may
+now report invalid option keys, invalid option value types, or lower-arity
+callback annotations that were previously hidden behind loose `array` or
+`callable` PHPDoc.
+
+If your project implements `ClientInterface`, extends client behavior through
+traits, builds custom handlers or middleware, or documents reusable request
+option arrays, update those PHPDoc annotations to match the supported request
+option and callback shapes.
 
 #### Multipart request serialization
 
@@ -447,6 +516,50 @@ response that triggered the retry when one exists, and the request being retried
 One-argument callbacks are now called with only the retry count, which also
 allows internal PHP functions with a single-argument signature.
 
+#### Logging middleware formatter types
+
+`GuzzleHttp\MessageFormatter` is now final. Applications that extended
+`MessageFormatter` should implement `GuzzleHttp\MessageFormatterInterface`
+instead and pass the custom formatter to `GuzzleHttp\Middleware::log()`.
+
+`Middleware::log()` now requires its formatter argument to implement
+`MessageFormatterInterface`. Passing `new MessageFormatter()` still works
+because `MessageFormatter` implements `MessageFormatterInterface`. Passing any
+other value now fails with PHP's native `TypeError` instead of Guzzle's previous
+`LogicException`.
+
+```php
+use GuzzleHttp\MessageFormatterInterface;
+use GuzzleHttp\Middleware;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+final class RedactingFormatter implements MessageFormatterInterface
+{
+    public function format(
+        RequestInterface $request,
+        ?ResponseInterface $response = null,
+        ?\Throwable $error = null
+    ): string {
+        return $request->getMethod().' '.$request->getUri()->getPath();
+    }
+}
+
+$stack->push(Middleware::log($logger, new RedactingFormatter()));
+```
+
+#### Built-in handler inheritance
+
+`GuzzleHttp\Handler\CurlFactory`, `GuzzleHttp\Handler\CurlHandler`,
+`GuzzleHttp\Handler\CurlMultiHandler`, `GuzzleHttp\Handler\MockHandler`, and
+`GuzzleHttp\Handler\StreamHandler` are now final.
+
+Applications that extended `CurlFactory` should implement
+`GuzzleHttp\Handler\CurlFactoryInterface` instead. Applications that extended
+`CurlHandler`, `CurlMultiHandler`, `MockHandler`, or `StreamHandler` should use
+composition instead: wrap a handler instance in a custom callable or provide a
+custom handler rather than subclassing the built-in handler.
+
 #### CurlMultiHandler select timeout
 
 The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
@@ -461,6 +574,30 @@ pass a custom delay callable to `Middleware::retry()`.
 
 `RedirectMiddleware::$defaultSettings` has been removed. Use
 `RedirectMiddleware::DEFAULT_SETTINGS` instead.
+
+#### Removed proxy helper API
+
+`Utils::isHostInNoProxy()` has been removed.
+
+Use `ProxyOptions::resolve()` when implementing Guzzle-compatible proxy handling
+in a custom handler. Use `ProxyOptions::isUriInNoProxy()` when checking whether a
+request URI matches a no-proxy list. Use `ProxyOptions::isHostInNoProxy()` only
+when checking a host string directly.
+
+These helpers use Guzzle 8's normalized no-proxy matching rather than preserving
+the old `Utils::isHostInNoProxy()` semantics. Domain matching is
+case-insensitive, IP literals are normalized before comparison, and CIDR entries
+match IP literal hosts.
+
+#### Non-instantiable utility classes
+
+Static utility and constant classes such as `GuzzleHttp\Middleware`,
+`GuzzleHttp\Utils`, `GuzzleHttp\RequestOptions`,
+`GuzzleHttp\Handler\HeaderProcessor`, and `GuzzleHttp\Handler\Proxy` now have
+private constructors. `GuzzleHttp\Handler\Proxy` is also declared `final`.
+
+These classes only expose static members. Replace any accidental instantiation
+with static method calls or constant access.
 
 6.0 to 7.0
 ----------

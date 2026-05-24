@@ -4,7 +4,7 @@ Guzzle clients use a handler and middleware system to send HTTP requests.
 
 ## Handlers
 
-A handler function accepts a `Psr\Http\Message\RequestInterface` and array of request options and returns a `GuzzleHttp\Promise\PromiseInterface` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with an exception.
+A handler function accepts a `Psr\Http\Message\RequestInterface` and array of request options and returns a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with a reason.
 
 You can provide a custom handler to a client using the `handler` option of a client constructor. It is important to understand that several request options used by Guzzle require that specific middlewares wrap the handler used by the client. You can ensure that the handler you provide to a client uses the default middlewares by wrapping the handler in the `GuzzleHttp\HandlerStack::create(callable $handler = null)` static method.
 
@@ -206,6 +206,10 @@ $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
 $client = new Client(['handler' => $stack]);
 ```
 
+### Logging Middleware
+
+`GuzzleHttp\Middleware::log()` logs requests, responses, and errors using a `GuzzleHttp\MessageFormatterInterface` implementation. `GuzzleHttp\MessageFormatter` formats exactly the values requested by its template. Templates that include full messages, headers, bodies, URIs, URLs, or dynamic header placeholders can include sensitive data such as credentials, cookies, tokens, or request bodies. Avoid using debug or full-message templates in production unless logs are protected, or provide a custom formatter or logger processor that redacts sensitive data before logs are written.
+
 ## Retry Middleware
 
 Use `GuzzleHttp\Middleware::retry()` to retry requests when a custom decider
@@ -399,7 +403,39 @@ does not support cURL sharing.
 
 ## Creating a Handler
 
-As stated earlier, a handler is a function accepts a `Psr\Http\Message\RequestInterface` and array of request options and returns a `GuzzleHttp\Promise\PromiseInterface` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with an exception.
+As stated earlier, a handler is a function that accepts a `Psr\Http\Message\RequestInterface` and an array of request options. A handler used with Guzzle middleware returns a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with a reason.
+
+```php
+use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+/**
+ * @return PromiseInterface<ResponseInterface, mixed>
+ */
+function handler(RequestInterface $request, array $options): PromiseInterface
+{
+    // Send the request and settle the returned promise with a response.
+}
+```
+
+Most custom handlers should be wrapped with `GuzzleHttp\HandlerStack::create($handler)`. This keeps Guzzle's default middleware behavior for redirects, cookies, HTTP errors, and request body preparation while still allowing the custom handler to own the underlying transport.
+
+Synchronous client methods set `GuzzleHttp\RequestOptions::SYNCHRONOUS` before invoking the handler and then call `wait()` on the returned promise. The `synchronous` option is a hint that the caller intends to wait, not permission for a handler to return a response directly. A handler promise's `wait()` method must complete the transfer or throw the rejection reason. Asynchronous client methods return the promise without blocking.
+
+### Request Option Ownership
+
+Request options are applied by different parts of Guzzle. A custom handler should know which options are already reflected in the request it receives and which options still need transport support.
+
+| Owner | Examples | Notes |
+| --- | --- | --- |
+| Client-applied options | `base_uri`, `headers`, `body`, `form_params`, `multipart`, `json`, `query`, `version`, `idn_conversion`, basic `auth` | These options affect request construction or request mutation before the final handler sends the request. |
+| Middleware-dependent options | `allow_redirects`, `cookies`, `http_errors`, `expect` | These options require the relevant middleware, normally from `HandlerStack::create()`. |
+| Handler-owned options | `delay`, `timeout`, `connect_timeout`, `read_timeout`, `stream`, `sink`, `verify`, `cert`, `ssl_key`, `proxy`, `force_ip_resolve`, `decode_content`, `progress`, `on_headers`, `on_stats`, `debug` | These options describe transport behavior and need explicit handler support or clear unsupported behavior. |
+
+Some options have split responsibilities. Basic `auth` adds an `Authorization` header before the handler runs, while digest and NTLM authentication are implemented through cURL options by Guzzle's built-in cURL handlers. The `expect` option is used by the body preparation middleware to add `Expect: 100-Continue`, but the transport still determines whether the protocol workflow is supported. The `decode_content` option can affect the `Accept-Encoding` request header, but response decoding is handled by the transport. Redirect middleware validates redirect targets with `allow_redirects.protocols`, but the handler is still responsible for enforcing which schemes it can send.
+
+### Handler-Owned Transfer Options
 
 A handler is responsible for applying the following request options. These request options are a subset of request options called "transfer options".
 
@@ -413,6 +449,7 @@ A handler is responsible for applying the following request options. These reque
 - [`expect`](request-options.md#expect)
 - [`force_ip_resolve`](request-options.md#force_ip_resolve)
 - [`on_headers`](request-options.md#on_headers)
+- [`on_stats`](request-options.md#on_stats)
 - [`progress`](request-options.md#progress)
 - [`protocols`](request-options.md#protocols)
 - [`proxy`](request-options.md#proxy)
@@ -423,3 +460,36 @@ A handler is responsible for applying the following request options. These reque
 - [`ssl_key_type`](request-options.md#ssl_key_type)
 - [`stream`](request-options.md#stream)
 - [`verify`](request-options.md#verify)
+
+Transport-specific options such as `curl` and `stream_context` are intended for the handlers that understand them. A non-cURL handler should reject or document how it treats cURL-specific options, and a non-stream handler should do the same for PHP stream context options.
+
+Handlers that support the `proxy` option should use `GuzzleHttp\ProxyOptions::resolve()` unless they intentionally document different proxy selection semantics. The returned `GuzzleHttp\ProxySelection` identifies the selected proxy string, no-proxy bypasses, and explicit proxy-disable cases. The handler is still responsible for applying that selection to its transport.
+
+First-party handlers should not silently ignore documented handler-owned options that users reasonably expect to affect transport behavior. They should implement the option, reject the request with a clear exception when the option is present, or document a deliberate no-op where the option has no meaningful transport equivalent. Custom handlers should follow the same pattern where practical.
+
+### Callback Semantics
+
+The `on_headers` option is invoked after the response headers have been received and before response body bytes are written to the configured `sink`. In Guzzle 8, the callback receives the response object and the corresponding request object. If it throws, the request promise is rejected with a `GuzzleHttp\Exception\RequestException` that wraps the thrown exception.
+
+The `on_stats` option is invoked when the handler has finished sending a request, with a `GuzzleHttp\TransferStats` object that describes the response received or the error encountered. Exceptions thrown by `on_stats` are not wrapped by Guzzle and may escape from the handler wait path. Built-in cURL handlers release native cURL handles before invoking `on_stats` and may invoke it per low-level transfer attempt.
+
+The `progress` option is invoked with the documented argument order: the total number of bytes expected to be downloaded, the number of bytes downloaded so far, the total number of bytes expected to be uploaded, and the number of bytes uploaded so far. With the built-in cURL handlers, returning a truthy value aborts the transfer and rejects the request promise with a `GuzzleHttp\Exception\RequestException`. If the callback throws, the cURL handlers reject the promise with a `RequestException` wrapping the thrown exception. The built-in stream handler treats progress callbacks as notifications and ignores return values. A handler that cannot provide progress information should reject the option or clearly document that progress reporting is unsupported.
+
+### Promise Queue Integration
+
+Guzzle promises settle callbacks through the Guzzle promise task queue. The queue is drained automatically during synchronous `wait()`, but it is not automatically driven by arbitrary event loops. A handler that resolves or rejects Guzzle promises from an external scheduler must ensure the Guzzle promise task queue is drained while that scheduler is running.
+
+After resolving or rejecting a Guzzle promise from an external scheduler, schedule `GuzzleHttp\Promise\Utils::queue()->run()` on that scheduler soon, without blocking the scheduler.
+
+```php
+use GuzzleHttp\Promise\Utils as PromiseUtils;
+
+// Pseudocode for an external scheduler callback.
+$promise->resolve($response);
+
+ExternalLoop::queue(static function (): void {
+    PromiseUtils::queue()->run();
+});
+```
+
+Do not rely only on `wait()` to drain the queue because asynchronous users may attach callbacks and expect them to run while their event loop is active. Avoid running the queue in a tight polling loop, and avoid replacing the global task queue unless your library fully owns the process runtime. External futures or promises should generally be adapted by intentionally settling a Guzzle promise, because `then()`, `wait()`, and `cancel()` semantics often differ between promise implementations.

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Psr7\Response;
@@ -112,11 +114,9 @@ final class EasyHandle
     /**
      * @param string $name
      *
-     * @return void
-     *
      * @throws \BadMethodCallException
      */
-    public function __get($name)
+    public function __get($name): void
     {
         $msg = $name === 'handle' ? 'The EasyHandle has been released' : 'Invalid property: '.$name;
         throw new \BadMethodCallException($msg);

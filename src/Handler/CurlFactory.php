@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
@@ -18,10 +19,8 @@ use Psr\Http\Message\UriInterface;
 
 /**
  * Creates curl resources from a request
- *
- * @final
  */
-class CurlFactory implements CurlFactoryInterface
+final class CurlFactory implements CurlFactoryInterface
 {
     public const CURL_VERSION_STR = 'curl_version';
 
@@ -526,14 +525,14 @@ class CurlFactory implements CurlFactoryInterface
      * Completes a cURL transaction, either returning a response promise or a
      * rejected promise.
      *
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
-     * @param CurlFactoryInterface                                                          $factory Dictates how the handle is released
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
+     * @param CurlFactoryInterface                                                                            $factory Dictates how the handle is released
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
     public static function finish(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
-        /** @var callable|null $onStats */
+        /** @var (callable(TransferStats): mixed)|null $onStats */
         $onStats = $easy->options['on_stats'] ?? null;
         $stats = $onStats !== null ? self::createStats($easy) : null;
 
@@ -547,7 +546,7 @@ class CurlFactory implements CurlFactoryInterface
         // Return the response if it is present and there is no error.
         $factory->release($easy);
 
-        if ($onStats !== null) {
+        if ($onStats !== null && $stats !== null) {
             $onStats($stats);
         }
 
@@ -583,8 +582,8 @@ class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
-     * @param callable|null                                                                 $onStats
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
+     * @param (callable(TransferStats): mixed)|null                                                           $onStats
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
@@ -594,7 +593,7 @@ class CurlFactory implements CurlFactoryInterface
         $ctx = self::createErrorContext($easy);
         $factory->release($easy);
 
-        if ($onStats !== null) {
+        if ($onStats !== null && $stats !== null) {
             $onStats($stats);
         }
 
@@ -899,61 +898,6 @@ class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @return array{set: bool, proxy: string, no_proxy: string, effective: ?string}
-     */
-    private static function resolveProxy(RequestInterface $request, array $options): array
-    {
-        $resolved = [
-            'set' => false,
-            'proxy' => '',
-            'no_proxy' => '',
-            'effective' => null,
-        ];
-
-        if (!isset($options['proxy'])) {
-            return $resolved;
-        }
-
-        $proxy = $options['proxy'];
-        if (!\is_array($proxy)) {
-            if (!\is_string($proxy)) {
-                throw new \InvalidArgumentException('proxy must be a string or array');
-            }
-
-            $resolved['set'] = true;
-            $resolved['proxy'] = $proxy;
-            $resolved['effective'] = $proxy !== '' ? $proxy : null;
-
-            return $resolved;
-        }
-
-        $scheme = $request->getUri()->getScheme();
-        if (!isset($proxy[$scheme])) {
-            return $resolved;
-        }
-
-        if (!\is_string($proxy[$scheme])) {
-            throw new \InvalidArgumentException('proxy values must be strings');
-        }
-
-        $uri = $request->getUri();
-        $noProxy = isset($proxy['no']) ? Utils::normalizeNoProxy($proxy['no']) : [];
-        if ($noProxy !== [] && Utils::isUriInNoProxy($uri, $noProxy)) {
-            $resolved['set'] = true;
-            $resolved['proxy'] = '';
-            $resolved['no_proxy'] = '*';
-
-            return $resolved;
-        }
-
-        $resolved['set'] = true;
-        $resolved['proxy'] = $proxy[$scheme];
-        $resolved['effective'] = $proxy[$scheme] !== '' ? $proxy[$scheme] : null;
-
-        return $resolved;
-    }
-
-    /**
      * @return array<int|string, mixed>
      */
     private function getDefaultConf(EasyHandle $easy): array
@@ -986,8 +930,8 @@ class CurlFactory implements CurlFactoryInterface
                 throw new \RuntimeException('HTTP/3 is not supported by this cURL installation.');
             }
 
-            $proxy = self::resolveProxy($easy->request, $easy->options);
-            $conf[\CURLOPT_HTTP_VERSION] = null !== $proxy['effective']
+            $proxy = ProxyOptions::resolve($easy->request->getUri(), $easy->options['proxy'] ?? null);
+            $conf[\CURLOPT_HTTP_VERSION] = $proxy->hasProxy()
                 ? (CurlVersion::supportsHttp2() ? \CURL_HTTP_VERSION_2_0 : \CURL_HTTP_VERSION_1_1)
                 : (int) \constant('CURL_HTTP_VERSION_3');
         } elseif ('2' === $version || '2.0' === $version) {
@@ -1087,7 +1031,7 @@ class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body) {
+            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body): string {
                 return $body->read($length);
             };
         }
@@ -1133,7 +1077,7 @@ class CurlFactory implements CurlFactoryInterface
     private function removeHeader(string $name, array &$options): void
     {
         foreach (\array_keys($options['_headers']) as $key) {
-            if (!\strcasecmp($key, $name)) {
+            if (!\strcasecmp((string) $key, $name)) {
                 unset($options['_headers'][$key]);
 
                 return;
@@ -1257,11 +1201,14 @@ class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_NOSIGNAL] = true;
         }
 
-        $proxy = self::resolveProxy($easy->request, $options);
-        $selectedProxy = $proxy['effective'];
-        if ($proxy['set']) {
-            $conf[\CURLOPT_PROXY] = $proxy['proxy'];
-            $conf[\CURLOPT_NOPROXY] = $proxy['no_proxy'];
+        $proxy = ProxyOptions::resolve($easy->request->getUri(), $options['proxy'] ?? null);
+        $selectedProxy = $proxy->getProxy();
+        if ($selectedProxy !== null) {
+            $conf[\CURLOPT_PROXY] = $selectedProxy;
+            $conf[\CURLOPT_NOPROXY] = '';
+        } elseif ($proxy->shouldDisableProxy()) {
+            $conf[\CURLOPT_PROXY] = '';
+            $conf[\CURLOPT_NOPROXY] = $proxy->isBypassed() ? '*' : '';
         }
 
         $proxyForConnectionReuse = self::getEffectiveProxyForConnectionReuse($selectedProxy, $options);
@@ -1390,6 +1337,7 @@ class CurlFactory implements CurlFactoryInterface
             if (!\is_callable($progress)) {
                 throw new \InvalidArgumentException('progress client option must be callable');
             }
+            /** @var callable(int|float, int|float, int|float, int|float): mixed $progress */
             $conf[\CURLOPT_NOPROGRESS] = false;
             $progressCallback = static function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($easy, $progress): int {
                 try {
@@ -1429,7 +1377,7 @@ class CurlFactory implements CurlFactoryInterface
      * error, causing the request to be sent through curl_multi_info_read()
      * without an error status.
      *
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
@@ -1485,7 +1433,7 @@ class CurlFactory implements CurlFactoryInterface
             $onHeaders,
             $easy,
             &$startingResponse
-        ) {
+        ): int {
             $value = \trim($h);
             if ($value === '') {
                 $startingResponse = true;

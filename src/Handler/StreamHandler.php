@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Exception\TimeoutException as Psr7TimeoutException;
 use GuzzleHttp\TransferStats;
@@ -18,10 +19,8 @@ use Psr\Http\Message\UriInterface;
 
 /**
  * HTTP handler that uses PHP's HTTP stream wrapper.
- *
- * @final
  */
-class StreamHandler
+final class StreamHandler
 {
     /**
      * @var array
@@ -329,11 +328,11 @@ class StreamHandler
     /**
      * Create a resource and check to ensure it was created successfully
      *
-     * @param callable $callback Callable that returns stream resource
+     * @param callable(): (resource|false) $callback Callable that returns a stream resource, or false when resource creation fails.
      *
      * @return resource
      *
-     * @throws \RuntimeException on error
+     * @throws \RuntimeException when the callback returns false or resource creation emits an error.
      */
     private function createResource(callable $callback)
     {
@@ -691,33 +690,13 @@ class StreamHandler
      */
     private function add_proxy(RequestInterface $request, array &$options, $value, array &$params): void
     {
-        $uri = null;
-
-        if (!\is_array($value)) {
-            if (!\is_string($value)) {
-                throw new \InvalidArgumentException('proxy must be a string or array');
-            }
-
-            $uri = $value;
-        } else {
-            $scheme = $request->getUri()->getScheme();
-            if (isset($value[$scheme])) {
-                if (!\is_string($value[$scheme])) {
-                    throw new \InvalidArgumentException('proxy values must be strings');
-                }
-
-                $noProxy = isset($value['no']) ? Utils::normalizeNoProxy($value['no']) : [];
-                if ($noProxy === [] || !Utils::isUriInNoProxy($request->getUri(), $noProxy)) {
-                    $uri = $value[$scheme];
-                }
-            }
-        }
-
-        if ($uri === null || $uri === '') {
+        $proxy = ProxyOptions::resolve($request->getUri(), $value);
+        $proxyUri = $proxy->getProxy();
+        if ($proxyUri === null) {
             return;
         }
 
-        $parsed = $this->parse_proxy($uri);
+        $parsed = $this->parse_proxy($proxyUri);
         $options['http']['proxy'] = $parsed['proxy'];
 
         if ($parsed['auth']) {
@@ -883,7 +862,7 @@ class StreamHandler
 
         self::addNotification(
             $params,
-            static function ($code, $a, $b, $c, $transferred, $total) use ($value) {
+            static function ($code, $a, $b, $c, $transferred, $total) use ($value): void {
                 if ($code == \STREAM_NOTIFY_PROGRESS) {
                     // The upload progress cannot be determined. Use 0 for cURL compatibility:
                     // https://curl.se/libcurl/c/CURLOPT_PROGRESSFUNCTION.html
@@ -945,7 +924,7 @@ class StreamHandler
 
     private static function callArray(array $functions): callable
     {
-        return static function (...$args) use ($functions) {
+        return static function (...$args) use ($functions): void {
             foreach ($functions as $fn) {
                 $fn(...$args);
             }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Utils;
@@ -9,6 +11,10 @@ use GuzzleHttp\Utils;
  */
 final class HeaderProcessor
 {
+    private function __construct()
+    {
+    }
+
     /**
      * Returns the HTTP version, status code, reason phrase, and headers.
      *

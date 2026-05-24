@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use Psr\Http\Message\RequestInterface;

@@ -8,12 +8,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Added
 
 - Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
-- Add generic PHPDoc annotations to async HTTP and handler APIs
+- Add generic and structured PHPDoc annotations to client request/config option, async promise, handler, middleware, pool, and mock handler APIs
 - Add CIDR notation support for IP no-proxy rules
 - Add network and timeout exception types
 - Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
 - Add explicit `close()` lifecycle methods to the built-in cURL handlers and concrete cURL factory
 - Add `HandlerClosedException` for pending transfers rejected by `CurlMultiHandler::close()`
+- Add `ProxyOptions` for proxy option resolution
 
 ### Changed
 
@@ -33,6 +34,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Support retry delay callbacks with retry count only or full retry context
 - Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays
+- Stop forwarding the generic `auth` request option when following cross-origin redirects
 - Reject invalid `HandlerStack::remove()` arguments
 - Require `Pool` request collections to be iterable
 - Raised the minimum supported libcurl version for the built-in cURL handlers to 7.34.0
@@ -55,6 +57,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Release built-in cURL easy handles before invoking `on_stats`
 - Prefer `CURLOPT_XFERINFOFUNCTION` for built-in cURL progress callbacks when available
 - Reject cURL multi handler promises when transfer completion callbacks throw during manual event-loop ticks
+- Made `MessageFormatter` final and required `Middleware::log()` formatters to implement `MessageFormatterInterface`
+- Made `GuzzleHttp\Handler\CurlFactory`, `GuzzleHttp\Handler\CurlHandler`, `GuzzleHttp\Handler\CurlMultiHandler`, `GuzzleHttp\Handler\MockHandler`, and `GuzzleHttp\Handler\StreamHandler` final
+- Made static utility classes non-instantiable and declared `GuzzleHttp\Handler\Proxy` final
 
 ### Removed
 
@@ -62,6 +67,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed support for the `GUZZLE_CURL_SELECT_TIMEOUT` environment variable; use `CurlMultiHandler`'s `select_timeout` option
 - Removed `RedirectMiddleware::$defaultSettings`; use `RedirectMiddleware::DEFAULT_SETTINGS`
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
+- Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
 
 ## 7.11.0 - Upcoming

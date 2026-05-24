@@ -164,18 +164,20 @@ class RequestExceptionTest extends TestCase
         self::assertSame(['bar' => 'baz'], $e->getHandlerContext());
     }
 
-    public function testObfuscateUrlWithUsername(): void
+    public function testObfuscateUrlWithToken(): void
     {
-        $r = new Request('GET', 'http://username@www.oo.com');
+        $r = new Request('GET', 'http://secret-token@www.oo.com');
         $e = RequestException::create($r, new Response(500));
-        self::assertStringContainsString('http://username@www.oo.com', $e->getMessage());
+        self::assertStringContainsString('http://***@www.oo.com', $e->getMessage());
+        self::assertStringNotContainsString('secret-token', $e->getMessage());
     }
 
     public function testObfuscateUrlWithUsernameAndPassword(): void
     {
         $r = new Request('GET', 'http://user:password@www.oo.com');
         $e = RequestException::create($r, new Response(500));
-        self::assertStringContainsString('http://user:***@www.oo.com', $e->getMessage());
+        self::assertStringContainsString('http://***@www.oo.com', $e->getMessage());
+        self::assertStringNotContainsString('password', $e->getMessage());
     }
 }
 

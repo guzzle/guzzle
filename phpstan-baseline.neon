@@ -1,8 +1,8 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Parameter \#1 \$str of function strtolower expects string, int\|string given\.$#'
-			identifier: argument.type
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
 			count: 1
 			path: src/Client.php
 
@@ -40,12 +40,6 @@ parameters:
 			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 6
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$str1 of function strcasecmp expects string, int\|string given\.$#'
-			identifier: argument.type
-			count: 1
 			path: src/Handler/CurlFactory.php
 
 		-
@@ -193,7 +187,7 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Call to function is_callable\(\) with callable\(\)\: mixed will always evaluate to true\.$#'
+			message: '#^Call to function is_callable\(\) with callable\(callable&THandler\)\: \(callable&THandler\) will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: src/HandlerStack.php
@@ -205,13 +199,7 @@ parameters:
 			path: src/HandlerStack.php
 
 		-
-			message: '#^Instanceof between ArrayAccess\<int, array\> and ArrayAccess will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 1
-			path: src/Middleware.php
-
-		-
-			message: '#^Instanceof between GuzzleHttp\\MessageFormatterInterface and GuzzleHttp\\MessageFormatterInterface will always evaluate to true\.$#'
+			message: '#^Instanceof between ArrayAccess\<int, array\<string, mixed\>\> and ArrayAccess will always evaluate to true\.$#'
 			identifier: instanceof.alwaysTrue
 			count: 1
 			path: src/Middleware.php
@@ -219,7 +207,7 @@ parameters:
 		-
 			message: '#^Result of && is always false\.$#'
 			identifier: booleanAnd.alwaysFalse
-			count: 2
+			count: 1
 			path: src/Middleware.php
 
 		-

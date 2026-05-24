@@ -38,12 +38,12 @@ class RedirectMiddleware
     ];
 
     /**
-     * @var callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>
+     * @var callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
      */
     private $nextHandler;
 
     /**
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $nextHandler Next handler to invoke.
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $nextHandler Next handler to invoke.
      */
     public function __construct(callable $nextHandler)
     {
@@ -94,12 +94,16 @@ class RedirectMiddleware
         $this->guardMax($request, $response, $options);
         $nextRequest = $this->modifyRequest($request, $options, $response);
 
-        // If authorization is handled by curl, unset it if URI is cross-origin.
-        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri()) && defined('\CURLOPT_HTTPAUTH')) {
-            unset(
-                $options['curl'][\CURLOPT_HTTPAUTH],
-                $options['curl'][\CURLOPT_USERPWD]
-            );
+        // Remove HTTP origin credentials if URI is cross-origin.
+        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri())) {
+            unset($options['auth']);
+
+            if (defined('\CURLOPT_HTTPAUTH')) {
+                unset(
+                    $options['curl'][\CURLOPT_HTTPAUTH],
+                    $options['curl'][\CURLOPT_USERPWD]
+                );
+            }
         }
 
         if (isset($options['allow_redirects']['on_redirect'])) {
@@ -134,7 +138,7 @@ class RedirectMiddleware
     private function withTracking(PromiseInterface $promise, string $uri, int $statusCode): PromiseInterface
     {
         return $promise->then(
-            static function (ResponseInterface $response) use ($uri, $statusCode) {
+            static function (ResponseInterface $response) use ($uri, $statusCode): ResponseInterface {
                 // Note that we are pushing to the front of the list as this
                 // would be an earlier response than what is currently present
                 // in the history header.

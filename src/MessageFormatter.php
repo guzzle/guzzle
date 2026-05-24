@@ -32,10 +32,8 @@ use Psr\Http\Message\ResponseInterface;
  * - {res_headers}:    Response headers
  * - {req_body}:       Request body
  * - {res_body}:       Response body
- *
- * @final
  */
-class MessageFormatter implements MessageFormatterInterface
+final class MessageFormatter implements MessageFormatterInterface
 {
     /**
      * Apache Common Log Format.
@@ -75,7 +73,7 @@ class MessageFormatter implements MessageFormatterInterface
         /** @var string */
         return \preg_replace_callback(
             '/{\s*([A-Za-z_\-\.0-9]+)\s*}/',
-            function (array $matches) use ($request, $response, $error, &$cache) {
+            function (array $matches) use ($request, $response, $error, &$cache): string {
                 if (isset($cache[$matches[1]])) {
                     return $cache[$matches[1]];
                 }
@@ -176,6 +174,7 @@ class MessageFormatter implements MessageFormatterInterface
                         }
                 }
 
+                $result = (string) $result;
                 $cache[$matches[1]] = $result;
 
                 return $result;

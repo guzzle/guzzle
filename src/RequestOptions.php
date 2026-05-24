@@ -1,6 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp;
+
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * This class contains a list of built-in Guzzle request options.
@@ -9,10 +16,15 @@ namespace GuzzleHttp;
  */
 final class RequestOptions
 {
+    private function __construct()
+    {
+    }
+
     /**
      * allow_redirects: (bool|array) Controls redirect behavior. Pass false
-     * to disable redirects, pass true to enable redirects, pass an
-     * associative to provide custom redirect settings. Defaults to "false".
+     * to disable redirects, pass true to enable redirects, or pass an
+     * associative array to provide custom redirect settings. Clients enable
+     * redirects by default when the default redirect middleware is present.
      * This option only works if your handler has the RedirectMiddleware. When
      * passing an associative array, you can provide the following key value
      * pairs:
@@ -25,10 +37,12 @@ final class RequestOptions
      *   header.
      * - protocols: (array, default=['http', 'https']) Allowed redirect
      *   protocols.
-     * - on_redirect: (callable) PHP callable that is invoked when a redirect
-     *   is encountered. The callable is invoked with the request, the redirect
-     *   response that was received, and the effective URI. Any return value
-     *   from the on_redirect function is ignored.
+     * - on_redirect: (callable(RequestInterface, ResponseInterface, UriInterface): mixed)
+     *   PHP callable that is invoked when a redirect is encountered. The
+     *   callable is invoked with the request, the redirect response that was
+     *   received, and the effective URI. Any return value is ignored.
+     * - track_redirects: (bool, default=false) Track redirected URI and status
+     *   history in response headers.
      */
     public const ALLOW_REDIRECTS = 'allow_redirects';
 
@@ -42,10 +56,12 @@ final class RequestOptions
     public const AUTH = 'auth';
 
     /**
-     * body: (resource|string|null|int|float|StreamInterface|callable|\Iterator)
+     * body: (resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable)
      * Body to send in the request. Scalar, resource, and stringable object
      * values are converted using the configured stream_factory. Callable and
-     * iterator bodies use Guzzle's existing stream handling.
+     * iterator bodies use Guzzle's existing stream handling. Strings are used
+     * as literal body contents, even when they name a callable. Callable bodies
+     * may be closures or invokable objects; arrays are not valid body values.
      */
     public const BODY = 'body';
 
@@ -65,7 +81,7 @@ final class RequestOptions
     public const CERT_TYPE = 'cert_type';
 
     /**
-     * cookies: (bool|GuzzleHttp\Cookie\CookieJarInterface, default=false)
+     * cookies: (false|GuzzleHttp\Cookie\CookieJarInterface, default=false)
      * Specifies whether or not cookies are used in a request or what cookie
      * jar to use or what cookies to send. This option only works if your
      * handler has the `cookie` middleware. Valid values are `false` and
@@ -168,29 +184,29 @@ final class RequestOptions
     public const JSON = 'json';
 
     /**
-     * multipart: (array) Array of associative arrays, each containing a
-     * required "name" key mapping to the form field, name, a required
-     * "contents" key mapping to a StreamInterface|resource|string, an
-     * optional "headers" associative array of custom headers, and an
-     * optional "filename" key mapping to a string to send as the filename in
-     * the part. If no "filename" key is present, then no "filename" attribute
-     * will be added to the part.
+     * multipart: (array) Array of part arrays, each containing a required
+     * "name" key mapping to the string or integer form field name, a required
+     * "contents" key mapping to any non-array value accepted by PSR-7
+     * Utils::streamFor() or a nested array of field values, an optional
+     * "headers" array of string custom header values, and an optional
+     * "filename" key mapping to a string to send as the filename in the part.
+     * "headers" and "filename" cannot be used when "contents" is an array.
      */
     public const MULTIPART = 'multipart';
 
     /**
-     * on_headers: (callable) A callable that is invoked when the HTTP headers
+     * on_headers: (callable(ResponseInterface, RequestInterface): mixed) A callable that is invoked when the HTTP headers
      * of the response have been received but the body has not yet begun to
      * download. The callable is passed the response and request as
-     * {@see \Psr\Http\Message\ResponseInterface} and
-     * {@see \Psr\Http\Message\RequestInterface} objects, respectively. If it
+     * {@see ResponseInterface} and
+     * {@see RequestInterface} objects, respectively. If it
      * throws, the request promise is rejected with a RequestException wrapping
      * the thrown exception.
      */
     public const ON_HEADERS = 'on_headers';
 
     /**
-     * on_stats: (callable) allows you to get access to transfer statistics of
+     * on_stats: (callable(TransferStats): mixed) allows you to get access to transfer statistics of
      * a request and access the lower level transfer details of the handler
      * associated with your client. ``on_stats`` is a callable that is invoked
      * when a handler has finished sending a request. The callback is invoked
@@ -203,8 +219,8 @@ final class RequestOptions
     public const ON_STATS = 'on_stats';
 
     /**
-     * progress: (callable) Defines a function to invoke when transfer
-     * progress is made. The function accepts the following positional
+     * progress: (callable(int|float, int|float, int|float, int|float): mixed)
+     * Defines a function to invoke when transfer progress is made. The function accepts the following positional
      * arguments: the total number of bytes expected to be downloaded, the
      * number of bytes downloaded so far, the number of bytes expected to be
      * uploaded, the number of bytes uploaded so far. With the built-in cURL
@@ -227,7 +243,8 @@ final class RequestOptions
      * pairs, IP literals, IP CIDR rules, or wildcard rules that should not be
      * proxied. Domain rules are matched case-insensitively. Exact IP literals
      * are normalized before matching. CIDR rules match IP literals only and
-     * are not port-specific.
+     * are not port-specific. Custom handlers can use ProxyOptions::resolve()
+     * to apply Guzzle-compatible proxy selection.
      */
     public const PROXY = 'proxy';
 
@@ -332,7 +349,8 @@ final class RequestOptions
     public const VERSION = 'version';
 
     /**
-     * force_ip_resolve: (bool) Force client to use only ipv4 or ipv6 protocol
+     * force_ip_resolve: (string) Set to "v4" to force IPv4 resolution or "v6"
+     * to force IPv6 resolution when supported by the handler.
      */
     public const FORCE_IP_RESOLVE = 'force_ip_resolve';
 }

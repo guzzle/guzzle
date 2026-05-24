@@ -58,7 +58,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - protocols: (array, default=`['http', 'https']`) Specified which protocols are allowed for redirect requests.
 
-- on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request and the redirect response that was received. Any return value from the on_redirect function is ignored.
+- on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request, the redirect response that was received, and the effective URI. Any return value from the on_redirect function is ignored.
 
 - track_redirects: (bool) When set to `true`, each redirected URI and status code encountered will be tracked in the `X-Guzzle-Redirect-History` and `X-Guzzle-Redirect-Status-History` headers respectively. All URIs and status codes will be stored in the order which the redirects were encountered.
 
@@ -108,9 +108,9 @@ echo $res->getHeaderLine('X-Guzzle-Redirect-Status-History');
 
 Guzzle considers a redirect cross-origin when the scheme, host, or effective port changes.
 
-On cross-origin redirects, Guzzle removes the `Authorization` and `Cookie` headers and clears cURL HTTP authentication options such as `CURLOPT_HTTPAUTH` and `CURLOPT_USERPWD`.
+On cross-origin redirects, Guzzle removes origin-scoped HTTP credentials before sending the redirected request. This includes the `Authorization` and `Cookie` headers, the generic `auth` request option, and cURL HTTP authentication options such as `CURLOPT_HTTPAUTH` and `CURLOPT_USERPWD`.
 
-Guzzle does not automatically remove other request options or headers solely because the redirect is cross-origin. This matches curl's redirect model. In particular, TLS client authentication options such as `cert`, `ssl_key`, custom cURL TLS options, and stream context TLS options are not removed automatically on cross-origin redirects.
+Same-origin redirects preserve those values. Guzzle does not automatically remove transport identity or TLS client credential options solely because the redirect is cross-origin. In particular, TLS client authentication options such as `cert`, `ssl_key`, custom cURL TLS options, and stream context TLS options are not removed automatically on cross-origin redirects.
 
 If TLS client credentials are only trusted for the original origin, disable automatic redirects and handle redirect responses manually, or use separate clients and request options for trusted origins.
 
@@ -121,7 +121,6 @@ Pass an array of HTTP authentication parameters to use with the request. The arr
 
 Types
 - array
-- string
 - null
 
 Default
@@ -172,6 +171,13 @@ Types
 - string
 - `fopen()` resource
 - `Psr\Http\Message\StreamInterface`
+- callable
+- `Iterator`
+- `Stringable`
+- int
+- float
+- bool
+- null
 
 Default
 None
@@ -204,7 +210,7 @@ This setting can be set to any of the following types:
   $client->request('POST', '/post', ['body' => $stream]);
   ```
 
-Scalar, resource, and object values with `__toString()` are converted to PSR-7 streams using the configured `stream_factory`. Callable and iterator bodies use Guzzle's existing stream handling because PSR-17 does not define factories for those stream types. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+Scalar, resource, and object values with `__toString()` are converted to PSR-7 streams using the configured `stream_factory`. Callable and iterator bodies use Guzzle's existing PSR-7 stream handling because PSR-17 does not define factories for those stream types. Callable bodies may be closures or invokable objects. Strings are always used as literal body contents, even when they name a callable. Callable arrays are arrays, and arrays are not valid `body` values. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
 
 > [!NOTE]
 > This option cannot be used with `form_params`, `multipart`, or `json`
@@ -263,7 +269,8 @@ Summary
 Specifies whether or not cookies are used in a request or what cookie jar to use or what cookies to send.
 
 Types
-`GuzzleHttp\Cookie\CookieJarInterface`
+- `GuzzleHttp\Cookie\CookieJarInterface`
+- false
 
 Default
 None
@@ -489,7 +496,7 @@ array
 Constant
 `GuzzleHttp\RequestOptions::FORM_PARAMS`
 
-Associative array of form field names to values where each value is a string or array of strings. Sets the Content-Type header to application/x-www-form-urlencoded when no Content-Type header is already present.
+Array mapping form field names, represented by PHP array keys, to values where each value is a string or array of strings. Numeric-string field names are stored as integer keys by PHP before `http_build_query()` encodes them. Sets the Content-Type header to application/x-www-form-urlencoded when no Content-Type header is already present.
 
 ```php
 $client->request('POST', '/post', [
@@ -508,7 +515,7 @@ $client->request('POST', '/post', [
 ## headers
 
 Summary
-Associative array of headers to add to the request. Each key is the name of a header, and each value is a string or array of strings representing the header field values.
+Array keyed by header names to add to the request. Numeric-string header names are stored as integer keys by PHP, and Guzzle casts header keys back to strings when applying them. Each value is a string or array of strings representing the header field values.
 
 Types
 array
@@ -663,11 +670,11 @@ array
 Constant
 `GuzzleHttp\RequestOptions::MULTIPART`
 
-The value of `multipart` is an array of associative arrays, each containing the following key value pairs:
+The value of `multipart` is an array of part arrays, each containing the following key value pairs:
 
-- `name`: (string, required) the form field name
-- `contents`: (StreamInterface/resource/string, required) The data to use in the form element.
-- `headers`: (array) Optional associative array of custom headers to use with the form element.
+- `name`: (string|int, required) the form field name
+- `contents`: (mixed, required) Any non-array value accepted by `GuzzleHttp\Psr7\Utils::streamFor()`, including strings, resources, streams, iterators, closures, and invokable objects. Arrays are expanded as nested multipart fields; `headers` and `filename` cannot be used when `contents` is an array.
+- `headers`: (array) Optional array of custom string header values to use with the form element.
 - `filename`: (string) Optional string to send as the filename in the part.
 
 ```php
@@ -895,6 +902,21 @@ Pass an associative array to specify HTTP proxies for specific URI schemes (i.e.
 > [!NOTE]
 > Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
 
+Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply Guzzle-compatible proxy selection. The helper resolves the documented `proxy` request option shape, including scheme-specific proxy entries and `no` exclusion rules. Handlers remain responsible for translating the selected proxy string into their transport-specific configuration.
+
+```php
+use GuzzleHttp\ProxyOptions;
+
+$selection = ProxyOptions::resolve($request->getUri(), $options['proxy'] ?? null);
+
+if ($selection->hasProxy()) {
+    $proxy = $selection->getProxy();
+    // Configure the transport to use $proxy.
+} elseif ($selection->shouldDisableProxy()) {
+    // Disable transport-level default or environment proxy behavior.
+}
+```
+
 ```php
 $client->request('GET', '/', [
     'proxy' => [
@@ -928,7 +950,7 @@ $client->request('GET', '/', [
 ## query
 
 Summary
-Associative array of query string values or query string to add to the request.
+Array of query string values or query string to add to the request. When the option is an array, keys are PHP array keys; numeric-string parameter names are stored as integer keys before `http_build_query()` encodes them.
 
 Types
 - array
