@@ -710,6 +710,31 @@ class RedirectMiddlewareTest extends TestCase
         $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
     }
 
+    /**
+     * @dataProvider crossOriginRedirectProvider
+     */
+    public function testAuthOptionTreatmentOnRedirect(string $originalUri, string $targetUri, bool $isCrossOrigin): void
+    {
+        $auth = ['testuser', 'testpass'];
+
+        $mock = new MockHandler([
+            new Response(302, ['Location' => $targetUri]),
+            static function (RequestInterface $request, array $options) use ($auth, $isCrossOrigin): ResponseInterface {
+                if ($isCrossOrigin) {
+                    self::assertArrayNotHasKey('auth', $options);
+                } else {
+                    self::assertArrayHasKey('auth', $options);
+                    self::assertSame($auth, $options['auth']);
+                }
+
+                return new Response(200);
+            },
+        ]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $client->get($originalUri, ['auth' => $auth]);
+    }
+
     public static function crossOriginRedirectProvider(): array
     {
         return [
