@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Exception\TimeoutException as Psr7TimeoutException;
 use GuzzleHttp\TransferStats;
@@ -691,33 +692,13 @@ class StreamHandler
      */
     private function add_proxy(RequestInterface $request, array &$options, $value, array &$params): void
     {
-        $uri = null;
-
-        if (!\is_array($value)) {
-            if (!\is_string($value)) {
-                throw new \InvalidArgumentException('proxy must be a string or array');
-            }
-
-            $uri = $value;
-        } else {
-            $scheme = $request->getUri()->getScheme();
-            if (isset($value[$scheme])) {
-                if (!\is_string($value[$scheme])) {
-                    throw new \InvalidArgumentException('proxy values must be strings');
-                }
-
-                $noProxy = isset($value['no']) ? Utils::normalizeNoProxy($value['no']) : [];
-                if ($noProxy === [] || !Utils::isUriInNoProxy($request->getUri(), $noProxy)) {
-                    $uri = $value[$scheme];
-                }
-            }
-        }
-
-        if ($uri === null || $uri === '') {
+        $proxy = ProxyOptions::resolve($request->getUri(), $value);
+        $proxyUri = $proxy->getProxy();
+        if ($proxyUri === null) {
             return;
         }
 
-        $parsed = $this->parse_proxy($uri);
+        $parsed = $this->parse_proxy($proxyUri);
         $options['http']['proxy'] = $parsed['proxy'];
 
         if ($parsed['auth']) {

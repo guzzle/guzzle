@@ -463,6 +463,8 @@ A handler is responsible for applying the following request options. These reque
 
 Transport-specific options such as `curl` and `stream_context` are intended for the handlers that understand them. A non-cURL handler should reject or document how it treats cURL-specific options, and a non-stream handler should do the same for PHP stream context options.
 
+Handlers that support the `proxy` option should use `GuzzleHttp\ProxyOptions::resolve()` unless they intentionally document different proxy selection semantics. The returned `GuzzleHttp\ProxySelection` identifies the selected proxy string, no-proxy bypasses, and explicit proxy-disable cases. The handler is still responsible for applying that selection to its transport.
+
 First-party handlers should not silently ignore documented handler-owned options that users reasonably expect to affect transport behavior. They should implement the option, reject the request with a clear exception when the option is present, or document a deliberate no-op where the option has no meaningful transport equivalent. Custom handlers should follow the same pattern where practical.
 
 ### Callback Semantics
