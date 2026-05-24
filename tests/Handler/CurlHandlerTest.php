@@ -6,9 +6,11 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlShareHandleState;
+use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
@@ -16,6 +18,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\CurlHandler
@@ -87,15 +90,23 @@ class CurlHandlerTest extends TestCase
 
     public function testCloseDoesNotCloseInjectedFactory(): void
     {
-        $factory = new class(3) extends CurlFactory {
+        $factory = new class implements CurlFactoryInterface {
             /** @var bool */
             public $closeCalled = false;
+
+            public function create(RequestInterface $request, array $options): EasyHandle
+            {
+                throw new \BadMethodCallException('Unexpected create call.');
+            }
+
+            public function release(EasyHandle $easy): void
+            {
+                throw new \BadMethodCallException('Unexpected release call.');
+            }
 
             public function close(): void
             {
                 $this->closeCalled = true;
-
-                parent::close();
             }
         };
         $handler = new CurlHandler(['handle_factory' => $factory]);

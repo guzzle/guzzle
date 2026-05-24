@@ -548,6 +548,18 @@ final class RedactingFormatter implements MessageFormatterInterface
 $stack->push(Middleware::log($logger, new RedactingFormatter()));
 ```
 
+#### Built-in handler inheritance
+
+`GuzzleHttp\Handler\CurlFactory`, `GuzzleHttp\Handler\CurlHandler`,
+`GuzzleHttp\Handler\CurlMultiHandler`, `GuzzleHttp\Handler\MockHandler`, and
+`GuzzleHttp\Handler\StreamHandler` are now final.
+
+Applications that extended `CurlFactory` should implement
+`GuzzleHttp\Handler\CurlFactoryInterface` instead. Applications that extended
+`CurlHandler`, `CurlMultiHandler`, `MockHandler`, or `StreamHandler` should use
+composition instead: wrap a handler instance in a custom callable or provide a
+custom handler rather than subclassing the built-in handler.
+
 #### CurlMultiHandler select timeout
 
 The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass

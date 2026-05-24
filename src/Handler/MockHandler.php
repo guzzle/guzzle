@@ -14,10 +14,8 @@ use Psr\Http\Message\StreamInterface;
 
 /**
  * Handler that returns responses or rejection reasons from a queue.
- *
- * @final
  */
-class MockHandler implements \Countable
+final class MockHandler implements \Countable
 {
     /**
      * @var list<ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>|callable(RequestInterface, array<array-key, mixed>): (ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>)>
