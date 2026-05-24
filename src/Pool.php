@@ -82,7 +82,7 @@ class Pool implements PromisorInterface
      *             headers?: array<array-key, string>,
      *             filename?: string
      *         }>,
-     *         on_headers?: callable(ResponseInterface, RequestInterface): mixed,
+     *         on_headers?: callable(ResponseInterface, RequestInterface, array-key=): mixed,
      *         on_stats?: callable(TransferStats): mixed,
      *         progress?: callable(int|float, int|float, int|float, int|float): mixed,
      *         protocols?: array<array-key, string>,
@@ -132,7 +132,7 @@ class Pool implements PromisorInterface
         $requestGenerator = static function () use ($requests, $client, $opts): \Generator {
             foreach ($requests as $key => $rfn) {
                 $keyedOpts = $opts;
-                if (isset($opts['on_headers']) && \is_callable($opts['on_headers'])) {
+                if (isset($opts['on_headers'])) {
                     $userOnHeaders = $opts['on_headers'];
                     $keyedOpts['on_headers'] = static function ($response, $request) use ($userOnHeaders, $key): void {
                         $userOnHeaders($response, $request, $key);
@@ -214,7 +214,7 @@ class Pool implements PromisorInterface
      *             headers?: array<array-key, string>,
      *             filename?: string
      *         }>,
-     *         on_headers?: callable(ResponseInterface, RequestInterface): mixed,
+     *         on_headers?: callable(ResponseInterface, RequestInterface, array-key=): mixed,
      *         on_stats?: callable(TransferStats): mixed,
      *         progress?: callable(int|float, int|float, int|float, int|float): mixed,
      *         protocols?: array<array-key, string>,
