@@ -11,11 +11,13 @@ use Psr\Http\Message\ResponseInterface;
 
 /**
  * Provides basic proxies for handlers.
- *
- * @final
  */
-class Proxy
+final class Proxy
 {
+    private function __construct()
+    {
+    }
+
     /**
      * Sends synchronous requests to a specific handler while sending all other
      * requests to another handler.
