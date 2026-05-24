@@ -1253,7 +1253,11 @@ The built-in stream handler supports only HTTP versions `1.0` and `1.1`.
 
 Empty or malformed `version` request option values are rejected before the request is sent. If a request uses a well-formed HTTP version that a built-in handler cannot send, the transfer fails with `GuzzleHttp\Exception\RequestException`.
 
-HTTP/3 requests sent by the built-in cURL handler use TLS 1.3 or newer. Lower TLS versions requested through `crypto_method` or `curl` options are upgraded to TLS 1.3 for HTTP/3 requests.
+HTTP/3 requests sent by the built-in cURL handler use Guzzle's normal HTTPS guard rail of TLS 1.2 or newer. HTTP/3 itself is negotiated by libcurl over QUIC and requires TLS 1.3 support in the cURL stack. If `crypto_method` explicitly requests TLS 1.3, Guzzle preserves that stricter minimum. Raw `CURLOPT_SSLVERSION` values passed through the `curl` option are rejected because TLS version handling is managed by Guzzle.
+
+When an effective proxy is selected for a request configured with `version => 3.0`, Guzzle does not attempt HTTP/3 through the proxy path. It falls back to HTTP/2 when available, otherwise HTTP/1.1. A matching proxy `no` rule is treated as a direct request and still allows HTTP/3 to be attempted.
 
 > [!NOTE]
-> For HTTP/3, Guzzle uses libcurl's `CURL_HTTP_VERSION_3`, which attempts HTTP/3 and allows libcurl to fall back to an earlier HTTP version if needed.
+> For HTTP/3, Guzzle uses libcurl's `CURL_HTTP_VERSION_3`, which attempts HTTP/3 and allows libcurl to fall back to an earlier HTTP version if needed. The response protocol version may therefore be lower than the requested request protocol version.
+
+Guzzle does not currently expose libcurl's `CURL_HTTP_VERSION_3ONLY` strict HTTP/3 mode.
