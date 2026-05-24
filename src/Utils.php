@@ -10,7 +10,9 @@ use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UriInterface;
 
 final class Utils
@@ -89,7 +91,7 @@ final class Utils
      *
      * @param array{share?: mixed} $curlOptions cURL handler constructor options.
      *
-     * @return callable(RequestInterface, array): Promise\PromiseInterface<\Psr\Http\Message\ResponseInterface, mixed> Returns the best handler for the given system.
+     * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> Returns the best handler for the given system.
      *
      * @throws \RuntimeException if no viable Handler is available.
      */
@@ -139,9 +141,14 @@ final class Utils
         return $handler;
     }
 
+    /**
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
+     *
+     * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
+     */
     private static function wrapStreamHandlerCurlShare(callable $handler, string $shareMode): callable
     {
-        return static function (RequestInterface $request, array $options) use ($handler, $shareMode): Promise\PromiseInterface {
+        return static function (RequestInterface $request, array $options) use ($handler, $shareMode): PromiseInterface {
             if (\array_key_exists('curl_share', $options)) {
                 CurlShareHandleState::normalizeMode($options['curl_share'], 'curl_share');
             }

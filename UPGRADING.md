@@ -394,6 +394,18 @@ implements Guzzle client interfaces, provides custom handlers or middleware, or
 uses stricter static analysis, you may need to update your PHPDoc annotations to
 include promise fulfillment and rejection types.
 
+Public client config, request option, pool option, handler, middleware, mock
+handler, and history middleware PHPDoc now uses structured array and callable
+shapes. This does not change runtime behavior, but stricter static analysis may
+now report invalid option keys, invalid option value types, or lower-arity
+callback annotations that were previously hidden behind loose `array` or
+`callable` PHPDoc.
+
+If your project implements `ClientInterface`, extends client behavior through
+traits, builds custom handlers or middleware, or documents reusable request
+option arrays, update those PHPDoc annotations to match the supported request
+option and callback shapes.
+
 #### Multipart request serialization
 
 Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts

@@ -330,11 +330,11 @@ class StreamHandler
     /**
      * Create a resource and check to ensure it was created successfully
      *
-     * @param callable $callback Callable that returns stream resource
+     * @param callable(): (resource|false) $callback Callable that returns a stream resource, or false when resource creation fails.
      *
      * @return resource
      *
-     * @throws \RuntimeException on error
+     * @throws \RuntimeException when the callback returns false or resource creation emits an error.
      */
     private function createResource(callable $callback)
     {

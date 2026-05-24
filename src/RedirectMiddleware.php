@@ -38,12 +38,12 @@ class RedirectMiddleware
     ];
 
     /**
-     * @var callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed>
+     * @var callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
      */
     private $nextHandler;
 
     /**
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $nextHandler Next handler to invoke.
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $nextHandler Next handler to invoke.
      */
     public function __construct(callable $nextHandler)
     {

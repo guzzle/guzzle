@@ -4,7 +4,7 @@ Guzzle clients use a handler and middleware system to send HTTP requests.
 
 ## Handlers
 
-A handler function accepts a `Psr\Http\Message\RequestInterface` and array of request options and returns a `GuzzleHttp\Promise\PromiseInterface` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with an exception.
+A handler function accepts a `Psr\Http\Message\RequestInterface` and array of request options and returns a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with a reason.
 
 You can provide a custom handler to a client using the `handler` option of a client constructor. It is important to understand that several request options used by Guzzle require that specific middlewares wrap the handler used by the client. You can ensure that the handler you provide to a client uses the default middlewares by wrapping the handler in the `GuzzleHttp\HandlerStack::create(callable $handler = null)` static method.
 
@@ -403,7 +403,7 @@ does not support cURL sharing.
 
 ## Creating a Handler
 
-As stated earlier, a handler is a function that accepts a `Psr\Http\Message\RequestInterface` and an array of request options. A handler used with Guzzle middleware returns a `GuzzleHttp\Promise\PromiseInterface` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with an exception.
+As stated earlier, a handler is a function that accepts a `Psr\Http\Message\RequestInterface` and an array of request options. A handler used with Guzzle middleware returns a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with a reason.
 
 ```php
 use GuzzleHttp\Promise\PromiseInterface;

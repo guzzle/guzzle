@@ -58,7 +58,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - protocols: (array, default=`['http', 'https']`) Specified which protocols are allowed for redirect requests.
 
-- on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request and the redirect response that was received. Any return value from the on_redirect function is ignored.
+- on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request, the redirect response that was received, and the effective URI. Any return value from the on_redirect function is ignored.
 
 - track_redirects: (bool) When set to `true`, each redirected URI and status code encountered will be tracked in the `X-Guzzle-Redirect-History` and `X-Guzzle-Redirect-Status-History` headers respectively. All URIs and status codes will be stored in the order which the redirects were encountered.
 
@@ -172,6 +172,13 @@ Types
 - string
 - `fopen()` resource
 - `Psr\Http\Message\StreamInterface`
+- callable
+- `Iterator`
+- `Stringable`
+- int
+- float
+- bool
+- null
 
 Default
 None
@@ -204,7 +211,7 @@ This setting can be set to any of the following types:
   $client->request('POST', '/post', ['body' => $stream]);
   ```
 
-Scalar, resource, and object values with `__toString()` are converted to PSR-7 streams using the configured `stream_factory`. Callable and iterator bodies use Guzzle's existing stream handling because PSR-17 does not define factories for those stream types. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+Scalar, resource, and object values with `__toString()` are converted to PSR-7 streams using the configured `stream_factory`. Callable and iterator bodies use Guzzle's existing PSR-7 stream handling because PSR-17 does not define factories for those stream types. Callable bodies may be closures, callable arrays, or invokable objects. Strings are always used as literal body contents, even when they name a callable. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
 
 > [!NOTE]
 > This option cannot be used with `form_params`, `multipart`, or `json`
@@ -666,7 +673,7 @@ Constant
 The value of `multipart` is an array of associative arrays, each containing the following key value pairs:
 
 - `name`: (string, required) the form field name
-- `contents`: (StreamInterface/resource/string, required) The data to use in the form element.
+- `contents`: (mixed, required) Any non-array value accepted by `GuzzleHttp\Psr7\Utils::streamFor()`, including strings, resources, streams, iterators, closures, and invokable objects.
 - `headers`: (array) Optional associative array of custom headers to use with the form element.
 - `filename`: (string) Optional string to send as the filename in the part.
 

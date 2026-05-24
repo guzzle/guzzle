@@ -7,6 +7,7 @@ namespace GuzzleHttp\Test\Handler;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
@@ -135,6 +136,37 @@ class MockHandlerTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $p = $mock($request, ['foo' => 'bar']);
         self::assertSame($r, $p->wait());
+    }
+
+    public function testQueuedCallableCanReturnPromise(): void
+    {
+        $response = new Response(201);
+        $mock = new MockHandler([
+            static function () use ($response) {
+                return Create::promiseFor($response);
+            },
+        ]);
+
+        $promise = $mock(new Request('GET', 'http://example.com'), []);
+
+        self::assertSame($response, $promise->wait());
+    }
+
+    public function testQueuedCallableCanReturnThrowable(): void
+    {
+        $reason = new \RuntimeException('failed');
+        $mock = new MockHandler([
+            static function () use ($reason): \Throwable {
+                return $reason;
+            },
+        ]);
+
+        $promise = $mock(new Request('GET', 'http://example.com'), []);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('failed');
+
+        $promise->wait();
     }
 
     public function testEnsuresOnHeadersIsCallable(): void

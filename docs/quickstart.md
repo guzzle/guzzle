@@ -109,7 +109,7 @@ $promise = $client->sendAsync($request);
 $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
 ```
 
-The promise returned by these methods implements the [Promises/A+ spec](https://promisesaplus.com/), provided by the [Guzzle promises library](https://github.com/guzzle/promises). This means that you can chain `then()` calls off of the promise. These then calls are either fulfilled with a successful `Psr\Http\Message\ResponseInterface` or rejected with an exception.
+The promise returned by these methods is a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` provided by the [Guzzle promises library](https://github.com/guzzle/promises). This means that you can chain `then()` calls off of the promise. These then calls are either fulfilled with a successful `Psr\Http\Message\ResponseInterface` or rejected with a reason. The reason is often an exception from Guzzle's exception hierarchy, but custom handlers can reject with other values.
 
 ```php
 use Psr\Http\Message\ResponseInterface;
@@ -120,9 +120,11 @@ $promise->then(
     function (ResponseInterface $res) {
         echo $res->getStatusCode() . "\n";
     },
-    function (RequestException $e) {
-        echo $e->getMessage() . "\n";
-        echo $e->getRequest()->getMethod();
+    function ($reason) {
+        if ($reason instanceof RequestException) {
+            echo $reason->getMessage() . "\n";
+            echo $reason->getRequest()->getMethod();
+        }
     }
 );
 ```
@@ -145,8 +147,7 @@ $promises = [
     'webp'  => $client->getAsync('/image/webp')
 ];
 
-// Wait for the requests to complete; throws a ConnectException
-// if any of the requests fail
+// Wait for the requests to complete; throws if any request is rejected.
 $responses = Promise\Utils::unwrap($promises);
 
 // You can access each response using the key of the promise
@@ -156,7 +157,8 @@ echo $responses['png']->getHeader('Content-Length')[0];
 // Wait for the requests to complete, even if some of them fail
 $responses = Promise\Utils::settle($promises)->wait();
 
-// Values returned above are wrapped in an array with 2 keys: "state" (either fulfilled or rejected) and "value" (contains the response)
+// Values returned above are wrapped in an array with "state" (either fulfilled or rejected),
+// plus "value" for fulfilled responses or "reason" for rejected requests.
 echo $responses['image']['state']; // returns "fulfilled"
 echo $responses['image']['value']->getHeader('Content-Length')[0];
 echo $responses['png']['value']->getHeader('Content-Length')[0];
@@ -166,10 +168,10 @@ You can use the `GuzzleHttp\Pool` object when you have an indeterminate amount o
 
 ```php
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Pool;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 
 $client = new Client();
 
@@ -182,10 +184,10 @@ $requests = function ($total) {
 
 $pool = new Pool($client, $requests(100), [
     'concurrency' => 5,
-    'fulfilled' => function (Response $response, $index) {
+    'fulfilled' => function (ResponseInterface $response, $index, PromiseInterface $aggregate) {
         // this is delivered each successful response
     },
-    'rejected' => function (RequestException $reason, $index) {
+    'rejected' => function ($reason, $index, PromiseInterface $aggregate) {
         // this is delivered each failed request
     },
 ]);
@@ -197,7 +199,7 @@ $promise = $pool->promise();
 $promise->wait();
 ```
 
-Or using a closure that will return a promise once the pool calls the closure.
+Or using a closure that will receive the merged request options and return either a response or a promise once the pool calls the closure.
 
 ```php
 $client = new Client();
@@ -205,8 +207,8 @@ $client = new Client();
 $requests = function ($total) use ($client) {
     $uri = 'http://127.0.0.1:8126/guzzle-server/perf';
     for ($i = 0; $i < $total; $i++) {
-        yield function() use ($client, $uri) {
-            return $client->getAsync($uri);
+        yield function(array $options) use ($client, $uri) {
+            return $client->getAsync($uri, $options);
         };
     }
 };

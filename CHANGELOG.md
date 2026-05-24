@@ -8,7 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Added
 
 - Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
-- Add generic PHPDoc annotations to async HTTP and handler APIs
+- Add generic and structured PHPDoc annotations to async HTTP, client option, handler, middleware, pool, and mock handler APIs
 - Add CIDR notation support for IP no-proxy rules
 - Add network and timeout exception types
 - Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
