@@ -107,7 +107,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
+     *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,
@@ -226,7 +226,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
+     *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,
@@ -314,7 +314,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
+     *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,
@@ -418,7 +418,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
+     *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,
@@ -534,7 +534,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
+     *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,

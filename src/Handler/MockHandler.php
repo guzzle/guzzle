@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\RequestException;
@@ -86,7 +88,7 @@ final class MockHandler implements \Countable
         }
 
         if (isset($options['delay']) && \is_numeric($options['delay'])) {
-            \usleep((int) $options['delay'] * 1000);
+            \usleep((int) ($options['delay'] * 1000));
         }
 
         $this->lastRequest = $request;
@@ -229,8 +231,12 @@ final class MockHandler implements \Countable
         $reason = null
     ): void {
         if (isset($options['on_stats'])) {
-            $transferTime = $options['transfer_time'] ?? 0;
-            $stats = new TransferStats($request, $response, $transferTime, $reason);
+            $transferTime = $options['transfer_time'] ?? 0.0;
+            if (!\is_int($transferTime) && !\is_float($transferTime) && (!\is_string($transferTime) || !\is_numeric($transferTime))) {
+                throw new \InvalidArgumentException('transfer_time must be a number of seconds');
+            }
+
+            $stats = new TransferStats($request, $response, (float) $transferTime, $reason);
             ($options['on_stats'])($stats);
         }
     }

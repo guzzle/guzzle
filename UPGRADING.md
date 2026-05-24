@@ -560,6 +560,14 @@ Applications that extended `CurlFactory` should implement
 composition instead: wrap a handler instance in a custom callable or provide a
 custom handler rather than subclassing the built-in handler.
 
+#### Progress callback parameter types
+
+The built-in handlers now pass integer byte counts to `progress` callbacks.
+Callbacks with `int` parameter types continue to work, and callbacks with `float`
+parameter types can still receive integer byte counts in PHP. If a callback used
+other scalar parameter types, update it to accept integers or remove the scalar
+parameter declarations.
+
 #### CurlMultiHandler select timeout
 
 The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
@@ -46,7 +48,7 @@ final class StreamHandler
 
         // Sleep if there is a delay specified.
         if (isset($options['delay'])) {
-            \usleep($options['delay'] * 1000);
+            \usleep((int) ($options['delay'] * 1000));
         }
 
         $protocolVersion = $request->getProtocolVersion();
@@ -866,7 +868,7 @@ final class StreamHandler
                 if ($code == \STREAM_NOTIFY_PROGRESS) {
                     // The upload progress cannot be determined. Use 0 for cURL compatibility:
                     // https://curl.se/libcurl/c/CURLOPT_PROGRESSFUNCTION.html
-                    $value($total, $transferred, 0, 0);
+                    $value((int) $total, (int) $transferred, 0, 0);
                 }
             }
         );

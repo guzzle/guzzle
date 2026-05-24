@@ -219,7 +219,7 @@ final class RequestOptions
     public const ON_STATS = 'on_stats';
 
     /**
-     * progress: (callable(int|float, int|float, int|float, int|float): mixed)
+     * progress: (callable(int, int, int, int): mixed)
      * Defines a function to invoke when transfer progress is made. The function accepts the following positional
      * arguments: the total number of bytes expected to be downloaded, the
      * number of bytes downloaded so far, the number of bytes expected to be

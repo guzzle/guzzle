@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Promise\PromiseInterface;
@@ -69,7 +71,7 @@ final class CurlHandler
         $this->assertOpen();
 
         if (isset($options['delay'])) {
-            \usleep($options['delay'] * 1000);
+            \usleep((int) ($options['delay'] * 1000));
         }
 
         $easy = $this->factory->create($request, $options);

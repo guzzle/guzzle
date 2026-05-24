@@ -791,7 +791,7 @@ None
 Constant
 `GuzzleHttp\RequestOptions::PROGRESS`
 
-The function accepts the following positional arguments:
+The function accepts the following integer byte-count positional arguments:
 
 - the total number of bytes expected to be downloaded, zero if unknown
 - the number of bytes downloaded so far
@@ -807,10 +807,10 @@ $result = $client->request(
     '/',
     [
         'progress' => function(
-            $downloadTotal,
-            $downloadedBytes,
-            $uploadTotal,
-            $uploadedBytes
+            int $downloadTotal,
+            int $downloadedBytes,
+            int $uploadTotal,
+            int $uploadedBytes
         ) {
             //do something
         },

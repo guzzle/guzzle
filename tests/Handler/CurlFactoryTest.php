@@ -1344,7 +1344,7 @@ class CurlFactoryTest extends TestCase
         $f = new CurlFactory(3);
         $called = [];
         $easy = $f->create(new Psr7\Request('GET', Server::$url), [
-            'progress' => static function ($downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes) use (&$called): bool {
+            'progress' => static function (int $downloadTotal, int $downloadedBytes, int $uploadTotal, int $uploadedBytes) use (&$called): bool {
                 $called = [$downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes];
 
                 return $downloadedBytes > 0;
@@ -1354,12 +1354,14 @@ class CurlFactoryTest extends TestCase
         try {
             $callback = $_SERVER['_curl'][self::progressCallbackOption()];
 
-            self::assertSame(0, $callback($easy->handle, 10, 0, 2, 0));
+            self::assertSame(0, $callback($easy->handle, 10.0, 0.0, 2.0, 0.0));
             self::assertFalse($easy->progressAborted);
+            self::assertNull($easy->progressException);
             self::assertSame([10, 0, 2, 0], $called);
 
-            self::assertSame(1, $callback($easy->handle, 10, 1, 2, 0));
+            self::assertSame(1, $callback($easy->handle, 10.0, 1.0, 2.0, 0.0));
             self::assertTrue($easy->progressAborted);
+            self::assertNull($easy->progressException);
             self::assertSame([10, 1, 2, 0], $called);
         } finally {
             $f->release($easy);

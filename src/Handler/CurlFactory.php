@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
@@ -1337,11 +1339,11 @@ final class CurlFactory implements CurlFactoryInterface
             if (!\is_callable($progress)) {
                 throw new \InvalidArgumentException('progress client option must be callable');
             }
-            /** @var callable(int|float, int|float, int|float, int|float): mixed $progress */
+            /** @var callable(int, int, int, int): mixed $progress */
             $conf[\CURLOPT_NOPROGRESS] = false;
             $progressCallback = static function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($easy, $progress): int {
                 try {
-                    if ($progress($downloadSize, $downloaded, $uploadSize, $uploaded)) {
+                    if ($progress((int) $downloadSize, (int) $downloaded, (int) $uploadSize, (int) $uploaded)) {
                         $easy->progressAborted = true;
 
                         return 1;
