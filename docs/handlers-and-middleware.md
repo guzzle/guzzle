@@ -282,7 +282,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * @return PromiseInterface<ResponseInterface>
+ * @return PromiseInterface Fulfilled with ResponseInterface.
  */
 function handler(RequestInterface $request, array $options): PromiseInterface
 {
