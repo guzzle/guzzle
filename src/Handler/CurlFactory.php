@@ -768,7 +768,7 @@ class CurlFactory implements CurlFactoryInterface
     private function removeHeader(string $name, array &$options): void
     {
         foreach (\array_keys($options['_headers']) as $key) {
-            if (!\strcasecmp($key, $name)) {
+            if (!\strcasecmp((string) $key, $name)) {
                 unset($options['_headers'][$key]);
 
                 return;

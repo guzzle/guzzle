@@ -148,6 +148,14 @@ class UtilsTest extends TestCase
         self::assertSame($expected, GuzzleHttp\normalize_header_keys($input));
     }
 
+    public function testNormalizeHeaderKeysHandlesNumericKeys()
+    {
+        $input = [0 => 'zero', 'HelLo' => 'foo'];
+        $expected = [0 => 0, 'hello' => 'HelLo'];
+
+        self::assertSame($expected, Utils::normalizeHeaderKeys($input));
+    }
+
     public static function noProxyProvider()
     {
         return [

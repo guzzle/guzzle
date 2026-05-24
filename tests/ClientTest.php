@@ -807,6 +807,35 @@ class ClientTest extends TestCase
         $client->send($request, ['headers' => ['X-Foo: Bar', 'X-Test: Fail']]);
     }
 
+    public function testDefaultHeadersHandleNumericHeaderNames()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client([
+            'handler' => $mock,
+            'headers' => ['0' => 'default'],
+        ]);
+
+        $client->send(new Request('GET', 'http://foo.com', ['0' => 'request']));
+
+        $sent = $mock->getLastRequest();
+        self::assertNotNull($sent);
+        self::assertSame(['request'], $sent->getHeader('0'));
+    }
+
+    public function testRequestHeadersHandleNumericHeaderNames()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('GET', 'http://foo.com');
+
+        $client->send($request, ['headers' => ['X-Foo' => 'bar', '0' => 'zero']]);
+
+        $sent = $mock->getLastRequest();
+        self::assertNotNull($sent);
+        self::assertSame(['bar'], $sent->getHeader('X-Foo'));
+        self::assertSame(['zero'], $sent->getHeader('0'));
+    }
+
     public function testCanSetCustomHandler()
     {
         $mock = new MockHandler([new Response(500)]);

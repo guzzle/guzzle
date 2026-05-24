@@ -19,12 +19,6 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$str of function strtolower expects string, int\|string given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Client.php
-
-		-
 			message: '#^Parameter \#1 \$str of function strtolower expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -118,12 +112,6 @@ parameters:
 			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 5
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$str1 of function strcasecmp expects string, int\|string given\.$#'
-			identifier: argument.type
-			count: 1
 			path: src/Handler/CurlFactory.php
 
 		-
