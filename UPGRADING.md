@@ -72,24 +72,76 @@ $client->request('GET', 'https://example.com');
 The convenience methods such as `$client->get()`, `$client->post()`, and their
 async variants continue to use uppercase standard methods.
 
-#### Network and timeout exceptions
+#### Exception hierarchy and classification
 
-`ConnectException` now extends `GuzzleHttp\Exception\NetworkException`, which
-extends `GuzzleHttp\Exception\TransferException` and implements PSR-18's
-`NetworkExceptionInterface`.
+Except for the cURL transport reclassifications described below, the exception
+hierarchy changes are additive and are almost never breaking. Existing catch
+blocks that target the same failure category still work: `ConnectException` still
+catches connection failures and new timeout failures, `RequestException` still
+catches response-aware and request-related transfer failures, and
+`TransferException` or `GuzzleException` still catch all Guzzle transfer
+failures.
 
-When a built-in handler can reliably identify a transfer timeout, it now throws
-`GuzzleHttp\Exception\TimeoutException`. `TimeoutException` extends
-`ConnectException`, so existing `catch (ConnectException $e)` and
-`catch (TransferException $e)` blocks continue to catch timeout failures.
+Guzzle 7 transfer exceptions used this hierarchy:
 
-Audit `catch (RequestException $e)` blocks that retry, log, or classify cURL
-transport failures. Proxy resolution, send, receive, and TLS verification
-failures before any response is received now throw `ConnectException`, so catch
-`ConnectException`, `NetworkExceptionInterface`, or `TransferException` for
-those network failures. Keep handling `RequestException` when you need to inspect
-a response, because failures after a response object is created still use
-`RequestException`.
+```text
+. \RuntimeException
+└── TransferException (implements GuzzleException)
+    ├── ConnectException (implements NetworkExceptionInterface)
+    └── RequestException (implements RequestExceptionInterface)
+        ├── BadResponseException
+        │   ├── ServerException
+        │   └── ClientException
+        └── TooManyRedirectsException
+```
+
+Guzzle 8 uses this hierarchy:
+
+```text
+. \RuntimeException
+└── TransferException (implements GuzzleException)
+    ├── HandlerClosedException
+    ├── NetworkException (implements NetworkExceptionInterface)
+    │   └── ConnectException
+    │       └── TimeoutException
+    └── RequestException (implements RequestExceptionInterface)
+        ├── BadResponseException
+        │   ├── ServerException
+        │   └── ClientException
+        └── TooManyRedirectsException
+```
+
+`NetworkException` is new and is now the base class for network failures.
+`ConnectException` now extends `NetworkException`, but it is still caught by
+existing `ConnectException`, `TransferException`, and `GuzzleException` catch
+blocks.
+
+`TimeoutException` is new and is thrown when a built-in handler can reliably
+identify a transfer timeout. It extends `ConnectException`, so existing
+`ConnectException` handling still catches timeouts.
+
+`HandlerClosedException` is new in Guzzle 8. It extends `TransferException` and
+is used when an explicitly closed `CurlMultiHandler` rejects transfers that are
+still pending, including delayed transfers. Existing Guzzle 7 code should not
+normally see this exception just by upgrading. Guzzle 7 did not have this
+exception or a public cURL handler `close()` method, and destructor cleanup did
+not reject pending promises. If you add deterministic cleanup with
+`CurlMultiHandler::close()`, wait for or cancel outstanding transfers first, or
+handle `HandlerClosedException` or `TransferException` for pending promises you
+may still observe.
+
+The main code to audit is code that used `catch (RequestException $e)` as its
+only catch block for cURL transport failures where no response was received.
+Some of those failures, including proxy resolution, send, receive, and TLS
+verification failures, are now classified as `ConnectException`. Catch
+`ConnectException`, `NetworkExceptionInterface`, `TransferException`, or
+`GuzzleException` for those network failures. Keep catching `RequestException`
+for response-aware handling, HTTP error responses, redirects, and other
+request-related failures that are not network failures.
+
+`GuzzleHttp\Exception\InvalidArgumentException` remains outside the transfer
+exception hierarchy and is still used for invalid configuration or request option
+values that can be rejected before a transfer starts.
 
 #### Request Protocol Versions
 
