@@ -52,6 +52,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers
 - Avoid stale authenticated proxy tunnels on affected libcurl versions
 - Allow built-in cURL handler `progress` callbacks to abort transfers with truthy return values
+- Normalize built-in handler `progress` callback arguments to integer byte counts
 - Reject built-in cURL handler `progress` callback throwables with `RequestException`
 - Release built-in cURL easy handles before invoking `on_stats`
 - Prefer `CURLOPT_XFERINFOFUNCTION` for built-in cURL progress callbacks when available

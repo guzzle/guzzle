@@ -60,6 +60,20 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals(5, $_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]);
     }
 
+    public function testThrowsWhenCurlMultiOptionNameIsInvalid(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler(['options' => [
+            'not-a-curlmopt-option' => true,
+        ]]);
+        $request = new Request('GET', Server::$url);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid cURL multi option "not-a-curlmopt-option".');
+        $a($request, []);
+    }
+
     public function testSendsRequest(): void
     {
         Server::enqueue([new Response()]);
@@ -82,6 +96,12 @@ class CurlMultiHandlerTest extends TestCase
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
         self::assertEquals(2, self::readSelectTimeout($a));
+    }
+
+    public function testCanSetNumericStringSelectTimeout(): void
+    {
+        $a = new CurlMultiHandler(['select_timeout' => '0.5']);
+        self::assertSame(0.5, self::readSelectTimeout($a));
     }
 
     public function testShareOptionAppliesCurlShare(): void

@@ -938,6 +938,22 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(0, $called[0][1]);
     }
 
+    public function testEmitsIntegerProgressInformation(): void
+    {
+        $called = [];
+        $this->queueRes();
+        $this->getSendResult([
+            'progress' => static function (int $downloadTotal, int $downloadedBytes, int $uploadTotal, int $uploadedBytes) use (&$called): void {
+                $called[] = [$downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes];
+            },
+        ]);
+        self::assertNotEmpty($called);
+        self::assertSame(8, $called[0][0]);
+        self::assertSame(0, $called[0][1]);
+        self::assertSame(0, $called[0][2]);
+        self::assertSame(0, $called[0][3]);
+    }
+
     public function testProgressReturnValueDoesNotAbortTransfer(): void
     {
         $this->queueRes();

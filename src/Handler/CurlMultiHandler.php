@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use Closure;
@@ -36,7 +38,7 @@ final class CurlMultiHandler
     private $shareHandleState;
 
     /**
-     * @var int
+     * @var float
      */
     private $selectTimeout;
 
@@ -124,9 +126,19 @@ final class CurlMultiHandler
             $this->ownsFactory = true;
         }
 
-        $this->selectTimeout = $options['select_timeout'] ?? 1;
+        $selectTimeout = $options['select_timeout'] ?? 1.0;
+        if (!\is_int($selectTimeout) && !\is_float($selectTimeout) && (!\is_string($selectTimeout) || !\is_numeric($selectTimeout))) {
+            throw new \InvalidArgumentException('select_timeout must be a number of seconds');
+        }
 
-        $this->options = $options['options'] ?? [];
+        $this->selectTimeout = (float) $selectTimeout;
+
+        $multiOptions = $options['options'] ?? [];
+        if (!\is_array($multiOptions)) {
+            throw new \InvalidArgumentException('options must be an array of cURL multi options');
+        }
+
+        $this->options = $multiOptions;
 
         // unsetting the property forces the first access to go through
         // __get().
@@ -158,6 +170,10 @@ final class CurlMultiHandler
         $this->_mh = $multiHandle;
 
         foreach ($this->options as $option => $value) {
+            if (!\is_int($option)) {
+                throw new \InvalidArgumentException(\sprintf('Invalid cURL multi option "%s".', $option));
+            }
+
             // A warning is raised in case of a wrong option.
             curl_multi_setopt($this->_mh, $option, $value);
         }

@@ -490,6 +490,20 @@ class MockHandlerTest extends TestCase
         self::assertEquals(0.4, $stats->getTransferTime());
     }
 
+    public function testTransferTimeAcceptsNumericString(): void
+    {
+        $e = new \Exception('a');
+        $mock = new MockHandler([$e]);
+        $request = new Request('GET', 'http://example.com');
+        $stats = null;
+        $onStats = static function (TransferStats $s) use (&$stats): void {
+            $stats = $s;
+        };
+        $mock($request, ['on_stats' => $onStats, 'transfer_time' => '0.4'])->wait(false);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertSame(0.4, $stats->getTransferTime());
+    }
+
     public function testResetQueue(): void
     {
         $mock = new MockHandler([new Response(200), new Response(204)]);

@@ -807,10 +807,10 @@ $result = $client->request(
     '/',
     [
         'progress' => function(
-            $downloadTotal,
-            $downloadedBytes,
-            $uploadTotal,
-            $uploadedBytes
+            int $downloadTotal,
+            int $downloadedBytes,
+            int $uploadTotal,
+            int $uploadedBytes
         ) {
             //do something
         },
