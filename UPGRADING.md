@@ -22,12 +22,11 @@ Guzzle 7 supported Guzzle Promises `^2.3` and Guzzle PSR-7 `^2.8`.
 
 Most applications using Guzzle also interact with Guzzle PSR-7 request,
 response, URI, stream, header, or multipart APIs, either directly or through
-request options. Treat the Guzzle PSR-7 3.x upgrade guide as part of the Guzzle
-8 upgrade, especially if your application constructs requests, modifies
+request options. Treat the Guzzle PSR-7 3.x upgrade guide as part of the
+Guzzle 8 upgrade, especially if your application constructs requests, modifies
 responses, sets headers, uploads files, builds multipart requests, or inspects
 streams. Applications using async requests, custom handlers, middleware, pools,
-or promise helpers should also account for the Guzzle Promises 3.x upgrade
-guide.
+or promise helpers should also account for the Guzzle Promises 3.x changes.
 
 Guzzle 8 now requires `psr/http-factory:^1.0` directly and no longer depends on
 `symfony/deprecation-contracts`.
@@ -36,13 +35,11 @@ Guzzle 8 now requires `psr/http-factory:^1.0` directly and no longer depends on
 
 Guzzle 8 uses Guzzle PSR-7 3.x, and several of its behavior changes surface
 through normal Guzzle client usage. The highest-impact inherited changes are
-stricter header values and preserved request method casing.
-
-Guzzle PSR-7 3.x validates header values more strictly.
-Header values passed through the `headers` request option or PSR-7 request APIs
-must now be strings or non-empty arrays of strings. Empty strings remain valid
-explicit header values, but empty arrays, `null`, `false`, integers, floats, and
-other non-string values are no longer cast or accepted.
+stricter header value validation and preserved request method casing: header
+values passed through the `headers` request option or PSR-7 request APIs must
+now be strings or non-empty arrays of strings. Empty strings remain valid
+explicit header values, but empty arrays, `null`, `false`, integers, floats,
+and other non-string values are no longer cast or accepted.
 
 If your application builds headers from configuration, user input, or typed
 domain values, normalize them before creating or sending requests:
