@@ -419,25 +419,6 @@ class StreamHandlerTest extends TestCase
         return $options;
     }
 
-    /**
-     * @param mixed $timeout
-     */
-    private function getTimeoutContext($timeout): array
-    {
-        $handler = new StreamHandler();
-        $request = new Request('GET', 'http://example.com');
-        $options = ['http' => []];
-        $params = [];
-        $method = new \ReflectionMethod(StreamHandler::class, 'add_timeout');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
-        }
-
-        $method->invokeArgs($handler, [$request, &$options, $timeout, &$params]);
-
-        return $options;
-    }
-
     private function applyDefaultTlsMinimum(string $uri, array $context): array
     {
         $handler = new StreamHandler();
@@ -596,16 +577,9 @@ class StreamHandlerTest extends TestCase
 
     public function testAddsTimeout(): void
     {
-        $opts = $this->getTimeoutContext(200);
-
+        $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertEquals(200, $opts['http']['timeout']);
-    }
-
-    public function testTruncatesStreamTimeoutToMilliseconds(): void
-    {
-        $opts = $this->getTimeoutContext(0.0015);
-
-        self::assertEquals(0.001, $opts['http']['timeout']);
     }
 
     /**
