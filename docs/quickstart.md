@@ -273,7 +273,7 @@ You can set query string parameters in the request's URI:
 $response = $client->request('GET', 'http://httpbin.org?foo=bar');
 ```
 
-You can specify the query string parameters using the `query` request option as an array. PHP stores numeric-string parameter names as integer array keys before building the query string.
+You can specify the query string parameters using the `query` request option as an array.
 
 ```php
 $client->request('GET', 'http://httpbin.org', [
@@ -326,7 +326,7 @@ In addition to specifying the raw data of a request using the `body` request opt
 
 #### Sending form fields
 
-Sending `application/x-www-form-urlencoded` POST requests requires that you specify the POST fields as an array in the `form_params` request options. PHP stores numeric-string form field names as integer array keys before encoding the request body.
+Sending `application/x-www-form-urlencoded` POST requests requires that you specify the POST fields as an array in the `form_params` request options.
 
 ```php
 $response = $client->request('POST', 'http://httpbin.org/post', [

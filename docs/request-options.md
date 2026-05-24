@@ -496,7 +496,7 @@ array
 Constant
 `GuzzleHttp\RequestOptions::FORM_PARAMS`
 
-Array mapping form field names, represented by PHP array keys, to values where each value is a string or array of strings. Numeric-string field names are stored as integer keys by PHP before `http_build_query()` encodes them. Sets the Content-Type header to application/x-www-form-urlencoded when no Content-Type header is already present.
+Array mapping form field names to values where each value is a string or array of strings. Sets the Content-Type header to application/x-www-form-urlencoded when no Content-Type header is already present.
 
 ```php
 $client->request('POST', '/post', [
@@ -515,7 +515,7 @@ $client->request('POST', '/post', [
 ## headers
 
 Summary
-Array keyed by header names to add to the request. Numeric-string header names are stored as integer keys by PHP, and Guzzle casts header keys back to strings when applying them. Each value is a string or array of strings representing the header field values.
+Array keyed by header names to add to the request. List-style header arrays are rejected. PHP stores numeric-string header names as integer keys; when such keys are accepted, Guzzle casts header keys back to strings while applying them. Each value is a string or array of strings representing the header field values.
 
 Types
 array
@@ -925,7 +925,7 @@ $client->request('GET', '/', [
 ## query
 
 Summary
-Array of query string values or query string to add to the request. When the option is an array, keys are PHP array keys; numeric-string parameter names are stored as integer keys before `http_build_query()` encodes them.
+Array of query string values or query string to add to the request.
 
 Types
 - array
