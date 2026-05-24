@@ -163,6 +163,10 @@ $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
 $client = new Client(['handler' => $stack]);
 ```
 
+### Logging Middleware
+
+`GuzzleHttp\Middleware::log()` logs requests, responses, and errors using a `GuzzleHttp\MessageFormatterInterface` implementation. `GuzzleHttp\MessageFormatter` formats exactly the values requested by its template. Templates that include full messages, headers, bodies, URIs, URLs, or dynamic header placeholders can include sensitive data such as credentials, cookies, tokens, or request bodies. Avoid using debug or full-message templates in production unless logs are protected, or provide a custom formatter or logger processor that redacts sensitive data before logs are written.
+
 ## HandlerStack
 
 A handler stack represents a stack of middleware to apply to a base handler function. You can push middleware to the stack to add to the top of the stack, and unshift middleware onto the stack to add to the bottom of the stack. When the stack is resolved, the handler is pushed onto the stack. Each value is then popped off of the stack, wrapping the previous value popped off of the stack.
