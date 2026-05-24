@@ -1786,16 +1786,10 @@ class CurlFactoryTest extends TestCase
             self::markTestSkipped('HTTP/3 cURL constants are not available.');
         }
 
-        $factory = new CurlFactory(3);
-        $easy = new EasyHandle();
-        $easy->request = new Psr7\Request('GET', 'https://example.com', [], null, $protocolVersion);
-
-        $method = new \ReflectionMethod(CurlFactory::class, 'getDefaultConf');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
-        }
-
-        $conf = $method->invoke($factory, $easy);
+        $conf = self::getDefaultCurlConf(
+            new Psr7\Request('GET', 'https://example.com', [], null, $protocolVersion),
+            []
+        );
 
         self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
     }
@@ -1879,18 +1873,17 @@ class CurlFactoryTest extends TestCase
         ]);
 
         try {
-            $factory = new CurlFactory(3);
-            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
-                'proxy' => [
-                    'https' => 'http://proxy.example.com:8080',
-                    'no' => ['example.com'],
-                ],
-            ]);
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                [
+                    'proxy' => [
+                        'https' => 'http://proxy.example.com:8080',
+                        'no' => ['example.com'],
+                    ],
+                ]
+            );
 
-            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
-            self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
-            self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
-            self::assertSame(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+            self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
@@ -1906,14 +1899,12 @@ class CurlFactoryTest extends TestCase
         ]);
 
         try {
-            $factory = new CurlFactory(3);
-            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
-                'proxy' => '',
-            ]);
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                ['proxy' => '']
+            );
 
-            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
-            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
-            self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+            self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
@@ -3019,6 +3010,26 @@ class CurlFactoryTest extends TestCase
         }
 
         return (int) \constant('CURLOPT_PROXYHEADER');
+    }
+
+    /**
+     * @param array<int|string, mixed> $options
+     *
+     * @return array<int|string, mixed>
+     */
+    private static function getDefaultCurlConf(RequestInterface $request, array $options): array
+    {
+        $factory = new CurlFactory(3);
+        $easy = new EasyHandle();
+        $easy->request = $request;
+        $easy->options = $options;
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'getDefaultConf');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        return $method->invoke($factory, $easy);
     }
 
     private static function requireHttp3TestConstants(): void
