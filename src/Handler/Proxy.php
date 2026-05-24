@@ -22,10 +22,10 @@ final class Proxy
      * Sends synchronous requests to a specific handler while sending all other
      * requests to another handler.
      *
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $default Handler used for normal responses
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $sync    Handler used for synchronous responses.
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $default Handler used for normal responses
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $sync    Handler used for synchronous responses.
      *
-     * @return callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> Returns the composed handler.
+     * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> Returns the composed handler.
      */
     public static function wrapSync(callable $default, callable $sync): callable
     {
@@ -42,10 +42,10 @@ final class Proxy
      * performance benefits of curl while still supporting true streaming
      * through the StreamHandler.
      *
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $default   Handler used for non-streaming responses
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $streaming Handler used for streaming responses
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $default   Handler used for non-streaming responses
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $streaming Handler used for streaming responses
      *
-     * @return callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> Returns the composed handler.
+     * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> Returns the composed handler.
      */
     public static function wrapStreaming(callable $default, callable $streaming): callable
     {

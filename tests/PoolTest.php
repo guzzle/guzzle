@@ -12,6 +12,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Promise\Promise;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Server\Server;
@@ -139,8 +140,82 @@ class PoolTest extends TestCase
         $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
         $p = new Pool($c, [$fn], $opts);
         $p->promise()->wait();
+        self::assertSame($opts['options'], $optHistory);
         self::assertCount(1, $h);
         self::assertTrue($h[0]->hasHeader('x-foo'));
+    }
+
+    public function testCanProvideCallablesThatReturnResponsePromises(): void
+    {
+        $h = [];
+        $handler = new MockHandler([
+            static function (RequestInterface $request) use (&$h): ResponseInterface {
+                $h[] = $request;
+
+                return new Response();
+            },
+        ]);
+        $c = new Client(['handler' => $handler]);
+        $optHistory = [];
+        $fn = static function (array $opts) use (&$optHistory, $c): PromiseInterface {
+            $optHistory = $opts;
+
+            return $c->requestAsync('GET', 'http://example.com', $opts);
+        };
+        $opts = ['options' => ['headers' => ['x-foo' => 'bar']]];
+        $p = new Pool($c, [$fn], $opts);
+        $p->promise()->wait();
+        self::assertSame($opts['options'], $optHistory);
+        self::assertCount(1, $h);
+        self::assertTrue($h[0]->hasHeader('x-foo'));
+    }
+
+    public function testConstructorCallbacksCanReceiveAggregatePromise(): void
+    {
+        $reason = new \RuntimeException('failed');
+        $client = new Client(['handler' => new MockHandler([new Response(200), $reason])]);
+        $seen = [];
+
+        $pool = new Pool($client, [
+            'ok' => new Request('GET', 'http://example.com/ok'),
+            'fail' => new Request('GET', 'http://example.com/fail'),
+        ], [
+            'fulfilled' => static function (ResponseInterface $response, string $index, PromiseInterface $aggregate) use (&$seen): void {
+                $seen['fulfilled'] = [$index, $response->getStatusCode(), $aggregate instanceof PromiseInterface];
+            },
+            'rejected' => static function ($value, string $index, PromiseInterface $aggregate) use (&$seen): void {
+                $seen['rejected'] = [$index, $value->getMessage(), $aggregate instanceof PromiseInterface];
+            },
+        ]);
+
+        $pool->promise()->wait(false);
+
+        self::assertSame(['ok', 200, true], $seen['fulfilled']);
+        self::assertSame(['fail', 'failed', true], $seen['rejected']);
+    }
+
+    public function testBatchCallbacksCanReceiveResultAndIndex(): void
+    {
+        $reason = new \RuntimeException('failed');
+        $client = new Client(['handler' => new MockHandler([new Response(200), $reason])]);
+        $seen = [];
+
+        $results = Pool::batch($client, [
+            'ok' => new Request('GET', 'http://example.com/ok'),
+            'fail' => new Request('GET', 'http://example.com/fail'),
+        ], [
+            'fulfilled' => static function (ResponseInterface $response, string $index) use (&$seen): void {
+                $seen['fulfilled'] = [$index, $response->getStatusCode()];
+            },
+            'rejected' => static function ($value, string $index) use (&$seen): void {
+                $seen['rejected'] = [$index, $value->getMessage()];
+            },
+        ]);
+
+        self::assertSame(['ok', 200], $seen['fulfilled']);
+        self::assertSame(['fail', 'failed'], $seen['rejected']);
+        self::assertInstanceOf(ResponseInterface::class, $results['ok']);
+        self::assertSame($reason, $results['fail']);
     }
 
     public function testBatchesResults(): void

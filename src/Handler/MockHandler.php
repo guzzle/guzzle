@@ -13,14 +13,14 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
 /**
- * Handler that returns responses or throw exceptions from a queue.
+ * Handler that returns responses or rejection reasons from a queue.
  *
  * @final
  */
 class MockHandler implements \Countable
 {
     /**
-     * @var array
+     * @var list<ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>|callable(RequestInterface, array<array-key, mixed>): (ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>)>
      */
     private $queue = [];
 
@@ -30,17 +30,17 @@ class MockHandler implements \Countable
     private $lastRequest;
 
     /**
-     * @var array
+     * @var array<array-key, mixed>
      */
     private $lastOptions = [];
 
     /**
-     * @var callable|null
+     * @var (callable(ResponseInterface|null): mixed)|null
      */
     private $onFulfilled;
 
     /**
-     * @var callable|null
+     * @var (callable(mixed): mixed)|null
      */
     private $onRejected;
 
@@ -48,9 +48,11 @@ class MockHandler implements \Countable
      * Creates a new MockHandler that uses the default handler stack list of
      * middlewares.
      *
-     * @param array|null    $queue       Array of responses, callables, or exceptions.
-     * @param callable|null $onFulfilled Callback to invoke when the return value is fulfilled.
-     * @param callable|null $onRejected  Callback to invoke when the return value is rejected.
+     * @param array<array-key, ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>|callable(RequestInterface, array<array-key, mixed>): (ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>)>|null $queue       Array of responses, promises, callables, or throwables.
+     * @param (callable(ResponseInterface|null): mixed)|null                                                                                                                                                                                $onFulfilled Callback to invoke when the return value is fulfilled.
+     * @param (callable(mixed): mixed)|null                                                                                                                                                                                                 $onRejected  Callback to invoke when the return value is rejected.
+     *
+     * @return HandlerStack<callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>>
      */
     public static function createWithMiddleware(?array $queue = null, ?callable $onFulfilled = null, ?callable $onRejected = null): HandlerStack
     {
@@ -59,12 +61,11 @@ class MockHandler implements \Countable
 
     /**
      * The passed in value must be an array of
-     * {@see ResponseInterface} objects, Exceptions,
-     * callables, or Promises.
+     * {@see ResponseInterface} objects, throwables, callables, or promises.
      *
-     * @param array<int, mixed>|null $queue       The parameters to be passed to the append function, as an indexed array.
-     * @param callable|null          $onFulfilled Callback to invoke when the return value is fulfilled.
-     * @param callable|null          $onRejected  Callback to invoke when the return value is rejected.
+     * @param array<array-key, ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>|callable(RequestInterface, array<array-key, mixed>): (ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>)>|null $queue       The parameters to be passed to the append function, as an indexed array.
+     * @param (callable(ResponseInterface|null): mixed)|null                                                                                                                                                                                $onFulfilled Callback to invoke when the return value is fulfilled.
+     * @param (callable(mixed): mixed)|null                                                                                                                                                                                                 $onRejected  Callback to invoke when the return value is rejected.
      */
     public function __construct(?array $queue = null, ?callable $onFulfilled = null, ?callable $onRejected = null)
     {
@@ -93,19 +94,15 @@ class MockHandler implements \Countable
         $this->lastRequest = $request;
         $this->lastOptions = $options;
         $response = \array_shift($this->queue);
+        $onHeaders = null;
         $onHeadersResponse = null;
 
         if (isset($options['on_headers'])) {
             if (!\is_callable($options['on_headers'])) {
                 throw new \InvalidArgumentException('on_headers must be callable');
             }
-            try {
-                $options['on_headers']($response, $request);
-            } catch (\Throwable $e) {
-                $msg = 'An error was encountered during the on_headers event';
-                $onHeadersResponse = $response instanceof ResponseInterface ? $response : null;
-                $response = new RequestException($msg, $request, $onHeadersResponse, $e);
-            }
+
+            $onHeaders = $options['on_headers'];
         }
 
         if (\is_callable($response)) {
@@ -115,6 +112,27 @@ class MockHandler implements \Countable
         $response = $response instanceof \Throwable
             ? P\Create::rejectionFor($response)
             : P\Create::promiseFor($response);
+
+        if (\is_callable($onHeaders)) {
+            $response = $response->then(
+                static function ($value) use ($onHeaders, $request, &$onHeadersResponse) {
+                    if (!$value instanceof ResponseInterface) {
+                        return $value;
+                    }
+
+                    try {
+                        $onHeaders($value, $request);
+                    } catch (\Throwable $e) {
+                        $msg = 'An error was encountered during the on_headers event';
+                        $onHeadersResponse = $value;
+
+                        throw new RequestException($msg, $request, $value, $e);
+                    }
+
+                    return $value;
+                }
+            );
+        }
 
         $promise = $response->then(
             function ($value) use ($request, $options) {
@@ -139,7 +157,7 @@ class MockHandler implements \Countable
 
                 return $value;
             },
-            function ($reason) use ($request, $options, $onHeadersResponse): PromiseInterface {
+            function ($reason) use ($request, $options, &$onHeadersResponse): PromiseInterface {
                 $this->invokeStats($request, $options, $onHeadersResponse, $reason);
                 if ($this->onRejected) {
                     ($this->onRejected)($reason);
@@ -157,7 +175,7 @@ class MockHandler implements \Countable
      * Adds one or more variadic requests, exceptions, callables, or promises
      * to the queue.
      *
-     * @param mixed ...$values
+     * @param mixed ...$values Responses, promises, throwables, or request-aware callables.
      */
     public function append(...$values): void
     {

@@ -527,14 +527,14 @@ class CurlFactory implements CurlFactoryInterface
      * Completes a cURL transaction, either returning a response promise or a
      * rejected promise.
      *
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
-     * @param CurlFactoryInterface                                                          $factory Dictates how the handle is released
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
+     * @param CurlFactoryInterface                                                                            $factory Dictates how the handle is released
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
     public static function finish(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
-        /** @var callable|null $onStats */
+        /** @var (callable(TransferStats): mixed)|null $onStats */
         $onStats = $easy->options['on_stats'] ?? null;
         $stats = $onStats !== null ? self::createStats($easy) : null;
 
@@ -548,7 +548,7 @@ class CurlFactory implements CurlFactoryInterface
         // Return the response if it is present and there is no error.
         $factory->release($easy);
 
-        if ($onStats !== null) {
+        if ($onStats !== null && $stats !== null) {
             $onStats($stats);
         }
 
@@ -584,8 +584,8 @@ class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
-     * @param callable|null                                                                 $onStats
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
+     * @param (callable(TransferStats): mixed)|null                                                           $onStats
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
@@ -595,7 +595,7 @@ class CurlFactory implements CurlFactoryInterface
         $ctx = self::createErrorContext($easy);
         $factory->release($easy);
 
-        if ($onStats !== null) {
+        if ($onStats !== null && $stats !== null) {
             $onStats($stats);
         }
 
@@ -1339,6 +1339,7 @@ class CurlFactory implements CurlFactoryInterface
             if (!\is_callable($progress)) {
                 throw new \InvalidArgumentException('progress client option must be callable');
             }
+            /** @var callable(int|float, int|float, int|float, int|float): mixed $progress */
             $conf[\CURLOPT_NOPROGRESS] = false;
             $progressCallback = static function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($easy, $progress): int {
                 try {
@@ -1378,7 +1379,7 @@ class CurlFactory implements CurlFactoryInterface
      * error, causing the request to be sent through curl_multi_info_read()
      * without an error status.
      *
-     * @param callable(RequestInterface, array): PromiseInterface<ResponseInterface, mixed> $handler
+     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */

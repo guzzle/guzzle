@@ -25,7 +25,7 @@ final class Middleware
      * The options array must be set to a CookieJarInterface in order to use
      * cookies. This is typically handled for you by a client.
      *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
     public static function cookies(): callable
     {
@@ -57,7 +57,7 @@ final class Middleware
      *
      * @param BodySummarizerInterface|null $bodySummarizer The body summarizer to use in exception messages.
      *
-     * @return callable(callable): callable Returns a function that accepts the next handler.
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
     public static function httpErrors(?BodySummarizerInterface $bodySummarizer = null): callable
     {
@@ -83,9 +83,9 @@ final class Middleware
     /**
      * Middleware that pushes history data to an ArrayAccess container.
      *
-     * @param array|\ArrayAccess<int, array> $container Container to hold the history (by reference).
+     * @param array<array-key, array{request: RequestInterface, response: ResponseInterface|null, error: mixed, options: array<array-key, mixed>}>|\ArrayAccess<int, array{request: RequestInterface, response: ResponseInterface|null, error: mixed, options: array<array-key, mixed>}> $container Container to hold the history (by reference).
      *
-     * @return callable(callable): callable Returns a function that accepts the next handler.
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      *
      * @throws \InvalidArgumentException if container is not an array or ArrayAccess.
      */
@@ -131,10 +131,10 @@ final class Middleware
      * before listener accepts a request and options array, and the after
      * listener accepts a request, options array, and response promise.
      *
-     * @param (callable(RequestInterface, array): mixed)|null                                             $before Function to invoke before forwarding the request.
-     * @param (callable(RequestInterface, array, PromiseInterface<ResponseInterface, mixed>): mixed)|null $after  Function invoked after forwarding.
+     * @param (callable(RequestInterface, array<array-key, mixed>): mixed)|null                                             $before Function to invoke before forwarding the request.
+     * @param (callable(RequestInterface, array<array-key, mixed>, PromiseInterface<ResponseInterface, mixed>): mixed)|null $after  Function invoked after forwarding.
      *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
     public static function tap(?callable $before = null, ?callable $after = null): callable
     {
@@ -156,7 +156,7 @@ final class Middleware
     /**
      * Middleware that handles request redirects.
      *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
     public static function redirect(): callable
     {
@@ -179,7 +179,7 @@ final class Middleware
      *                                                                                                          or retry context and returns the number of
      *                                                                                                          milliseconds to delay.
      *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
     public static function retry(callable $decider, ?callable $delay = null): callable
     {
@@ -196,9 +196,7 @@ final class Middleware
      * @param MessageFormatterInterface|MessageFormatter $formatter Formatter used to create message strings.
      * @param string                                     $logLevel  Level at which to log requests.
      *
-     * @phpstan-param \Psr\Log\LogLevel::* $logLevel Level at which to log requests.
-     *
-     * @return callable Returns a function that accepts the next handler.
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
     public static function log(LoggerInterface $logger, $formatter, string $logLevel = 'info'): callable
     {
@@ -234,6 +232,8 @@ final class Middleware
     /**
      * This middleware adds a default content-type if possible, a default
      * content-length or transfer-encoding header, and the expect header.
+     *
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
     public static function prepareBody(): callable
     {
@@ -248,6 +248,8 @@ final class Middleware
      *
      * @param callable(RequestInterface): RequestInterface $fn Function that accepts a RequestInterface and returns
      *                                                         a RequestInterface.
+     *
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
     public static function mapRequest(callable $fn): callable
     {
@@ -264,6 +266,8 @@ final class Middleware
      *
      * @param callable(ResponseInterface): ResponseInterface $fn Function that accepts a ResponseInterface and
      *                                                           returns a ResponseInterface.
+     *
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
     public static function mapResponse(callable $fn): callable
     {

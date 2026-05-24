@@ -382,7 +382,7 @@ declare strict types will throw `TypeError` for non-boolean values.
 `SetCookie::getExpires()` now returns `int|null`. Invalid textual expiration
 dates are treated as `null`.
 
-#### Generic Promise PHPDoc Types
+#### Generic Promise And Structured PHPDoc Types
 
 Guzzle's async client APIs, handlers, and middleware callable annotations now use
 generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a
@@ -393,6 +393,18 @@ Code using unparameterized promise types continues to work. If your project
 implements Guzzle client interfaces, provides custom handlers or middleware, or
 uses stricter static analysis, you may need to update your PHPDoc annotations to
 include promise fulfillment and rejection types.
+
+Public client config, request option, pool option, handler, middleware, mock
+handler, and history middleware PHPDoc now uses structured array and callable
+shapes. This does not change runtime behavior, but stricter static analysis may
+now report invalid option keys, invalid option value types, or lower-arity
+callback annotations that were previously hidden behind loose `array` or
+`callable` PHPDoc.
+
+If your project implements `ClientInterface`, extends client behavior through
+traits, builds custom handlers or middleware, or documents reusable request
+option arrays, update those PHPDoc annotations to match the supported request
+option and callback shapes.
 
 #### Multipart request serialization
 

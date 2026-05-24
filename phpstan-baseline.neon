@@ -1,6 +1,12 @@
 parameters:
 	ignoreErrors:
 		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: src/Client.php
+
+		-
 			message: '#^Result of && is always false\.$#'
 			identifier: booleanAnd.alwaysFalse
 			count: 1
@@ -181,7 +187,7 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Call to function is_callable\(\) with callable\(\)\: mixed will always evaluate to true\.$#'
+			message: '#^Call to function is_callable\(\) with callable\(callable&THandler\)\: \(callable&THandler\) will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
 			path: src/HandlerStack.php
@@ -193,7 +199,7 @@ parameters:
 			path: src/HandlerStack.php
 
 		-
-			message: '#^Instanceof between ArrayAccess\<int, array\> and ArrayAccess will always evaluate to true\.$#'
+			message: '#^Instanceof between ArrayAccess\<int, array\<string, mixed\>\> and ArrayAccess will always evaluate to true\.$#'
 			identifier: instanceof.alwaysTrue
 			count: 1
 			path: src/Middleware.php
