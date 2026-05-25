@@ -68,6 +68,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Dropped support for PHP 7.2 and 7.3
 - Removed support for the `GUZZLE_CURL_SELECT_TIMEOUT` environment variable; use `CurlMultiHandler`'s `select_timeout` option
+- Removed direct magic access to `CurlMultiHandler`'s internal `_mh` cURL multi handle; pass `CURLMOPT_*` options through the constructor `options` key
 - Removed `RedirectMiddleware::$defaultSettings`; use `RedirectMiddleware::DEFAULT_SETTINGS`
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
