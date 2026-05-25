@@ -2271,23 +2271,14 @@ class CurlFactoryTest extends TestCase
      */
     public function testCreatesConnectExceptionForConnectionErrors(int $errno): void
     {
-        $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
-
-        if (PHP_VERSION_ID < 80100) {
-            $m->setAccessible(true);
-        }
-
         $factory = new CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
         $easy->errno = $errno;
-        $response = $m->invoke(
-            null,
+        $response = CurlFactory::finish(
             static function (): void {
             },
             $easy,
-            $factory,
-            null,
-            null
+            $factory
         );
 
         try {
@@ -2384,24 +2375,15 @@ class CurlFactoryTest extends TestCase
 
     public function testCreatesTimeoutException(): void
     {
-        $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
-
-        if (PHP_VERSION_ID < 80100) {
-            $m->setAccessible(true);
-        }
-
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
         $easy = $factory->create($request, []);
         $easy->errno = \CURLE_OPERATION_TIMEOUTED;
-        $response = $m->invoke(
-            null,
+        $response = CurlFactory::finish(
             static function (): void {
             },
             $easy,
-            $factory,
-            null,
-            null
+            $factory
         );
 
         try {
