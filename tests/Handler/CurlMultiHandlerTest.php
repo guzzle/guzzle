@@ -731,7 +731,7 @@ class CurlMultiHandlerTest extends TestCase
 
     private static function readFactory(CurlMultiHandler $handler): CurlFactory
     {
-        $readFactory = \Closure::bind(static function (CurlMultiHandler $handler) {
+        $readFactory = \Closure::bind(static function (CurlMultiHandler $handler): CurlFactory {
             return $handler->factory;
         }, null, CurlMultiHandler::class);
 
