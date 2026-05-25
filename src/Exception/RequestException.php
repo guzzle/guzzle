@@ -82,13 +82,10 @@ class RequestException extends TransferException implements RequestExceptionInte
         $level = (int) \floor($response->getStatusCode() / 100);
         if ($level === 4) {
             $label = 'Client error';
-            $className = ClientException::class;
         } elseif ($level === 5) {
             $label = 'Server error';
-            $className = ServerException::class;
         } else {
             $label = 'Unsuccessful request';
-            $className = __CLASS__;
         }
 
         $uri = \GuzzleHttp\Psr7\Utils::redactUserInfo($request->getUri());
@@ -110,7 +107,15 @@ class RequestException extends TransferException implements RequestExceptionInte
             $message .= ":\n{$summary}\n";
         }
 
-        return new $className($message, $request, $response, $previous, $handlerContext);
+        if ($level === 4) {
+            return new ClientException($message, $request, $response, $previous, $handlerContext);
+        }
+
+        if ($level === 5) {
+            return new ServerException($message, $request, $response, $previous, $handlerContext);
+        }
+
+        return new self($message, $request, $response, $previous, $handlerContext);
     }
 
     /**
