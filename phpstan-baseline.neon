@@ -181,12 +181,6 @@ parameters:
 			path: src/Handler/EasyHandle.php
 
 		-
-			message: '#^Variable \$options in empty\(\) always exists and is not falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/Handler/StreamHandler.php
-
-		-
 			message: '#^Call to function is_callable\(\) with callable\(callable&THandler\)\: \(callable&THandler\) will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1

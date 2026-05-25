@@ -377,11 +377,6 @@ final class StreamHandler
      */
     private function createStream(RequestInterface $request, array $options)
     {
-        static $methods;
-        if (!$methods) {
-            $methods = \array_flip(\get_class_methods(__CLASS__));
-        }
-
         $scheme = $request->getUri()->getScheme();
         if (!\in_array($scheme, ['http', 'https'], true)) {
             throw new RequestException(\sprintf("The scheme '%s' is not supported.", $scheme), $request);
@@ -417,14 +412,7 @@ final class StreamHandler
             ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout')
             : null;
 
-        if (!empty($options)) {
-            foreach ($options as $key => $value) {
-                $method = "add_{$key}";
-                if (isset($methods[$method])) {
-                    $this->{$method}($request, $context, $value, $params);
-                }
-            }
-        }
+        $this->applyHandlerOptions($request, $context, $options, $params);
 
         if (isset($options['stream_context'])) {
             $streamContext = $options['stream_context'];
@@ -478,6 +466,33 @@ final class StreamHandler
                 return $resource;
             }
         );
+    }
+
+    private function applyHandlerOptions(RequestInterface $request, array &$context, array $options, array &$params): void
+    {
+        foreach ($options as $key => $value) {
+            if ($key === 'proxy') {
+                $this->applyProxyOption($request, $context, $value);
+            } elseif ($key === 'timeout') {
+                $this->applyTimeoutOption($context, $value);
+            } elseif ($key === 'crypto_method') {
+                $this->applyCryptoMethodOption($context, $value);
+            } elseif ($key === 'verify') {
+                $this->applyVerifyOption($context, $value);
+            } elseif ($key === 'cert') {
+                $this->applyCertOption($context, $value);
+            } elseif ($key === 'cert_type') {
+                $this->applyCertTypeOption($value);
+            } elseif ($key === 'ssl_key') {
+                $this->applySslKeyOption($context, $value);
+            } elseif ($key === 'ssl_key_type') {
+                $this->applySslKeyTypeOption($value);
+            } elseif ($key === 'progress') {
+                $this->applyProgressOption($value, $params);
+            } elseif ($key === 'debug') {
+                $this->applyDebugOption($request, $value, $params);
+            }
+        }
     }
 
     private function resolveHost(RequestInterface $request, array $options): UriInterface
@@ -694,7 +709,7 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_proxy(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applyProxyOption(RequestInterface $request, array &$context, $value): void
     {
         $proxy = ProxyOptions::resolve($request->getUri(), $value);
         $proxyUri = $proxy->getProxy();
@@ -702,21 +717,21 @@ final class StreamHandler
             return;
         }
 
-        $parsed = $this->parse_proxy($proxyUri);
-        $options['http']['proxy'] = $parsed['proxy'];
+        $parsed = $this->parseProxy($proxyUri);
+        $context['http']['proxy'] = $parsed['proxy'];
 
         if ($parsed['auth']) {
-            if (!isset($options['http']['header'])) {
-                $options['http']['header'] = [];
+            if (!isset($context['http']['header'])) {
+                $context['http']['header'] = [];
             }
-            $options['http']['header'] .= "\r\nProxy-Authorization: {$parsed['auth']}";
+            $context['http']['header'] .= "\r\nProxy-Authorization: {$parsed['auth']}";
         }
     }
 
     /**
      * Parses the given proxy URL to make it compatible with the format PHP's stream context expects.
      */
-    private function parse_proxy(string $url): array
+    private function parseProxy(string $url): array
     {
         $parsed = \parse_url($url);
 
@@ -744,40 +759,40 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_timeout(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applyTimeoutOption(array &$context, $value): void
     {
         $timeout = Utils::timeoutToMilliseconds($value, 'timeout');
 
         if ($timeout > 0) {
-            $options['http']['timeout'] = $timeout / 1000;
+            $context['http']['timeout'] = $timeout / 1000;
         }
     }
 
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_crypto_method(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applyCryptoMethodOption(array &$context, $value): void
     {
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
-            $options['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_0;
+            $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_0;
 
             return;
         }
 
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT) {
-            $options['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_1;
+            $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_1;
 
             return;
         }
 
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT) {
-            $options['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_2;
+            $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_2;
 
             return;
         }
 
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT) {
-            $options['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_3;
+            $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_3;
 
             return;
         }
@@ -788,17 +803,17 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_verify(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applyVerifyOption(array &$context, $value): void
     {
         if ($value === false) {
-            $options['ssl']['verify_peer'] = false;
-            $options['ssl']['verify_peer_name'] = false;
+            $context['ssl']['verify_peer'] = false;
+            $context['ssl']['verify_peer_name'] = false;
 
             return;
         }
 
         if (\is_string($value)) {
-            $options['ssl']['cafile'] = $value;
+            $context['ssl']['cafile'] = $value;
             if (!\file_exists($value)) {
                 throw new \RuntimeException("SSL CA bundle not found: $value");
             }
@@ -806,15 +821,15 @@ final class StreamHandler
             throw new \InvalidArgumentException('Invalid verify request option');
         }
 
-        $options['ssl']['verify_peer'] = true;
-        $options['ssl']['verify_peer_name'] = true;
-        $options['ssl']['allow_self_signed'] = false;
+        $context['ssl']['verify_peer'] = true;
+        $context['ssl']['verify_peer_name'] = true;
+        $context['ssl']['allow_self_signed'] = false;
     }
 
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_cert(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applyCertOption(array &$context, $value): void
     {
         [$value, $passphrase] = self::normalizeTlsFileOption('cert', $value);
 
@@ -822,14 +837,14 @@ final class StreamHandler
             throw new \RuntimeException("SSL certificate not found: {$value}");
         }
 
-        self::setTlsPassphrase($options, $passphrase, 'cert');
-        $options['ssl']['local_cert'] = $value;
+        self::setTlsPassphrase($context, $passphrase, 'cert');
+        $context['ssl']['local_cert'] = $value;
     }
 
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_cert_type(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applyCertTypeOption($value): void
     {
         self::assertStreamTlsType('cert_type', $value);
     }
@@ -837,7 +852,7 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_ssl_key(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applySslKeyOption(array &$context, $value): void
     {
         [$value, $passphrase] = self::normalizeTlsFileOption('ssl_key', $value);
 
@@ -845,14 +860,14 @@ final class StreamHandler
             throw new \RuntimeException("SSL private key not found: {$value}");
         }
 
-        self::setTlsPassphrase($options, $passphrase, 'ssl_key');
-        $options['ssl']['local_pk'] = $value;
+        self::setTlsPassphrase($context, $passphrase, 'ssl_key');
+        $context['ssl']['local_pk'] = $value;
     }
 
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_ssl_key_type(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applySslKeyTypeOption($value): void
     {
         self::assertStreamTlsType('ssl_key_type', $value);
     }
@@ -860,7 +875,7 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_progress(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applyProgressOption($value, array &$params): void
     {
         if (!\is_callable($value)) {
             throw new \InvalidArgumentException('progress client option must be callable');
@@ -881,7 +896,7 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_debug(RequestInterface $request, array &$options, $value, array &$params): void
+    private function applyDebugOption(RequestInterface $request, $value, array &$params): void
     {
         if ($value === false) {
             return;
