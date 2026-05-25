@@ -193,10 +193,10 @@ class CurlMultiHandlerTest extends TestCase
         $handler = new CurlMultiHandler();
 
         $setMultiHandle = \Closure::bind(static function (CurlMultiHandler $handler): void {
-            $handler->_mh = new \stdClass();
+            $handler->multiHandle = new \stdClass();
         }, null, CurlMultiHandler::class);
         $hasMultiHandle = \Closure::bind(static function (CurlMultiHandler $handler): bool {
-            return isset($handler->_mh);
+            return $handler->multiHandle !== null;
         }, null, CurlMultiHandler::class);
 
         $setMultiHandle($handler);
@@ -711,14 +711,6 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
-    public function throwsWhenAccessingInvalidProperty(): void
-    {
-        $h = new CurlMultiHandler();
-
-        $this->expectException(\BadMethodCallException::class);
-        $h->foo;
-    }
-
     private static function readSelectTimeout(CurlMultiHandler $handler)
     {
         $readSelectTimeout = \Closure::bind(static function (CurlMultiHandler $handler) {
@@ -731,7 +723,7 @@ class CurlMultiHandlerTest extends TestCase
     private static function hasMultiHandle(CurlMultiHandler $handler): bool
     {
         $hasMultiHandle = \Closure::bind(static function (CurlMultiHandler $handler): bool {
-            return isset($handler->_mh);
+            return $handler->multiHandle !== null;
         }, null, CurlMultiHandler::class);
 
         return $hasMultiHandle($handler);
