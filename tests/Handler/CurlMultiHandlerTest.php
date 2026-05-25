@@ -711,9 +711,9 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
-    private static function readSelectTimeout(CurlMultiHandler $handler)
+    private static function readSelectTimeout(CurlMultiHandler $handler): float
     {
-        $readSelectTimeout = \Closure::bind(static function (CurlMultiHandler $handler) {
+        $readSelectTimeout = \Closure::bind(static function (CurlMultiHandler $handler): float {
             return $handler->selectTimeout;
         }, null, CurlMultiHandler::class);
 

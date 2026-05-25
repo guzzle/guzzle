@@ -73,7 +73,7 @@ namespace GuzzleHttp\Handler {
         return \curl_share_init();
     }
 
-    function curl_share_setopt($handle, int $option, $value)
+    function curl_share_setopt($handle, int $option, $value): bool
     {
         if (!empty($_SERVER['curl_test'])) {
             $_SERVER['_curl_share'][$option][] = $value;
