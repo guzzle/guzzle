@@ -56,7 +56,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - referer: (bool, default=false) Set to true to enable adding the Referer header when redirecting.
 
-- protocols: (array, default=`['http', 'https']`) Specified which protocols are allowed for redirect requests.
+- protocols: (non-empty array of strings, default=`['http', 'https']`) Specified which protocols are allowed for redirect requests.
 
 - on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request, the redirect response that was received, and the effective URI. Any return value from the on_redirect function is ignored.
 
@@ -294,10 +294,11 @@ $client->request('GET', '/get', ['cookies' => $jar]);
 ## connect_timeout
 
 Summary
-Float describing the number of seconds to wait while trying to connect to a server. Use `0` to wait 300 seconds (the default behavior). Positive values below `0.001` seconds are rejected by the built-in cURL handler.
+Number of seconds to wait while trying to connect to a server. Use `0` to wait 300 seconds (the default behavior). Positive values below `0.001` seconds are rejected by the built-in cURL handler.
 
 Types
-float
+- int
+- float
 
 Default
 `0`
@@ -337,6 +338,30 @@ $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2
 
 > [!NOTE]
 > This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. It controls the minimum TLS protocol version. cURL 7.52.0 or higher is required to use TLS 1.3 with the cURL handler.
+
+## curl
+
+Summary
+Raw cURL options to apply when using a built-in cURL handler.
+
+Types
+- array
+
+Default
+None
+
+Constant
+No `RequestOptions` constant is defined for this handler-specific option.
+
+The array is keyed by integer or string cURL option names and values are passed to cURL after Guzzle applies request options. Raw cURL options that conflict with Guzzle-managed request handling are rejected by the built-in cURL handlers.
+
+```php
+$client->request('GET', '/', [
+    'curl' => [
+        CURLOPT_FRESH_CONNECT => true,
+    ],
+]);
+```
 
 ## debug
 
@@ -515,10 +540,11 @@ $client->request('POST', '/post', [
 ## headers
 
 Summary
-Array keyed by header names to add to the request. List-style header arrays are rejected. PHP stores numeric-string header names as integer keys; when such keys are accepted, Guzzle casts header keys back to strings while applying them. Each value is a string or array of strings representing the header field values.
+Array keyed by header names to add to the request. List-style header arrays are rejected. PHP stores numeric-string header names as integer keys; when such keys are accepted, Guzzle casts header keys back to strings while applying them. Each value is a string or non-empty array of strings representing the header field values.
 
 Types
-array
+- array
+- null
 
 Defaults
 None
@@ -598,6 +624,7 @@ Internationalized Domain Name (IDN) support.
 Types
 - bool
 - int
+- null
 
 Default
 `false`
@@ -613,7 +640,7 @@ $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' =>
 // The domain part (яндекс.рф) stays unmodified
 ```
 
-Enables/disables IDN support, can also be used for precise control by combining `IDNA_*` constants (except `IDNA_ERROR_*`), see the `$options` parameter in the [idn_to_ascii()](https://www.php.net/manual/en/function.idn-to-ascii.php) documentation for more details.
+Enables/disables IDN support, can also be used for precise control by combining `IDNA_*` constants (except `IDNA_ERROR_*`), see the `$options` parameter in the [idn_to_ascii()](https://www.php.net/manual/en/function.idn-to-ascii.php) documentation for more details. Pass `false` or `null` to disable IDN conversion.
 
 ## json
 
@@ -824,7 +851,7 @@ Summary
 Allowed URI schemes for request transfers.
 
 Types
-- array
+- non-empty array
 
 Default
 `['http', 'https']`
@@ -832,7 +859,7 @@ Default
 Constant
 `GuzzleHttp\RequestOptions::PROTOCOLS`
 
-This option accepts a non-empty array containing `http`, `https`, or both. It
+This option accepts a non-empty array of strings containing `http`, `https`, or both. It
 applies to each request transfer Guzzle sends, including redirect requests that
 reuse the same request options.
 
@@ -952,10 +979,11 @@ $client->request('GET', '/get?abc=123', ['query' => ['foo' => 'bar']]);
 ## read_timeout
 
 Summary
-Float describing the timeout to use when reading a streamed body. Positive values below `0.001` seconds are rejected by the built-in stream handler.
+Number of seconds to use when reading a streamed body. Positive values below `0.001` seconds are rejected by the built-in stream handler.
 
 Types
-float
+- int
+- float
 
 Default
 Defaults to the value of the `default_socket_timeout` PHP ini setting
@@ -1006,6 +1034,22 @@ This option can be set on a client or per request. It affects request-side objec
 
 > [!NOTE]
 > This option only affects requests created by `request()`, `requestAsync()`, and shortcut methods such as `get()` and `post()`. Requests passed to `send()`, `sendAsync()`, or `sendRequest()` are used as provided.
+
+## retries
+
+Summary
+Current retry count used by `GuzzleHttp\Middleware::retry()`.
+
+Types
+int
+
+Default
+`0` when retry middleware is used
+
+Constant
+No `RequestOptions` constant is defined for this middleware-specific option.
+
+The retry middleware initializes this option to `0` before the first attempt and increments it before each retry. Applications may seed it on a per-request basis when using the retry middleware.
 
 ## stream_factory
 
@@ -1181,6 +1225,22 @@ while (!$body->eof()) {
 > [!NOTE]
 > Streaming response support must be implemented by the HTTP handler used by a client. This option might not be supported by every HTTP handler, but the interface of the response object remains the same regardless of whether or not it is supported by the handler.
 
+## stream_context
+
+Summary
+PHP stream context options to merge into the context used by the built-in stream handler.
+
+Types
+array
+
+Default
+None
+
+Constant
+No `RequestOptions` constant is defined for this handler-specific option.
+
+This option is only supported by the built-in stream handler. Built-in cURL handlers reject this option because cURL does not use PHP stream contexts.
+
 ## synchronous
 
 Summary
@@ -1230,10 +1290,11 @@ If you do not need a specific certificate bundle, then Mozilla provides a common
 ## timeout
 
 Summary
-Float describing the total timeout of the request in seconds. Use `0` to wait indefinitely (the default behavior). Positive values below `0.001` seconds are rejected by the built-in handlers.
+Number of seconds to use as the total timeout of the request. Use `0` to wait indefinitely (the default behavior). Positive values below `0.001` seconds are rejected by the built-in handlers.
 
 Types
-float
+- int
+- float
 
 Default
 `0`
