@@ -39,7 +39,7 @@ final class EasyHandle
     /**
      * @var array Request options
      */
-    public $options = [];
+    public array $options = [];
 
     /**
      * @var int cURL error number (if any)
