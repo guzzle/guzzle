@@ -230,6 +230,11 @@ Destructor cleanup remains best-effort and does not reject pending promises.
 A custom `handle_factory` passed to a built-in cURL handler remains caller-owned.
 Closing the handler does not close an injected factory.
 
+Direct magic access to `CurlMultiHandler::$_mh` has been removed. This was an
+undocumented internal lazy cURL multi handle. Applications that used it to set
+`CURLMOPT_*` options should pass those values through the `options` key of the
+`CurlMultiHandler` constructor.
+
 #### Callback semantics
 
 If you use the `progress` request option with the built-in cURL handlers, audit
