@@ -24,6 +24,8 @@ final class EasyHandle
 
     public StreamInterface $sink;
 
+    public RequestInterface $request;
+
     /**
      * @var list<string> Received HTTP headers so far
      */
@@ -33,8 +35,6 @@ final class EasyHandle
      * @var ResponseInterface|null Received response (if any)
      */
     public ?ResponseInterface $response = null;
-
-    public RequestInterface $request;
 
     /**
      * @var array Request options
