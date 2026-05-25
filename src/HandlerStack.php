@@ -274,9 +274,9 @@ class HandlerStack
     /**
      * Provides a debug string for a given callable.
      *
-     * @param callable|string $fn Function to write as a string.
+     * @param callable $fn Function to write as a string.
      */
-    private function debugCallable($fn): string
+    private function debugCallable(callable $fn): string
     {
         if (\is_string($fn)) {
             return "callable({$fn})";
@@ -288,7 +288,7 @@ class HandlerStack
                 : "callable(['".\get_class($fn[0])."', '{$fn[1]}'])";
         }
 
-        /** @var object $fn */
+        /** @var callable&object $fn */
         return 'callable('.\spl_object_hash($fn).')';
     }
 }
