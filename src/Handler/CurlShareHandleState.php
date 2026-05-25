@@ -16,10 +16,7 @@ final class CurlShareHandleState
      */
     public $handle;
 
-    /**
-     * @var string
-     */
-    public $mode;
+    public string $mode;
 
     /**
      * @param resource|\CurlShareHandle|\CurlSharePersistentHandle|null $handle

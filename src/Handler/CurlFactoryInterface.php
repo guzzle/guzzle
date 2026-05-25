@@ -11,6 +11,9 @@ interface CurlFactoryInterface
     /**
      * Creates a cURL handle resource.
      *
+     * Implementations must return an EasyHandle whose public state properties
+     * contain values compatible with Guzzle's cURL handlers.
+     *
      * @param RequestInterface $request Request
      * @param array            $options Transfer options
      *

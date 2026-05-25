@@ -23,6 +23,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Adjusted `guzzlehttp/psr7` version constraint to `^3.0`
 - Quote multipart `Content-Type` boundary parameters when required
 - Added parameter and return types to `SetCookie` methods
+- Added native property types to supported public cURL handler state properties
 - Added `string` return types to `__toString()` methods
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Normalize no-proxy domain and IP literal matching consistently

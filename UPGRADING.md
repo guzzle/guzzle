@@ -573,6 +573,19 @@ Applications that extended `CurlFactory` should implement
 composition instead: wrap a handler instance in a custom callable or provide a
 custom handler rather than subclassing the built-in handler.
 
+#### Custom cURL handle factories
+
+Custom `GuzzleHttp\Handler\CurlFactoryInterface` implementations that create or
+mutate `GuzzleHttp\Handler\EasyHandle` instances must assign values compatible
+with EasyHandle's documented public property types. Several EasyHandle
+bookkeeping properties now use native property types, so assigning incompatible
+values to those properties raises `TypeError`.
+
+The native cURL handle properties intentionally remain untyped because PHP 7.4
+represents cURL handles as resources while PHP 8 represents them as cURL handle
+objects. Custom factories must still unset `$easy->handle` when releasing an easy
+handle, as required by `CurlFactoryInterface::release()`.
+
 #### Progress callback parameter types
 
 The built-in handlers now pass integer byte counts to `progress` callbacks.
