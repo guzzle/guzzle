@@ -22,84 +22,57 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class CurlMultiHandler
 {
-    /**
-     * @var CurlFactoryInterface
-     */
-    private $factory;
+    private CurlFactoryInterface $factory;
 
-    /**
-     * @var bool
-     */
-    private $ownsFactory;
+    private bool $ownsFactory;
 
-    /**
-     * @var CurlShareHandleState|null
-     */
-    private $shareHandleState;
+    private ?CurlShareHandleState $shareHandleState;
 
-    /**
-     * @var float
-     */
-    private $selectTimeout;
+    private float $selectTimeout;
 
     /**
      * @var int Will be higher than 0 when `curl_multi_exec` is still running.
      */
-    private $active = 0;
+    private int $active = 0;
 
     /**
      * @var array Request entry handles, indexed by handle id in `addRequest`.
      *
      * @see CurlMultiHandler::addRequest
      */
-    private $handles = [];
+    private array $handles = [];
 
     /**
      * @var array<int, float> An array of delay times, indexed by handle id in `addRequest`.
      *
      * @see CurlMultiHandler::addRequest
      */
-    private $delays = [];
+    private array $delays = [];
 
     /**
      * @var array<mixed> An associative array of CURLMOPT_* options and corresponding values for curl_multi_setopt()
      */
-    private $options = [];
+    private array $options = [];
 
     /**
      * @var resource|\CurlMultiHandle|null
      */
     private $multiHandle;
 
-    /**
-     * @var bool
-     */
-    private $closed = false;
+    private bool $closed = false;
 
-    /**
-     * @var bool
-     */
-    private $closing = false;
+    private bool $closing = false;
 
-    /**
-     * @var bool
-     */
-    private $executingMulti = false;
+    private bool $executingMulti = false;
 
     /**
      * @var array<int, array{easy: EasyHandle, attached: bool}>
      */
-    private $deferredCancels = [];
+    private array $deferredCancels = [];
 
-    /**
-     * @var bool
-     */
-    private $deferredClose = false;
+    private bool $deferredClose = false;
 
-    /**
-     * @var bool
-     */
-    private $deferredCloseExplicit = false;
+    private bool $deferredCloseExplicit = false;
 
     /**
      * This handler accepts the following options:
