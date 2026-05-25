@@ -534,6 +534,39 @@ EOT
     }
 
     /**
+     * @param mixed $value
+     *
+     * @internal
+     */
+    public static function normalizeIdnConversionOption($value): ?int
+    {
+        if ($value === null || $value === false) {
+            return null;
+        }
+
+        if ($value === true) {
+            return \IDNA_DEFAULT;
+        }
+
+        if (\is_int($value)) {
+            return $value;
+        }
+
+        if ((\is_string($value) && \is_numeric($value)) || (\is_float($value) && \is_finite($value))) {
+            \trigger_deprecation(
+                'guzzlehttp/guzzle',
+                '7.11',
+                'Passing %s as the "idn_conversion" request option is deprecated; guzzlehttp/guzzle 8.0 will reject values that are not true, false, null, or an integer IDNA_* bitmask.',
+                self::describeType($value)
+            );
+
+            return (int) $value;
+        }
+
+        throw new InvalidArgumentException('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
+    }
+
+    /**
      * @throws InvalidArgumentException
      *
      * @internal

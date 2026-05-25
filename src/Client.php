@@ -229,8 +229,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $uri = Psr7\UriResolver::resolve(Psr7\Utils::uriFor($config['base_uri']), $uri);
         }
 
-        if (isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
-            $idnOptions = ($config['idn_conversion'] === true) ? \IDNA_DEFAULT : $config['idn_conversion'];
+        $idnOptions = Utils::normalizeIdnConversionOption($config['idn_conversion'] ?? null);
+        if ($idnOptions !== null) {
             $uri = Utils::idnUriConvert($uri, $idnOptions);
         }
 
