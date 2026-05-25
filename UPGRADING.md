@@ -369,11 +369,6 @@ options, while the stream handler rejects cURL-only options it cannot honor.
 Guzzle 8 adds native parameter and return types where PHP 7.4 allows. Code
 overriding affected methods must update method signatures accordingly.
 
-More Guzzle source files now declare `strict_types=1`. Calls from application
-files that do not declare strict types continue to use PHP's normal weak-call
-behavior when calling Guzzle public APIs. Calls made by Guzzle into custom
-callbacks, middleware, handlers, and helper APIs now use strict scalar typing.
-
 `HandlerStack::__toString()` and `SetCookie::__toString()` now return `string`.
 
 `HandlerStack::remove()` now throws `TypeError` when passed a value that is
