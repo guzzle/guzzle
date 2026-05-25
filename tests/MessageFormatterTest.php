@@ -18,10 +18,16 @@ class MessageFormatterTest extends TestCase
 {
     public function testCreatesWithClfByDefault(): void
     {
-        $f = new MessageFormatter();
-        self::assertEquals(MessageFormatter::CLF, self::readTemplate($f));
-        $f = new MessageFormatter(null);
-        self::assertEquals(MessageFormatter::CLF, self::readTemplate($f));
+        $request = new Request('GET', 'http://example.com/foo', ['User-Agent' => 'Guzzle']);
+        $response = new Response(200, ['Content-Length' => '0']);
+        $format = static function (MessageFormatter $formatter) use ($request, $response): string {
+            return (string) \preg_replace('/\[[^\]]+\]/', '[date]', $formatter->format($request, $response));
+        };
+
+        $expected = $format(new MessageFormatter(MessageFormatter::CLF));
+
+        self::assertSame($expected, $format(new MessageFormatter()));
+        self::assertSame($expected, $format(new MessageFormatter(null)));
     }
 
     public static function dateProvider(): array
@@ -94,14 +100,5 @@ class MessageFormatterTest extends TestCase
     {
         $f = new MessageFormatter($template);
         self::assertSame((string) $result, $f->format(...$args));
-    }
-
-    private static function readTemplate(MessageFormatter $formatter): string
-    {
-        $readTemplate = \Closure::bind(static function (MessageFormatter $formatter): string {
-            return $formatter->template;
-        }, null, MessageFormatter::class);
-
-        return $readTemplate($formatter);
     }
 }

@@ -1798,7 +1798,7 @@ class CurlFactoryTest extends TestCase
             self::markTestSkipped('HTTP/3 cURL constants are not available.');
         }
 
-        $conf = self::getDefaultCurlConf(
+        $conf = self::createCurlConf(
             new Psr7\Request('GET', 'https://example.com', [], null, $protocolVersion),
             []
         );
@@ -1885,7 +1885,7 @@ class CurlFactoryTest extends TestCase
         ]);
 
         try {
-            $conf = self::getDefaultCurlConf(
+            $conf = self::createCurlConf(
                 new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
                 [
                     'proxy' => [
@@ -1911,7 +1911,7 @@ class CurlFactoryTest extends TestCase
         ]);
 
         try {
-            $conf = self::getDefaultCurlConf(
+            $conf = self::createCurlConf(
                 new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
                 ['proxy' => '']
             );
@@ -2271,23 +2271,14 @@ class CurlFactoryTest extends TestCase
      */
     public function testCreatesConnectExceptionForConnectionErrors(int $errno): void
     {
-        $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
-
-        if (PHP_VERSION_ID < 80100) {
-            $m->setAccessible(true);
-        }
-
         $factory = new CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
         $easy->errno = $errno;
-        $response = $m->invoke(
-            null,
+        $response = CurlFactory::finish(
             static function (): void {
             },
             $easy,
-            $factory,
-            null,
-            null
+            $factory
         );
 
         try {
@@ -2384,24 +2375,15 @@ class CurlFactoryTest extends TestCase
 
     public function testCreatesTimeoutException(): void
     {
-        $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
-
-        if (PHP_VERSION_ID < 80100) {
-            $m->setAccessible(true);
-        }
-
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
         $easy = $factory->create($request, []);
         $easy->errno = \CURLE_OPERATION_TIMEOUTED;
-        $response = $m->invoke(
-            null,
+        $response = CurlFactory::finish(
             static function (): void {
             },
             $easy,
-            $factory,
-            null,
-            null
+            $factory
         );
 
         try {
@@ -3029,19 +3011,21 @@ class CurlFactoryTest extends TestCase
      *
      * @return array<int|string, mixed>
      */
-    private static function getDefaultCurlConf(RequestInterface $request, array $options): array
+    private static function createCurlConf(RequestInterface $request, array $options): array
     {
-        $factory = new CurlFactory(3);
-        $easy = new EasyHandle();
-        $easy->request = $request;
-        $easy->options = $options;
+        unset($_SERVER['_curl']);
 
-        $method = new \ReflectionMethod(CurlFactory::class, 'getDefaultConf');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
+        $factory = new CurlFactory(0);
+        $easy = $factory->create($request, $options);
+
+        try {
+            $conf = $_SERVER['_curl'] ?? null;
+            self::assertIsArray($conf);
+
+            return $conf;
+        } finally {
+            $factory->release($easy);
         }
-
-        return $method->invoke($factory, $easy);
     }
 
     private static function requireHttp3TestConstants(): void

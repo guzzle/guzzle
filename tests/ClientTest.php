@@ -2091,11 +2091,11 @@ class ClientTest extends TestCase
 
     private static function readClientConfig(Client $client): array
     {
-        $readConfig = \Closure::bind(static function (Client $client): array {
-            return $client->config;
-        }, null, Client::class);
+        $config = $client->getConfig();
 
-        return $readConfig($client);
+        self::assertIsArray($config);
+
+        return $config;
     }
 
     private static function requestWithProtocolVersion(string $protocolVersion): RequestInterface
