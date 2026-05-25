@@ -6,20 +6,11 @@ namespace GuzzleHttp;
 
 final class ProxySelection
 {
-    /**
-     * @var string|null
-     */
-    private $proxy;
+    private ?string $proxy = null;
 
-    /**
-     * @var bool
-     */
-    private $bypassed;
+    private bool $bypassed = false;
 
-    /**
-     * @var bool
-     */
-    private $disabled;
+    private bool $disabled = false;
 
     private function __construct(?string $proxy, bool $bypassed, bool $disabled)
     {

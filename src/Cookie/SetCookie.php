@@ -27,12 +27,12 @@ class SetCookie
     /**
      * @var array Cookie data
      */
-    private $data;
+    private array $data = self::DEFAULTS;
 
     /**
      * @var bool Whether this cookie was set without a Domain attribute.
      */
-    private $hostOnly = false;
+    private bool $hostOnly = false;
 
     /**
      * Create a new SetCookie object from a string.

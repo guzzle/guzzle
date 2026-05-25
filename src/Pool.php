@@ -36,7 +36,7 @@ class Pool implements PromisorInterface
     /**
      * @var EachPromise<array-key, ResponseInterface, mixed>
      */
-    private $each;
+    private EachPromise $each;
 
     /**
      * @param ClientInterface                                                                                                                         $client   Client used to send the requests.

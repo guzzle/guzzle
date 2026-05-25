@@ -15,20 +15,11 @@ use Psr\Http\Message\ResponseInterface;
  */
 class RequestException extends TransferException implements RequestExceptionInterface
 {
-    /**
-     * @var RequestInterface
-     */
-    private $request;
+    private RequestInterface $request;
 
-    /**
-     * @var ResponseInterface|null
-     */
-    private $response;
+    private ?ResponseInterface $response = null;
 
-    /**
-     * @var array
-     */
-    private $handlerContext;
+    private array $handlerContext = [];
 
     public function __construct(
         string $message,

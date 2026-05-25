@@ -14,12 +14,12 @@ class FileCookieJar extends CookieJar
     /**
      * @var string filename
      */
-    private $filename;
+    private string $filename = '';
 
     /**
      * @var bool Control whether to persist session cookies or not.
      */
-    private $storeSessionCookies;
+    private bool $storeSessionCookies = false;
 
     /**
      * @var bool Whether to save the cookie jar on destruction.
@@ -28,7 +28,7 @@ class FileCookieJar extends CookieJar
      * PHP object injection file-write gadget when an application unserializes
      * attacker-controlled data.
      */
-    private $autoSave = true;
+    private bool $autoSave = true;
 
     /**
      * Create a new FileCookieJar object

@@ -15,12 +15,9 @@ class CookieJar implements CookieJarInterface
     /**
      * @var SetCookie[] Loaded cookie data
      */
-    private $cookies = [];
+    private array $cookies = [];
 
-    /**
-     * @var bool
-     */
-    private $strictMode;
+    private bool $strictMode = false;
 
     /**
      * @param bool  $strictMode  Set to true to throw exceptions when invalid

@@ -13,15 +13,9 @@ use Psr\Http\Message\RequestInterface;
  */
 class ConnectException extends NetworkException
 {
-    /**
-     * @var RequestInterface
-     */
-    private $request;
+    private RequestInterface $request;
 
-    /**
-     * @var array
-     */
-    private $handlerContext;
+    private array $handlerContext = [];
 
     public function __construct(
         string $message,
