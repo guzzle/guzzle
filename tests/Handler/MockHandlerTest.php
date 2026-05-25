@@ -454,6 +454,16 @@ class MockHandlerTest extends TestCase
         self::assertSame($request, $stats->getRequest());
     }
 
+    public function testRejectsNonCallableOnStats(): void
+    {
+        $mock = new MockHandler([new Response()]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('on_stats must be callable');
+
+        $mock(new Request('GET', 'http://example.com'), ['on_stats' => false])->wait();
+    }
+
     public function testInvokesOnStatsFunctionForError(): void
     {
         $e = new \Exception('a');

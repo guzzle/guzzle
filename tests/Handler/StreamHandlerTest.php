@@ -113,6 +113,16 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    public function testRejectsNonCallableOnStats(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('on_stats must be callable');
+
+        $handler(new Request('GET', 'http://example.com'), ['on_stats' => false]);
+    }
+
     public function testStreamAttributeKeepsStreamOpen(): void
     {
         $this->queueRes();

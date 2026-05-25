@@ -71,6 +71,24 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame('http://test.com', (string) $mock->getLastRequest()->getUri());
     }
 
+    public function testRedirectRejectsInvalidIdnConversionOption(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://www.tést.com/whatever']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+
+        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectExceptionMessage('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
+
+        $stack->resolve()(new Request('GET', 'http://example.com'), [
+            'allow_redirects' => ['max' => 2],
+            'idn_conversion' => '0',
+        ])->wait();
+    }
+
     public function testRedirectsWithRelativeUri(): void
     {
         $mock = new MockHandler([

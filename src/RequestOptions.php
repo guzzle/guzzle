@@ -168,10 +168,9 @@ final class RequestOptions
     public const HTTP_ERRORS = 'http_errors';
 
     /**
-     * idn: (bool|int, default=true) A combination of IDNA_* constants for
-     * idn_to_ascii() PHP's function (see "options" parameter). Set to false to
-     * disable IDN support completely, or to true to use the default
-     * configuration (IDNA_DEFAULT constant).
+     * idn_conversion: (bool|int, default=false) A combination of IDNA_* constants
+     * for PHP's idn_to_ascii() function. Set to false to disable IDN support, or
+     * true to use the default configuration (IDNA_DEFAULT constant).
      */
     public const IDN_CONVERSION = 'idn_conversion';
 
@@ -213,8 +212,9 @@ final class RequestOptions
      * with transfer statistics about the request, the response received, or
      * the error encountered. Included in the data is the total amount of time
      * taken to send the request. Exceptions thrown by on_stats are not wrapped
-     * by Guzzle. The built-in cURL handlers release native easy handles before
-     * invoking on_stats and invoke it per low-level transfer attempt.
+     * by Guzzle. Built-in handlers reject non-callable values before starting
+     * the transfer. The built-in cURL handlers release native easy handles
+     * before invoking on_stats and invoke it per low-level transfer attempt.
      */
     public const ON_STATS = 'on_stats';
 

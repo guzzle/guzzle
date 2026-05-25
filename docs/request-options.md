@@ -748,7 +748,7 @@ Types
 Constant
 `GuzzleHttp\RequestOptions::ON_STATS`
 
-The callable accepts a `GuzzleHttp\TransferStats` object.
+The callable accepts a `GuzzleHttp\TransferStats` object. Built-in handlers reject non-callable `on_stats` values before starting the transfer.
 
 Exceptions thrown by `on_stats` are not wrapped by Guzzle and may escape from the handler wait path. With the built-in cURL handlers, native cURL handles are released before `on_stats` is invoked. cURL handlers emit `on_stats` per low-level transfer attempt, so retries may invoke it more than once for one logical request.
 

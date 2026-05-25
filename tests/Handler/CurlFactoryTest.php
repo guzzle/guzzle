@@ -600,6 +600,16 @@ class CurlFactoryTest extends TestCase
         );
     }
 
+    public function testRejectsNonCallableOnStats(): void
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('on_stats must be callable');
+
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['on_stats' => false]);
+    }
+
     public function testValidatesVerify(): void
     {
         $f = new CurlFactory(3);

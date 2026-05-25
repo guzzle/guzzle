@@ -2012,7 +2012,7 @@ class ClientTest extends TestCase
         self::assertSame('яндекс.рф', (string) $request->getHeaderLine('Host'));
     }
 
-    public function testIdnConversionRejectsInvalidValue()
+    public function testIdnConversionRejectsInvalidValue(): void
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
@@ -2020,7 +2020,7 @@ class ClientTest extends TestCase
         $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
 
-        $client->request('GET', 'https://example.com', ['idn_conversion' => 'invalid']);
+        $client->request('GET', 'https://example.com', ['idn_conversion' => '0']);
     }
 
     /**
