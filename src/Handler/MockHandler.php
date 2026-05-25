@@ -139,7 +139,7 @@ final class MockHandler implements \Countable
         }
 
         $promise = $response->then(
-            function ($value) use ($request, $options) {
+            function ($value) use ($request, $options): ?ResponseInterface {
                 /** @var ResponseInterface|null $value */
                 $this->invokeStats($request, $options, $value);
                 if ($this->onFulfilled) {

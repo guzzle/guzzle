@@ -143,7 +143,7 @@ class MockHandlerTest extends TestCase
     {
         $response = new Response(201);
         $mock = new MockHandler([
-            static function () use ($response) {
+            static function () use ($response): PromiseInterface {
                 return Create::promiseFor($response);
             },
         ]);
