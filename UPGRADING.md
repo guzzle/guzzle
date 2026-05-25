@@ -581,6 +581,10 @@ with EasyHandle's documented public property types. Several EasyHandle
 bookkeeping properties now use native property types, so assigning incompatible
 values to those properties raises `TypeError`.
 
+Custom factories must assign the request and sink state before returning an
+EasyHandle to Guzzle because those properties are required typed invariants.
+Reading them before assignment raises PHP's uninitialized typed-property `Error`.
+
 The native cURL handle properties intentionally remain untyped because PHP 7.4
 represents cURL handles as resources while PHP 8 represents them as cURL handle
 objects. Custom factories must still unset `$easy->handle` when releasing an easy

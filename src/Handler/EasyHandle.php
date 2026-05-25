@@ -22,10 +22,7 @@ final class EasyHandle
      */
     public $handle;
 
-    /**
-     * @var StreamInterface Where data is being written
-     */
-    public $sink;
+    public StreamInterface $sink;
 
     /**
      * @var list<string> Received HTTP headers so far
@@ -37,10 +34,7 @@ final class EasyHandle
      */
     public ?ResponseInterface $response = null;
 
-    /**
-     * @var RequestInterface Request being sent
-     */
-    public $request;
+    public RequestInterface $request;
 
     /**
      * @var array Request options
