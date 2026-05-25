@@ -48,6 +48,8 @@ class StreamHandlerTest extends TestCase
         self::assertSame('hi there', (string) $response->getBody());
         $sent = Server::received()[0];
         self::assertSame('GET', $sent->getMethod());
+        self::assertSame('127.0.0.1', $sent->getUri()->getHost());
+        self::assertSame(8126, $sent->getUri()->getPort());
         self::assertSame('/', $sent->getUri()->getPath());
         self::assertSame('127.0.0.1:8126', $sent->getHeaderLine('Host'));
         self::assertSame('Bar', $sent->getHeaderLine('foo'));
