@@ -14,12 +14,12 @@ class FileCookieJar extends CookieJar
     /**
      * @var string filename
      */
-    private string $filename = '';
+    private string $filename;
 
     /**
      * @var bool Control whether to persist session cookies or not.
      */
-    private bool $storeSessionCookies = false;
+    private bool $storeSessionCookies;
 
     /**
      * @var bool Whether to save the cookie jar on destruction.

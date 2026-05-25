@@ -15,7 +15,7 @@ class ConnectException extends NetworkException
 {
     private RequestInterface $request;
 
-    private array $handlerContext = [];
+    private array $handlerContext;
 
     public function __construct(
         string $message,

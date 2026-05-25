@@ -8,7 +8,7 @@ use Psr\Http\Message\MessageInterface;
 
 final class BodySummarizer implements BodySummarizerInterface
 {
-    private ?int $truncateAt = null;
+    private ?int $truncateAt;
 
     public function __construct(?int $truncateAt = null)
     {

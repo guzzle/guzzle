@@ -12,12 +12,12 @@ class SessionCookieJar extends CookieJar
     /**
      * @var string session key
      */
-    private string $sessionKey = '';
+    private string $sessionKey;
 
     /**
      * @var bool Control whether to persist session cookies or not.
      */
-    private bool $storeSessionCookies = false;
+    private bool $storeSessionCookies;
 
     /**
      * Create a new SessionCookieJar object

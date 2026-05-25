@@ -17,9 +17,9 @@ class RequestException extends TransferException implements RequestExceptionInte
 {
     private RequestInterface $request;
 
-    private ?ResponseInterface $response = null;
+    private ?ResponseInterface $response;
 
-    private array $handlerContext = [];
+    private array $handlerContext;
 
     public function __construct(
         string $message,

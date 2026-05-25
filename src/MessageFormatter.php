@@ -51,7 +51,7 @@ final class MessageFormatter implements MessageFormatterInterface
     /**
      * @var string Template used to format log messages
      */
-    private string $template = self::CLF;
+    private string $template;
 
     /**
      * @param string $template Log message template

@@ -32,7 +32,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * @var array Default request options
      */
-    private array $config = [];
+    private array $config;
 
     /**
      * Clients accept an array of constructor parameters.

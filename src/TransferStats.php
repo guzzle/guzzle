@@ -16,11 +16,11 @@ final class TransferStats
 {
     private RequestInterface $request;
 
-    private ?ResponseInterface $response = null;
+    private ?ResponseInterface $response;
 
-    private ?float $transferTime = null;
+    private ?float $transferTime;
 
-    private array $handlerStats = [];
+    private array $handlerStats;
 
     /**
      * @var mixed|null

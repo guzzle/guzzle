@@ -27,7 +27,7 @@ class SetCookie
     /**
      * @var array Cookie data
      */
-    private array $data = self::DEFAULTS;
+    private array $data;
 
     /**
      * @var bool Whether this cookie was set without a Domain attribute.
