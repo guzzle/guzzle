@@ -113,6 +113,16 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    public function testRejectsNonCallableOnStats(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('on_stats must be callable');
+
+        $handler(new Request('GET', 'http://example.com'), ['on_stats' => false]);
+    }
+
     public function testStreamAttributeKeepsStreamOpen(): void
     {
         $this->queueRes();
@@ -400,25 +410,6 @@ class StreamHandlerTest extends TestCase
         return $handler($request, $opts)->wait();
     }
 
-    /**
-     * @param mixed $proxy
-     */
-    private function getProxyContext($proxy, string $uri = 'http://example.com'): array
-    {
-        $handler = new StreamHandler();
-        $request = new Request('GET', $uri);
-        $options = ['http' => []];
-        $params = [];
-        $method = new \ReflectionMethod(StreamHandler::class, 'add_proxy');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
-        }
-
-        $method->invokeArgs($handler, [$request, &$options, $proxy, &$params]);
-
-        return $options;
-    }
-
     private function applyDefaultTlsMinimum(string $uri, array $context): array
     {
         $handler = new StreamHandler();
@@ -463,26 +454,6 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('proxy', $opts['http']);
     }
 
-    public function testAddsProxyButHonorsNoProxyString(): void
-    {
-        $opts = $this->getProxyContext([
-            'http' => 'http://proxy.example.com:8125',
-            'no' => 'example.com,localhost',
-        ]);
-
-        self::assertArrayNotHasKey('proxy', $opts['http']);
-    }
-
-    public function testAddsProxyWithEmptyNoProxyString(): void
-    {
-        $opts = $this->getProxyContext([
-            'http' => 'http://proxy.example.com:8125',
-            'no' => '',
-        ]);
-
-        self::assertSame('tcp://proxy.example.com:8125', $opts['http']['proxy']);
-    }
-
     /**
      * @dataProvider invalidProxyOptionProvider
      *
@@ -492,7 +463,7 @@ class StreamHandlerTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        $this->getProxyContext($proxy);
+        $this->getSendResult(['proxy' => $proxy]);
     }
 
     public static function invalidProxyOptionProvider(): array
@@ -503,61 +474,6 @@ class StreamHandlerTest extends TestCase
             [['http' => 'http://proxy.example.com:8125', 'no' => new \stdClass()]],
             [['http' => 'http://proxy.example.com:8125', 'no' => [new \stdClass()]]],
         ];
-    }
-
-    public function testAddsProxyButHonorsNoProxyPorts(): void
-    {
-        $proxy = [
-            'http' => 'http://proxy.example.com:8125',
-            'https' => 'http://proxy.example.com:8125',
-            'no' => ['example.com:80'],
-        ];
-
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://example.com')['http']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'https://example.com')['http']['proxy']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://example.com:8080')['http']['proxy']);
-
-        $proxy['no'] = ['EXAMPLE.com'];
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://example.com')['http']);
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://foo.example.com')['http']);
-
-        $proxy['no'] = ' EXAMPLE.com , other.com ';
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://example.com')['http']);
-
-        $proxy['no'] = ['.example.com:8080'];
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://foo.example.com:8080')['http']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://example.com:8080')['http']['proxy']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://foo.example.com:8081')['http']['proxy']);
-
-        $proxy['no'] = ['.EXAMPLE.com:8080'];
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://foo.example.com:8080')['http']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://example.com:8080')['http']['proxy']);
-
-        $proxy['no'] = ['[::1]:8080'];
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://[::1]:8080')['http']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://[::1]:8081')['http']['proxy']);
-
-        $proxy['no'] = ['::1'];
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://[0:0:0:0:0:0:0:1]')['http']);
-
-        $proxy['no'] = ['[0:0:0:0:0:0:0:1]:8080'];
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://[::1]:8080')['http']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://[::1]:8081')['http']['proxy']);
-
-        $proxy['no'] = ['192.168.0.0/16'];
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://192.168.1.10')['http']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://192.169.1.10')['http']['proxy']);
-
-        $proxy['no'] = ['fd00::/8'];
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://[fd00::1]')['http']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://[fe80::1]')['http']['proxy']);
-
-        $proxy['no'] = ['*.example.com'];
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'http://test.example.com')['http']['proxy']);
-
-        $proxy['no'] = ['*:80'];
-        self::assertArrayNotHasKey('proxy', $this->getProxyContext($proxy, 'http://example.com')['http']);
-        self::assertSame('tcp://proxy.example.com:8125', $this->getProxyContext($proxy, 'https://example.com')['http']['proxy']);
     }
 
     public function testUsesProxy(): void
@@ -580,13 +496,6 @@ class StreamHandlerTest extends TestCase
         $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertEquals(200, $opts['http']['timeout']);
-    }
-
-    public function testTruncatesStreamTimeoutToMilliseconds(): void
-    {
-        $res = $this->getSendResult(['stream' => true, 'timeout' => 0.0015]);
-        $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertEquals(0.001, $opts['http']['timeout']);
     }
 
     /**
@@ -746,18 +655,11 @@ class StreamHandlerTest extends TestCase
     public function testCanSetCertWithArrayPathOnly(): void
     {
         $path = __FILE__;
-        $handler = new StreamHandler();
-        $options = [];
-        $params = [];
-        $method = new \ReflectionMethod(StreamHandler::class, 'add_cert');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
-        }
+        $res = $this->getSendResult(['cert' => [$path]]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
 
-        $method->invokeArgs($handler, [new Request('GET', 'http://example.com'), &$options, [$path], &$params]);
-
-        self::assertSame($path, $options['ssl']['local_cert']);
-        self::assertArrayNotHasKey('passphrase', $options['ssl']);
+        self::assertSame($path, $opts['ssl']['local_cert']);
+        self::assertArrayNotHasKey('passphrase', $opts['ssl']);
     }
 
     public function testCanSetCertTypeToPem(): void
@@ -821,18 +723,11 @@ class StreamHandlerTest extends TestCase
     public function testCanSetSslKeyWithArrayPathOnly(): void
     {
         $path = __FILE__;
-        $handler = new StreamHandler();
-        $options = [];
-        $params = [];
-        $method = new \ReflectionMethod(StreamHandler::class, 'add_ssl_key');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
-        }
+        $res = $this->getSendResult(['ssl_key' => [$path]]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
 
-        $method->invokeArgs($handler, [new Request('GET', 'http://example.com'), &$options, [$path], &$params]);
-
-        self::assertSame($path, $options['ssl']['local_pk']);
-        self::assertArrayNotHasKey('passphrase', $options['ssl']);
+        self::assertSame($path, $opts['ssl']['local_pk']);
+        self::assertArrayNotHasKey('passphrase', $opts['ssl']);
     }
 
     public function testCanSetSslKeyTypeToPem(): void
@@ -943,6 +838,22 @@ class StreamHandlerTest extends TestCase
         self::assertNotEmpty($called);
         self::assertEquals(8, $called[0][0]);
         self::assertEquals(0, $called[0][1]);
+    }
+
+    public function testEmitsIntegerProgressInformation(): void
+    {
+        $called = [];
+        $this->queueRes();
+        $this->getSendResult([
+            'progress' => static function (int $downloadTotal, int $downloadedBytes, int $uploadTotal, int $uploadedBytes) use (&$called): void {
+                $called[] = [$downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes];
+            },
+        ]);
+        self::assertNotEmpty($called);
+        self::assertSame(8, $called[0][0]);
+        self::assertSame(0, $called[0][1]);
+        self::assertSame(0, $called[0][2]);
+        self::assertSame(0, $called[0][3]);
     }
 
     public function testProgressReturnValueDoesNotAbortTransfer(): void

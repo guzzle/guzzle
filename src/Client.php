@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJar;
@@ -30,7 +32,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * @var array Default request options
      */
-    private $config;
+    private array $config;
 
     /**
      * Clients accept an array of constructor parameters.
@@ -71,7 +73,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         max?: int,
      *         strict?: bool,
      *         referer?: bool,
-     *         protocols?: array<array-key, string>,
+     *         protocols?: non-empty-array<array-key, string>,
      *         on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
      *         track_redirects?: bool
      *     },
@@ -93,11 +95,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, mixed>,
+     *     form_params?: array<array-key, string|array<array-key, string>>,
      *     force_ip_resolve?: string,
-     *     headers?: array<array-key, string|array<array-key, string>>|null,
+     *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
-     *     idn_conversion?: bool|int,
+     *     idn_conversion?: bool|int|null,
      *     json?: mixed,
      *     multipart?: array<array-key, array{
      *         name: string|int,
@@ -107,8 +109,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
-     *     protocols?: array<array-key, string>,
+     *     progress?: callable(int, int, int, int): mixed,
+     *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,
      *         https?: string,
@@ -190,7 +192,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         max?: int,
      *         strict?: bool,
      *         referer?: bool,
-     *         protocols?: array<array-key, string>,
+     *         protocols?: non-empty-array<array-key, string>,
      *         on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
      *         track_redirects?: bool
      *     },
@@ -212,11 +214,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, mixed>,
+     *     form_params?: array<array-key, string|array<array-key, string>>,
      *     force_ip_resolve?: string,
-     *     headers?: array<array-key, string|array<array-key, string>>|null,
+     *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
-     *     idn_conversion?: bool|int,
+     *     idn_conversion?: bool|int|null,
      *     json?: mixed,
      *     multipart?: array<array-key, array{
      *         name: string|int,
@@ -226,8 +228,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
-     *     protocols?: array<array-key, string>,
+     *     progress?: callable(int, int, int, int): mixed,
+     *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,
      *         https?: string,
@@ -278,7 +280,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         max?: int,
      *         strict?: bool,
      *         referer?: bool,
-     *         protocols?: array<array-key, string>,
+     *         protocols?: non-empty-array<array-key, string>,
      *         on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
      *         track_redirects?: bool
      *     },
@@ -300,11 +302,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, mixed>,
+     *     form_params?: array<array-key, string|array<array-key, string>>,
      *     force_ip_resolve?: string,
-     *     headers?: array<array-key, string|array<array-key, string>>|null,
+     *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
-     *     idn_conversion?: bool|int,
+     *     idn_conversion?: bool|int|null,
      *     json?: mixed,
      *     multipart?: array<array-key, array{
      *         name: string|int,
@@ -314,8 +316,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
-     *     protocols?: array<array-key, string>,
+     *     progress?: callable(int, int, int, int): mixed,
+     *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,
      *         https?: string,
@@ -382,7 +384,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         max?: int,
      *         strict?: bool,
      *         referer?: bool,
-     *         protocols?: array<array-key, string>,
+     *         protocols?: non-empty-array<array-key, string>,
      *         on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
      *         track_redirects?: bool
      *     },
@@ -404,11 +406,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, mixed>,
+     *     form_params?: array<array-key, string|array<array-key, string>>,
      *     force_ip_resolve?: string,
-     *     headers?: array<array-key, string|array<array-key, string>>|null,
+     *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
-     *     idn_conversion?: bool|int,
+     *     idn_conversion?: bool|int|null,
      *     json?: mixed,
      *     multipart?: array<array-key, array{
      *         name: string|int,
@@ -418,8 +420,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
-     *     protocols?: array<array-key, string>,
+     *     progress?: callable(int, int, int, int): mixed,
+     *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,
      *         https?: string,
@@ -498,7 +500,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         max?: int,
      *         strict?: bool,
      *         referer?: bool,
-     *         protocols?: array<array-key, string>,
+     *         protocols?: non-empty-array<array-key, string>,
      *         on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
      *         track_redirects?: bool
      *     },
@@ -520,11 +522,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, mixed>,
+     *     form_params?: array<array-key, string|array<array-key, string>>,
      *     force_ip_resolve?: string,
-     *     headers?: array<array-key, string|array<array-key, string>>|null,
+     *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
-     *     idn_conversion?: bool|int,
+     *     idn_conversion?: bool|int|null,
      *     json?: mixed,
      *     multipart?: array<array-key, array{
      *         name: string|int,
@@ -534,8 +536,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
-     *     progress?: callable(int|float, int|float, int|float, int|float): mixed,
-     *     protocols?: array<array-key, string>,
+     *     progress?: callable(int, int, int, int): mixed,
+     *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
      *         http?: string,
      *         https?: string,
@@ -581,7 +583,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param string|null $option The config option to retrieve.
      *
-     * @return mixed
+     * @return ($option is null ? array<string, mixed> : mixed)
      */
     public function getConfig(?string $option = null)
     {
@@ -597,8 +599,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $uri = Psr7\UriResolver::resolve(self::createUri($config['base_uri'], $uriFactory), $uri);
         }
 
-        if (isset($config['idn_conversion']) && ($config['idn_conversion'] !== false)) {
-            $idnOptions = ($config['idn_conversion'] === true) ? \IDNA_DEFAULT : $config['idn_conversion'];
+        $idnOptions = Utils::normalizeIdnConversionOption($config['idn_conversion'] ?? null);
+        if ($idnOptions !== null) {
             $uri = Utils::idnUriConvert($uri, $idnOptions);
         }
 

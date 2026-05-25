@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use Closure;
@@ -20,82 +22,57 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class CurlMultiHandler
 {
-    /**
-     * @var CurlFactoryInterface
-     */
-    private $factory;
+    private CurlFactoryInterface $factory;
 
-    /**
-     * @var bool
-     */
-    private $ownsFactory;
+    private bool $ownsFactory;
 
-    /**
-     * @var CurlShareHandleState|null
-     */
-    private $shareHandleState;
+    private ?CurlShareHandleState $shareHandleState;
 
-    /**
-     * @var int
-     */
-    private $selectTimeout;
+    private float $selectTimeout;
 
     /**
      * @var int Will be higher than 0 when `curl_multi_exec` is still running.
      */
-    private $active = 0;
+    private int $active = 0;
 
     /**
      * @var array Request entry handles, indexed by handle id in `addRequest`.
      *
      * @see CurlMultiHandler::addRequest
      */
-    private $handles = [];
+    private array $handles = [];
 
     /**
      * @var array<int, float> An array of delay times, indexed by handle id in `addRequest`.
      *
      * @see CurlMultiHandler::addRequest
      */
-    private $delays = [];
+    private array $delays = [];
 
     /**
      * @var array<mixed> An associative array of CURLMOPT_* options and corresponding values for curl_multi_setopt()
      */
-    private $options = [];
-
-    /** @var resource|\CurlMultiHandle */
-    private $_mh;
+    private array $options = [];
 
     /**
-     * @var bool
+     * @var resource|\CurlMultiHandle|null
      */
-    private $closed = false;
+    private $multiHandle;
 
-    /**
-     * @var bool
-     */
-    private $closing = false;
+    private bool $closed = false;
 
-    /**
-     * @var bool
-     */
-    private $executingMulti = false;
+    private bool $closing = false;
+
+    private bool $executingMulti = false;
 
     /**
      * @var array<int, array{easy: EasyHandle, attached: bool}>
      */
-    private $deferredCancels = [];
+    private array $deferredCancels = [];
 
-    /**
-     * @var bool
-     */
-    private $deferredClose = false;
+    private bool $deferredClose = false;
 
-    /**
-     * @var bool
-     */
-    private $deferredCloseExplicit = false;
+    private bool $deferredCloseExplicit = false;
 
     /**
      * This handler accepts the following options:
@@ -124,45 +101,19 @@ final class CurlMultiHandler
             $this->ownsFactory = true;
         }
 
-        $this->selectTimeout = $options['select_timeout'] ?? 1;
-
-        $this->options = $options['options'] ?? [];
-
-        // unsetting the property forces the first access to go through
-        // __get().
-        unset($this->_mh);
-    }
-
-    /**
-     * @param string $name
-     *
-     * @return resource|\CurlMultiHandle
-     *
-     * @throws \BadMethodCallException when another field as `_mh` will be gotten
-     * @throws \RuntimeException       when curl can not initialize a multi handle
-     */
-    public function __get($name)
-    {
-        if ($name !== '_mh') {
-            throw new \BadMethodCallException("Can not get other property as '_mh'.");
+        $selectTimeout = $options['select_timeout'] ?? 1.0;
+        if (!\is_int($selectTimeout) && !\is_float($selectTimeout) && (!\is_string($selectTimeout) || !\is_numeric($selectTimeout))) {
+            throw new \InvalidArgumentException('select_timeout must be a number of seconds');
         }
 
-        $this->assertOpen();
+        $this->selectTimeout = (float) $selectTimeout;
 
-        $multiHandle = \curl_multi_init();
-
-        if (false === $multiHandle) {
-            throw new \RuntimeException('Can not initialize curl multi handle.');
+        $multiOptions = $options['options'] ?? [];
+        if (!\is_array($multiOptions)) {
+            throw new \InvalidArgumentException('options must be an array of cURL multi options');
         }
 
-        $this->_mh = $multiHandle;
-
-        foreach ($this->options as $option => $value) {
-            // A warning is raised in case of a wrong option.
-            curl_multi_setopt($this->_mh, $option, $value);
-        }
-
-        return $this->_mh;
+        $this->options = $multiOptions;
     }
 
     public function __destruct()
@@ -211,7 +162,7 @@ final class CurlMultiHandler
                 if ($currentTime >= $delay) {
                     unset($this->delays[$id]);
                     \curl_multi_add_handle(
-                        $this->_mh,
+                        $this->getMultiHandle(),
                         $this->handles[$id]['easy']->handle
                     );
                 }
@@ -228,7 +179,7 @@ final class CurlMultiHandler
             return;
         }
 
-        if ($this->active && \curl_multi_select($this->_mh, $this->selectTimeout) === -1) {
+        if ($this->active && \curl_multi_select($this->getMultiHandle(), $this->selectTimeout) === -1) {
             // Perform a usleep if a select returns -1.
             // See: https://bugs.php.net/bug.php?id=61141
             \usleep(250);
@@ -243,7 +194,7 @@ final class CurlMultiHandler
 
             // Prevent busy looping for slow HTTP requests.
             if ($exec === \CURLM_CALL_MULTI_PERFORM) {
-                \curl_multi_select($this->_mh, $this->selectTimeout);
+                \curl_multi_select($this->getMultiHandle(), $this->selectTimeout);
             }
         } while ($exec === \CURLM_CALL_MULTI_PERFORM);
 
@@ -266,7 +217,7 @@ final class CurlMultiHandler
         }
 
         if ($exec === \CURLM_CALL_MULTI_PERFORM) {
-            \curl_multi_select($this->_mh, 0);
+            \curl_multi_select($this->getMultiHandle(), 0);
             P\Utils::queue()->add(Closure::fromCallable([$this, 'tickInQueue']));
         }
     }
@@ -420,15 +371,17 @@ final class CurlMultiHandler
 
     private function closeMultiHandle(?\Throwable &$failure): void
     {
-        if (!$this->hasMultiHandle()) {
+        if ($this->multiHandle === null) {
             return;
         }
 
-        $this->captureFailure($failure, function (): void {
+        $multiHandle = $this->multiHandle;
+
+        $this->captureFailure($failure, function () use ($multiHandle): void {
             try {
-                \curl_multi_close($this->_mh);
+                \curl_multi_close($multiHandle);
             } finally {
-                unset($this->_mh);
+                $this->multiHandle = null;
             }
         });
     }
@@ -454,7 +407,7 @@ final class CurlMultiHandler
         $failure = null;
 
         try {
-            return \curl_multi_exec($this->_mh, $this->active);
+            return \curl_multi_exec($this->getMultiHandle(), $this->active);
         } finally {
             $this->executingMulti = false;
             $this->cleanupDeferredCancels($failure);
@@ -530,12 +483,12 @@ final class CurlMultiHandler
      */
     private function removeHandleFromMulti($handle): void
     {
-        \curl_multi_remove_handle($this->_mh, $handle);
+        \curl_multi_remove_handle($this->getMultiHandle(), $handle);
     }
 
     private function hasMultiHandle(): bool
     {
-        return isset($this->_mh);
+        return $this->multiHandle !== null;
     }
 
     private static function hasEasyHandle(EasyHandle $easy): bool
@@ -549,7 +502,7 @@ final class CurlMultiHandler
         $id = (int) $easy->handle;
         $this->handles[$id] = $entry;
         if (empty($easy->options['delay'])) {
-            \curl_multi_add_handle($this->_mh, $easy->handle);
+            \curl_multi_add_handle($this->getMultiHandle(), $easy->handle);
         } else {
             $this->delays[$id] = Utils::currentTime() + ($easy->options['delay'] / 1000);
         }
@@ -614,7 +567,7 @@ final class CurlMultiHandler
 
     private function processMessages(): void
     {
-        while ($done = \curl_multi_info_read($this->_mh)) {
+        while ($done = \curl_multi_info_read($this->getMultiHandle())) {
             if ($done['msg'] !== \CURLMSG_DONE) {
                 // if it's not done, then it would be premature to remove the handle. ref https://github.com/guzzle/guzzle/pull/2892#issuecomment-945150216
                 continue;
@@ -660,5 +613,35 @@ final class CurlMultiHandler
         }
 
         return ((int) \max(0, $nextTime - $currentTime)) * 1000000;
+    }
+
+    /**
+     * @return resource|\CurlMultiHandle
+     */
+    private function getMultiHandle()
+    {
+        if ($this->multiHandle !== null) {
+            return $this->multiHandle;
+        }
+
+        $this->assertOpen();
+
+        $multiHandle = \curl_multi_init();
+        if (false === $multiHandle) {
+            throw new \RuntimeException('Can not initialize curl multi handle.');
+        }
+
+        $this->multiHandle = $multiHandle;
+
+        foreach ($this->options as $option => $value) {
+            if (!\is_int($option)) {
+                throw new \InvalidArgumentException(\sprintf('Invalid cURL multi option "%s".', $option));
+            }
+
+            // A warning is raised in case of a wrong option.
+            curl_multi_setopt($multiHandle, $option, $value);
+        }
+
+        return $multiHandle;
     }
 }

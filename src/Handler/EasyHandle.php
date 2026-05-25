@@ -22,55 +22,49 @@ final class EasyHandle
      */
     public $handle;
 
-    /**
-     * @var StreamInterface Where data is being written
-     */
-    public $sink;
+    public StreamInterface $sink;
+
+    public RequestInterface $request;
 
     /**
-     * @var array Received HTTP headers so far
+     * @var list<string> Received HTTP headers so far
      */
-    public $headers = [];
+    public array $headers = [];
 
     /**
      * @var ResponseInterface|null Received response (if any)
      */
-    public $response;
-
-    /**
-     * @var RequestInterface Request being sent
-     */
-    public $request;
+    public ?ResponseInterface $response = null;
 
     /**
      * @var array Request options
      */
-    public $options = [];
+    public array $options = [];
 
     /**
      * @var int cURL error number (if any)
      */
-    public $errno = 0;
+    public int $errno = 0;
 
     /**
      * @var \Throwable|null Exception during on_headers (if any)
      */
-    public $onHeadersException;
+    public ?\Throwable $onHeadersException = null;
 
     /**
      * @var \Throwable|null Exception during progress callback (if any)
      */
-    public $progressException;
+    public ?\Throwable $progressException = null;
 
     /**
      * @var bool Whether the progress callback requested abort
      */
-    public $progressAborted = false;
+    public bool $progressAborted = false;
 
     /**
      * @var \Throwable|null Exception during createResponse (if any)
      */
-    public $createResponseException;
+    public ?\Throwable $createResponseException = null;
 
     /**
      * Attach a response to the easy handle based on the received headers.
@@ -112,11 +106,9 @@ final class EasyHandle
     }
 
     /**
-     * @param string $name
-     *
      * @throws \BadMethodCallException
      */
-    public function __get($name): void
+    public function __get(string $name): void
     {
         $msg = $name === 'handle' ? 'The EasyHandle has been released' : 'Invalid property: '.$name;
         throw new \BadMethodCallException($msg);

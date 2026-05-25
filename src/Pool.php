@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJarInterface;
@@ -34,7 +36,7 @@ class Pool implements PromisorInterface
     /**
      * @var EachPromise<array-key, ResponseInterface, mixed>
      */
-    private $each;
+    private EachPromise $each;
 
     /**
      * @param ClientInterface                                                                                                                         $client   Client used to send the requests.
@@ -48,7 +50,7 @@ class Pool implements PromisorInterface
      *             max?: int,
      *             strict?: bool,
      *             referer?: bool,
-     *             protocols?: array<array-key, string>,
+     *             protocols?: non-empty-array<array-key, string>,
      *             on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
      *             track_redirects?: bool
      *         },
@@ -70,11 +72,11 @@ class Pool implements PromisorInterface
      *         decode_content?: bool|string,
      *         delay?: int|float,
      *         expect?: bool|int,
-     *         form_params?: array<array-key, mixed>,
+     *         form_params?: array<array-key, string|array<array-key, string>>,
      *         force_ip_resolve?: string,
-     *         headers?: array<array-key, string|array<array-key, string>>|null,
+     *         headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *         http_errors?: bool,
-     *         idn_conversion?: bool|int,
+     *         idn_conversion?: bool|int|null,
      *         json?: mixed,
      *         multipart?: array<array-key, array{
      *             name: string|int,
@@ -84,8 +86,8 @@ class Pool implements PromisorInterface
      *         }>,
      *         on_headers?: callable(ResponseInterface, RequestInterface, array-key=): mixed,
      *         on_stats?: callable(TransferStats): mixed,
-     *         progress?: callable(int|float, int|float, int|float, int|float): mixed,
-     *         protocols?: array<array-key, string>,
+     *         progress?: callable(int, int, int, int): mixed,
+     *         protocols?: non-empty-array<array-key, string>,
      *         proxy?: string|array{
      *             http?: string,
      *             https?: string,
@@ -180,7 +182,7 @@ class Pool implements PromisorInterface
      *             max?: int,
      *             strict?: bool,
      *             referer?: bool,
-     *             protocols?: array<array-key, string>,
+     *             protocols?: non-empty-array<array-key, string>,
      *             on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
      *             track_redirects?: bool
      *         },
@@ -202,11 +204,11 @@ class Pool implements PromisorInterface
      *         decode_content?: bool|string,
      *         delay?: int|float,
      *         expect?: bool|int,
-     *         form_params?: array<array-key, mixed>,
+     *         form_params?: array<array-key, string|array<array-key, string>>,
      *         force_ip_resolve?: string,
-     *         headers?: array<array-key, string|array<array-key, string>>|null,
+     *         headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *         http_errors?: bool,
-     *         idn_conversion?: bool|int,
+     *         idn_conversion?: bool|int|null,
      *         json?: mixed,
      *         multipart?: array<array-key, array{
      *             name: string|int,
@@ -216,8 +218,8 @@ class Pool implements PromisorInterface
      *         }>,
      *         on_headers?: callable(ResponseInterface, RequestInterface, array-key=): mixed,
      *         on_stats?: callable(TransferStats): mixed,
-     *         progress?: callable(int|float, int|float, int|float, int|float): mixed,
-     *         protocols?: array<array-key, string>,
+     *         progress?: callable(int, int, int, int): mixed,
+     *         protocols?: non-empty-array<array-key, string>,
      *         proxy?: string|array{
      *             http?: string,
      *             https?: string,

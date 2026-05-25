@@ -60,6 +60,20 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals(5, $_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]);
     }
 
+    public function testThrowsWhenCurlMultiOptionNameIsInvalid(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler(['options' => [
+            'not-a-curlmopt-option' => true,
+        ]]);
+        $request = new Request('GET', Server::$url);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid cURL multi option "not-a-curlmopt-option".');
+        $a($request, []);
+    }
+
     public function testSendsRequest(): void
     {
         Server::enqueue([new Response()]);
@@ -82,6 +96,12 @@ class CurlMultiHandlerTest extends TestCase
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
         self::assertEquals(2, self::readSelectTimeout($a));
+    }
+
+    public function testCanSetNumericStringSelectTimeout(): void
+    {
+        $a = new CurlMultiHandler(['select_timeout' => '0.5']);
+        self::assertSame(0.5, self::readSelectTimeout($a));
     }
 
     public function testShareOptionAppliesCurlShare(): void
@@ -173,10 +193,10 @@ class CurlMultiHandlerTest extends TestCase
         $handler = new CurlMultiHandler();
 
         $setMultiHandle = \Closure::bind(static function (CurlMultiHandler $handler): void {
-            $handler->_mh = new \stdClass();
+            $handler->multiHandle = new \stdClass();
         }, null, CurlMultiHandler::class);
         $hasMultiHandle = \Closure::bind(static function (CurlMultiHandler $handler): bool {
-            return isset($handler->_mh);
+            return $handler->multiHandle !== null;
         }, null, CurlMultiHandler::class);
 
         $setMultiHandle($handler);
@@ -691,17 +711,9 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
-    public function throwsWhenAccessingInvalidProperty(): void
+    private static function readSelectTimeout(CurlMultiHandler $handler): float
     {
-        $h = new CurlMultiHandler();
-
-        $this->expectException(\BadMethodCallException::class);
-        $h->foo;
-    }
-
-    private static function readSelectTimeout(CurlMultiHandler $handler)
-    {
-        $readSelectTimeout = \Closure::bind(static function (CurlMultiHandler $handler) {
+        $readSelectTimeout = \Closure::bind(static function (CurlMultiHandler $handler): float {
             return $handler->selectTimeout;
         }, null, CurlMultiHandler::class);
 
@@ -711,7 +723,7 @@ class CurlMultiHandlerTest extends TestCase
     private static function hasMultiHandle(CurlMultiHandler $handler): bool
     {
         $hasMultiHandle = \Closure::bind(static function (CurlMultiHandler $handler): bool {
-            return isset($handler->_mh);
+            return $handler->multiHandle !== null;
         }, null, CurlMultiHandler::class);
 
         return $hasMultiHandle($handler);
@@ -719,7 +731,7 @@ class CurlMultiHandlerTest extends TestCase
 
     private static function readFactory(CurlMultiHandler $handler): CurlFactory
     {
-        $readFactory = \Closure::bind(static function (CurlMultiHandler $handler) {
+        $readFactory = \Closure::bind(static function (CurlMultiHandler $handler): CurlFactory {
             return $handler->factory;
         }, null, CurlMultiHandler::class);
 

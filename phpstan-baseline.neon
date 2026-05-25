@@ -79,18 +79,6 @@ parameters:
 			path: src/Handler/CurlHandler.php
 
 		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:__get\(\) has invalid return type CurlMultiHandle\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:__get\(\) never returns CurlMultiHandle so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
 			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 5
@@ -151,19 +139,19 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh \(CurlMultiHandle\|resource\) in isset\(\) is not nullable\.$#'
-			identifier: isset.property
+			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:getMultiHandle\(\) has invalid return type CurlMultiHandle\.$#'
+			identifier: class.notFound
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh \(CurlMultiHandle\|resource\) is never assigned CurlMultiHandle so it can be removed from the property type\.$#'
+			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$multiHandle \(CurlMultiHandle\|resource\|null\) is never assigned CurlMultiHandle so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh has unknown class CurlMultiHandle as its type\.$#'
+			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$multiHandle has unknown class CurlMultiHandle as its type\.$#'
 			identifier: class.notFound
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
@@ -179,12 +167,6 @@ parameters:
 			identifier: class.notFound
 			count: 1
 			path: src/Handler/EasyHandle.php
-
-		-
-			message: '#^Variable \$options in empty\(\) always exists and is not falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/Handler/StreamHandler.php
 
 		-
 			message: '#^Call to function is_callable\(\) with callable\(callable&THandler\)\: \(callable&THandler\) will always evaluate to true\.$#'

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp;
 
 use Psr\Http\Message\MessageInterface;
@@ -49,7 +51,7 @@ final class MessageFormatter implements MessageFormatterInterface
     /**
      * @var string Template used to format log messages
      */
-    private $template;
+    private string $template;
 
     /**
      * @param string $template Log message template

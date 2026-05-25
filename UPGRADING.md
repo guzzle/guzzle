@@ -230,6 +230,11 @@ Destructor cleanup remains best-effort and does not reject pending promises.
 A custom `handle_factory` passed to a built-in cURL handler remains caller-owned.
 Closing the handler does not close an injected factory.
 
+Direct magic access to `CurlMultiHandler::$_mh` has been removed. This was an
+undocumented internal lazy cURL multi handle. Applications that used it to set
+`CURLMOPT_*` options should pass those values through the `options` key of the
+`CurlMultiHandler` constructor.
+
 #### Callback semantics
 
 If you use the `progress` request option with the built-in cURL handlers, audit
@@ -245,9 +250,10 @@ The stream handler still ignores `progress` return values.
 
 Exceptions thrown by `on_stats` remain unwrapped, so existing catch logic for
 `on_stats` exceptions does not need to change. The built-in cURL handlers now
-release native easy handles before invoking `on_stats`. Raw callbacks passed
-through the `curl` request option remain low-level cURL callbacks and are not
-normalized by Guzzle.
+release native easy handles before invoking `on_stats`. Built-in handlers now
+reject non-callable `on_stats` values before starting the transfer. Raw callbacks
+passed through the `curl` request option remain low-level cURL callbacks and are
+not normalized by Guzzle.
 
 The `on_headers` request option callback now receives the request as its second
 argument. Existing userland callbacks that accept only the response continue to
@@ -381,6 +387,15 @@ declare strict types will throw `TypeError` for non-boolean values.
 
 `SetCookie::getExpires()` now returns `int|null`. Invalid textual expiration
 dates are treated as `null`.
+
+#### IDN conversion option types
+
+The `idn_conversion` request option must be `true`, `false`, `null`, or an
+integer `IDNA_*` bitmask. Numeric strings and floats that previously worked
+through PHP scalar coercion are no longer accepted.
+
+Integer `0` remains a valid option bitmask. Use `false` or `null` to disable IDN
+conversion.
 
 #### Generic Promise And Structured PHPDoc Types
 
@@ -516,6 +531,9 @@ response that triggered the retry when one exists, and the request being retried
 One-argument callbacks are now called with only the retry count, which also
 allows internal PHP functions with a single-argument signature.
 
+The seeded `retries` request option must be an integer. Delay callbacks must
+return an integer number of milliseconds.
+
 #### Logging middleware formatter types
 
 `GuzzleHttp\MessageFormatter` is now final. Applications that extended
@@ -559,6 +577,31 @@ Applications that extended `CurlFactory` should implement
 `CurlHandler`, `CurlMultiHandler`, `MockHandler`, or `StreamHandler` should use
 composition instead: wrap a handler instance in a custom callable or provide a
 custom handler rather than subclassing the built-in handler.
+
+#### Custom cURL handle factories
+
+Custom `GuzzleHttp\Handler\CurlFactoryInterface` implementations that create or
+mutate `GuzzleHttp\Handler\EasyHandle` instances must assign values compatible
+with EasyHandle's documented public property types. Several EasyHandle
+bookkeeping properties now use native property types, so assigning incompatible
+values to those properties raises `TypeError`.
+
+Custom factories must assign the request and sink state before returning an
+EasyHandle to Guzzle because those properties are required typed invariants.
+Reading them before assignment raises PHP's uninitialized typed-property `Error`.
+
+The native cURL handle properties intentionally remain untyped because PHP 7.4
+represents cURL handles as resources while PHP 8 represents them as cURL handle
+objects. Custom factories must still unset `$easy->handle` when releasing an easy
+handle, as required by `CurlFactoryInterface::release()`.
+
+#### Progress callback parameter types
+
+The built-in handlers now pass integer byte counts to `progress` callbacks.
+Callbacks with `int` parameter types continue to work, and callbacks with `float`
+parameter types can still receive integer byte counts in PHP. If a callback used
+other scalar parameter types, update it to accept integers or remove the scalar
+parameter declarations.
 
 #### CurlMultiHandler select timeout
 

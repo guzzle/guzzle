@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJarInterface;
@@ -30,7 +32,7 @@ final class Middleware
     public static function cookies(): callable
     {
         return static function (callable $handler): callable {
-            return static function ($request, array $options) use ($handler): PromiseInterface {
+            return static function (RequestInterface $request, array $options) use ($handler): PromiseInterface {
                 if (empty($options['cookies'])) {
                     return $handler($request, $options);
                 } elseif (!$options['cookies'] instanceof CookieJarInterface) {
@@ -62,7 +64,7 @@ final class Middleware
     public static function httpErrors(?BodySummarizerInterface $bodySummarizer = null): callable
     {
         return static function (callable $handler) use ($bodySummarizer): callable {
-            return static function ($request, array $options) use ($handler, $bodySummarizer): PromiseInterface {
+            return static function (RequestInterface $request, array $options) use ($handler, $bodySummarizer): PromiseInterface {
                 if (empty($options['http_errors'])) {
                     return $handler($request, $options);
                 }
@@ -98,7 +100,7 @@ final class Middleware
         return static function (callable $handler) use (&$container): callable {
             return static function (RequestInterface $request, array $options) use ($handler, &$container): PromiseInterface {
                 return $handler($request, $options)->then(
-                    static function ($value) use ($request, &$container, $options): ResponseInterface {
+                    static function (ResponseInterface $value) use ($request, &$container, $options): ResponseInterface {
                         $container[] = [
                             'request' => $request,
                             'response' => $value,
@@ -203,7 +205,7 @@ final class Middleware
         return static function (callable $handler) use ($logger, $formatter, $logLevel): callable {
             return static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel): PromiseInterface {
                 return $handler($request, $options)->then(
-                    static function ($response) use ($logger, $request, $formatter, $logLevel): ResponseInterface {
+                    static function (ResponseInterface $response) use ($logger, $request, $formatter, $logLevel): ResponseInterface {
                         $message = $formatter->format($request, $response);
                         $logger->log($logLevel, $message);
 

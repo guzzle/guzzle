@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
@@ -27,27 +29,21 @@ final class CurlFactory implements CurlFactoryInterface
     /**
      * @var resource[]|\CurlHandle[]
      */
-    private $handles = [];
+    private array $handles = [];
 
     /**
      * @var int Total number of idle handles to keep in cache
      */
-    private $maxHandles;
+    private int $maxHandles;
 
-    /**
-     * @var bool
-     */
-    private $closed = false;
+    private bool $closed = false;
 
     /**
      * @var resource|\CurlShareHandle|\CurlSharePersistentHandle|null
      */
     private $shareHandle;
 
-    /**
-     * @var string
-     */
-    private $shareMode;
+    private string $shareMode;
 
     /**
      * @param int                                                       $maxHandles  Maximum number of idle handles.
@@ -124,6 +120,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         self::rejectUnsupportedRequestOptions($options);
+        self::assertOnStatsCallable($options);
         $this->rejectRequestLevelShareConflict($options);
         $this->rejectPersistentRequireConnectionReuseConflicts($options);
         self::rejectConflictingCurlOptions($options);
@@ -313,6 +310,13 @@ final class CurlFactory implements CurlFactoryInterface
 
         if (\array_key_exists('stream_context', $options)) {
             throw new \InvalidArgumentException('Passing the "stream_context" request option to a cURL handler is not supported because cURL handlers ignore PHP stream context options.');
+        }
+    }
+
+    private static function assertOnStatsCallable(array $options): void
+    {
+        if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
+            throw new \InvalidArgumentException('on_stats must be callable');
         }
     }
 
@@ -587,7 +591,7 @@ final class CurlFactory implements CurlFactoryInterface
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory, ?TransferStats $stats, $onStats): PromiseInterface
+    private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory, ?TransferStats $stats, ?callable $onStats): PromiseInterface
     {
         // Get error information and release the handle to the factory.
         $ctx = self::createErrorContext($easy);
@@ -1031,7 +1035,7 @@ final class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body): string {
+            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, int $length) use ($body): string {
                 return $body->read($length);
             };
         }
@@ -1171,7 +1175,7 @@ final class CurlFactory implements CurlFactoryInterface
             $sink = new LazyOpenStream($sink, 'w+');
         }
         $easy->sink = $sink;
-        $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, $write) use ($sink): int {
+        $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, string $write) use ($sink): int {
             return $sink->write($write);
         };
 
@@ -1337,11 +1341,11 @@ final class CurlFactory implements CurlFactoryInterface
             if (!\is_callable($progress)) {
                 throw new \InvalidArgumentException('progress client option must be callable');
             }
-            /** @var callable(int|float, int|float, int|float, int|float): mixed $progress */
+            /** @var callable(int, int, int, int): mixed $progress */
             $conf[\CURLOPT_NOPROGRESS] = false;
             $progressCallback = static function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($easy, $progress): int {
                 try {
-                    if ($progress($downloadSize, $downloaded, $uploadSize, $uploaded)) {
+                    if ($progress((int) $downloadSize, (int) $downloaded, (int) $uploadSize, (int) $uploaded)) {
                         $easy->progressAborted = true;
 
                         return 1;
@@ -1429,7 +1433,9 @@ final class CurlFactory implements CurlFactoryInterface
             $onHeaders = null;
         }
 
-        return static function ($ch, $h) use (
+        $startingResponse = false;
+
+        return static function ($ch, string $h) use (
             $onHeaders,
             $easy,
             &$startingResponse

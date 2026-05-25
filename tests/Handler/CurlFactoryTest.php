@@ -600,6 +600,16 @@ class CurlFactoryTest extends TestCase
         );
     }
 
+    public function testRejectsNonCallableOnStats(): void
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('on_stats must be callable');
+
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['on_stats' => false]);
+    }
+
     public function testValidatesVerify(): void
     {
         $f = new CurlFactory(3);
@@ -1344,7 +1354,7 @@ class CurlFactoryTest extends TestCase
         $f = new CurlFactory(3);
         $called = [];
         $easy = $f->create(new Psr7\Request('GET', Server::$url), [
-            'progress' => static function ($downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes) use (&$called): bool {
+            'progress' => static function (int $downloadTotal, int $downloadedBytes, int $uploadTotal, int $uploadedBytes) use (&$called): bool {
                 $called = [$downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes];
 
                 return $downloadedBytes > 0;
@@ -1354,12 +1364,14 @@ class CurlFactoryTest extends TestCase
         try {
             $callback = $_SERVER['_curl'][self::progressCallbackOption()];
 
-            self::assertSame(0, $callback($easy->handle, 10, 0, 2, 0));
+            self::assertSame(0, $callback($easy->handle, 10.0, 0.0, 2.0, 0.0));
             self::assertFalse($easy->progressAborted);
+            self::assertNull($easy->progressException);
             self::assertSame([10, 0, 2, 0], $called);
 
-            self::assertSame(1, $callback($easy->handle, 10, 1, 2, 0));
+            self::assertSame(1, $callback($easy->handle, 10.0, 1.0, 2.0, 0.0));
             self::assertTrue($easy->progressAborted);
+            self::assertNull($easy->progressException);
             self::assertSame([10, 1, 2, 0], $called);
         } finally {
             $f->release($easy);
@@ -2259,23 +2271,14 @@ class CurlFactoryTest extends TestCase
      */
     public function testCreatesConnectExceptionForConnectionErrors(int $errno): void
     {
-        $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
-
-        if (PHP_VERSION_ID < 80100) {
-            $m->setAccessible(true);
-        }
-
         $factory = new CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
         $easy->errno = $errno;
-        $response = $m->invoke(
-            null,
+        $response = CurlFactory::finish(
             static function (): void {
             },
             $easy,
-            $factory,
-            null,
-            null
+            $factory
         );
 
         try {
@@ -2372,24 +2375,15 @@ class CurlFactoryTest extends TestCase
 
     public function testCreatesTimeoutException(): void
     {
-        $m = new \ReflectionMethod(CurlFactory::class, 'finishError');
-
-        if (PHP_VERSION_ID < 80100) {
-            $m->setAccessible(true);
-        }
-
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
         $easy = $factory->create($request, []);
         $easy->errno = \CURLE_OPERATION_TIMEOUTED;
-        $response = $m->invoke(
-            null,
+        $response = CurlFactory::finish(
             static function (): void {
             },
             $easy,
-            $factory,
-            null,
-            null
+            $factory
         );
 
         try {

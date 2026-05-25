@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise as P;
@@ -42,7 +44,7 @@ class RetryMiddleware
         $this->decider = $decider;
         $this->nextHandler = $nextHandler;
         $this->delay = $delay ?: static function (int $retries): int {
-            return (int) 2 ** ($retries - 1) * 1000;
+            return (int) ((2 ** ($retries - 1)) * 1000);
         };
     }
 
@@ -53,6 +55,8 @@ class RetryMiddleware
     {
         if (!isset($options['retries'])) {
             $options['retries'] = 0;
+        } elseif (!\is_int($options['retries'])) {
+            throw new \InvalidArgumentException('retries must be an integer');
         }
 
         /** @var PromiseInterface<ResponseInterface, mixed> */

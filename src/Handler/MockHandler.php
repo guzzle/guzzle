@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\RequestException;
@@ -20,17 +22,14 @@ final class MockHandler implements \Countable
     /**
      * @var list<ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>|callable(RequestInterface, array<array-key, mixed>): (ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>)>
      */
-    private $queue = [];
+    private array $queue = [];
 
-    /**
-     * @var RequestInterface|null
-     */
-    private $lastRequest;
+    private ?RequestInterface $lastRequest = null;
 
     /**
      * @var array<array-key, mixed>
      */
-    private $lastOptions = [];
+    private array $lastOptions = [];
 
     /**
      * @var (callable(ResponseInterface|null): mixed)|null
@@ -86,7 +85,11 @@ final class MockHandler implements \Countable
         }
 
         if (isset($options['delay']) && \is_numeric($options['delay'])) {
-            \usleep((int) $options['delay'] * 1000);
+            \usleep((int) ($options['delay'] * 1000));
+        }
+
+        if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
+            throw new \InvalidArgumentException('on_stats must be callable');
         }
 
         $this->lastRequest = $request;
@@ -133,7 +136,7 @@ final class MockHandler implements \Countable
         }
 
         $promise = $response->then(
-            function ($value) use ($request, $options) {
+            function ($value) use ($request, $options): ?ResponseInterface {
                 /** @var ResponseInterface|null $value */
                 $this->invokeStats($request, $options, $value);
                 if ($this->onFulfilled) {
@@ -229,8 +232,12 @@ final class MockHandler implements \Countable
         $reason = null
     ): void {
         if (isset($options['on_stats'])) {
-            $transferTime = $options['transfer_time'] ?? 0;
-            $stats = new TransferStats($request, $response, $transferTime, $reason);
+            $transferTime = $options['transfer_time'] ?? 0.0;
+            if (!\is_int($transferTime) && !\is_float($transferTime) && (!\is_string($transferTime) || !\is_numeric($transferTime))) {
+                throw new \InvalidArgumentException('transfer_time must be a number of seconds');
+            }
+
+            $stats = new TransferStats($request, $response, (float) $transferTime, $reason);
             ($options['on_stats'])($stats);
         }
     }

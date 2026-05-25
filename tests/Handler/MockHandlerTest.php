@@ -143,7 +143,7 @@ class MockHandlerTest extends TestCase
     {
         $response = new Response(201);
         $mock = new MockHandler([
-            static function () use ($response) {
+            static function () use ($response): PromiseInterface {
                 return Create::promiseFor($response);
             },
         ]);
@@ -454,6 +454,16 @@ class MockHandlerTest extends TestCase
         self::assertSame($request, $stats->getRequest());
     }
 
+    public function testRejectsNonCallableOnStats(): void
+    {
+        $mock = new MockHandler([new Response()]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('on_stats must be callable');
+
+        $mock(new Request('GET', 'http://example.com'), ['on_stats' => false])->wait();
+    }
+
     public function testInvokesOnStatsFunctionForError(): void
     {
         $e = new \Exception('a');
@@ -488,6 +498,20 @@ class MockHandlerTest extends TestCase
         };
         $mock($request, ['on_stats' => $onStats, 'transfer_time' => 0.4])->wait(false);
         self::assertEquals(0.4, $stats->getTransferTime());
+    }
+
+    public function testTransferTimeAcceptsNumericString(): void
+    {
+        $e = new \Exception('a');
+        $mock = new MockHandler([$e]);
+        $request = new Request('GET', 'http://example.com');
+        $stats = null;
+        $onStats = static function (TransferStats $s) use (&$stats): void {
+            $stats = $s;
+        };
+        $mock($request, ['on_stats' => $onStats, 'transfer_time' => '0.4'])->wait(false);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertSame(0.4, $stats->getTransferTime());
     }
 
     public function testResetQueue(): void

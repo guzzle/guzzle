@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Promise\PromiseInterface;
@@ -15,25 +17,13 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class CurlHandler
 {
-    /**
-     * @var CurlFactoryInterface
-     */
-    private $factory;
+    private CurlFactoryInterface $factory;
 
-    /**
-     * @var bool
-     */
-    private $ownsFactory;
+    private bool $ownsFactory;
 
-    /**
-     * @var bool
-     */
-    private $closed = false;
+    private bool $closed = false;
 
-    /**
-     * @var CurlShareHandleState|null
-     */
-    private $shareHandleState;
+    private ?CurlShareHandleState $shareHandleState;
 
     /**
      * Accepts an associative array of options:
@@ -69,7 +59,7 @@ final class CurlHandler
         $this->assertOpen();
 
         if (isset($options['delay'])) {
-            \usleep($options['delay'] * 1000);
+            \usleep((int) ($options['delay'] * 1000));
         }
 
         $easy = $this->factory->create($request, $options);

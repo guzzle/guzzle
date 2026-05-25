@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
@@ -297,6 +299,28 @@ final class Utils
         }
 
         return $milliseconds;
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @internal
+     */
+    public static function normalizeIdnConversionOption($value): ?int
+    {
+        if ($value === null || $value === false) {
+            return null;
+        }
+
+        if ($value === true) {
+            return \IDNA_DEFAULT;
+        }
+
+        if (\is_int($value)) {
+            return $value;
+        }
+
+        throw new InvalidArgumentException('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
     }
 
     /**

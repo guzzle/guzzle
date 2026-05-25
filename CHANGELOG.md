@@ -23,11 +23,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Adjusted `guzzlehttp/psr7` version constraint to `^3.0`
 - Quote multipart `Content-Type` boundary parameters when required
 - Added parameter and return types to `SetCookie` methods
+- Added native property types to supported public cURL handler state properties
 - Added `string` return types to `__toString()` methods
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Normalize no-proxy domain and IP literal matching consistently
 - Pass the request as the second argument to `on_headers` callbacks
 - Pass the `Pool` iterable key as the third argument to `on_headers` callbacks when sending requests via `Pool`
+- Declare strict types across remaining source files
+- Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use
 - Reject invalid `SetCookie` constructor field types instead of coercing them
 - Reject conflicting raw cURL request options, including request-level `CURLOPT_SHARE`
 - Reject selected request options ignored by incompatible built-in handlers
@@ -53,6 +56,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers
 - Avoid stale authenticated proxy tunnels on affected libcurl versions
 - Allow built-in cURL handler `progress` callbacks to abort transfers with truthy return values
+- Normalize built-in handler `progress` callback arguments to integer byte counts
 - Reject built-in cURL handler `progress` callback throwables with `RequestException`
 - Release built-in cURL easy handles before invoking `on_stats`
 - Prefer `CURLOPT_XFERINFOFUNCTION` for built-in cURL progress callbacks when available
@@ -65,6 +69,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Dropped support for PHP 7.2 and 7.3
 - Removed support for the `GUZZLE_CURL_SELECT_TIMEOUT` environment variable; use `CurlMultiHandler`'s `select_timeout` option
+- Removed direct access to `CurlMultiHandler::$_mh`; pass `CURLMOPT_*` values through constructor `options` instead
 - Removed `RedirectMiddleware::$defaultSettings`; use `RedirectMiddleware::DEFAULT_SETTINGS`
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
@@ -92,6 +97,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
 - Deprecated conflicting raw cURL request options, including `CURLOPT_SHARE`, which will be rejected in 8.0
+- Deprecated scalar-coerced `idn_conversion` request option values, which will be rejected in 8.0
 - Deprecated selected request options ignored by incompatible built-in handlers, which will be rejected in 8.0
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 

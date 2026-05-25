@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
@@ -24,7 +26,7 @@ class HandlerStack
     /**
      * @var array<int, array{0: callable(callable&THandler): (callable&THandler), 1: string|null}>
      */
-    private $stack = [];
+    private array $stack = [];
 
     /**
      * @var (callable&THandler)|null
@@ -192,7 +194,7 @@ class HandlerStack
             $count = \count($this->stack);
             $this->stack = \array_values(\array_filter(
                 $this->stack,
-                static function ($tuple) use ($remove): bool {
+                static function (array $tuple) use ($remove): bool {
                     return $tuple[1] !== $remove;
                 }
             ));
@@ -204,7 +206,7 @@ class HandlerStack
 
         $this->stack = \array_values(\array_filter(
             $this->stack,
-            static function ($tuple) use ($remove): bool {
+            static function (array $tuple) use ($remove): bool {
                 return $tuple[0] !== $remove;
             }
         ));
@@ -272,9 +274,9 @@ class HandlerStack
     /**
      * Provides a debug string for a given callable.
      *
-     * @param callable|string $fn Function to write as a string.
+     * @param callable $fn Function to write as a string.
      */
-    private function debugCallable($fn): string
+    private function debugCallable(callable $fn): string
     {
         if (\is_string($fn)) {
             return "callable({$fn})";
@@ -286,7 +288,7 @@ class HandlerStack
                 : "callable(['".\get_class($fn[0])."', '{$fn[1]}'])";
         }
 
-        /** @var object $fn */
+        /** @var callable&object $fn */
         return 'callable('.\spl_object_hash($fn).')';
     }
 }
