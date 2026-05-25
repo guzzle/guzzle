@@ -613,7 +613,7 @@ $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' =>
 // The domain part (яндекс.рф) stays unmodified
 ```
 
-Enables/disables IDN support, can also be used for precise control by combining `IDNA_*` constants (except `IDNA_ERROR_*`), see the `$options` parameter in the [idn_to_ascii()](https://www.php.net/manual/en/function.idn-to-ascii.php) documentation for more details. Numeric strings and floats are not supported.
+Enables/disables IDN support, can also be used for precise control by combining `IDNA_*` constants (except `IDNA_ERROR_*`), see the `$options` parameter in the [idn_to_ascii()](https://www.php.net/manual/en/function.idn-to-ascii.php) documentation for more details.
 
 ## json
 

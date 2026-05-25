@@ -268,10 +268,8 @@ $response = $client->request('GET', 'https://example.com', [
 ]);
 ```
 
-The `retries` option must be an integer.
-
-If you do not provide a delay callback, the middleware uses an exponential
-backoff delay. When a retry is scheduled, the middleware writes the computed wait
+The `retries` option must be an integer. If you do not provide a delay callback,
+the middleware uses an exponential backoff delay and writes the computed wait
 time in milliseconds to the `delay` request option before invoking the next
 attempt. Delay callbacks must return an integer number of milliseconds.
 
