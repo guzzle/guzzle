@@ -613,7 +613,7 @@ $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' =>
 // The domain part (яндекс.рф) stays unmodified
 ```
 
-Enables/disables IDN support, can also be used for precise control by combining `IDNA_*` constants (except `IDNA_ERROR_*`), see the `$options` parameter in the [idn_to_ascii()](https://www.php.net/manual/en/function.idn-to-ascii.php) documentation for more details.
+Enables/disables IDN support, can also be used for precise control by combining `IDNA_*` constants (except `IDNA_ERROR_*`), see the `$options` parameter in the [idn_to_ascii()](https://www.php.net/manual/en/function.idn-to-ascii.php) documentation for more details. Numeric strings and floats are not supported.
 
 ## json
 
@@ -748,7 +748,7 @@ Types
 Constant
 `GuzzleHttp\RequestOptions::ON_STATS`
 
-The callable accepts a `GuzzleHttp\TransferStats` object.
+The callable accepts a `GuzzleHttp\TransferStats` object. Built-in handlers reject non-callable `on_stats` values before starting the transfer.
 
 Exceptions thrown by `on_stats` are not wrapped by Guzzle and may escape from the handler wait path. With the built-in cURL handlers, native cURL handles are released before `on_stats` is invoked. cURL handlers emit `on_stats` per low-level transfer attempt, so retries may invoke it more than once for one logical request.
 

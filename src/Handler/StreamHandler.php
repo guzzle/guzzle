@@ -65,6 +65,10 @@ final class StreamHandler
             throw new RequestException(sprintf('HTTP/%s is not supported by the stream handler.', $protocolVersion), $request);
         }
 
+        if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
+            throw new \InvalidArgumentException('on_stats must be callable');
+        }
+
         $startTime = isset($options['on_stats']) ? Utils::currentTime() : null;
 
         self::rejectUnsupportedRequestOptions($request, $options);

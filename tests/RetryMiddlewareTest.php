@@ -114,6 +114,21 @@ class RetryMiddlewareTest extends TestCase
         self::assertSame(200, $p->wait()->getStatusCode());
     }
 
+    public function testRejectsNonIntegerRetriesOption(): void
+    {
+        $decider = static function (int $retries): bool {
+            return false;
+        };
+        $m = Middleware::retry($decider);
+        $h = new MockHandler([new Response(200)]);
+        $c = new Client(['handler' => $m($h)]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('retries must be an integer');
+
+        $c->send(new Request('GET', 'http://test.com'), ['retries' => '0']);
+    }
+
     public function testCanRetryExceptions(): void
     {
         $calls = [];

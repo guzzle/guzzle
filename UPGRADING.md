@@ -245,9 +245,10 @@ The stream handler still ignores `progress` return values.
 
 Exceptions thrown by `on_stats` remain unwrapped, so existing catch logic for
 `on_stats` exceptions does not need to change. The built-in cURL handlers now
-release native easy handles before invoking `on_stats`. Raw callbacks passed
-through the `curl` request option remain low-level cURL callbacks and are not
-normalized by Guzzle.
+release native easy handles before invoking `on_stats`. Built-in handlers now
+reject non-callable `on_stats` values before starting the transfer. Raw callbacks
+passed through the `curl` request option remain low-level cURL callbacks and are
+not normalized by Guzzle.
 
 The `on_headers` request option callback now receives the request as its second
 argument. Existing userland callbacks that accept only the response continue to
@@ -368,6 +369,11 @@ options, while the stream handler rejects cURL-only options it cannot honor.
 Guzzle 8 adds native parameter and return types where PHP 7.4 allows. Code
 overriding affected methods must update method signatures accordingly.
 
+More Guzzle source files now declare `strict_types=1`. Calls from application
+files that do not declare strict types continue to use PHP's normal weak-call
+behavior when calling Guzzle public APIs. Calls made by Guzzle into custom
+callbacks, middleware, handlers, and helper APIs now use strict scalar typing.
+
 `HandlerStack::__toString()` and `SetCookie::__toString()` now return `string`.
 
 `HandlerStack::remove()` now throws `TypeError` when passed a value that is
@@ -381,6 +387,15 @@ declare strict types will throw `TypeError` for non-boolean values.
 
 `SetCookie::getExpires()` now returns `int|null`. Invalid textual expiration
 dates are treated as `null`.
+
+#### IDN conversion option types
+
+The `idn_conversion` request option must be `true`, `false`, `null`, or an
+integer `IDNA_*` bitmask. Numeric strings and floats that previously worked
+through PHP scalar coercion are no longer accepted.
+
+Integer `0` remains a valid option bitmask. Use `false` or `null` to disable IDN
+conversion.
 
 #### Generic Promise And Structured PHPDoc Types
 
@@ -515,6 +530,9 @@ Callbacks that accept three arguments continue to receive the retry count, the
 response that triggered the retry when one exists, and the request being retried.
 One-argument callbacks are now called with only the retry count, which also
 allows internal PHP functions with a single-argument signature.
+
+The seeded `retries` request option must be an integer. Delay callbacks must
+return an integer number of milliseconds.
 
 #### Logging middleware formatter types
 

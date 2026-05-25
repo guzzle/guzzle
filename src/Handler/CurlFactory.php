@@ -126,6 +126,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         self::rejectUnsupportedRequestOptions($options);
+        self::assertOnStatsCallable($options);
         $this->rejectRequestLevelShareConflict($options);
         $this->rejectPersistentRequireConnectionReuseConflicts($options);
         self::rejectConflictingCurlOptions($options);
@@ -315,6 +316,13 @@ final class CurlFactory implements CurlFactoryInterface
 
         if (\array_key_exists('stream_context', $options)) {
             throw new \InvalidArgumentException('Passing the "stream_context" request option to a cURL handler is not supported because cURL handlers ignore PHP stream context options.');
+        }
+    }
+
+    private static function assertOnStatsCallable(array $options): void
+    {
+        if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
+            throw new \InvalidArgumentException('on_stats must be callable');
         }
     }
 

@@ -91,6 +91,10 @@ final class MockHandler implements \Countable
             \usleep((int) ($options['delay'] * 1000));
         }
 
+        if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
+            throw new \InvalidArgumentException('on_stats must be callable');
+        }
+
         $this->lastRequest = $request;
         $this->lastOptions = $options;
         $response = \array_shift($this->queue);
