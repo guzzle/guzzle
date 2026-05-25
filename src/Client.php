@@ -583,7 +583,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param string|null $option The config option to retrieve.
      *
-     * @return mixed
+     * @return ($option is null ? array<string, mixed> : mixed)
      */
     public function getConfig(?string $option = null)
     {
