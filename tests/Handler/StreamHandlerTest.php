@@ -417,16 +417,15 @@ class StreamHandlerTest extends TestCase
     {
         $handler = new StreamHandler();
         $request = new Request('GET', $uri);
-        $options = ['http' => []];
-        $params = [];
-        $method = new \ReflectionMethod(StreamHandler::class, 'add_proxy');
+        $context = ['http' => []];
+        $method = new \ReflectionMethod(StreamHandler::class, 'applyProxyOption');
         if (\PHP_VERSION_ID < 80100) {
             $method->setAccessible(true);
         }
 
-        $method->invokeArgs($handler, [$request, &$options, $proxy, &$params]);
+        $method->invokeArgs($handler, [$request, &$context, $proxy]);
 
-        return $options;
+        return $context;
     }
 
     private function applyDefaultTlsMinimum(string $uri, array $context): array
@@ -750,17 +749,16 @@ class StreamHandlerTest extends TestCase
     {
         $path = __FILE__;
         $handler = new StreamHandler();
-        $options = [];
-        $params = [];
-        $method = new \ReflectionMethod(StreamHandler::class, 'add_cert');
+        $context = [];
+        $method = new \ReflectionMethod(StreamHandler::class, 'applyCertOption');
         if (\PHP_VERSION_ID < 80100) {
             $method->setAccessible(true);
         }
 
-        $method->invokeArgs($handler, [new Request('GET', 'http://example.com'), &$options, [$path], &$params]);
+        $method->invokeArgs($handler, [&$context, [$path]]);
 
-        self::assertSame($path, $options['ssl']['local_cert']);
-        self::assertArrayNotHasKey('passphrase', $options['ssl']);
+        self::assertSame($path, $context['ssl']['local_cert']);
+        self::assertArrayNotHasKey('passphrase', $context['ssl']);
     }
 
     public function testCanSetCertTypeToPem(): void
@@ -825,17 +823,16 @@ class StreamHandlerTest extends TestCase
     {
         $path = __FILE__;
         $handler = new StreamHandler();
-        $options = [];
-        $params = [];
-        $method = new \ReflectionMethod(StreamHandler::class, 'add_ssl_key');
+        $context = [];
+        $method = new \ReflectionMethod(StreamHandler::class, 'applySslKeyOption');
         if (\PHP_VERSION_ID < 80100) {
             $method->setAccessible(true);
         }
 
-        $method->invokeArgs($handler, [new Request('GET', 'http://example.com'), &$options, [$path], &$params]);
+        $method->invokeArgs($handler, [&$context, [$path]]);
 
-        self::assertSame($path, $options['ssl']['local_pk']);
-        self::assertArrayNotHasKey('passphrase', $options['ssl']);
+        self::assertSame($path, $context['ssl']['local_pk']);
+        self::assertArrayNotHasKey('passphrase', $context['ssl']);
     }
 
     public function testCanSetSslKeyTypeToPem(): void
