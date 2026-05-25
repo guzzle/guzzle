@@ -14,25 +14,13 @@ use Psr\Http\Message\UriInterface;
  */
 final class TransferStats
 {
-    /**
-     * @var RequestInterface
-     */
-    private $request;
+    private RequestInterface $request;
 
-    /**
-     * @var ResponseInterface|null
-     */
-    private $response;
+    private ?ResponseInterface $response;
 
-    /**
-     * @var float|null
-     */
-    private $transferTime;
+    private ?float $transferTime;
 
-    /**
-     * @var array
-     */
-    private $handlerStats;
+    private array $handlerStats;
 
     /**
      * @var mixed|null
