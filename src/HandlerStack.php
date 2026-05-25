@@ -26,7 +26,7 @@ class HandlerStack
     /**
      * @var array<int, array{0: callable(callable&THandler): (callable&THandler), 1: string|null}>
      */
-    private $stack = [];
+    private array $stack = [];
 
     /**
      * @var (callable&THandler)|null

@@ -24,15 +24,9 @@ use Psr\Http\Message\UriInterface;
  */
 final class StreamHandler
 {
-    /**
-     * @var array
-     */
-    private $lastHeaders = [];
+    private array $lastHeaders = [];
 
-    /**
-     * @var \Throwable|null
-     */
-    private $onStatsException;
+    private ?\Throwable $onStatsException = null;
 
     /**
      * Sends an HTTP request.
