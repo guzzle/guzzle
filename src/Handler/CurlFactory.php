@@ -29,27 +29,21 @@ final class CurlFactory implements CurlFactoryInterface
     /**
      * @var resource[]|\CurlHandle[]
      */
-    private $handles = [];
+    private array $handles = [];
 
     /**
      * @var int Total number of idle handles to keep in cache
      */
-    private $maxHandles;
+    private int $maxHandles;
 
-    /**
-     * @var bool
-     */
-    private $closed = false;
+    private bool $closed = false;
 
     /**
      * @var resource|\CurlShareHandle|\CurlSharePersistentHandle|null
      */
     private $shareHandle;
 
-    /**
-     * @var string
-     */
-    private $shareMode;
+    private string $shareMode;
 
     /**
      * @param int                                                       $maxHandles  Maximum number of idle handles.

@@ -17,25 +17,13 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class CurlHandler
 {
-    /**
-     * @var CurlFactoryInterface
-     */
-    private $factory;
+    private CurlFactoryInterface $factory;
 
-    /**
-     * @var bool
-     */
-    private $ownsFactory;
+    private bool $ownsFactory;
 
-    /**
-     * @var bool
-     */
-    private $closed = false;
+    private bool $closed = false;
 
-    /**
-     * @var CurlShareHandleState|null
-     */
-    private $shareHandleState;
+    private ?CurlShareHandleState $shareHandleState;
 
     /**
      * Accepts an associative array of options:
