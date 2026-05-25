@@ -22,17 +22,14 @@ final class MockHandler implements \Countable
     /**
      * @var list<ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>|callable(RequestInterface, array<array-key, mixed>): (ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>)>
      */
-    private $queue = [];
+    private array $queue = [];
 
-    /**
-     * @var RequestInterface|null
-     */
-    private $lastRequest;
+    private ?RequestInterface $lastRequest = null;
 
     /**
      * @var array<array-key, mixed>
      */
-    private $lastOptions = [];
+    private array $lastOptions = [];
 
     /**
      * @var (callable(ResponseInterface|null): mixed)|null
