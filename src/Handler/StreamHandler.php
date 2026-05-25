@@ -343,7 +343,7 @@ final class StreamHandler
     private function createResource(callable $callback)
     {
         $errors = [];
-        \set_error_handler(static function ($_, $msg, $file, $line) use (&$errors): bool {
+        \set_error_handler(static function (int $_, string $msg, string $file, int $line) use (&$errors): bool {
             $errors[] = [
                 'message' => $msg,
                 'file' => $file,

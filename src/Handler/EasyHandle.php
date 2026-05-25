@@ -112,11 +112,9 @@ final class EasyHandle
     }
 
     /**
-     * @param string $name
-     *
      * @throws \BadMethodCallException
      */
-    public function __get($name): void
+    public function __get(string $name): void
     {
         $msg = $name === 'handle' ? 'The EasyHandle has been released' : 'Invalid property: '.$name;
         throw new \BadMethodCallException($msg);
