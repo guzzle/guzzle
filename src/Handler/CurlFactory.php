@@ -597,7 +597,7 @@ final class CurlFactory implements CurlFactoryInterface
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory, ?TransferStats $stats, $onStats): PromiseInterface
+    private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory, ?TransferStats $stats, ?callable $onStats): PromiseInterface
     {
         // Get error information and release the handle to the factory.
         $ctx = self::createErrorContext($easy);
@@ -1041,7 +1041,7 @@ final class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body): string {
+            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, int $length) use ($body): string {
                 return $body->read($length);
             };
         }
@@ -1181,7 +1181,7 @@ final class CurlFactory implements CurlFactoryInterface
             $sink = new LazyOpenStream($sink, 'w+');
         }
         $easy->sink = $sink;
-        $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, $write) use ($sink): int {
+        $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, string $write) use ($sink): int {
             return $sink->write($write);
         };
 
@@ -1439,7 +1439,9 @@ final class CurlFactory implements CurlFactoryInterface
             $onHeaders = null;
         }
 
-        return static function ($ch, $h) use (
+        $startingResponse = false;
+
+        return static function ($ch, string $h) use (
             $onHeaders,
             $easy,
             &$startingResponse
