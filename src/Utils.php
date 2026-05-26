@@ -262,7 +262,6 @@ EOT
                 throw new InvalidArgumentException('protocols must contain only strings');
             }
 
-            $protocol = \strtolower($protocol);
             if ($protocol !== 'http' && $protocol !== 'https') {
                 throw new InvalidArgumentException('protocols may only contain "http" and "https"');
             }

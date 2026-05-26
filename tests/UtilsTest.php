@@ -156,6 +156,19 @@ class UtilsTest extends TestCase
         self::assertSame($expected, Utils::normalizeHeaderKeys($input));
     }
 
+    public function testNormalizeProtocolsAcceptsLowercaseProtocols()
+    {
+        self::assertSame(['http', 'https'], Utils::normalizeProtocols(['http', 'https', 'http']));
+    }
+
+    public function testNormalizeProtocolsRejectsUppercaseProtocols()
+    {
+        $this->expectException(GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectExceptionMessage('protocols may only contain "http" and "https"');
+
+        Utils::normalizeProtocols(['HTTPS']);
+    }
+
     public static function noProxyProvider()
     {
         return [
