@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\TimeoutException;
+use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
@@ -740,7 +741,9 @@ final class CurlFactory implements CurlFactoryInterface
             || (!$easy->response && isset($networkErrorsWithoutResponse[$easy->errno]));
 
         if ($easy->errno === \CURLE_OPERATION_TIMEOUTED) {
-            $error = new TimeoutException($message, $easy->request, null, $ctx);
+            $error = $easy->response !== null
+                ? new ResponseTimeoutException($message, $easy->request, $easy->response, null, $ctx)
+                : new NetworkTimeoutException($message, $easy->request, null, $ctx);
         } elseif ($isNetworkError) {
             $error = new ConnectException($message, $easy->request, null, $ctx);
         } else {
