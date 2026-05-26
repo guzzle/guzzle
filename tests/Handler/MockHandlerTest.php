@@ -3,7 +3,7 @@
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -154,7 +154,7 @@ class MockHandlerTest extends TestCase
             },
         ]);
 
-        $this->expectException(RequestException::class);
+        $this->expectException(ResponseException::class);
         $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
     }

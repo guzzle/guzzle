@@ -2,40 +2,44 @@
 
 namespace GuzzleHttp\Tests\Exception;
 
-use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \GuzzleHttp\Exception\BadResponseException
+ * @covers \GuzzleHttp\Exception\TooManyRedirectsException
  */
-class BadResponseExceptionTest extends TestCase
+class TooManyRedirectsExceptionTest extends TestCase
 {
     public function testHasResponse()
     {
         $req = new Request('GET', '/');
+        $res = new Response(302);
         $prev = new \Exception();
-        $response = new Response();
-        $e = new BadResponseException('foo', $req, $response, $prev);
-        self::assertInstanceOf(ResponseException::class, $e);
+        $e = new TooManyRedirectsException('foo', $req, $res, $prev, ['foo' => 'bar']);
+
+        self::assertInstanceOf(RequestException::class, $e);
+        self::assertNotInstanceOf(ResponseException::class, $e);
         self::assertSame($req, $e->getRequest());
-        self::assertSame($response, $e->getResponse());
+        self::assertSame($res, $e->getResponse());
         self::assertSame('foo', $e->getMessage());
+        self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 
     public function testHasResponseIsDeprecated()
     {
-        $e = new BadResponseException('foo', new Request('GET', '/'), new Response());
+        $e = new TooManyRedirectsException('foo', new Request('GET', '/'), new Response(302));
 
         $deprecations = self::captureDeprecations(static function () use ($e): void {
             self::assertTrue($e->hasResponse());
         });
 
         self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: GuzzleHttp\\Exception\\BadResponseException::hasResponse() is deprecated and will be removed in 8.0. Use instanceof GuzzleHttp\\Exception\\ResponseException instead.',
+            'Since guzzlehttp/guzzle 7.11: GuzzleHttp\\Exception\\TooManyRedirectsException::hasResponse() is deprecated and will be removed in 8.0. Use instanceof GuzzleHttp\\Exception\\ResponseException instead.',
         ], $deprecations);
     }
 

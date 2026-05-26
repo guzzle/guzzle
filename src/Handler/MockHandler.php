@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -99,7 +100,9 @@ class MockHandler implements \Countable
                 $options['on_headers']($response);
             } catch (\Exception $e) {
                 $msg = 'An error was encountered during the on_headers event';
-                $response = new RequestException($msg, $request, $response, $e);
+                $response = $response instanceof ResponseInterface
+                    ? new ResponseException($msg, $request, $response, $e)
+                    : new RequestException($msg, $request, null, $e);
             }
         }
 

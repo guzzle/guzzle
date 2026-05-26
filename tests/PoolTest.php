@@ -5,6 +5,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -215,8 +216,7 @@ class PoolTest extends TestCase
 
         foreach ($rejected as $reason) {
             self::assertInstanceOf(RequestException::class, $reason);
-            self::assertFalse($reason->hasResponse());
-            self::assertNull($reason->getResponse());
+            self::assertNotInstanceOf(ResponseException::class, $reason);
         }
     }
 

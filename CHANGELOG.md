@@ -12,6 +12,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added PHP stream handler support for the `ssl_key` request option
 - Added handler-lifetime cURL sharing through `curl_share` and cURL handler `share` options
 - Added `GuzzleHttp\Exception\NetworkException` as the base class for network-related transfer failures
+- Added `GuzzleHttp\Exception\ResponseException` as the base class for request failures where a response was received
 
 ### Changed
 
@@ -19,6 +20,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Allowed domainless `SetCookie` instances to be stored without wildcard request matching
 - Changed no-proxy matching to respect request ports for host-and-port rules
 - Made `GuzzleHttp\Exception\ConnectException` extend `GuzzleHttp\Exception\NetworkException`
+- Made `GuzzleHttp\Exception\BadResponseException` extend `GuzzleHttp\Exception\ResponseException`
+- Changed `GuzzleHttp\Exception\RequestException::create()` to return `GuzzleHttp\Exception\ResponseException` for generic response-present failures
 - Prevented `CurlMultiHandler` destructors from throwing during cleanup
 - Improved invalid response handling across handlers
 
@@ -29,6 +32,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated scalar-coerced `idn_conversion` request option values, which will be rejected in 8.0
 - Deprecated invalid documented request option value types, which will be rejected in 8.0
 - Deprecated selected request options ignored by incompatible built-in handlers, which will be rejected in 8.0
+- Deprecated response probing through `GuzzleHttp\Exception\RequestException::getResponse()` and `GuzzleHttp\Exception\RequestException::hasResponse()`; use `GuzzleHttp\Exception\ResponseException` for response-aware request failures
+- Deprecated `GuzzleHttp\Exception\RequestException::wrapException()`
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
 

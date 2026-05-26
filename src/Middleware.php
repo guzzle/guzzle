@@ -4,6 +4,8 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
@@ -212,7 +214,7 @@ final class Middleware
                         return $response;
                     },
                     static function ($reason) use ($logger, $request, $formatter): PromiseInterface {
-                        $response = $reason instanceof RequestException ? $reason->getResponse() : null;
+                        $response = ($reason instanceof ResponseException || $reason instanceof TooManyRedirectsException) ? $reason->getResponse() : null;
                         $message = $formatter->format($request, $response, P\Create::exceptionFor($reason));
                         $logger->error($message);
 

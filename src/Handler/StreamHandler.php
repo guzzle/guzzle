@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -92,7 +93,7 @@ class StreamHandler
             ) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             } else {
-                $e = RequestException::wrapException($request, $e);
+                $e = $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, null, $e);
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
 
@@ -146,7 +147,7 @@ class StreamHandler
                 $options['on_headers']($response);
             } catch (\Throwable $e) {
                 return P\Create::rejectionFor(
-                    new RequestException('An error was encountered during the on_headers event', $request, $response, $e)
+                    new ResponseException('An error was encountered during the on_headers event', $request, $response, $e)
                 );
             }
         }

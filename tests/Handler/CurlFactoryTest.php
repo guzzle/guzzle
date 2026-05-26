@@ -4,6 +4,7 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlShare;
@@ -1025,6 +1026,31 @@ class CurlFactoryTest extends TestCase
         $response->wait();
     }
 
+    public function testCreatesResponseExceptionForCurlErrorWithResponse()
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $response = new Psr7\Response(200);
+        $easy = $factory->create($request, []);
+        $easy->errno = \CURLE_WRITE_ERROR;
+        $easy->response = $response;
+        $promise = CurlFactory::finish(
+            static function () {
+            },
+            $easy,
+            $factory
+        );
+
+        try {
+            $promise->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
+            self::assertSame(\CURLE_WRITE_ERROR, $e->getHandlerContext()['errno']);
+        }
+    }
+
     public function testAddsTimeouts()
     {
         $f = new CurlFactory(3);
@@ -1107,8 +1133,7 @@ class CurlFactoryTest extends TestCase
                 $e->getMessage()
             );
             self::assertFalse($called);
-            self::assertFalse($e->hasResponse());
-            self::assertNull($e->getResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
         }
     }
@@ -1138,8 +1163,7 @@ class CurlFactoryTest extends TestCase
                 'An error was encountered while creating the response',
                 $e->getMessage()
             );
-            self::assertFalse($e->hasResponse());
-            self::assertNull($e->getResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertSame($easy->createResponseException, $e->getPrevious());
         }
     }
@@ -1167,7 +1191,7 @@ class CurlFactoryTest extends TestCase
             },
         ]);
 
-        $this->expectException(RequestException::class);
+        $this->expectException(ResponseException::class);
         $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
     }
@@ -1188,12 +1212,13 @@ class CurlFactoryTest extends TestCase
 
         try {
             $promise->wait();
-            self::fail('Expected RequestException');
-        } catch (RequestException $e) {
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
             self::assertStringContainsString(
                 'An error was encountered during the on_headers event',
                 $e->getMessage()
             );
+            self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertInstanceOf(\Error::class, $e->getPrevious());
         }
     }
@@ -1375,8 +1400,7 @@ class CurlFactoryTest extends TestCase
                 'An error was encountered while creating the response',
                 $e->getMessage()
             );
-            self::assertFalse($e->hasResponse());
-            self::assertNull($e->getResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
         }
     }

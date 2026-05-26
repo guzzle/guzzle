@@ -4,6 +4,7 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
@@ -859,7 +860,7 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $this->expectException(RequestException::class);
+        $this->expectException(ResponseException::class);
         $this->expectExceptionMessage('An error was encountered during the on_headers event');
         $promise->wait();
     }
@@ -880,12 +881,13 @@ class StreamHandlerTest extends TestCase
 
         try {
             $promise->wait();
-            self::fail('Expected RequestException');
-        } catch (RequestException $e) {
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
             self::assertStringContainsString(
                 'An error was encountered during the on_headers event',
                 $e->getMessage()
             );
+            self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertInstanceOf(\Error::class, $e->getPrevious());
         }
     }
@@ -1103,8 +1105,7 @@ class StreamHandlerTest extends TestCase
                 $e->getMessage()
             );
             self::assertFalse($called);
-            self::assertFalse($e->hasResponse());
-            self::assertNull($e->getResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
             self::assertInstanceOf(TransferStats::class, $stats);
             self::assertFalse($stats->hasResponse());

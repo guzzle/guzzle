@@ -334,7 +334,7 @@ Custom handlers do not need to support every handler-owned option, but they shou
 
 ### Callback Semantics
 
-The `on_headers` option is invoked after the response headers have been received and before response body bytes are written to the configured `sink`. In Guzzle 7, the callback receives the response object. If it throws, the request promise is rejected with a `GuzzleHttp\Exception\RequestException` that wraps the thrown exception.
+The `on_headers` option is invoked after the response headers have been received and before response body bytes are written to the configured `sink`. In Guzzle 7, the callback receives the response object. If it throws, the request promise is rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the thrown exception and exposes the response.
 
 The `on_stats` option is invoked when the handler has finished sending a request, with a `GuzzleHttp\TransferStats` object that describes the response received or the error encountered. Built-in cURL handlers may invoke `on_stats` per low-level transfer attempt.
 

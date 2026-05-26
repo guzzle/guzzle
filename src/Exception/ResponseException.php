@@ -5,17 +5,20 @@ namespace GuzzleHttp\Exception;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-class TooManyRedirectsException extends RequestException
+/**
+ * Exception thrown when a request fails after a response is received.
+ */
+class ResponseException extends RequestException
 {
     /**
-     * @var ResponseInterface|null
+     * @var ResponseInterface
      */
     private $response;
 
     public function __construct(
         string $message,
         RequestInterface $request,
-        ?ResponseInterface $response = null,
+        ResponseInterface $response,
         ?\Throwable $previous = null,
         array $handlerContext = []
     ) {
@@ -24,9 +27,9 @@ class TooManyRedirectsException extends RequestException
     }
 
     /**
-     * Get the associated response
+     * Get the associated response.
      */
-    public function getResponse(): ?ResponseInterface
+    public function getResponse(): ResponseInterface
     {
         return $this->response;
     }
@@ -36,8 +39,8 @@ class TooManyRedirectsException extends RequestException
      */
     public function hasResponse(): bool
     {
-        \trigger_deprecation('guzzlehttp/guzzle', '7.11', '%s::hasResponse() is deprecated and will be removed in 8.0. Use instanceof %s instead.', static::class, ResponseException::class);
+        \trigger_deprecation('guzzlehttp/guzzle', '7.11', '%s::hasResponse() is deprecated and will be removed in 8.0. Use instanceof %s instead.', static::class, self::class);
 
-        return $this->response !== null;
+        return true;
     }
 }

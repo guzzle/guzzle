@@ -745,7 +745,7 @@ Types
 Constant
 `GuzzleHttp\RequestOptions::ON_HEADERS`
 
-The callable accepts a `Psr\Http\Message\ResponseInterface` object. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\RequestException` that wraps the exception that was thrown.
+The callable accepts a `Psr\Http\Message\ResponseInterface` object. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the exception that was thrown and exposes the response.
 
 You may need to know what headers and status codes were received before data can be written to the sink.
 

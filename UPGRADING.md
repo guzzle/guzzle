@@ -1,6 +1,32 @@
 Guzzle Upgrade Guide
 ====================
 
+7.11 to 8.0
+-----------
+
+Guzzle 7.11 introduces `GuzzleHttp\Exception\ResponseException` as the base
+class for request failures where a response was received. Code that needs to
+inspect an exception response should check for `ResponseException` and call
+`ResponseException::getResponse()`.
+
+```php
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
+
+try {
+    $client->request('GET', $uri);
+} catch (ResponseException $e) {
+    $response = $e->getResponse();
+} catch (RequestException $e) {
+    // Request-related failure without supported response access.
+}
+```
+
+`GuzzleHttp\Exception\RequestException::getResponse()` and
+`GuzzleHttp\Exception\RequestException::hasResponse()` are deprecated in 7.11
+and will be removed in 8.0. `GuzzleHttp\Exception\RequestException::wrapException()`
+is also deprecated and should not be used in new code.
+
 6.0 to 7.0
 ----------
 

@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -545,13 +546,21 @@ class CurlFactory implements CurlFactoryInterface
         // return a rejected promise that wraps that exception.
         if ($easy->onHeadersException) {
             return P\Create::rejectionFor(
-                new RequestException(
-                    'An error was encountered during the on_headers event',
-                    $easy->request,
-                    $easy->response,
-                    $easy->onHeadersException,
-                    $ctx
-                )
+                $easy->response
+                    ? new ResponseException(
+                        'An error was encountered during the on_headers event',
+                        $easy->request,
+                        $easy->response,
+                        $easy->onHeadersException,
+                        $ctx
+                    )
+                    : new RequestException(
+                        'An error was encountered during the on_headers event',
+                        $easy->request,
+                        null,
+                        $easy->onHeadersException,
+                        $ctx
+                    )
             );
         }
 
@@ -574,9 +583,13 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         // Create a connection exception if it was a specific error code.
-        $error = isset($connectionErrors[$easy->errno])
-            ? new ConnectException($message, $easy->request, null, $ctx)
-            : new RequestException($message, $easy->request, $easy->response, null, $ctx);
+        if (isset($connectionErrors[$easy->errno])) {
+            $error = new ConnectException($message, $easy->request, null, $ctx);
+        } elseif ($easy->response) {
+            $error = new ResponseException($message, $easy->request, $easy->response, null, $ctx);
+        } else {
+            $error = new RequestException($message, $easy->request, null, null, $ctx);
+        }
 
         return P\Create::rejectionFor($error);
     }

@@ -2,7 +2,7 @@
 
 namespace GuzzleHttp\Tests;
 
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
@@ -52,7 +52,7 @@ class MessageFormatterTest extends TestCase
     {
         $request = new Request('PUT', '/', ['x-test' => 'abc'], Psr7\Utils::streamFor('foo'));
         $response = new Response(200, ['X-Baz' => 'Bar'], Psr7\Utils::streamFor('baz'));
-        $err = new RequestException('Test', $request, $response);
+        $err = new ResponseException('Test', $request, $response);
 
         return [
             ['{request}', [$request], Psr7\Message::toString($request)],
