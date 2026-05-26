@@ -25,7 +25,7 @@ class ConnectException extends NetworkException
         ?\Throwable $previous = null,
         array $handlerContext = []
     ) {
-        parent::__construct($message, 0, $previous);
+        parent::__construct($message, $request, $previous, $handlerContext);
         $this->request = $request;
         $this->handlerContext = $handlerContext;
     }
