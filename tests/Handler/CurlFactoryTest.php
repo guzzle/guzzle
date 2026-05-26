@@ -2488,12 +2488,7 @@ class CurlFactoryTest extends TestCase
     public function testAddsStreamingBody(): void
     {
         $f = new CurlFactory(3);
-        $bd = Psr7\FnStream::decorate(Psr7\Utils::streamFor('foo'), [
-            'getSize' => static function (): ?int {
-                return null;
-            },
-        ]);
-        $request = new Psr7\Request('PUT', Server::$url, [], $bd);
+        $request = new Psr7\Request('PUT', Server::$url, ['Content-Length' => '1000000'], 'foo');
         $f->create($request, []);
         self::assertEquals(1, $_SERVER['_curl'][\CURLOPT_UPLOAD]);
         self::assertIsCallable($_SERVER['_curl'][\CURLOPT_READFUNCTION]);
