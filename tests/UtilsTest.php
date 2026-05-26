@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Test;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Utils;
@@ -170,7 +171,7 @@ class UtilsTest extends TestCase
 
     public function testNormalizeProtocolsRejectsUppercaseProtocols(): void
     {
-        $this->expectException(GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('protocols may only contain "http" and "https"');
 
         Utils::normalizeProtocols(['HTTPS']);
