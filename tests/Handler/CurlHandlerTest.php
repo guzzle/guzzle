@@ -135,7 +135,6 @@ class CurlHandlerTest extends TestCase
         $p = $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])
             ->otherwise(static function (NetworkException $e) use (&$called): void {
                 $called = true;
-                self::assertTrue(\method_exists($e, 'getHandlerContext'));
                 self::assertArrayHasKey('errno', $e->getHandlerContext());
             });
         $p->wait();
