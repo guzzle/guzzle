@@ -36,7 +36,8 @@ final class RequestOptions
      * - referer: (bool, default=false) Set to true to enable the Referer
      *   header.
      * - protocols: (non-empty-array<array-key, string>, default=['http', 'https'])
-     *   Allowed redirect protocols.
+     *   Allowed redirect protocols. Redirect matching is case-sensitive; use
+     *   "http" and "https".
      * - on_redirect: (callable(RequestInterface, ResponseInterface, UriInterface): mixed)
      *   PHP callable that is invoked when a redirect is encountered. The
      *   callable is invoked with the request, the redirect response that was
@@ -233,7 +234,8 @@ final class RequestOptions
 
     /**
      * protocols: (non-empty-array<array-key, string>, default=['http', 'https'])
-     * Allowed URI schemes.
+     * Allowed URI schemes. Built-in handlers accept only the case-sensitive
+     * values "http" and "https".
      */
     public const PROTOCOLS = 'protocols';
 
@@ -251,10 +253,10 @@ final class RequestOptions
     public const PROXY = 'proxy';
 
     /**
-     * query: (array|string) Associative array of query string values to add
-     * to the request. This option uses PHP's http_build_query() to create
-     * the string representation. Pass a string value if you need more
-     * control than what this method provides
+     * query: (array<array-key, mixed>|string) Associative array of query string
+     * values to add to the request. This option uses PHP's http_build_query()
+     * to create the string representation. Pass a string value if you need
+     * more control than what this method provides
      */
     public const QUERY = 'query';
 
@@ -304,7 +306,7 @@ final class RequestOptions
     public const SSL_KEY_TYPE = 'ssl_key_type';
 
     /**
-     * stream: Set to true to attempt to stream a response rather than
+     * stream: (bool) Set to true to attempt to stream a response rather than
      * download it all up-front.
      */
     public const STREAM = 'stream';

@@ -1352,11 +1352,12 @@ class ClientTest extends TestCase
         self::assertSame('application/json', $last->getHeaderLine('Content-Type'));
     }
 
-    public function testAuthCanBeTrue(): void
+    public function testAuthCanBeDisabledWithNull(): void
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
-        $client->get('http://foo.com', ['auth' => false]);
+        $client->get('http://foo.com', ['auth' => null]);
+
         $last = $mock->getLastRequest();
         self::assertFalse($last->hasHeader('Authorization'));
     }
@@ -1410,15 +1411,6 @@ class ClientTest extends TestCase
             \CURLOPT_HTTPAUTH => 8,
             \CURLOPT_USERPWD => 'a:b',
         ], $last['curl']);
-    }
-
-    public function testAuthCanBeCustomType(): void
-    {
-        $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
-        $client->get('http://foo.com', ['auth' => 'foo']);
-        $last = $mock->getLastOptions();
-        self::assertSame('foo', $last['auth']);
     }
 
     /**

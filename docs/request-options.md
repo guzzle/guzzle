@@ -56,7 +56,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - referer: (bool, default=false) Set to true to enable adding the Referer header when redirecting.
 
-- protocols: (non-empty array of strings, default=`['http', 'https']`) Specified which protocols are allowed for redirect requests.
+- protocols: (non-empty array of strings, default=`['http', 'https']`) Specifies which protocols are allowed for redirect requests. Redirect matching is case-sensitive; use `http` and `https`.
 
 - on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request, the redirect response that was received, and the effective URI. Any return value from the on_redirect function is ignored.
 
@@ -859,9 +859,10 @@ Default
 Constant
 `GuzzleHttp\RequestOptions::PROTOCOLS`
 
-This option accepts a non-empty array of strings containing `http`, `https`, or both. It
-applies to each request transfer Guzzle sends, including redirect requests that
-reuse the same request options.
+This option accepts a non-empty array of strings. Built-in handlers accept only
+the case-sensitive values `http` and `https`. It applies to each request
+transfer Guzzle sends, including redirect requests that reuse the same request
+options.
 
 ```php
 $client->request('GET', 'https://example.com', [
