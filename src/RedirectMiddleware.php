@@ -267,7 +267,7 @@ class RedirectMiddleware
         }
 
         // Ensure that the redirect URI is allowed based on the protocols.
-        if (!\in_array($resolvedUri->getScheme(), $protocols)) {
+        if (!\in_array($resolvedUri->getScheme(), $protocols, true)) {
             throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', $resolvedUri, \implode(', ', $protocols)), $request, $response);
         }
 

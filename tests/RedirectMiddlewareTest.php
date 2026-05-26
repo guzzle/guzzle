@@ -283,6 +283,24 @@ class RedirectMiddlewareTest extends TestCase
         ], new Response(302, ['Location' => 'http://example.com/redirected']));
     }
 
+    public function testRedirectProtocolMatchingIsStrict(): void
+    {
+        $redirectMiddleware = new RedirectMiddleware(static function (): void {
+        });
+        $request = new Request('GET', 'http://example.com/');
+
+        $this->expectException(BadResponseException::class);
+        $this->expectExceptionMessage('does not use one of the allowed redirect protocols');
+
+        $redirectMiddleware->modifyRequest($request, [
+            'allow_redirects' => [
+                'protocols' => [true],
+                'strict' => false,
+                'referer' => false,
+            ],
+        ], new Response(302, ['Location' => 'http://example.com/redirected']));
+    }
+
     public function testRelativeRedirectPreservesCustomRequestAndUriImplementations(): void
     {
         $mock = new MockHandler([

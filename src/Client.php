@@ -800,7 +800,366 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
         }
 
+        self::assertRequestOptionTypes($result);
+
         return $result;
+    }
+
+    private static function assertRequestOptionTypes(array $options): void
+    {
+        if (isset($options['handler']) && !\is_callable($options['handler'])) {
+            self::invalidRequestOptionType('handler', 'callable', $options['handler']);
+        }
+
+        if (isset($options['allow_redirects'])) {
+            if (!\is_bool($options['allow_redirects']) && !\is_array($options['allow_redirects'])) {
+                self::invalidRequestOptionType('allow_redirects', 'bool|array', $options['allow_redirects']);
+            }
+
+            if (\is_array($options['allow_redirects'])) {
+                self::assertAllowRedirectsOptionTypes($options['allow_redirects']);
+            }
+        }
+
+        if (isset($options['auth']) && !\is_array($options['auth'])) {
+            self::invalidRequestOptionType('auth', 'array{0: string, 1: string, 2?: string}|null', $options['auth']);
+        }
+
+        self::assertTlsFileOptionTypes($options, 'cert');
+        self::assertIfPresentAndNotString($options, 'cert_type');
+        self::assertIfPresentAndNotNumber($options, 'connect_timeout');
+        self::assertIfPresentAndNotInt($options, 'crypto_method');
+        self::assertIfPresentAndNotBoolOrResource($options, 'debug');
+        self::assertIfPresentAndNotBoolOrString($options, 'decode_content');
+        self::assertIfPresentAndNotNumber($options, 'delay');
+        self::assertIfPresentAndNotBoolOrInt($options, 'expect');
+
+        if (isset($options['form_params'])) {
+            self::assertStringOrStringArrayOptionTypes('form_params', $options['form_params']);
+        }
+
+        if (isset($options['force_ip_resolve']) && !\is_string($options['force_ip_resolve'])) {
+            self::invalidRequestOptionType('force_ip_resolve', 'string', $options['force_ip_resolve']);
+        }
+
+        if (isset($options['headers'])) {
+            self::assertHeaderOptionTypes($options['headers']);
+        }
+
+        self::assertIfPresentAndNotBool($options, 'http_errors');
+
+        if (isset($options['multipart'])) {
+            self::assertMultipartOptionTypes($options['multipart']);
+        }
+
+        self::assertIfPresentAndNotCallable($options, 'on_headers');
+        self::assertIfPresentAndNotCallable($options, 'on_stats');
+        self::assertIfPresentAndNotCallable($options, 'progress');
+        self::assertIfPresentAndNotStringArray($options, 'protocols', true);
+        self::assertProxyOptionTypes($options);
+        self::assertIfPresentAndNotNumber($options, 'read_timeout');
+        self::assertIfPresentAndNotInt($options, 'retries');
+
+        if (isset($options['sink']) && !\is_resource($options['sink']) && !\is_string($options['sink']) && !$options['sink'] instanceof StreamInterface) {
+            self::invalidRequestOptionType('sink', 'resource|string|StreamInterface', $options['sink']);
+        }
+
+        self::assertTlsFileOptionTypes($options, 'ssl_key');
+        self::assertIfPresentAndNotString($options, 'ssl_key_type');
+        self::assertIfPresentAndNotBool($options, 'stream');
+        self::assertIfPresentAndNotArray($options, 'stream_context', 'array<array-key, mixed>');
+        self::assertIfPresentAndNotBool($options, 'synchronous');
+        self::assertIfPresentAndNotNumber($options, 'timeout');
+        self::assertIfPresentAndNotBoolOrString($options, 'verify');
+        self::assertIfPresentAndNotStringOrFloat($options, 'version');
+        self::assertIfPresentAndNotArray($options, 'curl', 'array<int|string, mixed>');
+
+        if (isset($options['cookies']) && $options['cookies'] !== false && !$options['cookies'] instanceof CookieJarInterface) {
+            self::invalidRequestOptionType('cookies', 'false|CookieJarInterface', $options['cookies']);
+        }
+    }
+
+    private static function assertAllowRedirectsOptionTypes(array $allowRedirects): void
+    {
+        self::assertIfPresentAndNotInt($allowRedirects, 'max', 'allow_redirects.max');
+        self::assertIfPresentAndNotBool($allowRedirects, 'strict', 'allow_redirects.strict');
+        self::assertIfPresentAndNotBool($allowRedirects, 'referer', 'allow_redirects.referer');
+        self::assertIfPresentAndNotStringArray($allowRedirects, 'protocols', true, 'allow_redirects.protocols');
+        self::assertIfPresentAndNotCallable($allowRedirects, 'on_redirect', 'allow_redirects.on_redirect');
+        self::assertIfPresentAndNotBool($allowRedirects, 'track_redirects', 'allow_redirects.track_redirects');
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function assertStringOrStringArrayOptionTypes(string $option, $value): void
+    {
+        if (!\is_array($value)) {
+            self::invalidRequestOptionType($option, 'array<array-key, string|array<array-key, string>>', $value);
+
+            return;
+        }
+
+        foreach ($value as $key => $item) {
+            $path = $option.'.'.(string) $key;
+            if (\is_array($item)) {
+                foreach ($item as $index => $nestedItem) {
+                    if (!\is_string($nestedItem)) {
+                        self::invalidRequestOptionType($path.'.'.(string) $index, 'string', $nestedItem);
+                    }
+                }
+            } elseif (!\is_string($item)) {
+                self::invalidRequestOptionType($path, 'string|array<array-key, string>', $item);
+            }
+        }
+    }
+
+    /**
+     * @param mixed $headers
+     */
+    private static function assertHeaderOptionTypes($headers): void
+    {
+        if (!\is_array($headers)) {
+            self::invalidRequestOptionType('headers', 'array<array-key, string|non-empty-array<array-key, string>>|null', $headers);
+
+            return;
+        }
+
+        foreach ($headers as $name => $value) {
+            $path = 'headers.'.(string) $name;
+            if (\is_array($value)) {
+                if ($value === []) {
+                    self::invalidRequestOptionType($path, 'string|non-empty-array<array-key, string>', $value);
+                }
+
+                foreach ($value as $index => $item) {
+                    if (!\is_string($item)) {
+                        self::invalidRequestOptionType($path.'.'.(string) $index, 'string', $item);
+                    }
+                }
+            } elseif (!\is_string($value)) {
+                self::invalidRequestOptionType($path, 'string|non-empty-array<array-key, string>', $value);
+            }
+        }
+    }
+
+    /**
+     * @param mixed $multipart
+     */
+    private static function assertMultipartOptionTypes($multipart): void
+    {
+        if (!\is_array($multipart)) {
+            self::invalidRequestOptionType('multipart', 'array<array-key, array{name: string|int, contents: mixed, headers?: array<array-key, string>, filename?: string}>', $multipart);
+
+            return;
+        }
+
+        foreach ($multipart as $index => $part) {
+            $path = 'multipart.'.(string) $index;
+            if (!\is_array($part)) {
+                self::invalidRequestOptionType($path, 'array{name: string|int, contents: mixed, headers?: array<array-key, string>, filename?: string}', $part);
+
+                return;
+            }
+
+            if (!\array_key_exists('name', $part) || (!\is_string($part['name']) && !\is_int($part['name']))) {
+                self::invalidRequestOptionType($path.'.name', 'string|int', $part['name'] ?? null);
+            }
+
+            if (!\array_key_exists('contents', $part)) {
+                self::invalidRequestOptionType($path, 'array{name: string|int, contents: mixed, headers?: array<array-key, string>, filename?: string}', $part);
+            }
+
+            if (\array_key_exists('headers', $part)) {
+                if (!\is_array($part['headers'])) {
+                    self::invalidRequestOptionType($path.'.headers', 'array<array-key, string>', $part['headers']);
+
+                    return;
+                }
+
+                foreach ($part['headers'] as $name => $value) {
+                    if (!\is_string($value)) {
+                        self::invalidRequestOptionType($path.'.headers.'.(string) $name, 'string', $value);
+                    }
+                }
+            }
+
+            if (\array_key_exists('filename', $part) && !\is_string($part['filename'])) {
+                self::invalidRequestOptionType($path.'.filename', 'string', $part['filename']);
+            }
+        }
+    }
+
+    private static function assertProxyOptionTypes(array $options): void
+    {
+        if (!isset($options['proxy'])) {
+            return;
+        }
+
+        if (!\is_string($options['proxy']) && !\is_array($options['proxy'])) {
+            self::invalidRequestOptionType('proxy', 'string|array{http?: string, https?: string, no?: string|array<array-key, string>}', $options['proxy']);
+
+            return;
+        }
+
+        if (!\is_array($options['proxy'])) {
+            return;
+        }
+
+        foreach (['http', 'https'] as $scheme) {
+            if (\array_key_exists($scheme, $options['proxy']) && !\is_string($options['proxy'][$scheme])) {
+                self::invalidRequestOptionType('proxy.'.$scheme, 'string', $options['proxy'][$scheme]);
+            }
+        }
+
+        if (!\array_key_exists('no', $options['proxy'])) {
+            return;
+        }
+
+        if (\is_string($options['proxy']['no'])) {
+            return;
+        }
+
+        if (!\is_array($options['proxy']['no'])) {
+            self::invalidRequestOptionType('proxy.no', 'string|array<array-key, string>', $options['proxy']['no']);
+
+            return;
+        }
+
+        foreach ($options['proxy']['no'] as $index => $noProxy) {
+            if (!\is_string($noProxy)) {
+                self::invalidRequestOptionType('proxy.no.'.(string) $index, 'string', $noProxy);
+            }
+        }
+    }
+
+    private static function assertTlsFileOptionTypes(array $options, string $option): void
+    {
+        if (!isset($options[$option])) {
+            return;
+        }
+
+        if (\is_string($options[$option])) {
+            return;
+        }
+
+        if (!\is_array($options[$option])) {
+            self::invalidRequestOptionType($option, 'string|array{0: string, 1?: string}', $options[$option]);
+
+            return;
+        }
+
+        if (!\array_key_exists(0, $options[$option]) || !\is_string($options[$option][0])) {
+            self::invalidRequestOptionType($option.'.0', 'string', $options[$option][0] ?? null);
+        }
+
+        if (\array_key_exists(1, $options[$option]) && !\is_string($options[$option][1])) {
+            self::invalidRequestOptionType($option.'.1', 'string', $options[$option][1]);
+        }
+    }
+
+    private static function assertIfPresentAndNotArray(array $options, string $option, string $expected): void
+    {
+        if (\array_key_exists($option, $options) && !\is_array($options[$option])) {
+            self::invalidRequestOptionType($option, $expected, $options[$option]);
+        }
+    }
+
+    private static function assertIfPresentAndNotBool(array $options, string $option, ?string $path = null): void
+    {
+        if (\array_key_exists($option, $options) && !\is_bool($options[$option])) {
+            self::invalidRequestOptionType($path ?? $option, 'bool', $options[$option]);
+        }
+    }
+
+    private static function assertIfPresentAndNotBoolOrInt(array $options, string $option): void
+    {
+        if (\array_key_exists($option, $options) && !\is_bool($options[$option]) && !\is_int($options[$option])) {
+            self::invalidRequestOptionType($option, 'bool|int', $options[$option]);
+        }
+    }
+
+    private static function assertIfPresentAndNotBoolOrResource(array $options, string $option): void
+    {
+        if (\array_key_exists($option, $options) && !\is_bool($options[$option]) && !\is_resource($options[$option])) {
+            self::invalidRequestOptionType($option, 'bool|resource', $options[$option]);
+        }
+    }
+
+    private static function assertIfPresentAndNotBoolOrString(array $options, string $option): void
+    {
+        if (\array_key_exists($option, $options) && !\is_bool($options[$option]) && !\is_string($options[$option])) {
+            self::invalidRequestOptionType($option, 'bool|string', $options[$option]);
+        }
+    }
+
+    private static function assertIfPresentAndNotCallable(array $options, string $option, ?string $path = null): void
+    {
+        if (\array_key_exists($option, $options) && !\is_callable($options[$option])) {
+            self::invalidRequestOptionType($path ?? $option, 'callable', $options[$option]);
+        }
+    }
+
+    private static function assertIfPresentAndNotInt(array $options, string $option, ?string $path = null): void
+    {
+        if (\array_key_exists($option, $options) && !\is_int($options[$option])) {
+            self::invalidRequestOptionType($path ?? $option, 'int', $options[$option]);
+        }
+    }
+
+    private static function assertIfPresentAndNotNumber(array $options, string $option): void
+    {
+        if (\array_key_exists($option, $options) && !\is_int($options[$option]) && !\is_float($options[$option])) {
+            self::invalidRequestOptionType($option, 'int|float', $options[$option]);
+        }
+    }
+
+    private static function assertIfPresentAndNotString(array $options, string $option): void
+    {
+        if (\array_key_exists($option, $options) && !\is_string($options[$option])) {
+            self::invalidRequestOptionType($option, 'string', $options[$option]);
+        }
+    }
+
+    private static function assertIfPresentAndNotStringArray(array $options, string $option, bool $nonEmpty, ?string $path = null): void
+    {
+        if (!\array_key_exists($option, $options)) {
+            return;
+        }
+
+        $path = $path ?? $option;
+
+        if (!\is_array($options[$option]) || ($nonEmpty && $options[$option] === [])) {
+            self::invalidRequestOptionType($path, ($nonEmpty ? 'non-empty-' : '').'array<array-key, string>', $options[$option]);
+
+            return;
+        }
+
+        foreach ($options[$option] as $index => $item) {
+            if (!\is_string($item)) {
+                self::invalidRequestOptionType($path.'.'.(string) $index, 'string', $item);
+            }
+        }
+    }
+
+    private static function assertIfPresentAndNotStringOrFloat(array $options, string $option): void
+    {
+        if (\array_key_exists($option, $options) && !\is_string($options[$option]) && !\is_float($options[$option])) {
+            self::invalidRequestOptionType($option, 'string|float', $options[$option]);
+        }
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function invalidRequestOptionType(string $option, string $expected, $value): void
+    {
+        throw new InvalidArgumentException(\sprintf(
+            'Passing %s to request option "%s" is invalid; expected %s.',
+            \get_debug_type($value),
+            $option,
+            $expected
+        ));
     }
 
     /**

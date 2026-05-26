@@ -124,7 +124,7 @@ class RetryMiddlewareTest extends TestCase
         $c = new Client(['handler' => $m($h)]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('retries must be an integer');
+        $this->expectExceptionMessage('Passing string to request option "retries" is invalid; expected int.');
 
         $c->send(new Request('GET', 'http://test.com'), ['retries' => '0']);
     }

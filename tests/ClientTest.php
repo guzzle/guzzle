@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlVersion;
@@ -1151,7 +1152,7 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $handler]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('allow_redirects must be true, false, or array');
+        $this->expectExceptionMessage('Passing string to request option "allow_redirects" is invalid; expected bool|array.');
         $client->get('http://foo.com', ['allow_redirects' => 'foo']);
     }
 
@@ -1172,7 +1173,7 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $handler]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('cookies must be an instance of GuzzleHttp\\Cookie\\CookieJarInterface');
+        $this->expectExceptionMessage('Passing string to request option "cookies" is invalid; expected false|CookieJarInterface.');
         $client->get('http://foo.com', ['cookies' => 'foo']);
     }
 
@@ -1245,6 +1246,209 @@ class ClientTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $client->get('http://foo.com', ['headers' => 'foo']);
+    }
+
+    /**
+     * @dataProvider invalidRequestOptionTypeProvider
+     */
+    public function testRejectsInvalidRequestOptionTypes(array $options, string $expectedMessage): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        $client->request('POST', 'http://foo.com', $options);
+    }
+
+    public static function invalidRequestOptionTypeProvider(): iterable
+    {
+        yield 'handler' => [
+            ['handler' => false],
+            'Passing bool to request option "handler" is invalid; expected callable.',
+        ];
+
+        yield 'allow_redirects' => [
+            ['allow_redirects' => 'true'],
+            'Passing string to request option "allow_redirects" is invalid; expected bool|array.',
+        ];
+
+        yield 'allow_redirects.protocols' => [
+            ['allow_redirects' => ['protocols' => []]],
+            'Passing array to request option "allow_redirects.protocols" is invalid; expected non-empty-array<array-key, string>.',
+        ];
+
+        yield 'allow_redirects.protocols value' => [
+            ['allow_redirects' => ['protocols' => [false]]],
+            'Passing bool to request option "allow_redirects.protocols.0" is invalid; expected string.',
+        ];
+
+        yield 'auth' => [
+            ['auth' => false],
+            'Passing bool to request option "auth" is invalid; expected array{0: string, 1: string, 2?: string}|null.',
+        ];
+
+        yield 'cert password' => [
+            ['cert' => ['cert.pem', null]],
+            'Passing null to request option "cert.1" is invalid; expected string.',
+        ];
+
+        yield 'cert_type' => [
+            ['cert_type' => false],
+            'Passing bool to request option "cert_type" is invalid; expected string.',
+        ];
+
+        yield 'connect_timeout' => [
+            ['connect_timeout' => '1'],
+            'Passing string to request option "connect_timeout" is invalid; expected int|float.',
+        ];
+
+        yield 'crypto_method' => [
+            ['crypto_method' => '1'],
+            'Passing string to request option "crypto_method" is invalid; expected int.',
+        ];
+
+        yield 'debug' => [
+            ['debug' => 'debug'],
+            'Passing string to request option "debug" is invalid; expected bool|resource.',
+        ];
+
+        yield 'decode_content' => [
+            ['decode_content' => 1],
+            'Passing int to request option "decode_content" is invalid; expected bool|string.',
+        ];
+
+        yield 'delay' => [
+            ['delay' => '1'],
+            'Passing string to request option "delay" is invalid; expected int|float.',
+        ];
+
+        yield 'expect' => [
+            ['expect' => 1.5],
+            'Passing float to request option "expect" is invalid; expected bool|int.',
+        ];
+
+        yield 'form param value' => [
+            ['form_params' => ['foo' => 1]],
+            'Passing int to request option "form_params.foo" is invalid; expected string|array<array-key, string>.',
+        ];
+
+        yield 'force_ip_resolve' => [
+            ['force_ip_resolve' => false],
+            'Passing bool to request option "force_ip_resolve" is invalid; expected string.',
+        ];
+
+        yield 'header value' => [
+            ['headers' => ['X-Test' => []]],
+            'Passing array to request option "headers.X-Test" is invalid; expected string|non-empty-array<array-key, string>.',
+        ];
+
+        yield 'multipart contents' => [
+            ['multipart' => [['name' => 'foo']]],
+            'Passing array to request option "multipart.0" is invalid; expected array{name: string|int, contents: mixed, headers?: array<array-key, string>, filename?: string}.',
+        ];
+
+        yield 'multipart header value' => [
+            ['multipart' => [['name' => 'foo', 'contents' => 'bar', 'headers' => ['X-Test' => false]]]],
+            'Passing bool to request option "multipart.0.headers.X-Test" is invalid; expected string.',
+        ];
+
+        yield 'http_errors' => [
+            ['http_errors' => 'false'],
+            'Passing string to request option "http_errors" is invalid; expected bool.',
+        ];
+
+        yield 'on_headers' => [
+            ['on_headers' => 'not a callable'],
+            'Passing string to request option "on_headers" is invalid; expected callable.',
+        ];
+
+        yield 'on_stats' => [
+            ['on_stats' => 'not a callable'],
+            'Passing string to request option "on_stats" is invalid; expected callable.',
+        ];
+
+        yield 'progress' => [
+            ['progress' => 'not a callable'],
+            'Passing string to request option "progress" is invalid; expected callable.',
+        ];
+
+        yield 'protocols' => [
+            ['protocols' => []],
+            'Passing array to request option "protocols" is invalid; expected non-empty-array<array-key, string>.',
+        ];
+
+        yield 'protocol value' => [
+            ['protocols' => [false]],
+            'Passing bool to request option "protocols.0" is invalid; expected string.',
+        ];
+
+        yield 'proxy no value' => [
+            ['proxy' => ['no' => [false]]],
+            'Passing bool to request option "proxy.no.0" is invalid; expected string.',
+        ];
+
+        yield 'retries' => [
+            ['retries' => '1'],
+            'Passing string to request option "retries" is invalid; expected int.',
+        ];
+
+        yield 'sink' => [
+            ['sink' => 123],
+            'Passing int to request option "sink" is invalid; expected resource|string|StreamInterface.',
+        ];
+
+        yield 'ssl_key password' => [
+            ['ssl_key' => ['key.pem', null]],
+            'Passing null to request option "ssl_key.1" is invalid; expected string.',
+        ];
+
+        yield 'ssl_key_type' => [
+            ['ssl_key_type' => false],
+            'Passing bool to request option "ssl_key_type" is invalid; expected string.',
+        ];
+
+        yield 'stream' => [
+            ['stream' => '1'],
+            'Passing string to request option "stream" is invalid; expected bool.',
+        ];
+
+        yield 'stream_context' => [
+            ['stream_context' => 'context'],
+            'Passing string to request option "stream_context" is invalid; expected array<array-key, mixed>.',
+        ];
+
+        yield 'timeout' => [
+            ['timeout' => '1'],
+            'Passing string to request option "timeout" is invalid; expected int|float.',
+        ];
+
+        yield 'verify' => [
+            ['verify' => 1],
+            'Passing int to request option "verify" is invalid; expected bool|string.',
+        ];
+
+        yield 'version' => [
+            ['version' => 1],
+            'Passing int to request option "version" is invalid; expected string|float.',
+        ];
+
+        yield 'curl' => [
+            ['curl' => 'curl'],
+            'Passing string to request option "curl" is invalid; expected array<int|string, mixed>.',
+        ];
+    }
+
+    public function testRejectsInvalidSynchronousRequestOption(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing string to request option "synchronous" is invalid; expected bool.');
+
+        $client->sendAsync(new Request('GET', 'http://foo.com'), ['synchronous' => '1']);
     }
 
     public function testAddsBody(): void
@@ -1423,7 +1627,7 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
 
-        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $client->get('http://foo.com', ['auth' => $auth]);
     }
 
@@ -1743,7 +1947,7 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mock]);
         $request = new Request('GET', 'http://foo.com');
 
-        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $client->send($request, ['headers' => ['X-Foo: Bar']]);
     }
 
@@ -1753,7 +1957,7 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mock]);
         $request = new Request('GET', 'http://foo.com');
 
-        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $client->send($request, ['headers' => ['X-Foo: Bar', 'X-Test: Fail']]);
     }
 
@@ -2009,7 +2213,7 @@ class ClientTest extends TestCase
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
 
         $client->request('GET', 'https://example.com', ['idn_conversion' => '0']);
@@ -2023,7 +2227,7 @@ class ClientTest extends TestCase
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('IDN conversion failed');
         $client->request('GET', 'https://-яндекс.рф/images', ['idn_conversion' => true]);
     }
