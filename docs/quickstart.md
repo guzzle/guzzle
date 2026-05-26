@@ -472,11 +472,11 @@ The following tree view describes how the Guzzle Exceptions depend on each other
 
 Guzzle throws exceptions for errors that occur during a transfer.
 
-- `GuzzleHttp\Exception\NetworkException` is the base class for networking errors. This exception extends from `GuzzleHttp\Exception\TransferException`.
+- `GuzzleHttp\Exception\NetworkException` is the base class for networking errors where no response has been received. It implements PSR-18's `Psr\Http\Client\NetworkExceptionInterface`.
 
 - `GuzzleHttp\Exception\HandlerClosedException` is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
 
-- `GuzzleHttp\Exception\RequestException` is the base class for request-related transfer failures that are not network failures. It implements PSR-18's `RequestExceptionInterface`, exposes the request with `getRequest()`, and may expose a response with `getResponse()` when one was received.
+- `GuzzleHttp\Exception\RequestException` is the base class for request-related transfer failures that are not network failures. It implements PSR-18's `Psr\Http\Client\RequestExceptionInterface`, exposes the request with `getRequest()`, and may expose a response with `getResponse()` when one was received.
 
 - A `GuzzleHttp\Exception\ConnectException` exception is thrown when a connection cannot be established. This exception extends from `GuzzleHttp\Exception\NetworkException`. Invalid or handler-unsupported HTTP request protocol versions are reported as `RequestException`, not `ConnectException`.
 
