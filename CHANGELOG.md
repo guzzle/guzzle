@@ -11,12 +11,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added `cert_type` and `ssl_key_type` request options for TLS certificate and private-key file types
 - Added PHP stream handler support for the `ssl_key` request option
 - Added handler-lifetime cURL sharing through `curl_share` and cURL handler `share` options
+- Added `GuzzleHttp\Exception\NetworkException` as the base class for network-related transfer failures
 
 ### Changed
 
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.10`
 - Allowed domainless `SetCookie` instances to be stored without wildcard request matching
 - Changed no-proxy matching to respect request ports for host-and-port rules
+- Made `GuzzleHttp\Exception\ConnectException` extend `GuzzleHttp\Exception\NetworkException`
 - Prevented `CurlMultiHandler` destructors from throwing during cleanup
 - Improved invalid response handling across handlers
 
