@@ -465,9 +465,9 @@ The following tree view describes how the Guzzle Exceptions depend on each other
 ```
 . \RuntimeException
 └── TransferException (implements GuzzleException)
-    ├── NetworkException (implements Psr\Http\Client\NetworkExceptionInterface)
+    ├── NetworkException (implements NetworkExceptionInterface)
     │   └── ConnectException
-    └── RequestException (implements Psr\Http\Client\RequestExceptionInterface)
+    └── RequestException (implements RequestExceptionInterface)
         ├── BadResponseException
         │   ├── ServerException
         │   └── ClientException
