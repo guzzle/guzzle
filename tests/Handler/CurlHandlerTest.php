@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Test\Handler;
 
-use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlHandler;
@@ -35,7 +35,7 @@ class CurlHandlerTest extends TestCase
         $handler = new CurlHandler();
         $request = new Request('GET', 'http://localhost:123');
 
-        $this->expectException(ConnectException::class);
+        $this->expectException(NetworkException::class);
         $this->expectExceptionMessage('cURL');
         $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
     }
@@ -133,8 +133,9 @@ class CurlHandlerTest extends TestCase
         $request = new Request('GET', 'http://localhost:123');
         $called = false;
         $p = $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])
-            ->otherwise(static function (ConnectException $e) use (&$called): void {
+            ->otherwise(static function (NetworkException $e) use (&$called): void {
                 $called = true;
+                self::assertTrue(\method_exists($e, 'getHandlerContext'));
                 self::assertArrayHasKey('errno', $e->getHandlerContext());
             });
         $p->wait();

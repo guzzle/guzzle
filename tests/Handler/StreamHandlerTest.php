@@ -6,7 +6,7 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\TimeoutException;
+use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
@@ -1371,7 +1371,7 @@ class StreamHandlerTest extends TestCase
         self::assertFalse(\feof($body));
     }
 
-    public function testThrowsTimeoutExceptionWhenDrainingResponseBodyTimesOut(): void
+    public function testThrowsResponseTimeoutExceptionWhenDrainingResponseBodyTimesOut(): void
     {
         Server::flush();
         $handler = new StreamHandler();
@@ -1389,17 +1389,20 @@ class StreamHandlerTest extends TestCase
                     },
                 ]
             )->wait();
-            self::fail('Expected TimeoutException');
-        } catch (TimeoutException $e) {
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
             $exception = $e;
             self::assertSame($request, $e->getRequest());
+            self::assertTrue($e->hasResponse());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
             self::assertSame(['timed_out' => true], $e->getHandlerContext());
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
-        self::assertFalse($stats->hasResponse());
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($exception->getResponse(), $stats->getResponse());
         self::assertSame($exception, $stats->getHandlerErrorData());
     }
 

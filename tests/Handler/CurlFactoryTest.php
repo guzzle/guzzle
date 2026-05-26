@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\TimeoutException;
+use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlShare;
@@ -17,6 +18,8 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\NetworkExceptionInterface;
+use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -2284,7 +2287,7 @@ class CurlFactoryTest extends TestCase
         try {
             $response->wait();
             self::fail('Expected ConnectException');
-        } catch (TimeoutException $e) {
+        } catch (NetworkTimeoutException $e) {
             self::fail('Expected non-timeout ConnectException');
         } catch (ConnectException $e) {
             self::assertSame($errno, $e->getHandlerContext()['errno']);
@@ -2336,7 +2339,7 @@ class CurlFactoryTest extends TestCase
         try {
             $promise->wait();
             self::fail('Expected ConnectException');
-        } catch (TimeoutException $e) {
+        } catch (NetworkTimeoutException $e) {
             self::fail('Expected non-timeout ConnectException');
         } catch (ConnectException $e) {
             self::assertSame($request, $e->getRequest());
@@ -2373,7 +2376,7 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testCreatesTimeoutException(): void
+    public function testCreatesNetworkTimeoutExceptionWithoutResponse(): void
     {
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
@@ -2388,9 +2391,39 @@ class CurlFactoryTest extends TestCase
 
         try {
             $response->wait();
-            self::fail('Expected TimeoutException');
-        } catch (TimeoutException $e) {
+            self::fail('Expected NetworkTimeoutException');
+        } catch (NetworkTimeoutException $e) {
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ConnectException::class, $e);
+            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
+            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
+        }
+    }
+
+    public function testCreatesResponseTimeoutExceptionWithResponse(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $response = new Psr7\Response(200);
+        $easy = $factory->create($request, []);
+        $easy->errno = \CURLE_OPERATION_TIMEOUTED;
+        $easy->response = $response;
+        $promise = CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        );
+
+        try {
+            $promise->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
             self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
         }
     }
@@ -2455,12 +2488,7 @@ class CurlFactoryTest extends TestCase
     public function testAddsStreamingBody(): void
     {
         $f = new CurlFactory(3);
-        $bd = Psr7\FnStream::decorate(Psr7\Utils::streamFor('foo'), [
-            'getSize' => static function (): ?int {
-                return null;
-            },
-        ]);
-        $request = new Psr7\Request('PUT', Server::$url, [], $bd);
+        $request = new Psr7\Request('PUT', Server::$url, ['Content-Length' => '1000000'], 'foo');
         $f->create($request, []);
         self::assertEquals(1, $_SERVER['_curl'][\CURLOPT_UPLOAD]);
         self::assertIsCallable($_SERVER['_curl'][\CURLOPT_READFUNCTION]);

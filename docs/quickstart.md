@@ -461,12 +461,13 @@ The following tree view describes how the Guzzle Exceptions depend on each other
 └── TransferException (implements GuzzleException)
     ├── HandlerClosedException
     ├── NetworkException (implements NetworkExceptionInterface)
-    │   └── ConnectException
-    │       └── TimeoutException
+    │   ├── ConnectException
+    │   └── NetworkTimeoutException
     └── RequestException (implements RequestExceptionInterface)
         ├── BadResponseException
         │   ├── ServerException
         │   └── ClientException
+        ├── ResponseTimeoutException
         └── TooManyRedirectsException
 ```
 
@@ -480,7 +481,9 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
 - A `GuzzleHttp\Exception\ConnectException` exception is thrown when a connection cannot be established. This exception extends from `GuzzleHttp\Exception\NetworkException`. Invalid or handler-unsupported HTTP request protocol versions are reported as `RequestException`, not `ConnectException`.
 
-- A `GuzzleHttp\Exception\TimeoutException` exception is thrown when a transfer timeout can be reliably identified. This exception extends from `GuzzleHttp\Exception\ConnectException`.
+- A `GuzzleHttp\Exception\NetworkTimeoutException` exception is thrown when a transfer timeout can be reliably identified before a response is received. This exception extends from `GuzzleHttp\Exception\NetworkException`.
+
+- A `GuzzleHttp\Exception\ResponseTimeoutException` exception is thrown when a transfer timeout can be reliably identified after a response is received. This exception extends from `GuzzleHttp\Exception\RequestException`.
 
 - A `GuzzleHttp\Exception\ClientException` is thrown for 400 level errors if the `http_errors` request option is set to true. This exception extends from `GuzzleHttp\Exception\BadResponseException` and `GuzzleHttp\Exception\BadResponseException` extends from `GuzzleHttp\Exception\RequestException`.
 

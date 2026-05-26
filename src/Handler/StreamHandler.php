@@ -6,7 +6,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\TimeoutException;
+use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
@@ -186,7 +186,14 @@ final class StreamHandler
         // Do not drain when the request is a HEAD request because they have
         // no body.
         if ($sink !== $stream) {
-            $this->drain($request, $stream, $sink, $response->getHeaderLine('Content-Length'));
+            try {
+                $this->drain($request, $response, $stream, $sink, $response->getHeaderLine('Content-Length'));
+            } catch (ResponseTimeoutException $e) {
+                $this->invokeStats($options, $request, $startTime, $response, $e);
+
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor($e);
+            }
         }
 
         $this->invokeStats($options, $request, $startTime, $response, null);
@@ -296,6 +303,7 @@ final class StreamHandler
      */
     private function drain(
         RequestInterface $request,
+        ResponseInterface $response,
         StreamInterface $source,
         StreamInterface $sink,
         string $contentLength
@@ -311,9 +319,10 @@ final class StreamHandler
                 (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
             );
         } catch (Psr7TimeoutException $e) {
-            throw new TimeoutException(
+            throw new ResponseTimeoutException(
                 'The stream handler timed out while transferring the response body',
                 $request,
+                $response,
                 $e,
                 ['timed_out' => true]
             );
