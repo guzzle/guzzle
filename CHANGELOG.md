@@ -18,7 +18,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.10`
 - Allowed domainless `SetCookie` instances to be stored without wildcard request matching
 - Changed no-proxy matching to respect request ports for host-and-port rules
-- Made `GuzzleHttp\Exception\ConnectException` extend `GuzzleHttp\Exception\NetworkException`; thrown classes are unchanged
+- Made `ConnectException` extend `NetworkException`; thrown classes unchanged
 - Prevented `CurlMultiHandler` destructors from throwing during cleanup
 - Improved invalid response handling across handlers
 
