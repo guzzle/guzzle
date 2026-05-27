@@ -6,6 +6,7 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -209,8 +210,8 @@ class MockHandlerTest extends TestCase
 
         try {
             $promise->wait();
-            self::fail('Expected RequestException');
-        } catch (RequestException $e) {
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
             self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
             self::assertInstanceOf(\Error::class, $e->getPrevious());
         }
@@ -233,8 +234,8 @@ class MockHandlerTest extends TestCase
 
         try {
             $promise->wait();
-            self::fail('Expected RequestException');
-        } catch (RequestException $e) {
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
             self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
             self::assertInstanceOf(TransferStats::class, $stats);
             self::assertSame($request, $stats->getRequest());
@@ -365,8 +366,8 @@ class MockHandlerTest extends TestCase
 
         try {
             $promise->wait();
-            self::fail('Expected RequestException');
-        } catch (RequestException $e) {
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
             self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
             self::assertSame($res, $e->getResponse());
             self::assertInstanceOf(TransferStats::class, $stats);

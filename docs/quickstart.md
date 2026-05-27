@@ -464,11 +464,12 @@ The following tree view describes how the Guzzle Exceptions depend on each other
     │   ├── ConnectException
     │   └── NetworkTimeoutException
     └── RequestException (implements RequestExceptionInterface)
-        ├── BadResponseException
-        │   ├── ServerException
-        │   └── ClientException
-        ├── ResponseTimeoutException
-        └── TooManyRedirectsException
+        └── ResponseException
+            ├── BadResponseException
+            │   ├── ServerException
+            │   └── ClientException
+            ├── ResponseTimeoutException
+            └── TooManyRedirectsException
 ```
 
 Guzzle throws exceptions for errors that occur during a transfer.
@@ -477,15 +478,20 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
 - `GuzzleHttp\Exception\HandlerClosedException` is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
 
-- `GuzzleHttp\Exception\RequestException` is the base class for request-related transfer failures that are not network failures. It implements PSR-18's `Psr\Http\Client\RequestExceptionInterface`, exposes the request with `getRequest()`, and may expose a response with `getResponse()` when one was received.
+- `GuzzleHttp\Exception\RequestException` is the base class for request-related transfer failures that are not network failures. It implements PSR-18's `Psr\Http\Client\RequestExceptionInterface` and exposes the request with `getRequest()`.
+
+- `GuzzleHttp\Exception\ResponseException` is the base class for request-related transfer failures where a response was received. It exposes the response with `getResponse()`.
+
+> [!NOTE]
+> Legacy response probing on `GuzzleHttp\Exception\RequestException` is deprecated. Catch `GuzzleHttp\Exception\ResponseException` to access a received response.
 
 - A `GuzzleHttp\Exception\ConnectException` exception is thrown when a connection cannot be established. This exception extends from `GuzzleHttp\Exception\NetworkException`. Invalid or handler-unsupported HTTP request protocol versions are reported as `RequestException`, not `ConnectException`.
 
 - A `GuzzleHttp\Exception\NetworkTimeoutException` exception is thrown when a transfer timeout can be reliably identified before a response is received. This exception extends from `GuzzleHttp\Exception\NetworkException`.
 
-- A `GuzzleHttp\Exception\ResponseTimeoutException` exception is thrown when a transfer timeout can be reliably identified after a response is received. This exception extends from `GuzzleHttp\Exception\RequestException`.
+- A `GuzzleHttp\Exception\ResponseTimeoutException` exception is thrown when a transfer timeout can be reliably identified after a response is received. This exception extends from `GuzzleHttp\Exception\ResponseException`.
 
-- A `GuzzleHttp\Exception\ClientException` is thrown for 400 level errors if the `http_errors` request option is set to true. This exception extends from `GuzzleHttp\Exception\BadResponseException` and `GuzzleHttp\Exception\BadResponseException` extends from `GuzzleHttp\Exception\RequestException`.
+- A `GuzzleHttp\Exception\ClientException` is thrown for 400 level errors if the `http_errors` request option is set to true. This exception extends from `GuzzleHttp\Exception\BadResponseException` and `GuzzleHttp\Exception\BadResponseException` extends from `GuzzleHttp\Exception\ResponseException`.
 
   ```php
   use GuzzleHttp\Psr7;
@@ -501,7 +507,7 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
 - A `GuzzleHttp\Exception\ServerException` is thrown for 500 level errors if the `http_errors` request option is set to true. This exception extends from `GuzzleHttp\Exception\BadResponseException`.
 
-- A `GuzzleHttp\Exception\TooManyRedirectsException` is thrown when too many redirects are followed. This exception extends from `GuzzleHttp\Exception\RequestException`.
+- A `GuzzleHttp\Exception\TooManyRedirectsException` is thrown when too many redirects are followed. This exception extends from `GuzzleHttp\Exception\ResponseException`.
 
 `Client::sendRequest()` returns redirect, 4xx, and 5xx responses as normal PSR-18 responses. These response-status exceptions are used by Guzzle request methods when the corresponding middleware options are enabled.
 

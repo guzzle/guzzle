@@ -7,6 +7,6 @@ namespace GuzzleHttp\Exception;
 /**
  * Exception thrown when a transfer times out after a response is received.
  */
-class ResponseTimeoutException extends RequestException
+class ResponseTimeoutException extends ResponseException
 {
 }

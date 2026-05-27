@@ -6,6 +6,7 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\StreamHandler;
@@ -70,7 +71,7 @@ class StreamHandlerTest extends TestCase
             self::fail('Expected request exception.');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertFalse($e->hasResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertSame('HTTP protocol version must not be empty.', $e->getMessage());
         }
     }
@@ -85,7 +86,7 @@ class StreamHandlerTest extends TestCase
             self::fail('Expected request exception.');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertFalse($e->hasResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertSame('HTTP protocol version must be a valid HTTP version number.', $e->getMessage());
         }
     }
@@ -1393,7 +1394,6 @@ class StreamHandlerTest extends TestCase
         } catch (ResponseTimeoutException $e) {
             $exception = $e;
             self::assertSame($request, $e->getRequest());
-            self::assertTrue($e->hasResponse());
             self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
@@ -1451,8 +1451,7 @@ class StreamHandlerTest extends TestCase
                 $e->getMessage()
             );
             self::assertFalse($called);
-            self::assertFalse($e->hasResponse());
-            self::assertNull($e->getResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
             self::assertInstanceOf(TransferStats::class, $stats);
             self::assertFalse($stats->hasResponse());

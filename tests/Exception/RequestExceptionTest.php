@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests\Exception;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -19,16 +20,13 @@ use Psr\Http\Client\RequestExceptionInterface;
  */
 class RequestExceptionTest extends TestCase
 {
-    public function testHasRequestAndResponse(): void
+    public function testHasRequest(): void
     {
         $req = new Request('GET', '/');
-        $res = new Response(200);
-        $e = new RequestException('foo', $req, $res);
+        $e = new RequestException('foo', $req);
         self::assertInstanceOf(RequestExceptionInterface::class, $e);
         self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
-        self::assertSame($res, $e->getResponse());
-        self::assertTrue($e->hasResponse());
         self::assertSame('foo', $e->getMessage());
     }
 
@@ -78,7 +76,7 @@ class RequestExceptionTest extends TestCase
             '300 ',
             $e->getMessage()
         );
-        self::assertInstanceOf(RequestException::class, $e);
+        self::assertInstanceOf(ResponseException::class, $e);
     }
 
     public function testThrowsInvalidArgumentExceptionOnOutOfBoundsResponseCode(): void

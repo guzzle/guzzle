@@ -743,7 +743,7 @@ Types
 Constant
 `GuzzleHttp\RequestOptions::ON_HEADERS`
 
-The callable accepts a `Psr\Http\Message\ResponseInterface` object and the corresponding `Psr\Http\Message\RequestInterface` object. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\RequestException` that wraps the exception that was thrown.
+The callable accepts a `Psr\Http\Message\ResponseInterface` object and the corresponding `Psr\Http\Message\RequestInterface` object. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the exception that was thrown.
 
 You may need to know what headers and status codes were received before data can be written to the sink.
 
@@ -825,7 +825,7 @@ The function accepts the following positional arguments:
 - the total number of bytes expected to be uploaded
 - the number of bytes uploaded so far
 
-With the built-in cURL handlers, returning a truthy value aborts the transfer and rejects the request promise with a `GuzzleHttp\Exception\RequestException`. If the callable throws, the built-in cURL handlers abort the transfer and reject the promise with a `RequestException` wrapping the thrown exception. The built-in stream handler treats progress callbacks as notifications only and ignores return values.
+With the built-in cURL handlers, returning a truthy value aborts the transfer and rejects the request promise with a `GuzzleHttp\Exception\ResponseException` when a response is available, or a `GuzzleHttp\Exception\RequestException` otherwise. If the callable throws, the built-in cURL handlers abort the transfer and reject the promise with the same response-aware classification while wrapping the thrown exception. The built-in stream handler treats progress callbacks as notifications only and ignores return values.
 
 ```php
 // Send a GET request to /get?foo=bar
@@ -1309,7 +1309,7 @@ $client->request('GET', '/delay/5', ['timeout' => 3.14]);
 // PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\NetworkTimeoutException'
 ```
 
-When a built-in handler can reliably identify a timeout before any response is received, it throws `GuzzleHttp\Exception\NetworkTimeoutException`. If a timeout is detected after a response is received, it throws `GuzzleHttp\Exception\ResponseTimeoutException`.
+When a built-in handler can reliably identify a timeout before any response is received, it throws `GuzzleHttp\Exception\NetworkTimeoutException`. If a timeout is detected after a response is received, it throws `GuzzleHttp\Exception\ResponseTimeoutException`, which extends `GuzzleHttp\Exception\ResponseException`.
 
 ## version
 

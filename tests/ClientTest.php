@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
@@ -119,7 +120,7 @@ class ClientTest extends TestCase
             self::fail('Expected request exception.');
         } catch (RequestException $e) {
             self::assertSame($version, $e->getRequest()->getProtocolVersion());
-            self::assertFalse($e->hasResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertSame('HTTP protocol version must be a valid HTTP version number.', $e->getMessage());
         }
 

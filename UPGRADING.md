@@ -114,11 +114,12 @@ Guzzle 8 uses this hierarchy:
     │   ├── ConnectException
     │   └── NetworkTimeoutException
     └── RequestException (implements RequestExceptionInterface)
-        ├── BadResponseException
-        │   ├── ServerException
-        │   └── ClientException
-        ├── ResponseTimeoutException
-        └── TooManyRedirectsException
+        └── ResponseException
+            ├── BadResponseException
+            │   ├── ServerException
+            │   └── ClientException
+            ├── ResponseTimeoutException
+            └── TooManyRedirectsException
 ```
 
 `NetworkException` was added in 7.11 and remains the base class for
@@ -133,10 +134,18 @@ reliably identify a transfer timeout before a response is received. It extends
 `NetworkExceptionInterface`, `TransferException`, or `GuzzleException`, depending
 on intent.
 
+`ResponseException` is new and is the base class for request failures where a
+response was received. Use `ResponseException::getResponse()` for response-aware
+exception handling.
+
 `ResponseTimeoutException` is new and is thrown when a built-in handler can
 reliably identify a transfer timeout after a response is received. It extends
-`RequestException` and exposes the response. This avoids reporting
+`ResponseException` and exposes the response. This avoids reporting
 response-aware failures as PSR-18 network exceptions.
+
+`RequestException::getResponse()` and `RequestException::hasResponse()` are
+deprecated. Check for `ResponseException` before reading a response from an
+exception. These legacy response probing methods will be removed in Guzzle 9.
 
 `HandlerClosedException` is new in Guzzle 8. It extends `TransferException` and
 is used when an explicitly closed `CurlMultiHandler` rejects transfers that are
@@ -167,14 +176,16 @@ For the built-in cURL handlers, the affected cURL error classifications are:
   classified this cURL error as `RequestException`.
 - `CURLE_SEND_ERROR` and `CURLE_RECV_ERROR` now throw `ConnectException` when
   no response was created. If a response was created before the error, they
-  remain `RequestException`.
+  remain request exceptions and are represented by `ResponseException` when a
+  response is available.
 - When the PHP cURL extension defines them, `CURLE_PROXY`,
   `CURLE_QUIC_CONNECT_ERROR`, `CURLE_HTTP2`, `CURLE_HTTP2_STREAM`,
   `CURLE_HTTP3`, `CURLE_PEER_FAILED_VERIFICATION`, `CURLE_SSL_CACERT`,
   `CURLE_SSL_PEER_CERTIFICATE`, `CURLE_SSL_PINNEDPUBKEYNOTMATCH`,
   `CURLE_SSL_INVALIDCERTSTATUS`, and `CURLE_SSL_CLIENTCERT` now throw
   `ConnectException` when no response was created. If a response was created
-  before the error, they remain `RequestException`.
+  before the error, they remain request exceptions and are represented by
+  `ResponseException` when a response is available.
 
 The existing always-network cURL errors, including
 `CURLE_COULDNT_RESOLVE_HOST`, `CURLE_COULDNT_CONNECT`,
@@ -187,6 +198,7 @@ transport failure type should add network-specific handling:
 ```php
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 
 try {
     $client->request('GET', $uri);
@@ -195,13 +207,18 @@ try {
 
     // Network failures without an HTTP response, including the reclassified
     // built-in cURL transport errors.
-} catch (RequestException $e) {
+} catch (ResponseException $e) {
     $response = $e->getResponse();
 
     // Response-aware failures, HTTP errors, redirects, callback failures, or
     // request-related transfer failures that are not network failures.
+} catch (RequestException $e) {
+    // Request-related failures without supported response access.
 }
 ```
+
+The deprecated `RequestException::wrapException()` method was removed. Create a
+`RequestException` directly instead.
 
 `GuzzleHttp\Exception\InvalidArgumentException` remains outside the transfer
 exception hierarchy and is still used for invalid configuration or request option
@@ -249,12 +266,14 @@ undocumented internal lazy cURL multi handle. Applications that used it to set
 
 If you use the `progress` request option with the built-in cURL handlers, audit
 callbacks for return values. Any truthy return value now aborts the transfer and
-rejects the request with `RequestException`. Return `0`, `false`, or nothing to
-keep the transfer running.
+rejects the request with `ResponseException` when a response is available, or
+`RequestException` otherwise. Return `0`, `false`, or nothing to keep the
+transfer running.
 
-If a cURL `progress` callback throws, catch `RequestException` and inspect
-`getPrevious()` for the original throwable. The throwable no longer escapes
-directly from the native cURL callback.
+If a cURL `progress` callback throws, catch `ResponseException` for
+response-aware failures or `RequestException` for broader request failures, and
+inspect `getPrevious()` for the original throwable. The throwable no longer
+escapes directly from the native cURL callback.
 
 The stream handler still ignores `progress` return values.
 
