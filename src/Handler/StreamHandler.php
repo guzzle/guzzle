@@ -39,11 +39,8 @@ final class StreamHandler
         'No route to host',
         'Host is unreachable',
         'Host is down',
-        'Connection reset by peer',
         'Cannot connect to HTTPS server through proxy',
         'SSL: Handshake timed out',
-        'SSL operation failed',
-        'SSL: fatal protocol error',
     ];
 
     private array $lastHeaders = [];
