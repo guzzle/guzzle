@@ -22,6 +22,24 @@ use Psr\Http\Message\UriInterface;
  */
 class StreamHandler
 {
+    private const CONNECTION_ERRORS = [
+        'php_network_getaddresses:',
+        'getaddrinfo',
+        'gethostbyname failed',
+        'Connection refused',
+        'No connection could be made because the target machine actively refused it',
+        "couldn't connect to host", // error on HHVM
+        'connection attempt failed',
+        'connect() failed',
+        'Connection timed out',
+        'Operation timed out',
+        'Network is unreachable',
+        'No route to host',
+        'Host is unreachable',
+        'Host is down',
+        'Cannot connect to HTTPS server through proxy',
+    ];
+
     /**
      * @var array
      */
@@ -92,25 +110,7 @@ class StreamHandler
 
     private static function isConnectionError(string $message): bool
     {
-        static $connectionErrors = [
-            'php_network_getaddresses:',
-            'getaddrinfo',
-            'gethostbyname failed',
-            'Connection refused',
-            'No connection could be made because the target machine actively refused it',
-            "couldn't connect to host", // error on HHVM
-            'connection attempt failed',
-            'connect() failed',
-            'Connection timed out',
-            'Operation timed out',
-            'Network is unreachable',
-            'No route to host',
-            'Host is unreachable',
-            'Host is down',
-            'Cannot connect to HTTPS server through proxy',
-        ];
-
-        foreach ($connectionErrors as $connectionError) {
+        foreach (self::CONNECTION_ERRORS as $connectionError) {
             if (false !== \strpos($message, $connectionError)) {
                 return true;
             }
