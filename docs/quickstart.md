@@ -470,15 +470,11 @@ When a transfer fails, first ask whether Guzzle has a response object yet. The a
             └── TooManyRedirectsException
 ```
 
-If the request cannot be completed because of a network problem and no response has been received, Guzzle throws `NetworkException`. This is the branch for transport failures that happen while opening the connection or moving bytes over the network. Connection establishment failures use the more specific `ConnectException`. Timeouts before a response is available use `NetworkTimeoutException`. Other no-response transport failures, such as send or receive errors, use `NetworkException` itself.
+If a network problem prevents Guzzle from receiving a response, it throws `NetworkException`. This covers transport failures while opening the connection or moving bytes over the network. Connection establishment failures use the more specific `ConnectException`, timeouts before a response is available use `NetworkTimeoutException`, and other no-response transport failures, such as send or receive errors, use `NetworkException` itself.
 
-If response headers have been parsed into a response object, later transfer failures use `ResponseException`. This is the only branch that exposes `getResponse()`. It includes `ResponseTimeoutException` when a timeout is identified after a response is available. When using Guzzle request methods, middleware may also turn completed responses into exceptions: `http_errors` turns 400 level responses into `ClientException` and 500 level responses into `ServerException`, and redirect middleware can throw `TooManyRedirectsException`.
+If Guzzle has parsed response headers into a response object, later transfer failures use `ResponseException`. This is the only branch that exposes `getResponse()`, and it includes `ResponseTimeoutException` when a timeout is identified after a response is available. With Guzzle request methods, middleware can also turn completed responses into exceptions: `http_errors` turns 400 level responses into `ClientException` and 500 level responses into `ServerException`, and redirect middleware can throw `TooManyRedirectsException`. `Client::sendRequest()` follows PSR-18 and returns redirect, 4xx, and 5xx responses normally instead.
 
-`Client::sendRequest()` follows PSR-18 and returns redirect, 4xx, and 5xx responses as normal responses. Those response-status exceptions are used by Guzzle request methods when the corresponding middleware options are enabled.
-
-If the failure belongs to the request but is not a network failure, and Guzzle does not have a response object, Guzzle throws `RequestException`. This includes invalid or handler-unsupported HTTP protocol versions, malformed response data that cannot be parsed into a PSR-7 response, and no-response transfers aborted by application code. `RequestException` exposes `getRequest()`, but it does not expose `getResponse()`.
-
-When handling these failures separately, put the catch blocks in the order shown below. The first catch handles transport failures with no response. The second handles failures where a response is available. The final catch handles other request failures without a response.
+If a non-network request failure occurs before Guzzle has a response object, it throws `RequestException`. This includes invalid or handler-unsupported HTTP protocol versions, malformed response data that cannot be parsed into a PSR-7 response, and no-response transfers aborted by application code. `RequestException` exposes `getRequest()`, but not `getResponse()`. When handling these cases separately, catch no-response transport failures first, response-aware failures second, and other request failures last.
 
 ```php
 use GuzzleHttp\Exception\NetworkException;
