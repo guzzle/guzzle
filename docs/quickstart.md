@@ -452,9 +452,9 @@ echo $response->getStatusCode();
 
 ## Exceptions
 
-When a transfer fails, first ask whether Guzzle has a response object yet. That answer determines which part of the exception hierarchy you should catch. Transfer failures are reported by exceptions that implement `GuzzleException`, which extends PSR-18's `ClientExceptionInterface`.
+When a transfer fails, first ask whether Guzzle has a response object yet. That answer determines which part of the exception hierarchy you should catch. Use `TransferException` or `GuzzleException` only when one catch block should handle every Guzzle transfer failure.
 
-If the request cannot be completed because of a network problem and no response has been received, Guzzle throws `NetworkException`. This matches PSR-18's network exception rule: `getRequest()` is available, but there is no response object. Connection establishment failures use the more specific `ConnectException`. Timeouts before a response is available use `NetworkTimeoutException`. Other no-response transport failures, such as send or receive errors, use `NetworkException` itself.
+If the request cannot be completed because of a network problem and no response has been received, Guzzle throws `NetworkException`. This is the branch for transport failures that happen while opening the connection or moving bytes over the network. Connection establishment failures use the more specific `ConnectException`. Timeouts before a response is available use `NetworkTimeoutException`. Other no-response transport failures, such as send or receive errors, use `NetworkException` itself.
 
 If response headers have been parsed into a response object, later transfer failures use `ResponseException`. This is the only branch that exposes `getResponse()`. It includes `ResponseTimeoutException` when a timeout is identified after a response is available. When using Guzzle request methods, middleware may also turn completed responses into exceptions: `http_errors` turns 400 level responses into `ClientException` and 500 level responses into `ServerException`, and redirect middleware can throw `TooManyRedirectsException`.
 
@@ -502,7 +502,7 @@ For reference, the exception hierarchy is:
             └── TooManyRedirectsException
 ```
 
-All transfer exceptions listed above extend from `TransferException`. `TransferException` implements `GuzzleException`, which extends PSR-18's `ClientExceptionInterface`.
+All transfer exceptions listed above extend from `TransferException` and implement `GuzzleException`.
 
 ## Environment Variables
 
