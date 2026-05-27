@@ -135,7 +135,7 @@ final class RequestOptions
     public const EXPECT = 'expect';
 
     /**
-     * form_params: (array<array-key, string|int|float|bool|null|array<array-key, mixed>>)
+     * form_params: (array<array-key, string|int|float|bool|null|array>)
      * Associative array of form field names to scalar, null, or nested array
      * values. Sets the Content-Type header to application/x-www-form-urlencoded
      * when no Content-Type header is already present.

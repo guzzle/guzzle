@@ -450,7 +450,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     private static function warnAboutInvalidFormParamTypes($value): void
     {
         if (!\is_array($value)) {
-            self::warnInvalidRequestOptionType('form_params', 'array<array-key, string|int|float|bool|null|array<array-key, mixed>>', $value);
+            self::warnInvalidRequestOptionType('form_params', 'array<array-key, string|int|float|bool|null|array>', $value);
 
             return;
         }
@@ -471,7 +471,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
 
             if ($item !== null && !\is_scalar($item)) {
-                self::warnInvalidRequestOptionType($itemPath, 'string|int|float|bool|null|array<array-key, mixed>', $item);
+                self::warnInvalidRequestOptionType($itemPath, 'string|int|float|bool|null|array', $item);
 
                 return false;
             }
