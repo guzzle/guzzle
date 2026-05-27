@@ -22,6 +22,24 @@ use Psr\Http\Message\UriInterface;
  */
 class StreamHandler
 {
+    private const CONNECTION_ERRORS = [
+        'php_network_getaddresses:',
+        'getaddrinfo',
+        'gethostbyname failed',
+        'Connection refused',
+        'No connection could be made because the target machine actively refused it',
+        "couldn't connect to host", // error on HHVM
+        'connection attempt failed',
+        'connect() failed',
+        'Connection timed out',
+        'Operation timed out',
+        'Network is unreachable',
+        'No route to host',
+        'Host is unreachable',
+        'Host is down',
+        'Cannot connect to HTTPS server through proxy',
+    ];
+
     /**
      * @var array
      */
@@ -79,13 +97,7 @@ class StreamHandler
             throw $e;
         } catch (\Exception $e) {
             // Determine if the error was a networking error.
-            $message = $e->getMessage();
-            // This list can probably get more comprehensive.
-            if (false !== \strpos($message, 'getaddrinfo') // DNS lookup failed
-                || false !== \strpos($message, 'Connection refused')
-                || false !== \strpos($message, "couldn't connect to host") // error on HHVM
-                || false !== \strpos($message, 'connection attempt failed')
-            ) {
+            if (self::isConnectionError($e->getMessage())) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             } else {
                 $e = RequestException::wrapException($request, $e);
@@ -94,6 +106,17 @@ class StreamHandler
 
             return P\Create::rejectionFor($e);
         }
+    }
+
+    private static function isConnectionError(string $message): bool
+    {
+        foreach (self::CONNECTION_ERRORS as $connectionError) {
+            if (false !== \strpos($message, $connectionError)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function invokeStats(

@@ -7,7 +7,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
-- Defer cURL multi cancellation cleanup until after progress callbacks return.
+- Defer cURL multi cancellation cleanup until after progress callbacks return
+- Classify additional stream handler connection failures as `ConnectException`
 
 
 ## 7.10.4 - 2025-05-22
