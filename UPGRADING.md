@@ -192,8 +192,14 @@ The existing always-network cURL errors, including
 `CURLE_SSL_CONNECT_ERROR`, and `CURLE_GOT_NOTHING`, still throw
 `ConnectException`.
 
-For example, code that previously treated `RequestException` as the only cURL
-transport failure type should add network-specific handling:
+The built-in stream handler now classifies additional connection setup, early
+connection close, and TLS handshake or protocol failures as `ConnectException`.
+If you previously caught only `RequestException` for these stream handler
+failures, catch `NetworkException`, `NetworkExceptionInterface`,
+`TransferException`, or `GuzzleException` instead.
+
+For example, code that previously treated `RequestException` as the only built-in
+handler transport failure type should add network-specific handling:
 
 ```php
 use GuzzleHttp\Exception\NetworkException;
@@ -206,7 +212,7 @@ try {
     $errno = $e->getHandlerContext()['errno'] ?? null;
 
     // Network failures without an HTTP response, including the reclassified
-    // built-in cURL transport errors.
+    // built-in handler transport errors.
 } catch (ResponseException $e) {
     $response = $e->getResponse();
 

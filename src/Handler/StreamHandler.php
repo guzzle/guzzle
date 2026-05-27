@@ -31,7 +31,6 @@ final class StreamHandler
         'gethostbyname failed',
         'Connection refused',
         'No connection could be made because the target machine actively refused it',
-        "couldn't connect to host", // error on HHVM
         'connection attempt failed',
         'connect() failed',
         'Connection timed out',
@@ -40,7 +39,11 @@ final class StreamHandler
         'No route to host',
         'Host is unreachable',
         'Host is down',
+        'Connection reset by peer',
         'Cannot connect to HTTPS server through proxy',
+        'SSL: Handshake timed out',
+        'SSL operation failed',
+        'SSL: fatal protocol error',
     ];
 
     private array $lastHeaders = [];
