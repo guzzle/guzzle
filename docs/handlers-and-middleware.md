@@ -278,9 +278,6 @@ $handler = new CurlHandler([
 ]);
 ```
 
-Do not pass `CURLOPT_SHARE` in the `curl` request option when transport sharing
-is configured.
-
 ## Creating a Handler
 
 As stated earlier, a handler is a function that accepts a `Psr\Http\Message\RequestInterface` and an array of request options. A handler used with Guzzle middleware returns a `GuzzleHttp\Promise\PromiseInterface` that is fulfilled with a `Psr\Http\Message\ResponseInterface` or rejected with a reason.
