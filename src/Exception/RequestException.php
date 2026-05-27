@@ -45,9 +45,13 @@ class RequestException extends TransferException implements RequestExceptionInte
 
     /**
      * Wrap non-RequestExceptions with a RequestException
+     *
+     * @deprecated since 7.11. Create a RequestException directly instead.
      */
     public static function wrapException(RequestInterface $request, \Throwable $e): RequestException
     {
+        \trigger_deprecation('guzzlehttp/guzzle', '7.11', '%s::wrapException() is deprecated and will be removed in 8.0. Create a %s directly instead.', self::class, self::class);
+
         return $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, null, $e);
     }
 

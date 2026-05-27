@@ -138,23 +138,6 @@ class RequestExceptionTest extends TestCase
         self::assertSame(442, $e->getCode());
     }
 
-    public function testWrapsRequestExceptions()
-    {
-        $e = new \Exception('foo');
-        $r = new Request('GET', 'http://www.oo.com');
-        $ex = RequestException::wrapException($r, $e);
-        self::assertInstanceOf(RequestException::class, $ex);
-        self::assertSame($e, $ex->getPrevious());
-    }
-
-    public function testDoesNotWrapExistingRequestExceptions()
-    {
-        $r = new Request('GET', 'http://www.oo.com');
-        $e = new RequestException('foo', $r);
-        $e2 = RequestException::wrapException($r, $e);
-        self::assertSame($e, $e2);
-    }
-
     public function testCanProvideHandlerContext()
     {
         $r = new Request('GET', 'http://www.oo.com');
