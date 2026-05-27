@@ -398,7 +398,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::warnIfPresentAndNotBool($options, 'synchronous');
         self::warnIfPresentAndNotNumber($options, 'timeout');
         self::warnIfPresentAndNotBoolOrString($options, 'verify');
-        self::warnIfPresentAndNotStringOrFloat($options, 'version');
+        self::warnIfPresentAndNotStringOrNumber($options, 'version');
         self::warnIfPresentAndNotArray($options, 'curl', 'array<int|string, mixed>');
 
         if (isset($options['cookies']) && $options['cookies'] === true) {
@@ -708,10 +708,15 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function warnIfPresentAndNotStringOrFloat(array $options, string $option): void
+    private static function warnIfPresentAndNotStringOrNumber(array $options, string $option): void
     {
-        if (\array_key_exists($option, $options) && !\is_string($options[$option]) && !\is_float($options[$option])) {
-            self::warnInvalidRequestOptionType($option, 'string|float', $options[$option]);
+        if (
+            \array_key_exists($option, $options)
+            && !\is_string($options[$option])
+            && !\is_int($options[$option])
+            && !\is_float($options[$option])
+        ) {
+            self::warnInvalidRequestOptionType($option, 'string|int|float', $options[$option]);
         }
     }
 
@@ -897,7 +902,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
-     * @param string|float $version
+     * @param string|int|float $version
      */
     private static function normalizeProtocolVersion($version): string
     {

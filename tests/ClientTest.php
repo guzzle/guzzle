@@ -932,6 +932,7 @@ class ClientTest extends TestCase
         yield ['1.1', '1.1'];
         yield [1.1, '1.1'];
         yield ['2', '2'];
+        yield [2, '2'];
         yield [2.0, '2.0'];
     }
 
