@@ -10,7 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added the `protocols` request option to restrict allowed URI schemes for request transfers
 - Added `cert_type` and `ssl_key_type` request options for TLS certificate and private-key file types
 - Added PHP stream handler support for the `ssl_key` request option
-- Added transport sharing configuration through the `transport_sharing` client option and cURL handler `transport_sharing` option
+- Added transport sharing via the `transport_sharing` client and cURL handler options
 - Added `GuzzleHttp\Exception\NetworkException` as the base class for network-related transfer failures
 
 ### Changed
