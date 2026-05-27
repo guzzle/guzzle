@@ -30,6 +30,14 @@ class RequestExceptionTest extends TestCase
         self::assertSame('foo', $e->getMessage());
     }
 
+    public function testDoesNotExposeResponseAccessors(): void
+    {
+        $e = new RequestException('foo', new Request('GET', '/'));
+
+        self::assertFalse(\method_exists($e, 'getResponse'));
+        self::assertFalse(\method_exists($e, 'hasResponse'));
+    }
+
     public function testCreatesGenerateException(): void
     {
         $e = RequestException::create(new Request('GET', '/'));
@@ -141,7 +149,7 @@ class RequestExceptionTest extends TestCase
     public function testCanProvideHandlerContext(): void
     {
         $r = new Request('GET', 'http://www.oo.com');
-        $e = new RequestException('foo', $r, null, null, ['bar' => 'baz']);
+        $e = new RequestException('foo', $r, null, ['bar' => 'baz']);
         self::assertSame(['bar' => 'baz'], $e->getHandlerContext());
     }
 

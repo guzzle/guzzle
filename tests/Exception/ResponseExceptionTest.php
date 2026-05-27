@@ -30,7 +30,9 @@ class ResponseExceptionTest extends TestCase
         self::assertSame($req, $e->getRequest());
         self::assertSame($res, $e->getResponse());
         self::assertSame('foo', $e->getMessage());
+        self::assertSame(200, $e->getCode());
         self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
+        self::assertFalse(\method_exists($e, 'hasResponse'));
     }
 }

@@ -15,7 +15,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add explicit `close()` lifecycle methods to the built-in cURL handlers and concrete cURL factory
 - Add `HandlerClosedException` for pending transfers rejected by `CurlMultiHandler::close()`
 - Add `ProxyOptions` for proxy option resolution
-- Add `ResponseException` as the base class for request failures where a response was received
+- Add `ResponseException` for request failures with responses
 
 ### Changed
 
@@ -68,10 +68,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Made `GuzzleHttp\Handler\CurlFactory`, `GuzzleHttp\Handler\CurlHandler`, `GuzzleHttp\Handler\CurlMultiHandler`, `GuzzleHttp\Handler\MockHandler`, and `GuzzleHttp\Handler\StreamHandler` final
 - Made static utility classes non-instantiable and declared `GuzzleHttp\Handler\Proxy` final
 
-### Deprecated
-
-- Deprecated `RequestException::getResponse()` and `RequestException::hasResponse()`; catch `ResponseException` to access a received response
-
 ### Removed
 
 - Dropped support for PHP 7.2 and 7.3
@@ -80,6 +76,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `RedirectMiddleware::$defaultSettings`; use `RedirectMiddleware::DEFAULT_SETTINGS`
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
 - Removed the deprecated `RequestException::wrapException()` method
+- Removed response access from `RequestException`; use `ResponseException`
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
 

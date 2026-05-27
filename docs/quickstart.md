@@ -482,9 +482,6 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
 - `GuzzleHttp\Exception\ResponseException` is the base class for request-related transfer failures where a response was received. It exposes the response with `getResponse()`.
 
-> [!NOTE]
-> Legacy response probing on `GuzzleHttp\Exception\RequestException` is deprecated. Catch `GuzzleHttp\Exception\ResponseException` to access a received response.
-
 - A `GuzzleHttp\Exception\ConnectException` exception is thrown when a connection cannot be established. This exception extends from `GuzzleHttp\Exception\NetworkException`. Invalid or handler-unsupported HTTP request protocol versions are reported as `RequestException`, not `ConnectException`.
 
 - A `GuzzleHttp\Exception\NetworkTimeoutException` exception is thrown when a transfer timeout can be reliably identified before a response is received. This exception extends from `GuzzleHttp\Exception\NetworkException`.

@@ -160,9 +160,10 @@ the base class for request failures where response headers were received and a
 response object is available, and `BadResponseException`,
 `ResponseTimeoutException`, and `TooManyRedirectsException` extend it. Use
 `ResponseException::getResponse()` for response-aware exception handling.
-`RequestException::getResponse()` and `RequestException::hasResponse()` are
-deprecated and will be removed in Guzzle 9; catch `ResponseException`, or test
-with `instanceof ResponseException`, before calling `getResponse()`.
+`RequestException` no longer stores or exposes responses: its constructor no
+longer accepts a response argument, and `RequestException::getResponse()` and
+`RequestException::hasResponse()` have been removed. Catch `ResponseException`,
+or test with `instanceof ResponseException`, before calling `getResponse()`.
 
 Timeouts are now split by whether response headers were received.
 `NetworkTimeoutException` is thrown when a built-in handler can reliably
@@ -242,7 +243,10 @@ The existing always-network cURL errors, including
 timeouts as `ConnectException`.
 
 The deprecated `RequestException::wrapException()` method was removed; create a
-`RequestException` directly instead.
+`RequestException` directly instead. When you need to create an exception for a
+failure with a response, create `ResponseException`, `BadResponseException`,
+`ClientException`, `ServerException`, or `TooManyRedirectsException` instead of
+passing the response to `RequestException`.
 `GuzzleHttp\Exception\InvalidArgumentException` remains outside the transfer
 exception hierarchy and is still used for invalid configuration or request
 option values that can be rejected before a transfer starts.

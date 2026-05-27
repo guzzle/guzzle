@@ -17,22 +17,17 @@ class RequestException extends TransferException implements RequestExceptionInte
 {
     private RequestInterface $request;
 
-    private ?ResponseInterface $response;
-
     private array $handlerContext;
 
     public function __construct(
         string $message,
         RequestInterface $request,
-        ?ResponseInterface $response = null,
         ?\Throwable $previous = null,
-        array $handlerContext = []
+        array $handlerContext = [],
+        int $code = 0
     ) {
-        // Set the code of the exception if the response is set and not future.
-        $code = $response ? $response->getStatusCode() : 0;
         parent::__construct($message, $code, $previous);
         $this->request = $request;
-        $this->response = $response;
         $this->handlerContext = $handlerContext;
     }
 
@@ -56,7 +51,6 @@ class RequestException extends TransferException implements RequestExceptionInte
             return new self(
                 'Error completing request',
                 $request,
-                null,
                 $previous,
                 $handlerContext
             );
@@ -107,31 +101,6 @@ class RequestException extends TransferException implements RequestExceptionInte
     public function getRequest(): RequestInterface
     {
         return $this->request;
-    }
-
-    /**
-     * Get the associated response
-     *
-     * Calling this method is deprecated since 8.0. Use instanceof
-     * ResponseException and ResponseException::getResponse() instead.
-     */
-    public function getResponse(): ?ResponseInterface
-    {
-        \trigger_deprecation('guzzlehttp/guzzle', '8.0', '%s::getResponse() is deprecated and will be removed in 9.0. Use instanceof %s and %s::getResponse() instead.', static::class, ResponseException::class, ResponseException::class);
-
-        return $this->response;
-    }
-
-    /**
-     * Check if a response was received
-     *
-     * @deprecated since 8.0. Use instanceof ResponseException instead.
-     */
-    public function hasResponse(): bool
-    {
-        \trigger_deprecation('guzzlehttp/guzzle', '8.0', '%s::hasResponse() is deprecated and will be removed in 9.0. Use instanceof %s instead.', static::class, ResponseException::class);
-
-        return $this->response !== null;
     }
 
     /**
