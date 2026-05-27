@@ -83,16 +83,17 @@ async variants continue to use uppercase standard methods.
 
 #### Exception hierarchy and classification
 
-Except for the built-in handler transport reclassifications described below, the
-exception hierarchy changes are additive and are almost never breaking. Existing
-catch blocks that target the same failure category still work: `RequestException`
-still catches response-aware and request-related transfer failures, and
-`TransferException` or `GuzzleException` still catch all Guzzle transfer
-failures.
-
-This section describes the Guzzle 7 to Guzzle 8 path. Guzzle 7.0 already moved
+Some Guzzle 8 exception changes add intermediate classes, while others
+intentionally reclassify specific failures. Broad `TransferException` and
+`GuzzleException` catch blocks still catch all Guzzle transfer failures, and
+`RequestException` still catches response-aware and other non-network request
+failures. More specific catch blocks need auditing: Guzzle 8 splits timeout
+failures by whether a response was received, and the built-in cURL and stream
+handlers classify more no-response transport failures as network failures. This
+section covers the Guzzle 7 to Guzzle 8 path. Guzzle 7.0 already moved
 `ConnectException` out from under `RequestException`; see the 6.0 to 7.0 notes
-for that migration.
+for that migration. The hierarchy changes are easiest to compare in the three
+trees below.
 
 Guzzle 7 before 7.11.0 uses this hierarchy:
 
@@ -139,42 +140,37 @@ Guzzle 8 uses this hierarchy:
             └── TooManyRedirectsException
 ```
 
-`NetworkException` was added in Guzzle 7.11.0 as the base class for
-no-response network failures. Before 7.11.0, `ConnectException` implemented
+`NetworkException` was added in Guzzle 7.11.0 as the base class for no-response
+network failures. Before 7.11.0, `ConnectException` implemented
 `Psr\Http\Client\NetworkExceptionInterface` directly and there was no
-Guzzle-specific network base class.
+Guzzle-specific network base class. Code that must support Guzzle 7 versions
+before 7.11.0 should catch `Psr\Http\Client\NetworkExceptionInterface`,
+`TransferException`, or `GuzzleException`, depending on intent. Code that can
+require Guzzle 7.11.0 or newer may catch `NetworkException`. `ConnectException`
+still extends `NetworkException` in Guzzle 8, so existing 7.11
+`NetworkException`, `TransferException`, and `GuzzleException` catch blocks still
+catch connection failures.
 
-Code that must support Guzzle 7 versions before 7.11.0 should catch
-`Psr\Http\Client\NetworkExceptionInterface`, `TransferException`, or
-`GuzzleException`, depending on intent. Code that can require Guzzle 7.11.0 or
-newer may catch `NetworkException`.
+Guzzle 8 adds the response-aware side of the hierarchy. Guzzle 7.11.0 did not
+add `ResponseException`; response-aware request failures remain under
+`RequestException` throughout Guzzle 7. In Guzzle 8, `ResponseException` is the
+base class for request failures where a response was received, and
+`BadResponseException`, `ResponseTimeoutException`, and
+`TooManyRedirectsException` extend it. Use `ResponseException::getResponse()` for
+response-aware exception handling. `RequestException::getResponse()` and
+`RequestException::hasResponse()` are deprecated and will be removed in Guzzle 9;
+check for `ResponseException` before reading a response from an exception.
 
-`ConnectException` still extends `NetworkException` in Guzzle 8, so existing
-7.11 `NetworkException`, `TransferException`, and `GuzzleException` catch blocks
-still catch connection failures.
-
-Guzzle 7.11.0 did not add `ResponseException`; response-aware request failures
-remain under `RequestException` throughout Guzzle 7.
-
-`NetworkTimeoutException` is new and is thrown when a built-in handler can
-reliably identify a transfer timeout before a response is received. It extends
-`NetworkException`, but not `ConnectException`. Code that caught
-`ConnectException` for cURL timeouts should catch `NetworkException`,
-`Psr\Http\Client\NetworkExceptionInterface`, `TransferException`, or
-`GuzzleException`, depending on intent.
-
-`ResponseException` is new and is the base class for request failures where a
-response was received. Use `ResponseException::getResponse()` for response-aware
-exception handling.
-
-`ResponseTimeoutException` is new and is thrown when a built-in handler can
-reliably identify a transfer timeout after a response is received. It extends
-`ResponseException` and exposes the response. This avoids reporting
+Timeouts are now split by whether a response was received. `NetworkTimeoutException`
+is thrown when a built-in handler can reliably identify a transfer timeout before
+a response is received. It extends `NetworkException`, but not
+`ConnectException`, so code that caught `ConnectException` for cURL timeouts
+should catch `NetworkException`, `Psr\Http\Client\NetworkExceptionInterface`,
+`TransferException`, or `GuzzleException`, depending on intent.
+`ResponseTimeoutException` is thrown when a built-in handler can reliably
+identify a transfer timeout after a response is received. It extends
+`ResponseException` and exposes the response, which avoids reporting
 response-aware failures as PSR-18 network exceptions.
-
-`RequestException::getResponse()` and `RequestException::hasResponse()` are
-deprecated. Check for `ResponseException` before reading a response from an
-exception. These legacy response probing methods will be removed in Guzzle 9.
 
 `HandlerClosedException` is new in Guzzle 8. It extends `TransferException` and
 is used when an explicitly closed `CurlMultiHandler` rejects transfers that are
@@ -187,9 +183,9 @@ handle `HandlerClosedException` or `TransferException` for pending promises you
 may still observe.
 
 The main code to audit is code that used `catch (RequestException $e)` as its
-only catch block for cURL transport failures where no response was received.
-Guzzle 8 classifies more response-less built-in cURL failures as network
-failures. Catch `NetworkException`,
+only catch block for built-in handler transport failures where no response was
+received. Guzzle 8 classifies more response-less cURL and stream handler failures
+as network failures. Catch `NetworkException`,
 `Psr\Http\Client\NetworkExceptionInterface`, `TransferException`, or
 `GuzzleException` for those failures. Keep catching `RequestException` for
 response-aware handling, HTTP error responses, redirects, callback failures, and
@@ -219,12 +215,10 @@ For the built-in cURL handlers, the affected cURL error classifications are:
 The existing always-network cURL errors, including
 `CURLE_COULDNT_RESOLVE_HOST`, `CURLE_COULDNT_CONNECT`,
 `CURLE_SSL_CONNECT_ERROR`, and `CURLE_GOT_NOTHING`, still throw
-`ConnectException`.
-
-The built-in stream handler now classifies additional connection setup, early
-connection close, and TLS handshake or protocol failures as `ConnectException`.
-If you previously caught only `RequestException` for these stream handler
-failures, catch `NetworkException`,
+`ConnectException`. The built-in stream handler now classifies additional
+connection setup, early connection close, and TLS handshake or protocol failures
+as `ConnectException`. If you previously caught only `RequestException` for
+these stream handler failures, catch `NetworkException`,
 `Psr\Http\Client\NetworkExceptionInterface`, `TransferException`, or
 `GuzzleException` instead.
 
@@ -253,12 +247,11 @@ try {
 }
 ```
 
-The deprecated `RequestException::wrapException()` method was removed. Create a
-`RequestException` directly instead.
-
-`GuzzleHttp\Exception\InvalidArgumentException` remains outside the transfer
-exception hierarchy and is still used for invalid configuration or request option
-values that can be rejected before a transfer starts.
+The deprecated `RequestException::wrapException()` method was removed; create a
+`RequestException` directly instead. `GuzzleHttp\Exception\InvalidArgumentException`
+remains outside the transfer exception hierarchy and is still used for invalid
+configuration or request option values that can be rejected before a transfer
+starts.
 
 #### Request Protocol Versions
 
