@@ -57,18 +57,16 @@ final class CurlVersion
 
     public static function supportsHttp3(): bool
     {
-        if (
-            !self::supportsTls13()
-            || !\defined('CURL_VERSION_HTTP3')
-            || !\defined('CURL_HTTP_VERSION_3')
-        ) {
+        if (!\defined('CURL_VERSION_HTTP3') || !\defined('CURL_HTTP_VERSION_3')) {
             return false;
         }
 
-        $versionInfo = self::getInfo();
+        $version = self::get();
+        if (null === $version || version_compare($version, self::HTTP_3_VERSION, '<')) {
+            return false;
+        }
 
-        return version_compare($versionInfo['version'], self::HTTP_3_VERSION, '>=')
-            && 0 !== ((int) \constant('CURL_VERSION_HTTP3') & $versionInfo['features']);
+        return 0 !== ((int) \constant('CURL_VERSION_HTTP3') & self::getInfo()['features']);
     }
 
     public static function supportsProxyCredentialAwareConnectionReuse(): bool
