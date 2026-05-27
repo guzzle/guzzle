@@ -496,8 +496,6 @@ try {
 
 `HandlerClosedException` sits outside the request/response lifecycle. It is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
 
-All transfer exceptions listed above extend from `TransferException` and implement `GuzzleException`.
-
 ## Environment Variables
 
 Guzzle exposes a few environment variables that can be used to customize the behavior of the library.
