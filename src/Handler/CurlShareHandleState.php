@@ -76,10 +76,7 @@ final class CurlShareHandleState
 
     public static function assertNoRequiredSharingCustomFactoryConflict(array $options, string $handlerName): void
     {
-        if (
-            !\array_key_exists('handle_factory', $options)
-            || $options['handle_factory'] === null
-        ) {
+        if (!\array_key_exists('handle_factory', $options) || $options['handle_factory'] === null) {
             return;
         }
 

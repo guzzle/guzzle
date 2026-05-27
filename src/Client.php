@@ -51,9 +51,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * - base_uri: (string|UriInterface) Base URI of the client that is merged
      *   into relative URIs. Can be a string or instance of UriInterface.
      * - transport_sharing: (string|null) Transport sharing mode for the
-     *   default handler. Accepts TransportSharing::NONE,
-     *   TransportSharing::HANDLER_PREFER, or
-     *   TransportSharing::HANDLER_REQUIRE. Defaults to null.
+     *   default handler. Accepts TransportSharing::* or null. Defaults to null.
      * - **: any request option
      *
      * @param array $config Client configuration settings.
