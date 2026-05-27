@@ -21,7 +21,7 @@ class ResponseException extends RequestException
         ?\Throwable $previous = null,
         array $handlerContext = []
     ) {
-        parent::__construct($message, $request, $previous, $handlerContext, $response->getStatusCode());
+        parent::__construct($message, $request, $response->getStatusCode(), $previous, $handlerContext);
         $this->response = $response;
     }
 

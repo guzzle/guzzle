@@ -149,7 +149,7 @@ class RequestExceptionTest extends TestCase
     public function testCanProvideHandlerContext(): void
     {
         $r = new Request('GET', 'http://www.oo.com');
-        $e = new RequestException('foo', $r, null, ['bar' => 'baz']);
+        $e = new RequestException('foo', $r, 0, null, ['bar' => 'baz']);
         self::assertSame(['bar' => 'baz'], $e->getHandlerContext());
     }
 

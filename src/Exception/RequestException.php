@@ -22,9 +22,9 @@ class RequestException extends TransferException implements RequestExceptionInte
     public function __construct(
         string $message,
         RequestInterface $request,
+        int $code = 0,
         ?\Throwable $previous = null,
-        array $handlerContext = [],
-        int $code = 0
+        array $handlerContext = []
     ) {
         parent::__construct($message, $code, $previous);
         $this->request = $request;
@@ -51,6 +51,7 @@ class RequestException extends TransferException implements RequestExceptionInte
             return new self(
                 'Error completing request',
                 $request,
+                0,
                 $previous,
                 $handlerContext
             );
