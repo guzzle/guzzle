@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
@@ -30,17 +32,22 @@ final class StreamHandler
         'php_network_getaddresses:',
         'getaddrinfo',
         'gethostbyname failed',
+        'Unable to connect to',
         'Connection refused',
         'No connection could be made because the target machine actively refused it',
         'connection attempt failed',
         'connect() failed',
-        'Connection timed out',
-        'Operation timed out',
         'Network is unreachable',
         'No route to host',
         'Host is unreachable',
         'Host is down',
         'Cannot connect to HTTPS server through proxy',
+        'Failed to enable crypto',
+    ];
+
+    private const TIMEOUT_ERRORS = [
+        'Connection timed out',
+        'Operation timed out',
         'SSL: Handshake timed out',
     ];
 
@@ -111,11 +118,13 @@ final class StreamHandler
             }
 
             // Determine if the error was a networking error.
-            if (!$e instanceof ConnectException) {
-                if (self::isConnectionError($e->getMessage())) {
+            if (!$e instanceof NetworkException) {
+                if (self::isTimeoutError($e->getMessage())) {
+                    $e = new NetworkTimeoutException($e->getMessage(), $request, $e);
+                } elseif (self::isConnectionError($e->getMessage())) {
                     $e = new ConnectException($e->getMessage(), $request, $e);
-                } else {
-                    $e = $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, 0, $e);
+                } elseif (!$e instanceof RequestException) {
+                    $e = new RequestException($e->getMessage(), $request, 0, $e);
                 }
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
@@ -136,10 +145,21 @@ final class StreamHandler
         return true;
     }
 
+    private static function isTimeoutError(string $message): bool
+    {
+        foreach (self::TIMEOUT_ERRORS as $timeoutError) {
+            if (false !== \stripos($message, $timeoutError)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static function isConnectionError(string $message): bool
     {
         foreach (self::CONNECTION_ERRORS as $connectionError) {
-            if (false !== \strpos($message, $connectionError)) {
+            if (false !== \stripos($message, $connectionError)) {
                 return true;
             }
         }
@@ -471,7 +491,7 @@ final class StreamHandler
         );
 
         return $this->createResource(
-            function () use ($uri, $contextResource, $context, $request, $readTimeout) {
+            function () use ($uri, $contextResource, $readTimeout) {
                 $resource = @\fopen((string) $uri, 'r', false, $contextResource);
 
                 // See https://wiki.php.net/rfc/deprecations_php_8_5#deprecate_the_http_response_header_predefined_variable
@@ -482,7 +502,7 @@ final class StreamHandler
                 $this->lastHeaders = $http_response_header ?? [];
 
                 if (false === $resource) {
-                    throw new ConnectException(sprintf('Connection refused for URI %s', $uri), $request, null, $context);
+                    return false;
                 }
 
                 if ($readTimeout !== null) {

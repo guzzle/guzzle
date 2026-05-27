@@ -452,9 +452,7 @@ echo $response->getStatusCode();
 
 ## Exceptions
 
-**Tree View**
-
-The following tree view describes how the Guzzle Exceptions depend on each other.
+When a transfer fails, first ask whether Guzzle has a response object yet. The answer determines which branch below to catch: `NetworkException` for no-response network failures, `ResponseException` for failures with a response, and `RequestException` for other request failures. Use `TransferException` or `GuzzleException` only when one catch block should handle every Guzzle transfer failure.
 
 ```
 . \RuntimeException
@@ -472,43 +470,31 @@ The following tree view describes how the Guzzle Exceptions depend on each other
             └── TooManyRedirectsException
 ```
 
-Guzzle throws exceptions for errors that occur during a transfer.
+If a network problem prevents Guzzle from receiving a response, it throws `NetworkException`. This covers transport failures while opening the connection or moving bytes over the network. Connection establishment failures use the more specific `ConnectException`, timeouts before a response is available use `NetworkTimeoutException`, and other no-response transport failures, such as send or receive errors, use `NetworkException` itself.
 
-- `GuzzleHttp\Exception\NetworkException` is the base class for networking errors where no response has been received. It implements PSR-18's `Psr\Http\Client\NetworkExceptionInterface`.
+If Guzzle has parsed response headers into a response object, later transfer failures use `ResponseException`. This is the only branch that exposes `getResponse()`, and it includes `ResponseTimeoutException` when a timeout is identified after a response is available. With Guzzle request methods, middleware can also turn completed responses into exceptions: `http_errors` turns 400 level responses into `ClientException` and 500 level responses into `ServerException`, and redirect middleware can throw `TooManyRedirectsException`. `Client::sendRequest()` follows PSR-18 and returns redirect, 4xx, and 5xx responses normally instead.
 
-- `GuzzleHttp\Exception\HandlerClosedException` is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
+If a non-network request failure occurs before Guzzle has a response object, it throws `RequestException`. This includes invalid or handler-unsupported HTTP protocol versions, malformed response data that cannot be parsed into a PSR-7 response, and no-response transfers aborted by application code. `RequestException` exposes `getRequest()`, but not `getResponse()`. When handling these cases separately, catch no-response transport failures first, response-aware failures second, and other request failures last.
 
-- `GuzzleHttp\Exception\RequestException` is the base class for request-related transfer failures that are not network failures. It implements PSR-18's `Psr\Http\Client\RequestExceptionInterface` and exposes the request with `getRequest()`.
+```php
+use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Psr7\Message;
 
-- `GuzzleHttp\Exception\ResponseException` is the base class for request-related transfer failures where a response was received. It exposes the response with `getResponse()`.
+try {
+    $client->request('GET', 'https://github.com/_abc_123_404');
+} catch (NetworkException $e) {
+    echo Message::toString($e->getRequest());
+} catch (ResponseException $e) {
+    echo Message::toString($e->getRequest());
+    echo Message::toString($e->getResponse());
+} catch (RequestException $e) {
+    echo Message::toString($e->getRequest());
+}
+```
 
-- A `GuzzleHttp\Exception\ConnectException` exception is thrown when a connection cannot be established. This exception extends from `GuzzleHttp\Exception\NetworkException`. Invalid or handler-unsupported HTTP request protocol versions are reported as `RequestException`, not `ConnectException`.
-
-- A `GuzzleHttp\Exception\NetworkTimeoutException` exception is thrown when a transfer timeout can be reliably identified before a response is received. This exception extends from `GuzzleHttp\Exception\NetworkException`.
-
-- A `GuzzleHttp\Exception\ResponseTimeoutException` exception is thrown when a transfer timeout can be reliably identified after a response is received. This exception extends from `GuzzleHttp\Exception\ResponseException`.
-
-- A `GuzzleHttp\Exception\ClientException` is thrown for 400 level errors if the `http_errors` request option is set to true. This exception extends from `GuzzleHttp\Exception\BadResponseException` and `GuzzleHttp\Exception\BadResponseException` extends from `GuzzleHttp\Exception\ResponseException`.
-
-  ```php
-  use GuzzleHttp\Psr7;
-  use GuzzleHttp\Exception\ClientException;
-
-  try {
-      $client->request('GET', 'https://github.com/_abc_123_404');
-  } catch (ClientException $e) {
-      echo Psr7\Message::toString($e->getRequest());
-      echo Psr7\Message::toString($e->getResponse());
-  }
-  ```
-
-- A `GuzzleHttp\Exception\ServerException` is thrown for 500 level errors if the `http_errors` request option is set to true. This exception extends from `GuzzleHttp\Exception\BadResponseException`.
-
-- A `GuzzleHttp\Exception\TooManyRedirectsException` is thrown when too many redirects are followed. This exception extends from `GuzzleHttp\Exception\ResponseException`.
-
-`Client::sendRequest()` returns redirect, 4xx, and 5xx responses as normal PSR-18 responses. These response-status exceptions are used by Guzzle request methods when the corresponding middleware options are enabled.
-
-All of the above exceptions extend from `GuzzleHttp\Exception\TransferException`. `TransferException` implements `GuzzleHttp\Exception\GuzzleException`, which extends PSR-18's `ClientExceptionInterface`.
+`HandlerClosedException` sits outside the request/response lifecycle. It is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
 
 ## Environment Variables
 

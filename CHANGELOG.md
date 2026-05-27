@@ -49,8 +49,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Apply the stream handler `crypto_method` option through the SSL context so it consistently controls the minimum TLS version
 - Validate built-in handler timeout options before applying them
 - Classify empty, malformed, or handler-unsupported request protocol versions as request exceptions
-- Classify additional cURL transport failures without a response as network exceptions
-- Classify stream handler TLS handshake timeouts as `ConnectException`
+- Classify additional cURL transport failures without a response as `NetworkException`
+- Classify stream connection failures as `ConnectException` and identifiable no-response timeouts as `NetworkTimeoutException`
 - Classify generic response-aware request failures as `ResponseException`
 - Throw `NetworkTimeoutException` for reliably detected no-response transfer timeouts
 - Throw `ResponseTimeoutException` for reliably detected response-aware transfer timeouts
@@ -60,7 +60,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Avoid stale authenticated proxy tunnels on affected libcurl versions
 - Allow built-in cURL handler `progress` callbacks to abort transfers with truthy return values
 - Normalize built-in handler `progress` callback arguments to integer byte counts
-- Reject built-in cURL handler `progress` callback throwables with `RequestException`
+- Reject built-in cURL `progress` throwables with `ResponseException` when a response exists, otherwise `RequestException`
 - Release built-in cURL easy handles before invoking `on_stats`
 - Prefer `CURLOPT_XFERINFOFUNCTION` for built-in cURL progress callbacks when available
 - Reject cURL multi handler promises when transfer completion callbacks throw during manual event-loop ticks
