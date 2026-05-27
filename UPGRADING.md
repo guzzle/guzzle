@@ -267,25 +267,6 @@ previously caught `InvalidArgumentException` or `ConnectException` for request
 protocol version failures, catch `RequestException` or `GuzzleException`
 instead.
 
-#### cURL handler lifecycle
-
-Applications that manage built-in cURL handlers or factories directly should
-treat closed instances as unusable. Reusing a closed `CurlHandler`,
-`CurlMultiHandler`, or `CurlFactory` throws `BadMethodCallException`; create a
-new instance instead.
-
-If `CurlMultiHandler::close()` is called while transfers are pending, those
-promises are rejected with `GuzzleHttp\Exception\HandlerClosedException`.
-Destructor cleanup remains best-effort and does not reject pending promises.
-
-A custom `handle_factory` passed to a built-in cURL handler remains caller-owned.
-Closing the handler does not close an injected factory.
-
-Direct magic access to `CurlMultiHandler::$_mh` has been removed. This was an
-undocumented internal lazy cURL multi handle. Applications that used it to set
-`CURLMOPT_*` options should pass those values through the `options` key of the
-`CurlMultiHandler` constructor.
-
 #### Callback semantics
 
 If you use the `progress` request option with the built-in cURL handlers, audit
@@ -340,6 +321,25 @@ handlers. If the default handler stack detects an older libcurl version, it will
 not select the cURL handler automatically. Manually configured cURL handlers also
 reject requests when the linked libcurl version is lower than 7.34.0 or the PHP
 cURL extension does not expose TLS 1.2 support.
+
+#### cURL handler lifecycle
+
+Applications that manage built-in cURL handlers or factories directly should
+treat closed instances as unusable. Reusing a closed `CurlHandler`,
+`CurlMultiHandler`, or `CurlFactory` throws `BadMethodCallException`; create a
+new instance instead.
+
+If `CurlMultiHandler::close()` is called while transfers are pending, those
+promises are rejected with `GuzzleHttp\Exception\HandlerClosedException`.
+Destructor cleanup remains best-effort and does not reject pending promises.
+
+A custom `handle_factory` passed to a built-in cURL handler remains caller-owned.
+Closing the handler does not close an injected factory.
+
+Direct magic access to `CurlMultiHandler::$_mh` has been removed. This was an
+undocumented internal lazy cURL multi handle. Applications that used it to set
+`CURLMOPT_*` options should pass those values through the `options` key of the
+`CurlMultiHandler` constructor.
 
 #### Timeout option validation
 
