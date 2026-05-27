@@ -97,9 +97,9 @@ class CurlMultiHandler
                 ? CurlShareHandleState::fromOption($transportSharing)
                 : null;
 
-            $this->factory = $this->shareHandleState === null
-                ? new CurlFactory(50)
-                : new CurlFactory(50, $this->shareHandleState->mode, $this->shareHandleState->handle);
+            $this->factory = $this->shareHandleState !== null
+                ? new CurlFactory(50, $this->shareHandleState->mode, $this->shareHandleState->handle)
+                : new CurlFactory(50);
         }
 
         if (isset($options['select_timeout'])) {

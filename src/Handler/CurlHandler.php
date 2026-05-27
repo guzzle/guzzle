@@ -52,9 +52,9 @@ class CurlHandler
             ? CurlShareHandleState::fromOption($transportSharing)
             : null;
 
-        $this->factory = $this->shareHandleState === null
-            ? new CurlFactory(3)
-            : new CurlFactory(3, $this->shareHandleState->mode, $this->shareHandleState->handle);
+        $this->factory = $this->shareHandleState !== null
+            ? new CurlFactory(3, $this->shareHandleState->mode, $this->shareHandleState->handle)
+            : new CurlFactory(3);
     }
 
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
