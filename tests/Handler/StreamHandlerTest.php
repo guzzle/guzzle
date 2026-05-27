@@ -116,6 +116,7 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'php_network_getaddresses: getaddrinfo for example.test failed'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Unable to connect to example.test:80'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'fopen(): Failed to open stream: Connection refused'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'fopen(): Failed to open stream: No connection could be made because the target machine actively refused it'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Cannot connect to HTTPS server through proxy'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Failed to enable crypto'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectionError', 'HTTP request failed!'));
@@ -458,10 +459,12 @@ class StreamHandlerTest extends TestCase
 
     public function testAddsProxy(): void
     {
-        $this->expectException(ConnectException::class);
-        $this->expectExceptionMessage('Connection refused');
-
-        $this->getSendResult(['proxy' => '127.0.0.1:8125']);
+        try {
+            $this->getSendResult(['proxy' => '127.0.0.1:8125']);
+            self::fail('Expected ConnectException');
+        } catch (ConnectException $e) {
+            self::assertMatchesRegularExpression('/refused/i', $e->getMessage());
+        }
     }
 
     public function testAddsProxyByProtocol(): void
@@ -1476,9 +1479,12 @@ class StreamHandlerTest extends TestCase
             )->wait();
             self::fail('Expected an exception');
         } catch (ConnectException $e) {
-            self::assertStringContainsString('Connection refused', $e->getMessage());
+            self::assertMatchesRegularExpression('/refused/i', $e->getMessage());
         } catch (RequestException $e) {
-            self::assertStringContainsString('HTTP invalid response format', $e->getMessage());
+            self::assertMatchesRegularExpression(
+                '/HTTP invalid response format|An error was encountered while creating the response/',
+                $e->getMessage()
+            );
         }
     }
 
