@@ -60,7 +60,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Avoid stale authenticated proxy tunnels on affected libcurl versions
 - Allow built-in cURL handler `progress` callbacks to abort transfers with truthy return values
 - Normalize built-in handler `progress` callback arguments to integer byte counts
-- Reject cURL `progress` throwables with `ResponseException` when a response exists, otherwise `RequestException`
+- Reject built-in cURL `progress` throwables with `ResponseException` when a response exists, otherwise `RequestException`
 - Release built-in cURL easy handles before invoking `on_stats`
 - Prefer `CURLOPT_XFERINFOFUNCTION` for built-in cURL progress callbacks when available
 - Reject cURL multi handler promises when transfer completion callbacks throw during manual event-loop ticks
