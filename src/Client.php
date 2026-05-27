@@ -569,7 +569,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (!\is_string($options['proxy']) && !\is_array($options['proxy'])) {
-            self::warnInvalidRequestOptionType('proxy', 'string|array{http?: string, https?: string, no?: string|array<array-key, string>}', $options['proxy']);
+            self::warnInvalidRequestOptionType('proxy', 'string|array{http?: string|null, https?: string|null, no?: string|array<array-key, string>|null}', $options['proxy']);
 
             return;
         }
@@ -579,12 +579,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         foreach (['http', 'https'] as $scheme) {
-            if (\array_key_exists($scheme, $options['proxy']) && !\is_string($options['proxy'][$scheme])) {
-                self::warnInvalidRequestOptionType('proxy.'.$scheme, 'string', $options['proxy'][$scheme]);
+            if (\array_key_exists($scheme, $options['proxy']) && $options['proxy'][$scheme] !== null && !\is_string($options['proxy'][$scheme])) {
+                self::warnInvalidRequestOptionType('proxy.'.$scheme, 'string|null', $options['proxy'][$scheme]);
             }
         }
 
-        if (!\array_key_exists('no', $options['proxy'])) {
+        if (!\array_key_exists('no', $options['proxy']) || $options['proxy']['no'] === null) {
             return;
         }
 
@@ -593,7 +593,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (!\is_array($options['proxy']['no'])) {
-            self::warnInvalidRequestOptionType('proxy.no', 'string|array<array-key, string>', $options['proxy']['no']);
+            self::warnInvalidRequestOptionType('proxy.no', 'string|array<array-key, string>|null', $options['proxy']['no']);
 
             return;
         }

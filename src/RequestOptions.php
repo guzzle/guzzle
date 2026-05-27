@@ -220,9 +220,9 @@ final class RequestOptions
     /**
      * proxy: (string|array) Pass a string to specify an HTTP proxy, or an
      * array to specify different proxies for different protocols (where the
-     * key is the protocol and the value is a proxy string). Provide a "no"
-     * key as a string or array of strings to specify hosts or host-and-port
-     * pairs that should not be proxied.
+     * key is the protocol and the value is a proxy string or null). Provide a
+     * "no" key as a string, array of strings, or null to specify hosts or
+     * host-and-port pairs that should not be proxied.
      */
     public const PROXY = 'proxy';
 
