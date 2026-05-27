@@ -485,9 +485,6 @@ Guzzle throws exceptions for errors that occur during a transfer.
 
 - `GuzzleHttp\Exception\ResponseException` is the base class for request-related transfer failures where a response was received. It exposes the response with `getResponse()`.
 
-> [!NOTE]
-> Accessing responses through `RequestException::getResponse()` and checking `RequestException::hasResponse()` are deprecated. Use `GuzzleHttp\Exception\ResponseException` for response-aware request failures. `GuzzleHttp\Exception\RequestException::wrapException()` is also deprecated and should not be used in new code.
-
 - A `GuzzleHttp\Exception\ClientException` is thrown for 400 level errors if the `http_errors` request option is set to true. This exception extends from `GuzzleHttp\Exception\BadResponseException` and `GuzzleHttp\Exception\BadResponseException` extends from `GuzzleHttp\Exception\ResponseException`.
 
   ```php
@@ -532,3 +529,6 @@ Guzzle can utilize PHP ini settings when configuring clients.
 
 `openssl.cafile`
 Specifies the path on disk to a CA file in PEM format to use when sending requests over "https". See: <https://wiki.php.net/rfc/tls-peer-verification#phpini_defaults>
+
+> [!NOTE]
+> Legacy response probing on `GuzzleHttp\Exception\RequestException` is deprecated. Use `GuzzleHttp\Exception\ResponseException` for response-aware request failures. `GuzzleHttp\Exception\RequestException::wrapException()` is also deprecated and should not be used in new code.

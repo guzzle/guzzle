@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  */
 class BadResponseExceptionTest extends TestCase
 {
-    public function testHasResponse()
+    public function testHasRequestAndResponse()
     {
         $req = new Request('GET', '/');
         $prev = new \Exception();
@@ -24,41 +24,5 @@ class BadResponseExceptionTest extends TestCase
         self::assertSame($response, $e->getResponse());
         self::assertSame('foo', $e->getMessage());
         self::assertSame($prev, $e->getPrevious());
-    }
-
-    public function testHasResponseIsDeprecated()
-    {
-        $e = new BadResponseException('foo', new Request('GET', '/'), new Response());
-
-        $deprecations = self::captureDeprecations(static function () use ($e): void {
-            self::assertTrue($e->hasResponse());
-        });
-
-        self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: GuzzleHttp\\Exception\\BadResponseException::hasResponse() is deprecated and will be removed in 8.0. Use instanceof GuzzleHttp\\Exception\\ResponseException instead.',
-        ], $deprecations);
-    }
-
-    private static function captureDeprecations(callable $callback): array
-    {
-        $deprecations = [];
-
-        set_error_handler(static function (int $severity, string $message) use (&$deprecations): bool {
-            if ($severity !== \E_USER_DEPRECATED) {
-                return false;
-            }
-
-            $deprecations[] = $message;
-
-            return true;
-        });
-
-        try {
-            $callback();
-        } finally {
-            restore_error_handler();
-        }
-
-        return $deprecations;
     }
 }

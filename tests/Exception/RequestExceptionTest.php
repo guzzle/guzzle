@@ -28,35 +28,7 @@ class RequestExceptionTest extends TestCase
         self::assertSame('foo', $e->getMessage());
     }
 
-    public function testGetResponseIsDeprecated()
-    {
-        $req = new Request('GET', '/');
-        $res = new Response(200);
-        $e = new RequestException('foo', $req, $res);
-
-        $deprecations = self::captureDeprecations(static function () use ($e, $res): void {
-            self::assertSame($res, $e->getResponse());
-        });
-
-        self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: GuzzleHttp\\Exception\\RequestException::getResponse() is deprecated and will be removed in 8.0. Use instanceof GuzzleHttp\\Exception\\ResponseException and GuzzleHttp\\Exception\\ResponseException::getResponse() instead.',
-        ], $deprecations);
-    }
-
-    public function testHasResponseIsDeprecated()
-    {
-        $e = new RequestException('foo', new Request('GET', '/'), new Response(200));
-
-        $deprecations = self::captureDeprecations(static function () use ($e): void {
-            self::assertTrue($e->hasResponse());
-        });
-
-        self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: GuzzleHttp\\Exception\\RequestException::hasResponse() is deprecated and will be removed in 8.0. Use instanceof GuzzleHttp\\Exception\\ResponseException instead.',
-        ], $deprecations);
-    }
-
-    public function testCreatesGenerateException()
+    public function testCreatesGenericException()
     {
         $e = RequestException::create(new Request('GET', '/'));
         self::assertSame('Error completing request', $e->getMessage());
@@ -164,39 +136,6 @@ class RequestExceptionTest extends TestCase
         self::assertSame(442, $e->getCode());
     }
 
-    public function testWrapsRequestExceptions()
-    {
-        $e = new \Exception('foo');
-        $r = new Request('GET', 'http://www.oo.com');
-        $ex = null;
-
-        $deprecations = self::captureDeprecations(static function () use ($r, $e, &$ex): void {
-            $ex = RequestException::wrapException($r, $e);
-        });
-
-        self::assertInstanceOf(RequestException::class, $ex);
-        self::assertSame($e, $ex->getPrevious());
-        self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: GuzzleHttp\\Exception\\RequestException::wrapException() is deprecated and will be removed in 8.0. Create a GuzzleHttp\\Exception\\RequestException or GuzzleHttp\\Exception\\ResponseException directly instead.',
-        ], $deprecations);
-    }
-
-    public function testDoesNotWrapExistingRequestExceptions()
-    {
-        $r = new Request('GET', 'http://www.oo.com');
-        $e = new RequestException('foo', $r);
-        $e2 = null;
-
-        $deprecations = self::captureDeprecations(static function () use ($r, $e, &$e2): void {
-            $e2 = RequestException::wrapException($r, $e);
-        });
-
-        self::assertSame($e, $e2);
-        self::assertSame([
-            'Since guzzlehttp/guzzle 7.11: GuzzleHttp\\Exception\\RequestException::wrapException() is deprecated and will be removed in 8.0. Create a GuzzleHttp\\Exception\\RequestException or GuzzleHttp\\Exception\\ResponseException directly instead.',
-        ], $deprecations);
-    }
-
     public function testCanProvideHandlerContext()
     {
         $r = new Request('GET', 'http://www.oo.com');
@@ -216,29 +155,6 @@ class RequestExceptionTest extends TestCase
         $r = new Request('GET', 'http://user:password@www.oo.com');
         $e = RequestException::create($r, new Response(500));
         self::assertStringContainsString('http://user:***@www.oo.com', $e->getMessage());
-    }
-
-    private static function captureDeprecations(callable $callback): array
-    {
-        $deprecations = [];
-
-        set_error_handler(static function (int $severity, string $message) use (&$deprecations): bool {
-            if ($severity !== \E_USER_DEPRECATED) {
-                return false;
-            }
-
-            $deprecations[] = $message;
-
-            return true;
-        });
-
-        try {
-            $callback();
-        } finally {
-            restore_error_handler();
-        }
-
-        return $deprecations;
     }
 }
 
