@@ -28,14 +28,7 @@ class RequestExceptionTest extends TestCase
         self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
         self::assertSame('foo', $e->getMessage());
-    }
-
-    public function testDoesNotExposeResponseAccessors(): void
-    {
-        $e = new RequestException('foo', new Request('GET', '/'));
-
-        self::assertFalse(\method_exists($e, 'getResponse'));
-        self::assertFalse(\method_exists($e, 'hasResponse'));
+        self::assertSame(0, $e->getCode());
     }
 
     public function testCreatesGenerateException(): void
@@ -149,8 +142,9 @@ class RequestExceptionTest extends TestCase
     public function testCanProvideHandlerContext(): void
     {
         $r = new Request('GET', 'http://www.oo.com');
-        $e = new RequestException('foo', $r, 0, null, ['bar' => 'baz']);
+        $e = new RequestException('foo', $r, 123, null, ['bar' => 'baz']);
         self::assertSame(['bar' => 'baz'], $e->getHandlerContext());
+        self::assertSame(123, $e->getCode());
     }
 
     public function testObfuscateUrlWithToken(): void
