@@ -826,6 +826,25 @@ class ClientTest extends TestCase
         }
     }
 
+    public function testNullProxyValuesAreAccepted()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $client->get('http://foo.com', [
+            'proxy' => [
+                'http' => null,
+                'https' => null,
+                'no' => null,
+            ],
+        ]);
+
+        self::assertSame(
+            ['http' => null, 'https' => null, 'no' => null],
+            $mock->getLastOptions()['proxy']
+        );
+    }
+
     public function testRequestSendsWithSync()
     {
         $mock = new MockHandler([new Response()]);
