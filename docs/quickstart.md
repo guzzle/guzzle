@@ -462,7 +462,7 @@ If response headers have been parsed into a response object, later transfer fail
 
 If the failure belongs to the request but is not a network failure, and Guzzle does not have a response object, Guzzle throws `RequestException`. This includes invalid or handler-unsupported HTTP protocol versions, malformed response data that cannot be parsed into a PSR-7 response, and no-response transfers aborted by application code. `RequestException` exposes `getRequest()`, but it does not expose `getResponse()`.
 
-`NetworkException` and `RequestException` are sibling branches under `TransferException`, so catching `RequestException` does not catch network failures. `ResponseException` extends `RequestException`, so catch `ResponseException` first when you need to call `getResponse()`.
+When handling these failures separately, put the catch blocks in the order shown below. The first catch handles transport failures with no response. The second handles failures where a response is available. The final catch handles other request failures without a response.
 
 ```php
 use GuzzleHttp\Exception\NetworkException;
