@@ -12,7 +12,7 @@ Please make sure:
 - You are calling a function or a method with the correct type.
 - If you extend a class of Guzzle; update all signatures on methods you override.
 
-#### Other backwards compatibility breaking changes
+#### Other Backwards Compatibility Breaking Changes
 
 - Class `GuzzleHttp\UriTemplate` is removed.
 - Class `GuzzleHttp\Exception\SeekException` is removed.
@@ -35,7 +35,7 @@ Please make sure:
 - The `log` middleware will log the errors with level `error` instead of `notice` 
 - Support for international domain names (IDN) is now disabled by default, and enabling it requires installing ext-intl, linked against a modern version of the C library (ICU 4.6 or higher).
 
-#### Native functions calls
+#### Native Functions Calls
 
 All internal native functions calls of Guzzle are now prefixed with a slash. This
 change makes it impossible for method overloading by other libraries or applications.
