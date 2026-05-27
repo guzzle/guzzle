@@ -1431,8 +1431,8 @@ class ClientTest extends TestCase
         ];
 
         yield 'version' => [
-            ['version' => 1],
-            'Passing int to request option "version" is invalid; expected string|float.',
+            ['version' => true],
+            'Passing bool to request option "version" is invalid; expected string|int|float.',
         ];
 
         yield 'curl' => [
@@ -2069,7 +2069,7 @@ class ClientTest extends TestCase
     /**
      * @dataProvider versionProvider
      *
-     * @param float|string $version
+     * @param float|int|string $version
      */
     public function testNormalizesVersionOption($version, string $expected): void
     {
@@ -2097,6 +2097,7 @@ class ClientTest extends TestCase
         yield ['1.1', '1.1'];
         yield [1.1, '1.1'];
         yield ['2', '2'];
+        yield [2, '2'];
         yield [2.0, '2.0'];
         yield ['3', '3'];
         yield [3.0, '3.0'];

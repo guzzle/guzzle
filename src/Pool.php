@@ -110,7 +110,7 @@ class Pool implements PromisorInterface
      *         timeout?: int|float,
      *         uri_factory?: UriFactoryInterface,
      *         verify?: bool|string,
-     *         version?: string|float,
+     *         version?: string|int|float,
      *         curl?: array<int|string, mixed>,
      *         ...
      *     },
@@ -235,7 +235,7 @@ class Pool implements PromisorInterface
      *         timeout?: int|float,
      *         uri_factory?: UriFactoryInterface,
      *         verify?: bool|string,
-     *         version?: string|float,
+     *         version?: string|int|float,
      *         curl?: array<int|string, mixed>,
      *         ...
      *     },

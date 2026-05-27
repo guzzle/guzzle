@@ -133,7 +133,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $config Client configuration settings and default request options.
@@ -252,7 +252,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply to the given request and to the transfer. See {@see RequestOptions}.
@@ -340,7 +340,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply to the given request and to the transfer. See {@see RequestOptions}.
@@ -444,7 +444,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply. See {@see RequestOptions}.
@@ -560,7 +560,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply. See {@see RequestOptions}.
@@ -871,7 +871,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertIfPresentAndNotBool($options, 'synchronous');
         self::assertIfPresentAndNotNumber($options, 'timeout');
         self::assertIfPresentAndNotBoolOrString($options, 'verify');
-        self::assertIfPresentAndNotStringOrFloat($options, 'version');
+        self::assertIfPresentAndNotStringOrNumber($options, 'version');
         self::assertIfPresentAndNotArray($options, 'curl', 'array<int|string, mixed>');
 
         if (isset($options['cookies']) && $options['cookies'] !== false && !$options['cookies'] instanceof CookieJarInterface) {
@@ -1142,10 +1142,15 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertIfPresentAndNotStringOrFloat(array $options, string $option): void
+    private static function assertIfPresentAndNotStringOrNumber(array $options, string $option): void
     {
-        if (\array_key_exists($option, $options) && !\is_string($options[$option]) && !\is_float($options[$option])) {
-            self::invalidRequestOptionType($option, 'string|float', $options[$option]);
+        if (
+            \array_key_exists($option, $options)
+            && !\is_string($options[$option])
+            && !\is_int($options[$option])
+            && !\is_float($options[$option])
+        ) {
+            self::invalidRequestOptionType($option, 'string|int|float', $options[$option]);
         }
     }
 
@@ -1346,7 +1351,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
-     * @param string|float $version
+     * @param string|int|float $version
      */
     private static function normalizeProtocolVersion($version): string
     {

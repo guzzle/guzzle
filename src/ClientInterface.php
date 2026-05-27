@@ -96,7 +96,7 @@ interface ClientInterface
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply to the given request and to the transfer.
@@ -176,7 +176,7 @@ interface ClientInterface
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply to the given request and to the transfer.
@@ -261,7 +261,7 @@ interface ClientInterface
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -346,7 +346,7 @@ interface ClientInterface
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.

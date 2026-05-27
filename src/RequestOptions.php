@@ -343,7 +343,7 @@ final class RequestOptions
     public const URI_FACTORY = 'uri_factory';
 
     /**
-     * version: (string|float, default=1.1) Specifies the HTTP protocol
+     * version: (string|int|float, default=1.1) Specifies the HTTP protocol
      * version to attempt to use.
      *
      * Guzzle defaults to HTTP/1.1. The built-in stream handler supports

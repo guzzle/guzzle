@@ -1317,7 +1317,7 @@ Summary
 Protocol version to attempt to use with the request.
 
 Types
-string, float
+string, int, float
 
 Default
 `1.1`

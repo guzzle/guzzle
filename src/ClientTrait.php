@@ -96,7 +96,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -180,7 +180,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -267,7 +267,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -354,7 +354,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -441,7 +441,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -528,7 +528,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -615,7 +615,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -703,7 +703,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -787,7 +787,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -874,7 +874,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -961,7 +961,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -1048,7 +1048,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -1135,7 +1135,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
@@ -1222,7 +1222,7 @@ trait ClientTrait
      *     timeout?: int|float,
      *     uri_factory?: UriFactoryInterface,
      *     verify?: bool|string,
-     *     version?: string|float,
+     *     version?: string|int|float,
      *     curl?: array<int|string, mixed>,
      *     ...
      * } $options Request options to apply.
