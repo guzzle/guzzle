@@ -6,6 +6,12 @@
 2.  To use the PHP stream handler, `allow_url_fopen` must be enabled in your system's php.ini.
 3.  To use the cURL handler, you must have cURL >= 7.34.0 compiled with OpenSSL and zlib.
 
+Optional HTTP protocol support depends on the PHP cURL extension and the
+linked runtime libcurl. HTTP/2 requires libcurl built with HTTP/2 support.
+HTTP/3 requires PHP exposing the HTTP/3 cURL constants, libcurl 7.66.0 or
+higher, and a runtime libcurl built with HTTP/3 and QUIC support. HTTP/3
+support usually requires choosing an HTTP/3 backend when libcurl is built.
+
 ## Installation
 
 The recommended way to install Guzzle is with [Composer](https://getcomposer.org). Composer is a dependency management tool for PHP that allows you to declare the dependencies your project needs and installs them into your project.

@@ -1970,8 +1970,8 @@ class CurlFactoryTest extends TestCase
 
     public function testHttp3PreservesExplicitTls13CryptoMethod(): void
     {
-        if (!CurlVersion::supportsHttp3()) {
-            self::markTestSkipped('HTTP/3 is not supported by this cURL installation.');
+        if (!CurlVersion::supportsHttp3() || !CurlVersion::supportsTls13()) {
+            self::markTestSkipped('HTTP/3 with explicit TLS 1.3 is not supported by this cURL installation.');
         }
 
         $factory = new CurlFactory(3);
@@ -3055,7 +3055,7 @@ class CurlFactoryTest extends TestCase
 
     private static function requireHttp3TestConstants(): void
     {
-        foreach (['CURL_VERSION_HTTP3', 'CURL_HTTP_VERSION_3', 'CURL_SSLVERSION_TLSv1_3'] as $constant) {
+        foreach (['CURL_VERSION_HTTP3', 'CURL_HTTP_VERSION_3'] as $constant) {
             if (!\defined($constant)) {
                 self::markTestSkipped($constant.' is not available.');
             }

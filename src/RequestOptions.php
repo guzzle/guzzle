@@ -343,12 +343,15 @@ final class RequestOptions
     public const URI_FACTORY = 'uri_factory';
 
     /**
-     * version: (string|float) Specifies the HTTP protocol version to attempt
-     * to use.
+     * version: (string|float, default=1.1) Specifies the HTTP protocol
+     * version to attempt to use.
      *
-     * HTTP/3 is supported by the built-in cURL handler on PHP 8.4 or higher
-     * when the PHP cURL extension and linked libcurl support HTTP/3 and
-     * TLS 1.3. HTTP/3 requests use libcurl's fallback-capable HTTP/3 mode.
+     * Guzzle defaults to HTTP/1.1. The built-in cURL handler supports
+     * HTTP/1.0, HTTP/1.1, HTTP/2, and HTTP/3 depending on linked libcurl
+     * capabilities. HTTP/3 requires PHP HTTP/3 cURL constants, libcurl
+     * 7.66.0 or higher, and a runtime libcurl built with HTTP/3 and QUIC
+     * support. libcurl may negotiate a lower HTTP version when using
+     * fallback-capable HTTP/2 or HTTP/3 modes.
      */
     public const VERSION = 'version';
 
