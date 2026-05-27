@@ -3,7 +3,7 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
-## 7.10.5 - Upcoming
+## 7.10.5 - 2025-05-27
 
 ### Fixed
 
