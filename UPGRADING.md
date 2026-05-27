@@ -10,7 +10,7 @@ behavior, changes some network exception classification, and tightens validation
 for request options, protocols, transport settings, cookies, and native method
 signatures. It also adds generic PHPDoc types to async APIs for static analysis.
 
-#### PHP Version and Dependencies
+#### PHP version and dependencies
 
 Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 `^7.2.5 || ^8.0`.
@@ -36,7 +36,7 @@ Guzzle 8 now requires `psr/http-factory:^1.0` directly.
 [psr7-upgrade-guide]: https://github.com/guzzle/psr7/blob/3.0/UPGRADING.md
 [promises-upgrade-guide]: https://github.com/guzzle/promises/blob/3.0/UPGRADING.md
 
-#### PSR-7 Header Values and Request Methods
+#### PSR-7 header values and request methods
 
 Guzzle 8 uses Guzzle PSR-7 3.x, and several of its behavior changes surface
 through normal Guzzle client usage. This section summarizes the inherited PSR-7
@@ -248,7 +248,7 @@ The deprecated `RequestException::wrapException()` method was removed; create a
 exception hierarchy and is still used for invalid configuration or request
 option values that can be rejected before a transfer starts.
 
-#### Request Protocol Versions
+#### Request protocol versions
 
 Invalid request protocol versions are no longer treated as omitted. Passing
 `'version' => ''`, `'version' => 'HTTP/1.1'`, or sending a PSR-7 request whose
@@ -450,7 +450,7 @@ through PHP scalar coercion are no longer accepted.
 Integer `0` remains a valid option bitmask. Use `false` or `null` to disable IDN
 conversion.
 
-#### Generic Promise And Structured PHPDoc Types
+#### Generic promise and structured PHPDoc types
 
 Guzzle's async client APIs, handlers, and middleware callable annotations now use
 generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a
