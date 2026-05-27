@@ -1286,13 +1286,13 @@ class ClientTest extends TestCase
         ];
 
         yield 'auth' => [
-            ['auth' => false],
-            'Passing bool to request option "auth" is invalid; expected array{0: string, 1: string, 2?: string}|null.',
+            ['auth' => true],
+            'Passing bool to request option "auth" is invalid; expected array{0: string, 1: string, 2?: string|null}|string|false|null.',
         ];
 
         yield 'cert password' => [
-            ['cert' => ['cert.pem', null]],
-            'Passing null to request option "cert.1" is invalid; expected string.',
+            ['cert' => ['cert.pem', new \stdClass()]],
+            'Passing stdClass to request option "cert.1" is invalid; expected string|null.',
         ];
 
         yield 'cert_type' => [
@@ -1331,8 +1331,8 @@ class ClientTest extends TestCase
         ];
 
         yield 'form param value' => [
-            ['form_params' => ['foo' => 1]],
-            'Passing int to request option "form_params.foo" is invalid; expected string|array<array-key, string>.',
+            ['form_params' => ['foo' => new \stdClass()]],
+            'Passing stdClass to request option "form_params.foo" is invalid; expected string|int|float|bool|null|array.',
         ];
 
         yield 'force_ip_resolve' => [
@@ -1401,8 +1401,8 @@ class ClientTest extends TestCase
         ];
 
         yield 'ssl_key password' => [
-            ['ssl_key' => ['key.pem', null]],
-            'Passing null to request option "ssl_key.1" is invalid; expected string.',
+            ['ssl_key' => ['key.pem', new \stdClass()]],
+            'Passing stdClass to request option "ssl_key.1" is invalid; expected string|null.',
         ];
 
         yield 'ssl_key_type' => [
@@ -1572,8 +1572,28 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock, 'auth' => ['a', 'b']]);
         $client->get('http://foo.com', ['auth' => null]);
+
         $last = $mock->getLastRequest();
         self::assertFalse($last->hasHeader('Authorization'));
+    }
+
+    public function testAuthCanBeDisabledWithFalse(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => false]);
+
+        $last = $mock->getLastRequest();
+        self::assertFalse($last->hasHeader('Authorization'));
+    }
+
+    public function testAuthCanBeCustomStringForHandlers(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => 'custom']);
+
+        self::assertSame('custom', $mock->getLastOptions()['auth']);
     }
 
     public function testAuthCanBeArrayForBasicAuth(): void
@@ -1590,6 +1610,17 @@ class ClientTest extends TestCase
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $client->get('http://foo.com', ['auth' => ['a', 'b', 'basic']]);
+
+        $last = $mock->getLastRequest();
+        self::assertSame('Basic YTpi', $last->getHeaderLine('Authorization'));
+    }
+
+    public function testAuthCanUseNullTypeForDefaultBasicAuth(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => ['a', 'b', null]]);
+
         $last = $mock->getLastRequest();
         self::assertSame('Basic YTpi', $last->getHeaderLine('Authorization'));
     }
@@ -1635,11 +1666,9 @@ class ClientTest extends TestCase
     public static function invalidAuthOptionProvider(): array
     {
         return [
-            [[]],
             [['user']],
             [[['user'], 'pass']],
             [['user', ['pass']]],
-            [['user', 'pass', null]],
             [['user', 'pass', 1]],
             [['user', 'pass', []]],
             [['user', 'pass', 'unknown']],
@@ -1665,6 +1694,41 @@ class ClientTest extends TestCase
             'foo=bar+bam&baz%5Bboo%5D=qux',
             (string) $last->getBody()
         );
+    }
+
+    public function testFormParamsAcceptScalarAndNullValues(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->post('http://foo.com', [
+            'form_params' => [
+                'int' => 1,
+                'float' => 1.5,
+                'true' => true,
+                'false' => false,
+                'null' => null,
+                'nested' => ['value' => 2],
+            ],
+        ]);
+
+        $last = $mock->getLastRequest();
+        self::assertSame(
+            'int=1&float=1.5&true=1&false=0&nested%5Bvalue%5D=2',
+            (string) $last->getBody()
+        );
+    }
+
+    public function testTlsPassphraseOptionsAcceptNullPasswordSlot(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', [
+            'cert' => [__FILE__, null],
+            'ssl_key' => [__FILE__, null],
+        ]);
+
+        self::assertSame([__FILE__, null], $mock->getLastOptions()['cert']);
+        self::assertSame([__FILE__, null], $mock->getLastOptions()['ssl_key']);
     }
 
     public function testFormParamsEncodedProperly(): void

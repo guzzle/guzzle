@@ -43,12 +43,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -58,7 +58,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -86,7 +86,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -127,12 +127,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -142,7 +142,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -170,7 +170,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -214,12 +214,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -229,7 +229,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -257,7 +257,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -301,12 +301,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -316,7 +316,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -344,7 +344,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -388,12 +388,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -403,7 +403,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -431,7 +431,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -475,12 +475,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -490,7 +490,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -518,7 +518,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -562,12 +562,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -577,7 +577,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -605,7 +605,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -650,12 +650,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -665,7 +665,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -693,7 +693,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -734,12 +734,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -749,7 +749,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -777,7 +777,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -821,12 +821,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -836,7 +836,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -864,7 +864,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -908,12 +908,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -923,7 +923,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -951,7 +951,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -995,12 +995,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -1010,7 +1010,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -1038,7 +1038,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -1082,12 +1082,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -1097,7 +1097,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -1125,7 +1125,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -1169,12 +1169,12 @@ trait ClientTrait
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -1184,7 +1184,7 @@ trait ClientTrait
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -1212,7 +1212,7 @@ trait ClientTrait
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,

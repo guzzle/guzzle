@@ -80,12 +80,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -95,7 +95,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -123,7 +123,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -199,12 +199,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -214,7 +214,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -242,7 +242,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -287,12 +287,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -302,7 +302,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -330,7 +330,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -391,12 +391,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -406,7 +406,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -434,7 +434,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -507,12 +507,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     auth?: array{
      *         0: string,
      *         1: string,
-     *         2?: string
-     *     }|null,
+     *         2?: string|null
+     *     }|string|false|null,
      *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     cert_type?: string,
      *     connect_timeout?: int|float,
@@ -522,7 +522,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     decode_content?: bool|string,
      *     delay?: int|float,
      *     expect?: bool|int,
-     *     form_params?: array<array-key, string|array<array-key, string>>,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
      *     force_ip_resolve?: string,
      *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
      *     http_errors?: bool,
@@ -550,7 +550,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
-     *         1?: string
+     *         1?: string|null
      *     },
      *     ssl_key_type?: string,
      *     stream?: bool,
@@ -821,8 +821,13 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
         }
 
-        if (isset($options['auth']) && !\is_array($options['auth'])) {
-            self::invalidRequestOptionType('auth', 'array{0: string, 1: string, 2?: string}|null', $options['auth']);
+        if (
+            isset($options['auth'])
+            && $options['auth'] !== false
+            && !\is_string($options['auth'])
+            && !\is_array($options['auth'])
+        ) {
+            self::invalidRequestOptionType('auth', 'array{0: string, 1: string, 2?: string|null}|string|false|null', $options['auth']);
         }
 
         self::assertTlsFileOptionTypes($options, 'cert');
@@ -835,7 +840,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertIfPresentAndNotBoolOrInt($options, 'expect');
 
         if (isset($options['form_params'])) {
-            self::assertStringOrStringArrayOptionTypes('form_params', $options['form_params']);
+            self::assertFormParamTypes($options['form_params']);
         }
 
         if (isset($options['force_ip_resolve']) && !\is_string($options['force_ip_resolve'])) {
@@ -892,26 +897,37 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * @param mixed $value
      */
-    private static function assertStringOrStringArrayOptionTypes(string $option, $value): void
+    private static function assertFormParamTypes($value): void
     {
         if (!\is_array($value)) {
-            self::invalidRequestOptionType($option, 'array<array-key, string|array<array-key, string>>', $value);
+            self::invalidRequestOptionType('form_params', 'array<array-key, string|int|float|bool|null|array>', $value);
 
             return;
         }
 
-        foreach ($value as $key => $item) {
-            $path = $option.'.'.(string) $key;
+        self::assertFormParamArray($value, 'form_params');
+    }
+
+    private static function assertFormParamArray(array $values, string $path): bool
+    {
+        foreach ($values as $key => $item) {
+            $itemPath = $path.'.'.(string) $key;
             if (\is_array($item)) {
-                foreach ($item as $index => $nestedItem) {
-                    if (!\is_string($nestedItem)) {
-                        self::invalidRequestOptionType($path.'.'.(string) $index, 'string', $nestedItem);
-                    }
+                if (!self::assertFormParamArray($item, $itemPath)) {
+                    return false;
                 }
-            } elseif (!\is_string($item)) {
-                self::invalidRequestOptionType($path, 'string|array<array-key, string>', $item);
+
+                continue;
+            }
+
+            if ($item !== null && !\is_scalar($item)) {
+                self::invalidRequestOptionType($itemPath, 'string|int|float|bool|null|array', $item);
+
+                return false;
             }
         }
+
+        return true;
     }
 
     /**
@@ -1053,8 +1069,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             self::invalidRequestOptionType($option.'.0', 'string', $options[$option][0] ?? null);
         }
 
-        if (\array_key_exists(1, $options[$option]) && !\is_string($options[$option][1])) {
-            self::invalidRequestOptionType($option.'.1', 'string', $options[$option][1]);
+        if (\array_key_exists(1, $options[$option]) && $options[$option][1] !== null && !\is_string($options[$option][1])) {
+            self::invalidRequestOptionType($option.'.1', 'string|null', $options[$option][1]);
         }
     }
 
@@ -1257,7 +1273,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             unset($options['body']);
         }
 
-        if (isset($options['auth']) && \is_array($options['auth'])) {
+        if (isset($options['auth']) && \is_array($options['auth']) && $options['auth'] !== []) {
             $value = $options['auth'];
 
             if (!\array_key_exists(0, $value) || !\array_key_exists(1, $value)) {
@@ -1272,7 +1288,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
 
             $type = 'basic';
-            if (\array_key_exists(2, $value)) {
+            if (\array_key_exists(2, $value) && $value[2] !== null) {
                 $type = $value[2];
                 if (!\is_string($type)) {
                     throw new InvalidArgumentException('auth type must be a string');

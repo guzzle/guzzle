@@ -48,11 +48,12 @@ final class RequestOptions
     public const ALLOW_REDIRECTS = 'allow_redirects';
 
     /**
-     * auth: (array) Pass an array of HTTP authentication parameters to use
-     * with the request. The array must contain the username in index [0],
-     * the password in index [1], and you can optionally provide a built-in
-     * authentication type in index [2]. Pass null to disable authentication
-     * for a request.
+     * auth: (array{0: string, 1: string, 2?: string|null}|string|false|null)
+     * Pass an array of HTTP authentication parameters to use with the request.
+     * The array must contain the username in index [0], the password in index
+     * [1], and you can optionally provide a built-in authentication type in
+     * index [2]. Pass false or null to disable authentication for a request.
+     * String values are passed through for custom handlers.
      */
     public const AUTH = 'auth';
 
@@ -67,12 +68,13 @@ final class RequestOptions
     public const BODY = 'body';
 
     /**
-     * cert: (string|array) Set to a string to specify the path to a client
-     * certificate file. PEM is the default certificate format. If a password
-     * is required, set cert to an array containing the certificate path in
-     * the first array element followed by the certificate password in the
-     * second array element. Use cert_type to specify another supported
-     * certificate format.
+     * cert: (string|array{0: string, 1?: string|null}) Set to a string to
+     * specify the path to a client certificate file. PEM is the default
+     * certificate format. If a password is required, set cert to an array
+     * containing the certificate path in the first array element followed by
+     * the certificate password in the second array element. A null password is
+     * treated the same as omitting it. Use cert_type to specify another
+     * supported certificate format.
      */
     public const CERT = 'cert';
 
@@ -147,9 +149,9 @@ final class RequestOptions
     public const EXPECT = 'expect';
 
     /**
-     * form_params: (array<array-key, string|array<array-key, string>>) Associative
-     * array of form field names to values where each value is a string or array
-     * of strings. Sets the Content-Type header to application/x-www-form-urlencoded
+     * form_params: (array<array-key, string|int|float|bool|null|array>)
+     * Associative array of form field names to scalar, null, or nested array
+     * values. Sets the Content-Type header to application/x-www-form-urlencoded
      * when no Content-Type header is already present.
      */
     public const FORM_PARAMS = 'form_params';
@@ -292,11 +294,12 @@ final class RequestOptions
     public const SYNCHRONOUS = 'synchronous';
 
     /**
-     * ssl_key: (array|string) Specify the path to a private SSL key file. PEM
-     * is the default private key format. If a password is required, set
-     * ssl_key to an array containing the key path in the first array element
-     * followed by the key password in the second element. Use ssl_key_type to
-     * specify another supported key format.
+     * ssl_key: (array{0: string, 1?: string|null}|string) Specify the path to
+     * a private SSL key file. PEM is the default private key format. If a
+     * password is required, set ssl_key to an array containing the key path in
+     * the first array element followed by the key password in the second
+     * element. A null password is treated the same as omitting it. Use
+     * ssl_key_type to specify another supported key format.
      */
     public const SSL_KEY = 'ssl_key';
 
