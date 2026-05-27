@@ -83,14 +83,31 @@ async variants continue to use uppercase standard methods.
 
 #### Exception hierarchy and classification
 
-Except for the cURL transport reclassifications described below, the exception
-hierarchy changes are additive and are almost never breaking. Existing catch
-blocks that target the same failure category still work: `NetworkException` still
-catches no-response network failures, `RequestException` still catches
-response-aware and request-related transfer failures, and `TransferException` or
-`GuzzleException` still catch all Guzzle transfer failures.
+Except for the built-in handler transport reclassifications described below, the
+exception hierarchy changes are additive and are almost never breaking. Existing
+catch blocks that target the same failure category still work: `RequestException`
+still catches response-aware and request-related transfer failures, and
+`TransferException` or `GuzzleException` still catch all Guzzle transfer
+failures.
 
-Guzzle 7.11 transfer exceptions use this hierarchy:
+This section describes the Guzzle 7 to Guzzle 8 path. Guzzle 7.0 already moved
+`ConnectException` out from under `RequestException`; see the 6.0 to 7.0 notes
+for that migration.
+
+Guzzle 7 before 7.11.0 uses this hierarchy:
+
+```text
+. \RuntimeException
+└── TransferException (implements GuzzleException)
+    ├── ConnectException (implements NetworkExceptionInterface)
+    └── RequestException (implements RequestExceptionInterface)
+        ├── BadResponseException
+        │   ├── ServerException
+        │   └── ClientException
+        └── TooManyRedirectsException
+```
+
+Guzzle 7 starting with 7.11.0 uses this hierarchy:
 
 ```text
 . \RuntimeException
@@ -122,17 +139,29 @@ Guzzle 8 uses this hierarchy:
             └── TooManyRedirectsException
 ```
 
-`NetworkException` was added in 7.11 and remains the base class for
-no-response network failures. `ConnectException` still extends
-`NetworkException`, so existing `NetworkException`, `TransferException`, and
-`GuzzleException` catch blocks still catch connection failures.
+`NetworkException` was added in Guzzle 7.11.0 as the base class for
+no-response network failures. Before 7.11.0, `ConnectException` implemented
+`Psr\Http\Client\NetworkExceptionInterface` directly and there was no
+Guzzle-specific network base class.
+
+Code that must support Guzzle 7 versions before 7.11.0 should catch
+`Psr\Http\Client\NetworkExceptionInterface`, `TransferException`, or
+`GuzzleException`, depending on intent. Code that can require Guzzle 7.11.0 or
+newer may catch `NetworkException`.
+
+`ConnectException` still extends `NetworkException` in Guzzle 8, so existing
+7.11 `NetworkException`, `TransferException`, and `GuzzleException` catch blocks
+still catch connection failures.
+
+Guzzle 7.11.0 did not add `ResponseException`; response-aware request failures
+remain under `RequestException` throughout Guzzle 7.
 
 `NetworkTimeoutException` is new and is thrown when a built-in handler can
 reliably identify a transfer timeout before a response is received. It extends
 `NetworkException`, but not `ConnectException`. Code that caught
 `ConnectException` for cURL timeouts should catch `NetworkException`,
-`NetworkExceptionInterface`, `TransferException`, or `GuzzleException`, depending
-on intent.
+`Psr\Http\Client\NetworkExceptionInterface`, `TransferException`, or
+`GuzzleException`, depending on intent.
 
 `ResponseException` is new and is the base class for request failures where a
 response was received. Use `ResponseException::getResponse()` for response-aware
@@ -160,11 +189,11 @@ may still observe.
 The main code to audit is code that used `catch (RequestException $e)` as its
 only catch block for cURL transport failures where no response was received.
 Guzzle 8 classifies more response-less built-in cURL failures as network
-failures. Catch `NetworkException`, `NetworkExceptionInterface`,
-`TransferException`, or `GuzzleException` for those failures. Keep catching
-`RequestException` for response-aware handling, HTTP error responses,
-redirects, callback failures, and request-related failures that are not network
-failures.
+failures. Catch `NetworkException`,
+`Psr\Http\Client\NetworkExceptionInterface`, `TransferException`, or
+`GuzzleException` for those failures. Keep catching `RequestException` for
+response-aware handling, HTTP error responses, redirects, callback failures, and
+request-related failures that are not network failures.
 
 For the built-in cURL handlers, the affected cURL error classifications are:
 
@@ -195,8 +224,9 @@ The existing always-network cURL errors, including
 The built-in stream handler now classifies additional connection setup, early
 connection close, and TLS handshake or protocol failures as `ConnectException`.
 If you previously caught only `RequestException` for these stream handler
-failures, catch `NetworkException`, `NetworkExceptionInterface`,
-`TransferException`, or `GuzzleException` instead.
+failures, catch `NetworkException`,
+`Psr\Http\Client\NetworkExceptionInterface`, `TransferException`, or
+`GuzzleException` instead.
 
 For example, code that previously treated `RequestException` as the only built-in
 handler transport failure type should add network-specific handling:
