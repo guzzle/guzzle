@@ -7,6 +7,7 @@ namespace GuzzleHttp\Test\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
@@ -1726,7 +1727,7 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected request exception.');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertFalse($e->hasResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertSame('HTTP protocol version must not be empty.', $e->getMessage());
         }
     }
@@ -1741,7 +1742,7 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected request exception.');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertFalse($e->hasResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertSame('HTTP protocol version must be a valid HTTP version number.', $e->getMessage());
         }
     }
@@ -2368,8 +2369,8 @@ class CurlFactoryTest extends TestCase
 
         try {
             $promise->wait();
-            self::fail('Expected RequestException');
-        } catch (RequestException $e) {
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame($response, $e->getResponse());
             self::assertSame($errno, $e->getHandlerContext()['errno']);
@@ -2420,6 +2421,7 @@ class CurlFactoryTest extends TestCase
             $promise->wait();
             self::fail('Expected ResponseTimeoutException');
         } catch (ResponseTimeoutException $e) {
+            self::assertInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
@@ -2555,8 +2557,7 @@ class CurlFactoryTest extends TestCase
                 $e->getMessage()
             );
             self::assertFalse($called);
-            self::assertFalse($e->hasResponse());
-            self::assertNull($e->getResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
             self::assertResponseInfoWasNotExposed($e->getHandlerContext());
             self::assertInstanceOf(TransferStats::class, $stats);
@@ -2591,8 +2592,7 @@ class CurlFactoryTest extends TestCase
                 'An error was encountered while creating the response',
                 $e->getMessage()
             );
-            self::assertFalse($e->hasResponse());
-            self::assertNull($e->getResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertSame($easy->createResponseException, $e->getPrevious());
             self::assertResponseInfoWasNotExposed($e->getHandlerContext());
         }
@@ -2951,8 +2951,7 @@ class CurlFactoryTest extends TestCase
                 'An error was encountered while creating the response',
                 $e->getMessage()
             );
-            self::assertFalse($e->hasResponse());
-            self::assertNull($e->getResponse());
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
             self::assertResponseInfoWasNotExposed($e->getHandlerContext());
         }

@@ -7,6 +7,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -681,12 +682,25 @@ final class CurlFactory implements CurlFactoryInterface
         // If an exception was encountered during the onHeaders event, then
         // return a rejected promise that wraps that exception.
         if ($easy->onHeadersException) {
+            if ($easy->response) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor(
+                    new ResponseException(
+                        'An error was encountered during the on_headers event',
+                        $easy->request,
+                        $easy->response,
+                        $easy->onHeadersException,
+                        $ctx
+                    )
+                );
+            }
+
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor(
                 new RequestException(
                     'An error was encountered during the on_headers event',
                     $easy->request,
-                    $easy->response,
+                    null,
                     $easy->onHeadersException,
                     $ctx
                 )
@@ -694,12 +708,25 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if ($easy->progressException) {
+            if ($easy->response) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor(
+                    new ResponseException(
+                        'An error was encountered during the progress event',
+                        $easy->request,
+                        $easy->response,
+                        $easy->progressException,
+                        $ctx
+                    )
+                );
+            }
+
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor(
                 new RequestException(
                     'An error was encountered during the progress event',
                     $easy->request,
-                    $easy->response,
+                    null,
                     $easy->progressException,
                     $ctx
                 )
@@ -707,12 +734,25 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if ($easy->progressAborted && $easy->errno === \CURLE_ABORTED_BY_CALLBACK) {
+            if ($easy->response) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor(
+                    new ResponseException(
+                        'The transfer was aborted by the progress callback',
+                        $easy->request,
+                        $easy->response,
+                        null,
+                        $ctx
+                    )
+                );
+            }
+
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor(
                 new RequestException(
                     'The transfer was aborted by the progress callback',
                     $easy->request,
-                    $easy->response,
+                    null,
                     null,
                     $ctx
                 )
@@ -746,8 +786,10 @@ final class CurlFactory implements CurlFactoryInterface
                 : new NetworkTimeoutException($message, $easy->request, null, $ctx);
         } elseif ($isNetworkError) {
             $error = new ConnectException($message, $easy->request, null, $ctx);
+        } elseif ($easy->response) {
+            $error = new ResponseException($message, $easy->request, $easy->response, null, $ctx);
         } else {
-            $error = new RequestException($message, $easy->request, $easy->response, null, $ctx);
+            $error = new RequestException($message, $easy->request, null, null, $ctx);
         }
 
         /** @var PromiseInterface<ResponseInterface, mixed> */

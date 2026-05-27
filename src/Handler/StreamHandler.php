@@ -6,6 +6,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -175,7 +176,7 @@ final class StreamHandler
             try {
                 $options['on_headers']($response, $request);
             } catch (\Throwable $e) {
-                $reason = new RequestException('An error was encountered during the on_headers event', $request, $response, $e);
+                $reason = new ResponseException('An error was encountered during the on_headers event', $request, $response, $e);
                 $this->invokeStats($options, $request, $startTime, $response, $reason);
 
                 /** @var PromiseInterface<ResponseInterface, mixed> */

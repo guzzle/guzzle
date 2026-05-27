@@ -10,7 +10,7 @@ use Psr\Http\Message\RequestInterface;
 /**
  * Base exception for network-related transfer failures.
  */
-abstract class NetworkException extends TransferException implements NetworkExceptionInterface
+class NetworkException extends TransferException implements NetworkExceptionInterface
 {
     private RequestInterface $request;
 
