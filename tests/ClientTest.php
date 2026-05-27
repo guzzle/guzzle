@@ -557,11 +557,39 @@ class ClientTest extends TestCase
         self::assertFalse($last->hasHeader('Authorization'));
     }
 
+    public function testAuthCanBeDisabledWithFalse()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => false]);
+
+        $last = $mock->getLastRequest();
+        self::assertFalse($last->hasHeader('Authorization'));
+    }
+
+    public function testAuthCanBeCustomStringForHandlers()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => 'custom']);
+
+        self::assertSame('custom', $mock->getLastOptions()['auth']);
+    }
+
     public function testAuthCanBeArrayForBasicAuth()
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
         $client->get('http://foo.com', ['auth' => ['a', 'b']]);
+        $last = $mock->getLastRequest();
+        self::assertSame('Basic YTpi', $last->getHeaderLine('Authorization'));
+    }
+
+    public function testAuthCanUseNullTypeForDefaultBasicAuth()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => ['a', 'b', null]]);
         $last = $mock->getLastRequest();
         self::assertSame('Basic YTpi', $last->getHeaderLine('Authorization'));
     }
@@ -609,6 +637,41 @@ class ClientTest extends TestCase
             'foo=bar+bam&baz%5Bboo%5D=qux',
             (string) $last->getBody()
         );
+    }
+
+    public function testFormParamsAcceptScalarAndNullValues()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->post('http://foo.com', [
+            'form_params' => [
+                'int' => 1,
+                'float' => 1.5,
+                'true' => true,
+                'false' => false,
+                'null' => null,
+                'nested' => ['value' => 2],
+            ],
+        ]);
+
+        $last = $mock->getLastRequest();
+        self::assertSame(
+            'int=1&float=1.5&true=1&false=0&nested%5Bvalue%5D=2',
+            (string) $last->getBody()
+        );
+    }
+
+    public function testTlsPassphraseOptionsAcceptNullPasswordSlot()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', [
+            'cert' => [__FILE__, null],
+            'ssl_key' => [__FILE__, null],
+        ]);
+
+        self::assertSame([__FILE__, null], $mock->getLastOptions()['cert']);
+        self::assertSame([__FILE__, null], $mock->getLastOptions()['ssl_key']);
     }
 
     public function testFormParamsEncodedProperly()
