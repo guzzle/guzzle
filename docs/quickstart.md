@@ -452,7 +452,23 @@ echo $response->getStatusCode();
 
 ## Exceptions
 
-When a transfer fails, first ask whether Guzzle has a response object yet. That answer determines which part of the exception hierarchy you should catch. Use `TransferException` or `GuzzleException` only when one catch block should handle every Guzzle transfer failure.
+When a transfer fails, first ask whether Guzzle has a response object yet. The answer determines which branch below to catch: `NetworkException` for no-response network failures, `ResponseException` for failures with a response, and `RequestException` for other request failures. Use `TransferException` or `GuzzleException` only when one catch block should handle every Guzzle transfer failure.
+
+```
+. \RuntimeException
+└── TransferException (implements GuzzleException)
+    ├── HandlerClosedException
+    ├── NetworkException (implements NetworkExceptionInterface)
+    │   ├── ConnectException
+    │   └── NetworkTimeoutException
+    └── RequestException (implements RequestExceptionInterface)
+        └── ResponseException
+            ├── BadResponseException
+            │   ├── ServerException
+            │   └── ClientException
+            ├── ResponseTimeoutException
+            └── TooManyRedirectsException
+```
 
 If the request cannot be completed because of a network problem and no response has been received, Guzzle throws `NetworkException`. This is the branch for transport failures that happen while opening the connection or moving bytes over the network. Connection establishment failures use the more specific `ConnectException`. Timeouts before a response is available use `NetworkTimeoutException`. Other no-response transport failures, such as send or receive errors, use `NetworkException` itself.
 
@@ -483,24 +499,6 @@ try {
 ```
 
 `HandlerClosedException` sits outside the request/response lifecycle. It is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
-
-For reference, the exception hierarchy is:
-
-```
-. \RuntimeException
-└── TransferException (implements GuzzleException)
-    ├── HandlerClosedException
-    ├── NetworkException (implements NetworkExceptionInterface)
-    │   ├── ConnectException
-    │   └── NetworkTimeoutException
-    └── RequestException (implements RequestExceptionInterface)
-        └── ResponseException
-            ├── BadResponseException
-            │   ├── ServerException
-            │   └── ClientException
-            ├── ResponseTimeoutException
-            └── TooManyRedirectsException
-```
 
 All transfer exceptions listed above extend from `TransferException` and implement `GuzzleException`.
 
