@@ -244,13 +244,13 @@ final class RequestOptions
     /**
      * proxy: (string|array) Pass a string to specify an HTTP proxy, or an
      * array to specify different proxies for different protocols (where the
-     * key is the protocol and the value is a proxy string). Provide a "no"
-     * key as a string or array of strings to specify hosts, host-and-port
-     * pairs, IP literals, IP CIDR rules, or wildcard rules that should not be
-     * proxied. Domain rules are matched case-insensitively. Exact IP literals
-     * are normalized before matching. CIDR rules match IP literals only and
-     * are not port-specific. Custom handlers can use ProxyOptions::resolve()
-     * to apply Guzzle-compatible proxy selection.
+     * key is the protocol and the value is a proxy string or null). Provide a
+     * "no" key as a string, array of strings, or null to specify hosts,
+     * host-and-port pairs, IP literals, IP CIDR rules, or wildcard rules that
+     * should not be proxied. Domain rules are matched case-insensitively.
+     * Exact IP literals are normalized before matching. CIDR rules match IP
+     * literals only and are not port-specific. Custom handlers can use
+     * ProxyOptions::resolve() to apply Guzzle-compatible proxy selection.
      */
     public const PROXY = 'proxy';
 

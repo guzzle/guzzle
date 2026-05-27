@@ -112,9 +112,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
-     *         http?: string,
-     *         https?: string,
-     *         no?: string|array<array-key, string>
+     *         http?: string|null,
+     *         https?: string|null,
+     *         no?: string|array<array-key, string>|null
      *     },
      *     query?: array<array-key, mixed>|string,
      *     read_timeout?: int|float,
@@ -231,9 +231,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
-     *         http?: string,
-     *         https?: string,
-     *         no?: string|array<array-key, string>
+     *         http?: string|null,
+     *         https?: string|null,
+     *         no?: string|array<array-key, string>|null
      *     },
      *     query?: array<array-key, mixed>|string,
      *     read_timeout?: int|float,
@@ -319,9 +319,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
-     *         http?: string,
-     *         https?: string,
-     *         no?: string|array<array-key, string>
+     *         http?: string|null,
+     *         https?: string|null,
+     *         no?: string|array<array-key, string>|null
      *     },
      *     query?: array<array-key, mixed>|string,
      *     read_timeout?: int|float,
@@ -423,9 +423,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
-     *         http?: string,
-     *         https?: string,
-     *         no?: string|array<array-key, string>
+     *         http?: string|null,
+     *         https?: string|null,
+     *         no?: string|array<array-key, string>|null
      *     },
      *     query?: array<array-key, mixed>|string,
      *     read_timeout?: int|float,
@@ -539,9 +539,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
-     *         http?: string,
-     *         https?: string,
-     *         no?: string|array<array-key, string>
+     *         http?: string|null,
+     *         https?: string|null,
+     *         no?: string|array<array-key, string>|null
      *     },
      *     query?: array<array-key, mixed>|string,
      *     read_timeout?: int|float,
@@ -1013,7 +1013,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (!\is_string($options['proxy']) && !\is_array($options['proxy'])) {
-            self::invalidRequestOptionType('proxy', 'string|array{http?: string, https?: string, no?: string|array<array-key, string>}', $options['proxy']);
+            self::invalidRequestOptionType('proxy', 'string|array{http?: string|null, https?: string|null, no?: string|array<array-key, string>|null}', $options['proxy']);
 
             return;
         }
@@ -1023,12 +1023,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         foreach (['http', 'https'] as $scheme) {
-            if (\array_key_exists($scheme, $options['proxy']) && !\is_string($options['proxy'][$scheme])) {
-                self::invalidRequestOptionType('proxy.'.$scheme, 'string', $options['proxy'][$scheme]);
+            if (\array_key_exists($scheme, $options['proxy']) && $options['proxy'][$scheme] !== null && !\is_string($options['proxy'][$scheme])) {
+                self::invalidRequestOptionType('proxy.'.$scheme, 'string|null', $options['proxy'][$scheme]);
             }
         }
 
-        if (!\array_key_exists('no', $options['proxy'])) {
+        if (!\array_key_exists('no', $options['proxy']) || $options['proxy']['no'] === null) {
             return;
         }
 
@@ -1037,7 +1037,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (!\is_array($options['proxy']['no'])) {
-            self::invalidRequestOptionType('proxy.no', 'string|array<array-key, string>', $options['proxy']['no']);
+            self::invalidRequestOptionType('proxy.no', 'string|array<array-key, string>|null', $options['proxy']['no']);
 
             return;
         }

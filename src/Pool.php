@@ -89,9 +89,9 @@ class Pool implements PromisorInterface
      *         progress?: callable(int, int, int, int): mixed,
      *         protocols?: non-empty-array<array-key, string>,
      *         proxy?: string|array{
-     *             http?: string,
-     *             https?: string,
-     *             no?: string|array<array-key, string>
+     *             http?: string|null,
+     *             https?: string|null,
+     *             no?: string|array<array-key, string>|null
      *         },
      *         query?: array<array-key, mixed>|string,
      *         read_timeout?: int|float,
@@ -214,9 +214,9 @@ class Pool implements PromisorInterface
      *         progress?: callable(int, int, int, int): mixed,
      *         protocols?: non-empty-array<array-key, string>,
      *         proxy?: string|array{
-     *             http?: string,
-     *             https?: string,
-     *             no?: string|array<array-key, string>
+     *             http?: string|null,
+     *             https?: string|null,
+     *             no?: string|array<array-key, string>|null
      *         },
      *         query?: array<array-key, mixed>|string,
      *         read_timeout?: int|float,
