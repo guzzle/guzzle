@@ -115,7 +115,7 @@ final class StreamHandler
                 if (self::isConnectionError($e->getMessage())) {
                     $e = new ConnectException($e->getMessage(), $request, $e);
                 } else {
-                    $e = $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, null, $e);
+                    $e = $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, 0, $e);
                 }
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
@@ -239,7 +239,7 @@ final class StreamHandler
         $reason = new RequestException(
             'An error was encountered while creating the response',
             $request,
-            null,
+            0,
             $previous
         );
 

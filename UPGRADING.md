@@ -153,16 +153,18 @@ specifically. Code that must support older Guzzle 7.x releases at the same time
 as Guzzle 8.0 should keep a broader `TransferException` catch at the boundary
 where all Guzzle transfer failures are handled.
 
-Guzzle 8.0 adds the response-aware side of the hierarchy. Guzzle 7.11.0 did not
-add `ResponseException`; response-aware request failures remain under
+Guzzle 8.0 also makes response-aware request failures explicit. Guzzle 7.11.0
+did not add `ResponseException`; response-aware request failures remain under
 `RequestException` throughout Guzzle 7.x. In Guzzle 8.0, `ResponseException` is
 the base class for request failures where response headers were received and a
 response object is available, and `BadResponseException`,
-`ResponseTimeoutException`, and `TooManyRedirectsException` extend it. Use
-`ResponseException::getResponse()` for response-aware exception handling.
-`RequestException::getResponse()` and `RequestException::hasResponse()` are
-deprecated and will be removed in Guzzle 9; catch `ResponseException`, or test
-with `instanceof ResponseException`, before calling `getResponse()`.
+`ResponseTimeoutException`, and `TooManyRedirectsException` extend it. Response
+access now belongs to this branch only: `RequestException` no longer stores
+responses, no longer accepts a response constructor argument, and no longer has
+`getResponse()` or `hasResponse()` methods. Catch `ResponseException`, or test
+with `instanceof ResponseException`, before calling `getResponse()`. If you
+instantiate `RequestException` directly, its third constructor argument is now
+the exception code, followed by the previous exception and handler context.
 
 Timeouts are now split by whether response headers were received.
 `NetworkTimeoutException` is thrown when a built-in handler can reliably
@@ -241,8 +243,11 @@ The existing always-network cURL errors, including
 `ConnectException`. The built-in stream handler now classifies TLS handshake
 timeouts as `ConnectException`.
 
-The deprecated `RequestException::wrapException()` method was removed; create a
-`RequestException` directly instead.
+The deprecated `RequestException::wrapException()` method was removed. Create a
+`RequestException` directly for request failures where Guzzle does not expose a
+response object. For failures with a response, create `ResponseException`,
+`BadResponseException`, `ClientException`, `ServerException`, or
+`TooManyRedirectsException` instead.
 `GuzzleHttp\Exception\InvalidArgumentException` remains outside the transfer
 exception hierarchy and is still used for invalid configuration or request
 option values that can be rejected before a transfer starts.

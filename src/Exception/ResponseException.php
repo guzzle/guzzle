@@ -21,7 +21,7 @@ class ResponseException extends RequestException
         ?\Throwable $previous = null,
         array $handlerContext = []
     ) {
-        parent::__construct($message, $request, $response, $previous, $handlerContext);
+        parent::__construct($message, $request, $response->getStatusCode(), $previous, $handlerContext);
         $this->response = $response;
     }
 
@@ -31,15 +31,5 @@ class ResponseException extends RequestException
     public function getResponse(): ResponseInterface
     {
         return $this->response;
-    }
-
-    /**
-     * @deprecated since 8.0. Response exceptions always have a response. Use instanceof ResponseException instead.
-     */
-    public function hasResponse(): bool
-    {
-        \trigger_deprecation('guzzlehttp/guzzle', '8.0', '%s::hasResponse() is deprecated and will be removed in 9.0. Use instanceof %s instead.', static::class, self::class);
-
-        return true;
     }
 }

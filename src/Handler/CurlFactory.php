@@ -673,7 +673,7 @@ final class CurlFactory implements CurlFactoryInterface
                 new RequestException(
                     'An error was encountered while creating the response',
                     $easy->request,
-                    null,
+                    0,
                     $easy->createResponseException,
                     $ctx
                 )
@@ -701,7 +701,7 @@ final class CurlFactory implements CurlFactoryInterface
                 new RequestException(
                     'An error was encountered during the on_headers event',
                     $easy->request,
-                    null,
+                    0,
                     $easy->onHeadersException,
                     $ctx
                 )
@@ -727,7 +727,7 @@ final class CurlFactory implements CurlFactoryInterface
                 new RequestException(
                     'An error was encountered during the progress event',
                     $easy->request,
-                    null,
+                    0,
                     $easy->progressException,
                     $ctx
                 )
@@ -753,7 +753,7 @@ final class CurlFactory implements CurlFactoryInterface
                 new RequestException(
                     'The transfer was aborted by the progress callback',
                     $easy->request,
-                    null,
+                    0,
                     null,
                     $ctx
                 )
@@ -790,7 +790,7 @@ final class CurlFactory implements CurlFactoryInterface
         } elseif ($easy->response) {
             $error = new ResponseException($message, $easy->request, $easy->response, null, $ctx);
         } else {
-            $error = new RequestException($message, $easy->request, null, null, $ctx);
+            $error = new RequestException($message, $easy->request, 0, null, $ctx);
         }
 
         /** @var PromiseInterface<ResponseInterface, mixed> */
