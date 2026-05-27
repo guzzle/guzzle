@@ -361,7 +361,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::warnIfPresentAndNotBoolOrInt($options, 'expect');
 
         if (isset($options['form_params'])) {
-            self::warnAboutInvalidStringOrStringArrayOptionTypes('form_params', $options['form_params']);
+            self::warnAboutInvalidFormParamTypes($options['form_params']);
         }
 
         if (isset($options['force_ip_resolve']) && !\is_string($options['force_ip_resolve'])) {
@@ -421,8 +421,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     private static function warnAboutInvalidAuthOptionTypes($auth): void
     {
+        if ($auth === false || \is_string($auth) || $auth === []) {
+            return;
+        }
+
         if (!\is_array($auth)) {
-            self::warnInvalidRequestOptionType('auth', 'array{0: string, 1: string, 2?: string}|null', $auth);
+            self::warnInvalidRequestOptionType('auth', 'array{0: string, 1: string, 2?: string|null}|string|false|null', $auth);
 
             return;
         }
@@ -435,38 +439,45 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             self::warnInvalidRequestOptionType('auth.1', 'string', $auth[1] ?? null);
         }
 
-        if (\array_key_exists(2, $auth) && !\is_string($auth[2])) {
-            self::warnInvalidRequestOptionType('auth.2', 'string', $auth[2]);
+        if (\array_key_exists(2, $auth) && $auth[2] !== null && !\is_string($auth[2])) {
+            self::warnInvalidRequestOptionType('auth.2', 'string|null', $auth[2]);
         }
     }
 
     /**
      * @param mixed $value
      */
-    private static function warnAboutInvalidStringOrStringArrayOptionTypes(string $option, $value): void
+    private static function warnAboutInvalidFormParamTypes($value): void
     {
         if (!\is_array($value)) {
-            self::warnInvalidRequestOptionType($option, 'array<array-key, string|array<array-key, string>>', $value);
+            self::warnInvalidRequestOptionType('form_params', 'array<array-key, string|int|float|bool|null|array<array-key, mixed>>', $value);
 
             return;
         }
 
-        foreach ($value as $key => $item) {
-            $path = $option.'.'.(string) $key;
+        self::warnAboutInvalidFormParamArray($value, 'form_params');
+    }
+
+    private static function warnAboutInvalidFormParamArray(array $values, string $path): bool
+    {
+        foreach ($values as $key => $item) {
+            $itemPath = $path.'.'.(string) $key;
             if (\is_array($item)) {
-                foreach ($item as $index => $nestedItem) {
-                    if (!\is_string($nestedItem)) {
-                        self::warnInvalidRequestOptionType($path.'.'.(string) $index, 'string', $nestedItem);
-
-                        break 2;
-                    }
+                if (!self::warnAboutInvalidFormParamArray($item, $itemPath)) {
+                    return false;
                 }
-            } elseif (!\is_string($item)) {
-                self::warnInvalidRequestOptionType($path, 'string|array<array-key, string>', $item);
 
-                break;
+                continue;
+            }
+
+            if ($item !== null && !\is_scalar($item)) {
+                self::warnInvalidRequestOptionType($itemPath, 'string|int|float|bool|null|array<array-key, mixed>', $item);
+
+                return false;
             }
         }
+
+        return true;
     }
 
     /**
@@ -616,8 +627,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             self::warnInvalidRequestOptionType($option.'.0', 'string', $options[$option][0] ?? null);
         }
 
-        if (\array_key_exists(1, $options[$option]) && !\is_string($options[$option][1])) {
-            self::warnInvalidRequestOptionType($option.'.1', 'string', $options[$option][1]);
+        if (\array_key_exists(1, $options[$option]) && $options[$option][1] !== null && !\is_string($options[$option][1])) {
+            self::warnInvalidRequestOptionType($option.'.1', 'string|null', $options[$option][1]);
         }
     }
 

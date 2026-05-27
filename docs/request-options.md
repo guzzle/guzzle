@@ -117,10 +117,12 @@ If TLS client credentials are only trusted for the original origin, disable auto
 ## auth
 
 Summary
-Pass an array of HTTP authentication parameters to use with the request. The array must contain the username in index `[0]`, the password in index `[1]`, and you can optionally provide a built-in authentication type in index `[2]`. Pass `null` to disable authentication for a request.
+Pass HTTP authentication parameters to use with the request. An array must contain the username in index `[0]`, the password in index `[1]`, and can optionally provide a built-in authentication type in index `[2]`. Pass `false` or `null` to disable authentication for a request. String values are passed through for custom handlers.
 
 Types
 - array
+- string
+- false
 - null
 
 Default
@@ -128,8 +130,6 @@ None
 
 Constant
 `GuzzleHttp\RequestOptions::AUTH`
-
-Top-level non-array `auth` values other than `null` are deprecated in 7.11 and will be rejected in 8.0.
 
 The built-in authentication types are as follows:
 
@@ -220,7 +220,7 @@ Values are converted to PSR-7 streams with `GuzzleHttp\Psr7\Utils::streamFor()`.
 ## cert
 
 Summary
-Set to a string to specify the path to a file containing a client side certificate. PEM is the default certificate format. If a password is required, then set to an array containing the path to the certificate file in the first array element followed by the password required for the certificate in the second array element. Use [`cert_type`](#cert_type) to specify another supported certificate format.
+Set to a string to specify the path to a file containing a client side certificate. PEM is the default certificate format. If a password is required, then set to an array containing the path to the certificate file in the first array element followed by the password required for the certificate in the second array element. A `null` password is treated the same as omitting it. Use [`cert_type`](#cert_type) to specify another supported certificate format.
 
 Types
 - string
@@ -523,7 +523,7 @@ array
 Constant
 `GuzzleHttp\RequestOptions::FORM_PARAMS`
 
-Array mapping form field names to values where each value is a string or array of strings. Sets the Content-Type header to application/x-www-form-urlencoded when no Content-Type header is already present.
+Array mapping form field names to scalar, `null`, or nested array values. Values are serialized with PHP's `http_build_query()`. Sets the Content-Type header to application/x-www-form-urlencoded when no Content-Type header is already present.
 
 ```php
 $client->request('POST', '/post', [
@@ -1040,7 +1040,7 @@ $resource = $response->getBody()->detach();
 ## ssl_key
 
 Summary
-Specify the path to a file containing a private SSL key. PEM is the default private key format. If a password is required, then set to an array containing the path to the SSL key in the first array element followed by the password required for the key in the second element. Use [`ssl_key_type`](#ssl_key_type) to specify another supported key format.
+Specify the path to a file containing a private SSL key. PEM is the default private key format. If a password is required, then set to an array containing the path to the SSL key in the first array element followed by the password required for the key in the second element. A `null` password is treated the same as omitting it. Use [`ssl_key_type`](#ssl_key_type) to specify another supported key format.
 
 Types
 - string
