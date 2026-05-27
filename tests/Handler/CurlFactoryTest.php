@@ -6,12 +6,12 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
-use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransferStats;
+use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
@@ -123,7 +123,7 @@ class CurlFactoryTest extends TestCase
 
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
-        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
 
@@ -145,7 +145,7 @@ class CurlFactoryTest extends TestCase
         $requestShareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
         self::assertNotFalse($requestShareHandle);
-        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
         try {
             $this->expectException(\InvalidArgumentException::class);
@@ -169,7 +169,7 @@ class CurlFactoryTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('share handle is required');
 
-        new CurlFactory(3, CurlShare::HANDLER);
+        new CurlFactory(3, TransportSharing::HANDLER_PREFER);
     }
 
     public function testRejectsShareHandleWhenSharingIsDisabled(): void
@@ -183,7 +183,7 @@ class CurlFactoryTest extends TestCase
             $this->expectException(\InvalidArgumentException::class);
             $this->expectExceptionMessage('cannot be provided');
 
-            new CurlFactory(3, CurlShare::NONE, $shareHandle);
+            new CurlFactory(3, TransportSharing::NONE, $shareHandle);
         } finally {
             if (PHP_VERSION_ID < 80000) {
                 \curl_share_close($shareHandle);
@@ -196,7 +196,7 @@ class CurlFactoryTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('cURL share handle');
 
-        new CurlFactory(3, CurlShare::HANDLER, false);
+        new CurlFactory(3, TransportSharing::HANDLER_PREFER, false);
     }
 
     public function testCanChangeCurlOptions()

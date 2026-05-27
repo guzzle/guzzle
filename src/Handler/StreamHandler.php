@@ -9,6 +9,7 @@ use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\TransferStats;
+use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -476,11 +477,12 @@ class StreamHandler
 
     private static function triggerUnsupportedRequestOptionDeprecations(RequestInterface $request, array $options): void
     {
-        if (
-            \array_key_exists('curl_share', $options)
-            && CurlShareHandleState::normalizeMode($options['curl_share'], 'curl_share') !== CurlShare::NONE
-        ) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "curl_share" option to the stream handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because the stream handler does not support cURL sharing.');
+        if (\array_key_exists('transport_sharing', $options)) {
+            $transportSharingMode = CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing');
+
+            if ($transportSharingMode === TransportSharing::HANDLER_REQUIRE) {
+                throw new \InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
+            }
         }
 
         if (

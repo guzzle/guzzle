@@ -4,7 +4,6 @@ namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
@@ -13,6 +12,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransferStats;
+use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -992,30 +992,55 @@ class StreamHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testStreamAcceptsDisabledCurlShareOption()
+    public function testStreamAcceptsDisabledTransportSharingOption()
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
 
         $handler = new StreamHandler();
         $response = $handler(new Request('GET', Server::$url), [
-            'curl_share' => CurlShare::NONE,
+            'transport_sharing' => TransportSharing::NONE,
         ])->wait();
 
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testStreamAcceptsNullCurlShareOption()
+    public function testStreamAcceptsNullTransportSharingOption()
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
 
         $handler = new StreamHandler();
         $response = $handler(new Request('GET', Server::$url), [
-            'curl_share' => null,
+            'transport_sharing' => null,
         ])->wait();
 
         self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testStreamAcceptsPreferredTransportSharingOption()
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), [
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testStreamRejectsRequiredTransportSharingOption()
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('transport_sharing');
+
+        $handler(new Request('GET', Server::$url), [
+            'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
+        ]);
     }
 
     public function testDrainsResponseAndReadsAllContentWhenContentLengthIsZero()

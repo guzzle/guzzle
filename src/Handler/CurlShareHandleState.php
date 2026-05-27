@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 
 /**
@@ -29,47 +30,51 @@ final class CurlShareHandleState
     }
 
     /**
-     * @param mixed $share
+     * @param mixed $sharing
      */
-    public static function fromOption($share): ?self
+    public static function fromOption($sharing): ?self
     {
-        if ($share instanceof self) {
-            return $share;
+        if ($sharing instanceof self) {
+            return $sharing;
         }
 
-        $mode = self::normalizeMode($share, 'share');
-        if ($mode === CurlShare::NONE) {
+        $mode = self::normalizeMode($sharing, 'transport_sharing');
+        if ($mode === TransportSharing::NONE) {
             return null;
+        }
+
+        if ($mode === TransportSharing::HANDLER_PREFER) {
+            return self::createHandlerShareOrNull($mode);
         }
 
         return self::createHandlerShare($mode);
     }
 
     /**
-     * @param mixed $share
+     * @param mixed $sharing
      */
-    public static function normalizeMode($share, string $option): string
+    public static function normalizeMode($sharing, string $option): string
     {
-        if ($share instanceof self) {
-            return $share->mode;
+        if ($sharing instanceof self) {
+            return $sharing->mode;
         }
 
-        if ($share === null || $share === CurlShare::NONE) {
-            return CurlShare::NONE;
+        if ($sharing === null || $sharing === TransportSharing::NONE) {
+            return TransportSharing::NONE;
         }
 
-        if ($share === CurlShare::HANDLER) {
-            return CurlShare::HANDLER;
+        if ($sharing === TransportSharing::HANDLER_PREFER || $sharing === TransportSharing::HANDLER_REQUIRE) {
+            return $sharing;
         }
 
         throw new \InvalidArgumentException(\sprintf(
-            'The "%s" option must be null, GuzzleHttp\\Handler\\CurlShare::NONE, or GuzzleHttp\\Handler\\CurlShare::HANDLER; received %s.',
+            'The "%s" option must be null or a GuzzleHttp\\TransportSharing::* constant; received %s.',
             $option,
-            Utils::describeType($share)
+            Utils::describeType($sharing)
         ));
     }
 
-    public static function assertNoCustomFactoryConflict(array $options, string $handlerName): void
+    public static function assertNoRequiredSharingCustomFactoryConflict(array $options, string $handlerName): void
     {
         if (
             !\array_key_exists('handle_factory', $options)
@@ -78,21 +83,30 @@ final class CurlShareHandleState
             return;
         }
 
-        $mode = self::normalizeMode($options['share'] ?? null, 'share');
-        if ($mode === CurlShare::NONE) {
+        $mode = self::normalizeMode($options['transport_sharing'] ?? null, 'transport_sharing');
+        if ($mode !== TransportSharing::HANDLER_REQUIRE) {
             return;
         }
 
         throw new \InvalidArgumentException(\sprintf(
-            'The "share" %s option cannot be used with a custom "handle_factory" because Guzzle cannot ensure that the custom factory applies CURLOPT_SHARE.',
+            'The "transport_sharing" %s option cannot require sharing with a custom "handle_factory" because Guzzle cannot ensure that the custom factory applies CURLOPT_SHARE.',
             $handlerName
         ));
+    }
+
+    private static function createHandlerShareOrNull(string $mode): ?self
+    {
+        try {
+            return self::createHandlerShare($mode);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private static function createHandlerShare(string $mode): self
     {
         if (!\function_exists('curl_share_init') || !\function_exists('curl_share_setopt')) {
-            throw new \InvalidArgumentException('The cURL handler option "share" requires cURL share support.');
+            throw new \InvalidArgumentException('The "transport_sharing" option requires cURL share support.');
         }
 
         self::requireCurlConstant('CURLOPT_SHARE');
@@ -136,7 +150,7 @@ final class CurlShareHandleState
     {
         if (!\defined($constant)) {
             throw new \InvalidArgumentException(\sprintf(
-                'The cURL handler option "share" requires %s, but it is not available in the installed PHP cURL extension.',
+                'The "transport_sharing" option requires %s, but it is not available in the installed PHP cURL extension.',
                 $constant
             ));
         }
