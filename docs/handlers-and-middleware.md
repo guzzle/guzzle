@@ -341,66 +341,64 @@ $stack->after('add_baz', Middleware::mapRequest(function (RequestInterface $r) {
 $stack->remove('add_foo');
 ```
 
-## cURL Sharing
+## Transport Sharing
 
-By default, Guzzle does not configure cURL share handles.
+By default, Guzzle does not ask handlers to share low-level transport state.
 
-Use the `curl_share` client constructor option when Guzzle creates the default
-handler:
+Use the `transport_sharing` client constructor option when Guzzle creates the
+default handler:
 
 ```php
 use GuzzleHttp\Client;
-use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\TransportSharing;
 
 $client = new Client([
-    'curl_share' => CurlShare::PERSISTENT_PREFER,
+    'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
 ]);
 ```
 
-`CurlShare::NONE` disables cURL sharing. This is the default.
+`TransportSharing::NONE` disables transport sharing. This is the default.
 
-`CurlShare::HANDLER` shares cURL DNS and SSL session cache state for the
-lifetime of Guzzle's cURL handlers. It does not share cURL connection cache
-state.
+`TransportSharing::HANDLER_PREFER` asks the selected handler to share transport
+state for the lifetime of that handler when it can. Guzzle's cURL handlers use
+cURL share handles to share DNS and SSL session cache state. If sharing cannot
+be configured, or if the selected handler does not support sharing, Guzzle
+continues without sharing.
 
-`CurlShare::PERSISTENT_PREFER` uses PHP persistent cURL share handles when
-available. Persistent sharing shares DNS, connection, and SSL session cache
+`TransportSharing::HANDLER_REQUIRE` requires handler-lifetime transport
+sharing. Guzzle fails when it cannot select a cURL handler with cURL share
+support, when sharing cannot be configured, or when a request is routed to a
+handler that does not support sharing.
+
+`TransportSharing::PERSISTENT_PREFER` uses PHP persistent cURL share handles
+when available. Persistent sharing shares DNS, connection, and SSL session cache
 state. When persistent cURL share handles are unavailable or cannot be created,
-Guzzle falls back to `CurlShare::HANDLER`. This fallback still requires normal
-cURL share support; if handler-lifetime sharing cannot be configured, Guzzle
-fails with the same error as `CurlShare::HANDLER`.
+Guzzle falls back to `TransportSharing::HANDLER_REQUIRE`. This fallback still
+requires normal cURL share support.
 
-`CurlShare::PERSISTENT_REQUIRE` requires PHP persistent cURL share handles and
-does not fall back to handler-lifetime sharing. If persistent sharing is
-unavailable or cannot be created, Guzzle fails while creating the handler.
+`TransportSharing::PERSISTENT_REQUIRE` requires PHP persistent cURL share
+handles and does not fall back to handler-lifetime sharing. If persistent
+sharing is unavailable or cannot be created, Guzzle fails while creating the
+handler.
 
-Guzzle chooses the shared cURL cache state for each mode. The shared data is not
-configurable. Guzzle never enables cURL cookie sharing because cookies are
-managed through Guzzle middleware.
+Because `TransportSharing::PERSISTENT_REQUIRE` requires connection cache
+sharing, Guzzle rejects request-level cURL options or proxy tunnel cases that
+require a fresh connection for safety.
 
-Because `CurlShare::PERSISTENT_REQUIRE` requires connection cache sharing,
-Guzzle rejects request-level cURL options or proxy tunnel cases that require a
-fresh connection for safety.
+Transport sharing does not share cookies. Cookies are managed by Guzzle
+middleware.
 
 When constructing cURL handlers manually, configure sharing with the handler
-`share` option:
+`transport_sharing` option:
 
 ```php
 use GuzzleHttp\Handler\CurlHandler;
-use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\TransportSharing;
 
 $handler = new CurlHandler([
-    'share' => CurlShare::HANDLER,
+    'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
 ]);
 ```
-
-The `share` option is supported by `CurlHandler` and `CurlMultiHandler`. The
-`curl_share` client option can only be used when Guzzle creates the default
-handler. If you provide a custom handler, configure sharing on that handler
-directly.
-
-Do not pass `CURLOPT_SHARE` in the `curl` request option. The PHP stream handler
-does not support cURL sharing.
 
 ## Creating a Handler
 

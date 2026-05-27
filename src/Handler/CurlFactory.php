@@ -15,6 +15,7 @@ use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
+use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -51,17 +52,17 @@ final class CurlFactory implements CurlFactoryInterface
      * @param int                                                       $maxHandles  Maximum number of idle handles.
      * @param resource|\CurlShareHandle|\CurlSharePersistentHandle|null $shareHandle
      */
-    public function __construct(int $maxHandles, string $shareMode = CurlShare::NONE, $shareHandle = null)
+    public function __construct(int $maxHandles, string $shareMode = TransportSharing::NONE, $shareHandle = null)
     {
         $this->maxHandles = $maxHandles;
-        $this->shareMode = CurlShareHandleState::normalizeMode($shareMode, 'share');
+        $this->shareMode = CurlShareHandleState::normalizeMode($shareMode, 'transport_sharing');
 
-        if ($this->shareMode === CurlShare::NONE && $shareHandle !== null) {
-            throw new \InvalidArgumentException('A cURL share handle cannot be provided when cURL sharing is disabled.');
+        if ($this->shareMode === TransportSharing::NONE && $shareHandle !== null) {
+            throw new \InvalidArgumentException('A cURL share handle cannot be provided when transport sharing is disabled.');
         }
 
-        if ($this->shareMode !== CurlShare::NONE && $shareHandle === null) {
-            throw new \InvalidArgumentException('A cURL share handle is required when cURL sharing is enabled.');
+        if ($this->shareMode !== TransportSharing::NONE && $shareHandle === null) {
+            throw new \InvalidArgumentException('A cURL share handle is required when transport sharing is enabled.');
         }
 
         if ($shareHandle !== null && !self::isCurlShareHandle($shareHandle)) {
@@ -222,13 +223,13 @@ final class CurlFactory implements CurlFactoryInterface
             return;
         }
 
-        throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with the "curl_share" client option or the "share" cURL handler option.');
+        throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with configured transport sharing.');
     }
 
     private function rejectPersistentRequireConnectionReuseConflicts(array $options): void
     {
         if (
-            $this->shareMode !== CurlShare::PERSISTENT_REQUIRE
+            $this->shareMode !== TransportSharing::PERSISTENT_REQUIRE
             || !isset($options['curl'])
             || !\is_array($options['curl'])
         ) {
@@ -304,10 +305,10 @@ final class CurlFactory implements CurlFactoryInterface
     private static function rejectUnsupportedRequestOptions(array $options): void
     {
         if (
-            \array_key_exists('curl_share', $options)
-            && CurlShareHandleState::normalizeMode($options['curl_share'], 'curl_share') !== CurlShare::NONE
+            \array_key_exists('transport_sharing', $options)
+            && CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing') !== TransportSharing::NONE
         ) {
-            throw new \InvalidArgumentException('The "curl_share" option is a client constructor option, not a request option. Configure cURL sharing when creating the Client, CurlHandler, or CurlMultiHandler.');
+            throw new \InvalidArgumentException('The "transport_sharing" option is a client constructor option, not a request option. Configure transport sharing when creating the Client, CurlHandler, or CurlMultiHandler.');
         }
 
         if (\array_key_exists('stream_context', $options)) {
@@ -335,7 +336,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         $options = [];
 
-        self::addConflictingCurlOption($options, 'CURLOPT_SHARE', 'the "curl_share" client option or the "share" cURL handler option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SHARE', 'the "transport_sharing" client option or cURL handler option');
         self::addConflictingCurlOption($options, 'CURLOPT_URL', 'the request URI');
         self::addConflictingCurlOption($options, 'CURLOPT_PORT', 'the request URI');
         self::addConflictingCurlOption($options, 'CURLOPT_CUSTOMREQUEST', 'the request method');
@@ -475,7 +476,7 @@ final class CurlFactory implements CurlFactoryInterface
                 }
             }
         } finally {
-            $this->shareMode = CurlShare::NONE;
+            $this->shareMode = TransportSharing::NONE;
             $this->shareHandle = null;
         }
 
@@ -1262,7 +1263,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         $proxyForConnectionReuse = self::getEffectiveProxyForConnectionReuse($selectedProxy, $options);
         if ($proxyForConnectionReuse !== null && self::requiresFreshConnectionForAuthenticatedProxy($easy->request, $proxyForConnectionReuse, $options)) {
-            if ($this->shareMode === CurlShare::PERSISTENT_REQUIRE) {
+            if ($this->shareMode === TransportSharing::PERSISTENT_REQUIRE) {
                 throw new \InvalidArgumentException('Persistent cURL sharing is required, but this request requires a fresh proxy tunnel connection.');
             }
 

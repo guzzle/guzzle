@@ -11,13 +11,13 @@ use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
-use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransferStats;
+use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Client\RequestExceptionInterface;
@@ -201,7 +201,7 @@ class CurlFactoryTest extends TestCase
 
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
-        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
 
@@ -247,9 +247,10 @@ class CurlFactoryTest extends TestCase
 
     public static function enabledShareModeProvider(): iterable
     {
-        yield 'handler' => [CurlShare::HANDLER];
-        yield 'persistent prefer' => [CurlShare::PERSISTENT_PREFER];
-        yield 'persistent require' => [CurlShare::PERSISTENT_REQUIRE];
+        yield 'handler prefer' => [TransportSharing::HANDLER_PREFER];
+        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
+        yield 'persistent prefer' => [TransportSharing::PERSISTENT_PREFER];
+        yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE];
     }
 
     public function testRejectsEnabledShareModeWithoutShareHandle(): void
@@ -257,7 +258,7 @@ class CurlFactoryTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('share handle is required');
 
-        new CurlFactory(3, CurlShare::HANDLER);
+        new CurlFactory(3, TransportSharing::HANDLER_PREFER);
     }
 
     public function testRejectsShareHandleWhenSharingIsDisabled(): void
@@ -271,7 +272,7 @@ class CurlFactoryTest extends TestCase
             $this->expectException(\InvalidArgumentException::class);
             $this->expectExceptionMessage('cannot be provided');
 
-            new CurlFactory(3, CurlShare::NONE, $shareHandle);
+            new CurlFactory(3, TransportSharing::NONE, $shareHandle);
         } finally {
             if (PHP_VERSION_ID < 80000) {
                 \curl_share_close($shareHandle);
@@ -284,7 +285,7 @@ class CurlFactoryTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('cURL share handle');
 
-        new CurlFactory(3, CurlShare::HANDLER, false);
+        new CurlFactory(3, TransportSharing::HANDLER_PREFER, false);
     }
 
     public function testPersistentRequireRejectsFreshConnect(): void
@@ -293,7 +294,7 @@ class CurlFactoryTest extends TestCase
 
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
-        $factory = new CurlFactory(3, CurlShare::PERSISTENT_REQUIRE, $shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
         try {
             $this->expectException(\InvalidArgumentException::class);
@@ -315,7 +316,7 @@ class CurlFactoryTest extends TestCase
 
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
-        $factory = new CurlFactory(3, CurlShare::PERSISTENT_REQUIRE, $shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
         try {
             $this->expectException(\InvalidArgumentException::class);
@@ -337,7 +338,7 @@ class CurlFactoryTest extends TestCase
 
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
-        $factory = new CurlFactory(3, CurlShare::PERSISTENT_REQUIRE, $shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
         $easy = $factory->create(new Psr7\Request('GET', 'https://example.com'), [
             'curl' => [
                 \CURLOPT_FRESH_CONNECT => false,
@@ -361,7 +362,7 @@ class CurlFactoryTest extends TestCase
         $proxyHeaderOption = self::proxyHeaderOption();
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
-        $factory = new CurlFactory(3, CurlShare::PERSISTENT_REQUIRE, $shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
         try {
             $this->expectException(\InvalidArgumentException::class);
@@ -384,7 +385,7 @@ class CurlFactoryTest extends TestCase
 
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
-        $factory = new CurlFactory(3, CurlShare::HANDLER, $shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
         self::assertSame($shareHandle, self::readShareHandle($factory));
 
@@ -453,7 +454,7 @@ class CurlFactoryTest extends TestCase
         try {
             $this->expectException(\InvalidArgumentException::class);
             $this->expectExceptionMessage('CURLOPT_SHARE');
-            $this->expectExceptionMessage('curl_share');
+            $this->expectExceptionMessage('transport_sharing');
 
             (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
                 'curl' => [
@@ -470,11 +471,11 @@ class CurlFactoryTest extends TestCase
     public function testRejectsRequestLevelCurlShareClientOption(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('curl_share');
+        $this->expectExceptionMessage('transport_sharing');
         $this->expectExceptionMessage('client constructor option');
 
         (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
-            'curl_share' => CurlShare::HANDLER,
+            'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
         ]);
     }
 

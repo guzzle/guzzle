@@ -7,7 +7,6 @@ namespace GuzzleHttp;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
-use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\Proxy;
@@ -91,30 +90,31 @@ final class Utils
      *
      * The returned handler is not wrapped by any default middlewares.
      *
-     * @param array{share?: mixed} $curlOptions cURL handler constructor options.
+     * @param array{transport_sharing?: mixed} $handlerOptions Handler constructor options.
      *
      * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> Returns the best handler for the given system.
      *
      * @throws \RuntimeException if no viable Handler is available.
      */
-    public static function chooseHandler(array $curlOptions = []): callable
+    public static function chooseHandler(array $handlerOptions = []): callable
     {
         $handler = null;
-        $shareMode = CurlShareHandleState::normalizeMode($curlOptions['share'] ?? null, 'share');
-        $shareRequested = $shareMode !== CurlShare::NONE;
+        $sharingMode = CurlShareHandleState::normalizeMode($handlerOptions['transport_sharing'] ?? null, 'transport_sharing');
+        $sharingRequested = $sharingMode !== TransportSharing::NONE;
+        $sharingRequired = !\in_array($sharingMode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER], true);
         $curlHandlerOptions = [];
         $curlSupported = CurlVersion::supportsTls12()
             && (\function_exists('curl_multi_exec') || \function_exists('curl_exec'));
 
-        if ($shareRequested && !$curlSupported) {
-            throw new \RuntimeException('cURL sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and a supported libcurl version.');
+        if ($sharingRequired && !$curlSupported) {
+            throw new \RuntimeException('Required transport sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and a supported libcurl version.');
         }
 
         if ($curlSupported) {
-            if ($shareRequested) {
-                $shareState = CurlShareHandleState::fromOption($shareMode);
+            if ($sharingRequested) {
+                $shareState = CurlShareHandleState::fromOption($sharingMode);
                 if ($shareState !== null) {
-                    $curlHandlerOptions['share'] = $shareState;
+                    $curlHandlerOptions['transport_sharing'] = $shareState;
                 }
             }
 
@@ -129,8 +129,8 @@ final class Utils
 
         if (\ini_get('allow_url_fopen')) {
             $streamHandler = new StreamHandler();
-            if ($shareRequested) {
-                $streamHandler = self::wrapStreamHandlerCurlShare($streamHandler, $shareMode);
+            if ($sharingRequired) {
+                $streamHandler = self::wrapStreamHandlerTransportSharing($streamHandler, $sharingMode);
             }
 
             $handler = $handler
@@ -148,14 +148,14 @@ final class Utils
      *
      * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
      */
-    private static function wrapStreamHandlerCurlShare(callable $handler, string $shareMode): callable
+    private static function wrapStreamHandlerTransportSharing(callable $handler, string $sharingMode): callable
     {
-        return static function (RequestInterface $request, array $options) use ($handler, $shareMode): PromiseInterface {
-            if (\array_key_exists('curl_share', $options)) {
-                CurlShareHandleState::normalizeMode($options['curl_share'], 'curl_share');
+        return static function (RequestInterface $request, array $options) use ($handler, $sharingMode): PromiseInterface {
+            if (\array_key_exists('transport_sharing', $options)) {
+                CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing');
             }
 
-            $options['curl_share'] = $shareMode;
+            $options['transport_sharing'] = $sharingMode;
 
             return $handler($request, $options);
         };

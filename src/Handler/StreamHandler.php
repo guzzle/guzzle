@@ -14,6 +14,7 @@ use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Exception\TimeoutException as Psr7TimeoutException;
 use GuzzleHttp\TransferStats;
+use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -620,11 +621,12 @@ final class StreamHandler
 
     private static function rejectUnsupportedRequestOptions(RequestInterface $request, array $options): void
     {
-        if (
-            \array_key_exists('curl_share', $options)
-            && CurlShareHandleState::normalizeMode($options['curl_share'], 'curl_share') !== CurlShare::NONE
-        ) {
-            throw new \InvalidArgumentException('The "curl_share" option is not supported by the stream handler because the stream handler does not support cURL sharing.');
+        if (\array_key_exists('transport_sharing', $options)) {
+            $transportSharingMode = CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing');
+
+            if (!\in_array($transportSharingMode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER], true)) {
+                throw new \InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
+            }
         }
 
         if (

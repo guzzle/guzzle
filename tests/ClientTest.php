@@ -9,7 +9,6 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
-use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -21,6 +20,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
+use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
@@ -157,7 +157,7 @@ class ClientTest extends TestCase
         self::assertSame(['http', 'https'], $config['protocols']);
     }
 
-    public function testCurlShareIsDisabledByDefault(): void
+    public function testTransportSharingIsDisabledByDefault(): void
     {
         $_SERVER['curl_test'] = true;
         unset($_SERVER['_curl_share_init_count']);
@@ -171,7 +171,7 @@ class ClientTest extends TestCase
         }
     }
 
-    public function testCurlShareHandlerModeCreatesDefaultShareHandle(): void
+    public function testHandlerPreferTransportSharingCreatesDefaultShareHandle(): void
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();
 
@@ -180,7 +180,7 @@ class ClientTest extends TestCase
 
         try {
             new Client([
-                'curl_share' => CurlShare::HANDLER,
+                'transport_sharing' => TransportSharing::HANDLER_PREFER,
             ]);
 
             self::assertSame(1, $_SERVER['_curl_share_init_count']);
@@ -193,7 +193,7 @@ class ClientTest extends TestCase
         }
     }
 
-    public function testCurlSharePersistentPreferCreatesDefaultShareHandle(): void
+    public function testPersistentPreferTransportSharingCreatesDefaultShareHandle(): void
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();
 
@@ -207,7 +207,7 @@ class ClientTest extends TestCase
 
         try {
             new Client([
-                'curl_share' => CurlShare::PERSISTENT_PREFER,
+                'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
             ]);
 
             self::assertPersistentPreferShareWasCreated();
@@ -222,7 +222,7 @@ class ClientTest extends TestCase
         }
     }
 
-    public function testCurlSharePersistentRequireFailsWhenPersistentSharingIsUnavailable(): void
+    public function testPersistentRequireTransportSharingFailsWhenPersistentSharingIsUnavailable(): void
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();
 
@@ -234,70 +234,80 @@ class ClientTest extends TestCase
             $this->expectException(\InvalidArgumentException::class);
 
             new Client([
-                'curl_share' => CurlShare::PERSISTENT_REQUIRE,
+                'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
             ]);
         } finally {
             unset($_SERVER['curl_share_init_persistent_fail']);
         }
     }
 
+    public function testHandlerPreferTransportSharingCanBeUsedWithCustomHandler(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler(),
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
+        ]);
+
+        self::assertNull($client->getConfig('transport_sharing'));
+    }
+
     /**
-     * @dataProvider enabledShareModeProvider
+     * @dataProvider strictTransportSharingModeProvider
      */
-    public function testCurlShareCannotBeUsedWithCustomHandler(string $shareMode): void
+    public function testRequiredTransportSharingCannotBeUsedWithCustomHandler(string $transportSharing): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('curl_share');
+        $this->expectExceptionMessage('transport_sharing');
 
         new Client([
             'handler' => new MockHandler(),
-            'curl_share' => $shareMode,
+            'transport_sharing' => $transportSharing,
         ]);
     }
 
-    public static function enabledShareModeProvider(): iterable
+    public static function strictTransportSharingModeProvider(): iterable
     {
-        yield 'handler' => [CurlShare::HANDLER];
-        yield 'persistent prefer' => [CurlShare::PERSISTENT_PREFER];
-        yield 'persistent require' => [CurlShare::PERSISTENT_REQUIRE];
+        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
+        yield 'persistent prefer' => [TransportSharing::PERSISTENT_PREFER];
+        yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE];
     }
 
-    public function testCurlShareNullCanBeUsedWithCustomHandler(): void
-    {
-        $client = new Client([
-            'handler' => new MockHandler(),
-            'curl_share' => null,
-        ]);
-
-        self::assertNull($client->getConfig('curl_share'));
-    }
-
-    public function testCurlShareNoneCanBeUsedWithCustomHandler(): void
+    public function testTransportSharingNullCanBeUsedWithCustomHandler(): void
     {
         $client = new Client([
             'handler' => new MockHandler(),
-            'curl_share' => CurlShare::NONE,
+            'transport_sharing' => null,
         ]);
 
-        self::assertNull($client->getConfig('curl_share'));
+        self::assertNull($client->getConfig('transport_sharing'));
+    }
+
+    public function testTransportSharingNoneCanBeUsedWithCustomHandler(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler(),
+            'transport_sharing' => TransportSharing::NONE,
+        ]);
+
+        self::assertNull($client->getConfig('transport_sharing'));
     }
 
     /**
-     * @dataProvider invalidCurlShareOptions
+     * @dataProvider invalidTransportSharingOptions
      *
-     * @param mixed $curlShare
+     * @param mixed $transportSharing
      */
-    public function testCurlShareRejectsInvalidValues($curlShare): void
+    public function testTransportSharingRejectsInvalidValues($transportSharing): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('curl_share');
+        $this->expectExceptionMessage('transport_sharing');
 
         new Client([
-            'curl_share' => $curlShare,
+            'transport_sharing' => $transportSharing,
         ]);
     }
 
-    public static function invalidCurlShareOptions(): iterable
+    public static function invalidTransportSharingOptions(): iterable
     {
         yield 'true' => [true];
         yield 'false' => [false];

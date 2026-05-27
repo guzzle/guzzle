@@ -9,13 +9,13 @@ use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlMultiHandler;
-use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Server\Server;
+use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -104,7 +104,7 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame(0.5, self::readSelectTimeout($a));
     }
 
-    public function testShareOptionAppliesCurlShare(): void
+    public function testTransportSharingOptionAppliesCurlShare(): void
     {
         self::skipIfCurlShareIsUnavailable();
 
@@ -112,7 +112,7 @@ class CurlMultiHandlerTest extends TestCase
         Server::enqueue([new Response(200)]);
 
         $handler = new CurlMultiHandler([
-            'share' => CurlShare::HANDLER,
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
         ]);
 
         $handler(new Request('GET', Server::$url), [])->wait();
@@ -125,7 +125,7 @@ class CurlMultiHandlerTest extends TestCase
         ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
     }
 
-    public function testPersistentPreferShareOptionAppliesCurlShare(): void
+    public function testPersistentPreferTransportSharingOptionAppliesCurlShare(): void
     {
         self::skipIfCurlShareIsUnavailable();
 
@@ -133,7 +133,7 @@ class CurlMultiHandlerTest extends TestCase
         Server::enqueue([new Response(200)]);
 
         $handler = new CurlMultiHandler([
-            'share' => CurlShare::PERSISTENT_PREFER,
+            'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
         ]);
 
         $handler(new Request('GET', Server::$url), [])->wait();
@@ -142,32 +142,42 @@ class CurlMultiHandlerTest extends TestCase
         self::assertPersistentPreferShareWasCreated();
     }
 
+    public function testPreferredTransportSharingCanBeUsedWithCustomFactory(): void
+    {
+        $handler = new CurlMultiHandler([
+            'handle_factory' => new CurlFactory(0),
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
+        ]);
+
+        self::assertInstanceOf(CurlMultiHandler::class, $handler);
+    }
+
     /**
-     * @dataProvider enabledShareModeProvider
+     * @dataProvider strictTransportSharingModeProvider
      */
-    public function testShareOptionCannotBeUsedWithCustomFactory(string $shareMode): void
+    public function testRequiredTransportSharingCannotBeUsedWithCustomFactory(string $transportSharing): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('handle_factory');
 
         new CurlMultiHandler([
             'handle_factory' => new CurlFactory(0),
-            'share' => $shareMode,
+            'transport_sharing' => $transportSharing,
         ]);
     }
 
-    public static function enabledShareModeProvider(): iterable
+    public static function strictTransportSharingModeProvider(): iterable
     {
-        yield 'handler' => [CurlShare::HANDLER];
-        yield 'persistent prefer' => [CurlShare::PERSISTENT_PREFER];
-        yield 'persistent require' => [CurlShare::PERSISTENT_REQUIRE];
+        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
+        yield 'persistent prefer' => [TransportSharing::PERSISTENT_PREFER];
+        yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE];
     }
 
-    public function testDisabledShareOptionCanBeUsedWithCustomFactory(): void
+    public function testDisabledTransportSharingCanBeUsedWithCustomFactory(): void
     {
         $handler = new CurlMultiHandler([
             'handle_factory' => new CurlFactory(0),
-            'share' => CurlShare::NONE,
+            'transport_sharing' => TransportSharing::NONE,
         ]);
 
         self::assertInstanceOf(CurlMultiHandler::class, $handler);
@@ -178,7 +188,7 @@ class CurlMultiHandlerTest extends TestCase
         self::skipIfCurlShareIsUnavailable();
 
         $handler = new CurlMultiHandler([
-            'share' => CurlShare::HANDLER,
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
         ]);
 
         self::assertNotNull(self::readShareHandleState($handler));

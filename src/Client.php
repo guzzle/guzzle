@@ -9,7 +9,6 @@ use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -59,16 +58,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *   default middleware to the handler.
      * - base_uri: (string|UriInterface) Base URI of the client that is merged
      *   into relative URIs. Can be a string or instance of UriInterface.
-     * - curl_share: (string|null) cURL share-handle mode for the default cURL
-     *   handler. Accepts CurlShare::NONE, CurlShare::HANDLER,
-     *   CurlShare::PERSISTENT_PREFER, or CurlShare::PERSISTENT_REQUIRE.
-     *   Defaults to null.
+     * - transport_sharing: (string|null) Transport sharing mode for the
+     *   default handler. Accepts TransportSharing::* or null. Defaults to null.
      * - **: any request option
      *
      * @param array{
      *     handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *     base_uri?: string|UriInterface,
-     *     curl_share?: string|null,
+     *     transport_sharing?: string|null,
      *     allow_redirects?: bool|array{
      *         max?: int,
      *         strict?: bool,
@@ -142,18 +139,18 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     public function __construct(array $config = [])
     {
-        $curlShare = \array_key_exists('curl_share', $config) ? $config['curl_share'] : null;
-        $curlShareMode = CurlShareHandleState::normalizeMode($curlShare, 'curl_share');
-        unset($config['curl_share']);
+        $transportSharing = \array_key_exists('transport_sharing', $config) ? $config['transport_sharing'] : null;
+        $transportSharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
+        unset($config['transport_sharing']);
 
         if (!isset($config['handler'])) {
-            $config['handler'] = $curlShareMode === CurlShare::NONE
+            $config['handler'] = $transportSharingMode === TransportSharing::NONE
                 ? HandlerStack::create()
-                : HandlerStack::create(Utils::chooseHandler(['share' => $curlShareMode]));
+                : HandlerStack::create(Utils::chooseHandler(['transport_sharing' => $transportSharingMode]));
         } elseif (!\is_callable($config['handler'])) {
             throw new InvalidArgumentException('handler must be a callable');
-        } elseif ($curlShareMode !== CurlShare::NONE) {
-            throw new InvalidArgumentException('The "curl_share" client option can only be used when Guzzle creates the default handler. Configure the "share" option on CurlHandler or CurlMultiHandler when providing a custom cURL handler.');
+        } elseif (!\in_array($transportSharingMode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER], true)) {
+            throw new InvalidArgumentException('The "transport_sharing" client option can only require sharing when Guzzle creates the default handler. Configure the "transport_sharing" option on CurlHandler or CurlMultiHandler when providing a custom cURL handler.');
         }
 
         $factory = new HttpFactory();
