@@ -382,11 +382,6 @@ handles and does not fall back to handler-lifetime sharing. If persistent
 sharing is unavailable or cannot be created, Guzzle fails while creating the
 handler.
 
-Only `TransportSharing::HANDLER_REQUIRE` and
-`TransportSharing::PERSISTENT_REQUIRE` require a handler that supports transport
-sharing. Prefer modes continue without sharing when the selected handler cannot
-provide it.
-
 Because `TransportSharing::PERSISTENT_REQUIRE` requires connection cache
 sharing, Guzzle rejects request-level cURL options or proxy tunnel cases that
 require a fresh connection for safety.

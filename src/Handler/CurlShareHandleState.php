@@ -88,15 +88,12 @@ final class CurlShareHandleState
 
     public static function assertNoRequiredSharingCustomFactoryConflict(array $options, string $handlerName): void
     {
-        if (
-            !\array_key_exists('handle_factory', $options)
-            || $options['handle_factory'] === null
-        ) {
+        if (!\array_key_exists('handle_factory', $options) || $options['handle_factory'] === null) {
             return;
         }
 
         $mode = self::normalizeMode($options['transport_sharing'] ?? null, 'transport_sharing');
-        if (\in_array($mode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER, TransportSharing::PERSISTENT_PREFER], true)) {
+        if (!\in_array($mode, [TransportSharing::HANDLER_REQUIRE, TransportSharing::PERSISTENT_REQUIRE], true)) {
             return;
         }
 
