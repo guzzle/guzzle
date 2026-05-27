@@ -452,9 +452,37 @@ echo $response->getStatusCode();
 
 ## Exceptions
 
-**Tree View**
+Transfer failures are reported by exceptions that implement `GuzzleException`, which extends PSR-18's `ClientExceptionInterface`. The short class names below are in the `GuzzleHttp\Exception` namespace.
 
-The following tree view describes how the Guzzle Exceptions depend on each other.
+The most useful distinction is where the failure happens in the request/response lifecycle. Before response headers have been parsed into a response object, network transport failures are reported as `NetworkException`. This matches PSR-18's network exception rule: there is no response object, but `getRequest()` returns the request. `ConnectException` is the more specific case for connection establishment failures, and `NetworkTimeoutException` is used when a timeout is identified before a response is available.
+
+After response headers have been parsed into a response object, later transfer failures are reported as `ResponseException`. Response exceptions expose the request with `getRequest()` and the response with `getResponse()`. This includes `ResponseTimeoutException` when a timeout is identified after a response is available. When using Guzzle request methods with the `http_errors` option enabled, this branch also includes `ClientException` for 400 level responses and `ServerException` for 500 level responses. When redirects are enabled, it includes `TooManyRedirectsException` when too many redirects are followed.
+
+Other request-related transfer failures are reported as `RequestException`. This branch is for non-network failures where Guzzle does not expose a response, such as invalid or handler-unsupported HTTP protocol versions, malformed response data that prevents Guzzle from creating a PSR-7 response, or a no-response transfer aborted by application code. It exposes the request with `getRequest()`, but it does not expose a response.
+
+`NetworkException` does not extend `RequestException`, so catch it separately when you need to handle transport failures. Catch `ResponseException` before `RequestException` when you need to call `getResponse()`.
+
+```php
+use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Psr7\Message;
+
+try {
+    $client->request('GET', 'https://github.com/_abc_123_404');
+} catch (NetworkException $e) {
+    echo Message::toString($e->getRequest());
+} catch (ResponseException $e) {
+    echo Message::toString($e->getRequest());
+    echo Message::toString($e->getResponse());
+} catch (RequestException $e) {
+    echo Message::toString($e->getRequest());
+}
+```
+
+`HandlerClosedException` is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
+
+For reference, the exception hierarchy is:
 
 ```
 . \RuntimeException
@@ -472,45 +500,9 @@ The following tree view describes how the Guzzle Exceptions depend on each other
             └── TooManyRedirectsException
 ```
 
-Guzzle throws exceptions for errors that occur during a transfer.
-
-- `GuzzleHttp\Exception\NetworkException` is the base class for networking errors where no response has been received. It implements PSR-18's `Psr\Http\Client\NetworkExceptionInterface`.
-
-- `GuzzleHttp\Exception\HandlerClosedException` is used when a built-in handler rejects a transfer because the handler was explicitly closed before the transfer completed. For example, pending `CurlMultiHandler` transfers are rejected with this exception when `CurlMultiHandler::close()` is called.
-
-- `GuzzleHttp\Exception\RequestException` is the base class for request-related transfer failures that are not network failures. It implements PSR-18's `Psr\Http\Client\RequestExceptionInterface` and exposes the request with `getRequest()`.
-
-- `GuzzleHttp\Exception\ResponseException` is the base class for request-related transfer failures where a response was received. It exposes the response with `getResponse()`.
-
-  Because `ResponseException` extends `RequestException`, catch `ResponseException` before `RequestException` when you need to call `getResponse()`.
-
-- A `GuzzleHttp\Exception\ConnectException` exception is thrown when a connection cannot be established. This exception extends from `GuzzleHttp\Exception\NetworkException`. Invalid or handler-unsupported HTTP request protocol versions are reported as `RequestException`, not `ConnectException`.
-
-- A `GuzzleHttp\Exception\NetworkTimeoutException` exception is thrown when a transfer timeout can be reliably identified before a response is received. This exception extends from `GuzzleHttp\Exception\NetworkException`.
-
-- A `GuzzleHttp\Exception\ResponseTimeoutException` exception is thrown when a transfer timeout can be reliably identified after a response is received. This exception extends from `GuzzleHttp\Exception\ResponseException`.
-
-- A `GuzzleHttp\Exception\ClientException` is thrown for 400 level errors if the `http_errors` request option is set to true. This exception extends from `GuzzleHttp\Exception\BadResponseException` and `GuzzleHttp\Exception\BadResponseException` extends from `GuzzleHttp\Exception\ResponseException`.
-
-  ```php
-  use GuzzleHttp\Psr7;
-  use GuzzleHttp\Exception\ClientException;
-
-  try {
-      $client->request('GET', 'https://github.com/_abc_123_404');
-  } catch (ClientException $e) {
-      echo Psr7\Message::toString($e->getRequest());
-      echo Psr7\Message::toString($e->getResponse());
-  }
-  ```
-
-- A `GuzzleHttp\Exception\ServerException` is thrown for 500 level errors if the `http_errors` request option is set to true. This exception extends from `GuzzleHttp\Exception\BadResponseException`.
-
-- A `GuzzleHttp\Exception\TooManyRedirectsException` is thrown when too many redirects are followed. This exception extends from `GuzzleHttp\Exception\ResponseException`.
-
 `Client::sendRequest()` returns redirect, 4xx, and 5xx responses as normal PSR-18 responses. These response-status exceptions are used by Guzzle request methods when the corresponding middleware options are enabled.
 
-All of the above exceptions extend from `GuzzleHttp\Exception\TransferException`. `TransferException` implements `GuzzleHttp\Exception\GuzzleException`, which extends PSR-18's `ClientExceptionInterface`.
+All transfer exceptions listed above extend from `TransferException`. `TransferException` implements `GuzzleException`, which extends PSR-18's `ClientExceptionInterface`.
 
 ## Environment Variables
 
