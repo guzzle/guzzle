@@ -10,7 +10,7 @@ behavior, changes some network exception classification, and tightens validation
 for request options, protocols, transport settings, cookies, and native method
 signatures. It also adds generic PHPDoc types to async APIs for static analysis.
 
-#### PHP version and dependencies
+#### PHP Version and Dependencies
 
 Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 `^7.2.5 || ^8.0`.
@@ -36,7 +36,7 @@ Guzzle 8 now requires `psr/http-factory:^1.0` directly.
 [psr7-upgrade-guide]: https://github.com/guzzle/psr7/blob/3.0/UPGRADING.md
 [promises-upgrade-guide]: https://github.com/guzzle/promises/blob/3.0/UPGRADING.md
 
-#### PSR-7 header values and request methods
+#### PSR-7 Header Values and Request Methods
 
 Guzzle 8 uses Guzzle PSR-7 3.x, and several of its behavior changes surface
 through normal Guzzle client usage. This section summarizes the inherited PSR-7
@@ -81,7 +81,7 @@ $client->request('GET', 'https://example.com');
 The convenience methods such as `$client->get()`, `$client->post()`, and their
 async variants continue to use uppercase standard methods.
 
-#### Exception hierarchy and classification
+#### Exception Hierarchy and Classification
 
 Some Guzzle 8.0 exception changes add intermediate classes, while others
 intentionally reclassify specific failures. Broad `TransferException` and
@@ -248,7 +248,7 @@ The deprecated `RequestException::wrapException()` method was removed; create a
 exception hierarchy and is still used for invalid configuration or request
 option values that can be rejected before a transfer starts.
 
-#### Request protocol versions
+#### Request Protocol Versions
 
 Invalid request protocol versions are no longer treated as omitted. Passing
 `'version' => ''`, `'version' => 'HTTP/1.1'`, or sending a PSR-7 request whose
@@ -267,7 +267,7 @@ previously caught `InvalidArgumentException` or `ConnectException` for request
 protocol version failures, catch `RequestException` or `GuzzleException`
 instead.
 
-#### Callback semantics
+#### Callback Semantics
 
 If you use the `progress` request option with the built-in cURL handlers, audit
 callbacks for return values. Any truthy return value now aborts the transfer and
@@ -295,14 +295,14 @@ work, but callbacks that inspect all arguments, for example with
 `func_get_args()` or a variadic parameter, will observe the additional
 `Psr\Http\Message\RequestInterface` argument.
 
-#### Sink resource ownership
+#### Sink Resource Ownership
 
 PHP resources passed as the `sink` request option are no longer closed when the
 response body is closed or garbage-collected by the built-in cURL and stream
 handlers. Applications that relied on Guzzle closing a raw resource sink should
 close the resource explicitly or pass a string path instead.
 
-#### TLS minimum version
+#### TLS Minimum Version
 
 The built-in cURL and stream handlers now default HTTPS requests to TLS 1.2 or
 newer. Applications that must connect to legacy TLS 1.0 or TLS 1.1 endpoints can
@@ -314,7 +314,7 @@ $client->request('GET', 'https://legacy.example.com', [
 ]);
 ```
 
-#### cURL minimum version
+#### cURL Minimum Version
 
 Guzzle 8 requires libcurl 7.34.0 or higher when using the built-in cURL
 handlers. If the default handler stack detects an older libcurl version, it will
@@ -322,7 +322,7 @@ not select the cURL handler automatically. Manually configured cURL handlers als
 reject requests when the linked libcurl version is lower than 7.34.0 or the PHP
 cURL extension does not expose TLS 1.2 support.
 
-#### cURL handler lifecycle
+#### cURL Handler Lifecycle
 
 Applications that manage built-in cURL handlers or factories directly should
 treat closed instances as unusable. Reusing a closed `CurlHandler`,
@@ -341,14 +341,14 @@ undocumented internal lazy cURL multi handle. Applications that used it to set
 `CURLMOPT_*` options should pass those values through the `options` key of the
 `CurlMultiHandler` constructor.
 
-#### Timeout option validation
+#### Timeout Option Validation
 
 The built-in cURL and stream handlers now validate timeout option values before
 applying them. `timeout`, `connect_timeout`, and `read_timeout` must be `0` or at
 least `0.001` seconds when provided. Positive values below 1 millisecond now
 throw `InvalidArgumentException` instead of being converted to no timeout.
 
-#### Proxy option validation
+#### Proxy Option Validation
 
 The `proxy` request option is validated more strictly. Proxy values must be
 strings, and the `proxy['no']` value may be either an array of strings or a
@@ -376,7 +376,7 @@ $client->request('GET', '/', [
 ]);
 ```
 
-#### Auth option validation
+#### Auth Option Validation
 
 The `auth` request option now validates array values before applying them. Auth
 arrays must contain username and password strings at indexes `0` and `1`. If an
@@ -398,7 +398,7 @@ $client->request('GET', '/', [
 ]);
 ```
 
-#### Cross-origin redirect auth cleanup
+#### Cross-Origin Redirect Auth Cleanup
 
 Guzzle 8 no longer forwards the generic `auth` request option when automatic
 redirects cross origin. Guzzle already removed the `Authorization` and `Cookie`
@@ -410,7 +410,7 @@ handler intentionally reused `auth` across redirected origins, disable automatic
 redirects or handle redirects manually so each origin receives explicit
 credentials.
 
-#### Handler-specific option overrides
+#### Handler-Specific Option Overrides
 
 Handler-specific overrides remain available for finer transport control when
 they do not conflict with Guzzle-managed behavior. The built-in cURL handlers
@@ -422,7 +422,7 @@ handles. Use first-class Guzzle request options for those settings.
 The cURL handlers also reject stream-only `stream_context` and `read_timeout`
 options, while the stream handler rejects cURL-only options it cannot honor.
 
-#### Native type declarations
+#### Native Type Declarations
 
 Guzzle 8 adds native parameter and return types where PHP 7.4 allows. Code
 overriding affected methods must update method signatures accordingly.
@@ -441,7 +441,7 @@ declare strict types will throw `TypeError` for non-boolean values.
 `SetCookie::getExpires()` now returns `int|null`. Invalid textual expiration
 dates are treated as `null`.
 
-#### IDN conversion option types
+#### IDN Conversion Option Types
 
 The `idn_conversion` request option must be `true`, `false`, `null`, or an
 integer `IDNA_*` bitmask. Numeric strings and floats that previously worked
@@ -450,7 +450,7 @@ through PHP scalar coercion are no longer accepted.
 Integer `0` remains a valid option bitmask. Use `false` or `null` to disable IDN
 conversion.
 
-#### Generic promise and structured PHPDoc types
+#### Generic Promise and Structured PHPDoc Types
 
 Guzzle's async client APIs, handlers, and middleware callable annotations now use
 generic `PromiseInterface<ResponseInterface, mixed>` PHPDoc types. This is a
@@ -474,7 +474,7 @@ traits, builds custom handlers or middleware, or documents reusable request
 option arrays, update those PHPDoc annotations to match the supported request
 option and callback shapes.
 
-#### Multipart request serialization
+#### Multipart Request Serialization
 
 Guzzle 8 uses Guzzle PSR-7 3.x for multipart request bodies. Multipart parts
 created through the `multipart` request option no longer include generated
@@ -496,7 +496,7 @@ Automatically generated boundaries are unchanged.
 You can still pass an explicit `Content-Length` header in a multipart element's
 `headers` array if a non-standard peer requires it.
 
-#### Host-only cookies
+#### Host-Only Cookies
 
 Cookies extracted from responses without a `Domain` attribute are now stored as
 host-only cookies. They are sent only to the exact host that set them.
@@ -508,7 +508,7 @@ behavior should use an explicit `Domain` attribute.
 `SetCookie::toArray()` may include `HostOnly => true` for host-only cookies.
 Existing persisted cookie files without this key load as non-host-only cookies.
 
-#### SetCookie constructor field validation
+#### SetCookie Constructor Field Validation
 
 `SetCookie` constructor arrays no longer coerce invalid field values. Cookie
 names, values, domains, paths, max-age values, expiry values, and boolean flags
@@ -534,7 +534,7 @@ new SetCookie([
 Cookies parsed from normal `Set-Cookie` headers continue to be normalized by
 `SetCookie::fromString()`.
 
-#### CookieJar::clear null semantics
+#### CookieJar::clear Null Semantics
 
 `CookieJar::clear()` now treats only `null` as an omitted path or name.
 Previously, falsy path or name values such as `'0'` or `''` could be interpreted
@@ -548,7 +548,7 @@ $jar->clear();
 
 If you pass a path or name, that value is now treated as provided.
 
-#### FileCookieJar serialization
+#### FileCookieJar Serialization
 
 `FileCookieJar` instances restored with `unserialize()` no longer save cookies
 automatically on destruction. If your application intentionally unserializes a
@@ -557,7 +557,7 @@ automatically on destruction. If your application intentionally unserializes a
 Saved cookie files now JSON-escape tag characters. Existing cookie files remain
 readable, and cookie values are unchanged when loaded.
 
-#### Retry delay callbacks
+#### Retry Delay Callbacks
 
 The retry middleware accepts an optional delay callback as the second argument to
 `Middleware::retry()` or the third constructor argument to `RetryMiddleware`. The
@@ -587,7 +587,7 @@ allows internal PHP functions with a single-argument signature.
 The seeded `retries` request option must be an integer. Delay callbacks must
 return an integer number of milliseconds.
 
-#### Logging middleware formatter types
+#### Logging Middleware Formatter Types
 
 `GuzzleHttp\MessageFormatter` is now final. Applications that extended
 `MessageFormatter` should implement `GuzzleHttp\MessageFormatterInterface`
@@ -619,7 +619,7 @@ final class RedactingFormatter implements MessageFormatterInterface
 $stack->push(Middleware::log($logger, new RedactingFormatter()));
 ```
 
-#### Built-in handler inheritance
+#### Built-in Handler Inheritance
 
 `GuzzleHttp\Handler\CurlFactory`, `GuzzleHttp\Handler\CurlHandler`,
 `GuzzleHttp\Handler\CurlMultiHandler`, `GuzzleHttp\Handler\MockHandler`, and
@@ -631,7 +631,7 @@ Applications that extended `CurlFactory` should implement
 composition instead: wrap a handler instance in a custom callable or provide a
 custom handler rather than subclassing the built-in handler.
 
-#### Custom cURL handle factories
+#### Custom cURL Handle Factories
 
 Custom `GuzzleHttp\Handler\CurlFactoryInterface` implementations that create or
 mutate `GuzzleHttp\Handler\EasyHandle` instances must assign values compatible
@@ -648,7 +648,7 @@ represents cURL handles as resources while PHP 8 represents them as cURL handle
 objects. Custom factories must still unset `$easy->handle` when releasing an easy
 handle, as required by `CurlFactoryInterface::release()`.
 
-#### Progress callback parameter types
+#### Progress Callback Parameter Types
 
 The built-in handlers now pass integer byte counts to `progress` callbacks.
 Callbacks with `int` parameter types continue to work, and callbacks with `float`
@@ -656,12 +656,12 @@ parameter types can still receive integer byte counts in PHP. If a callback used
 other scalar parameter types, update it to accept integers or remove the scalar
 parameter declarations.
 
-#### CurlMultiHandler select timeout
+#### CurlMultiHandler Select Timeout
 
 The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
 the `select_timeout` option to `CurlMultiHandler` instead.
 
-#### Removed middleware helper APIs
+#### Removed Middleware Helper APIs
 
 `RetryMiddleware::exponentialDelay()` has been removed. The retry middleware
 continues to use the same exponential backoff calculation by default. This only
@@ -671,7 +671,7 @@ pass a custom delay callable to `Middleware::retry()`.
 `RedirectMiddleware::$defaultSettings` has been removed. Use
 `RedirectMiddleware::DEFAULT_SETTINGS` instead.
 
-#### Removed proxy helper API
+#### Removed Proxy Helper API
 
 `Utils::isHostInNoProxy()` has been removed.
 
@@ -685,7 +685,7 @@ the old `Utils::isHostInNoProxy()` semantics. Domain matching is
 case-insensitive, IP literals are normalized before comparison, and CIDR entries
 match IP literal hosts.
 
-#### Non-instantiable utility classes
+#### Non-instantiable Utility Classes
 
 Static utility and constant classes such as `GuzzleHttp\Middleware`,
 `GuzzleHttp\Utils`, `GuzzleHttp\RequestOptions`,
