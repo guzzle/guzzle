@@ -1587,6 +1587,16 @@ class ClientTest extends TestCase
         self::assertFalse($last->hasHeader('Authorization'));
     }
 
+    public function testEmptyAuthArrayIsIgnored(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['auth' => []]);
+
+        $last = $mock->getLastRequest();
+        self::assertFalse($last->hasHeader('Authorization'));
+    }
+
     public function testAuthCanBeCustomStringForHandlers(): void
     {
         $mock = new MockHandler([new Response()]);
