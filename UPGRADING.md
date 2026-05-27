@@ -224,24 +224,24 @@ The affected built-in cURL classifications are:
   `ConnectException`.
 - `CURLE_COULDNT_RESOLVE_PROXY` now throws `ConnectException`. Guzzle 7.x
   classified this cURL error as `RequestException`.
-- `CURLE_SEND_ERROR` and `CURLE_RECV_ERROR` now throw `ConnectException` when
-  no response object was created. If a response object was created before the
-  error, they remain request exceptions and are represented by
-  `ResponseException` when a response is available.
-- When the PHP cURL extension defines them, `CURLE_PROXY`,
-  `CURLE_QUIC_CONNECT_ERROR`, `CURLE_HTTP2`, `CURLE_HTTP2_STREAM`,
-  `CURLE_HTTP3`, `CURLE_PEER_FAILED_VERIFICATION`, `CURLE_SSL_CACERT`,
-  `CURLE_SSL_PEER_CERTIFICATE`, `CURLE_SSL_PINNEDPUBKEYNOTMATCH`,
-  `CURLE_SSL_INVALIDCERTSTATUS`, and `CURLE_SSL_CLIENTCERT` now throw
-  `ConnectException` when no response object was created. If a response object
-  was created before the error, they remain request exceptions and are
-  represented by `ResponseException` when a response is available.
+- `CURLE_GOT_NOTHING`, `CURLE_SEND_ERROR`, `CURLE_RECV_ERROR`, and
+  no-response HTTP/2 or HTTP/3 protocol failures now throw `NetworkException`.
+  Guzzle 7.x either threw `ConnectException` or classified some of these as
+  `RequestException`.
+- TLS certificate, proxy connection, DNS, TCP connection, and QUIC connection
+  failures without a response throw `ConnectException`.
+- If a response object was created before the cURL error, the failure is
+  represented by `ResponseException` or `ResponseTimeoutException`.
 
-The existing always-network cURL errors, including
-`CURLE_COULDNT_RESOLVE_HOST`, `CURLE_COULDNT_CONNECT`,
-`CURLE_SSL_CONNECT_ERROR`, and `CURLE_GOT_NOTHING`, still throw
-`ConnectException`. The built-in stream handler now classifies TLS handshake
-timeouts as `ConnectException`.
+The existing cURL DNS, TCP connection, and TLS setup errors, including
+`CURLE_COULDNT_RESOLVE_HOST`, `CURLE_COULDNT_CONNECT`, and
+`CURLE_SSL_CONNECT_ERROR`, still throw `ConnectException`.
+
+The built-in stream handler now classifies DNS, TCP connect, proxy connect, and
+TLS setup failures as `ConnectException`. No-response stream timeouts that can
+be identified from PHP stream warnings are classified as
+`NetworkTimeoutException`; other malformed or unparseable response failures
+remain `RequestException`.
 
 The deprecated `RequestException::wrapException()` method was removed. Create a
 `RequestException` directly for request failures where Guzzle does not expose a

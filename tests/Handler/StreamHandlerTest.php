@@ -102,6 +102,25 @@ class StreamHandlerTest extends TestCase
         )->wait();
     }
 
+    public function testClassifiesStreamTimeoutErrors(): void
+    {
+        self::assertTrue($this->matchesStreamHandlerError('isTimeoutError', 'fopen(): SSL: Handshake timed out'));
+        self::assertTrue($this->matchesStreamHandlerError('isTimeoutError', 'fopen(): Failed to open stream: Connection timed out'));
+        self::assertTrue($this->matchesStreamHandlerError('isTimeoutError', 'fopen(): Failed to open stream: Operation timed out'));
+        self::assertFalse($this->matchesStreamHandlerError('isTimeoutError', 'HTTP request failed!'));
+        self::assertFalse($this->matchesStreamHandlerError('isConnectionError', 'fopen(): SSL: Handshake timed out'));
+    }
+
+    public function testClassifiesStreamConnectionErrors(): void
+    {
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'php_network_getaddresses: getaddrinfo for example.test failed'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Unable to connect to example.test:80'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'fopen(): Failed to open stream: Connection refused'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Cannot connect to HTTPS server through proxy'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Failed to enable crypto'));
+        self::assertFalse($this->matchesStreamHandlerError('isConnectionError', 'HTTP request failed!'));
+    }
+
     public function testRejectsHttp3(): void
     {
         $handler = new StreamHandler();
@@ -425,6 +444,16 @@ class StreamHandlerTest extends TestCase
         $method->invokeArgs($handler, [$request, &$context]);
 
         return $context;
+    }
+
+    private function matchesStreamHandlerError(string $method, string $message): bool
+    {
+        $reflection = new \ReflectionMethod(StreamHandler::class, $method);
+        if (\PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
+
+        return $reflection->invoke(null, $message) === true;
     }
 
     public function testAddsProxy(): void
@@ -1449,7 +1478,7 @@ class StreamHandlerTest extends TestCase
         } catch (ConnectException $e) {
             self::assertStringContainsString('Connection refused', $e->getMessage());
         } catch (RequestException $e) {
-            self::assertStringContainsString('An error was encountered while creating the response', $e->getMessage());
+            self::assertStringContainsString('HTTP invalid response format', $e->getMessage());
         }
     }
 

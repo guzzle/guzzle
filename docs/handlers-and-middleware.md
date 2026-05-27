@@ -219,7 +219,7 @@ before a response was returned.
 
 ```php
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use Psr\Http\Message\RequestInterface;
@@ -238,7 +238,7 @@ $stack->push(Middleware::retry(
             return false;
         }
 
-        if ($reason instanceof ConnectException) {
+        if ($reason instanceof NetworkException) {
             return true;
         }
 

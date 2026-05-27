@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
@@ -2268,7 +2269,21 @@ class CurlFactoryTest extends TestCase
         yield 'resolve proxy' => [\CURLE_COULDNT_RESOLVE_PROXY];
         yield 'connect' => [\CURLE_COULDNT_CONNECT];
         yield 'ssl connect' => [\CURLE_SSL_CONNECT_ERROR];
-        yield 'got nothing' => [\CURLE_GOT_NOTHING];
+
+        foreach ([
+            'CURLE_PROXY',
+            'CURLE_QUIC_CONNECT_ERROR',
+            'CURLE_PEER_FAILED_VERIFICATION',
+            'CURLE_SSL_CACERT',
+            'CURLE_SSL_PEER_CERTIFICATE',
+            'CURLE_SSL_PINNEDPUBKEYNOTMATCH',
+            'CURLE_SSL_INVALIDCERTSTATUS',
+            'CURLE_SSL_CLIENTCERT',
+        ] as $constant) {
+            if (\defined($constant)) {
+                yield $constant => [(int) \constant($constant)];
+            }
+        }
     }
 
     /**
@@ -2296,23 +2311,16 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public static function curlResponseSensitiveNetworkErrorProvider(): iterable
+    public static function curlNetworkErrorWithoutResponseProvider(): iterable
     {
+        yield 'got nothing' => [\CURLE_GOT_NOTHING];
         yield 'send' => [\CURLE_SEND_ERROR];
         yield 'receive' => [\CURLE_RECV_ERROR];
 
         foreach ([
-            'CURLE_PROXY',
-            'CURLE_QUIC_CONNECT_ERROR',
             'CURLE_HTTP2',
             'CURLE_HTTP2_STREAM',
             'CURLE_HTTP3',
-            'CURLE_PEER_FAILED_VERIFICATION',
-            'CURLE_SSL_CACERT',
-            'CURLE_SSL_PEER_CERTIFICATE',
-            'CURLE_SSL_PINNEDPUBKEYNOTMATCH',
-            'CURLE_SSL_INVALIDCERTSTATUS',
-            'CURLE_SSL_CLIENTCERT',
         ] as $constant) {
             if (\defined($constant)) {
                 yield $constant => [(int) \constant($constant)];
@@ -2321,9 +2329,9 @@ class CurlFactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider curlResponseSensitiveNetworkErrorProvider
+     * @dataProvider curlNetworkErrorWithoutResponseProvider
      */
-    public function testCreatesConnectExceptionForNetworkErrorsWithoutResponse(int $errno): void
+    public function testCreatesNetworkExceptionForNetworkErrorsWithoutResponse(int $errno): void
     {
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
@@ -2340,19 +2348,33 @@ class CurlFactoryTest extends TestCase
 
         try {
             $promise->wait();
-            self::fail('Expected ConnectException');
+            self::fail('Expected NetworkException');
         } catch (NetworkTimeoutException $e) {
-            self::fail('Expected non-timeout ConnectException');
-        } catch (ConnectException $e) {
+            self::fail('Expected non-timeout NetworkException');
+        } catch (NetworkException $e) {
+            self::assertNotInstanceOf(ConnectException::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame($errno, $e->getHandlerContext()['errno']);
         }
     }
 
     /**
-     * @dataProvider curlResponseSensitiveNetworkErrorProvider
+     * @dataProvider curlNetworkErrorWithoutResponseProvider
      */
-    public function testNetworkErrorsWithResponseStayRequestExceptions(int $errno): void
+    public function testNetworkErrorsWithResponseStayResponseExceptions(int $errno): void
+    {
+        $this->assertCurlErrorWithResponseCreatesResponseException($errno);
+    }
+
+    /**
+     * @dataProvider curlConnectionErrorProvider
+     */
+    public function testConnectionErrorsWithResponseStayResponseExceptions(int $errno): void
+    {
+        $this->assertCurlErrorWithResponseCreatesResponseException($errno);
+    }
+
+    private function assertCurlErrorWithResponseCreatesResponseException(int $errno): void
     {
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
