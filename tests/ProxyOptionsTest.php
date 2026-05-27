@@ -18,6 +18,8 @@ class ProxyOptionsTest extends TestCase
             ['http://example.com', '', null, false, true],
             ['http://example.com', ['https' => 'http://proxy.example.com:8080'], null, false, false],
             ['http://example.com', ['http' => 'http://proxy.example.com:8080'], 'http://proxy.example.com:8080', false, false],
+            ['http://example.com', ['http' => 'http://proxy.example.com:8080', 'no' => null], 'http://proxy.example.com:8080', false, false],
+            ['http://example.com', ['http' => null], null, false, false],
             ['http://example.com', ['http' => ''], null, false, true],
             ['http://example.com', ['http' => 'http://proxy.example.com:8080', 'no' => ['example.com']], null, true, false],
             ['http://example.com', ['http' => 'http://proxy.example.com:8080', 'no' => 'example.com,localhost'], null, true, false],
@@ -125,10 +127,15 @@ class ProxyOptionsTest extends TestCase
         self::assertSame(['foo.com', 'bar.com'], ProxyOptions::normalizeNoProxy([' foo.com ', '', ' bar.com ']));
     }
 
+    public function testNormalizesNullNoProxyValue(): void
+    {
+        self::assertSame([], ProxyOptions::normalizeNoProxy(null));
+    }
+
     public function testValidatesNoProxyValue(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('proxy no list must be a string or array of strings');
+        $this->expectExceptionMessage('proxy no list must be null, a string, or an array of strings');
 
         ProxyOptions::normalizeNoProxy(new \stdClass());
     }
@@ -136,7 +143,7 @@ class ProxyOptionsTest extends TestCase
     public function testValidatesNoProxyArrayValues(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('proxy no list must be a string or array of strings');
+        $this->expectExceptionMessage('proxy no list must be null, a string, or an array of strings');
 
         ProxyOptions::normalizeNoProxy(['foo.com', new \stdClass()]);
     }
@@ -144,7 +151,7 @@ class ProxyOptionsTest extends TestCase
     public function testValidatesNoProxyValueWhenResolvingProxy(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('proxy no list must be a string or array of strings');
+        $this->expectExceptionMessage('proxy no list must be null, a string, or an array of strings');
 
         ProxyOptions::resolve(Psr7\Utils::uriFor('http://example.com'), [
             'http' => 'http://proxy.example.com:8080',
@@ -155,7 +162,7 @@ class ProxyOptionsTest extends TestCase
     public function testValidatesNoProxyArrayValueWhenResolvingProxy(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('proxy no list must be a string or array of strings');
+        $this->expectExceptionMessage('proxy no list must be null, a string, or an array of strings');
 
         ProxyOptions::resolve(Psr7\Utils::uriFor('http://example.com'), [
             'http' => 'http://proxy.example.com:8080',

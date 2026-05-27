@@ -62,16 +62,20 @@ final class ProxyOptions
      */
     public static function normalizeNoProxy($noProxy): array
     {
+        if ($noProxy === null) {
+            return [];
+        }
+
         if (\is_string($noProxy)) {
             $noProxy = \explode(',', $noProxy);
         } elseif (!\is_array($noProxy)) {
-            throw new InvalidArgumentException('proxy no list must be a string or array of strings');
+            throw new InvalidArgumentException('proxy no list must be null, a string, or an array of strings');
         }
 
         $result = [];
         foreach ($noProxy as $area) {
             if (!\is_string($area)) {
-                throw new InvalidArgumentException('proxy no list must be a string or array of strings');
+                throw new InvalidArgumentException('proxy no list must be null, a string, or an array of strings');
             }
 
             $area = \trim($area);
@@ -175,7 +179,7 @@ final class ProxyOptions
     {
         foreach ($noProxy as $area) {
             if (!\is_string($area)) {
-                throw new InvalidArgumentException('proxy no list must be a string or array of strings');
+                throw new InvalidArgumentException('proxy no list must be null, a string, or an array of strings');
             }
         }
     }
