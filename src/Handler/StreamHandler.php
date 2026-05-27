@@ -101,7 +101,7 @@ final class StreamHandler
                 ) {
                     $e = new ConnectException($e->getMessage(), $request, $e);
                 } else {
-                    $e = RequestException::wrapException($request, $e);
+                    $e = $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, null, $e);
                 }
             }
             $this->invokeStats($options, $request, $startTime, null, $e);

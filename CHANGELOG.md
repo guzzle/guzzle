@@ -102,6 +102,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated scalar-coerced `idn_conversion` request option values, which will be rejected in 8.0
 - Deprecated invalid documented request option value types, which will be rejected in 8.0
 - Deprecated selected request options ignored by incompatible built-in handlers, which will be rejected in 8.0
+- Deprecated `RequestException::wrapException()`, which will be removed in 8.0
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
 
