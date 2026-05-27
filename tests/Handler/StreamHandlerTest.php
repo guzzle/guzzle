@@ -1286,7 +1286,7 @@ class StreamHandlerTest extends TestCase
     public function testStreamAcceptsPreferredTransportSharingOption(): void
     {
         Server::flush();
-        Server::enqueue([new Response(200)]);
+        Server::enqueue([new Response(200), new Response(200)]);
 
         $handler = new StreamHandler();
         $response = $handler(new Request('GET', Server::$url), [
@@ -1294,9 +1294,18 @@ class StreamHandlerTest extends TestCase
         ])->wait();
 
         self::assertSame(200, $response->getStatusCode());
+
+        $response = $handler(new Request('GET', Server::$url), [
+            'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testStreamRejectsRequiredTransportSharingOption(): void
+    /**
+     * @dataProvider requiredTransportSharingModeProvider
+     */
+    public function testStreamRejectsRequiredTransportSharingOption(string $transportSharing): void
     {
         $handler = new StreamHandler();
 
@@ -1304,8 +1313,14 @@ class StreamHandlerTest extends TestCase
         $this->expectExceptionMessage('transport_sharing');
 
         $handler(new Request('GET', Server::$url), [
-            'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
+            'transport_sharing' => $transportSharing,
         ]);
+    }
+
+    public static function requiredTransportSharingModeProvider(): iterable
+    {
+        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
+        yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE];
     }
 
     public function testStreamRejectsCurlOption(): void

@@ -87,7 +87,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Added
 
-- Added persistent cURL share modes for handler-managed cURL sharing
+- Added persistent transport sharing modes
 - Added the `protocols` request option to restrict allowed URI schemes for request transfers
 - Added `cert_type` and `ssl_key_type` request options for TLS certificate and private-key file types
 - Added PHP stream handler support for the `ssl_key` request option

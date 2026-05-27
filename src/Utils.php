@@ -101,7 +101,7 @@ final class Utils
         $handler = null;
         $sharingMode = CurlShareHandleState::normalizeMode($handlerOptions['transport_sharing'] ?? null, 'transport_sharing');
         $sharingRequested = $sharingMode !== TransportSharing::NONE;
-        $sharingRequired = !\in_array($sharingMode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER], true);
+        $sharingRequired = \in_array($sharingMode, [TransportSharing::HANDLER_REQUIRE, TransportSharing::PERSISTENT_REQUIRE], true);
         $curlHandlerOptions = [];
         $curlSupported = CurlVersion::supportsTls12()
             && (\function_exists('curl_multi_exec') || \function_exists('curl_exec'));

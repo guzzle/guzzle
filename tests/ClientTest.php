@@ -251,6 +251,16 @@ class ClientTest extends TestCase
         self::assertNull($client->getConfig('transport_sharing'));
     }
 
+    public function testPersistentPreferTransportSharingCanBeUsedWithCustomHandler(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler(),
+            'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
+        ]);
+
+        self::assertNull($client->getConfig('transport_sharing'));
+    }
+
     /**
      * @dataProvider strictTransportSharingModeProvider
      */
@@ -268,7 +278,6 @@ class ClientTest extends TestCase
     public static function strictTransportSharingModeProvider(): iterable
     {
         yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
-        yield 'persistent prefer' => [TransportSharing::PERSISTENT_PREFER];
         yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE];
     }
 
