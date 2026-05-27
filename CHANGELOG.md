@@ -50,7 +50,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Validate built-in handler timeout options before applying them
 - Classify empty, malformed, or handler-unsupported request protocol versions as request exceptions
 - Classify additional cURL transport failures without a response as network exceptions
-- Classify additional stream handler transport failures as `ConnectException`
+- Classify stream handler TLS handshake timeouts as `ConnectException`
 - Classify generic response-aware request failures as `ResponseException`
 - Throw `NetworkTimeoutException` for reliably detected no-response transfer timeouts
 - Throw `ResponseTimeoutException` for reliably detected response-aware transfer timeouts

@@ -238,9 +238,8 @@ The affected built-in cURL classifications are:
 The existing always-network cURL errors, including
 `CURLE_COULDNT_RESOLVE_HOST`, `CURLE_COULDNT_CONNECT`,
 `CURLE_SSL_CONNECT_ERROR`, and `CURLE_GOT_NOTHING`, still throw
-`ConnectException`. The built-in stream handler now classifies additional
-connection setup, early connection close, and TLS handshake or protocol failures
-as `ConnectException`.
+`ConnectException`. The built-in stream handler now classifies TLS handshake
+timeouts as `ConnectException`.
 
 The deprecated `RequestException::wrapException()` method was removed; create a
 `RequestException` directly instead.
