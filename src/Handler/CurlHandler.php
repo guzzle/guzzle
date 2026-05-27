@@ -48,9 +48,9 @@ class CurlHandler
             return;
         }
 
-        $this->shareHandleState = $sharingMode === TransportSharing::NONE
-            ? null
-            : CurlShareHandleState::fromOption($transportSharing);
+        $this->shareHandleState = $sharingMode !== TransportSharing::NONE
+            ? CurlShareHandleState::fromOption($transportSharing)
+            : null;
 
         $this->factory = $this->shareHandleState === null
             ? new CurlFactory(3)
