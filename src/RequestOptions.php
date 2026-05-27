@@ -346,12 +346,11 @@ final class RequestOptions
      * version: (string|float, default=1.1) Specifies the HTTP protocol
      * version to attempt to use.
      *
-     * Guzzle defaults to HTTP/1.1. The built-in cURL handler supports
-     * HTTP/1.0, HTTP/1.1, HTTP/2, and HTTP/3 depending on linked libcurl
-     * capabilities. HTTP/3 requires PHP HTTP/3 cURL constants, libcurl
-     * 7.66.0 or higher, and a runtime libcurl built with HTTP/3 and QUIC
-     * support. libcurl may negotiate a lower HTTP version when using
-     * fallback-capable HTTP/2 or HTTP/3 modes.
+     * Guzzle defaults to HTTP/1.1. The built-in stream handler supports
+     * HTTP/1.0 and HTTP/1.1. The built-in cURL handler also supports HTTP/2
+     * and HTTP/3 when the installed cURL stack reports those features. For
+     * HTTP/2 and HTTP/3, libcurl may use a lower HTTP version when
+     * negotiation or connection setup falls back.
      */
     public const VERSION = 'version';
 
