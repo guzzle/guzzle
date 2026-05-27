@@ -96,7 +96,7 @@ final class CurlShareHandleState
         }
 
         $mode = self::normalizeMode($options['transport_sharing'] ?? null, 'transport_sharing');
-        if ($mode === TransportSharing::NONE || $mode === TransportSharing::HANDLER_PREFER) {
+        if (\in_array($mode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER, TransportSharing::PERSISTENT_PREFER], true)) {
             return;
         }
 
@@ -147,17 +147,17 @@ final class CurlShareHandleState
         return new self($mode, $handle);
     }
 
-    private static function createPersistentShareOrFallback(): self
+    private static function createPersistentShareOrFallback(): ?self
     {
-        if (!self::supportsPersistentShare()) {
-            return self::createHandlerShare(TransportSharing::HANDLER_REQUIRE);
+        if (self::supportsPersistentShare()) {
+            try {
+                return self::createPersistentShare(TransportSharing::PERSISTENT_PREFER);
+            } catch (\Throwable $e) {
+                // Fall back to handler-lifetime best effort below.
+            }
         }
 
-        try {
-            return self::createPersistentShare(TransportSharing::PERSISTENT_PREFER);
-        } catch (\Throwable $e) {
-            return self::createHandlerShare(TransportSharing::HANDLER_REQUIRE);
-        }
+        return self::createHandlerShareOrNull(TransportSharing::HANDLER_PREFER);
     }
 
     private static function createPersistentShare(string $mode): self

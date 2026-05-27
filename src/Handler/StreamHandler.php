@@ -624,7 +624,7 @@ final class StreamHandler
         if (\array_key_exists('transport_sharing', $options)) {
             $transportSharingMode = CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing');
 
-            if (!\in_array($transportSharingMode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER], true)) {
+            if (!\in_array($transportSharingMode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER, TransportSharing::PERSISTENT_PREFER], true)) {
                 throw new \InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
             }
         }

@@ -204,14 +204,23 @@ class CurlHandlerTest extends TestCase
         }
     }
 
-    public function testPreferredTransportSharingCanBeUsedWithCustomFactory(): void
+    /**
+     * @dataProvider preferredTransportSharingModeProvider
+     */
+    public function testPreferredTransportSharingCanBeUsedWithCustomFactory(string $transportSharing): void
     {
         $handler = new CurlHandler([
             'handle_factory' => new CurlFactory(0),
-            'transport_sharing' => TransportSharing::HANDLER_PREFER,
+            'transport_sharing' => $transportSharing,
         ]);
 
         self::assertInstanceOf(CurlHandler::class, $handler);
+    }
+
+    public static function preferredTransportSharingModeProvider(): iterable
+    {
+        yield 'handler prefer' => [TransportSharing::HANDLER_PREFER];
+        yield 'persistent prefer' => [TransportSharing::PERSISTENT_PREFER];
     }
 
     /**
@@ -231,7 +240,6 @@ class CurlHandlerTest extends TestCase
     public static function strictTransportSharingModeProvider(): iterable
     {
         yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
-        yield 'persistent prefer' => [TransportSharing::PERSISTENT_PREFER];
         yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE];
     }
 

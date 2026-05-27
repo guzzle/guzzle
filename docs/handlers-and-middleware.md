@@ -370,16 +370,22 @@ sharing. Guzzle fails when it cannot select a cURL handler with cURL share
 support, when sharing cannot be configured, or when a request is routed to a
 handler that does not support sharing.
 
-`TransportSharing::PERSISTENT_PREFER` uses PHP persistent cURL share handles
-when available. Persistent sharing shares DNS, connection, and SSL session cache
-state. When persistent cURL share handles are unavailable or cannot be created,
-Guzzle falls back to `TransportSharing::HANDLER_REQUIRE`. This fallback still
-requires normal cURL share support.
+`TransportSharing::PERSISTENT_PREFER` asks Guzzle to use the strongest sharing
+available in the current environment. Guzzle first tries persistent cURL share
+handles, which can share DNS, connection, and SSL session cache state across
+handler lifetimes. If persistent sharing is unavailable or cannot be created,
+Guzzle falls back to `TransportSharing::HANDLER_PREFER`. If handler-lifetime
+sharing is also unavailable, Guzzle continues without sharing.
 
 `TransportSharing::PERSISTENT_REQUIRE` requires PHP persistent cURL share
 handles and does not fall back to handler-lifetime sharing. If persistent
 sharing is unavailable or cannot be created, Guzzle fails while creating the
 handler.
+
+Only `TransportSharing::HANDLER_REQUIRE` and
+`TransportSharing::PERSISTENT_REQUIRE` require a handler that supports transport
+sharing. Prefer modes continue without sharing when the selected handler cannot
+provide it.
 
 Because `TransportSharing::PERSISTENT_REQUIRE` requires connection cache
 sharing, Guzzle rejects request-level cURL options or proxy tunnel cases that

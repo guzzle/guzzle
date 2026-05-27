@@ -142,14 +142,23 @@ class CurlMultiHandlerTest extends TestCase
         self::assertPersistentPreferShareWasCreated();
     }
 
-    public function testPreferredTransportSharingCanBeUsedWithCustomFactory(): void
+    /**
+     * @dataProvider preferredTransportSharingModeProvider
+     */
+    public function testPreferredTransportSharingCanBeUsedWithCustomFactory(string $transportSharing): void
     {
         $handler = new CurlMultiHandler([
             'handle_factory' => new CurlFactory(0),
-            'transport_sharing' => TransportSharing::HANDLER_PREFER,
+            'transport_sharing' => $transportSharing,
         ]);
 
         self::assertInstanceOf(CurlMultiHandler::class, $handler);
+    }
+
+    public static function preferredTransportSharingModeProvider(): iterable
+    {
+        yield 'handler prefer' => [TransportSharing::HANDLER_PREFER];
+        yield 'persistent prefer' => [TransportSharing::PERSISTENT_PREFER];
     }
 
     /**
@@ -169,7 +178,6 @@ class CurlMultiHandlerTest extends TestCase
     public static function strictTransportSharingModeProvider(): iterable
     {
         yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
-        yield 'persistent prefer' => [TransportSharing::PERSISTENT_PREFER];
         yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE];
     }
 

@@ -149,7 +149,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 : HandlerStack::create(Utils::chooseHandler(['transport_sharing' => $transportSharingMode]));
         } elseif (!\is_callable($config['handler'])) {
             throw new InvalidArgumentException('handler must be a callable');
-        } elseif (!\in_array($transportSharingMode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER], true)) {
+        } elseif (!\in_array($transportSharingMode, [TransportSharing::NONE, TransportSharing::HANDLER_PREFER, TransportSharing::PERSISTENT_PREFER], true)) {
             throw new InvalidArgumentException('The "transport_sharing" client option can only require sharing when Guzzle creates the default handler. Configure the "transport_sharing" option on CurlHandler or CurlMultiHandler when providing a custom cURL handler.');
         }
 
