@@ -3,7 +3,7 @@
 namespace GuzzleHttp\Test;
 
 use GuzzleHttp;
-use GuzzleHttp\Handler\CurlShare;
+use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 
@@ -86,7 +86,7 @@ class UtilsTest extends TestCase
         self::assertIsCallable(GuzzleHttp\choose_handler());
     }
 
-    public function testChooseHandlerAcceptsCurlShareOption(): void
+    public function testChooseHandlerAcceptsPreferredTransportSharing(): void
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();
 
@@ -94,7 +94,7 @@ class UtilsTest extends TestCase
         unset($_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
 
         try {
-            $handler = Utils::chooseHandler(['share' => CurlShare::HANDLER]);
+            $handler = Utils::chooseHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
 
             self::assertIsCallable($handler);
             self::assertSame(1, $_SERVER['_curl_share_init_count']);
@@ -107,13 +107,34 @@ class UtilsTest extends TestCase
         }
     }
 
-    public function testChooseHandlerAcceptsDisabledCurlShareOption(): void
+    public function testChooseHandlerAcceptsRequiredTransportSharing(): void
+    {
+        self::skipIfDefaultCurlHandlerIsUnavailable();
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+
+        try {
+            $handler = Utils::chooseHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+
+            self::assertIsCallable($handler);
+            self::assertSame(1, $_SERVER['_curl_share_init_count']);
+            self::assertSame([
+                \CURL_LOCK_DATA_DNS,
+                \CURL_LOCK_DATA_SSL_SESSION,
+            ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+        }
+    }
+
+    public function testChooseHandlerAcceptsDisabledTransportSharing(): void
     {
         $_SERVER['curl_test'] = true;
         unset($_SERVER['_curl_share_init_count']);
 
         try {
-            self::assertIsCallable(Utils::chooseHandler(['share' => CurlShare::NONE]));
+            self::assertIsCallable(Utils::chooseHandler(['transport_sharing' => TransportSharing::NONE]));
 
             self::assertArrayNotHasKey('_curl_share_init_count', $_SERVER);
         } finally {
@@ -320,6 +341,7 @@ class UtilsTest extends TestCase
     {
         if (
             !\function_exists('curl_share_init')
+            || !\function_exists('curl_share_setopt')
             || !\function_exists('curl_exec')
             || !\function_exists('curl_version')
             || version_compare(curl_version()['version'], '7.21.2') < 0

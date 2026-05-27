@@ -3,12 +3,12 @@
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Handler\CurlFactory;
-use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Handler\CurlShareHandleState;
+use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \GuzzleHttp\Handler\CurlShare
+ * @covers \GuzzleHttp\TransportSharing
  * @covers \GuzzleHttp\Handler\CurlShareHandleState
  */
 class CurlShareHandleStateTest extends TestCase
@@ -42,17 +42,17 @@ class CurlShareHandleStateTest extends TestCase
 
     public function testNoneDisablesSharing(): void
     {
-        self::assertNull(CurlShareHandleState::fromOption(CurlShare::NONE));
+        self::assertNull(CurlShareHandleState::fromOption(TransportSharing::NONE));
     }
 
-    public function testHandlerModeCreatesShareHandleForDnsAndSslSession(): void
+    public function testHandlerPreferCreatesShareHandleForDnsAndSslSession(): void
     {
         self::skipIfCurlShareIsUnavailable();
 
-        $state = CurlShareHandleState::fromOption(CurlShare::HANDLER);
+        $state = CurlShareHandleState::fromOption(TransportSharing::HANDLER_PREFER);
 
         self::assertInstanceOf(CurlShareHandleState::class, $state);
-        self::assertSame(CurlShare::HANDLER, $state->mode);
+        self::assertSame(TransportSharing::HANDLER_PREFER, $state->mode);
         self::assertSame(1, $_SERVER['_curl_share_init_count']);
         self::assertSame([
             \CURL_LOCK_DATA_DNS,
@@ -62,6 +62,21 @@ class CurlShareHandleStateTest extends TestCase
         if (\defined('CURL_LOCK_DATA_CONNECT')) {
             self::assertNotContains(\constant('CURL_LOCK_DATA_CONNECT'), $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
         }
+    }
+
+    public function testHandlerRequireCreatesShareHandleForDnsAndSslSession(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $state = CurlShareHandleState::fromOption(TransportSharing::HANDLER_REQUIRE);
+
+        self::assertInstanceOf(CurlShareHandleState::class, $state);
+        self::assertSame(TransportSharing::HANDLER_REQUIRE, $state->mode);
+        self::assertSame(1, $_SERVER['_curl_share_init_count']);
+        self::assertSame([
+            \CURL_LOCK_DATA_DNS,
+            \CURL_LOCK_DATA_SSL_SESSION,
+        ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
     }
 
     /**
@@ -84,28 +99,47 @@ class CurlShareHandleStateTest extends TestCase
         yield 'string' => ['dns'];
     }
 
-    public function testRejectsShareWithCustomFactory(): void
+    public function testAllowsHandlerPreferWithCustomFactory(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('handle_factory');
-
-        CurlShareHandleState::assertNoCustomFactoryConflict([
+        CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict([
             'handle_factory' => new CurlFactory(0),
-            'share' => CurlShare::HANDLER,
-        ], 'CurlHandler');
-    }
-
-    public function testAllowsDisabledShareWithCustomFactory(): void
-    {
-        CurlShareHandleState::assertNoCustomFactoryConflict([
-            'handle_factory' => new CurlFactory(0),
-            'share' => CurlShare::NONE,
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
         ], 'CurlHandler');
 
         self::assertTrue(true);
     }
 
-    public function testCurlShareSetoptFailureThrows(): void
+    public function testRejectsHandlerRequireWithCustomFactory(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('handle_factory');
+
+        CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict([
+            'handle_factory' => new CurlFactory(0),
+            'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
+        ], 'CurlHandler');
+    }
+
+    public function testAllowsDisabledTransportSharingWithCustomFactory(): void
+    {
+        CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict([
+            'handle_factory' => new CurlFactory(0),
+            'transport_sharing' => TransportSharing::NONE,
+        ], 'CurlHandler');
+
+        self::assertTrue(true);
+    }
+
+    public function testHandlerPreferFallsBackToNoSharingWhenShareSetupFails(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $_SERVER['curl_share_setopt_fail'] = \CURL_LOCK_DATA_DNS;
+
+        self::assertNull(CurlShareHandleState::fromOption(TransportSharing::HANDLER_PREFER));
+    }
+
+    public function testHandlerRequireShareSetoptFailureThrows(): void
     {
         self::skipIfCurlShareIsUnavailable();
 
@@ -114,7 +148,7 @@ class CurlShareHandleStateTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Unable to configure cURL share handle');
 
-        CurlShareHandleState::fromOption(CurlShare::HANDLER);
+        CurlShareHandleState::fromOption(TransportSharing::HANDLER_REQUIRE);
     }
 
     private static function skipIfCurlShareIsUnavailable(): void

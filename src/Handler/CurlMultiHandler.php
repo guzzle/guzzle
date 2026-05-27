@@ -6,6 +6,7 @@ use Closure;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 
@@ -76,7 +77,7 @@ class CurlMultiHandler
      * This handler accepts the following options:
      *
      * - handle_factory: An optional factory  used to create curl handles
-     * - share: Optional cURL share-handle configuration.
+     * - transport_sharing: Optional transport sharing mode.
      * - select_timeout: Optional timeout (in seconds) to block before timing
      *   out while selecting curl handles. Defaults to 1 second.
      * - options: An associative array of CURLMOPT_* options and
@@ -84,16 +85,21 @@ class CurlMultiHandler
      */
     public function __construct(array $options = [])
     {
-        CurlShareHandleState::assertNoCustomFactoryConflict($options, 'CurlMultiHandler');
-
-        $this->shareHandleState = CurlShareHandleState::fromOption($options['share'] ?? null);
+        CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict($options, 'CurlMultiHandler');
+        $transportSharing = $options['transport_sharing'] ?? null;
+        $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
 
         if (\array_key_exists('handle_factory', $options) && $options['handle_factory'] !== null) {
+            $this->shareHandleState = null;
             $this->factory = $options['handle_factory'];
-        } elseif ($this->shareHandleState !== null) {
-            $this->factory = new CurlFactory(50, $this->shareHandleState->mode, $this->shareHandleState->handle);
         } else {
-            $this->factory = new CurlFactory(50);
+            $this->shareHandleState = $sharingMode === TransportSharing::NONE
+                ? null
+                : CurlShareHandleState::fromOption($transportSharing);
+
+            $this->factory = $this->shareHandleState === null
+                ? new CurlFactory(50)
+                : new CurlFactory(50, $this->shareHandleState->mode, $this->shareHandleState->handle);
         }
 
         if (isset($options['select_timeout'])) {

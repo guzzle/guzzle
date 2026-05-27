@@ -5,11 +5,11 @@ namespace GuzzleHttp\Tests\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlMultiHandler;
-use GuzzleHttp\Handler\CurlShare;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Server\Server;
+use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 
@@ -62,7 +62,7 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals(2, self::readSelectTimeout($a));
     }
 
-    public function testShareOptionAppliesCurlShare(): void
+    public function testTransportSharingOptionAppliesCurlShare(): void
     {
         self::skipIfCurlShareIsUnavailable();
 
@@ -70,7 +70,7 @@ class CurlMultiHandlerTest extends TestCase
         Server::enqueue([new Response(200)]);
 
         $handler = new CurlMultiHandler([
-            'share' => CurlShare::HANDLER,
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
         ]);
 
         $handler(new Request('GET', Server::$url), [])->wait();
@@ -83,22 +83,32 @@ class CurlMultiHandlerTest extends TestCase
         ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
     }
 
-    public function testShareOptionCannotBeUsedWithCustomFactory(): void
+    public function testPreferredTransportSharingCanBeUsedWithCustomFactory(): void
+    {
+        $handler = new CurlMultiHandler([
+            'handle_factory' => new CurlFactory(0),
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
+        ]);
+
+        self::assertInstanceOf(CurlMultiHandler::class, $handler);
+    }
+
+    public function testRequiredTransportSharingCannotBeUsedWithCustomFactory(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('handle_factory');
 
         new CurlMultiHandler([
             'handle_factory' => new CurlFactory(0),
-            'share' => CurlShare::HANDLER,
+            'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
         ]);
     }
 
-    public function testDisabledShareOptionCanBeUsedWithCustomFactory(): void
+    public function testDisabledTransportSharingCanBeUsedWithCustomFactory(): void
     {
         $handler = new CurlMultiHandler([
             'handle_factory' => new CurlFactory(0),
-            'share' => CurlShare::NONE,
+            'transport_sharing' => TransportSharing::NONE,
         ]);
 
         self::assertInstanceOf(CurlMultiHandler::class, $handler);
@@ -259,7 +269,7 @@ class CurlMultiHandlerTest extends TestCase
 
     private static function skipIfCurlShareIsUnavailable(): void
     {
-        if (!\function_exists('curl_share_init') || !\defined('CURLOPT_SHARE')) {
+        if (!\function_exists('curl_share_init') || !\function_exists('curl_share_setopt') || !\defined('CURLOPT_SHARE')) {
             self::markTestSkipped('cURL share handles are unavailable.');
         }
     }
