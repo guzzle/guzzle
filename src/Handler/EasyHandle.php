@@ -68,14 +68,14 @@ final class EasyHandle
     public ?\Throwable $createResponseException = null;
 
     /**
-     * @var TimeoutException|null Exception during response sink write timeout.
-     */
-    public ?TimeoutException $sinkWriteTimeoutException = null;
-
-    /**
      * @var TimeoutException|null Exception during request body read timeout.
      */
     public ?TimeoutException $bodyReadTimeoutException = null;
+
+    /**
+     * @var TimeoutException|null Exception during response sink write timeout.
+     */
+    public ?TimeoutException $sinkWriteTimeoutException = null;
 
     /**
      * Attach a response to the easy handle based on the received headers.

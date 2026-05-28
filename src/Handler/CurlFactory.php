@@ -586,7 +586,7 @@ final class CurlFactory implements CurlFactoryInterface
         $onStats = $easy->options['on_stats'] ?? null;
         $stats = $onStats !== null ? self::createStats($easy) : null;
 
-        if (!$easy->response || $easy->errno || $easy->sinkWriteTimeoutException || $easy->bodyReadTimeoutException) {
+        if (!$easy->response || $easy->errno || $easy->bodyReadTimeoutException || $easy->sinkWriteTimeoutException) {
             return self::finishError($handler, $easy, $factory, $stats, $onStats);
         }
 
@@ -648,7 +648,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         // Retry when nothing is present or when curl failed to rewind.
-        if ($easy->sinkWriteTimeoutException === null && $easy->bodyReadTimeoutException === null && empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
+        if ($easy->bodyReadTimeoutException === null && $easy->sinkWriteTimeoutException === null && empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
             return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
@@ -744,6 +744,33 @@ final class CurlFactory implements CurlFactoryInterface
             );
         }
 
+        if ($easy->bodyReadTimeoutException) {
+            $ctx['timed_out'] = true;
+
+            if ($easy->response) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor(
+                    new ResponseTimeoutException(
+                        'The cURL handler timed out while transferring the request body',
+                        $easy->request,
+                        $easy->response,
+                        $easy->bodyReadTimeoutException,
+                        $ctx
+                    )
+                );
+            }
+
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new NetworkTimeoutException(
+                    'The cURL handler timed out while transferring the request body',
+                    $easy->request,
+                    $easy->bodyReadTimeoutException,
+                    $ctx
+                )
+            );
+        }
+
         if ($easy->sinkWriteTimeoutException) {
             $ctx['timed_out'] = true;
 
@@ -767,33 +794,6 @@ final class CurlFactory implements CurlFactoryInterface
                     $easy->request,
                     0,
                     $easy->sinkWriteTimeoutException,
-                    $ctx
-                )
-            );
-        }
-
-        if ($easy->bodyReadTimeoutException) {
-            $ctx['timed_out'] = true;
-
-            if ($easy->response) {
-                /** @var PromiseInterface<ResponseInterface, mixed> */
-                return P\Create::rejectionFor(
-                    new ResponseTimeoutException(
-                        'The cURL handler timed out while transferring the request body',
-                        $easy->request,
-                        $easy->response,
-                        $easy->bodyReadTimeoutException,
-                        $ctx
-                    )
-                );
-            }
-
-            /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(
-                new NetworkTimeoutException(
-                    'The cURL handler timed out while transferring the request body',
-                    $easy->request,
-                    $easy->bodyReadTimeoutException,
                     $ctx
                 )
             );
