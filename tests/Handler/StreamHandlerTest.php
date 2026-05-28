@@ -139,7 +139,9 @@ class StreamHandlerTest extends TestCase
     public function testClassifiesStreamNetworkErrors(): void
     {
         self::assertTrue($this->matchesStreamHandlerError('isNetworkError', 'SSL: Connection reset by peer'));
-        self::assertTrue($this->matchesStreamHandlerError('isNetworkError', 'Send of 64 bytes failed with errno=32 Broken pipe'));
+        self::assertTrue($this->matchesStreamHandlerError('isNetworkError', 'SSL: Broken pipe'));
+        // A bare connect-phase reset (no "SSL:" prefix) is not a network error.
+        self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'fopen(): Failed to open stream: Connection reset by peer'));
         self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'fopen(): Failed to open stream: Connection refused'));
         self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'HTTP request failed!'));
     }

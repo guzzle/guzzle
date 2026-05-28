@@ -53,8 +53,8 @@ final class StreamHandler
     ];
 
     private const NETWORK_ERRORS = [
-        'Connection reset by peer',
-        'Broken pipe',
+        'SSL: Connection reset by peer',
+        'SSL: Broken pipe',
     ];
 
     private array $lastHeaders = [];
