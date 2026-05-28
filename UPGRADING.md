@@ -263,6 +263,20 @@ response object. For failures with a response, create `ResponseException`,
 exception hierarchy and is still used for invalid configuration or request
 option values that can be rejected before a transfer starts.
 
+#### Body Summaries In HTTP Error Exceptions
+
+Guzzle's default `http_errors` middleware uses `BodySummarizer` to include a
+short response body summary in response-aware exception messages. In Guzzle 7,
+creating that summary rewound seekable response bodies to the beginning. In
+Guzzle 8, `BodySummarizer` still summarizes from the beginning of the body, but
+then restores the body cursor to its previous position.
+
+Most applications do not need changes. Check only code that catches
+response-aware exceptions from `http_errors` and then reads the response body
+while relying on exception creation to leave that body rewound. If you need to
+read the body from the beginning after catching the exception, call
+`Message::rewindBody()` explicitly.
+
 #### Request Protocol Versions
 
 Invalid request protocol versions are no longer treated as omitted. Passing
