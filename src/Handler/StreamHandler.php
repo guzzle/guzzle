@@ -55,6 +55,7 @@ final class StreamHandler
     private const NETWORK_ERRORS = [
         'SSL: Connection reset by peer',
         'SSL: Broken pipe',
+        'unexpected eof while reading',
     ];
 
     private array $lastHeaders = [];

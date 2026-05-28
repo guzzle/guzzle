@@ -112,7 +112,7 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): SSL: Handshake timed out'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Connection timed out'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Operation timed out'));
-        self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'stream_socket_client(): connect() failed: Operation timed out'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'stream_socket_client(): Unable to connect to example.test:443 (Operation timed out)'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectTimeoutError', 'HTTP request failed!'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectionError', 'fopen(): SSL: Handshake timed out'));
     }
@@ -125,6 +125,10 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'fopen(): Failed to open stream: No connection could be made because the target machine actively refused it'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Cannot connect to HTTPS server through proxy'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Failed to enable crypto'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'fopen(): Failed to open stream: Network is unreachable'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'fopen(): Failed to open stream: No route to host'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'fopen(): Failed to open stream: Host is down'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'A connection attempt failed because the connected party did not properly respond after a period of time'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectionError', 'HTTP request failed!'));
     }
 
@@ -140,6 +144,8 @@ class StreamHandlerTest extends TestCase
     {
         self::assertTrue($this->matchesStreamHandlerError('isNetworkError', 'SSL: Connection reset by peer'));
         self::assertTrue($this->matchesStreamHandlerError('isNetworkError', 'SSL: Broken pipe'));
+        // OpenSSL 3.0+ reports a peer closing the connection without close_notify this way.
+        self::assertTrue($this->matchesStreamHandlerError('isNetworkError', 'SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading'));
         // A bare connect-phase reset (no "SSL:" prefix) is not a network error.
         self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'fopen(): Failed to open stream: Connection reset by peer'));
         self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'fopen(): Failed to open stream: Connection refused'));
@@ -272,6 +278,56 @@ class StreamHandlerTest extends TestCase
             self::assertSame($request, $e->getRequest());
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(ConnectException::class, $e);
+            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
+        }
+    }
+
+    public function testClassifiesUnexpectedEofAsNetwork(): void
+    {
+        // OpenSSL 3.0+ surfaces a peer closing the connection without a TLS
+        // close_notify (an empty reply, like cURL's CURLE_GOT_NOTHING) as
+        // "unexpected eof while reading". The handshake already completed, so
+        // there is no "Failed to enable crypto", and it is a network error.
+        $handler = new StreamHandler();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function (): string {
+                throw new \RuntimeException('SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading');
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected NetworkException');
+        } catch (NetworkException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ConnectException::class, $e);
+            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
+        }
+    }
+
+    public function testClassifiesHandshakeUnexpectedEofAsConnect(): void
+    {
+        // The same OpenSSL EOF during the handshake co-emits "Failed to enable
+        // crypto", which is matched as a connection error first, so it stays a
+        // connect error instead of being reclassified as a network error.
+        $handler = new StreamHandler();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function (): string {
+                throw new \RuntimeException('SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading. Failed to enable crypto');
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected ConnectException');
+        } catch (ConnectException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
         }
     }
