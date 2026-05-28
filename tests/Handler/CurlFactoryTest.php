@@ -2909,18 +2909,11 @@ class CurlFactoryTest extends TestCase
         self::assertSame(\CURLE_WRITE_ERROR, $stats->getHandlerErrorData());
     }
 
-    /**
-     * @dataProvider curlHandlerProvider
-     */
-    public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsNetworkTimeoutThroughCurlHandlers(callable $handlerFactory): void
+    public function testStreamingRequestBodyReadPsr7TimeoutAbortsReadCallback(): void
     {
-        Server::flush();
-        Server::enqueue([
-            new Psr7\Response(200, [], 'abc'),
-        ]);
+        $factory = new CurlFactory(3);
         $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
         $readCalled = false;
-        $stats = null;
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
             'getSize' => static function (): ?int {
                 return null;
@@ -2932,14 +2925,42 @@ class CurlFactoryTest extends TestCase
             },
         ]);
         $request = new Psr7\Request('PUT', Server::$url, [], $body);
-        $handler = $handlerFactory();
+        $easy = $factory->create($request, []);
 
         try {
-            $handler($request, [
-                'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
-                    $stats = $transferStats;
-                },
-            ])->wait();
+            $callback = $_SERVER['_curl'][\CURLOPT_READFUNCTION];
+
+            self::assertSame(0x10000000, $callback($easy->handle, null, 8192));
+            self::assertTrue($readCalled);
+            self::assertSame($previous, $easy->bodyReadTimeoutException);
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsNetworkTimeoutWithoutResponse(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
+        $stats = null;
+        $request = new Psr7\Request('PUT', Server::$url, [], 'payload');
+        $easy = $factory->create($request, [
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+        $easy->bodyReadTimeoutException = $previous;
+        $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
+        $handler = static function (RequestInterface $request, array $options) {
+            self::fail('Did not expect timeout failure to be retried');
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
 
             self::fail('Expected NetworkTimeoutException');
         } catch (NetworkTimeoutException $e) {
@@ -2952,18 +2973,55 @@ class CurlFactoryTest extends TestCase
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
-        } finally {
-            Server::flush();
-
-            if (\method_exists($handler, 'close')) {
-                $handler->close();
-            }
         }
 
-        self::assertTrue($readCalled);
         self::assertInstanceOf(TransferStats::class, $stats);
         self::assertFalse($stats->hasResponse());
         self::assertNull($stats->getResponse());
+        self::assertSame($request, $stats->getRequest());
+        self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $stats->getHandlerErrorData());
+    }
+
+    public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsResponseTimeoutWithResponse(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
+        $stats = null;
+        $request = new Psr7\Request('PUT', Server::$url, [], 'payload');
+        $response = new Psr7\Response(200, [], 'early');
+        $easy = $factory->create($request, [
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+        $easy->response = $response;
+        $easy->bodyReadTimeoutException = $previous;
+        $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
+        $handler = static function (RequestInterface $request, array $options) {
+            self::fail('Did not expect timeout failure to be retried');
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
+
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
+            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
+            self::assertTrue($e->getHandlerContext()['timed_out'] ?? false);
+            self::assertInstanceOf(ResponseException::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($response, $stats->getResponse());
         self::assertSame($request, $stats->getRequest());
         self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $stats->getHandlerErrorData());
     }
