@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
+use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,7 @@ class ResponseTimeoutExceptionTest extends TestCase
         self::assertInstanceOf(ResponseException::class, $e);
         self::assertInstanceOf(RequestException::class, $e);
         self::assertInstanceOf(RequestExceptionInterface::class, $e);
+        self::assertInstanceOf(TimeoutException::class, $e);
         self::assertNotInstanceOf(ConnectException::class, $e);
         self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());

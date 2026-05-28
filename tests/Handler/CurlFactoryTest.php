@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
+use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlVersion;
@@ -2304,7 +2306,7 @@ class CurlFactoryTest extends TestCase
         try {
             $response->wait();
             self::fail('Expected ConnectException');
-        } catch (NetworkTimeoutException $e) {
+        } catch (ConnectTimeoutException $e) {
             self::fail('Expected non-timeout ConnectException');
         } catch (ConnectException $e) {
             self::assertSame($errno, $e->getHandlerContext()['errno']);
@@ -2349,6 +2351,8 @@ class CurlFactoryTest extends TestCase
         try {
             $promise->wait();
             self::fail('Expected NetworkException');
+        } catch (ConnectTimeoutException $e) {
+            self::fail('Expected non-timeout NetworkException');
         } catch (NetworkTimeoutException $e) {
             self::fail('Expected non-timeout NetworkException');
         } catch (NetworkException $e) {
@@ -2400,7 +2404,7 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testCreatesNetworkTimeoutExceptionWithoutResponse(): void
+    public function testCreatesNetworkTimeoutExceptionForNonConnectTimeout(): void
     {
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
@@ -2416,13 +2420,31 @@ class CurlFactoryTest extends TestCase
         try {
             $response->wait();
             self::fail('Expected NetworkTimeoutException');
+        } catch (ConnectTimeoutException $e) {
+            self::fail('Expected NetworkTimeoutException, not ConnectTimeoutException');
         } catch (NetworkTimeoutException $e) {
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertInstanceOf(TimeoutException::class, $e);
             self::assertNotInstanceOf(ConnectException::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
         }
+    }
+
+    public function testClassifiesConnectTimeoutErrors(): void
+    {
+        self::assertTrue($this->matchesCurlConnectTimeout('Connection timed out after 5003 milliseconds'));
+        self::assertTrue($this->matchesCurlConnectTimeout('Resolving timed out after 5000 milliseconds'));
+        self::assertFalse($this->matchesCurlConnectTimeout('Operation timed out after 30000 milliseconds with 0 bytes received'));
+        self::assertFalse($this->matchesCurlConnectTimeout(''));
+    }
+
+    private function matchesCurlConnectTimeout(string $error): bool
+    {
+        $reflection = new \ReflectionMethod(CurlFactory::class, 'isConnectTimeout');
+
+        return $reflection->invoke(null, $error) === true;
     }
 
     public function testCreatesResponseTimeoutExceptionWithResponse(): void
@@ -2446,6 +2468,7 @@ class CurlFactoryTest extends TestCase
         } catch (ResponseTimeoutException $e) {
             self::assertInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertInstanceOf(TimeoutException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame($response, $e->getResponse());

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
@@ -747,9 +748,13 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if ($easy->errno === \CURLE_OPERATION_TIMEOUTED) {
-            $error = $easy->response !== null
-                ? new ResponseTimeoutException($message, $easy->request, $easy->response, null, $ctx)
-                : new NetworkTimeoutException($message, $easy->request, null, $ctx);
+            if ($easy->response !== null) {
+                $error = new ResponseTimeoutException($message, $easy->request, $easy->response, null, $ctx);
+            } elseif (self::isConnectTimeout($ctx['error'] ?? '')) {
+                $error = new ConnectTimeoutException($message, $easy->request, null, $ctx);
+            } else {
+                $error = new NetworkTimeoutException($message, $easy->request, null, $ctx);
+            }
         } elseif ($easy->response) {
             $error = new ResponseException($message, $easy->request, $easy->response, null, $ctx);
         } elseif (self::isConnectionError($easy->errno)) {
@@ -816,6 +821,12 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         return isset($networkErrors[$errno]);
+    }
+
+    private static function isConnectTimeout(string $error): bool
+    {
+        return \stripos($error, 'Connection timed out') !== false
+            || \stripos($error, 'Resolving timed out') !== false;
     }
 
     private static function sanitizeCurlError(string $error, UriInterface $uri): string

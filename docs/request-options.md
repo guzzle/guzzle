@@ -1308,10 +1308,10 @@ Constant
 ```php
 // Timeout if a server does not return a response in 3.14 seconds.
 $client->request('GET', '/delay/5', ['timeout' => 3.14]);
-// PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\NetworkTimeoutException'
+// PHP Fatal error:  Uncaught exception 'GuzzleHttp\Exception\ConnectTimeoutException'
 ```
 
-When a built-in handler can reliably identify a timeout before any response is received, it throws `GuzzleHttp\Exception\NetworkTimeoutException`. If a timeout is detected after a response is received, it throws `GuzzleHttp\Exception\ResponseTimeoutException`, which extends `GuzzleHttp\Exception\ResponseException`.
+When a built-in handler identifies a connect-phase timeout, it throws `GuzzleHttp\Exception\ConnectTimeoutException`, which extends `ConnectException`. If the timeout occurs after the connection is established but before a response is received, it throws `GuzzleHttp\Exception\NetworkTimeoutException`. If a timeout is detected after a response is received, it throws `GuzzleHttp\Exception\ResponseTimeoutException`, which extends `GuzzleHttp\Exception\ResponseException`. All three implement `GuzzleHttp\Exception\TimeoutException`.
 
 ## version
 

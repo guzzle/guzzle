@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\NetworkException;
-use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
@@ -45,7 +45,7 @@ final class StreamHandler
         'Failed to enable crypto',
     ];
 
-    private const TIMEOUT_ERRORS = [
+    private const CONNECT_TIMEOUT_ERRORS = [
         'Connection timed out',
         'Operation timed out',
         'SSL: Handshake timed out',
@@ -119,8 +119,8 @@ final class StreamHandler
 
             // Determine if the error was a networking error.
             if (!$e instanceof NetworkException) {
-                if (self::isTimeoutError($e->getMessage())) {
-                    $e = new NetworkTimeoutException($e->getMessage(), $request, $e);
+                if (self::isConnectTimeoutError($e->getMessage())) {
+                    $e = new ConnectTimeoutException($e->getMessage(), $request, $e);
                 } elseif (self::isConnectionError($e->getMessage())) {
                     $e = new ConnectException($e->getMessage(), $request, $e);
                 } elseif (!$e instanceof RequestException) {
@@ -145,9 +145,9 @@ final class StreamHandler
         return true;
     }
 
-    private static function isTimeoutError(string $message): bool
+    private static function isConnectTimeoutError(string $message): bool
     {
-        foreach (self::TIMEOUT_ERRORS as $timeoutError) {
+        foreach (self::CONNECT_TIMEOUT_ERRORS as $timeoutError) {
             if (false !== \stripos($message, $timeoutError)) {
                 return true;
             }
