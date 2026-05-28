@@ -1306,17 +1306,17 @@ Constant
 `GuzzleHttp\RequestOptions::TIMEOUT`
 
 ```php
-use GuzzleHttp\Exception\TimeoutException;
-
-try {
-    // Timeout if the request does not complete in 3.14 seconds.
-    $client->request('GET', '/delay/5', ['timeout' => 3.14]);
-} catch (TimeoutException $e) {
-    // Handle timeout failures.
-}
+// Timeout if the request does not complete in 3.14 seconds.
+$client->request('GET', '/delay/5', ['timeout' => 3.14]);
 ```
 
-Built-in handlers split timeout exceptions by where the timeout is observed. Connect timeouts throw `GuzzleHttp\Exception\ConnectTimeoutException`, which extends `ConnectException`. Other timeouts before a response is received throw `GuzzleHttp\Exception\NetworkTimeoutException`. Timeouts after a response is received throw `GuzzleHttp\Exception\ResponseTimeoutException`, which extends `GuzzleHttp\Exception\ResponseException`. All three implement `GuzzleHttp\Exception\TimeoutException`. Timeout subtype selection depends on the signal available from the underlying handler.
+Built-in handlers split timeout exceptions by where the timeout is observed.
+Connect timeouts throw `GuzzleHttp\Exception\ConnectTimeoutException`, which
+extends `ConnectException`. Other timeouts before a response is received throw
+`GuzzleHttp\Exception\NetworkTimeoutException`. Timeouts after a response is
+received throw `GuzzleHttp\Exception\ResponseTimeoutException`, which extends
+`GuzzleHttp\Exception\ResponseException`. Timeout subtype selection depends on
+the signal available from the underlying handler.
 
 ## version
 

@@ -11,7 +11,6 @@ use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
-use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlVersion;
@@ -2411,7 +2410,6 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected NetworkTimeoutException, not ConnectTimeoutException');
         } catch (NetworkTimeoutException $e) {
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertInstanceOf(TimeoutException::class, $e);
             self::assertNotInstanceOf(ConnectException::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
@@ -2437,7 +2435,6 @@ class CurlFactoryTest extends TestCase
         } catch (ConnectTimeoutException $e) {
             self::assertInstanceOf(ConnectException::class, $e);
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertInstanceOf(TimeoutException::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
@@ -2464,7 +2461,6 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected NetworkTimeoutException, not ConnectTimeoutException');
         } catch (NetworkTimeoutException $e) {
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertInstanceOf(TimeoutException::class, $e);
             self::assertNotInstanceOf(ConnectException::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
@@ -2516,7 +2512,6 @@ class CurlFactoryTest extends TestCase
         } catch (ResponseTimeoutException $e) {
             self::assertInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
-            self::assertInstanceOf(TimeoutException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame($response, $e->getResponse());
@@ -2543,7 +2538,6 @@ class CurlFactoryTest extends TestCase
         } catch (ResponseTimeoutException $e) {
             self::assertInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
-            self::assertInstanceOf(TimeoutException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame($response, $e->getResponse());

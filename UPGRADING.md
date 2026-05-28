@@ -132,14 +132,14 @@ Guzzle 8.0 uses this hierarchy:
     ├── HandlerClosedException
     ├── NetworkException (implements NetworkExceptionInterface)
     │   ├── ConnectException
-    │   │   └── ConnectTimeoutException (implements TimeoutException)
-    │   └── NetworkTimeoutException (implements TimeoutException)
+    │   │   └── ConnectTimeoutException
+    │   └── NetworkTimeoutException
     └── RequestException (implements RequestExceptionInterface)
         └── ResponseException
             ├── BadResponseException
             │   ├── ServerException
             │   └── ClientException
-            ├── ResponseTimeoutException (implements TimeoutException)
+            ├── ResponseTimeoutException
             └── TooManyRedirectsException
 ```
 
@@ -168,16 +168,14 @@ with `instanceof ResponseException`, before calling `getResponse()`. If you
 instantiate `RequestException` directly, its third constructor argument is now
 the exception code, followed by the previous exception and handler context.
 
-Timeout exception classes are now split by phase, and all timeout exceptions
-implement the `TimeoutException` marker interface. `ConnectTimeoutException` is
+Timeout exception classes are now split by phase. `ConnectTimeoutException` is
 thrown for connect timeouts (DNS resolution, TCP connect, proxy CONNECT, or TLS
 handshake). It extends `ConnectException`, so code that catches
 `ConnectException` will also catch connect timeouts. `NetworkTimeoutException`
 is thrown for other timeouts before response headers are received; it extends
 `NetworkException` but not `ConnectException`. `ResponseTimeoutException` is
 thrown for timeouts after response headers are received; it extends
-`ResponseException` and exposes the response. Catch `TimeoutException` before
-network or response branches to handle timeout failures in a single branch.
+`ResponseException` and exposes the response.
 
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
@@ -189,28 +187,23 @@ not reject pending promises. If you add deterministic cleanup with
 handle `HandlerClosedException` or `TransferException` for pending promises you
 may still observe.
 
-The practical catch-order migration is to handle timeouts first when they need a
-single branch, then network failures before request failures. If you previously
-caught `RequestException` as the only built-in handler transport failure type,
-add a `NetworkException` catch before it. If you previously caught
-`ConnectException` for cURL timeouts or broad transport failures, catch
-`NetworkException` instead; keep `ConnectException` only for
+The practical catch-order migration is to handle network failures before request
+failures. If you previously caught `RequestException` as the only built-in
+handler transport failure type, add a `NetworkException` catch before it. If
+you previously caught `ConnectException` for cURL timeouts or broad transport
+failures, catch `NetworkException` instead; keep `ConnectException` only for
 connection-establishment handling. Catch `ResponseException` before
 `RequestException` when you need response access, and use `TransferException`
 only when one catch block should handle every Guzzle transfer failure. After
-upgrading to Guzzle 8.0, use this catch order when timeouts should be handled
-together:
+upgrading to Guzzle 8.0, use this catch order:
 
 ```php
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
-use GuzzleHttp\Exception\TimeoutException;
 
 try {
     $client->request('GET', $uri);
-} catch (TimeoutException $e) {
-    // Timeout failures.
 } catch (NetworkException $e) {
     // No-response network failures, including reclassified cURL and stream
     // handler failures.

@@ -8,7 +8,6 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
-use GuzzleHttp\Exception\TimeoutException;
 use GuzzleHttp\Psr7\Request;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\NetworkExceptionInterface;
@@ -28,7 +27,6 @@ class ConnectTimeoutExceptionTest extends TestCase
         self::assertInstanceOf(ConnectException::class, $e);
         self::assertInstanceOf(NetworkException::class, $e);
         self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-        self::assertInstanceOf(TimeoutException::class, $e);
         self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
         self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());

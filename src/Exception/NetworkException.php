@@ -8,7 +8,7 @@ use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 
 /**
- * Base exception for network-related transfer failures.
+ * Base exception for transfer failures without a response.
  */
 class NetworkException extends TransferException implements NetworkExceptionInterface
 {

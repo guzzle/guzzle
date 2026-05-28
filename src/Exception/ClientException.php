@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Exception;
 
 /**
- * Exception when a client error is encountered (4xx codes)
+ * Exception thrown for HTTP responses with 4xx status codes.
  */
 class ClientException extends BadResponseException
 {

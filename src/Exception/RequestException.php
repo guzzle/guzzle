@@ -11,7 +11,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * HTTP Request exception
+ * Base exception for request failures associated with a request.
  */
 class RequestException extends TransferException implements RequestExceptionInterface
 {
