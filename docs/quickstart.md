@@ -99,7 +99,9 @@ $promise = $client->postAsync('http://httpbin.org/post');
 $promise = $client->putAsync('http://httpbin.org/put');
 ```
 
-You can also use the `sendAsync()` and `requestAsync()` methods of a client. Use `requestAsync()` for asynchronous requests that do not have a named shortcut method:
+You can also use the `sendAsync()` and `requestAsync()` methods of a client. Use
+`requestAsync()` for asynchronous requests that do not have a named shortcut
+method:
 
 ```php
 use GuzzleHttp\Psr7\Request;
@@ -115,7 +117,14 @@ $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
 $promise = $client->requestAsync('OPTIONS', 'http://httpbin.org/get');
 ```
 
-The promise returned by these methods is a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` provided by the [Guzzle promises library](https://github.com/guzzle/promises). This means that you can chain `then()` calls off of the promise. These then calls are either fulfilled with a successful `Psr\Http\Message\ResponseInterface` or rejected with a reason. The reason is often an exception from Guzzle's exception hierarchy, but custom handlers can reject with other values.
+The promise returned by these methods is a
+`GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>`
+provided by the [Guzzle promises library](https://github.com/guzzle/promises).
+This means that you can chain `then()` calls off of the promise. These then
+calls are either fulfilled with a successful
+`Psr\Http\Message\ResponseInterface` or rejected with a reason. The reason is
+often an exception from Guzzle's exception hierarchy, but custom handlers can
+reject with other values.
 
 ```php
 use Psr\Http\Message\ResponseInterface;
