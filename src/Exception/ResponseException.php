@@ -8,7 +8,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * Exception thrown when a request fails after a response is received.
+ * Exception thrown when a request fails after response headers are received.
  */
 class ResponseException extends RequestException
 {

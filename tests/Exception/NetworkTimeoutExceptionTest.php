@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests\Exception;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Psr7\Request;
@@ -26,6 +27,7 @@ class NetworkTimeoutExceptionTest extends TestCase
         self::assertInstanceOf(NetworkException::class, $e);
         self::assertInstanceOf(NetworkExceptionInterface::class, $e);
         self::assertNotInstanceOf(ConnectException::class, $e);
+        self::assertNotInstanceOf(ConnectTimeoutException::class, $e);
         self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
         self::assertSame('foo', $e->getMessage());

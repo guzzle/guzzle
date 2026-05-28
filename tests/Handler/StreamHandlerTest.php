@@ -104,10 +104,11 @@ class StreamHandlerTest extends TestCase
 
     public function testClassifiesStreamTimeoutErrors(): void
     {
-        self::assertTrue($this->matchesStreamHandlerError('isTimeoutError', 'fopen(): SSL: Handshake timed out'));
-        self::assertTrue($this->matchesStreamHandlerError('isTimeoutError', 'fopen(): Failed to open stream: Connection timed out'));
-        self::assertTrue($this->matchesStreamHandlerError('isTimeoutError', 'fopen(): Failed to open stream: Operation timed out'));
-        self::assertFalse($this->matchesStreamHandlerError('isTimeoutError', 'HTTP request failed!'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): SSL: Handshake timed out'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Connection timed out'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Operation timed out'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'stream_socket_client(): connect() failed: Operation timed out'));
+        self::assertFalse($this->matchesStreamHandlerError('isConnectTimeoutError', 'HTTP request failed!'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectionError', 'fopen(): SSL: Handshake timed out'));
     }
 

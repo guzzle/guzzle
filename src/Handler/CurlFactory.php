@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
@@ -29,6 +30,41 @@ use Psr\Http\Message\UriInterface;
 final class CurlFactory implements CurlFactoryInterface
 {
     public const CURL_VERSION_STR = 'curl_version';
+
+    private const CURL_CONNECTION_ERRORS = [
+        5 => true,   // CURLE_COULDNT_RESOLVE_PROXY
+        6 => true,   // CURLE_COULDNT_RESOLVE_HOST
+        7 => true,   // CURLE_COULDNT_CONNECT
+        35 => true,  // CURLE_SSL_CONNECT_ERROR
+        51 => true,  // CURLE_PEER_FAILED_VERIFICATION before libcurl 7.62.0
+        60 => true,  // CURLE_SSL_CACERT / modern CURLE_PEER_FAILED_VERIFICATION
+        83 => true,  // CURLE_SSL_ISSUER_ERROR
+        90 => true,  // CURLE_SSL_PINNEDPUBKEYNOTMATCH
+        91 => true,  // CURLE_SSL_INVALIDCERTSTATUS
+        96 => true,  // CURLE_QUIC_CONNECT_ERROR
+        97 => true,  // CURLE_PROXY
+        98 => true,  // CURLE_SSL_CLIENTCERT
+        101 => true, // CURLE_ECH_REQUIRED
+    ];
+
+    private const CURL_NETWORK_ERRORS = [
+        16 => true, // CURLE_HTTP2
+        52 => true, // CURLE_GOT_NOTHING
+        55 => true, // CURLE_SEND_ERROR
+        56 => true, // CURLE_RECV_ERROR
+        92 => true, // CURLE_HTTP2_STREAM
+        95 => true, // CURLE_HTTP3
+    ];
+
+    private const CURL_CONNECT_TIMEOUT_ERRORS = [
+        'Connection timed out',
+        'Connection timeout',
+        'Connection time-out',
+        'Resolving timed out',
+        'name lookup timed out',
+        'Proxy CONNECT aborted due to timeout',
+        'SSL connection timeout',
+    ];
 
     /**
      * @var resource[]|\CurlHandle[]
@@ -747,9 +783,13 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if ($easy->errno === \CURLE_OPERATION_TIMEOUTED) {
-            $error = $easy->response !== null
-                ? new ResponseTimeoutException($message, $easy->request, $easy->response, null, $ctx)
-                : new NetworkTimeoutException($message, $easy->request, null, $ctx);
+            if ($easy->response !== null) {
+                $error = new ResponseTimeoutException($message, $easy->request, $easy->response, null, $ctx);
+            } elseif (self::isConnectTimeoutError($ctx['error'] ?? '')) {
+                $error = new ConnectTimeoutException($message, $easy->request, null, $ctx);
+            } else {
+                $error = new NetworkTimeoutException($message, $easy->request, null, $ctx);
+            }
         } elseif ($easy->response) {
             $error = new ResponseException($message, $easy->request, $easy->response, null, $ctx);
         } elseif (self::isConnectionError($easy->errno)) {
@@ -766,56 +806,28 @@ final class CurlFactory implements CurlFactoryInterface
 
     private static function isConnectionError(int $errno): bool
     {
-        static $connectionErrors;
-        if ($connectionErrors === null) {
-            $connectionErrors = [
-                \CURLE_COULDNT_RESOLVE_HOST => true,
-                \CURLE_COULDNT_RESOLVE_PROXY => true,
-                \CURLE_COULDNT_CONNECT => true,
-                \CURLE_SSL_CONNECT_ERROR => true,
-            ];
-
-            foreach ([
-                'CURLE_PROXY',
-                'CURLE_QUIC_CONNECT_ERROR',
-                'CURLE_PEER_FAILED_VERIFICATION',
-                'CURLE_SSL_CACERT',
-                'CURLE_SSL_PEER_CERTIFICATE',
-                'CURLE_SSL_PINNEDPUBKEYNOTMATCH',
-                'CURLE_SSL_INVALIDCERTSTATUS',
-                'CURLE_SSL_CLIENTCERT',
-            ] as $constant) {
-                if (\defined($constant)) {
-                    $connectionErrors[(int) \constant($constant)] = true;
-                }
-            }
-        }
-
-        return isset($connectionErrors[$errno]);
+        return isset(self::CURL_CONNECTION_ERRORS[$errno]);
     }
 
     private static function isNetworkError(int $errno): bool
     {
-        static $networkErrors;
-        if ($networkErrors === null) {
-            $networkErrors = [
-                \CURLE_GOT_NOTHING => true,
-                \CURLE_SEND_ERROR => true,
-                \CURLE_RECV_ERROR => true,
-            ];
+        return isset(self::CURL_NETWORK_ERRORS[$errno]);
+    }
 
-            foreach ([
-                'CURLE_HTTP2',
-                'CURLE_HTTP2_STREAM',
-                'CURLE_HTTP3',
-            ] as $constant) {
-                if (\defined($constant)) {
-                    $networkErrors[(int) \constant($constant)] = true;
-                }
+    private static function isConnectTimeoutError(string $error): bool
+    {
+        if ('' === $error) {
+            return false;
+        }
+
+        foreach (self::CURL_CONNECT_TIMEOUT_ERRORS as $connectTimeoutError) {
+            if (\stripos($error, $connectTimeoutError) !== false) {
+                return true;
             }
         }
 
-        return isset($networkErrors[$errno]);
+        return \stripos($error, 'Failed to resolve') !== false
+            && \stripos($error, 'timeout') !== false;
     }
 
     private static function sanitizeCurlError(string $error, UriInterface $uri): string

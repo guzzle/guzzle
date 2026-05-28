@@ -10,6 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
 - Add generic and structured PHPDoc annotations to client request/config option, async promise, handler, middleware, pool, and mock handler APIs
 - Add CIDR notation support for IP no-proxy rules
+- Add `ConnectTimeoutException` for connect-phase timeouts, extending `ConnectException`
 - Add `NetworkTimeoutException` and `ResponseTimeoutException`
 - Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
 - Add explicit `close()` lifecycle methods to the built-in cURL handlers and concrete cURL factory
@@ -50,10 +51,11 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Validate built-in handler timeout options before applying them
 - Classify empty, malformed, or handler-unsupported request protocol versions as request exceptions
 - Classify additional cURL transport failures without a response as `NetworkException`
-- Classify stream connection failures as `ConnectException` and identifiable no-response timeouts as `NetworkTimeoutException`
+- Classify stream connect failures as `ConnectException`, with connect timeouts as `ConnectTimeoutException`
 - Classify generic response-aware request failures as `ResponseException`
-- Throw `NetworkTimeoutException` for reliably detected no-response transfer timeouts
-- Throw `ResponseTimeoutException` for reliably detected response-aware transfer timeouts
+- Throw `ConnectTimeoutException` for connect timeouts
+- Throw `NetworkTimeoutException` for cURL no-response timeout errors
+- Throw `ResponseTimeoutException` for response-aware transfer timeouts
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers
