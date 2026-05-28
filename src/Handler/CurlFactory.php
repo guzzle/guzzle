@@ -68,9 +68,14 @@ final class CurlFactory implements CurlFactoryInterface
     ];
 
     /**
-     * libcurl's CURL_READFUNC_ABORT value. PHP exposes CURL_READFUNC_PAUSE but not CURL_READFUNC_ABORT.
+     * libcurl's CURL_READFUNC_ABORT value.
      */
     private const CURL_READFUNC_ABORT = 0x10000000;
+
+    /**
+     * libcurl's CURLE_SEND_FAIL_REWIND value.
+     */
+    private const CURLE_SEND_FAIL_REWIND = 65;
 
     /**
      * @var resource[]|\CurlHandle[]
@@ -586,7 +591,7 @@ final class CurlFactory implements CurlFactoryInterface
         $onStats = $easy->options['on_stats'] ?? null;
         $stats = $onStats !== null ? self::createStats($easy) : null;
 
-        if (!$easy->response || $easy->errno || $easy->bodyReadTimeoutException || $easy->sinkWriteTimeoutException) {
+        if (self::shouldFinishWithError($easy)) {
             return self::finishError($handler, $easy, $factory, $stats, $onStats);
         }
 
@@ -647,12 +652,32 @@ final class CurlFactory implements CurlFactoryInterface
             $onStats($stats);
         }
 
-        // Retry when nothing is present or when curl failed to rewind.
-        if ($easy->bodyReadTimeoutException === null && $easy->sinkWriteTimeoutException === null && empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
+        if (self::shouldRetryFailedRewind($easy)) {
             return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
         return self::createRejection($easy, $ctx);
+    }
+
+    private static function shouldFinishWithError(EasyHandle $easy): bool
+    {
+        return !$easy->response
+            || $easy->errno !== 0
+            || $easy->bodyReadTimeoutException !== null
+            || $easy->sinkWriteTimeoutException !== null;
+    }
+
+    private static function shouldRetryFailedRewind(EasyHandle $easy): bool
+    {
+        if ($easy->bodyReadTimeoutException !== null || $easy->sinkWriteTimeoutException !== null) {
+            return false;
+        }
+
+        if (!empty($easy->options['_err_message'])) {
+            return false;
+        }
+
+        return $easy->errno === 0 || $easy->errno === self::CURLE_SEND_FAIL_REWIND;
     }
 
     private static function createErrorContext(EasyHandle $easy): array

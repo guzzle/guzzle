@@ -2853,62 +2853,6 @@ class CurlFactoryTest extends TestCase
         self::assertSame('abc 123', (string) $response->getBody());
     }
 
-    /**
-     * @dataProvider curlHandlerProvider
-     */
-    public function testSinkWritePsr7TimeoutRejectsAsResponseTimeoutThroughCurlHandlers(callable $handlerFactory): void
-    {
-        Server::flush();
-        Server::enqueue([
-            new Psr7\Response(200, [], 'abc'),
-        ]);
-        $request = new Psr7\Request('GET', Server::$url);
-        $handler = $handlerFactory();
-        $previous = new Psr7\Exception\TimeoutException('Unable to write to stream: timed out');
-        $stats = null;
-        $writeCalled = false;
-        $sink = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
-            'write' => static function (string $data) use (&$writeCalled, $previous): int {
-                $writeCalled = true;
-
-                throw $previous;
-            },
-        ]);
-
-        try {
-            $handler($request, [
-                'sink' => $sink,
-                'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
-                    $stats = $transferStats;
-                },
-            ])->wait();
-
-            self::fail('Expected ResponseTimeoutException');
-        } catch (ResponseTimeoutException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The cURL handler timed out while transferring the response body', $e->getMessage());
-            self::assertSame($previous, $e->getPrevious());
-            self::assertSame(\CURLE_WRITE_ERROR, $e->getHandlerContext()['errno']);
-            self::assertTrue($e->getHandlerContext()['timed_out'] ?? false);
-            self::assertInstanceOf(ResponseException::class, $e);
-            self::assertInstanceOf(RequestExceptionInterface::class, $e);
-            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
-        } finally {
-            Server::flush();
-
-            if (\method_exists($handler, 'close')) {
-                $handler->close();
-            }
-        }
-
-        self::assertTrue($writeCalled);
-        self::assertInstanceOf(TransferStats::class, $stats);
-        self::assertTrue($stats->hasResponse());
-        self::assertSame(200, $stats->getResponse()->getStatusCode());
-        self::assertSame(\CURLE_WRITE_ERROR, $stats->getHandlerErrorData());
-    }
-
     public function testStreamingRequestBodyReadPsr7TimeoutAbortsReadCallback(): void
     {
         $factory = new CurlFactory(3);
@@ -3154,6 +3098,62 @@ class CurlFactoryTest extends TestCase
         }
 
         self::assertTrue($castCalled);
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testSinkWritePsr7TimeoutRejectsAsResponseTimeoutThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [], 'abc'),
+        ]);
+        $request = new Psr7\Request('GET', Server::$url);
+        $handler = $handlerFactory();
+        $previous = new Psr7\Exception\TimeoutException('Unable to write to stream: timed out');
+        $stats = null;
+        $writeCalled = false;
+        $sink = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data) use (&$writeCalled, $previous): int {
+                $writeCalled = true;
+
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $handler($request, [
+                'sink' => $sink,
+                'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                    $stats = $transferStats;
+                },
+            ])->wait();
+
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('The cURL handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(\CURLE_WRITE_ERROR, $e->getHandlerContext()['errno']);
+            self::assertTrue($e->getHandlerContext()['timed_out'] ?? false);
+            self::assertInstanceOf(ResponseException::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+
+        self::assertTrue($writeCalled);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame(200, $stats->getResponse()->getStatusCode());
+        self::assertSame(\CURLE_WRITE_ERROR, $stats->getHandlerErrorData());
     }
 
     public function testInvokesOnStatsOnSuccess(): void
