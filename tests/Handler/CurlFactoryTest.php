@@ -2487,6 +2487,9 @@ class CurlFactoryTest extends TestCase
     private function matchesCurlConnectTimeoutError(string $error): bool
     {
         $reflection = new \ReflectionMethod(CurlFactory::class, 'isConnectTimeoutError');
+        if (\PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
 
         return $reflection->invoke(null, $error) === true;
     }
@@ -2549,6 +2552,9 @@ class CurlFactoryTest extends TestCase
     private function createCurlRejection(EasyHandle $easy, array $ctx)
     {
         $reflection = new \ReflectionMethod(CurlFactory::class, 'createRejection');
+        if (\PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
 
         return $reflection->invoke(null, $easy, $ctx);
     }
