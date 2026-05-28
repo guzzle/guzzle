@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace GuzzleHttp\Test\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectTimeoutException;
+use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
@@ -19,6 +22,8 @@ use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\NetworkExceptionInterface;
+use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -121,6 +126,152 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Cannot connect to HTTPS server through proxy'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectionError', 'Failed to enable crypto'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectionError', 'HTTP request failed!'));
+    }
+
+    public function testClassifiesStreamSendErrors(): void
+    {
+        self::assertTrue($this->matchesStreamHandlerError('isSendError', 'Send of 65536 bytes failed with errno=110 Connection timed out'));
+        self::assertTrue($this->matchesStreamHandlerError('isSendError', 'Send of 8192 bytes failed with errno=60 Operation timed out'));
+        self::assertFalse($this->matchesStreamHandlerError('isSendError', 'fopen(): Failed to open stream: Connection timed out'));
+        self::assertFalse($this->matchesStreamHandlerError('isSendError', 'HTTP request failed!'));
+    }
+
+    public function testClassifiesStreamNetworkErrors(): void
+    {
+        self::assertTrue($this->matchesStreamHandlerError('isNetworkError', 'SSL: Connection reset by peer'));
+        self::assertTrue($this->matchesStreamHandlerError('isNetworkError', 'Send of 64 bytes failed with errno=32 Broken pipe'));
+        self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'fopen(): Failed to open stream: Connection refused'));
+        self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'HTTP request failed!'));
+    }
+
+    public function testThrowsNetworkTimeoutExceptionWhenRequestBodyReadTimesOut(): void
+    {
+        $handler = new StreamHandler();
+        $previous = new Psr7\Exception\TimeoutException('Unable to read stream contents: timed out');
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function () use ($previous): string {
+                throw $previous;
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+        $stats = null;
+        $exception = null;
+
+        try {
+            $handler($request, [
+                'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                    $stats = $transferStats;
+                },
+            ])->wait();
+
+            self::fail('Expected NetworkTimeoutException');
+        } catch (NetworkTimeoutException $e) {
+            $exception = $e;
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('The stream handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(NetworkException::class, $e);
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertFalse($stats->hasResponse());
+        self::assertSame($request, $stats->getRequest());
+        self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testClassifiesPostConnectSendTimeoutAsNetworkTimeout(): void
+    {
+        // A real send() ETIMEDOUT can't be triggered, so the request-body read
+        // is only a seam to feed a representative send-failure message in.
+        $handler = new StreamHandler();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function (): string {
+                throw new \RuntimeException('Send of 65536 bytes failed with errno=110 Connection timed out');
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected NetworkTimeoutException');
+        } catch (NetworkTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ConnectException::class, $e);
+        }
+    }
+
+    public function testClassifiesConnectTimeoutMessageAsConnectTimeout(): void
+    {
+        // Without the "Send of ..." marker, a connect-timeout message stays a connect timeout.
+        $handler = new StreamHandler();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function (): string {
+                throw new \RuntimeException('fopen(): Failed to open stream: Connection timed out');
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected ConnectTimeoutException');
+        } catch (ConnectTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(ConnectException::class, $e);
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+    }
+
+    public function testClassifiesPostConnectSendFailureAsNetwork(): void
+    {
+        // A non-timeout send failure (e.g. peer reset) is a network error, not a timeout.
+        $handler = new StreamHandler();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function (): string {
+                throw new \RuntimeException('Send of 65536 bytes failed with errno=104 Connection reset by peer');
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected NetworkException');
+        } catch (NetworkException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
+            self::assertNotInstanceOf(ConnectException::class, $e);
+            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+        }
+    }
+
+    public function testClassifiesConnectionResetAsNetwork(): void
+    {
+        // A post-connect reset (e.g. TLS "SSL: Connection reset by peer") is a network error.
+        $handler = new StreamHandler();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function (): string {
+                throw new \RuntimeException('SSL: Connection reset by peer');
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected NetworkException');
+        } catch (NetworkException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ConnectException::class, $e);
+            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
+        }
     }
 
     public function testRejectsHttp3(): void

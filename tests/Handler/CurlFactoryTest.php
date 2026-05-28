@@ -3156,6 +3156,48 @@ class CurlFactoryTest extends TestCase
         self::assertSame(\CURLE_WRITE_ERROR, $stats->getHandlerErrorData());
     }
 
+    public function testSinkWritePsr7TimeoutRejectsAsNetworkTimeoutWithoutResponse(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new Psr7\Exception\TimeoutException('Unable to write to stream: timed out');
+        $stats = null;
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, [
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+        $easy->sinkWriteTimeoutException = $previous;
+        $easy->errno = \CURLE_WRITE_ERROR;
+        $handler = static function (RequestInterface $request, array $options) {
+            self::fail('Did not expect timeout failure to be retried');
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
+
+            self::fail('Expected NetworkTimeoutException');
+        } catch (NetworkTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('The cURL handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(\CURLE_WRITE_ERROR, $e->getHandlerContext()['errno']);
+            self::assertTrue($e->getHandlerContext()['timed_out'] ?? false);
+            self::assertInstanceOf(NetworkException::class, $e);
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertFalse($stats->hasResponse());
+        self::assertNull($stats->getResponse());
+        self::assertSame($request, $stats->getRequest());
+        self::assertSame(\CURLE_WRITE_ERROR, $stats->getHandlerErrorData());
+    }
+
     public function testInvokesOnStatsOnSuccess(): void
     {
         Server::flush();

@@ -814,10 +814,9 @@ final class CurlFactory implements CurlFactoryInterface
 
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor(
-                new RequestException(
+                new NetworkTimeoutException(
                     'The cURL handler timed out while transferring the response body',
                     $easy->request,
-                    0,
                     $easy->sinkWriteTimeoutException,
                     $ctx
                 )
