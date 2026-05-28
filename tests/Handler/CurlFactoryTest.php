@@ -2474,23 +2474,23 @@ class CurlFactoryTest extends TestCase
 
     public function testClassifiesConnectTimeoutErrors(): void
     {
-        self::assertTrue($this->matchesCurlConnectTimeout('Connection timed out after 5003 milliseconds'));
-        self::assertTrue($this->matchesCurlConnectTimeout('Connection timeout after 5003 ms'));
-        self::assertTrue($this->matchesCurlConnectTimeout('Connection time-out'));
-        self::assertTrue($this->matchesCurlConnectTimeout('Resolving timed out after 5000 milliseconds'));
-        self::assertTrue($this->matchesCurlConnectTimeout("Failed to resolve 'example.com' with timeout after 1000 ms"));
-        self::assertTrue($this->matchesCurlConnectTimeout('name lookup timed out'));
-        self::assertTrue($this->matchesCurlConnectTimeout('Proxy CONNECT aborted due to timeout'));
-        self::assertTrue($this->matchesCurlConnectTimeout('SSL connection timeout'));
-        self::assertFalse($this->matchesCurlConnectTimeout('Operation timed out after 30000 milliseconds with 0 bytes received'));
-        self::assertFalse($this->matchesCurlConnectTimeout('Operation too slow. Less than 10 bytes/sec transferred the last 30 seconds'));
-        self::assertFalse($this->matchesCurlConnectTimeout('Timeout was reached'));
-        self::assertFalse($this->matchesCurlConnectTimeout(''));
+        self::assertTrue($this->matchesCurlConnectTimeoutError('Connection timed out after 5003 milliseconds'));
+        self::assertTrue($this->matchesCurlConnectTimeoutError('Connection timeout after 5003 ms'));
+        self::assertTrue($this->matchesCurlConnectTimeoutError('Connection time-out'));
+        self::assertTrue($this->matchesCurlConnectTimeoutError('Resolving timed out after 5000 milliseconds'));
+        self::assertTrue($this->matchesCurlConnectTimeoutError("Failed to resolve 'example.com' with timeout after 1000 ms"));
+        self::assertTrue($this->matchesCurlConnectTimeoutError('name lookup timed out'));
+        self::assertTrue($this->matchesCurlConnectTimeoutError('Proxy CONNECT aborted due to timeout'));
+        self::assertTrue($this->matchesCurlConnectTimeoutError('SSL connection timeout'));
+        self::assertFalse($this->matchesCurlConnectTimeoutError('Operation timed out after 30000 milliseconds with 0 bytes received'));
+        self::assertFalse($this->matchesCurlConnectTimeoutError('Operation too slow. Less than 10 bytes/sec transferred the last 30 seconds'));
+        self::assertFalse($this->matchesCurlConnectTimeoutError('Timeout was reached'));
+        self::assertFalse($this->matchesCurlConnectTimeoutError(''));
     }
 
-    private function matchesCurlConnectTimeout(string $error): bool
+    private function matchesCurlConnectTimeoutError(string $error): bool
     {
-        $reflection = new \ReflectionMethod(CurlFactory::class, 'isConnectTimeout');
+        $reflection = new \ReflectionMethod(CurlFactory::class, 'isConnectTimeoutError');
 
         return $reflection->invoke(null, $error) === true;
     }
