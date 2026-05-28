@@ -1493,14 +1493,35 @@ final class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_SSLKEY] = $sslKey;
         }
 
-        if (isset($options['progress'])) {
-            $progress = $options['progress'];
-            if (!\is_callable($progress)) {
-                throw new \InvalidArgumentException('progress client option must be callable');
-            }
-            /** @var callable(int, int, int, int): mixed $progress */
+        $progress = $options['progress'] ?? null;
+        if ($progress !== null && !\is_callable($progress)) {
+            throw new \InvalidArgumentException('progress client option must be callable');
+        }
+
+        // The streaming read callback (set by applyBody) aborts the upload on a
+        // body read timeout by returning CURL_READFUNC_ABORT, but PHP ignores
+        // that integer return before 8.1.17/8.2.4. Install a progress callback
+        // so older PHP still has a cross-version abort path; the failure is
+        // classified from `$easy->bodyReadTimeoutException` regardless of errno
+        // (a truncated request may reach the server first on those versions).
+        $abortsOnBodyReadTimeout = isset($conf[\CURLOPT_READFUNCTION]);
+
+        if ($progress !== null || $abortsOnBodyReadTimeout) {
+            /** @var (callable(int, int, int, int): mixed)|null $progress */
             $conf[\CURLOPT_NOPROGRESS] = false;
             $progressCallback = static function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($easy, $progress): int {
+                // Abort the transfer when the request body read timed out (the
+                // cross-version abort path, since older PHP ignores the read
+                // callback's return). progressAborted is left unset so the
+                // failure is classified from `$easy->bodyReadTimeoutException`.
+                if ($easy->bodyReadTimeoutException !== null) {
+                    return 1;
+                }
+
+                if ($progress === null) {
+                    return 0;
+                }
+
                 try {
                     if ($progress((int) $downloadSize, (int) $downloaded, (int) $uploadSize, (int) $uploaded)) {
                         $easy->progressAborted = true;

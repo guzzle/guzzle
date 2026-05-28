@@ -2940,6 +2940,95 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testStreamingUploadInstallsProgressAbortForBodyReadTimeout(): void
+    {
+        $factory = new CurlFactory(3);
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+        $easy = $factory->create($request, []);
+
+        try {
+            // A progress callback is installed for streaming uploads even when
+            // the "progress" option is absent, so the upload can be aborted on a
+            // body read timeout on PHP versions where the read callback's abort
+            // return value is ignored (< 8.1.17 / < 8.2.4).
+            self::assertArrayHasKey(self::progressCallbackOption(), $_SERVER['_curl']);
+            $progress = $_SERVER['_curl'][self::progressCallbackOption()];
+
+            self::assertSame(0, $progress($easy->handle, 0, 0, 0, 0));
+
+            $easy->bodyReadTimeoutException = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
+            self::assertSame(1, $progress($easy->handle, 0, 0, 0, 0));
+            self::assertFalse($easy->progressAborted);
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testStreamingRequestBodyReadTimeoutAbortsTransferThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [], 'hi'),
+        ]);
+        $handler = $handlerFactory();
+        $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
+        $readCalled = false;
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'read' => static function (int $length) use (&$readCalled, $previous): string {
+                $readCalled = true;
+
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected the upload read timeout to reject the transfer');
+        } catch (NetworkTimeoutException $e) {
+            // On PHP >= 8.1.17 / 8.2.4 the read callback aborts synchronously
+            // (and on older PHP the progress callback may abort before a
+            // response arrives), so no usable response is received.
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+        } catch (ResponseTimeoutException $e) {
+            // PHP versions without read-callback abort support (< 8.1.17, and
+            // 8.2.0-8.2.3 since the fix shipped in 8.1.17 and 8.2.4) ignore the
+            // read callback's abort return, so the transfer is aborted by the
+            // progress callback, possibly after an early response is observed.
+            // It is still a timeout, never a silent success.
+            self::assertTrue(\PHP_VERSION_ID < 80117 || (\PHP_VERSION_ID >= 80200 && \PHP_VERSION_ID < 80204));
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+
+        self::assertTrue($readCalled);
+    }
+
     public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsNetworkTimeoutWithoutResponse(): void
     {
         $factory = new CurlFactory(3);

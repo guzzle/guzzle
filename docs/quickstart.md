@@ -87,7 +87,8 @@ You can find out more about client middleware in [Handlers and Middleware](handl
 
 ### Async Requests
 
-You can send asynchronous requests using the named async shortcut methods provided by a client:
+You can send asynchronous requests using the named async shortcut methods
+provided by a client:
 
 ```php
 $promise = $client->getAsync('http://httpbin.org/get');
@@ -118,17 +119,16 @@ The promise returned by these methods is a `GuzzleHttp\Promise\PromiseInterface<
 
 ```php
 use Psr\Http\Message\ResponseInterface;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TransferException;
 
 $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
 $promise->then(
     function (ResponseInterface $res) {
-        echo $res->getStatusCode() . "\n";
+        echo $res->getStatusCode();
     },
     function ($reason) {
-        if ($reason instanceof RequestException) {
-            echo $reason->getMessage() . "\n";
-            echo $reason->getRequest()->getMethod();
+        if ($reason instanceof TransferException) {
+            echo $reason->getMessage();
         }
     }
 );
@@ -486,8 +486,8 @@ If Guzzle has parsed response headers into a response object, later transfer
 failures use `ResponseException`. This is the only branch that exposes
 `getResponse()`, and it includes `ResponseTimeoutException` for response
 timeouts. With Guzzle request methods, middleware can also turn completed
-responses into exceptions: `http_errors` turns 400 level responses into
-`ClientException` and 500 level responses into `ServerException`, and redirect
+responses into exceptions: `http_errors` turns 4xx responses into
+`ClientException` and 5xx responses into `ServerException`, and redirect
 middleware can throw `TooManyRedirectsException`. `Client::sendRequest()`
 follows PSR-18 and returns redirect, 4xx, and 5xx responses normally instead.
 
