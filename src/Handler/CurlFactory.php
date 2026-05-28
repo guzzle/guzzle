@@ -14,6 +14,7 @@ use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
+use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
@@ -580,7 +581,7 @@ final class CurlFactory implements CurlFactoryInterface
         $onStats = $easy->options['on_stats'] ?? null;
         $stats = $onStats !== null ? self::createStats($easy) : null;
 
-        if (!$easy->response || $easy->errno) {
+        if (!$easy->response || $easy->errno || $easy->sinkWriteTimeoutException) {
             return self::finishError($handler, $easy, $factory, $stats, $onStats);
         }
 
@@ -642,7 +643,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         // Retry when nothing is present or when curl failed to rewind.
-        if (empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
+        if ($easy->sinkWriteTimeoutException === null && empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
             return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
@@ -733,6 +734,34 @@ final class CurlFactory implements CurlFactoryInterface
                     $easy->request,
                     0,
                     $easy->progressException,
+                    $ctx
+                )
+            );
+        }
+
+        if ($easy->sinkWriteTimeoutException) {
+            $ctx['timed_out'] = true;
+
+            if ($easy->response) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor(
+                    new ResponseTimeoutException(
+                        'The cURL handler timed out while transferring the response body',
+                        $easy->request,
+                        $easy->response,
+                        $easy->sinkWriteTimeoutException,
+                        $ctx
+                    )
+                );
+            }
+
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new RequestException(
+                    'The cURL handler timed out while transferring the response body',
+                    $easy->request,
+                    0,
+                    $easy->sinkWriteTimeoutException,
                     $ctx
                 )
             );
@@ -1254,8 +1283,14 @@ final class CurlFactory implements CurlFactoryInterface
             $sink = new LazyOpenStream($sink, 'w+');
         }
         $easy->sink = $sink;
-        $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, string $write) use ($sink): int {
-            return $sink->write($write);
+        $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, string $write) use ($easy, $sink): int {
+            try {
+                return $sink->write($write);
+            } catch (TimeoutException $e) {
+                $easy->sinkWriteTimeoutException = $e;
+
+                return 0;
+            }
         };
 
         $timeoutRequiresNoSignal = false;

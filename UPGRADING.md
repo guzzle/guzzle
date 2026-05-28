@@ -178,6 +178,12 @@ not `ConnectException`. `ResponseTimeoutException` is thrown for timeouts after
 response headers are received; it extends `ResponseException` and exposes the
 response.
 
+The built-in cURL and stream handlers classify a
+`GuzzleHttp\Psr7\Exception\TimeoutException` raised while writing a response
+body to a configured sink as `ResponseTimeoutException`, because response headers
+have already been received. Inspect `getPrevious()` for the original PSR-7
+timeout exception.
+
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
 are still pending, including delayed transfers. Existing Guzzle 7.x code should

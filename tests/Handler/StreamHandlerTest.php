@@ -1166,6 +1166,51 @@ class StreamHandlerTest extends TestCase
         self::assertSame('abc 123', (string) $response->getBody());
     }
 
+    public function testThrowsResponseTimeoutExceptionWhenSinkWriteTimesOut(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $stats = null;
+        $exception = null;
+        $writeCalled = false;
+        $previous = new Psr7\Exception\TimeoutException('Unable to write to stream: timed out');
+        $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data) use (&$writeCalled, $previous): int {
+                $writeCalled = true;
+
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $handler(
+                $request,
+                [
+                    'sink' => $sink,
+                    'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                        $stats = $transferStats;
+                    },
+                ]
+            )->wait();
+
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            $exception = $e;
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(['timed_out' => true], $e->getHandlerContext());
+        }
+
+        self::assertTrue($writeCalled);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($exception->getResponse(), $stats->getResponse());
+        self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
     public function testInvokesOnStatsOnSuccess(): void
     {
         Server::flush();

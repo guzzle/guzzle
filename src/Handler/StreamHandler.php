@@ -14,7 +14,7 @@ use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\Exception\TimeoutException as Psr7TimeoutException;
+use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
@@ -363,7 +363,7 @@ final class StreamHandler
                 $sink,
                 (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
             );
-        } catch (Psr7TimeoutException $e) {
+        } catch (TimeoutException $e) {
             throw new ResponseTimeoutException(
                 'The stream handler timed out while transferring the response body',
                 $request,
