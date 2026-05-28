@@ -168,14 +168,15 @@ with `instanceof ResponseException`, before calling `getResponse()`. If you
 instantiate `RequestException` directly, its third constructor argument is now
 the exception code, followed by the previous exception and handler context.
 
-Timeout exception classes are now split by phase. `ConnectTimeoutException` is
-thrown for connect timeouts (DNS resolution, TCP connect, proxy CONNECT, or TLS
-handshake). It extends `ConnectException`, so code that catches
-`ConnectException` will also catch connect timeouts. `NetworkTimeoutException`
-is thrown for other timeouts before response headers are received; it extends
-`NetworkException` but not `ConnectException`. `ResponseTimeoutException` is
-thrown for timeouts after response headers are received; it extends
-`ResponseException` and exposes the response.
+Timeout exception classes are now split by the phase the handler can determine.
+`ConnectTimeoutException` is thrown for detected connect timeouts (DNS
+resolution, TCP connect, proxy CONNECT, or TLS handshake). It extends
+`ConnectException`, so code that catches `ConnectException` will also catch
+connect timeouts. `NetworkTimeoutException` is thrown for other detected
+timeouts before response headers are received; it extends `NetworkException` but
+not `ConnectException`. `ResponseTimeoutException` is thrown for timeouts after
+response headers are received; it extends `ResponseException` and exposes the
+response.
 
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that

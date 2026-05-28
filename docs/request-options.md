@@ -1310,13 +1310,13 @@ Constant
 $client->request('GET', '/delay/5', ['timeout' => 3.14]);
 ```
 
-Built-in handlers split timeout exceptions by where the timeout is observed.
-Connect timeouts throw `GuzzleHttp\Exception\ConnectTimeoutException`, which
-extends `ConnectException`. Other timeouts before a response is received throw
+Built-in handlers use the most specific timeout exception they can determine
+from the underlying transfer. Connect timeouts throw
+`GuzzleHttp\Exception\ConnectTimeoutException`, which extends
+`ConnectException`. Other timeouts before a response is received throw
 `GuzzleHttp\Exception\NetworkTimeoutException`. Timeouts after a response is
 received throw `GuzzleHttp\Exception\ResponseTimeoutException`, which extends
-`GuzzleHttp\Exception\ResponseException`. Timeout subtype selection depends on
-the signal available from the underlying handler.
+`GuzzleHttp\Exception\ResponseException`.
 
 ## version
 
