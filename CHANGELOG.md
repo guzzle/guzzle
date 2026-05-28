@@ -11,7 +11,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add generic and structured PHPDoc annotations to client request/config option, async promise, handler, middleware, pool, and mock handler APIs
 - Add CIDR notation support for IP no-proxy rules
 - Add `ConnectTimeoutException` for connect-phase timeouts, extending `ConnectException`
-- Add `TimeoutException` marker interface implemented by all timeout exception classes
 - Add `NetworkTimeoutException` and `ResponseTimeoutException`
 - Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
 - Add explicit `close()` lifecycle methods to the built-in cURL handlers and concrete cURL factory
