@@ -73,6 +73,11 @@ final class EasyHandle
     public ?TimeoutException $sinkWriteTimeoutException = null;
 
     /**
+     * @var TimeoutException|null Exception during request body read timeout.
+     */
+    public ?TimeoutException $bodyReadTimeoutException = null;
+
+    /**
      * Attach a response to the easy handle based on the received headers.
      *
      * @throws \RuntimeException if no headers have been received or the first

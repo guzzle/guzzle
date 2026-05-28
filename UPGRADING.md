@@ -184,6 +184,13 @@ body to a configured sink as `ResponseTimeoutException`, because response header
 have already been received. Inspect `getPrevious()` for the original PSR-7
 timeout exception.
 
+The built-in cURL handlers classify a
+`GuzzleHttp\Psr7\Exception\TimeoutException` raised while reading the request
+body during upload as `NetworkTimeoutException` when no response has been
+received. If an early response object is available, the failure is classified as
+`ResponseTimeoutException`. Inspect `getPrevious()` for the original PSR-7
+timeout exception.
+
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
 are still pending, including delayed transfers. Existing Guzzle 7.x code should

@@ -2909,6 +2909,106 @@ class CurlFactoryTest extends TestCase
         self::assertSame(\CURLE_WRITE_ERROR, $stats->getHandlerErrorData());
     }
 
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsNetworkTimeoutThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [], 'abc'),
+        ]);
+        $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
+        $readCalled = false;
+        $stats = null;
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'read' => static function (int $length) use (&$readCalled, $previous): string {
+                $readCalled = true;
+
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+        $handler = $handlerFactory();
+
+        try {
+            $handler($request, [
+                'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                    $stats = $transferStats;
+                },
+            ])->wait();
+
+            self::fail('Expected NetworkTimeoutException');
+        } catch (NetworkTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
+            self::assertTrue($e->getHandlerContext()['timed_out'] ?? false);
+            self::assertInstanceOf(NetworkException::class, $e);
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+
+        self::assertTrue($readCalled);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertFalse($stats->hasResponse());
+        self::assertNull($stats->getResponse());
+        self::assertSame($request, $stats->getRequest());
+        self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $stats->getHandlerErrorData());
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testStringRequestBodyReadPsr7TimeoutRejectsAsNetworkTimeoutThroughCurlHandlers(callable $handlerFactory): void
+    {
+        $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
+        $castCalled = false;
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            '__toString' => static function () use (&$castCalled, $previous): string {
+                $castCalled = true;
+
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+        $handler = $handlerFactory();
+
+        try {
+            $handler($request, [
+                'curl' => ['body_as_string' => true],
+            ])->wait();
+
+            self::fail('Expected NetworkTimeoutException');
+        } catch (NetworkTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame([], $e->getHandlerContext());
+            self::assertInstanceOf(NetworkException::class, $e);
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+        } finally {
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+
+        self::assertTrue($castCalled);
+    }
+
     public function testInvokesOnStatsOnSuccess(): void
     {
         Server::flush();

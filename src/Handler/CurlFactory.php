@@ -68,6 +68,11 @@ final class CurlFactory implements CurlFactoryInterface
     ];
 
     /**
+     * libcurl's CURL_READFUNC_ABORT value. PHP exposes CURL_READFUNC_PAUSE but not CURL_READFUNC_ABORT.
+     */
+    private const CURL_READFUNC_ABORT = 0x10000000;
+
+    /**
      * @var resource[]|\CurlHandle[]
      */
     private array $handles = [];
@@ -581,7 +586,7 @@ final class CurlFactory implements CurlFactoryInterface
         $onStats = $easy->options['on_stats'] ?? null;
         $stats = $onStats !== null ? self::createStats($easy) : null;
 
-        if (!$easy->response || $easy->errno || $easy->sinkWriteTimeoutException) {
+        if (!$easy->response || $easy->errno || $easy->sinkWriteTimeoutException || $easy->bodyReadTimeoutException) {
             return self::finishError($handler, $easy, $factory, $stats, $onStats);
         }
 
@@ -643,7 +648,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         // Retry when nothing is present or when curl failed to rewind.
-        if ($easy->sinkWriteTimeoutException === null && empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
+        if ($easy->sinkWriteTimeoutException === null && $easy->bodyReadTimeoutException === null && empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
             return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
@@ -762,6 +767,33 @@ final class CurlFactory implements CurlFactoryInterface
                     $easy->request,
                     0,
                     $easy->sinkWriteTimeoutException,
+                    $ctx
+                )
+            );
+        }
+
+        if ($easy->bodyReadTimeoutException) {
+            $ctx['timed_out'] = true;
+
+            if ($easy->response) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor(
+                    new ResponseTimeoutException(
+                        'The cURL handler timed out while transferring the request body',
+                        $easy->request,
+                        $easy->response,
+                        $easy->bodyReadTimeoutException,
+                        $ctx
+                    )
+                );
+            }
+
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new NetworkTimeoutException(
+                    'The cURL handler timed out while transferring the request body',
+                    $easy->request,
+                    $easy->bodyReadTimeoutException,
                     $ctx
                 )
             );
@@ -1098,7 +1130,7 @@ final class CurlFactory implements CurlFactoryInterface
         $size = $body->getSize();
 
         if ($size === null || $size > 0) {
-            $this->applyBody($easy->request, $easy->options, $conf);
+            $this->applyBody($easy, $conf);
 
             return;
         }
@@ -1120,8 +1152,10 @@ final class CurlFactory implements CurlFactoryInterface
         }
     }
 
-    private function applyBody(RequestInterface $request, array $options, array &$conf): void
+    private function applyBody(EasyHandle $easy, array &$conf): void
     {
+        $request = $easy->request;
+        $options = $easy->options;
         $size = $request->hasHeader('Content-Length')
             ? (int) $request->getHeaderLine('Content-Length')
             : null;
@@ -1143,8 +1177,17 @@ final class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, int $length) use ($body): string {
-                return $body->read($length);
+            /**
+             * @return int|string
+             */
+            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, int $length) use ($easy, $body) {
+                try {
+                    return $body->read($length);
+                } catch (TimeoutException $e) {
+                    $easy->bodyReadTimeoutException = $e;
+
+                    return self::CURL_READFUNC_ABORT;
+                }
             };
         }
 
