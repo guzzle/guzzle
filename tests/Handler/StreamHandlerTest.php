@@ -107,6 +107,7 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): SSL: Handshake timed out'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Connection timed out'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Operation timed out'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'stream_socket_client(): connect() failed: Operation timed out'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectTimeoutError', 'HTTP request failed!'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectionError', 'fopen(): SSL: Handshake timed out'));
     }

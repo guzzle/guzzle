@@ -773,27 +773,23 @@ final class CurlFactory implements CurlFactoryInterface
     {
         static $connectionErrors;
         if ($connectionErrors === null) {
+            // PHP does not expose every CURLE_* name that supported libcurl
+            // versions can return, so keep the known numeric values here too.
             $connectionErrors = [
                 \CURLE_COULDNT_RESOLVE_HOST => true,
                 \CURLE_COULDNT_RESOLVE_PROXY => true,
                 \CURLE_COULDNT_CONNECT => true,
                 \CURLE_SSL_CONNECT_ERROR => true,
+                51 => true,  // CURLE_PEER_FAILED_VERIFICATION before libcurl 7.62.0
+                60 => true,  // CURLE_SSL_CACERT / modern CURLE_PEER_FAILED_VERIFICATION
+                83 => true,  // CURLE_SSL_ISSUER_ERROR
+                90 => true,  // CURLE_SSL_PINNEDPUBKEYNOTMATCH
+                91 => true,  // CURLE_SSL_INVALIDCERTSTATUS
+                96 => true,  // CURLE_QUIC_CONNECT_ERROR
+                97 => true,  // CURLE_PROXY
+                98 => true,  // CURLE_SSL_CLIENTCERT
+                101 => true, // CURLE_ECH_REQUIRED
             ];
-
-            foreach ([
-                'CURLE_PROXY',
-                'CURLE_QUIC_CONNECT_ERROR',
-                'CURLE_PEER_FAILED_VERIFICATION',
-                'CURLE_SSL_CACERT',
-                'CURLE_SSL_PEER_CERTIFICATE',
-                'CURLE_SSL_PINNEDPUBKEYNOTMATCH',
-                'CURLE_SSL_INVALIDCERTSTATUS',
-                'CURLE_SSL_CLIENTCERT',
-            ] as $constant) {
-                if (\defined($constant)) {
-                    $connectionErrors[(int) \constant($constant)] = true;
-                }
-            }
         }
 
         return isset($connectionErrors[$errno]);
@@ -804,20 +800,13 @@ final class CurlFactory implements CurlFactoryInterface
         static $networkErrors;
         if ($networkErrors === null) {
             $networkErrors = [
+                16 => true, // CURLE_HTTP2
                 \CURLE_GOT_NOTHING => true,
                 \CURLE_SEND_ERROR => true,
                 \CURLE_RECV_ERROR => true,
+                92 => true, // CURLE_HTTP2_STREAM
+                95 => true, // CURLE_HTTP3
             ];
-
-            foreach ([
-                'CURLE_HTTP2',
-                'CURLE_HTTP2_STREAM',
-                'CURLE_HTTP3',
-            ] as $constant) {
-                if (\defined($constant)) {
-                    $networkErrors[(int) \constant($constant)] = true;
-                }
-            }
         }
 
         return isset($networkErrors[$errno]);
@@ -825,8 +814,26 @@ final class CurlFactory implements CurlFactoryInterface
 
     private static function isConnectTimeout(string $error): bool
     {
-        return \stripos($error, 'Connection timed out') !== false
-            || \stripos($error, 'Resolving timed out') !== false;
+        if ('' === $error) {
+            return false;
+        }
+
+        foreach ([
+            'Connection timed out',
+            'Connection timeout',
+            'Connection time-out',
+            'Resolving timed out',
+            'name lookup timed out',
+            'Proxy CONNECT aborted due to timeout',
+            'SSL connection timeout',
+        ] as $connectTimeoutError) {
+            if (\stripos($error, $connectTimeoutError) !== false) {
+                return true;
+            }
+        }
+
+        return \stripos($error, 'Failed to resolve') !== false
+            && \stripos($error, 'timeout') !== false;
     }
 
     private static function sanitizeCurlError(string $error, UriInterface $uri): string

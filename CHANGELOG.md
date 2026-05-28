@@ -52,11 +52,11 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Validate built-in handler timeout options before applying them
 - Classify empty, malformed, or handler-unsupported request protocol versions as request exceptions
 - Classify additional cURL transport failures without a response as `NetworkException`
-- Classify stream connection failures as `ConnectException` and identifiable no-response timeouts as `ConnectTimeoutException`
+- Classify stream connect failures as `ConnectException`, with connect timeouts as `ConnectTimeoutException`
 - Classify generic response-aware request failures as `ResponseException`
-- Throw `ConnectTimeoutException` for reliably detected connect-phase timeouts
-- Throw `NetworkTimeoutException` for reliably detected post-connect pre-response transfer timeouts
-- Throw `ResponseTimeoutException` for reliably detected response-aware transfer timeouts
+- Throw `ConnectTimeoutException` for connect timeouts
+- Throw `NetworkTimeoutException` for cURL no-response timeout errors
+- Throw `ResponseTimeoutException` for response-aware transfer timeouts
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers

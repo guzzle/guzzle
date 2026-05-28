@@ -2267,25 +2267,19 @@ class CurlFactoryTest extends TestCase
 
     public static function curlConnectionErrorProvider(): iterable
     {
-        yield 'resolve host' => [\CURLE_COULDNT_RESOLVE_HOST];
-        yield 'resolve proxy' => [\CURLE_COULDNT_RESOLVE_PROXY];
-        yield 'connect' => [\CURLE_COULDNT_CONNECT];
-        yield 'ssl connect' => [\CURLE_SSL_CONNECT_ERROR];
-
-        foreach ([
-            'CURLE_PROXY',
-            'CURLE_QUIC_CONNECT_ERROR',
-            'CURLE_PEER_FAILED_VERIFICATION',
-            'CURLE_SSL_CACERT',
-            'CURLE_SSL_PEER_CERTIFICATE',
-            'CURLE_SSL_PINNEDPUBKEYNOTMATCH',
-            'CURLE_SSL_INVALIDCERTSTATUS',
-            'CURLE_SSL_CLIENTCERT',
-        ] as $constant) {
-            if (\defined($constant)) {
-                yield $constant => [(int) \constant($constant)];
-            }
-        }
+        yield 'resolve proxy' => [5];
+        yield 'resolve host' => [6];
+        yield 'connect' => [7];
+        yield 'ssl connect' => [35];
+        yield 'old peer verification' => [51];
+        yield 'ssl cacert / peer verification' => [60];
+        yield 'ssl issuer' => [83];
+        yield 'ssl pinned public key mismatch' => [90];
+        yield 'ssl invalid cert status' => [91];
+        yield 'quic connect' => [96];
+        yield 'proxy handshake' => [97];
+        yield 'ssl client cert' => [98];
+        yield 'ech required' => [101];
     }
 
     /**
@@ -2315,19 +2309,12 @@ class CurlFactoryTest extends TestCase
 
     public static function curlNetworkErrorWithoutResponseProvider(): iterable
     {
-        yield 'got nothing' => [\CURLE_GOT_NOTHING];
-        yield 'send' => [\CURLE_SEND_ERROR];
-        yield 'receive' => [\CURLE_RECV_ERROR];
-
-        foreach ([
-            'CURLE_HTTP2',
-            'CURLE_HTTP2_STREAM',
-            'CURLE_HTTP3',
-        ] as $constant) {
-            if (\defined($constant)) {
-                yield $constant => [(int) \constant($constant)];
-            }
-        }
+        yield 'http2 framing' => [16];
+        yield 'got nothing' => [52];
+        yield 'send' => [55];
+        yield 'receive' => [56];
+        yield 'http2 stream' => [92];
+        yield 'http3' => [95];
     }
 
     /**
@@ -2432,11 +2419,72 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testCreatesConnectTimeoutExceptionForConnectTimeout(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, []);
+        $easy->errno = \CURLE_OPERATION_TIMEOUTED;
+        $easy->response = null;
+        $promise = $this->createCurlRejection($easy, [
+            'errno' => \CURLE_OPERATION_TIMEOUTED,
+            'error' => 'Connection timeout after 5003 ms',
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected ConnectTimeoutException');
+        } catch (ConnectTimeoutException $e) {
+            self::assertInstanceOf(ConnectException::class, $e);
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertInstanceOf(TimeoutException::class, $e);
+            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
+            self::assertSame('Connection timeout after 5003 ms', $e->getHandlerContext()['error']);
+        }
+    }
+
+    public function testCreatesNetworkTimeoutExceptionForGenericCurlTimeoutMessage(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, []);
+        $easy->errno = \CURLE_OPERATION_TIMEOUTED;
+        $easy->response = null;
+        $promise = $this->createCurlRejection($easy, [
+            'errno' => \CURLE_OPERATION_TIMEOUTED,
+            'error' => 'Timeout was reached',
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected NetworkTimeoutException');
+        } catch (ConnectTimeoutException $e) {
+            self::fail('Expected NetworkTimeoutException, not ConnectTimeoutException');
+        } catch (NetworkTimeoutException $e) {
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertInstanceOf(TimeoutException::class, $e);
+            self::assertNotInstanceOf(ConnectException::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
+            self::assertSame('Timeout was reached', $e->getHandlerContext()['error']);
+        }
+    }
+
     public function testClassifiesConnectTimeoutErrors(): void
     {
         self::assertTrue($this->matchesCurlConnectTimeout('Connection timed out after 5003 milliseconds'));
+        self::assertTrue($this->matchesCurlConnectTimeout('Connection timeout after 5003 ms'));
+        self::assertTrue($this->matchesCurlConnectTimeout('Connection time-out'));
         self::assertTrue($this->matchesCurlConnectTimeout('Resolving timed out after 5000 milliseconds'));
+        self::assertTrue($this->matchesCurlConnectTimeout("Failed to resolve 'example.com' with timeout after 1000 ms"));
+        self::assertTrue($this->matchesCurlConnectTimeout('name lookup timed out'));
+        self::assertTrue($this->matchesCurlConnectTimeout('Proxy CONNECT aborted due to timeout'));
+        self::assertTrue($this->matchesCurlConnectTimeout('SSL connection timeout'));
         self::assertFalse($this->matchesCurlConnectTimeout('Operation timed out after 30000 milliseconds with 0 bytes received'));
+        self::assertFalse($this->matchesCurlConnectTimeout('Operation too slow. Less than 10 bytes/sec transferred the last 30 seconds'));
+        self::assertFalse($this->matchesCurlConnectTimeout('Timeout was reached'));
         self::assertFalse($this->matchesCurlConnectTimeout(''));
     }
 
@@ -2474,6 +2522,41 @@ class CurlFactoryTest extends TestCase
             self::assertSame($response, $e->getResponse());
             self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
         }
+    }
+
+    public function testResponseTimeoutWinsOverConnectTimeoutLookingCurlMessage(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $response = new Psr7\Response(200);
+        $easy = $factory->create($request, []);
+        $easy->errno = \CURLE_OPERATION_TIMEOUTED;
+        $easy->response = $response;
+        $promise = $this->createCurlRejection($easy, [
+            'errno' => \CURLE_OPERATION_TIMEOUTED,
+            'error' => 'Connection timed out after 5003 milliseconds',
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            self::assertInstanceOf(ResponseException::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertInstanceOf(TimeoutException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
+            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
+            self::assertSame('Connection timed out after 5003 milliseconds', $e->getHandlerContext()['error']);
+        }
+    }
+
+    private function createCurlRejection(EasyHandle $easy, array $ctx)
+    {
+        $reflection = new \ReflectionMethod(CurlFactory::class, 'createRejection');
+
+        return $reflection->invoke(null, $easy, $ctx);
     }
 
     public function testAddsTimeouts(): void

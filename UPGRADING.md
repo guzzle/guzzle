@@ -88,9 +88,10 @@ intentionally reclassify specific failures. Broad `TransferException` and
 `GuzzleException` catch blocks still catch all Guzzle transfer failures, and
 `RequestException` still catches response-aware and other non-network request
 failures. More specific catch blocks need auditing: Guzzle 8.0 splits timeout
-failures by whether response headers were received, and the built-in cURL and
-stream handlers classify more no-response transport failures as network
-failures. This section covers upgrading from Guzzle 7.x to Guzzle 8.0. The
+failures into connect-phase, no-response network, and response-aware timeout
+classes, and the built-in cURL and stream handlers classify more no-response
+transport failures as network failures. This section covers upgrading from
+Guzzle 7.x to Guzzle 8.0. The
 `ConnectException` inheritance change happened earlier, in Guzzle 7.0.0, when it
 moved out from under `RequestException`; see the 6.0 to 7.0 notes for that
 migration. The hierarchy changes are easiest to compare in the three trees
@@ -167,17 +168,16 @@ with `instanceof ResponseException`, before calling `getResponse()`. If you
 instantiate `RequestException` directly, its third constructor argument is now
 the exception code, followed by the previous exception and handler context.
 
-Timeouts are now split by phase, and all timeout exceptions implement the
-`TimeoutException` marker interface. `ConnectTimeoutException` is thrown when
-a built-in handler identifies a connect-phase timeout (DNS resolution, TCP
-connect, or TLS handshake). It extends `ConnectException`, so code that catches
+Timeout exception classes are now split by phase, and all timeout exceptions
+implement the `TimeoutException` marker interface. `ConnectTimeoutException` is
+thrown for connect timeouts (DNS resolution, TCP connect, proxy CONNECT, or TLS
+handshake). It extends `ConnectException`, so code that catches
 `ConnectException` will also catch connect timeouts. `NetworkTimeoutException`
-is thrown when a timeout occurs after connection is established but before
-response headers are received; it extends `NetworkException` but not
-`ConnectException`. `ResponseTimeoutException` is thrown when a timeout occurs
-after response headers are received; it extends `ResponseException` and exposes
-the response. Catch `TimeoutException` to handle all three timeout types in a
-single branch.
+is thrown for other timeouts before response headers are received; it extends
+`NetworkException` but not `ConnectException`. `ResponseTimeoutException` is
+thrown for timeouts after response headers are received; it extends
+`ResponseException` and exposes the response. Catch `TimeoutException` before
+network or response branches to handle timeout failures in a single branch.
 
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
@@ -189,23 +189,28 @@ not reject pending promises. If you add deterministic cleanup with
 handle `HandlerClosedException` or `TransferException` for pending promises you
 may still observe.
 
-The practical catch-order migration is to handle network failures before request
-failures. If you previously caught `RequestException` as the only built-in
-handler transport failure type, add a `NetworkException` catch before it. If you
-previously caught `ConnectException` for cURL timeouts or broad transport
-failures, catch `NetworkException` instead; keep `ConnectException` only for
+The practical catch-order migration is to handle timeouts first when they need a
+single branch, then network failures before request failures. If you previously
+caught `RequestException` as the only built-in handler transport failure type,
+add a `NetworkException` catch before it. If you previously caught
+`ConnectException` for cURL timeouts or broad transport failures, catch
+`NetworkException` instead; keep `ConnectException` only for
 connection-establishment handling. Catch `ResponseException` before
 `RequestException` when you need response access, and use `TransferException`
 only when one catch block should handle every Guzzle transfer failure. After
-upgrading to Guzzle 8.0, use this catch order:
+upgrading to Guzzle 8.0, use this catch order when timeouts should be handled
+together:
 
 ```php
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\TimeoutException;
 
 try {
     $client->request('GET', $uri);
+} catch (TimeoutException $e) {
+    // Timeout failures.
 } catch (NetworkException $e) {
     // No-response network failures, including reclassified cURL and stream
     // handler failures.
@@ -221,11 +226,15 @@ try {
 The affected built-in cURL classifications are:
 
 - `CURLE_OPERATION_TIMEOUTED` now throws `ConnectTimeoutException` when the
-  cURL error message indicates a connect-phase timeout ("Connection timed out"
-  or "Resolving timed out"). Guzzle 7.x threw `ConnectException`.
+  cURL error message identifies a DNS resolution, TCP connection, proxy CONNECT,
+  or TLS connection timeout. Examples include "Resolving timed out",
+  "Connection timed out", "Connection timeout", "Connection time-out",
+  "Failed to resolve ... with timeout", "name lookup timed out",
+  "Proxy CONNECT aborted due to timeout", and "SSL connection timeout". Guzzle
+  7.x threw `ConnectException`.
 - `CURLE_OPERATION_TIMEOUTED` now throws `NetworkTimeoutException` when the
-  timeout occurs after connection is established but before response headers
-  are received. Guzzle 7.x threw `ConnectException`.
+  timeout occurs before response headers are received and the cURL error message
+  does not identify it as connect-phase. Guzzle 7.x threw `ConnectException`.
 - `CURLE_OPERATION_TIMEOUTED` now throws `ResponseTimeoutException` when a
   response object was created before the timeout. Guzzle 7.x threw
   `ConnectException`.
@@ -245,10 +254,11 @@ The existing cURL DNS, TCP connection, and TLS setup errors, including
 `CURLE_SSL_CONNECT_ERROR`, still throw `ConnectException`.
 
 The built-in stream handler now classifies DNS, TCP connect, proxy connect, and
-TLS setup failures as `ConnectException`. No-response stream timeouts that can
-be identified from PHP stream warnings are classified as
-`ConnectTimeoutException`; other malformed or unparseable response failures
-remain `RequestException`.
+TLS setup failures as `ConnectException`. Stream warnings that identify a
+connection establishment timeout, including platform TCP timeout text such as
+"Connection timed out" or "Operation timed out" and TLS handshake text such as
+"SSL: Handshake timed out", are classified as `ConnectTimeoutException`; other
+malformed or unparseable response failures remain `RequestException`.
 
 The deprecated `RequestException::wrapException()` method was removed. Create a
 `RequestException` directly for request failures where Guzzle does not expose a
