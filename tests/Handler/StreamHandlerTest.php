@@ -113,6 +113,10 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Connection timed out'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Operation timed out'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'stream_socket_client(): Unable to connect to example.test:443 (Operation timed out)'));
+        // Windows WSAETIMEDOUT (errno 10060) wording matches for both connect-phase
+        // and post-connect send timeouts; the end-to-end tests prove which classifier wins.
+        self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'));
+        self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'Send of 65536 bytes failed with errno=10060 A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectTimeoutError', 'HTTP request failed!'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectionError', 'fopen(): SSL: Handshake timed out'));
     }
@@ -256,6 +260,52 @@ class StreamHandlerTest extends TestCase
             self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
             self::assertNotInstanceOf(ConnectException::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+        }
+    }
+
+    public function testClassifiesWindowsSendTimeoutAsNetworkTimeout(): void
+    {
+        // Windows WSAETIMEDOUT (errno 10060) write timeout on an established
+        // connection. The body-read seam only feeds a representative message in.
+        $handler = new StreamHandler();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function (): string {
+                throw new \RuntimeException('Send of 65536 bytes failed with errno=10060 A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond');
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected NetworkTimeoutException');
+        } catch (NetworkTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ConnectException::class, $e);
+        }
+    }
+
+    public function testClassifiesWindowsConnectTimeoutAsConnectTimeout(): void
+    {
+        // The same WSAETIMEDOUT wording without the "Send of ..." marker is a
+        // connect-phase timeout and must be a ConnectTimeoutException.
+        $handler = new StreamHandler();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function (): string {
+                throw new \RuntimeException('A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond');
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected ConnectTimeoutException');
+        } catch (ConnectTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(ConnectException::class, $e);
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
         }
     }
 

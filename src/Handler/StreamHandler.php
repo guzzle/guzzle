@@ -50,6 +50,7 @@ final class StreamHandler
         'Connection timed out',
         'Operation timed out',
         'SSL: Handshake timed out',
+        'did not properly respond after a period of time',
     ];
 
     private const NETWORK_ERRORS = [
