@@ -709,8 +709,7 @@ final class CurlFactory implements CurlFactoryInterface
                     'An error was encountered while creating the response',
                     $easy->request,
                     0,
-                    $easy->createResponseException,
-                    $ctx
+                    $easy->createResponseException
                 )
             );
         }
@@ -725,8 +724,7 @@ final class CurlFactory implements CurlFactoryInterface
                         'An error was encountered during the on_headers event',
                         $easy->request,
                         $easy->response,
-                        $easy->onHeadersException,
-                        $ctx
+                        $easy->onHeadersException
                     )
                 );
             }
@@ -737,8 +735,7 @@ final class CurlFactory implements CurlFactoryInterface
                     'An error was encountered during the on_headers event',
                     $easy->request,
                     0,
-                    $easy->onHeadersException,
-                    $ctx
+                    $easy->onHeadersException
                 )
             );
         }
@@ -751,8 +748,7 @@ final class CurlFactory implements CurlFactoryInterface
                         'An error was encountered during the progress event',
                         $easy->request,
                         $easy->response,
-                        $easy->progressException,
-                        $ctx
+                        $easy->progressException
                     )
                 );
             }
@@ -763,8 +759,7 @@ final class CurlFactory implements CurlFactoryInterface
                     'An error was encountered during the progress event',
                     $easy->request,
                     0,
-                    $easy->progressException,
-                    $ctx
+                    $easy->progressException
                 )
             );
         }
@@ -779,8 +774,7 @@ final class CurlFactory implements CurlFactoryInterface
                         'The cURL handler timed out while transferring the request body',
                         $easy->request,
                         $easy->response,
-                        $easy->bodyReadTimeoutException,
-                        $ctx
+                        $easy->bodyReadTimeoutException
                     )
                 );
             }
@@ -790,8 +784,7 @@ final class CurlFactory implements CurlFactoryInterface
                 new NetworkTimeoutException(
                     'The cURL handler timed out while transferring the request body',
                     $easy->request,
-                    $easy->bodyReadTimeoutException,
-                    $ctx
+                    $easy->bodyReadTimeoutException
                 )
             );
         }
@@ -806,8 +799,7 @@ final class CurlFactory implements CurlFactoryInterface
                         'The cURL handler timed out while transferring the response body',
                         $easy->request,
                         $easy->response,
-                        $easy->sinkWriteTimeoutException,
-                        $ctx
+                        $easy->sinkWriteTimeoutException
                     )
                 );
             }
@@ -817,8 +809,7 @@ final class CurlFactory implements CurlFactoryInterface
                 new NetworkTimeoutException(
                     'The cURL handler timed out while transferring the response body',
                     $easy->request,
-                    $easy->sinkWriteTimeoutException,
-                    $ctx
+                    $easy->sinkWriteTimeoutException
                 )
             );
         }
@@ -831,8 +822,7 @@ final class CurlFactory implements CurlFactoryInterface
                         'The transfer was aborted by the progress callback',
                         $easy->request,
                         $easy->response,
-                        null,
-                        $ctx
+                        null
                     )
                 );
             }
@@ -843,8 +833,7 @@ final class CurlFactory implements CurlFactoryInterface
                     'The transfer was aborted by the progress callback',
                     $easy->request,
                     0,
-                    null,
-                    $ctx
+                    null
                 )
             );
         }
@@ -869,20 +858,20 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ($easy->errno === \CURLE_OPERATION_TIMEOUTED) {
             if ($easy->response !== null) {
-                $error = new ResponseTimeoutException($message, $easy->request, $easy->response, null, $ctx);
+                $error = new ResponseTimeoutException($message, $easy->request, $easy->response);
             } elseif (self::isConnectTimeoutError($ctx['error'] ?? '')) {
-                $error = new ConnectTimeoutException($message, $easy->request, null, $ctx);
+                $error = new ConnectTimeoutException($message, $easy->request);
             } else {
-                $error = new NetworkTimeoutException($message, $easy->request, null, $ctx);
+                $error = new NetworkTimeoutException($message, $easy->request);
             }
         } elseif ($easy->response) {
-            $error = new ResponseException($message, $easy->request, $easy->response, null, $ctx);
+            $error = new ResponseException($message, $easy->request, $easy->response);
         } elseif (self::isConnectionError($easy->errno)) {
-            $error = new ConnectException($message, $easy->request, null, $ctx);
+            $error = new ConnectException($message, $easy->request);
         } elseif (self::isNetworkError($easy->errno)) {
-            $error = new NetworkException($message, $easy->request, null, $ctx);
+            $error = new NetworkException($message, $easy->request);
         } else {
-            $error = new RequestException($message, $easy->request, 0, null, $ctx);
+            $error = new RequestException($message, $easy->request);
         }
 
         /** @var PromiseInterface<ResponseInterface, mixed> */

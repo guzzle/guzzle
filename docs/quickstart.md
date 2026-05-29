@@ -500,13 +500,14 @@ responses into exceptions: `http_errors` turns 4xx responses into
 middleware can throw `TooManyRedirectsException`. `Client::sendRequest()`
 follows PSR-18 and returns redirect, 4xx, and 5xx responses normally instead.
 
-If a non-network request failure occurs before Guzzle has a response object, it
-throws `RequestException`. This includes invalid or handler-unsupported HTTP
-protocol versions, malformed response data that cannot be parsed into a PSR-7
-response, and no-response transfers aborted by application code.
-`RequestException` exposes `getRequest()`, but not `getResponse()`. When
-handling these cases separately, catch no-response transport failures first,
-response-aware failures second, and other request failures last.
+All `TransferException` instances expose `getRequest()`. If a non-network
+request failure occurs before Guzzle has a response object, it throws
+`RequestException`. This includes invalid or handler-unsupported HTTP protocol
+versions, malformed response data that cannot be parsed into a PSR-7 response,
+and no-response transfers aborted by application code. `RequestException` does
+not expose `getResponse()`. When handling these cases separately, catch
+no-response transport failures first, response-aware failures second, and other
+request failures last.
 
 ```php
 use GuzzleHttp\Exception\NetworkException;

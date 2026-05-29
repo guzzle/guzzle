@@ -15,20 +15,13 @@ use Psr\Http\Message\ResponseInterface;
  */
 class RequestException extends TransferException implements RequestExceptionInterface
 {
-    private RequestInterface $request;
-
-    private array $handlerContext;
-
     public function __construct(
         string $message,
         RequestInterface $request,
         int $code = 0,
-        ?\Throwable $previous = null,
-        array $handlerContext = []
+        ?\Throwable $previous = null
     ) {
-        parent::__construct($message, $code, $previous);
-        $this->request = $request;
-        $this->handlerContext = $handlerContext;
+        parent::__construct($message, $request, $code, $previous);
     }
 
     /**
@@ -37,14 +30,12 @@ class RequestException extends TransferException implements RequestExceptionInte
      * @param RequestInterface             $request        Request sent
      * @param ResponseInterface|null       $response       Response received, if any
      * @param \Throwable|null              $previous       Previous exception
-     * @param array                        $handlerContext Optional handler context
      * @param BodySummarizerInterface|null $bodySummarizer Optional body summarizer
      */
     public static function create(
         RequestInterface $request,
         ?ResponseInterface $response = null,
         ?\Throwable $previous = null,
-        array $handlerContext = [],
         ?BodySummarizerInterface $bodySummarizer = null
     ): self {
         if (!$response) {
@@ -52,8 +43,7 @@ class RequestException extends TransferException implements RequestExceptionInte
                 'Error completing request',
                 $request,
                 0,
-                $previous,
-                $handlerContext
+                $previous
             );
         }
 
@@ -86,44 +76,13 @@ class RequestException extends TransferException implements RequestExceptionInte
         }
 
         if ($level === 4) {
-            return new ClientException($message, $request, $response, $previous, $handlerContext);
+            return new ClientException($message, $request, $response, $previous);
         }
 
         if ($level === 5) {
-            return new ServerException($message, $request, $response, $previous, $handlerContext);
+            return new ServerException($message, $request, $response, $previous);
         }
 
-        return new ResponseException($message, $request, $response, $previous, $handlerContext);
-    }
-
-    /**
-     * Get the request that caused the exception
-     */
-    public function getRequest(): RequestInterface
-    {
-        return $this->request;
-    }
-
-    /**
-     * Get contextual information about the error from the underlying handler.
-     *
-     * The contents of this array will vary depending on which handler you are
-     * using. It may also be just an empty array. Relying on this data will
-     * couple you to a specific handler, but can give more debug information
-     * when needed.
-     *
-     * @deprecated since 7.11. Use TransferStats from the "on_stats" request
-     *             option for handler context instead.
-     */
-    public function getHandlerContext(): array
-    {
-        \trigger_deprecation(
-            'guzzlehttp/guzzle',
-            '7.11',
-            '%s is deprecated and will be removed in 8.0. Use TransferStats from the "on_stats" request option for handler context instead.',
-            __METHOD__
-        );
-
-        return $this->handlerContext;
+        return new ResponseException($message, $request, $response, $previous);
     }
 }

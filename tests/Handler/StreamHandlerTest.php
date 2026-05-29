@@ -1474,7 +1474,6 @@ class StreamHandlerTest extends TestCase
             self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertSame(['timed_out' => true], $e->getHandlerContext());
         }
 
         self::assertTrue($writeCalled);
@@ -1776,7 +1775,6 @@ class StreamHandlerTest extends TestCase
             self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
-            self::assertSame(['timed_out' => true], $e->getHandlerContext());
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
@@ -1811,7 +1809,6 @@ class StreamHandlerTest extends TestCase
             self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
-            self::assertSame(['timed_out' => true], $e->getHandlerContext());
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);

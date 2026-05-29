@@ -379,7 +379,8 @@ class CurlMultiHandlerTest extends TestCase
         self::assertIsResource($sink);
 
         $handler = new CurlMultiHandler();
-        $promise = $handler(new Request('GET', Server::$url), [
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
             'delay' => 10000,
             'sink' => $sink,
         ]);
@@ -534,7 +535,8 @@ class CurlMultiHandlerTest extends TestCase
         $progressCalls = 0;
         $closed = false;
 
-        $promise = $handler(new Request('GET', Server::$url), [
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
             'timeout' => 5,
             'progress' => static function (
                 $downloadSize,
@@ -571,6 +573,7 @@ class CurlMultiHandlerTest extends TestCase
                 self::fail('Expected HandlerClosedException.');
             } catch (HandlerClosedException $e) {
                 self::assertSame('The cURL multi handler was closed before the transfer completed.', $e->getMessage());
+                self::assertSame($request, $e->getRequest());
             }
 
             try {
@@ -596,7 +599,9 @@ class CurlMultiHandlerTest extends TestCase
         $progressCalls = 0;
         $closed = false;
 
-        $activePromise = $handler(new Request('GET', Server::$url), [
+        $activeRequest = new Request('GET', Server::$url);
+        $delayedRequest = new Request('GET', Server::$url);
+        $activePromise = $handler($activeRequest, [
             'timeout' => 5,
             'progress' => static function (
                 $downloadSize,
@@ -613,7 +618,7 @@ class CurlMultiHandlerTest extends TestCase
             },
         ]);
 
-        $delayedPromise = $handler(new Request('GET', Server::$url), [
+        $delayedPromise = $handler($delayedRequest, [
             'delay' => 10000,
         ]);
 
@@ -633,12 +638,13 @@ class CurlMultiHandlerTest extends TestCase
             self::assertTrue(P\Is::rejected($activePromise));
             self::assertTrue(P\Is::rejected($delayedPromise));
 
-            foreach ([$activePromise, $delayedPromise] as $promise) {
+            foreach ([[$activePromise, $activeRequest], [$delayedPromise, $delayedRequest]] as [$promise, $request]) {
                 try {
                     $promise->wait();
                     self::fail('Expected HandlerClosedException.');
                 } catch (HandlerClosedException $e) {
                     self::assertSame('The cURL multi handler was closed before the transfer completed.', $e->getMessage());
+                    self::assertSame($request, $e->getRequest());
                 }
             }
         } finally {

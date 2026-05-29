@@ -323,9 +323,6 @@ class PoolTest extends TestCase
         foreach ($rejected as $reason) {
             self::assertInstanceOf(RequestException::class, $reason);
             self::assertNotInstanceOf(ResponseException::class, $reason);
-            self::assertArrayNotHasKey('http_code', $reason->getHandlerContext());
-            self::assertArrayNotHasKey('header_size', $reason->getHandlerContext());
-            self::assertArrayNotHasKey('content_type', $reason->getHandlerContext());
         }
     }
 

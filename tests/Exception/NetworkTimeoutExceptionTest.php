@@ -22,7 +22,7 @@ class NetworkTimeoutExceptionTest extends TestCase
     {
         $req = new Request('GET', '/');
         $prev = new \Exception();
-        $e = new NetworkTimeoutException('foo', $req, $prev, ['foo' => 'bar']);
+        $e = new NetworkTimeoutException('foo', $req, $prev);
 
         self::assertInstanceOf(NetworkException::class, $e);
         self::assertInstanceOf(NetworkExceptionInterface::class, $e);
@@ -31,7 +31,6 @@ class NetworkTimeoutExceptionTest extends TestCase
         self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
         self::assertSame('foo', $e->getMessage());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }

@@ -1404,7 +1404,6 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame('The transfer was aborted by the progress callback', $e->getMessage());
-            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
         } finally {
             Server::flush();
 
@@ -1435,7 +1434,6 @@ class CurlFactoryTest extends TestCase
         } catch (RequestException $e) {
             self::assertSame('An error was encountered during the progress event', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
         } finally {
             Server::flush();
 
@@ -1468,7 +1466,6 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame('The transfer was aborted by the progress callback', $e->getMessage());
-            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
         }
     }
 
@@ -1497,7 +1494,6 @@ class CurlFactoryTest extends TestCase
         } catch (RequestException $e) {
             self::assertSame('An error was encountered during the progress event', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
         }
     }
 
@@ -2287,7 +2283,8 @@ class CurlFactoryTest extends TestCase
     public function testCreatesConnectExceptionForConnectionErrors(int $errno): void
     {
         $factory = new CurlFactory(1);
-        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, []);
         $easy->errno = $errno;
         $response = CurlFactory::finish(
             static function (): void {
@@ -2302,7 +2299,7 @@ class CurlFactoryTest extends TestCase
         } catch (ConnectTimeoutException $e) {
             self::fail('Expected non-timeout ConnectException');
         } catch (ConnectException $e) {
-            self::assertSame($errno, $e->getHandlerContext()['errno']);
+            self::assertSame($request, $e->getRequest());
         }
     }
 
@@ -2344,7 +2341,6 @@ class CurlFactoryTest extends TestCase
         } catch (NetworkException $e) {
             self::assertNotInstanceOf(ConnectException::class, $e);
             self::assertSame($request, $e->getRequest());
-            self::assertSame($errno, $e->getHandlerContext()['errno']);
         }
     }
 
@@ -2386,7 +2382,6 @@ class CurlFactoryTest extends TestCase
         } catch (ResponseException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame($response, $e->getResponse());
-            self::assertSame($errno, $e->getHandlerContext()['errno']);
         }
     }
 
@@ -2413,7 +2408,6 @@ class CurlFactoryTest extends TestCase
             self::assertNotInstanceOf(ConnectException::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
-            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
         }
     }
 
@@ -2437,8 +2431,6 @@ class CurlFactoryTest extends TestCase
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
-            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
-            self::assertSame('Connection timeout after 5003 ms', $e->getHandlerContext()['error']);
         }
     }
 
@@ -2463,8 +2455,6 @@ class CurlFactoryTest extends TestCase
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(ConnectException::class, $e);
             self::assertSame($request, $e->getRequest());
-            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
-            self::assertSame('Timeout was reached', $e->getHandlerContext()['error']);
         }
     }
 
@@ -2518,7 +2508,6 @@ class CurlFactoryTest extends TestCase
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame($response, $e->getResponse());
-            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
         }
     }
 
@@ -2544,8 +2533,6 @@ class CurlFactoryTest extends TestCase
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame($response, $e->getResponse());
-            self::assertSame(\CURLE_OPERATION_TIMEOUTED, $e->getHandlerContext()['errno']);
-            self::assertSame('Connection timed out after 5003 milliseconds', $e->getHandlerContext()['error']);
         }
     }
 
@@ -2557,6 +2544,13 @@ class CurlFactoryTest extends TestCase
         }
 
         return $reflection->invoke(null, $easy, $ctx);
+    }
+
+    private static function assertResponseInfoWasNotExposed(array $context): void
+    {
+        self::assertArrayNotHasKey('http_code', $context);
+        self::assertArrayNotHasKey('header_size', $context);
+        self::assertArrayNotHasKey('content_type', $context);
     }
 
     public function testAddsTimeouts(): void
@@ -2688,7 +2682,6 @@ class CurlFactoryTest extends TestCase
             self::assertFalse($called);
             self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
-            self::assertResponseInfoWasNotExposed($e->getHandlerContext());
             self::assertInstanceOf(TransferStats::class, $stats);
             self::assertFalse($stats->hasResponse());
             self::assertNull($stats->getResponse());
@@ -2723,7 +2716,6 @@ class CurlFactoryTest extends TestCase
             );
             self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertSame($easy->createResponseException, $e->getPrevious());
-            self::assertResponseInfoWasNotExposed($e->getHandlerContext());
         }
     }
 
@@ -2950,7 +2942,6 @@ class CurlFactoryTest extends TestCase
             self::assertSame($request, $e->getRequest());
             self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
         } catch (ResponseTimeoutException $e) {
             // PHP versions without read-callback abort support (< 8.1.17, and
@@ -3000,8 +2991,6 @@ class CurlFactoryTest extends TestCase
             self::assertSame($request, $e->getRequest());
             self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
-            self::assertTrue($e->getHandlerContext()['timed_out'] ?? false);
             self::assertInstanceOf(NetworkException::class, $e);
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
@@ -3045,8 +3034,6 @@ class CurlFactoryTest extends TestCase
             self::assertSame($response, $e->getResponse());
             self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $e->getHandlerContext()['errno']);
-            self::assertTrue($e->getHandlerContext()['timed_out'] ?? false);
             self::assertInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
@@ -3086,7 +3073,6 @@ class CurlFactoryTest extends TestCase
             self::assertSame($request, $e->getRequest());
             self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertSame([], $e->getHandlerContext());
             self::assertInstanceOf(NetworkException::class, $e);
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
@@ -3136,8 +3122,6 @@ class CurlFactoryTest extends TestCase
             self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertSame('The cURL handler timed out while transferring the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertSame(\CURLE_WRITE_ERROR, $e->getHandlerContext()['errno']);
-            self::assertTrue($e->getHandlerContext()['timed_out'] ?? false);
             self::assertInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
@@ -3183,8 +3167,6 @@ class CurlFactoryTest extends TestCase
             self::assertSame($request, $e->getRequest());
             self::assertSame('The cURL handler timed out while transferring the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertSame(\CURLE_WRITE_ERROR, $e->getHandlerContext()['errno']);
-            self::assertTrue($e->getHandlerContext()['timed_out'] ?? false);
             self::assertInstanceOf(NetworkException::class, $e);
             self::assertInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
@@ -3427,15 +3409,7 @@ class CurlFactoryTest extends TestCase
             );
             self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
-            self::assertResponseInfoWasNotExposed($e->getHandlerContext());
         }
-    }
-
-    private static function assertResponseInfoWasNotExposed(array $context): void
-    {
-        self::assertArrayNotHasKey('http_code', $context);
-        self::assertArrayNotHasKey('header_size', $context);
-        self::assertArrayNotHasKey('content_type', $context);
     }
 
     private static function assertAuthenticatedProxyConnectionReuseOptions(): void
