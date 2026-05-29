@@ -168,9 +168,20 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
+        $normalizedMethod = \strtoupper($method);
+        if ($method !== $normalizedMethod) {
+            \trigger_deprecation(
+                'guzzlehttp/guzzle',
+                '7.11',
+                'Passing a non-uppercase HTTP method to Client::requestAsync() is deprecated; guzzlehttp/guzzle 8.0 will preserve HTTP method casing. Pass an uppercase method explicitly if uppercase is required.'
+            );
+            $method = $normalizedMethod;
+        }
+
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
         $headers = $options['headers'] ?? [];
+        self::castDeprecatedHeaderOptionValues($headers);
         $body = $options['body'] ?? null;
         $version = self::normalizeProtocolVersion($options['version'] ?? '1.1');
         // Merge the URI into the base URI.
@@ -200,6 +211,16 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     public function request(string $method, $uri = '', array $options = []): ResponseInterface
     {
+        $normalizedMethod = \strtoupper($method);
+        if ($method !== $normalizedMethod) {
+            \trigger_deprecation(
+                'guzzlehttp/guzzle',
+                '7.11',
+                'Passing a non-uppercase HTTP method to Client::request() is deprecated; guzzlehttp/guzzle 8.0 will preserve HTTP method casing. Pass an uppercase method explicitly if uppercase is required.'
+            );
+            $method = $normalizedMethod;
+        }
+
         $options[RequestOptions::SYNCHRONOUS] = true;
 
         return $this->requestAsync($method, $uri, $options)->wait();
@@ -790,7 +811,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (array_keys($options['headers']) === range(0, count($options['headers']) - 1)) {
                 throw new InvalidArgumentException('The headers array must have header name as keys.');
             }
-            $modify['set_headers'] = $options['headers'];
+            $headers = $options['headers'];
+            self::castDeprecatedHeaderOptionValues($headers);
+            $modify['set_headers'] = $headers;
             unset($options['headers']);
         }
 
@@ -909,6 +932,30 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         return $request;
+    }
+
+    /**
+     * @param array<array-key, mixed> $headers
+     */
+    private static function castDeprecatedHeaderOptionValues(array &$headers): void
+    {
+        foreach ($headers as $name => $value) {
+            if (\is_array($value)) {
+                foreach ($value as $index => $item) {
+                    if ($item === null || (!\is_string($item) && \is_scalar($item))) {
+                        $value[$index] = (string) $item;
+                    }
+                }
+
+                $headers[$name] = $value;
+
+                continue;
+            }
+
+            if ($value === null || (!\is_string($value) && \is_scalar($value))) {
+                $headers[$name] = (string) $value;
+            }
+        }
     }
 
     /**
