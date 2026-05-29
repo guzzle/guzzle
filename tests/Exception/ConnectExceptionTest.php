@@ -22,7 +22,7 @@ class ConnectExceptionTest extends TestCase
     {
         $req = new Request('GET', '/');
         $prev = new \Exception();
-        $e = new ConnectException('foo', $req, $prev, ['foo' => 'bar']);
+        $e = new ConnectException('foo', $req, $prev);
         self::assertInstanceOf(NetworkException::class, $e);
         self::assertInstanceOf(NetworkExceptionInterface::class, $e);
         self::assertNotInstanceOf(ConnectTimeoutException::class, $e);
@@ -30,7 +30,6 @@ class ConnectExceptionTest extends TestCase
         self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
         self::assertSame('foo', $e->getMessage());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }

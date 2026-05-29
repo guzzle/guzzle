@@ -109,6 +109,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Deprecated
 
 - Deprecated non-iterable `Pool` request collections, which will be rejected in 8.0
+- Deprecated `RequestException::getHandlerContext()` and `NetworkException::getHandlerContext()`, which will be removed in 8.0
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
 - Deprecated conflicting raw cURL request options, including `CURLOPT_SHARE`, which will be rejected in 8.0
 - Deprecated scalar-coerced `idn_conversion` request option values, which will be rejected in 8.0

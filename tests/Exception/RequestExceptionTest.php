@@ -139,14 +139,6 @@ class RequestExceptionTest extends TestCase
         self::assertSame(442, $e->getCode());
     }
 
-    public function testCanProvideHandlerContext(): void
-    {
-        $r = new Request('GET', 'http://www.oo.com');
-        $e = new RequestException('foo', $r, 123, null, ['bar' => 'baz']);
-        self::assertSame(['bar' => 'baz'], $e->getHandlerContext());
-        self::assertSame(123, $e->getCode());
-    }
-
     public function testObfuscateUrlWithToken(): void
     {
         $r = new Request('GET', 'http://secret-token@www.oo.com');

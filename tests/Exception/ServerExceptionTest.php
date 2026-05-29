@@ -24,7 +24,7 @@ class ServerExceptionTest extends TestCase
         $req = new Request('GET', '/');
         $res = new Response(500);
         $prev = new \Exception();
-        $e = new ServerException('foo', $req, $res, $prev, ['foo' => 'bar']);
+        $e = new ServerException('foo', $req, $res, $prev);
 
         self::assertInstanceOf(BadResponseException::class, $e);
         self::assertInstanceOf(ResponseException::class, $e);
@@ -35,7 +35,6 @@ class ServerExceptionTest extends TestCase
         self::assertSame($res, $e->getResponse());
         self::assertSame(500, $e->getCode());
         self::assertSame('foo', $e->getMessage());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }

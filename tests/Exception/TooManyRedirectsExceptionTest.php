@@ -23,7 +23,7 @@ class TooManyRedirectsExceptionTest extends TestCase
         $req = new Request('GET', '/');
         $res = new Response(302);
         $prev = new \Exception();
-        $e = new TooManyRedirectsException('foo', $req, $res, $prev, ['foo' => 'bar']);
+        $e = new TooManyRedirectsException('foo', $req, $res, $prev);
 
         self::assertInstanceOf(ResponseException::class, $e);
         self::assertInstanceOf(RequestException::class, $e);
@@ -32,7 +32,6 @@ class TooManyRedirectsExceptionTest extends TestCase
         self::assertSame($req, $e->getRequest());
         self::assertSame($res, $e->getResponse());
         self::assertSame('foo', $e->getMessage());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }

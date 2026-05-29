@@ -21,7 +21,7 @@ class NetworkExceptionTest extends TestCase
     {
         $req = new Request('GET', '/');
         $prev = new \Exception();
-        $e = new NetworkException('foo', $req, $prev, ['foo' => 'bar']);
+        $e = new NetworkException('foo', $req, $prev);
 
         self::assertInstanceOf(TransferException::class, $e);
         self::assertInstanceOf(GuzzleException::class, $e);
@@ -29,7 +29,6 @@ class NetworkExceptionTest extends TestCase
         self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
         self::assertSame('foo', $e->getMessage());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }
