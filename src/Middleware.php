@@ -76,7 +76,7 @@ final class Middleware
                         if ($code < 400) {
                             return $response;
                         }
-                        throw RequestException::create($request, $response, null, [], $bodySummarizer);
+                        throw RequestException::create($request, $response, null, $bodySummarizer);
                     }
                 );
             };

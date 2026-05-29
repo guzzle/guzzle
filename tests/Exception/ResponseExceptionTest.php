@@ -17,12 +17,12 @@ use Psr\Http\Client\RequestExceptionInterface;
  */
 class ResponseExceptionTest extends TestCase
 {
-    public function testCarriesRequestResponseAndContext(): void
+    public function testCarriesRequestAndResponse(): void
     {
         $req = new Request('GET', '/');
         $res = new Response(418);
         $prev = new \Exception();
-        $e = new ResponseException('foo', $req, $res, $prev, ['foo' => 'bar']);
+        $e = new ResponseException('foo', $req, $res, $prev);
 
         self::assertInstanceOf(RequestException::class, $e);
         self::assertInstanceOf(RequestExceptionInterface::class, $e);
@@ -31,7 +31,6 @@ class ResponseExceptionTest extends TestCase
         self::assertSame($res, $e->getResponse());
         self::assertSame('foo', $e->getMessage());
         self::assertSame(418, $e->getCode());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }

@@ -401,8 +401,7 @@ final class StreamHandler
                 'The stream handler timed out while transferring the response body',
                 $request,
                 $response,
-                $e,
-                ['timed_out' => true]
+                $e
             );
         }
 

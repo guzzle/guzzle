@@ -18,10 +18,9 @@ class ResponseException extends RequestException
         string $message,
         RequestInterface $request,
         ResponseInterface $response,
-        ?\Throwable $previous = null,
-        array $handlerContext = []
+        ?\Throwable $previous = null
     ) {
-        parent::__construct($message, $request, $response->getStatusCode(), $previous, $handlerContext);
+        parent::__construct($message, $request, $response->getStatusCode(), $previous);
         $this->response = $response;
     }
 

@@ -327,7 +327,7 @@ final class CurlMultiHandler
 
             if ($explicit) {
                 $this->captureFailure($failure, function () use ($entry): void {
-                    $entry['deferred']->reject(new HandlerClosedException('The cURL multi handler was closed before the transfer completed.'));
+                    $entry['deferred']->reject(new HandlerClosedException('The cURL multi handler was closed before the transfer completed.', $entry['easy']->request));
                 });
             }
         }
@@ -377,7 +377,7 @@ final class CurlMultiHandler
 
             if ($reject) {
                 $this->captureFailure($failure, function () use ($entry): void {
-                    $entry['deferred']->reject(new HandlerClosedException('The cURL multi handler was closed before the transfer completed.'));
+                    $entry['deferred']->reject(new HandlerClosedException('The cURL multi handler was closed before the transfer completed.', $entry['easy']->request));
                 });
             }
 

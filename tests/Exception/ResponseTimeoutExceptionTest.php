@@ -24,7 +24,7 @@ class ResponseTimeoutExceptionTest extends TestCase
         $req = new Request('GET', '/');
         $res = new Response(200);
         $prev = new \Exception();
-        $e = new ResponseTimeoutException('foo', $req, $res, $prev, ['foo' => 'bar']);
+        $e = new ResponseTimeoutException('foo', $req, $res, $prev);
 
         self::assertInstanceOf(ResponseException::class, $e);
         self::assertInstanceOf(RequestException::class, $e);
@@ -34,7 +34,6 @@ class ResponseTimeoutExceptionTest extends TestCase
         self::assertSame($req, $e->getRequest());
         self::assertSame($res, $e->getResponse());
         self::assertSame('foo', $e->getMessage());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }
