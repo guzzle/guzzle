@@ -7,6 +7,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
@@ -14,7 +15,7 @@ use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
-use GuzzleHttp\Psr7\Exception\TimeoutException as Psr7TimeoutException;
+use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
@@ -49,6 +50,13 @@ final class StreamHandler
         'Connection timed out',
         'Operation timed out',
         'SSL: Handshake timed out',
+        'did not properly respond after a period of time',
+    ];
+
+    private const NETWORK_ERRORS = [
+        'SSL: Connection reset by peer',
+        'SSL: Broken pipe',
+        'unexpected eof while reading',
     ];
 
     private array $lastHeaders = [];
@@ -117,14 +125,22 @@ final class StreamHandler
                 throw $e;
             }
 
-            // Determine if the error was a networking error.
-            if (!$e instanceof NetworkException) {
-                if (self::isConnectTimeoutError($e->getMessage())) {
-                    $e = new ConnectTimeoutException($e->getMessage(), $request, $e);
-                } elseif (self::isConnectionError($e->getMessage())) {
-                    $e = new ConnectException($e->getMessage(), $request, $e);
+            if ($e instanceof TimeoutException) {
+                $e = new NetworkTimeoutException('The stream handler timed out while transferring the request body', $request, $e);
+            } elseif (!$e instanceof NetworkException) {
+                $message = $e->getMessage();
+                if (self::isSendError($message)) {
+                    $e = self::isConnectTimeoutError($message)
+                        ? new NetworkTimeoutException($message, $request, $e)
+                        : new NetworkException($message, $request, $e);
+                } elseif (self::isConnectTimeoutError($message)) {
+                    $e = new ConnectTimeoutException($message, $request, $e);
+                } elseif (self::isConnectionError($message)) {
+                    $e = new ConnectException($message, $request, $e);
+                } elseif (self::isNetworkError($message)) {
+                    $e = new NetworkException($message, $request, $e);
                 } elseif (!$e instanceof RequestException) {
-                    $e = new RequestException($e->getMessage(), $request, 0, $e);
+                    $e = new RequestException($message, $request, 0, $e);
                 }
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
@@ -160,6 +176,23 @@ final class StreamHandler
     {
         foreach (self::CONNECTION_ERRORS as $connectionError) {
             if (false !== \stripos($message, $connectionError)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function isSendError(string $message): bool
+    {
+        // A failed write ("Send of N bytes failed ...") implies an established connection.
+        return false !== \stripos($message, 'bytes failed with errno=');
+    }
+
+    private static function isNetworkError(string $message): bool
+    {
+        foreach (self::NETWORK_ERRORS as $networkError) {
+            if (false !== \stripos($message, $networkError)) {
                 return true;
             }
         }
@@ -363,7 +396,7 @@ final class StreamHandler
                 $sink,
                 (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
             );
-        } catch (Psr7TimeoutException $e) {
+        } catch (TimeoutException $e) {
             throw new ResponseTimeoutException(
                 'The stream handler timed out while transferring the response body',
                 $request,

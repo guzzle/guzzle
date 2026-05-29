@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
@@ -65,6 +66,16 @@ final class EasyHandle
      * @var \Throwable|null Exception during createResponse (if any)
      */
     public ?\Throwable $createResponseException = null;
+
+    /**
+     * @var TimeoutException|null Exception during request body read timeout.
+     */
+    public ?TimeoutException $bodyReadTimeoutException = null;
+
+    /**
+     * @var TimeoutException|null Exception during response sink write timeout.
+     */
+    public ?TimeoutException $sinkWriteTimeoutException = null;
 
     /**
      * Attach a response to the easy handle based on the received headers.

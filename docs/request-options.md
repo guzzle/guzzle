@@ -996,6 +996,12 @@ Constant
 
 The timeout applies to individual read operations on a streamed body (when the `stream` option is enabled).
 
+When a read on the streamed PSR-7 body times out, `read()` throws
+`GuzzleHttp\Psr7\Exception\TimeoutException`. This PSR-7 class sits outside the
+`GuzzleHttp\Exception\GuzzleException` hierarchy, so catch it explicitly. If you
+detach the body and read the raw PHP stream resource instead, functions such as
+`fgets()` return `false` on timeout, following PHP's stream semantics.
+
 ```php
 $response = $client->request('GET', '/stream', [
     'stream' => true,
@@ -1004,10 +1010,10 @@ $response = $client->request('GET', '/stream', [
 
 $body = $response->getBody();
 
-// Returns false on timeout
+// Throws GuzzleHttp\Psr7\Exception\TimeoutException on timeout
 $data = $body->read(1024);
 
-// Returns false on timeout
+// Returns false on timeout (raw stream resource)
 $line = fgets($body->detach());
 ```
 
@@ -1317,6 +1323,11 @@ from the underlying transfer. Connect timeouts throw
 `GuzzleHttp\Exception\NetworkTimeoutException`. Timeouts after a response is
 received throw `GuzzleHttp\Exception\ResponseTimeoutException`, which extends
 `GuzzleHttp\Exception\ResponseException`.
+
+This classification also applies to timeouts that originate from a slow PSR-7
+request or response body, which follow the same phase rule above. In that case
+the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available via
+`getPrevious()`.
 
 ## version
 

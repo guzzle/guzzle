@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Exception\NetworkTimeoutException;
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\TransportSharing;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -70,7 +73,17 @@ final class CurlHandler
             \usleep((int) ($options['delay'] * 1000));
         }
 
-        $easy = $this->factory->create($request, $options);
+        try {
+            $easy = $this->factory->create($request, $options);
+        } catch (TimeoutException $e) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(new NetworkTimeoutException(
+                'The cURL handler timed out while transferring the request body',
+                $request,
+                $e
+            ));
+        }
+
         \curl_exec($easy->handle);
         $easy->errno = \curl_errno($easy->handle);
 

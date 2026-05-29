@@ -52,10 +52,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify empty, malformed, or handler-unsupported request protocol versions as request exceptions
 - Classify additional cURL transport failures without a response as `NetworkException`
 - Classify stream connect failures as `ConnectException`, with connect timeouts as `ConnectTimeoutException`
+- Classify stream transport failures without a response as `NetworkException`, with timeouts as `NetworkTimeoutException`
 - Classify generic response-aware request failures as `ResponseException`
 - Throw `ConnectTimeoutException` for connect timeouts
 - Throw `NetworkTimeoutException` for cURL no-response timeout errors
 - Throw `ResponseTimeoutException` for response-aware transfer timeouts
+- Classify cURL PSR-7 request-body upload timeouts by response phase
+- Classify cURL PSR-7 response sink write timeouts by response phase
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers

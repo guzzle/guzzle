@@ -176,7 +176,12 @@ connect timeouts. `NetworkTimeoutException` is thrown for other detected
 timeouts before response headers are received; it extends `NetworkException` but
 not `ConnectException`. `ResponseTimeoutException` is thrown for timeouts after
 response headers are received; it extends `ResponseException` and exposes the
-response.
+response. These phases apply however the timeout is detected, including
+timeouts that originate from a slow PSR-7 stream: a request body that stalls
+before any response is received is a `NetworkTimeoutException`, while a stall
+transferring the response body is a `ResponseTimeoutException`. When the
+timeout comes from a PSR-7 stream, the original
+`GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
 
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
@@ -217,42 +222,18 @@ try {
 }
 ```
 
-The affected built-in cURL classifications are:
+Beyond timeouts, the built-in handlers reclassify several no-response transport
+failures that Guzzle 7.x reported as `RequestException` or `ConnectException`:
 
-- `CURLE_OPERATION_TIMEOUTED` now throws `ConnectTimeoutException` when the
-  cURL error message identifies a DNS resolution, TCP connection, proxy CONNECT,
-  or TLS connection timeout. Examples include "Resolving timed out",
-  "Connection timed out", "Connection timeout", "Connection time-out",
-  "Failed to resolve ... with timeout", "name lookup timed out",
-  "Proxy CONNECT aborted due to timeout", and "SSL connection timeout". Guzzle
-  7.x threw `ConnectException`.
-- `CURLE_OPERATION_TIMEOUTED` now throws `NetworkTimeoutException` when the
-  timeout occurs before response headers are received and the cURL error message
-  does not identify it as connect-phase. Guzzle 7.x threw `ConnectException`.
-- `CURLE_OPERATION_TIMEOUTED` now throws `ResponseTimeoutException` when a
-  response object was created before the timeout. Guzzle 7.x threw
-  `ConnectException`.
-- `CURLE_COULDNT_RESOLVE_PROXY` now throws `ConnectException`. Guzzle 7.x
-  classified this cURL error as `RequestException`.
-- `CURLE_GOT_NOTHING`, `CURLE_SEND_ERROR`, `CURLE_RECV_ERROR`, and
-  no-response HTTP/2 or HTTP/3 protocol failures now throw `NetworkException`.
-  Guzzle 7.x either threw `ConnectException` or classified some of these as
-  `RequestException`.
-- TLS certificate, proxy connection, DNS, TCP connection, and QUIC connection
-  failures without a response throw `ConnectException`.
-- If a response object was created before the cURL error, the failure is
-  represented by `ResponseException` or `ResponseTimeoutException`.
+- Connection-establishment failures (DNS and proxy resolution, TCP connect, TLS
+  setup, and QUIC connect) are `ConnectException`.
+- Other failures with no response, such as send and receive errors and
+  no-response HTTP/2 and HTTP/3 protocol errors, are `NetworkException`.
+- A failure that occurs after a response was received is a `ResponseException`
+  (or `ResponseTimeoutException`).
 
-The existing cURL DNS, TCP connection, and TLS setup errors, including
-`CURLE_COULDNT_RESOLVE_HOST`, `CURLE_COULDNT_CONNECT`, and
-`CURLE_SSL_CONNECT_ERROR`, still throw `ConnectException`.
-
-The built-in stream handler now classifies DNS, TCP connect, proxy connect, and
-TLS setup failures as `ConnectException`. Stream warnings that identify a
-connection establishment timeout, including platform TCP timeout text such as
-"Connection timed out" or "Operation timed out" and TLS handshake text such as
-"SSL: Handshake timed out", are classified as `ConnectTimeoutException`; other
-malformed or unparseable response failures remain `RequestException`.
+This applies to both the cURL and stream handlers; the exact error codes and
+messages each one maps onto these classes are an implementation detail.
 
 The deprecated `RequestException::wrapException()` method was removed. Create a
 `RequestException` directly for request failures where Guzzle does not expose a

@@ -14,6 +14,7 @@ use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
+use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use GuzzleHttp\TransferStats;
@@ -65,6 +66,16 @@ final class CurlFactory implements CurlFactoryInterface
         'Proxy CONNECT aborted due to timeout',
         'SSL connection timeout',
     ];
+
+    /**
+     * libcurl's CURL_READFUNC_ABORT value.
+     */
+    private const CURL_READFUNC_ABORT = 0x10000000;
+
+    /**
+     * libcurl's CURLE_SEND_FAIL_REWIND value.
+     */
+    private const CURLE_SEND_FAIL_REWIND = 65;
 
     /**
      * @var resource[]|\CurlHandle[]
@@ -580,7 +591,7 @@ final class CurlFactory implements CurlFactoryInterface
         $onStats = $easy->options['on_stats'] ?? null;
         $stats = $onStats !== null ? self::createStats($easy) : null;
 
-        if (!$easy->response || $easy->errno) {
+        if (self::shouldFinishWithError($easy)) {
             return self::finishError($handler, $easy, $factory, $stats, $onStats);
         }
 
@@ -641,12 +652,32 @@ final class CurlFactory implements CurlFactoryInterface
             $onStats($stats);
         }
 
-        // Retry when nothing is present or when curl failed to rewind.
-        if (empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
+        if (self::shouldRetryFailedRewind($easy)) {
             return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
         return self::createRejection($easy, $ctx);
+    }
+
+    private static function shouldFinishWithError(EasyHandle $easy): bool
+    {
+        return !$easy->response
+            || $easy->errno !== 0
+            || $easy->bodyReadTimeoutException !== null
+            || $easy->sinkWriteTimeoutException !== null;
+    }
+
+    private static function shouldRetryFailedRewind(EasyHandle $easy): bool
+    {
+        if ($easy->bodyReadTimeoutException !== null || $easy->sinkWriteTimeoutException !== null) {
+            return false;
+        }
+
+        if (!empty($easy->options['_err_message'])) {
+            return false;
+        }
+
+        return $easy->errno === 0 || $easy->errno === self::CURLE_SEND_FAIL_REWIND;
     }
 
     private static function createErrorContext(EasyHandle $easy): array
@@ -733,6 +764,60 @@ final class CurlFactory implements CurlFactoryInterface
                     $easy->request,
                     0,
                     $easy->progressException,
+                    $ctx
+                )
+            );
+        }
+
+        if ($easy->bodyReadTimeoutException) {
+            $ctx['timed_out'] = true;
+
+            if ($easy->response) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor(
+                    new ResponseTimeoutException(
+                        'The cURL handler timed out while transferring the request body',
+                        $easy->request,
+                        $easy->response,
+                        $easy->bodyReadTimeoutException,
+                        $ctx
+                    )
+                );
+            }
+
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new NetworkTimeoutException(
+                    'The cURL handler timed out while transferring the request body',
+                    $easy->request,
+                    $easy->bodyReadTimeoutException,
+                    $ctx
+                )
+            );
+        }
+
+        if ($easy->sinkWriteTimeoutException) {
+            $ctx['timed_out'] = true;
+
+            if ($easy->response) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor(
+                    new ResponseTimeoutException(
+                        'The cURL handler timed out while transferring the response body',
+                        $easy->request,
+                        $easy->response,
+                        $easy->sinkWriteTimeoutException,
+                        $ctx
+                    )
+                );
+            }
+
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new NetworkTimeoutException(
+                    'The cURL handler timed out while transferring the response body',
+                    $easy->request,
+                    $easy->sinkWriteTimeoutException,
                     $ctx
                 )
             );
@@ -1069,7 +1154,7 @@ final class CurlFactory implements CurlFactoryInterface
         $size = $body->getSize();
 
         if ($size === null || $size > 0) {
-            $this->applyBody($easy->request, $easy->options, $conf);
+            $this->applyBody($easy, $conf);
 
             return;
         }
@@ -1091,8 +1176,10 @@ final class CurlFactory implements CurlFactoryInterface
         }
     }
 
-    private function applyBody(RequestInterface $request, array $options, array &$conf): void
+    private function applyBody(EasyHandle $easy, array &$conf): void
     {
+        $request = $easy->request;
+        $options = $easy->options;
         $size = $request->hasHeader('Content-Length')
             ? (int) $request->getHeaderLine('Content-Length')
             : null;
@@ -1114,8 +1201,17 @@ final class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, int $length) use ($body): string {
-                return $body->read($length);
+            /**
+             * @return int|string
+             */
+            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, int $length) use ($easy, $body) {
+                try {
+                    return $body->read($length);
+                } catch (TimeoutException $e) {
+                    $easy->bodyReadTimeoutException = $e;
+
+                    return self::CURL_READFUNC_ABORT;
+                }
             };
         }
 
@@ -1254,8 +1350,14 @@ final class CurlFactory implements CurlFactoryInterface
             $sink = new LazyOpenStream($sink, 'w+');
         }
         $easy->sink = $sink;
-        $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, string $write) use ($sink): int {
-            return $sink->write($write);
+        $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, string $write) use ($easy, $sink): int {
+            try {
+                return $sink->write($write);
+            } catch (TimeoutException $e) {
+                $easy->sinkWriteTimeoutException = $e;
+
+                return 0;
+            }
         };
 
         $timeoutRequiresNoSignal = false;
@@ -1415,14 +1517,35 @@ final class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_SSLKEY] = $sslKey;
         }
 
-        if (isset($options['progress'])) {
-            $progress = $options['progress'];
-            if (!\is_callable($progress)) {
-                throw new \InvalidArgumentException('progress client option must be callable');
-            }
-            /** @var callable(int, int, int, int): mixed $progress */
+        $progress = $options['progress'] ?? null;
+        if ($progress !== null && !\is_callable($progress)) {
+            throw new \InvalidArgumentException('progress client option must be callable');
+        }
+
+        // The streaming read callback (set by applyBody) aborts the upload on a
+        // body read timeout by returning CURL_READFUNC_ABORT, but PHP ignores
+        // that integer return before 8.1.17/8.2.4. Install a progress callback
+        // so older PHP still has a cross-version abort path; the failure is
+        // classified from `$easy->bodyReadTimeoutException` regardless of errno
+        // (a truncated request may reach the server first on those versions).
+        $abortsOnBodyReadTimeout = isset($conf[\CURLOPT_READFUNCTION]);
+
+        if ($progress !== null || $abortsOnBodyReadTimeout) {
+            /** @var (callable(int, int, int, int): mixed)|null $progress */
             $conf[\CURLOPT_NOPROGRESS] = false;
             $progressCallback = static function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($easy, $progress): int {
+                // Abort the transfer when the request body read timed out (the
+                // cross-version abort path, since older PHP ignores the read
+                // callback's return). progressAborted is left unset so the
+                // failure is classified from `$easy->bodyReadTimeoutException`.
+                if ($easy->bodyReadTimeoutException !== null) {
+                    return 1;
+                }
+
+                if ($progress === null) {
+                    return 0;
+                }
+
                 try {
                     if ($progress((int) $downloadSize, (int) $downloaded, (int) $uploadSize, (int) $uploaded)) {
                         $easy->progressAborted = true;
