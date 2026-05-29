@@ -895,10 +895,10 @@ Pass a string to specify a proxy for all protocols.
 $client->request('GET', '/', ['proxy' => 'http://localhost:8125']);
 ```
 
-Pass an associative array to specify HTTP proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair to provide a list of host names that should not be proxied to. No-proxy entries may include ports, for example `example.com:8080` or `[::1]:8080`. The `http`, `https`, and `no` entries may be set to `null` to leave that entry unconfigured.
+Pass an associative array to specify HTTP proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair as a comma-delimited string or an array to provide a list of host names that should not be proxied to. No-proxy entries may include ports, for example `example.com:8080` or `[::1]:8080`. The `http`, `https`, and `no` entries may be set to `null` to leave that entry unconfigured.
 
 > [!NOTE]
-> Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value parsed from the `NO_PROXY` environment variable (e.g., `explode(',', getenv('NO_PROXY'))`).
+> Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
 
 ```php
 $client->request('GET', '/', [

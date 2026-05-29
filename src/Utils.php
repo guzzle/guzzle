@@ -333,12 +333,20 @@ EOT
     /**
      * Returns true if the provided URI matches any of the no proxy areas.
      *
-     * @param array<array-key, mixed> $noProxyArray An array of host patterns.
+     * @param mixed $noProxy No-proxy host patterns.
      *
      * @internal
      */
-    public static function isUriInNoProxy(UriInterface $uri, array $noProxyArray): bool
+    public static function isUriInNoProxy(UriInterface $uri, $noProxy): bool
     {
+        if (\is_string($noProxy)) {
+            $noProxy = \explode(',', $noProxy);
+        }
+
+        if (!\is_array($noProxy)) {
+            return false;
+        }
+
         $host = $uri->getHost();
         if ($host === '') {
             return false;
@@ -349,10 +357,12 @@ EOT
             $port = self::getDefaultPort($uri->getScheme());
         }
 
-        foreach ($noProxyArray as $area) {
+        foreach ($noProxy as $area) {
             if (!\is_string($area)) {
                 continue;
             }
+
+            $area = \trim($area);
 
             // Always match on wildcards.
             if ($area === '*') {

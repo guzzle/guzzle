@@ -229,6 +229,13 @@ class UtilsTest extends TestCase
     public static function uriNoProxyProvider()
     {
         return [
+            ['http://example.com', 'example.com', true],
+            ['http://foo.com', 'example.com, foo.com', true],
+            ['http://foo.com', ' example.com , foo.com ', true],
+            ['http://foo.com', '', false],
+            ['http://foo.com', null, false],
+            ['http://foo.com', false, false],
+            ['http://example.com', [' example.com ', new \stdClass()], true],
             ['http://example.com', ['example.com:80'], true],
             ['https://example.com', ['example.com:443'], true],
             ['http://example.com:8080', ['example.com:8080'], true],

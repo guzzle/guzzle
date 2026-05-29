@@ -22,6 +22,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Prevented `CurlMultiHandler` destructors from throwing during cleanup
 - Improved invalid response handling across handlers
 
+### Fixed
+
+- Fixed string `proxy.no` request option values being accepted but ignored by built-in handlers
+
 ### Deprecated
 
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
