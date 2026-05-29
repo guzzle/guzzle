@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
+use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
@@ -55,6 +56,11 @@ final class CurlFactory implements CurlFactoryInterface
         56 => true, // CURLE_RECV_ERROR
         92 => true, // CURLE_HTTP2_STREAM
         95 => true, // CURLE_HTTP3
+    ];
+
+    private const CURL_RESPONSE_TRANSFER_ERRORS = [
+        18 => true, // CURLE_PARTIAL_FILE
+        61 => true, // CURLE_BAD_CONTENT_ENCODING
     ];
 
     private const CURL_CONNECT_TIMEOUT_ERRORS = [
@@ -770,7 +776,7 @@ final class CurlFactory implements CurlFactoryInterface
             if ($easy->response) {
                 /** @var PromiseInterface<ResponseInterface, mixed> */
                 return P\Create::rejectionFor(
-                    new ResponseTimeoutException(
+                    new ResponseException(
                         'The cURL handler timed out while transferring the request body',
                         $easy->request,
                         $easy->response,
@@ -795,8 +801,8 @@ final class CurlFactory implements CurlFactoryInterface
             if ($easy->response) {
                 /** @var PromiseInterface<ResponseInterface, mixed> */
                 return P\Create::rejectionFor(
-                    new ResponseTimeoutException(
-                        'The cURL handler timed out while transferring the response body',
+                    new ResponseException(
+                        'The cURL handler timed out while writing the response body',
                         $easy->request,
                         $easy->response,
                         $easy->sinkWriteTimeoutException
@@ -865,7 +871,9 @@ final class CurlFactory implements CurlFactoryInterface
                 $error = new NetworkTimeoutException($message, $easy->request);
             }
         } elseif ($easy->response) {
-            $error = new ResponseException($message, $easy->request, $easy->response);
+            $error = self::isResponseTransferError($easy->errno)
+                ? new ResponseTransferException($message, $easy->request, $easy->response)
+                : new ResponseException($message, $easy->request, $easy->response);
         } elseif (self::isConnectionError($easy->errno)) {
             $error = new ConnectException($message, $easy->request);
         } elseif (self::isNetworkError($easy->errno)) {
@@ -886,6 +894,13 @@ final class CurlFactory implements CurlFactoryInterface
     private static function isNetworkError(int $errno): bool
     {
         return isset(self::CURL_NETWORK_ERRORS[$errno]);
+    }
+
+    private static function isResponseTransferError(int $errno): bool
+    {
+        return self::isConnectionError($errno)
+            || self::isNetworkError($errno)
+            || isset(self::CURL_RESPONSE_TRANSFER_ERRORS[$errno]);
     }
 
     private static function isConnectTimeoutError(string $error): bool

@@ -214,12 +214,14 @@ $client = new Client(['handler' => $stack]);
 
 Use `GuzzleHttp\Middleware::retry()` to retry requests when a custom decider
 returns `true`. The decider receives the current retry count, the request, the
-response if one was received, and the rejection reason if the request failed
-before a response was returned.
+response for fulfilled responses, and the rejection reason for failed transfers.
+A rejection reason may itself expose a response, for example when it is a
+`ResponseException`.
 
 ```php
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use Psr\Http\Message\RequestInterface;
@@ -238,7 +240,7 @@ $stack->push(Middleware::retry(
             return false;
         }
 
-        if ($reason instanceof NetworkException) {
+        if ($reason instanceof NetworkException || $reason instanceof ResponseTransferException) {
             return true;
         }
 

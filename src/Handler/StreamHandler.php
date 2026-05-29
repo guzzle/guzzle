@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
+use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
@@ -266,7 +267,7 @@ final class StreamHandler
         if ($sink !== $stream) {
             try {
                 $this->drain($request, $response, $stream, $sink, $response->getHeaderLine('Content-Length'));
-            } catch (ResponseTimeoutException $e) {
+            } catch (ResponseException $e) {
                 $this->invokeStats($options, $request, $startTime, $response, $e);
 
                 /** @var PromiseInterface<ResponseInterface, mixed> */
@@ -386,16 +387,21 @@ final class StreamHandler
         StreamInterface $sink,
         string $contentLength
     ): StreamInterface {
-        // If a content-length header is provided, then stop reading once
-        // that number of bytes has been read. This can prevent infinitely
-        // reading from a stream when dealing with servers that do not honor
-        // Connection: Close headers.
         try {
+            $target = $this->createResponseSink($request, $response, $sink);
+            // If a content-length header is provided, then stop reading once
+            // that number of bytes has been read. This can prevent infinitely
+            // reading from a stream when dealing with servers that do not
+            // honor Connection: Close headers.
             Psr7\Utils::copyToStream(
                 $source,
-                $sink,
+                $target,
                 (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
             );
+            $sink->seek(0);
+            $source->close();
+        } catch (ResponseException $e) {
+            throw $e;
         } catch (TimeoutException $e) {
             throw new ResponseTimeoutException(
                 'The stream handler timed out while transferring the response body',
@@ -403,12 +409,59 @@ final class StreamHandler
                 $response,
                 $e
             );
+        } catch (\Throwable $e) {
+            throw new ResponseTransferException(
+                $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed while transferring the response body',
+                $request,
+                $response,
+                $e
+            );
         }
 
-        $sink->seek(0);
-        $source->close();
-
         return $sink;
+    }
+
+    private function createResponseSink(
+        RequestInterface $request,
+        ResponseInterface $response,
+        StreamInterface $sink
+    ): StreamInterface {
+        return Psr7\FnStream::decorate($sink, [
+            'close' => static function (): void {
+            },
+            'write' => static function (string $data) use ($request, $response, $sink): int {
+                try {
+                    $written = $sink->write($data);
+                } catch (TimeoutException $e) {
+                    throw new ResponseException(
+                        'The stream handler timed out while writing the response body',
+                        $request,
+                        $response,
+                        $e
+                    );
+                } catch (\Throwable $e) {
+                    throw new ResponseException(
+                        $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed while writing the response body',
+                        $request,
+                        $response,
+                        $e
+                    );
+                }
+
+                if ($written <= 0) {
+                    throw new ResponseException('Unable to write to stream', $request, $response);
+                }
+
+                return $written;
+            },
+            'getMetadata' => static function (?string $key = null) use ($sink) {
+                if ($key === 'timed_out') {
+                    return false;
+                }
+
+                return $sink->getMetadata($key);
+            },
+        ]);
     }
 
     /**

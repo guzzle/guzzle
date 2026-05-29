@@ -12,6 +12,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add CIDR notation support for IP no-proxy rules
 - Add `ConnectTimeoutException` for connect-phase timeouts, extending `ConnectException`
 - Add `NetworkTimeoutException` and `ResponseTimeoutException`
+- Add `ResponseTransferException` for transfer-level failures after response headers are received
 - Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
 - Add explicit `close()` lifecycle methods to the built-in cURL handlers and concrete cURL factory
 - Add `HandlerClosedException` for pending transfers rejected by `CurlMultiHandler::close()`
@@ -54,6 +55,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify stream connect failures as `ConnectException`, with connect timeouts as `ConnectTimeoutException`
 - Classify stream transport failures without a response as `NetworkException`, with timeouts as `NetworkTimeoutException`
 - Classify generic response-aware request failures as `ResponseException`
+- Classify response-aware transfer failures as `ResponseTransferException`
 - Throw `ConnectTimeoutException` for connect timeouts
 - Throw `NetworkTimeoutException` for cURL no-response timeout errors
 - Throw `ResponseTimeoutException` for response-aware transfer timeouts

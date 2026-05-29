@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
+use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
@@ -1366,6 +1367,8 @@ class StreamHandlerTest extends TestCase
                 $e->getMessage()
             );
             self::assertInstanceOf(\Error::class, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
     }
 
@@ -1392,6 +1395,8 @@ class StreamHandlerTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertStringContainsString('An error was encountered during the on_headers event', $e->getMessage());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertInstanceOf(TransferStats::class, $gotStats);
             self::assertTrue($gotStats->hasResponse());
             self::assertSame(200, $gotStats->getResponse()->getStatusCode());
@@ -1439,7 +1444,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('abc 123', (string) $response->getBody());
     }
 
-    public function testThrowsResponseTimeoutExceptionWhenSinkWriteTimesOut(): void
+    public function testThrowsResponseExceptionWhenSinkWriteTimesOut(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
@@ -1467,13 +1472,16 @@ class StreamHandlerTest extends TestCase
                 ]
             )->wait();
 
-            self::fail('Expected ResponseTimeoutException');
-        } catch (ResponseTimeoutException $e) {
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
             $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame('The stream handler timed out while writing the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
 
         self::assertTrue($writeCalled);
@@ -1481,6 +1489,91 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($stats->hasResponse());
         self::assertSame($exception->getResponse(), $stats->getResponse());
         self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testThrowsResponseExceptionWhenSinkWriteFails(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $stats = null;
+        $exception = null;
+        $previous = new \RuntimeException('sink failed');
+        $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data) use ($previous): int {
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $handler(
+                $request,
+                [
+                    'sink' => $sink,
+                    'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                        $stats = $transferStats;
+                    },
+                ]
+            )->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            $exception = $e;
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame($previous, $e->getPrevious());
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($exception->getResponse(), $stats->getResponse());
+        self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testThrowsResponseTransferExceptionWhenResponseBodyReadFails(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $previous = new \RuntimeException('SSL: Connection reset by peer');
+        $stats = null;
+        $source = FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'read' => static function (int $length) use ($previous): string {
+                throw $previous;
+            },
+        ]);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+        ]);
+
+        $promise = $this->invokeStreamHandlerCreateResponse(
+            $handler,
+            $request,
+            [
+                'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                    $stats = $transferStats;
+                },
+            ],
+            $source
+        );
+
+        try {
+            $promise->wait();
+
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertInstanceOf(TransferStats::class, $stats);
+            self::assertTrue($stats->hasResponse());
+            self::assertSame($e->getResponse(), $stats->getResponse());
+            self::assertSame($e, $stats->getHandlerErrorData());
+        }
     }
 
     public function testInvokesOnStatsOnSuccess(): void
@@ -1775,6 +1868,7 @@ class StreamHandlerTest extends TestCase
             self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
@@ -1809,6 +1903,7 @@ class StreamHandlerTest extends TestCase
             self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
@@ -1919,6 +2014,32 @@ class StreamHandlerTest extends TestCase
                 return $new;
             }
         };
+    }
+
+    /**
+     * @param list<string> $headers
+     */
+    private function setStreamHandlerLastHeaders(StreamHandler $handler, array $headers): void
+    {
+        $property = new \ReflectionProperty(StreamHandler::class, 'lastHeaders');
+        if (\PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
+
+        $property->setValue($handler, $headers);
+    }
+
+    /**
+     * @param resource|StreamInterface $stream
+     */
+    private function invokeStreamHandlerCreateResponse(StreamHandler $handler, RequestInterface $request, array $options, $stream)
+    {
+        $method = new \ReflectionMethod(StreamHandler::class, 'createResponse');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        return $method->invoke($handler, $request, $options, $stream, Utils::currentTime());
     }
 
     public function testProtocolsOptionRejectsDisallowedStreamScheme(): void
