@@ -1318,6 +1318,11 @@ from the underlying transfer. Connect timeouts throw
 received throw `GuzzleHttp\Exception\ResponseTimeoutException`, which extends
 `GuzzleHttp\Exception\ResponseException`.
 
+This classification also applies to timeouts that originate from a slow PSR-7
+request or response body, which follow the same phase rule above. In that case
+the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available via
+`getPrevious()`.
+
 ## version
 
 Summary

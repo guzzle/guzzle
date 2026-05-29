@@ -176,13 +176,11 @@ connect timeouts. `NetworkTimeoutException` is thrown for other detected
 timeouts before response headers are received; it extends `NetworkException` but
 not `ConnectException`. `ResponseTimeoutException` is thrown for timeouts after
 response headers are received; it extends `ResponseException` and exposes the
-response.
-
-These phases apply however the timeout is detected, including timeouts that
-originate from a slow PSR-7 stream. A request body that stalls while it is
-uploaded is a `NetworkTimeoutException` (no response yet); a stall while the
-response body is transferred is a `ResponseTimeoutException` (the response was
-already received). In both cases the original
+response. These phases apply however the timeout is detected, including
+timeouts that originate from a slow PSR-7 stream: a request body that stalls
+before any response is received is a `NetworkTimeoutException`, while a stall
+transferring the response body is a `ResponseTimeoutException`. When the
+timeout comes from a PSR-7 stream, the original
 `GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
 
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
