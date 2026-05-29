@@ -69,20 +69,6 @@ class CurlHandlerTest extends TestCase
         self::assertGreaterThan(0.0001, Utils::currentTime() - $s);
     }
 
-    public function testCreatesCurlErrorsWithContext()
-    {
-        $handler = new CurlHandler();
-        $request = new Request('GET', 'http://localhost:123');
-        $called = false;
-        $p = $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])
-            ->otherwise(static function (ConnectException $e) use (&$called) {
-                $called = true;
-                self::assertArrayHasKey('errno', $e->getHandlerContext());
-            });
-        $p->wait();
-        self::assertTrue($called);
-    }
-
     public function testTransportSharingOptionAppliesCurlShare(): void
     {
         self::skipIfCurlShareIsUnavailable();

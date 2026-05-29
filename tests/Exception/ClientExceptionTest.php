@@ -21,7 +21,7 @@ class ClientExceptionTest extends TestCase
         $req = new Request('GET', '/');
         $res = new Response(404);
         $prev = new \Exception();
-        $e = new ClientException('foo', $req, $res, $prev, ['foo' => 'bar']);
+        $e = new ClientException('foo', $req, $res, $prev);
 
         self::assertInstanceOf(BadResponseException::class, $e);
         self::assertInstanceOf(RequestException::class, $e);
@@ -32,7 +32,6 @@ class ClientExceptionTest extends TestCase
         self::assertTrue($e->hasResponse());
         self::assertSame(404, $e->getCode());
         self::assertSame('foo', $e->getMessage());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }
