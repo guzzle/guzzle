@@ -345,6 +345,14 @@ class CurlFactoryTest extends TestCase
             'proxy' => ['http' => 'http://bar.com', 'https' => 'https://t'],
         ]);
         self::assertEquals('http://bar.com', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        $this->checkNoProxyForHost('http://test.test.com', 'test.test.com', false);
+        $this->checkNoProxyForHost('http://test.test.com', 'other.test.com, test.test.com', false);
+        $this->checkNoProxyForHost('http://test.test.com', ' other.test.com , test.test.com ', false);
+        $this->checkNoProxyForHost('http://test.test.com', 'test.test.com:80', false);
+        $this->checkNoProxyForHost('http://test.test.com', '*', false);
+        $this->checkNoProxyForHost('http://test.test.com', '', true);
+        $this->checkNoProxyForHost('http://test.test.com', null, true);
+        $this->checkNoProxyForHost('http://test.test.com', [' test.test.com ', new \stdClass()], false);
         $this->checkNoProxyForHost('http://test.test.com', ['test.test.com'], false);
         $this->checkNoProxyForHost('http://test.test.com', ['.test.com'], false);
         $this->checkNoProxyForHost('http://test.test.com', ['test.test.com:80'], false);
