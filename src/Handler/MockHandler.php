@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Promise as P;
@@ -81,6 +82,8 @@ final class MockHandler implements \Countable
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         if (!$this->queue) {
+            // Test-setup error (more requests made than responses queued);
+            // intentionally a bare SPL exception, not a GuzzleException.
             throw new \OutOfBoundsException('Mock queue is empty');
         }
 
@@ -89,7 +92,7 @@ final class MockHandler implements \Countable
         }
 
         if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
-            throw new \InvalidArgumentException('on_stats must be callable');
+            throw new InvalidArgumentException('on_stats must be callable');
         }
 
         $this->lastRequest = $request;
@@ -100,7 +103,7 @@ final class MockHandler implements \Countable
 
         if (isset($options['on_headers'])) {
             if (!\is_callable($options['on_headers'])) {
-                throw new \InvalidArgumentException('on_headers must be callable');
+                throw new InvalidArgumentException('on_headers must be callable');
             }
 
             $onHeaders = $options['on_headers'];
@@ -234,7 +237,7 @@ final class MockHandler implements \Countable
         if (isset($options['on_stats'])) {
             $transferTime = $options['transfer_time'] ?? 0.0;
             if (!\is_int($transferTime) && !\is_float($transferTime) && (!\is_string($transferTime) || !\is_numeric($transferTime))) {
-                throw new \InvalidArgumentException('transfer_time must be a number of seconds');
+                throw new InvalidArgumentException('transfer_time must be a number of seconds');
             }
 
             $stats = new TransferStats($request, $response, (float) $transferTime, $reason);

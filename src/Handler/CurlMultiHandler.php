@@ -6,6 +6,7 @@ namespace GuzzleHttp\Handler;
 
 use Closure;
 use GuzzleHttp\Exception\HandlerClosedException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
@@ -111,14 +112,14 @@ final class CurlMultiHandler
 
         $selectTimeout = $options['select_timeout'] ?? 1.0;
         if (!\is_int($selectTimeout) && !\is_float($selectTimeout) && (!\is_string($selectTimeout) || !\is_numeric($selectTimeout))) {
-            throw new \InvalidArgumentException('select_timeout must be a number of seconds');
+            throw new InvalidArgumentException('select_timeout must be a number of seconds');
         }
 
         $this->selectTimeout = (float) $selectTimeout;
 
         $multiOptions = $options['options'] ?? [];
         if (!\is_array($multiOptions)) {
-            throw new \InvalidArgumentException('options must be an array of cURL multi options');
+            throw new InvalidArgumentException('options must be an array of cURL multi options');
         }
 
         $this->options = $multiOptions;
@@ -272,6 +273,8 @@ final class CurlMultiHandler
     private function assertOpen(): void
     {
         if ($this->closed || $this->closing) {
+            // Programmer misuse (reusing a closed handler), not a transfer failure;
+            // intentionally a LogicException outside the GuzzleException hierarchy.
             throw new \BadMethodCallException('Cannot use the cURL multi handler after it has been closed.');
         }
     }
@@ -653,7 +656,7 @@ final class CurlMultiHandler
 
         foreach ($this->options as $option => $value) {
             if (!\is_int($option)) {
-                throw new \InvalidArgumentException(\sprintf('Invalid cURL multi option "%s".', $option));
+                throw new InvalidArgumentException(\sprintf('Invalid cURL multi option "%s".', $option));
             }
 
             // A warning is raised in case of a wrong option.

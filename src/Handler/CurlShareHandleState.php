@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 
@@ -79,7 +80,7 @@ final class CurlShareHandleState
             return $sharing;
         }
 
-        throw new \InvalidArgumentException(\sprintf(
+        throw new InvalidArgumentException(\sprintf(
             'The "%s" option must be null or a GuzzleHttp\\TransportSharing::* constant; received %s.',
             $option,
             Utils::describeType($sharing)
@@ -97,7 +98,7 @@ final class CurlShareHandleState
             return;
         }
 
-        throw new \InvalidArgumentException(\sprintf(
+        throw new InvalidArgumentException(\sprintf(
             'The "transport_sharing" %s option cannot require sharing with a custom "handle_factory" because Guzzle cannot ensure that the custom factory applies CURLOPT_SHARE.',
             $handlerName
         ));
@@ -115,7 +116,7 @@ final class CurlShareHandleState
     private static function createHandlerShare(string $mode): self
     {
         if (!\function_exists('curl_share_init') || !\function_exists('curl_share_setopt')) {
-            throw new \InvalidArgumentException('The "transport_sharing" option requires cURL share support.');
+            throw new InvalidArgumentException('The "transport_sharing" option requires cURL share support.');
         }
 
         self::requireCurlConstant('CURLOPT_SHARE');
@@ -128,11 +129,11 @@ final class CurlShareHandleState
                 try {
                     $success = curl_share_setopt($handle, $shareOption, $lock);
                 } catch (\Throwable $e) {
-                    throw new \InvalidArgumentException('Unable to configure cURL share handle: '.$e->getMessage(), 0, $e);
+                    throw new InvalidArgumentException('Unable to configure cURL share handle: '.$e->getMessage(), 0, $e);
                 }
 
                 if (!$success) {
-                    throw new \InvalidArgumentException(\sprintf('Unable to configure cURL share handle with lock data %d.', $lock));
+                    throw new InvalidArgumentException(\sprintf('Unable to configure cURL share handle with lock data %d.', $lock));
                 }
             }
         } catch (\Throwable $e) {
@@ -160,7 +161,7 @@ final class CurlShareHandleState
     private static function createPersistentShare(string $mode): self
     {
         if (!self::supportsPersistentShare()) {
-            throw new \InvalidArgumentException('The "transport_sharing" option requires persistent cURL share handle support.');
+            throw new InvalidArgumentException('The "transport_sharing" option requires persistent cURL share handle support.');
         }
 
         self::requireCurlConstant('CURLOPT_SHARE');
@@ -168,7 +169,7 @@ final class CurlShareHandleState
         try {
             $handle = curl_share_init_persistent(self::persistentLocks());
         } catch (\Throwable $e) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Unable to create persistent cURL share handle: '.$e->getMessage(),
                 0,
                 $e
@@ -213,7 +214,7 @@ final class CurlShareHandleState
     private static function requireCurlConstant(string $constant): int
     {
         if (!\defined($constant)) {
-            throw new \InvalidArgumentException(\sprintf(
+            throw new InvalidArgumentException(\sprintf(
                 'The "transport_sharing" option requires %s, but it is not available in the installed PHP cURL extension.',
                 $constant
             ));
@@ -221,7 +222,7 @@ final class CurlShareHandleState
 
         $value = \constant($constant);
         if (!\is_int($value)) {
-            throw new \InvalidArgumentException(\sprintf('The cURL constant %s must resolve to an integer.', $constant));
+            throw new InvalidArgumentException(\sprintf('The cURL constant %s must resolve to an integer.', $constant));
         }
 
         return $value;

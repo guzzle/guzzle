@@ -6,6 +6,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ConnectTimeoutException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
@@ -96,7 +97,7 @@ final class StreamHandler
         }
 
         if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
-            throw new \InvalidArgumentException('on_stats must be callable');
+            throw new InvalidArgumentException('on_stats must be callable');
         }
 
         $startTime = isset($options['on_stats']) ? Utils::currentTime() : null;
@@ -542,7 +543,7 @@ final class StreamHandler
         $streamContextHasTlsSettings = self::hasStreamContextTlsSettings($options);
 
         if (isset($options['on_headers']) && !\is_callable($options['on_headers'])) {
-            throw new \InvalidArgumentException('on_headers must be callable');
+            throw new InvalidArgumentException('on_headers must be callable');
         }
 
         $readTimeout = isset($options['read_timeout'])
@@ -554,7 +555,7 @@ final class StreamHandler
         if (isset($options['stream_context'])) {
             $streamContext = $options['stream_context'];
             if (!\is_array($streamContext)) {
-                throw new \InvalidArgumentException('stream_context must be an array');
+                throw new InvalidArgumentException('stream_context must be an array');
             }
             $context = \array_replace_recursive($context, $streamContext);
 
@@ -568,7 +569,7 @@ final class StreamHandler
 
         // Microsoft NTLM authentication only supported with curl handler
         if (isset($options['auth'][2]) && 'ntlm' === $options['auth'][2]) {
-            throw new \InvalidArgumentException('Microsoft NTLM authentication only supported with curl handler');
+            throw new InvalidArgumentException('Microsoft NTLM authentication only supported with curl handler');
         }
 
         $uri = $this->resolveHost($request, $options);
@@ -734,7 +735,7 @@ final class StreamHandler
             $transportSharingMode = CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing');
 
             if (\in_array($transportSharingMode, [TransportSharing::HANDLER_REQUIRE, TransportSharing::PERSISTENT_REQUIRE], true)) {
-                throw new \InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
+                throw new InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
             }
         }
 
@@ -744,15 +745,15 @@ final class StreamHandler
             && $options['curl'] !== []
             && !self::isCurlOptionGeneratedByAuth($options)
         ) {
-            throw new \InvalidArgumentException('Passing the "curl" request option to the stream handler is not supported because the stream handler ignores cURL options.');
+            throw new InvalidArgumentException('Passing the "curl" request option to the stream handler is not supported because the stream handler ignores cURL options.');
         }
 
         if (self::usesDigestAuth($options)) {
-            throw new \InvalidArgumentException('Digest authentication is not supported by the stream handler because it is only supported by cURL handlers.');
+            throw new InvalidArgumentException('Digest authentication is not supported by the stream handler because it is only supported by cURL handlers.');
         }
 
         if (\array_key_exists('expect', $options) && $options['expect'] !== false && $request->hasHeader('Expect')) {
-            throw new \InvalidArgumentException('Passing the "expect" request option to the stream handler is not supported when it adds an Expect header because the stream handler does not support Expect: 100-Continue.');
+            throw new InvalidArgumentException('Passing the "expect" request option to the stream handler is not supported when it adds an Expect header because the stream handler does not support Expect: 100-Continue.');
         }
     }
 
@@ -799,11 +800,11 @@ final class StreamHandler
 
         if (\is_array($value)) {
             if (!isset($value[0]) || !\is_string($value[0])) {
-                throw new \InvalidArgumentException(\sprintf('Invalid %s request option', $option));
+                throw new InvalidArgumentException(\sprintf('Invalid %s request option', $option));
             }
             if (isset($value[1])) {
                 if (!\is_string($value[1])) {
-                    throw new \InvalidArgumentException(\sprintf('Invalid %s request option', $option));
+                    throw new InvalidArgumentException(\sprintf('Invalid %s request option', $option));
                 }
                 $passphrase = $value[1];
             }
@@ -811,7 +812,7 @@ final class StreamHandler
         }
 
         if (!\is_string($value)) {
-            throw new \InvalidArgumentException(\sprintf('Invalid %s request option', $option));
+            throw new InvalidArgumentException(\sprintf('Invalid %s request option', $option));
         }
 
         return [$value, $passphrase];
@@ -824,7 +825,7 @@ final class StreamHandler
         }
 
         if (isset($options['ssl']['passphrase']) && $options['ssl']['passphrase'] !== $passphrase) {
-            throw new \InvalidArgumentException(\sprintf('Cannot use different passphrases for cert and ssl_key with the stream handler; %s conflicts with an existing TLS passphrase.', $option));
+            throw new InvalidArgumentException(\sprintf('Cannot use different passphrases for cert and ssl_key with the stream handler; %s conflicts with an existing TLS passphrase.', $option));
         }
 
         $options['ssl']['passphrase'] = $passphrase;
@@ -836,11 +837,11 @@ final class StreamHandler
     private static function assertStreamTlsType(string $option, $value): void
     {
         if (!\is_string($value) || $value === '') {
-            throw new \InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
+            throw new InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
         }
 
         if (\strtoupper($value) !== 'PEM') {
-            throw new \InvalidArgumentException(\sprintf('The stream handler only supports "PEM" for the %s request option.', $option));
+            throw new InvalidArgumentException(\sprintf('The stream handler only supports "PEM" for the %s request option.', $option));
         }
     }
 
@@ -935,7 +936,7 @@ final class StreamHandler
             return;
         }
 
-        throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
+        throw new InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
     }
 
     /**
@@ -956,7 +957,7 @@ final class StreamHandler
                 throw new \RuntimeException("SSL CA bundle not found: $value");
             }
         } elseif ($value !== true) {
-            throw new \InvalidArgumentException('Invalid verify request option');
+            throw new InvalidArgumentException('Invalid verify request option');
         }
 
         $context['ssl']['verify_peer'] = true;
@@ -1016,7 +1017,7 @@ final class StreamHandler
     private function applyProgressOption($value, array &$params): void
     {
         if (!\is_callable($value)) {
-            throw new \InvalidArgumentException('progress client option must be callable');
+            throw new InvalidArgumentException('progress client option must be callable');
         }
 
         self::addNotification(

@@ -112,6 +112,8 @@ final class CurlHandler
     private function assertOpen(): void
     {
         if ($this->closed) {
+            // Programmer misuse (reusing a closed handler), not a transfer failure;
+            // intentionally a LogicException outside the GuzzleException hierarchy.
             throw new \BadMethodCallException('Cannot use the cURL handler after it has been closed.');
         }
     }
