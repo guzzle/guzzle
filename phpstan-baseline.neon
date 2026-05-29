@@ -79,6 +79,12 @@ parameters:
 			path: src/Handler/CurlHandler.php
 
 		-
+			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:getMultiHandle\(\) has invalid return type CurlMultiHandle\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
 			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 5
@@ -139,12 +145,6 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:getMultiHandle\(\) has invalid return type CurlMultiHandle\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
 			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$multiHandle \(CurlMultiHandle\|resource\|null\) is never assigned CurlMultiHandle so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
@@ -191,12 +191,6 @@ parameters:
 			identifier: booleanAnd.alwaysFalse
 			count: 1
 			path: src/Middleware.php
-
-		-
-			message: '#^Call to function is_iterable\(\) with array\|Iterator will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Pool.php
 
 		-
 			message: '#^Cannot cast mixed to string\.$#'
