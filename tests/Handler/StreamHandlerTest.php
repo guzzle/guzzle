@@ -1771,6 +1771,41 @@ class StreamHandlerTest extends TestCase
         self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
+    public function testThrowsResponseTimeoutExceptionWhenDrainingGzipBodyTimesOut(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'guzzle-server/read-timeout-gzip');
+        $stats = null;
+        $exception = null;
+
+        try {
+            $handler(
+                $request,
+                [
+                    'decode_content' => true,
+                    RequestOptions::READ_TIMEOUT => 0.05,
+                    'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                        $stats = $transferStats;
+                    },
+                ]
+            )->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            $exception = $e;
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
+            self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
+            self::assertSame(['timed_out' => true], $e->getHandlerContext());
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($exception->getResponse(), $stats->getResponse());
+        self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
     public function testHandlesGarbageHttpServerGracefully(): void
     {
         $handler = new StreamHandler();
