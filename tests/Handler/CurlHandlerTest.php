@@ -10,6 +10,7 @@ use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Server\Server;
+use GuzzleHttp\Tests\DeprecationTestTrait;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +20,8 @@ use PHPUnit\Framework\TestCase;
  */
 class CurlHandlerTest extends TestCase
 {
+    use DeprecationTestTrait;
+
     protected function getHandler($options = [])
     {
         return new CurlHandler($options);
@@ -75,9 +78,12 @@ class CurlHandlerTest extends TestCase
         $request = new Request('GET', 'http://localhost:123');
         $called = false;
         $p = $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])
-            ->otherwise(static function (ConnectException $e) use (&$called) {
+            ->otherwise(function (ConnectException $e) use (&$called) {
                 $called = true;
-                self::assertArrayHasKey('errno', $e->getHandlerContext());
+                $context = $this->withoutDeprecations(static function () use ($e) {
+                    return $e->getHandlerContext();
+                });
+                self::assertArrayHasKey('errno', $context);
             });
         $p->wait();
         self::assertTrue($called);

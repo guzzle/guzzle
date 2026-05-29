@@ -46,9 +46,19 @@ class NetworkException extends TransferException implements NetworkExceptionInte
      * using. It may also be just an empty array. Relying on this data will
      * couple you to a specific handler, but can give more debug information
      * when needed.
+     *
+     * @deprecated since 7.11. Use TransferStats from the "on_stats" request
+     *             option for handler context instead.
      */
     public function getHandlerContext(): array
     {
+        \trigger_deprecation(
+            'guzzlehttp/guzzle',
+            '7.11',
+            '%s is deprecated and will be removed in 8.0. Use TransferStats from the "on_stats" request option for handler context instead.',
+            __METHOD__
+        );
+
         return $this->handlerContext;
     }
 }

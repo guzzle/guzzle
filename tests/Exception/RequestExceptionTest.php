@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
+use GuzzleHttp\Tests\DeprecationTestTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Client\RequestExceptionInterface;
@@ -17,6 +18,8 @@ use Psr\Http\Client\RequestExceptionInterface;
  */
 class RequestExceptionTest extends TestCase
 {
+    use DeprecationTestTrait;
+
     public function testHasRequestAndResponse()
     {
         $req = new Request('GET', '/');
@@ -142,7 +145,11 @@ class RequestExceptionTest extends TestCase
     {
         $r = new Request('GET', 'http://www.oo.com');
         $e = new RequestException('foo', $r, null, null, ['bar' => 'baz']);
-        self::assertSame(['bar' => 'baz'], $e->getHandlerContext());
+        $context = $this->withoutDeprecations(static function () use ($e) {
+            return $e->getHandlerContext();
+        });
+
+        self::assertSame(['bar' => 'baz'], $context);
     }
 
     public function testObfuscateUrlWithUsername()

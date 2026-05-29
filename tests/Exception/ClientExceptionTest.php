@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Tests\DeprecationTestTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Client\RequestExceptionInterface;
@@ -16,6 +17,8 @@ use Psr\Http\Client\RequestExceptionInterface;
  */
 class ClientExceptionTest extends TestCase
 {
+    use DeprecationTestTrait;
+
     public function testHasRequestAndResponse()
     {
         $req = new Request('GET', '/');
@@ -32,7 +35,10 @@ class ClientExceptionTest extends TestCase
         self::assertTrue($e->hasResponse());
         self::assertSame(404, $e->getCode());
         self::assertSame('foo', $e->getMessage());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
+        $context = $this->withoutDeprecations(static function () use ($e) {
+            return $e->getHandlerContext();
+        });
+        self::assertSame('bar', $context['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }

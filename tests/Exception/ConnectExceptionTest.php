@@ -5,6 +5,7 @@ namespace GuzzleHttp\Tests\Exception;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Tests\DeprecationTestTrait;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Client\RequestExceptionInterface;
@@ -14,6 +15,8 @@ use Psr\Http\Client\RequestExceptionInterface;
  */
 class ConnectExceptionTest extends TestCase
 {
+    use DeprecationTestTrait;
+
     public function testHasRequest()
     {
         $req = new Request('GET', '/');
@@ -24,7 +27,10 @@ class ConnectExceptionTest extends TestCase
         self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
         self::assertSame('foo', $e->getMessage());
-        self::assertSame('bar', $e->getHandlerContext()['foo']);
+        $context = $this->withoutDeprecations(static function () use ($e) {
+            return $e->getHandlerContext();
+        });
+        self::assertSame('bar', $context['foo']);
         self::assertSame($prev, $e->getPrevious());
     }
 }
