@@ -23,12 +23,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Prevented `CurlMultiHandler` destructors from throwing during cleanup
 - Improved invalid response handling across handlers
 
-### Fixed
-
-- Prevented single `Pool` inputs from triggering `guzzlehttp/promises` non-iterable deprecations
-
 ### Deprecated
 
+- Deprecated non-iterable `Pool` request collections, which will be rejected in 8.0
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
 - Deprecated conflicting raw cURL request options, including `CURLOPT_SHARE`, which will be rejected in 8.0
 - Deprecated scalar-coerced `idn_conversion` request option values, which will be rejected in 8.0

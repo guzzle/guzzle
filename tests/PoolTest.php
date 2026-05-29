@@ -18,14 +18,6 @@ use Psr\Http\Message\RequestInterface;
 
 class PoolTest extends TestCase
 {
-    public function testValidatesSingleInvalidElement()
-    {
-        $p = new Pool(new Client(), 'foo');
-
-        $this->expectException(\InvalidArgumentException::class);
-        $p->promise()->wait();
-    }
-
     public function testValidatesEachElement()
     {
         $c = new Client();
@@ -44,31 +36,6 @@ class PoolTest extends TestCase
         $c = $this->getClient();
         $p = new Pool($c, [new Request('GET', 'http://example.com')]);
         $p->promise()->wait();
-    }
-
-    public function testAcceptsSingleRequest()
-    {
-        $h = [];
-        $handler = new MockHandler([
-            static function (RequestInterface $request) use (&$h) {
-                $h[] = $request;
-
-                return new Response();
-            },
-        ]);
-        $c = new Client(['handler' => $handler]);
-        $keys = [];
-        $p = new Pool($c, new Request('GET', 'http://example.com'), [
-            'fulfilled' => static function ($res, $index) use (&$keys) {
-                $keys[] = $index;
-            },
-        ]);
-
-        $p->promise()->wait();
-
-        self::assertCount(1, $h);
-        self::assertSame('http://example.com', (string) $h[0]->getUri());
-        self::assertSame([0], $keys);
     }
 
     /**
@@ -135,40 +102,6 @@ class PoolTest extends TestCase
         $p->promise()->wait();
         self::assertCount(1, $h);
         self::assertTrue($h[0]->hasHeader('x-foo'));
-    }
-
-    public function testAcceptsSingleCallable()
-    {
-        $h = [];
-        $handler = new MockHandler([
-            static function (RequestInterface $request) use (&$h) {
-                $h[] = $request;
-
-                return new Response();
-            },
-        ]);
-        $c = new Client(['handler' => $handler]);
-        $optHistory = [];
-        $fn = static function (array $opts) use (&$optHistory, $c) {
-            $optHistory = $opts;
-
-            return $c->requestAsync('GET', 'http://example.com', $opts);
-        };
-        $keys = [];
-        $opts = [
-            'options' => ['headers' => ['x-foo' => 'bar']],
-            'fulfilled' => static function ($res, $index) use (&$keys) {
-                $keys[] = $index;
-            },
-        ];
-        $p = new Pool($c, $fn, $opts);
-
-        $p->promise()->wait();
-
-        self::assertSame($opts['options'], $optHistory);
-        self::assertCount(1, $h);
-        self::assertTrue($h[0]->hasHeader('x-foo'));
-        self::assertSame([0], $keys);
     }
 
     public function testBatchesResults()

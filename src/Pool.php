@@ -2,7 +2,6 @@
 
 namespace GuzzleHttp;
 
-use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\EachPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\PromisorInterface;
@@ -30,7 +29,7 @@ class Pool implements PromisorInterface
 
     /**
      * @param ClientInterface $client   Client used to send the requests.
-     * @param array|\Iterator $requests Requests or functions that return
+     * @param iterable        $requests Requests or functions that return
      *                                  requests to send concurrently.
      * @param array           $config   Associative array of options
      *                                  - concurrency: (int) Maximum number of requests to send concurrently
@@ -52,12 +51,19 @@ class Pool implements PromisorInterface
         }
 
         if (!\is_iterable($requests)) {
+            \trigger_deprecation(
+                'guzzlehttp/guzzle',
+                '7.11',
+                'Passing a non-iterable request collection to %s::__construct() or %s::batch() is deprecated; guzzlehttp/guzzle 8.0 will require an iterable.',
+                __CLASS__,
+                __CLASS__
+            );
+
             $requests = [$requests];
         }
 
-        $iterable = P\Create::iterFor($requests);
-        $requests = static function () use ($iterable, $client, $opts) {
-            foreach ($iterable as $key => $rfn) {
+        $requests = static function () use ($requests, $client, $opts) {
+            foreach ($requests as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
                     yield $key => $client->sendAsync($rfn, $opts);
                 } elseif (\is_callable($rfn)) {
@@ -88,7 +94,7 @@ class Pool implements PromisorInterface
      * indeterminate number of requests concurrently.
      *
      * @param ClientInterface $client   Client used to send the requests
-     * @param array|\Iterator $requests Requests to send concurrently.
+     * @param iterable        $requests Requests to send concurrently.
      * @param array           $options  Passes through the options available in
      *                                  {@see Pool::__construct}
      *
