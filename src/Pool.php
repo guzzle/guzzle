@@ -51,6 +51,10 @@ class Pool implements PromisorInterface
             $opts = [];
         }
 
+        if (!\is_iterable($requests)) {
+            $requests = [$requests];
+        }
+
         $iterable = P\Create::iterFor($requests);
         $requests = static function () use ($iterable, $client, $opts) {
             foreach ($iterable as $key => $rfn) {
