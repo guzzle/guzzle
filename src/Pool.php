@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp;
 
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\EachPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Promise\PromisorInterface;
@@ -29,7 +30,7 @@ class Pool implements PromisorInterface
 
     /**
      * @param ClientInterface $client   Client used to send the requests.
-     * @param iterable        $requests Requests or functions that return
+     * @param array|\Iterator $requests Requests or functions that return
      *                                  requests to send concurrently.
      * @param array           $config   Associative array of options
      *                                  - concurrency: (int) Maximum number of requests to send concurrently
@@ -62,8 +63,9 @@ class Pool implements PromisorInterface
             $requests = [$requests];
         }
 
-        $requests = static function () use ($requests, $client, $opts) {
-            foreach ($requests as $key => $rfn) {
+        $iterable = P\Create::iterFor($requests);
+        $requests = static function () use ($iterable, $client, $opts) {
+            foreach ($iterable as $key => $rfn) {
                 if ($rfn instanceof RequestInterface) {
                     yield $key => $client->sendAsync($rfn, $opts);
                 } elseif (\is_callable($rfn)) {
@@ -94,7 +96,7 @@ class Pool implements PromisorInterface
      * indeterminate number of requests concurrently.
      *
      * @param ClientInterface $client   Client used to send the requests
-     * @param iterable        $requests Requests to send concurrently.
+     * @param array|\Iterator $requests Requests to send concurrently.
      * @param array           $options  Passes through the options available in
      *                                  {@see Pool::__construct}
      *
