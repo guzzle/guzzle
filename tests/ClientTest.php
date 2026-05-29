@@ -128,6 +128,26 @@ class ClientTest extends TestCase
         self::assertSame('1.1', $mock->getLastRequest()->getProtocolVersion());
     }
 
+    public function testRequestWithUppercaseMethodSendsUppercaseMethod()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $client->request('GET', 'http://foo.com');
+
+        self::assertSame('GET', $mock->getLastRequest()->getMethod());
+    }
+
+    public function testRequestAsyncWithUppercaseMethodSendsUppercaseMethod()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $client->requestAsync('POST', 'http://foo.com')->wait();
+
+        self::assertSame('POST', $mock->getLastRequest()->getMethod());
+    }
+
     public function testClientHasOptions()
     {
         $client = new Client([
@@ -919,6 +939,30 @@ class ClientTest extends TestCase
         self::assertNotNull($sent);
         self::assertSame(['bar'], $sent->getHeader('X-Foo'));
         self::assertSame(['zero'], $sent->getHeader('0'));
+    }
+
+    public function testEasyRequestHeadersHandleNumericHeaderNames()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $client->request('GET', 'http://foo.com', ['headers' => ['0' => 'zero']]);
+
+        $sent = $mock->getLastRequest();
+        self::assertNotNull($sent);
+        self::assertSame(['zero'], $sent->getHeader('0'));
+    }
+
+    public function testEasyRequestHeadersPreserveStringValueArrays()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $client->request('GET', 'http://foo.com', ['headers' => ['X-Foo' => ['bar', 'baz']]]);
+
+        $sent = $mock->getLastRequest();
+        self::assertNotNull($sent);
+        self::assertSame(['bar', 'baz'], $sent->getHeader('X-Foo'));
     }
 
     public function testCanSetCustomHandler()

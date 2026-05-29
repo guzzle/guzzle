@@ -25,6 +25,12 @@ parameters:
 			path: src/Client.php
 
 		-
+			message: '#^Parameter \#3 \$headers of class GuzzleHttp\\Psr7\\Request constructor expects array\<array\<string\>\|string\>, array\<mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Client.php
+
+		-
 			message: '#^Part \$value\[0\] \(mixed\) of encapsed string cannot be cast to string\.$#'
 			identifier: encapsedStringPart.nonString
 			count: 3
