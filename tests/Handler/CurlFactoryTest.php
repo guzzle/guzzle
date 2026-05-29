@@ -2283,7 +2283,8 @@ class CurlFactoryTest extends TestCase
     public function testCreatesConnectExceptionForConnectionErrors(int $errno): void
     {
         $factory = new CurlFactory(1);
-        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, []);
         $easy->errno = $errno;
         $response = CurlFactory::finish(
             static function (): void {

@@ -535,7 +535,8 @@ class CurlMultiHandlerTest extends TestCase
         $progressCalls = 0;
         $closed = false;
 
-        $promise = $handler(new Request('GET', Server::$url), [
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
             'timeout' => 5,
             'progress' => static function (
                 $downloadSize,
