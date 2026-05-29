@@ -6,6 +6,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ConnectTimeoutException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
@@ -112,15 +113,15 @@ final class CurlFactory implements CurlFactoryInterface
         $this->shareMode = CurlShareHandleState::normalizeMode($shareMode, 'transport_sharing');
 
         if ($this->shareMode === TransportSharing::NONE && $shareHandle !== null) {
-            throw new \InvalidArgumentException('A cURL share handle cannot be provided when transport sharing is disabled.');
+            throw new InvalidArgumentException('A cURL share handle cannot be provided when transport sharing is disabled.');
         }
 
         if ($this->shareMode !== TransportSharing::NONE && $shareHandle === null) {
-            throw new \InvalidArgumentException('A cURL share handle is required when transport sharing is enabled.');
+            throw new InvalidArgumentException('A cURL share handle is required when transport sharing is enabled.');
         }
 
         if ($shareHandle !== null && !self::isCurlShareHandle($shareHandle)) {
-            throw new \InvalidArgumentException('A cURL share handle must be an instance of CurlShareHandle, CurlSharePersistentHandle, or a curl_share resource.');
+            throw new InvalidArgumentException('A cURL share handle must be an instance of CurlShareHandle, CurlSharePersistentHandle, or a curl_share resource.');
         }
 
         $this->shareHandle = $shareHandle;
@@ -199,7 +200,7 @@ final class CurlFactory implements CurlFactoryInterface
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         if ($this->shareHandle !== null) {
             if (!\defined('CURLOPT_SHARE')) {
-                throw new \InvalidArgumentException('The configured cURL share handle requires CURLOPT_SHARE, but it is not available in the installed PHP cURL extension.');
+                throw new InvalidArgumentException('The configured cURL share handle requires CURLOPT_SHARE, but it is not available in the installed PHP cURL extension.');
             }
 
             $conf[(int) \constant('CURLOPT_SHARE')] = $this->shareHandle;
@@ -207,7 +208,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         $handle = $this->handles ? \array_pop($this->handles) : \curl_init();
         if (false === $handle) {
-            throw new \RuntimeException('Can not initialize cURL handle.');
+            throw new RequestException('Can not initialize cURL handle.', $request);
         }
         $easy->handle = $handle;
 
@@ -233,7 +234,7 @@ final class CurlFactory implements CurlFactoryInterface
     {
         foreach ($conf as $option => $value) {
             if (!\is_int($option)) {
-                throw new \InvalidArgumentException(\sprintf(
+                throw new InvalidArgumentException(\sprintf(
                     'Invalid cURL option %s.',
                     self::formatCurlOption($option)
                 ));
@@ -242,7 +243,7 @@ final class CurlFactory implements CurlFactoryInterface
             try {
                 $success = curl_setopt($handle, $option, $value);
             } catch (\Throwable $e) {
-                throw new \InvalidArgumentException(
+                throw new InvalidArgumentException(
                     \sprintf(
                         'Unable to set cURL option %s: %s',
                         self::formatCurlOption($option),
@@ -254,7 +255,7 @@ final class CurlFactory implements CurlFactoryInterface
             }
 
             if (!$success) {
-                throw new \InvalidArgumentException(\sprintf(
+                throw new InvalidArgumentException(\sprintf(
                     'Unable to set cURL option %s.',
                     self::formatCurlOption($option)
                 ));
@@ -277,7 +278,7 @@ final class CurlFactory implements CurlFactoryInterface
             return;
         }
 
-        throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with configured transport sharing.');
+        throw new InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with configured transport sharing.');
     }
 
     private function rejectPersistentRequireConnectionReuseConflicts(array $options): void
@@ -291,11 +292,11 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if (!empty($options['curl'][\CURLOPT_FRESH_CONNECT])) {
-            throw new \InvalidArgumentException('The CURLOPT_FRESH_CONNECT cURL option cannot be used when persistent cURL sharing is required because it disables connection reuse.');
+            throw new InvalidArgumentException('The CURLOPT_FRESH_CONNECT cURL option cannot be used when persistent cURL sharing is required because it disables connection reuse.');
         }
 
         if (!empty($options['curl'][\CURLOPT_FORBID_REUSE])) {
-            throw new \InvalidArgumentException('The CURLOPT_FORBID_REUSE cURL option cannot be used when persistent cURL sharing is required because it disables connection reuse.');
+            throw new InvalidArgumentException('The CURLOPT_FORBID_REUSE cURL option cannot be used when persistent cURL sharing is required because it disables connection reuse.');
         }
     }
 
@@ -342,14 +343,14 @@ final class CurlFactory implements CurlFactoryInterface
             $name = self::formatCurlOption($option);
             $replacement = $conflictingOptions[$option];
             if ($replacement !== null) {
-                throw new \InvalidArgumentException(\sprintf(
+                throw new InvalidArgumentException(\sprintf(
                     'Passing %s in the "curl" request option is not supported because it conflicts with Guzzle-managed request handling. Use %s instead.',
                     $name,
                     $replacement
                 ));
             }
 
-            throw new \InvalidArgumentException(\sprintf(
+            throw new InvalidArgumentException(\sprintf(
                 'Passing %s in the "curl" request option is not supported because it conflicts with Guzzle-managed cURL internals.',
                 $name
             ));
@@ -362,18 +363,18 @@ final class CurlFactory implements CurlFactoryInterface
             \array_key_exists('transport_sharing', $options)
             && CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing') !== TransportSharing::NONE
         ) {
-            throw new \InvalidArgumentException('The "transport_sharing" option is a client constructor option, not a request option. Configure transport sharing when creating the Client, CurlHandler, or CurlMultiHandler.');
+            throw new InvalidArgumentException('The "transport_sharing" option is a client constructor option, not a request option. Configure transport sharing when creating the Client, CurlHandler, or CurlMultiHandler.');
         }
 
         if (\array_key_exists('stream_context', $options)) {
-            throw new \InvalidArgumentException('Passing the "stream_context" request option to a cURL handler is not supported because cURL handlers ignore PHP stream context options.');
+            throw new InvalidArgumentException('Passing the "stream_context" request option to a cURL handler is not supported because cURL handlers ignore PHP stream context options.');
         }
     }
 
     private static function assertOnStatsCallable(array $options): void
     {
         if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
-            throw new \InvalidArgumentException('on_stats must be callable');
+            throw new InvalidArgumentException('on_stats must be callable');
         }
     }
 
@@ -504,6 +505,8 @@ final class CurlFactory implements CurlFactoryInterface
     private function assertOpen(): void
     {
         if ($this->closed) {
+            // Programmer misuse (reusing a closed factory), not a transfer failure;
+            // intentionally a LogicException outside the GuzzleException hierarchy.
             throw new \BadMethodCallException('Cannot use the cURL factory after it has been closed.');
         }
     }
@@ -1099,7 +1102,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ('3' === $version || '3.0' === $version) {
             if (!\defined('CURL_HTTP_VERSION_3')) {
-                throw new \RuntimeException('HTTP/3 is not supported by this cURL installation.');
+                throw new RequestException('HTTP/3 is not supported by this cURL installation.', $easy->request);
             }
 
             $proxy = ProxyOptions::resolve($easy->request->getUri(), $easy->options['proxy'] ?? null);
@@ -1141,7 +1144,7 @@ final class CurlFactory implements CurlFactoryInterface
     private static function normalizeTlsFileType(string $option, $type): string
     {
         if (!\is_string($type) || $type === '') {
-            throw new \InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
+            throw new InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
         }
 
         return \strtoupper($type);
@@ -1301,7 +1304,7 @@ final class CurlFactory implements CurlFactoryInterface
                 if (\is_string($options['verify'])) {
                     // Throw an error if the file/folder/link path is not valid or doesn't exist.
                     if (!\file_exists($options['verify'])) {
-                        throw new \InvalidArgumentException("SSL CA bundle not found: {$options['verify']}");
+                        throw new InvalidArgumentException("SSL CA bundle not found: {$options['verify']}");
                     }
                     // If it's a directory or a link to a directory use CURLOPT_CAPATH.
                     // If not, it's probably a file, or a link to a file, so use CURLOPT_CAINFO.
@@ -1349,7 +1352,7 @@ final class CurlFactory implements CurlFactoryInterface
             $sink = \GuzzleHttp\Psr7\Utils::streamFor($sink);
         } elseif (!\is_dir(\dirname($sink))) {
             // Ensure that the directory exists before failing in curl.
-            throw new \RuntimeException(\sprintf('Directory %s does not exist for sink value of %s', \dirname($sink), $sink));
+            throw new RequestException(\sprintf('Directory %s does not exist for sink value of %s', \dirname($sink), $sink), $easy->request);
         } else {
             $sink = new LazyOpenStream($sink, 'w+');
         }
@@ -1403,7 +1406,7 @@ final class CurlFactory implements CurlFactoryInterface
         $proxyForConnectionReuse = self::getEffectiveProxyForConnectionReuse($selectedProxy, $options);
         if ($proxyForConnectionReuse !== null && self::requiresFreshConnectionForAuthenticatedProxy($easy->request, $proxyForConnectionReuse, $options)) {
             if ($this->shareMode === TransportSharing::PERSISTENT_REQUIRE) {
-                throw new \InvalidArgumentException('Persistent cURL sharing is required, but this request requires a fresh proxy tunnel connection.');
+                throw new InvalidArgumentException('Persistent cURL sharing is required, but this request requires a fresh proxy tunnel connection.');
             }
 
             $conf[\CURLOPT_FRESH_CONNECT] = true;
@@ -1432,11 +1435,11 @@ final class CurlFactory implements CurlFactoryInterface
                     $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
                 } elseif (\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $cryptoMethod) {
                     if (!CurlVersion::supportsTls13()) {
-                        throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
+                        throw new InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
                     }
                     $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
                 } else {
-                    throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
+                    throw new InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
                 }
             } elseif (\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $cryptoMethod) {
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_0;
@@ -1446,11 +1449,11 @@ final class CurlFactory implements CurlFactoryInterface
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
             } elseif (\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $cryptoMethod) {
                 if (!CurlVersion::supportsTls13()) {
-                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
+                    throw new InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
                 }
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
             } else {
-                throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
+                throw new InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
             }
         }
 
@@ -1464,21 +1467,21 @@ final class CurlFactory implements CurlFactoryInterface
             $cert = $options['cert'];
             if (\is_array($cert)) {
                 if (!isset($cert[0]) || !\is_string($cert[0])) {
-                    throw new \InvalidArgumentException('Invalid cert request option');
+                    throw new InvalidArgumentException('Invalid cert request option');
                 }
                 if (isset($cert[1])) {
                     if (!\is_string($cert[1])) {
-                        throw new \InvalidArgumentException('Invalid cert request option');
+                        throw new InvalidArgumentException('Invalid cert request option');
                     }
                     $conf[\CURLOPT_SSLCERTPASSWD] = $cert[1];
                 }
                 $cert = $cert[0];
             }
             if (!\is_string($cert)) {
-                throw new \InvalidArgumentException('Invalid cert request option');
+                throw new InvalidArgumentException('Invalid cert request option');
             }
             if (!\file_exists($cert)) {
-                throw new \InvalidArgumentException("SSL certificate not found: {$cert}");
+                throw new InvalidArgumentException("SSL certificate not found: {$cert}");
             }
             // OpenSSL (versions 0.9.3 and later) also support "P12" for PKCS#12-encoded files.
             // see https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
@@ -1498,11 +1501,11 @@ final class CurlFactory implements CurlFactoryInterface
         if (isset($options['ssl_key'])) {
             if (\is_array($options['ssl_key'])) {
                 if (!isset($options['ssl_key'][0]) || !\is_string($options['ssl_key'][0])) {
-                    throw new \InvalidArgumentException('Invalid ssl_key request option');
+                    throw new InvalidArgumentException('Invalid ssl_key request option');
                 }
                 if (isset($options['ssl_key'][1])) {
                     if (!\is_string($options['ssl_key'][1])) {
-                        throw new \InvalidArgumentException('Invalid ssl_key request option');
+                        throw new InvalidArgumentException('Invalid ssl_key request option');
                     }
                     $conf[\CURLOPT_SSLKEYPASSWD] = $options['ssl_key'][1];
                 }
@@ -1512,18 +1515,18 @@ final class CurlFactory implements CurlFactoryInterface
             $sslKey = $sslKey ?? $options['ssl_key'];
 
             if (!\is_string($sslKey)) {
-                throw new \InvalidArgumentException('Invalid ssl_key request option');
+                throw new InvalidArgumentException('Invalid ssl_key request option');
             }
 
             if (self::shouldValidateSslKeyFile($sslKeyType) && !\file_exists($sslKey)) {
-                throw new \InvalidArgumentException("SSL private key not found: {$sslKey}");
+                throw new InvalidArgumentException("SSL private key not found: {$sslKey}");
             }
             $conf[\CURLOPT_SSLKEY] = $sslKey;
         }
 
         $progress = $options['progress'] ?? null;
         if ($progress !== null && !\is_callable($progress)) {
-            throw new \InvalidArgumentException('progress client option must be callable');
+            throw new InvalidArgumentException('progress client option must be callable');
         }
 
         // The streaming read callback (set by applyBody) aborts the upload on a
@@ -1633,7 +1636,7 @@ final class CurlFactory implements CurlFactoryInterface
             $onHeaders = $easy->options['on_headers'];
 
             if (!\is_callable($onHeaders)) {
-                throw new \InvalidArgumentException('on_headers must be callable');
+                throw new InvalidArgumentException('on_headers must be callable');
             }
         } else {
             $onHeaders = null;
