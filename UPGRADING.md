@@ -168,7 +168,7 @@ response constructor argument, and no longer has
 `getResponse()` or `hasResponse()` methods. Catch `ResponseException`, or test
 with `instanceof ResponseException`, before calling `getResponse()`. If you
 instantiate `RequestException` directly, its third constructor argument is now
-the exception code, followed by the previous exception and handler context.
+the exception code, followed by the previous exception.
 
 Timeout exception classes are now split by the phase the handler can determine.
 `ConnectTimeoutException` is thrown for detected connect timeouts (DNS
@@ -179,12 +179,14 @@ timeouts before response headers are received; it extends `NetworkException` but
 not `ConnectException`. `ResponseTimeoutException` is thrown for timeouts after
 response headers are received; it extends `ResponseException` and exposes the
 response. These phases apply however the timeout is detected, including timeouts
-that originate from a slow PSR-7 stream: a request body that stalls before any
-response is received is a
-`NetworkTimeoutException`, while a stall transferring the response body is a
-`ResponseTimeoutException`. When the timeout comes from a PSR-7 stream, the
-original `GuzzleHttp\Psr7\Exception\TimeoutException` is available via
-`getPrevious()`.
+that originate from a slow PSR-7 stream. A request body that stalls before any
+response is received is a `NetworkTimeoutException`, and a stall reading the
+response body off the network is a `ResponseTimeoutException`. A timeout from a
+caller-supplied PSR-7 stream after response headers are received is a plain
+`ResponseException` rather than `ResponseTimeoutException`; this covers a slow
+`sink` write and a request body that stalls after the server has already sent
+response headers. Whenever the timeout comes from a PSR-7 stream, the original
+`GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
 
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
@@ -238,8 +240,9 @@ failures that Guzzle 7.x reported as `RequestException` or `ConnectException`:
 - Other failures with no response, such as send and receive errors and
   no-response HTTP/2 and HTTP/3 protocol errors, are `NetworkException`.
 - Transfer-level failures after a response was received are
-  `ResponseTransferException`; response-aware timeouts are
-  `ResponseTimeoutException`.
+  `ResponseTransferException`; a stall reading the response body off the network
+  is a `ResponseTimeoutException`, while a slow `sink` write or a request-body
+  stall after headers is a plain `ResponseException`.
 - Other failures that occur after a response was received are
   `ResponseException`.
 

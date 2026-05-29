@@ -1576,6 +1576,140 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    public function testKeepsSinkWriteFailureAsResponseExceptionWhenUnderlyingSinkReportsTimedOut(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $previous = new \RuntimeException('sink failed');
+        $underlying = Psr7\Utils::streamFor();
+        $sink = FnStream::decorate($underlying, [
+            'write' => static function (string $data) use ($previous): int {
+                throw $previous;
+            },
+            'getMetadata' => static function (?string $key = null) use ($underlying) {
+                if ($key === 'timed_out') {
+                    return true;
+                }
+
+                return $underlying->getMetadata($key);
+            },
+        ]);
+
+        try {
+            $handler($request, ['sink' => $sink])->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('sink failed', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+    }
+
+    public function testThrowsResponseExceptionWhenSinkWriteReturnsZero(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data): int {
+                return 0;
+            },
+        ]);
+
+        try {
+            $handler($request, ['sink' => $sink])->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('Unable to write to stream', $e->getMessage());
+            self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+    }
+
+    public function testUsesFallbackMessageWhenResponseBodyReadFailsWithEmptyMessage(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $previous = new \RuntimeException('');
+        $source = FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'read' => static function (int $length) use ($previous): string {
+                throw $previous;
+            },
+        ]);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+        ]);
+
+        $promise = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source);
+
+        try {
+            $promise->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('The stream handler failed while transferring the response body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+        }
+    }
+
+    public function testUsesFallbackMessageWhenSinkWriteFailsWithEmptyMessage(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $previous = new \RuntimeException('');
+        $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data) use ($previous): int {
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $handler($request, ['sink' => $sink])->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame('The stream handler failed while writing the response body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
+        }
+    }
+
+    public function testThrowsResponseTransferExceptionWhenSinkRewindFails(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $previous = new \RuntimeException('Stream is not seekable');
+        $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
+            'seek' => static function ($offset, $whence = \SEEK_SET) use ($previous): void {
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $handler($request, ['sink' => $sink])->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+    }
+
     public function testInvokesOnStatsOnSuccess(): void
     {
         Server::flush();

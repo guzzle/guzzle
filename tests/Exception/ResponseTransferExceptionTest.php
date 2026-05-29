@@ -21,7 +21,7 @@ class ResponseTransferExceptionTest extends TestCase
     public function testCarriesRequestAndResponse(): void
     {
         $req = new Request('GET', '/');
-        $res = new Response(200);
+        $res = new Response(502);
         $prev = new \Exception();
         $e = new ResponseTransferException('foo', $req, $res, $prev);
 
@@ -32,6 +32,7 @@ class ResponseTransferExceptionTest extends TestCase
         self::assertSame($req, $e->getRequest());
         self::assertSame($res, $e->getResponse());
         self::assertSame('foo', $e->getMessage());
+        self::assertSame(502, $e->getCode());
         self::assertSame($prev, $e->getPrevious());
     }
 }

@@ -3108,7 +3108,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $stats->getHandlerErrorData());
     }
 
-    public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsResponseTimeoutWithResponse(): void
+    public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsResponseExceptionWithResponse(): void
     {
         $factory = new CurlFactory(3);
         $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
@@ -3194,7 +3194,7 @@ class CurlFactoryTest extends TestCase
     /**
      * @dataProvider curlHandlerProvider
      */
-    public function testSinkWritePsr7TimeoutRejectsAsResponseTimeoutThroughCurlHandlers(callable $handlerFactory): void
+    public function testSinkWritePsr7TimeoutRejectsAsResponseExceptionThroughCurlHandlers(callable $handlerFactory): void
     {
         Server::flush();
         Server::enqueue([

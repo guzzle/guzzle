@@ -410,6 +410,10 @@ final class StreamHandler
                 $e
             );
         } catch (\Throwable $e) {
+            // Any other failure after headers — including failing to rewind a
+            // non-seekable caller sink or to close the source once the body has
+            // been fully received — surfaces as a ResponseTransferException that
+            // still carries the complete response.
             throw new ResponseTransferException(
                 $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed while transferring the response body',
                 $request,

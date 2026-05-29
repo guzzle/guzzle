@@ -22,7 +22,7 @@ class ResponseTimeoutExceptionTest extends TestCase
     public function testHasRequestAndResponse(): void
     {
         $req = new Request('GET', '/');
-        $res = new Response(200);
+        $res = new Response(504);
         $prev = new \Exception();
         $e = new ResponseTimeoutException('foo', $req, $res, $prev);
 
@@ -34,6 +34,7 @@ class ResponseTimeoutExceptionTest extends TestCase
         self::assertSame($req, $e->getRequest());
         self::assertSame($res, $e->getResponse());
         self::assertSame('foo', $e->getMessage());
+        self::assertSame(504, $e->getCode());
         self::assertSame($prev, $e->getPrevious());
     }
 }
