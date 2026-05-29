@@ -90,6 +90,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Added
 
 - Added persistent transport sharing modes
+- Added support for providing the `proxy` request option's `no` value as a comma-delimited string
 - Added the `protocols` request option to restrict allowed URI schemes for request transfers
 - Added `cert_type` and `ssl_key_type` request options for TLS certificate and private-key file types
 - Added PHP stream handler support for the `ssl_key` request option
@@ -107,6 +108,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Deprecated
 
+- Deprecated non-iterable `Pool` request collections, which will be rejected in 8.0
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
 - Deprecated conflicting raw cURL request options, including `CURLOPT_SHARE`, which will be rejected in 8.0
 - Deprecated scalar-coerced `idn_conversion` request option values, which will be rejected in 8.0

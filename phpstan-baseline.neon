@@ -193,6 +193,12 @@ parameters:
 			path: src/Middleware.php
 
 		-
+			message: '#^Call to function is_iterable\(\) with array\|Iterator will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Pool.php
+
+		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 1
