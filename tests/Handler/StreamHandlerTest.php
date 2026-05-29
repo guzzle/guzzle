@@ -771,6 +771,20 @@ class StreamHandlerTest extends TestCase
         ];
     }
 
+    public function testAddsProxyButHonorsStringNoProxy(): void
+    {
+        $url = Server::$url;
+        $host = (string) parse_url($url, \PHP_URL_HOST);
+
+        $res = $this->getSendResult(['proxy' => [
+            'http' => $url,
+            'no' => 'example.com, '.$host,
+        ]]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+
+        self::assertArrayNotHasKey('proxy', $opts['http']);
+    }
+
     public function testUsesProxy(): void
     {
         $this->queueRes();
