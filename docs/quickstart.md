@@ -464,9 +464,10 @@ echo $response->getStatusCode();
 When a transfer fails, first ask whether Guzzle has a response object yet. The
 answer determines which branch below to catch: `NetworkException` for
 no-response network failures, `ResponseException` for failures with a response,
-and `RequestException` for other request failures. Use `TransferException` or
-`GuzzleException` only when one catch block should handle every Guzzle transfer
-failure.
+and `RequestException` for other request failures. Transfer-level failures after
+response headers are received use `ResponseTransferException`. Use
+`TransferException` or `GuzzleException` only when one catch block should handle
+every Guzzle transfer failure.
 
 ```
 . \RuntimeException
@@ -479,9 +480,10 @@ failure.
     └── RequestException (implements RequestExceptionInterface)
         └── ResponseException
             ├── BadResponseException
-            │   ├── ServerException
-            │   └── ClientException
+            │   ├── ClientException
+            │   └── ServerException
             ├── ResponseTimeoutException
+            ├── ResponseTransferException
             └── TooManyRedirectsException
 ```
 
@@ -493,12 +495,13 @@ failure, Guzzle uses a more specific subtype such as `ConnectException`,
 
 If Guzzle has parsed response headers into a response object, later transfer
 failures use `ResponseException`. This is the only branch that exposes
-`getResponse()`, and it includes `ResponseTimeoutException` for response
-timeouts. With Guzzle request methods, middleware can also turn completed
-responses into exceptions: `http_errors` turns 4xx responses into
-`ClientException` and 5xx responses into `ServerException`, and redirect
-middleware can throw `TooManyRedirectsException`. `Client::sendRequest()`
-follows PSR-18 and returns redirect, 4xx, and 5xx responses normally instead.
+`getResponse()`. Transfer-level failures in this branch use
+`ResponseTransferException`; response timeouts use `ResponseTimeoutException`.
+With Guzzle request methods, middleware can also turn completed responses into
+exceptions: `http_errors` turns 4xx responses into `ClientException` and 5xx
+responses into `ServerException`, and redirect middleware can throw
+`TooManyRedirectsException`. `Client::sendRequest()` follows PSR-18 and returns
+redirect, 4xx, and 5xx responses normally instead.
 
 All `TransferException` instances expose `getRequest()`. If a non-network
 request failure occurs before Guzzle has a response object, it throws
@@ -513,12 +516,16 @@ request failures last.
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Psr7\Message;
 
 try {
     $client->request('GET', 'https://github.com/_abc_123_404');
 } catch (NetworkException $e) {
     echo Message::toString($e->getRequest());
+} catch (ResponseTransferException $e) {
+    echo Message::toString($e->getRequest());
+    echo Message::toString($e->getResponse());
 } catch (ResponseException $e) {
     echo Message::toString($e->getRequest());
     echo Message::toString($e->getResponse());

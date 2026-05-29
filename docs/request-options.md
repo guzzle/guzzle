@@ -1322,12 +1322,13 @@ from the underlying transfer. Connect timeouts throw
 `ConnectException`. Other timeouts before a response is received throw
 `GuzzleHttp\Exception\NetworkTimeoutException`. Timeouts after a response is
 received throw `GuzzleHttp\Exception\ResponseTimeoutException`, which extends
-`GuzzleHttp\Exception\ResponseException`.
+`GuzzleHttp\Exception\ResponseException` and exposes the response.
 
-This classification also applies to timeouts that originate from a slow PSR-7
-request or response body, which follow the same phase rule above. In that case
-the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available via
-`getPrevious()`.
+Timeouts that originate from a slow PSR-7 stream follow the same phase rule, with
+one exception: a slow `sink` write, or a request body that stalls after response
+headers are received, throws a plain `GuzzleHttp\Exception\ResponseException`
+rather than `ResponseTimeoutException`. In every case the original
+`GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
 
 ## version
 
