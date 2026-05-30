@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - `CurlMultiHandler` now rejects the promise when `CurlFactory::finish()` throws, preserving sibling transfers
+- `SetCookie` now normalizes unparseable textual `Expires` values to `null` instead of storing `false`, avoiding cookies incorrectly appearing permanently expired
 
 
 ## 7.10.5 - 2025-05-27
