@@ -42,6 +42,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - `CurlMultiHandler` now rejects the promise when `CurlFactory::finish()` throws, preserving sibling transfers
 - `SetCookie` now normalizes unparseable `Expires` values to `null` instead of `false`
+- Fix stream handler decoded `gzip`/`deflate` truncation by dropping invalid `Content-Length`
 
 
 ## 7.10.5 - 2025-05-27
