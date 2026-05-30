@@ -57,6 +57,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify stream transport failures without a response as `NetworkException`, with timeouts as `NetworkTimeoutException`
 - Classify generic response-aware request failures as `ResponseException`
 - Classify response-aware transfer failures as `ResponseTransferException`
+- Reject short non-streamed stream-handler response bodies with valid `Content-Length` as `ResponseTransferException`
 - Treat response sink rewind failures as `ResponseException` and skip non-seekable sink rewinds
 - Ignore stream source close failures after a complete response body transfer
 - Throw `GuzzleHttp\Exception\InvalidArgumentException` for invalid built-in handler options

@@ -385,17 +385,18 @@ final class StreamHandler
         StreamInterface $sink,
         string $contentLength
     ): StreamInterface {
+        // Keep the existing loose read bound, but only reject short bodies when
+        // the Content-Length is a valid framing promise for this response.
+        $copyLimit = (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1;
+        $declaredLength = self::declaredResponseBodyLength($request, $response);
+
         try {
             $target = $this->createResponseSink($request, $response, $sink);
             // If a content-length header is provided, then stop reading once
             // that number of bytes has been read. This can prevent infinitely
             // reading from a stream when dealing with servers that do not
             // honor Connection: Close headers.
-            Psr7\Utils::copyToStream(
-                $source,
-                $target,
-                (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
-            );
+            $copied = Psr7\Utils::copyToStream($source, $target, $copyLimit);
         } catch (ResponseException $e) {
             throw $e;
         } catch (TimeoutException $e) {
@@ -416,14 +417,22 @@ final class StreamHandler
             );
         }
 
-        $rewindException = null;
+        $exception = null;
+
+        if ($declaredLength !== null && $copied < $declaredLength) {
+            $exception = new ResponseTransferException(
+                'The stream handler received fewer bytes than the declared Content-Length',
+                $request,
+                $response
+            );
+        }
 
         try {
-            if ($sink->isSeekable()) {
+            if ($exception === null && $sink->isSeekable()) {
                 $sink->rewind();
             }
         } catch (\Throwable $e) {
-            $rewindException = new ResponseException(
+            $exception = new ResponseException(
                 $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed to rewind the response body',
                 $request,
                 $response,
@@ -437,11 +446,57 @@ final class StreamHandler
             }
         }
 
-        if ($rewindException !== null) {
-            throw $rewindException;
+        if ($exception !== null) {
+            throw $exception;
         }
 
         return $sink;
+    }
+
+    private static function declaredResponseBodyLength(RequestInterface $request, ResponseInterface $response): ?int
+    {
+        $status = $response->getStatusCode();
+        $method = $request->getMethod();
+
+        if (
+            $method === 'HEAD'
+            || ($method === 'CONNECT' && $status >= 200 && $status < 300)
+            || $status < 200
+            || $status === 204
+            || $status === 304
+            || $response->hasHeader('Transfer-Encoding')
+        ) {
+            return null;
+        }
+
+        $length = null;
+        foreach ($response->getHeader('Content-Length') as $value) {
+            foreach (\explode(',', $value) as $part) {
+                $part = \trim($part, " \t");
+                if (\preg_match('/^[0-9]+$/', $part) !== 1) {
+                    return null;
+                }
+
+                $part = \ltrim($part, '0');
+                $part = $part === '' ? '0' : $part;
+                if ($length !== null && $part !== $length) {
+                    return null;
+                }
+
+                $length = $part;
+            }
+        }
+
+        if ($length === null || $length === '0') {
+            return null;
+        }
+
+        $max = (string) \PHP_INT_MAX;
+        if (\strlen($length) > \strlen($max) || (\strlen($length) === \strlen($max) && $length > $max)) {
+            return null;
+        }
+
+        return (int) $length;
     }
 
     private function createResponseSink(

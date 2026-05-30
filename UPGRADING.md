@@ -232,6 +232,18 @@ as `RequestException` or `ConnectException`:
 This applies to both the cURL and stream handlers; the exact error codes and
 messages each one maps onto these classes are an implementation detail.
 
+The stream handler now rejects a drained, non-streamed response when a valid,
+positive `Content-Length` declares more bytes than the handler receives, raising
+`ResponseTransferException`. This matches the cURL handler for identity-coded
+responses, compressed responses with `decode_content` disabled, and unsupported
+compressed codings that the stream handler leaves raw. It does not apply to
+`stream => true` responses, decoded gzip or deflate responses, chunked or other
+`Transfer-Encoding` responses, conflicting or malformed `Content-Length` values,
+or lengths above `PHP_INT_MAX`. Responses to `HEAD`, any `1xx`, `204`, `304`,
+and successful `CONNECT` requests are never checked because they are bodiless by
+framing. `205 Reset Content` is checked because it remains framed by
+`Content-Length`.
+
 The deprecated `RequestException::wrapException()` method was removed. Create a
 `RequestException` directly for request failures where Guzzle does not expose a
 response object. For failures with a response, create `ResponseException`,
