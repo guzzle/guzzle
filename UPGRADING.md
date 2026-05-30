@@ -495,6 +495,10 @@ unchanged, matching browser multipart form submission behavior. Custom multipart
 part header names and values, and explicit PSR-7 multipart boundaries, are also
 validated by PSR-7.
 
+Custom multipart part header values also preserve trailing spaces and tabs in the
+serialized request body, so raw body snapshots or signatures may need updated
+expectations.
+
 Guzzle now quotes the `boundary` parameter in generated
 `Content-Type: multipart/form-data` headers when an explicit PSR-7
 `MultipartStream` boundary contains characters that require quoting.
