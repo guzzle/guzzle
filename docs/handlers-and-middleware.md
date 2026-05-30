@@ -216,12 +216,12 @@ Use `GuzzleHttp\Middleware::retry()` to retry requests when a custom decider
 returns `true`. The decider receives the current retry count, the request, the
 response for fulfilled responses, and the rejection reason for failed transfers.
 A rejection reason may itself expose a response, for example when it is a
-`ResponseException`.
+`ResponseException`. A conservative retry strategy should retry only connection
+establishment errors and too many request responses.
 
 ```php
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\NetworkException;
-use GuzzleHttp\Exception\ResponseTransferException;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use Psr\Http\Message\RequestInterface;
@@ -240,11 +240,11 @@ $stack->push(Middleware::retry(
             return false;
         }
 
-        if ($reason instanceof NetworkException || $reason instanceof ResponseTransferException) {
+        if ($reason instanceof ConnectException) {
             return true;
         }
 
-        return $response !== null && $response->getStatusCode() >= 500;
+        return $response?->getStatusCode() === 429;
     },
     function (
         int $retries,
