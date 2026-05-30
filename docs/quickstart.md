@@ -465,20 +465,17 @@ The following tree view describes how the Guzzle Exceptions depend on each other
 ```
 . \RuntimeException
 └── TransferException (implements GuzzleException)
-    ├── NetworkException (implements NetworkExceptionInterface)
-    │   └── ConnectException
+    ├── ConnectException (implements NetworkExceptionInterface)
     └── RequestException (implements RequestExceptionInterface)
         ├── BadResponseException
-        │   ├── ServerException
-        │   └── ClientException
+        │   ├── ClientException
+        │   └── ServerException
         └── TooManyRedirectsException
 ```
 
 Guzzle throws exceptions for errors that occur during a transfer.
 
-- `GuzzleHttp\Exception\NetworkException` is the base class for networking errors where no response has been received. It implements PSR-18's `Psr\Http\Client\NetworkExceptionInterface`.
-
-- A `GuzzleHttp\Exception\ConnectException` exception is thrown in the event of a connection or networking error. This exception extends from `GuzzleHttp\Exception\NetworkException`. Catch `NetworkException` or `Psr\Http\Client\NetworkExceptionInterface` when you want to handle all no-response network failures.
+- A `GuzzleHttp\Exception\ConnectException` exception is thrown in the event of a connection or networking error. It implements PSR-18's `Psr\Http\Client\NetworkExceptionInterface`.
 
 - `GuzzleHttp\Exception\RequestException` is the base class for request-related transfer failures that are not network failures. It implements PSR-18's `Psr\Http\Client\RequestExceptionInterface`.
 
