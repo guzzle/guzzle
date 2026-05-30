@@ -153,6 +153,74 @@ class CurlMultiHandlerTest extends TestCase
         self::assertGreaterThanOrEqual($expected, Utils::currentTime());
     }
 
+    public function testManualTickRejectsPromiseWhenFinishThrows(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $previous = new \RuntimeException('stats failed');
+        $promise = $handler(new Request('GET', Server::$url), [
+            'on_stats' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+            while (P\Is::pending($promise) && \microtime(true) < $deadline) {
+                $handler->tick();
+            }
+
+            self::assertTrue(P\Is::rejected($promise));
+
+            try {
+                $promise->wait();
+                self::fail('Expected RuntimeException');
+            } catch (\RuntimeException $e) {
+                self::assertSame($previous, $e);
+            }
+        } finally {
+            Server::flush();
+        }
+    }
+
+    public function testFinishThrowDoesNotAffectSiblingTransfers(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200), new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $previous = new \RuntimeException('stats failed');
+
+        $bad = $handler(new Request('GET', Server::$url), [
+            'on_stats' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $good = $handler(new Request('GET', Server::$url), []);
+
+        try {
+            $deadline = \microtime(true) + 5;
+            while ((P\Is::pending($bad) || P\Is::pending($good)) && \microtime(true) < $deadline) {
+                $handler->tick();
+            }
+
+            self::assertTrue(P\Is::fulfilled($good));
+            self::assertSame(200, $good->wait()->getStatusCode());
+
+            self::assertTrue(P\Is::rejected($bad));
+            try {
+                $bad->wait();
+                self::fail('Expected RuntimeException');
+            } catch (\RuntimeException $e) {
+                self::assertSame($previous, $e);
+            }
+        } finally {
+            Server::flush();
+        }
+    }
+
     public function testUsesTimeoutEnvironmentVariables()
     {
         unset($_SERVER['GUZZLE_CURL_SELECT_TIMEOUT']);

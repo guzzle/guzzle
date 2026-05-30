@@ -329,9 +329,16 @@ class CurlMultiHandler
             $entry = $this->handles[$id];
             unset($this->handles[$id], $this->delays[$id]);
             $entry['easy']->errno = $done['result'];
-            $entry['deferred']->resolve(
-                CurlFactory::finish($this, $entry['easy'], $this->factory)
-            );
+
+            try {
+                $result = CurlFactory::finish($this, $entry['easy'], $this->factory);
+            } catch (\Throwable $e) {
+                $entry['deferred']->reject($e);
+
+                continue;
+            }
+
+            $entry['deferred']->resolve($result);
         }
     }
 
