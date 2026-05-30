@@ -399,8 +399,6 @@ final class StreamHandler
                 $target,
                 (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1
             );
-            $sink->seek(0);
-            $source->close();
         } catch (ResponseException $e) {
             throw $e;
         } catch (TimeoutException $e) {
@@ -411,16 +409,39 @@ final class StreamHandler
                 $e
             );
         } catch (\Throwable $e) {
-            // Any other failure after headers — including failing to rewind a
-            // non-seekable caller sink or to close the source once the body has
-            // been fully received — surfaces as a ResponseTransferException that
-            // still carries the complete response.
+            // Any other failure while reading the response body off the network
+            // surfaces as a ResponseTransferException carrying the response.
             throw new ResponseTransferException(
                 $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed while transferring the response body',
                 $request,
                 $response,
                 $e
             );
+        }
+
+        $rewindException = null;
+
+        try {
+            if ($sink->isSeekable()) {
+                $sink->rewind();
+            }
+        } catch (\Throwable $e) {
+            $rewindException = new ResponseException(
+                $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed to rewind the response body',
+                $request,
+                $response,
+                $e
+            );
+        } finally {
+            try {
+                $source->close();
+            } catch (\Throwable $e) {
+                // Best-effort cleanup after the response body has been received.
+            }
+        }
+
+        if ($rewindException !== null) {
+            throw $rewindException;
         }
 
         return $sink;

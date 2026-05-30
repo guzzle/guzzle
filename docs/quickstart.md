@@ -495,13 +495,15 @@ failure, Guzzle uses a more specific subtype such as `ConnectException`,
 
 If Guzzle has parsed response headers into a response object, later transfer
 failures use `ResponseException`. This is the only branch that exposes
-`getResponse()`. Transfer-level failures in this branch use
+`getResponse()`. Failures while reading the response body off the network use
 `ResponseTransferException`, with response timeouts as
-`ResponseTimeoutException`. With Guzzle request methods, middleware can also
-turn completed responses into exceptions: `http_errors` turns 4xx responses into
-`ClientException` and 5xx responses into `ServerException`, and redirect
-middleware can throw `TooManyRedirectsException`. `Client::sendRequest()`
-follows PSR-18 and returns redirect, 4xx, and 5xx responses normally instead.
+`ResponseTimeoutException`. Local response finalization failures, such as a
+failed sink rewind, stay plain `ResponseException`. With Guzzle request methods,
+middleware can also turn completed responses into exceptions: `http_errors`
+turns 4xx responses into `ClientException` and 5xx responses into
+`ServerException`, and redirect middleware can throw
+`TooManyRedirectsException`. `Client::sendRequest()` follows PSR-18 and returns
+redirect, 4xx, and 5xx responses normally instead.
 
 All `TransferException` instances expose `getRequest()`. If a non-network
 request failure occurs before Guzzle has a response object, it throws

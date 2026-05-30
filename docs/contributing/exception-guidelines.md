@@ -39,6 +39,11 @@ that they could fix by changing their code?
       (e.g. "the cURL extension is not available") ──► \RuntimeException (bare SPL is fine here)
 ```
 
+Use `ResponseTransferException` only for failures reading the response body off
+the network after response headers were received. Local response finalization
+failures, such as rewinding a response sink after the body has been received,
+are plain `ResponseException` failures.
+
 ## `GuzzleHttp\Exception\InvalidArgumentException`
 
 `final class InvalidArgumentException extends \InvalidArgumentException implements GuzzleException`

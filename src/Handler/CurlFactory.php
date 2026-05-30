@@ -610,14 +610,39 @@ final class CurlFactory implements CurlFactoryInterface
         // Return the response if it is present and there is no error.
         $factory->release($easy);
 
-        if ($onStats !== null && $stats !== null) {
-            $onStats($stats);
+        // Rewind the body of the response if possible. Failures here are local
+        // response finalization errors, not response-transfer failures.
+        $body = $response->getBody();
+        try {
+            if ($body->isSeekable()) {
+                $body->rewind();
+            }
+        } catch (\Throwable $e) {
+            $reason = new ResponseException(
+                $e->getMessage() !== '' ? $e->getMessage() : 'The cURL handler failed to rewind the response body',
+                $easy->request,
+                $response,
+                $e
+            );
+
+            if ($onStats !== null && $stats !== null) {
+                // Report the ResponseException rather than errno 0 to match the
+                // stream handler's response finalization stats.
+                $onStats(new TransferStats(
+                    $easy->request,
+                    $response,
+                    $stats->getTransferTime(),
+                    $reason,
+                    $stats->getHandlerStats()
+                ));
+            }
+
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor($reason);
         }
 
-        // Rewind the body of the response if possible.
-        $body = $response->getBody();
-        if ($body->isSeekable()) {
-            $body->rewind();
+        if ($onStats !== null && $stats !== null) {
+            $onStats($stats);
         }
 
         /** @var PromiseInterface<ResponseInterface, mixed> */
