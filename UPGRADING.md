@@ -153,10 +153,12 @@ response constructor argument, and no longer has `getResponse()` or
 instantiate `RequestException` directly, its third constructor argument is now
 the exception code, followed by the previous exception.
 
-Exception handler context access was removed. If you used handler context to
-work out what kind of transfer failure occurred, switch to the more granular
-exception classes in the hierarchy above. If you need handler-level timing or
-statistics, collect them during the transfer with the `on_stats` request option.
+`RequestException::getHandlerContext()` and
+`ConnectException::getHandlerContext()` were removed. If you used handler
+context to work out what kind of transfer failure occurred, switch to the more
+granular exception classes in the hierarchy above. If you need handler-level
+timing or statistics, collect them during the transfer with the `on_stats`
+request option.
 
 Timeout exception classes are now split by the phase the handler can determine.
 `ConnectTimeoutException` is thrown for detected connect timeouts (DNS
@@ -186,18 +188,8 @@ not reject pending promises. If you add deterministic cleanup with
 handle `HandlerClosedException` or `TransferException` for pending promises you
 may still observe.
 
-The practical catch-order migration is to handle no-response network failures
-before request failures. If you previously caught `RequestException` as the only
-built-in handler transport failure type, add a `NetworkException` catch before
-it in Guzzle 8.0-only code, or a
-`Psr\Http\Client\NetworkExceptionInterface` catch before it in reusable code
-that supports both Guzzle 7.x and 8.0. If you previously caught
-`ConnectException` for cURL timeouts or broad no-response transport failures,
-catch `NetworkException` or `NetworkExceptionInterface` instead; keep
-`ConnectException` only for connection-establishment handling. Catch
-`ResponseException` before `RequestException` when you need response access, and
-use `TransferException` only when one catch block should handle every Guzzle
-transfer failure. After upgrading to Guzzle 8.0, use this catch order:
+When updating catch blocks for Guzzle 8.0, catch the more specific no-response
+and response-aware failures before `RequestException`. Use this catch order:
 
 ```php
 use GuzzleHttp\Exception\NetworkException;

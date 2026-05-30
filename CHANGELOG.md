@@ -86,7 +86,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `RedirectMiddleware::$defaultSettings`; use `RedirectMiddleware::DEFAULT_SETTINGS`
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
 - Removed the deprecated `RequestException::wrapException()` method
-- Removed exception handler context access; use the more granular exception hierarchy for failure classification
+- Removed `RequestException::getHandlerContext()` and `ConnectException::getHandlerContext()`; use the more granular exception hierarchy for failure classification
 - Removed response access from `RequestException`; use `ResponseException`
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
