@@ -21,13 +21,14 @@ class RequestExceptionTest extends TestCase
     {
         $req = new Request('GET', '/');
         $res = new Response(200);
-        $e = new RequestException('foo', $req, $res);
+        $e = new RequestException('foo', $req, $res, null, ['foo' => 'bar']);
         self::assertInstanceOf(RequestExceptionInterface::class, $e);
         self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         self::assertSame($req, $e->getRequest());
         self::assertSame($res, $e->getResponse());
         self::assertTrue($e->hasResponse());
         self::assertSame('foo', $e->getMessage());
+        self::assertSame('bar', $e->getHandlerContext()['foo']);
     }
 
     public function testCreatesGenerateException()
