@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Test;
+namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlVersion;
@@ -25,7 +25,7 @@ class UtilsTest extends TestCase
             [false, 'bool(false)'],
             [10, 'int(10)'],
             [1.0, 'float(1)'],
-            [new StrClass(), 'object(GuzzleHttp\Test\StrClass)'],
+            [new StrClass(), 'object(GuzzleHttp\Tests\StrClass)'],
             [['foo'], 'array(1)'],
         ];
     }

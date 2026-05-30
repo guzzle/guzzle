@@ -75,7 +75,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject built-in cURL `progress` throwables with `ResponseException` when a response exists, otherwise `RequestException`
 - Release built-in cURL easy handles before invoking `on_stats`
 - Prefer `CURLOPT_XFERINFOFUNCTION` for built-in cURL progress callbacks when available
-- Reject cURL multi handler promises when transfer completion callbacks throw during manual event-loop ticks
 - Made `MessageFormatter` final and required `Middleware::log()` formatters to implement `MessageFormatterInterface`
 - Made `GuzzleHttp\Handler\CurlFactory`, `GuzzleHttp\Handler\CurlHandler`, `GuzzleHttp\Handler\CurlMultiHandler`, `GuzzleHttp\Handler\MockHandler`, and `GuzzleHttp\Handler\StreamHandler` final
 - Made static utility classes non-instantiable and declared `GuzzleHttp\Handler\Proxy` final

@@ -705,6 +705,48 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testFinishThrowDoesNotAffectSiblingTransfers(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200), new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $previous = new \RuntimeException('stats failed');
+
+        $bad = $handler(new Request('GET', Server::$url), [
+            'on_stats' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $good = $handler(new Request('GET', Server::$url), []);
+
+        try {
+            $deadline = \microtime(true) + 5;
+
+            while (P\Is::pending($bad) || P\Is::pending($good)) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for cURL multi transfers.');
+                }
+
+                $handler->tick();
+            }
+
+            self::assertTrue(P\Is::fulfilled($good));
+            self::assertSame(200, $good->wait()->getStatusCode());
+
+            self::assertTrue(P\Is::rejected($bad));
+            try {
+                $bad->wait();
+                self::fail('Expected RuntimeException');
+            } catch (\RuntimeException $e) {
+                self::assertSame($previous, $e);
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
     public function testWaitFalseRejectsPromiseWhenFinishThrows(): void
     {
         Server::flush();

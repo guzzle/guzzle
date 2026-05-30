@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Test;
+namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
