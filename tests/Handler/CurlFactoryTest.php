@@ -3472,6 +3472,60 @@ class CurlFactoryTest extends TestCase
         self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
+    public function testOnStatsExceptionEscapesOnSeekableBodyRewindFailureAfterHandleRelease(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $rewindFailure = new \RuntimeException('rewind failed');
+        $statsFailure = new \RuntimeException('stats failed');
+        $response = new Psr7\Response(
+            200,
+            [],
+            Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+                'isSeekable' => static function (): bool {
+                    return true;
+                },
+                'rewind' => static function () use ($rewindFailure): void {
+                    throw $rewindFailure;
+                },
+            ])
+        );
+        $easy = null;
+        $called = false;
+        $easy = $factory->create($request, [
+            'on_stats' => static function (TransferStats $stats) use (&$easy, $factory, &$called, $response, $rewindFailure, $statsFailure): void {
+                $called = true;
+                self::assertInstanceOf(EasyHandle::class, $easy);
+                self::assertTrue($stats->hasResponse());
+                self::assertSame($response, $stats->getResponse());
+                self::assertArrayNotHasKey('handle', \get_object_vars($easy));
+                self::assertCount(1, self::readIdleHandles($factory));
+
+                $error = $stats->getHandlerErrorData();
+                self::assertInstanceOf(ResponseException::class, $error);
+                self::assertSame($rewindFailure, $error->getPrevious());
+
+                throw $statsFailure;
+            },
+        ]);
+        $easy->response = $response;
+
+        try {
+            CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $factory
+            );
+
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($statsFailure, $e);
+        }
+
+        self::assertTrue($called);
+    }
+
     public function testInvokesOnStatsAfterErrorHandleRelease(): void
     {
         $factory = new CurlFactory(1);

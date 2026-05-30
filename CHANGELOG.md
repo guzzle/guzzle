@@ -58,6 +58,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify generic response-aware request failures as `ResponseException`
 - Classify response-aware transfer failures as `ResponseTransferException`
 - Treat response sink rewind failures as `ResponseException` and skip non-seekable sink rewinds
+- Ignore stream source close failures after a complete response body transfer
 - Throw `GuzzleHttp\Exception\InvalidArgumentException` for invalid built-in handler options
 - Classify built-in cURL handle, `sink`, and HTTP/3 setup failures as `RequestException`
 - Throw `ConnectTimeoutException` for connect timeouts
