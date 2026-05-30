@@ -91,32 +91,17 @@ failures. More specific catch blocks need auditing: Guzzle 8.0 splits timeout
 failures into connect-phase, no-response network, and response-aware timeout
 classes, and the built-in cURL and stream handlers classify more no-response
 transport failures as network failures. This section covers upgrading from
-Guzzle 7.x to Guzzle 8.0. The
-`ConnectException` inheritance change happened earlier, in Guzzle 7.0.0, when it
-moved out from under `RequestException`; see the 6.0 to 7.0 notes for that
-migration. The hierarchy changes are easiest to compare in the three trees
-below.
+Guzzle 7.x to Guzzle 8.0. The `ConnectException` inheritance change happened
+earlier, in Guzzle 7.0.0, when it moved out from under `RequestException`; see
+the 6.0 to 7.0 notes for that migration. The hierarchy changes are easiest to
+compare in the two trees below.
 
-Guzzle 7 releases before 7.11.0 use this hierarchy:
+Guzzle 7.x uses this hierarchy:
 
 ```text
 . \RuntimeException
 └── TransferException (implements GuzzleException)
     ├── ConnectException (implements NetworkExceptionInterface)
-    └── RequestException (implements RequestExceptionInterface)
-        ├── BadResponseException
-        │   ├── ClientException
-        │   └── ServerException
-        └── TooManyRedirectsException
-```
-
-Guzzle 7 releases starting with 7.11.0 use this hierarchy:
-
-```text
-. \RuntimeException
-└── TransferException (implements GuzzleException)
-    ├── NetworkException (implements NetworkExceptionInterface)
-    │   └── ConnectException
     └── RequestException (implements RequestExceptionInterface)
         ├── BadResponseException
         │   ├── ClientException
@@ -144,31 +129,36 @@ Guzzle 8.0 uses this hierarchy:
             └── TooManyRedirectsException
 ```
 
-`NetworkException` was added in Guzzle 7.11.0 as the base class for no-response
-network failures. Before 7.11.0, `ConnectException` implemented
-`Psr\Http\Client\NetworkExceptionInterface` directly and there was no
-Guzzle-specific network base class. The recommended migration path is to support
-Guzzle 7.11.0 before moving to Guzzle 8.0. Most code that previously caught
-`ConnectException` for transport-level failures should catch `NetworkException`
-instead when it can require Guzzle 7.11.0 or newer, including Guzzle 8.0. Keep
-catching `ConnectException` only when handling connection establishment failures
-specifically. Code that must support older Guzzle 7.x releases at the same time
-as Guzzle 8.0 should keep a broader `TransferException` catch at the boundary
-where all Guzzle transfer failures are handled.
+`NetworkException` is new in Guzzle 8.0 as the base class for no-response
+network failures. Throughout Guzzle 7.x, `ConnectException` implements
+`Psr\Http\Client\NetworkExceptionInterface` directly and there is no
+Guzzle-specific network base class. Reusable packages that support both Guzzle
+7.x and 8.0 should catch `Psr\Http\Client\NetworkExceptionInterface` for
+no-response network failures. Applications or packages that require Guzzle 8.0
+may catch `GuzzleHttp\Exception\NetworkException` for all no-response network
+failures. Keep catching `ConnectException` only when handling connection
+establishment failures specifically.
 
-Guzzle 8.0 also makes response-aware request failures explicit. Guzzle 7.11.0
-did not add `ResponseException`; response-aware request failures remain under
+Guzzle 8.0 also makes response-aware request failures explicit. Guzzle 7.x does
+not have `ResponseException`; response-aware request failures remain under
 `RequestException` throughout Guzzle 7.x. In Guzzle 8.0, `ResponseException` is
 the base class for request failures where response headers were received and a
 response object is available. `ResponseTransferException`,
 `ResponseTimeoutException`, `BadResponseException`, and
 `TooManyRedirectsException` extend it. Response access now belongs to this
 branch only: `RequestException` no longer stores responses, no longer accepts a
-response constructor argument, and no longer has
-`getResponse()` or `hasResponse()` methods. Catch `ResponseException`, or test
-with `instanceof ResponseException`, before calling `getResponse()`. If you
+response constructor argument, and no longer has `getResponse()` or
+`hasResponse()` methods. Catch `ResponseException`, or test with
+`instanceof ResponseException`, before calling `getResponse()`. If you
 instantiate `RequestException` directly, its third constructor argument is now
 the exception code, followed by the previous exception.
+
+`RequestException::getHandlerContext()` and
+`ConnectException::getHandlerContext()` were removed. If you used handler
+context to work out what kind of transfer failure occurred, switch to the more
+granular exception classes in the hierarchy above. If you need handler-level
+timing or statistics, collect them during the transfer with the `on_stats`
+request option.
 
 Timeout exception classes are now split by the phase the handler can determine.
 `ConnectTimeoutException` is thrown for detected connect timeouts (DNS
@@ -198,15 +188,8 @@ not reject pending promises. If you add deterministic cleanup with
 handle `HandlerClosedException` or `TransferException` for pending promises you
 may still observe.
 
-The practical catch-order migration is to handle no-response network failures
-before request failures. If you previously caught `RequestException` as the only
-built-in handler transport failure type, add a `NetworkException` catch before
-it. If you previously caught `ConnectException` for cURL timeouts or broad
-no-response transport failures, catch `NetworkException` instead; keep
-`ConnectException` only for connection-establishment handling. Catch
-`ResponseException` before `RequestException` when you need response access, and
-use `TransferException` only when one catch block should handle every Guzzle
-transfer failure. After upgrading to Guzzle 8.0, use this catch order:
+When updating catch blocks for Guzzle 8.0, catch the more specific no-response
+and response-aware failures before `RequestException`. Use this catch order:
 
 ```php
 use GuzzleHttp\Exception\NetworkException;

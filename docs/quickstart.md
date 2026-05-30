@@ -491,7 +491,10 @@ If a network problem prevents Guzzle from receiving a response, it throws
 `NetworkException`. This covers transport failures while opening the connection
 or moving bytes over the network. When the handler can determine a more specific
 failure, Guzzle uses a more specific subtype such as `ConnectException`,
-`ConnectTimeoutException`, or `NetworkTimeoutException`.
+`ConnectTimeoutException`, or `NetworkTimeoutException`. Code that must support
+both Guzzle 7.x and 8.0 should catch
+`Psr\Http\Client\NetworkExceptionInterface` instead, because
+`GuzzleHttp\Exception\NetworkException` is new in Guzzle 8.0.
 
 If Guzzle has parsed response headers into a response object, later transfer
 failures use `ResponseException`. This is the only branch that exposes
