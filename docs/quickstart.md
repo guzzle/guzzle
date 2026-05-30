@@ -468,8 +468,8 @@ The following tree view describes how the Guzzle Exceptions depend on each other
     ├── ConnectException (implements NetworkExceptionInterface)
     └── RequestException (implements RequestExceptionInterface)
         ├── BadResponseException
-        │   ├── ServerException
-        │   └── ClientException
+        │   ├── ClientException
+        │   └── ServerException
         └── TooManyRedirectsException
 ```
 
