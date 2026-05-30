@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Test;
+namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Utils;
