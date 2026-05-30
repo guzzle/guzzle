@@ -248,14 +248,18 @@ class StreamHandlerTest extends TestCase
 
         $ref = new \ReflectionObject($handler);
         $lastHeaders = $ref->getProperty('lastHeaders');
-        $lastHeaders->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $lastHeaders->setAccessible(true);
+        }
         $lastHeaders->setValue($handler, [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
             'Content-Length: '.\strlen($gzip),
         ]);
         $createResponse = $ref->getMethod('createResponse');
-        $createResponse->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $createResponse->setAccessible(true);
+        }
 
         /** @var ResponseInterface $response */
         $response = $createResponse->invoke($handler, $request, ['decode_content' => true], $resource, null)->wait();

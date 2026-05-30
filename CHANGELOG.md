@@ -9,7 +9,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - `CurlMultiHandler` now rejects the promise when `CurlFactory::finish()` throws, preserving sibling transfers
 - `SetCookie` now normalizes unparseable `Expires` values to `null` instead of `false`
-- Stream handler now removes the decoded `Content-Length` for `gzip` and `deflate` responses, preserving the original value as `x-encoded-content-length` instead of rewriting it to the compressed size and potentially truncating seekable decoded bodies
+- Stream handler now drops decoded `gzip`/`deflate` `Content-Length`, preserving the original as `x-encoded-content-length` to avoid truncation
 
 
 ## 7.10.5 - 2025-05-27
