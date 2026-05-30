@@ -3258,6 +3258,8 @@ class CurlFactoryTest extends TestCase
         $request = new Psr7\Request('GET', Server::$url);
         $handler = $handlerFactory();
         $underlying = Psr7\Utils::streamFor();
+        $stats = null;
+        $statsCalled = 0;
         $rewindCalled = false;
         $seekCalled = false;
         $sink = Psr7\FnStream::decorate($underlying, [
@@ -3277,7 +3279,13 @@ class CurlFactoryTest extends TestCase
         ]);
 
         try {
-            $response = $handler($request, ['sink' => $sink])->wait();
+            $response = $handler($request, [
+                'sink' => $sink,
+                'on_stats' => static function (TransferStats $transferStats) use (&$stats, &$statsCalled): void {
+                    ++$statsCalled;
+                    $stats = $transferStats;
+                },
+            ])->wait();
 
             self::assertSame(200, $response->getStatusCode());
             self::assertSame($sink, $response->getBody());
@@ -3293,6 +3301,11 @@ class CurlFactoryTest extends TestCase
         self::assertFalse($seekCalled);
         $underlying->rewind();
         self::assertSame('abc', $underlying->getContents());
+        self::assertSame(1, $statsCalled);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($response, $stats->getResponse());
+        self::assertSame(0, $stats->getHandlerErrorData());
     }
 
     public function testSinkWritePsr7TimeoutRejectsAsNetworkTimeoutWithoutResponse(): void
@@ -3504,6 +3517,9 @@ class CurlFactoryTest extends TestCase
                 $error = $stats->getHandlerErrorData();
                 self::assertInstanceOf(ResponseException::class, $error);
                 self::assertSame($rewindFailure, $error->getPrevious());
+                self::assertNotInstanceOf(ResponseTransferException::class, $error);
+                self::assertNotInstanceOf(ResponseTimeoutException::class, $error);
+                self::assertNotInstanceOf(NetworkExceptionInterface::class, $error);
 
                 throw $statsFailure;
             },

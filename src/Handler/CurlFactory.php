@@ -626,6 +626,8 @@ final class CurlFactory implements CurlFactoryInterface
             );
 
             if ($onStats !== null && $stats !== null) {
+                // Report the ResponseException rather than errno 0 to match the
+                // stream handler's response finalization stats.
                 $onStats(new TransferStats(
                     $easy->request,
                     $response,

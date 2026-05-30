@@ -1731,6 +1731,8 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
         $underlying = Psr7\Utils::streamFor();
+        $stats = null;
+        $statsCalled = 0;
         $rewindCalled = false;
         $seekCalled = false;
         $sink = FnStream::decorate($underlying, [
@@ -1749,7 +1751,13 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $response = $handler($request, ['sink' => $sink])->wait();
+        $response = $handler($request, [
+            'sink' => $sink,
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats, &$statsCalled): void {
+                ++$statsCalled;
+                $stats = $transferStats;
+            },
+        ])->wait();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame($sink, $response->getBody());
@@ -1757,6 +1765,11 @@ class StreamHandlerTest extends TestCase
         self::assertFalse($seekCalled);
         $underlying->rewind();
         self::assertSame('hi there', $underlying->getContents());
+        self::assertSame(1, $statsCalled);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($response, $stats->getResponse());
+        self::assertNull($stats->getHandlerErrorData());
     }
 
     public function testIgnoresSourceCloseFailureAfterCompleteBody(): void
