@@ -66,6 +66,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Throw `ResponseTimeoutException` for response-aware transfer timeouts
 - Classify cURL PSR-7 request-body upload timeouts by response phase
 - Classify cURL PSR-7 response sink write timeouts by response phase
+- Classify cURL response sink write throwables as `ResponseException` or `RequestException`
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers

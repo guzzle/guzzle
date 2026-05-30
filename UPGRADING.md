@@ -174,6 +174,13 @@ has already sent response headers. Whenever the timeout comes from a PSR-7
 stream, the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available
 via `getPrevious()`.
 
+Generic throwables from a cURL `sink` write are now wrapped instead of escaping
+the native cURL callback. They become plain `ResponseException` instances when a
+response was received, or `RequestException` instances otherwise, with the
+original throwable available via `getPrevious()`. The cURL handlers continue to
+report `CURLE_WRITE_ERROR` as `on_stats` handler error data for these write
+callback failures.
+
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
 are still pending, including delayed transfers. Existing Guzzle 7.x code should
@@ -220,8 +227,8 @@ as `RequestException` or `ConnectException`:
   no-response HTTP/2 and HTTP/3 protocol errors, are `NetworkException`.
 - Response-transfer failures after response headers were received are
   `ResponseTransferException`. Response-body network stalls are
-  `ResponseTimeoutException`, while a slow `sink` write or request-body stall
-  after headers is a plain `ResponseException`.
+  `ResponseTimeoutException`, while `sink` write failures or request-body stalls
+  after headers are plain `ResponseException` instances.
 - Post-transfer response finalization failures are also plain
   `ResponseException`. A seekable response sink that fails to rewind does not
   become a `ResponseTransferException`. Non-seekable sinks are not rewound, and

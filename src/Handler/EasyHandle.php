@@ -78,6 +78,11 @@ final class EasyHandle
     public ?TimeoutException $sinkWriteTimeoutException = null;
 
     /**
+     * @var \Throwable|null Exception during response sink write.
+     */
+    public ?\Throwable $sinkWriteException = null;
+
+    /**
      * Attach a response to the easy handle based on the received headers.
      *
      * @throws \RuntimeException if no headers have been received or the first
