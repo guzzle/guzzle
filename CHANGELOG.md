@@ -11,7 +11,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add generic and structured PHPDoc annotations to client request/config option, async promise, handler, middleware, pool, and mock handler APIs
 - Add CIDR notation support for IP no-proxy rules
 - Add `ConnectTimeoutException` for connect-phase timeouts, extending `ConnectException`
-- Add `NetworkException` as the base class for no-response network failures
+- Add `NetworkException` for no-response network failures
 - Add `NetworkTimeoutException` and `ResponseTimeoutException`
 - Add `ResponseTransferException` for transfer-level failures after response headers are received
 - Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
