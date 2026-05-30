@@ -22,6 +22,23 @@ class SetCookieTest extends TestCase
         self::assertIsInt($cookie->getExpires());
     }
 
+    public function testUnparseableExpiresBecomesNull()
+    {
+        $cookie = new SetCookie();
+        $cookie->setExpires('this-is-not-a-date');
+
+        self::assertNull($cookie->getExpires(), 'an unparseable Expires must be normalized to null, not stored as false');
+        self::assertFalse($cookie->isExpired(), 'an unparseable Expires must not make the cookie permanently expired');
+    }
+
+    public function testUnparseableExpiresFromStringBecomesNull()
+    {
+        $cookie = SetCookie::fromString('foo=bar; Expires=garbage');
+
+        self::assertNull($cookie->getExpires());
+        self::assertFalse($cookie->isExpired());
+    }
+
     public function testAddsExpiresBasedOnMaxAge()
     {
         $t = \time();
