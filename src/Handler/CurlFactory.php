@@ -1722,7 +1722,7 @@ final class CurlFactory implements CurlFactoryInterface
 
                     return -1;
                 }
-                if ($onHeaders !== null) {
+                if ($onHeaders !== null && $easy->response !== null) {
                     try {
                         $onHeaders($easy->response, $easy->request);
                     } catch (\Throwable $e) {

@@ -94,6 +94,13 @@ final class EasyHandle
 
         [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($this->headers);
 
+        // Non-101 informational responses precede the final response. Do not
+        // expose them as the response for a transfer that ends before the final
+        // response arrives. 101 switches protocol and is kept as terminal.
+        if ($status < 200 && $status !== 101) {
+            return;
+        }
+
         $normalizedKeys = Utils::normalizeHeaderKeys($headers);
 
         if (!empty($this->options['decode_content']) && isset($normalizedKeys['content-encoding'])) {
