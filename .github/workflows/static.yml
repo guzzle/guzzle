@@ -76,3 +76,26 @@ jobs:
 
       - name: Execute Composer Normalize
         run: make static-composer-normalize-check
+
+  structarmed:
+    name: StructArmed
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Download dependencies
+        run: composer update --no-interaction --no-progress
+
+      - name: Download StructArmed
+        run: composer require --dev boundwize/structarmed:^0.9 --no-interaction --no-progress
+
+      - name: Execute StructArmed
+        run: vendor/bin/structarmed analyze

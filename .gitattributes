@@ -11,3 +11,4 @@
 /phpunit.xml.dist      export-ignore
 /tests/                export-ignore
 /vendor-bin/           export-ignore
+/structarmed.php       export-ignore

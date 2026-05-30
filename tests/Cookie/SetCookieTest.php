@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Tests\CookieJar;
+namespace GuzzleHttp\Tests\Cookie;
 
 use GuzzleHttp\Cookie\SetCookie;
 use PHPUnit\Framework\TestCase;

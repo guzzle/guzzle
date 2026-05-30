@@ -1,6 +1,6 @@
 <?php
 
-namespace GuzzleHttp\Tests\CookieJar;
+namespace GuzzleHttp\Tests\Cookie;
 
 use GuzzleHttp\Cookie\SessionCookieJar;
 use GuzzleHttp\Cookie\SetCookie;
