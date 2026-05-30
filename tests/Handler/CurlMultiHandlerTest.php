@@ -153,7 +153,7 @@ class CurlMultiHandlerTest extends TestCase
         self::assertGreaterThanOrEqual($expected, Utils::currentTime());
     }
 
-    public function testManualTickRejectsPromiseWhenFinishThrows(): void
+    public function testManualTickRejectsPromiseWhenFinishThrows()
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
@@ -161,7 +161,7 @@ class CurlMultiHandlerTest extends TestCase
         $handler = new CurlMultiHandler(['select_timeout' => 0]);
         $previous = new \RuntimeException('stats failed');
         $promise = $handler(new Request('GET', Server::$url), [
-            'on_stats' => static function () use ($previous): void {
+            'on_stats' => static function () use ($previous) {
                 throw $previous;
             },
         ]);
@@ -185,7 +185,7 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
-    public function testFinishThrowDoesNotAffectSiblingTransfers(): void
+    public function testFinishThrowDoesNotAffectSiblingTransfers()
     {
         Server::flush();
         Server::enqueue([new Response(200), new Response(200)]);
@@ -194,7 +194,7 @@ class CurlMultiHandlerTest extends TestCase
         $previous = new \RuntimeException('stats failed');
 
         $bad = $handler(new Request('GET', Server::$url), [
-            'on_stats' => static function () use ($previous): void {
+            'on_stats' => static function () use ($previous) {
                 throw $previous;
             },
         ]);
