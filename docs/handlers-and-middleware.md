@@ -244,7 +244,7 @@ $stack->push(Middleware::retry(
             return true;
         }
 
-        return $response?->getStatusCode() === 429;
+        return $response !== null && $response->getStatusCode() === 429;
     },
     function (
         int $retries,
