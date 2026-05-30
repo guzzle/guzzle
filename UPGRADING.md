@@ -219,9 +219,13 @@ as `RequestException` or `ConnectException`:
 - Other failures with no response, such as send and receive errors and
   no-response HTTP/2 and HTTP/3 protocol errors, are `NetworkException`.
 - Response-transfer failures after response headers were received are
-  `ResponseTransferException`; response-body network stalls are
+  `ResponseTransferException`. Response-body network stalls are
   `ResponseTimeoutException`, while a slow `sink` write or request-body stall
   after headers is a plain `ResponseException`.
+- Post-transfer response finalization failures are also plain
+  `ResponseException`. A seekable response sink that fails to rewind does not
+  become a `ResponseTransferException`. Non-seekable sinks are not rewound, and
+  source close cleanup after a complete stream-handler download is best effort.
 - Other failures that occur after a response was received are
   `ResponseException`.
 

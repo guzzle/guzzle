@@ -1686,28 +1686,147 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testThrowsResponseTransferExceptionWhenSinkRewindFails(): void
+    public function testSurfacesSeekableSinkRewindFailureAsResponseException(): void
     {
         $this->queueRes();
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
-        $previous = new \RuntimeException('Stream is not seekable');
+        $previous = new \RuntimeException('rewind failed');
+        $exception = null;
+        $stats = null;
         $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
-            'seek' => static function ($offset, $whence = \SEEK_SET) use ($previous): void {
+            'rewind' => static function () use ($previous): void {
                 throw $previous;
             },
         ]);
 
         try {
-            $handler($request, ['sink' => $sink])->wait();
-            self::fail('Expected ResponseTransferException');
-        } catch (ResponseTransferException $e) {
+            $handler($request, [
+                'sink' => $sink,
+                'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                    $stats = $transferStats;
+                },
+            ])->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
             self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
+
+        self::assertInstanceOf(ResponseException::class, $exception);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($exception->getResponse(), $stats->getResponse());
+        self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testNonSeekableSinkSucceedsWithoutRewind(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $underlying = Psr7\Utils::streamFor();
+        $rewindCalled = false;
+        $seekCalled = false;
+        $sink = FnStream::decorate($underlying, [
+            'isSeekable' => static function (): bool {
+                return false;
+            },
+            'rewind' => static function () use (&$rewindCalled): void {
+                $rewindCalled = true;
+
+                throw new \RuntimeException('must not rewind a non-seekable sink');
+            },
+            'seek' => static function ($offset, $whence = \SEEK_SET) use (&$seekCalled): void {
+                $seekCalled = true;
+
+                throw new \RuntimeException('must not seek a non-seekable sink');
+            },
+        ]);
+
+        $response = $handler($request, ['sink' => $sink])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame($sink, $response->getBody());
+        self::assertFalse($rewindCalled);
+        self::assertFalse($seekCalled);
+        $underlying->rewind();
+        self::assertSame('hi there', $underlying->getContents());
+    }
+
+    public function testIgnoresSourceCloseFailureAfterCompleteBody(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $closeCalled = false;
+        $throwOnClose = true;
+        $source = FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'close' => static function () use (&$closeCalled, &$throwOnClose): void {
+                $closeCalled = true;
+
+                if ($throwOnClose) {
+                    $throwOnClose = false;
+
+                    throw new \RuntimeException('close failed');
+                }
+            },
+        ]);
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('abc', (string) $response->getBody());
+        self::assertTrue($closeCalled);
+    }
+
+    public function testAttemptsSourceCloseWhenSinkRewindFails(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $rewindFailure = new \RuntimeException('rewind failed');
+        $closeFailure = new \RuntimeException('close failed');
+        $closeCalled = false;
+        $throwOnClose = true;
+        $source = FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'close' => static function () use (&$closeCalled, &$throwOnClose, $closeFailure): void {
+                $closeCalled = true;
+
+                if ($throwOnClose) {
+                    $throwOnClose = false;
+
+                    throw $closeFailure;
+                }
+            },
+        ]);
+        $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
+            'rewind' => static function () use ($rewindFailure): void {
+                throw $rewindFailure;
+            },
+        ]);
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, ['sink' => $sink], $source)->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame($rewindFailure, $e->getPrevious());
+            self::assertNotSame($closeFailure, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+        }
+
+        self::assertTrue($closeCalled);
     }
 
     public function testInvokesOnStatsOnSuccess(): void

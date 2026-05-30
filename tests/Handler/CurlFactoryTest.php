@@ -3246,6 +3246,55 @@ class CurlFactoryTest extends TestCase
         self::assertSame(\CURLE_WRITE_ERROR, $stats->getHandlerErrorData());
     }
 
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testNonSeekableSinkSucceedsWithoutRewindThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['Content-Length' => '3'], 'abc'),
+        ]);
+        $request = new Psr7\Request('GET', Server::$url);
+        $handler = $handlerFactory();
+        $underlying = Psr7\Utils::streamFor();
+        $rewindCalled = false;
+        $seekCalled = false;
+        $sink = Psr7\FnStream::decorate($underlying, [
+            'isSeekable' => static function (): bool {
+                return false;
+            },
+            'rewind' => static function () use (&$rewindCalled): void {
+                $rewindCalled = true;
+
+                throw new \RuntimeException('must not rewind a non-seekable sink');
+            },
+            'seek' => static function ($offset, $whence = \SEEK_SET) use (&$seekCalled): void {
+                $seekCalled = true;
+
+                throw new \RuntimeException('must not seek a non-seekable sink');
+            },
+        ]);
+
+        try {
+            $response = $handler($request, ['sink' => $sink])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame($sink, $response->getBody());
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+
+        self::assertFalse($rewindCalled);
+        self::assertFalse($seekCalled);
+        $underlying->rewind();
+        self::assertSame('abc', $underlying->getContents());
+    }
+
     public function testSinkWritePsr7TimeoutRejectsAsNetworkTimeoutWithoutResponse(): void
     {
         $factory = new CurlFactory(3);
@@ -3365,6 +3414,62 @@ class CurlFactoryTest extends TestCase
 
         self::assertTrue($called);
         self::assertSame(200, $promise->wait()->getStatusCode());
+    }
+
+    public function testSurfacesSeekableBodyRewindFailureAsResponseException(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $previous = new \RuntimeException('rewind failed');
+        $response = new Psr7\Response(
+            200,
+            [],
+            Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+                'isSeekable' => static function (): bool {
+                    return true;
+                },
+                'rewind' => static function () use ($previous): void {
+                    throw $previous;
+                },
+            ])
+        );
+        $easy = null;
+        $exception = null;
+        $stats = null;
+        $easy = $factory->create($request, [
+            'on_stats' => static function (TransferStats $transferStats) use (&$easy, $factory, &$stats): void {
+                $stats = $transferStats;
+                self::assertInstanceOf(EasyHandle::class, $easy);
+                self::assertArrayNotHasKey('handle', \get_object_vars($easy));
+                self::assertCount(1, self::readIdleHandles($factory));
+            },
+        ]);
+        $easy->response = $response;
+
+        try {
+            CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $factory
+            )->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            $exception = $e;
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertInstanceOf(ResponseException::class, $exception);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($response, $stats->getResponse());
+        self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
     public function testInvokesOnStatsAfterErrorHandleRelease(): void

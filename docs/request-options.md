@@ -1132,7 +1132,8 @@ PHP temp stream
 Constant
 `GuzzleHttp\RequestOptions::SINK`
 
-Pass a string to specify the path to a file that will store the contents of the response body:
+Pass a string to specify the path to a file that will store the contents of the
+response body:
 
 ```php
 $client->request('GET', '/stream/20', ['sink' => '/path/to/file']);
@@ -1145,7 +1146,8 @@ $resource = \GuzzleHttp\Psr7\Utils::tryFopen('/path/to/file', 'w');
 $client->request('GET', '/stream/20', ['sink' => $resource]);
 ```
 
-Pass a `Psr\Http\Message\StreamInterface` object to stream the response body to an open PSR-7 stream.
+Pass a `Psr\Http\Message\StreamInterface` object to stream the response body to
+an open PSR-7 stream.
 
 ```php
 $resource = \GuzzleHttp\Psr7\Utils::tryFopen('/path/to/file', 'w');
@@ -1153,13 +1155,20 @@ $stream = \GuzzleHttp\Psr7\Utils::streamFor($resource);
 $client->request('GET', '/stream/20', ['sink' => $stream]);
 ```
 
-With Guzzle's built-in cURL and PHP stream handlers, non-streaming responses use the sink stream as the response body.
+With Guzzle's built-in cURL and PHP stream handlers, non-streaming responses use
+the sink stream as the response body. The handlers rewind seekable sink streams
+before returning the response. If the sink is not seekable, the request still
+succeeds and the response body is left at the sink's current position, usually
+EOF.
 
 If `sink` is a string path, Guzzle opens the file and owns that stream.
 
-If `sink` is a PHP resource, the caller owns the resource and is responsible for closing it. Closing or destroying the response body detaches Guzzle's wrapper without closing the original resource.
+If `sink` is a PHP resource, the caller owns the resource and is responsible for
+closing it. Closing or destroying the response body detaches Guzzle's wrapper
+without closing the original resource.
 
-If `sink` is a `Psr\Http\Message\StreamInterface`, Guzzle uses that stream object as-is and its own `close()` behavior applies.
+If `sink` is a `Psr\Http\Message\StreamInterface`, Guzzle uses that stream
+object as-is and its own `close()` behavior applies.
 
 ## ssl_key
 
