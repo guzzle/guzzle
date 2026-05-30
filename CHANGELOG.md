@@ -24,12 +24,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Deprecated
 
 - Deprecated non-iterable `Pool` request collections, which will be rejected in 8.0
+- Deprecated non-uppercase easy request HTTP methods
+- Deprecated invalid `headers` request option values
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
 - Deprecated conflicting raw cURL request options, including `CURLOPT_SHARE`, which will be rejected in 8.0
 - Deprecated scalar-coerced `idn_conversion` request option values, which will be rejected in 8.0
 - Deprecated invalid documented request option value types, which will be rejected in 8.0
 - Deprecated selected request options ignored by incompatible built-in handlers, which will be rejected in 8.0
-- Deprecated `RequestException::wrapException()`, which will be removed in 8.0
+- Deprecated `RequestException::wrapException()` for removal in 8.0
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
 
