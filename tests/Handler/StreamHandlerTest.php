@@ -232,6 +232,44 @@ class StreamHandlerTest extends TestCase
         self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }
 
+    public function testDecodedGzipLargerThanEncodedReturnsFullBodyAndDropsContentLength()
+    {
+        $decoded = \str_repeat('A', 1000);
+        $gzip = \gzencode($decoded);
+        self::assertIsString($gzip);
+
+        $resource = \fopen('php://temp', 'r+');
+        self::assertIsResource($resource);
+        \fwrite($resource, $gzip);
+        \rewind($resource);
+
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+
+        $ref = new \ReflectionObject($handler);
+        $lastHeaders = $ref->getProperty('lastHeaders');
+        if (\PHP_VERSION_ID < 80100) {
+            $lastHeaders->setAccessible(true);
+        }
+        $lastHeaders->setValue($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: '.\strlen($gzip),
+        ]);
+        $createResponse = $ref->getMethod('createResponse');
+        if (\PHP_VERSION_ID < 80100) {
+            $createResponse->setAccessible(true);
+        }
+
+        /** @var ResponseInterface $response */
+        $response = $createResponse->invoke($handler, $request, ['decode_content' => true], $resource, null)->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame($decoded, (string) $response->getBody());
+        self::assertFalse($response->hasHeader('Content-Length'));
+        self::assertSame((string) \strlen($gzip), $response->getHeaderLine('x-encoded-content-length'));
+    }
+
     public function testAutomaticallyDecompressGzipHead()
     {
         Server::flush();
@@ -246,7 +284,7 @@ class StreamHandlerTest extends TestCase
         $request = new Request('HEAD', Server::$url);
         $response = $handler($request, ['decode_content' => true])->wait();
 
-        // Verify that the content-length matches the encoded size.
+        // Verify that the content-length is removed after decoding.
         self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == \strlen($content));
     }
 

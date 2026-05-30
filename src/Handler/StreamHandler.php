@@ -213,15 +213,12 @@ class StreamHandler
                     // Remove content-encoding header
                     unset($headers[$normalizedKeys['content-encoding']]);
 
-                    // Fix content-length header
+                    // The decoded length cannot be known without inflating the
+                    // stream, so keep the original length for inspection and
+                    // drop the now-unknown Content-Length header.
                     if (isset($normalizedKeys['content-length'])) {
                         $headers['x-encoded-content-length'] = $headers[$normalizedKeys['content-length']];
-                        $length = (int) $stream->getSize();
-                        if ($length === 0) {
-                            unset($headers[$normalizedKeys['content-length']]);
-                        } else {
-                            $headers[$normalizedKeys['content-length']] = [(string) $length];
-                        }
+                        unset($headers[$normalizedKeys['content-length']]);
                     }
                 }
             }
