@@ -578,6 +578,304 @@ class StreamHandlerTest extends TestCase
         \fclose($stream);
     }
 
+    public function testThrowsResponseTransferExceptionWhenContentLengthBodyIsShort(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $stats = null;
+        $exception = null;
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse(
+                $handler,
+                $request,
+                [
+                    'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                        $stats = $transferStats;
+                    },
+                ],
+                Psr7\Utils::streamFor('ab')
+            )->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            $exception = $e;
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('The stream handler received fewer bytes than the declared Content-Length', $e->getMessage());
+            self::assertNull($e->getPrevious());
+            self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertInstanceOf(ResponseTransferException::class, $exception);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($exception->getResponse(), $stats->getResponse());
+        self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testExactContentLengthBodySucceeds(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abc'))->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('abc', (string) $response->getBody());
+    }
+
+    public function testOverlongContentLengthBodySucceedsAndStopsAtDeclaredLength(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abcdef'))->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('abc', (string) $response->getBody());
+    }
+
+    /**
+     * @dataProvider bodilessStatusProvider
+     */
+    public function testBodilessStatusWithPositiveContentLengthSucceeds(int $status, string $reason): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            "HTTP/1.1 {$status} {$reason}",
+            'Content-Length: 3',
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+
+        self::assertSame($status, $response->getStatusCode());
+    }
+
+    public static function bodilessStatusProvider(): array
+    {
+        return [
+            '100 Continue' => [100, 'Continue'],
+            '101 Switching Protocols' => [101, 'Switching Protocols'],
+            '204 No Content' => [204, 'No Content'],
+            '304 Not Modified' => [304, 'Not Modified'],
+        ];
+    }
+
+    public function testShortContentLengthBodyOn205Rejects(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 205 Reset Content',
+            'Content-Length: 3',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame(205, $e->getResponse()->getStatusCode());
+        }
+    }
+
+    public function testExactContentLengthBodyOn205Succeeds(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 205 Reset Content',
+            'Content-Length: 3',
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abc'))->wait();
+
+        self::assertSame(205, $response->getStatusCode());
+    }
+
+    public function testConnect2xxWithPositiveContentLengthSucceeds(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('CONNECT', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 Connection Established',
+            'Content-Length: 3',
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testLeadingZeroContentLengthIsEnforced(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 0003',
+        ]);
+
+        $this->expectException(ResponseTransferException::class);
+
+        $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+    }
+
+    public function testDuplicateIdenticalContentLengthIsEnforced(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+            'Content-Length: 3',
+        ]);
+
+        $this->expectException(ResponseTransferException::class);
+
+        $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+    }
+
+    public function testConflictingContentLengthSkipsShortBodyCheck(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+            'Content-Length: 5',
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('ab', (string) $response->getBody());
+    }
+
+    public function testContentLengthAbovePhpIntMaxSkipsShortBodyCheck(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $overflow = '99999999999999999999999999';
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            "Content-Length: {$overflow}",
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('ab', (string) $response->getBody());
+    }
+
+    public function testAttemptsSourceCloseWhenContentLengthBodyIsShort(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $closeCalled = false;
+        $source = FnStream::decorate(Psr7\Utils::streamFor('ab'), [
+            'close' => static function () use (&$closeCalled): void {
+                $closeCalled = true;
+
+                throw new \RuntimeException('close failed');
+            },
+        ]);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame('The stream handler received fewer bytes than the declared Content-Length', $e->getMessage());
+            self::assertNull($e->getPrevious());
+        }
+
+        self::assertTrue($closeCalled);
+    }
+
+    public function testTransferEncodingWithBogusContentLengthDoesNotTriggerShortBody(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Transfer-Encoding: chunked',
+            'Content-Length: 100',
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abc'))->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('abc', (string) $response->getBody());
+    }
+
+    public function testShortRawBodyWithUnsupportedEncodingAndDecodeOnThrows(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: br',
+            'Content-Length: 10',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => true], Psr7\Utils::streamFor('rawbytes'))->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+        }
+    }
+
+    public function testShortRawBodyWithGzipEncodingAndDecodeOffThrows(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: 10',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => false], Psr7\Utils::streamFor('rawbytes'))->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+        }
+    }
+
     public function testDoesNotDrainWhenHeadRequest(): void
     {
         Server::flush();
