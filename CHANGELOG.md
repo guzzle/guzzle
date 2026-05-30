@@ -7,7 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
-- `CurlMultiHandler` now rejects the affected promise when `CurlFactory::finish()` throws, without interrupting sibling transfers
+- `CurlMultiHandler` now rejects the promise when `CurlFactory::finish()` throws, preserving sibling transfers
 
 
 ## 7.10.5 - 2025-05-27
