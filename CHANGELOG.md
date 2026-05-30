@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.10.6 - Upcoming
+
+### Fixed
+
+- `CurlMultiHandler`: an exception thrown from `CurlFactory::finish()` (most commonly a throwing `on_stats` callback) no longer escapes the event loop. The affected request's promise is now rejected with the exception, and other in-flight transfers on the same handler continue to settle normally.
+
+
 ## 7.10.5 - 2025-05-27
 
 ### Fixed
