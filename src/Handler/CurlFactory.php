@@ -698,12 +698,17 @@ final class CurlFactory implements CurlFactoryInterface
         return !$easy->response
             || $easy->errno !== 0
             || $easy->bodyReadTimeoutException !== null
-            || $easy->sinkWriteTimeoutException !== null;
+            || $easy->sinkWriteTimeoutException !== null
+            || $easy->sinkWriteException !== null;
     }
 
     private static function shouldRetryFailedRewind(EasyHandle $easy): bool
     {
-        if ($easy->bodyReadTimeoutException !== null || $easy->sinkWriteTimeoutException !== null) {
+        if (
+            $easy->bodyReadTimeoutException !== null
+            || $easy->sinkWriteTimeoutException !== null
+            || $easy->sinkWriteException !== null
+        ) {
             return false;
         }
 
@@ -844,6 +849,34 @@ final class CurlFactory implements CurlFactoryInterface
                     'The cURL handler timed out while transferring the response body',
                     $easy->request,
                     $easy->sinkWriteTimeoutException
+                )
+            );
+        }
+
+        if ($easy->sinkWriteException) {
+            $message = $easy->sinkWriteException->getMessage() !== ''
+                ? $easy->sinkWriteException->getMessage()
+                : 'The cURL handler failed while writing the response body';
+
+            if ($easy->response) {
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor(
+                    new ResponseException(
+                        $message,
+                        $easy->request,
+                        $easy->response,
+                        $easy->sinkWriteException
+                    )
+                );
+            }
+
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new RequestException(
+                    $message,
+                    $easy->request,
+                    0,
+                    $easy->sinkWriteException
                 )
             );
         }
@@ -1387,6 +1420,10 @@ final class CurlFactory implements CurlFactoryInterface
                 return $sink->write($write);
             } catch (TimeoutException $e) {
                 $easy->sinkWriteTimeoutException = $e;
+
+                return 0;
+            } catch (\Throwable $e) {
+                $easy->sinkWriteException = $e;
 
                 return 0;
             }

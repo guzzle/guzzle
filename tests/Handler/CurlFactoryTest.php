@@ -3249,6 +3249,188 @@ class CurlFactoryTest extends TestCase
     /**
      * @dataProvider curlHandlerProvider
      */
+    public function testGenericSinkWriteFailureRejectsAsResponseExceptionThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [], 'abc'),
+        ]);
+        $request = new Psr7\Request('GET', Server::$url);
+        $handler = $handlerFactory();
+        $previous = new \RuntimeException('sink failed');
+        $stats = null;
+        $writeCalled = false;
+        $sink = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data) use (&$writeCalled, $previous): int {
+                $writeCalled = true;
+
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $handler($request, [
+                'sink' => $sink,
+                'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                    $stats = $transferStats;
+                },
+            ])->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('sink failed', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+
+        self::assertTrue($writeCalled);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame(200, $stats->getResponse()->getStatusCode());
+        self::assertSame(\CURLE_WRITE_ERROR, $stats->getHandlerErrorData());
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testSinkWriteErrorRejectsAsResponseExceptionThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [], 'abc'),
+        ]);
+        $request = new Psr7\Request('GET', Server::$url);
+        $handler = $handlerFactory();
+        $previous = new \Error('sink fatal');
+        $writeCalled = false;
+        $sink = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data) use (&$writeCalled, $previous): int {
+                $writeCalled = true;
+
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $handler($request, ['sink' => $sink])->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+
+        self::assertTrue($writeCalled);
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testSinkWriteFailureUsesFallbackMessageWhenThrowableMessageEmpty(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [], 'abc'),
+        ]);
+        $request = new Psr7\Request('GET', Server::$url);
+        $handler = $handlerFactory();
+        $sink = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data): int {
+                throw new \RuntimeException('');
+            },
+        ]);
+
+        try {
+            $handler($request, ['sink' => $sink])->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame('The cURL handler failed while writing the response body', $e->getMessage());
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testSinkWriteReturningTooFewBytesRejectsAsResponseExceptionWithoutPrevious(callable $handlerFactory): void
+    {
+        $body = \str_repeat('x', 1024);
+        $scenarios = [
+            'return zero' => false,
+            'short positive' => true,
+        ];
+
+        foreach ($scenarios as $label => $positiveShort) {
+            Server::flush();
+            Server::enqueue([
+                new Psr7\Response(200, [], $body),
+            ]);
+            $request = new Psr7\Request('GET', Server::$url);
+            $handler = $handlerFactory();
+            $callbackRan = false;
+            $sawPositiveShort = false;
+            $sink = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
+                'write' => static function (string $data) use ($positiveShort, &$callbackRan, &$sawPositiveShort): int {
+                    $callbackRan = true;
+                    $written = $positiveShort ? \strlen($data) - 1 : 0;
+                    if ($written > 0 && $written < \strlen($data)) {
+                        $sawPositiveShort = true;
+                    }
+
+                    return $written;
+                },
+            ]);
+
+            try {
+                $handler($request, ['sink' => $sink])->wait();
+
+                self::fail("Expected ResponseException ({$label})");
+            } catch (ResponseException $e) {
+                self::assertSame(200, $e->getResponse()->getStatusCode(), $label);
+                self::assertNull($e->getPrevious(), $label);
+                self::assertNotInstanceOf(ResponseTransferException::class, $e, $label);
+            } finally {
+                Server::flush();
+
+                if (\method_exists($handler, 'close')) {
+                    $handler->close();
+                }
+            }
+
+            self::assertTrue($callbackRan, "the short-write callback must run ({$label})");
+            if ($positiveShort) {
+                self::assertTrue($sawPositiveShort, "expected a genuinely positive short write ({$label})");
+            }
+        }
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
     public function testNonSeekableSinkSucceedsWithoutRewindThroughCurlHandlers(callable $handlerFactory): void
     {
         Server::flush();
@@ -3346,6 +3528,66 @@ class CurlFactoryTest extends TestCase
         self::assertNull($stats->getResponse());
         self::assertSame($request, $stats->getRequest());
         self::assertSame(\CURLE_WRITE_ERROR, $stats->getHandlerErrorData());
+    }
+
+    public function testGenericSinkWriteFailureWithoutResponseRejectsAsRequestExceptionWithoutRetry(): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, []);
+        $previous = new \RuntimeException('sink failed');
+        $easy->sinkWriteException = $previous;
+        $retried = false;
+        $handler = static function () use (&$retried): P\PromiseInterface {
+            $retried = true;
+
+            return P\Create::promiseFor(new Psr7\Response(200));
+        };
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('sink failed', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkException::class, $e);
+        }
+
+        self::assertFalse($retried, 'A sink write failure must never trigger a request-body rewind retry');
+    }
+
+    public function testGenericSinkWriteFailureWithResponseRejectsWithoutRetryWhenErrnoIsZero(): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('GET', Server::$url);
+        $response = new Psr7\Response(200, [], 'abc');
+        $easy = $factory->create($request, []);
+        $previous = new \RuntimeException('sink failed');
+        $easy->response = $response;
+        $easy->sinkWriteException = $previous;
+        $retried = false;
+        $handler = static function () use (&$retried): P\PromiseInterface {
+            $retried = true;
+
+            return P\Create::promiseFor(new Psr7\Response(200));
+        };
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
+            self::assertSame('sink failed', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+        }
+
+        self::assertFalse($retried, 'A sink write failure must never trigger a request-body rewind retry');
     }
 
     public function testInvokesOnStatsOnSuccess(): void
