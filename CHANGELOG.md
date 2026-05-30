@@ -36,6 +36,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
 
+## 7.10.6 - Upcoming
+
+### Fixed
+
+- `CurlMultiHandler` now rejects the promise when `CurlFactory::finish()` throws, preserving sibling transfers
+
+
 ## 7.10.5 - 2025-05-27
 
 ### Fixed
