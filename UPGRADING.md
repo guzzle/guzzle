@@ -89,12 +89,12 @@ intentionally reclassify specific failures. Broad `TransferException` and
 `RequestException` still catches response-aware and other non-network request
 failures. More specific catch blocks need auditing: Guzzle 8.0 splits timeout
 failures into connect-phase, no-response network, and response-aware timeout
-classes, and the built-in cURL and stream handlers classify more no-response
-transport failures as network failures. This section covers upgrading from
-Guzzle 7.x to Guzzle 8.0. The `ConnectException` inheritance change happened
-earlier, in Guzzle 7.0.0, when it moved out from under `RequestException`; see
-the 6.0 to 7.0 notes for that migration. The hierarchy changes are easiest to
-compare in the two trees below.
+classes, and the built-in cURL and stream handlers classify more transport
+failures by transfer phase. This section covers upgrading from Guzzle 7.x to
+Guzzle 8.0. The `ConnectException` inheritance change happened earlier, in
+Guzzle 7.0.0, when it moved out from under `RequestException`; see the 6.0 to
+7.0 notes for that migration. The hierarchy changes are easiest to compare in
+the two trees below.
 
 Guzzle 7.x uses this hierarchy:
 
@@ -124,8 +124,8 @@ Guzzle 8.0 uses this hierarchy:
             ├── BadResponseException
             │   ├── ClientException
             │   └── ServerException
-            ├── ResponseTimeoutException
             ├── ResponseTransferException
+            │   └── ResponseTimeoutException
             └── TooManyRedirectsException
 ```
 
@@ -144,39 +144,35 @@ not have `ResponseException`; response-aware request failures remain under
 `RequestException` throughout Guzzle 7.x. In Guzzle 8.0, `ResponseException` is
 the base class for request failures where response headers were received and a
 response object is available. `ResponseTransferException`,
-`ResponseTimeoutException`, `BadResponseException`, and
-`TooManyRedirectsException` extend it. Response access now belongs to this
-branch only: `RequestException` no longer stores responses, no longer accepts a
-response constructor argument, and no longer has `getResponse()` or
-`hasResponse()` methods. Catch `ResponseException`, or test with
-`instanceof ResponseException`, before calling `getResponse()`. If you
+`BadResponseException`, and `TooManyRedirectsException` extend it. Only this
+branch exposes response access: `RequestException` no longer stores responses,
+no longer accepts a response constructor argument, and no longer has
+`getResponse()` or `hasResponse()` methods. Catch `ResponseException`, or test
+with `instanceof ResponseException`, before calling `getResponse()`. If you
 instantiate `RequestException` directly, its third constructor argument is now
-the exception code, followed by the previous exception.
-
-`RequestException::getHandlerContext()` and
-`ConnectException::getHandlerContext()` were removed. If you used handler
-context to work out what kind of transfer failure occurred, switch to the more
-granular exception classes in the hierarchy above. If you need handler-level
-timing or statistics, collect them during the transfer with the `on_stats`
-request option.
+the exception code, followed by the previous exception. If you used the removed
+`getHandlerContext()` methods to classify failures, use the more granular
+exception classes above instead. Use `on_stats` when you need handler timing or
+statistics.
 
 Timeout exception classes are now split by the phase the handler can determine.
 `ConnectTimeoutException` is thrown for detected connect timeouts (DNS
 resolution, TCP connect, proxy CONNECT, or TLS handshake). It extends
 `ConnectException`, so code that catches `ConnectException` will also catch
 connect timeouts. `NetworkTimeoutException` is thrown for other detected
-timeouts before response headers are received; it extends `NetworkException` but
-not `ConnectException`. `ResponseTimeoutException` is thrown for timeouts after
-response headers are received; it extends `ResponseException` and exposes the
-response. These phases apply however the timeout is detected, including timeouts
-that originate from a slow PSR-7 stream. A request body that stalls before any
-response is received is a `NetworkTimeoutException`, and a stall reading the
-response body off the network is a `ResponseTimeoutException`. A timeout from a
-caller-supplied PSR-7 stream after response headers are received is a plain
-`ResponseException` rather than `ResponseTimeoutException`; this covers a slow
-`sink` write and a request body that stalls after the server has already sent
-response headers. Whenever the timeout comes from a PSR-7 stream, the original
-`GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
+timeouts before response headers are received. It extends `NetworkException`,
+but not `ConnectException`. `ResponseTimeoutException` is thrown for timeouts
+after response headers are received. It extends `ResponseTransferException` and
+exposes the response. These phases apply however the timeout is detected,
+including timeouts that originate from a slow PSR-7 stream. A request body that
+stalls before any response is received is a `NetworkTimeoutException`, and a
+stall reading the response body off the network is a `ResponseTimeoutException`.
+A timeout from a caller-supplied PSR-7 stream after response headers are
+received is a plain `ResponseException` rather than `ResponseTimeoutException`.
+This covers a slow `sink` write and a request body that stalls after the server
+has already sent response headers. Whenever the timeout comes from a PSR-7
+stream, the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available
+via `getPrevious()`.
 
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
@@ -189,7 +185,7 @@ handle `HandlerClosedException` or `TransferException` for pending promises you
 may still observe.
 
 When updating catch blocks for Guzzle 8.0, catch the more specific no-response
-and response-aware failures before `RequestException`. Use this catch order:
+and response-aware failures before `RequestException`:
 
 ```php
 use GuzzleHttp\Exception\NetworkException;
@@ -215,17 +211,17 @@ try {
 }
 ```
 
-Beyond timeouts, the built-in handlers reclassify several no-response transport
-failures that Guzzle 7.x reported as `RequestException` or `ConnectException`:
+The built-in handlers also reclassify several failures that Guzzle 7.x reported
+as `RequestException` or `ConnectException`:
 
 - Connection-establishment failures (DNS and proxy resolution, TCP connect, TLS
   setup, and QUIC connect) are `ConnectException`.
 - Other failures with no response, such as send and receive errors and
   no-response HTTP/2 and HTTP/3 protocol errors, are `NetworkException`.
-- Transfer-level failures after a response was received are
-  `ResponseTransferException`; a stall reading the response body off the network
-  is a `ResponseTimeoutException`, while a slow `sink` write or a request-body
-  stall after headers is a plain `ResponseException`.
+- Response-transfer failures after response headers were received are
+  `ResponseTransferException`; response-body network stalls are
+  `ResponseTimeoutException`, while a slow `sink` write or request-body stall
+  after headers is a plain `ResponseException`.
 - Other failures that occur after a response was received are
   `ResponseException`.
 
