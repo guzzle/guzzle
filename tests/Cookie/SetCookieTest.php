@@ -30,7 +30,7 @@ class SetCookieTest extends TestCase
         self::assertNull($cookie->getExpires());
     }
 
-    public function testUnparseableExpiresBecomesNull()
+    public function testUnparseableExpiresBecomesNull(): void
     {
         $cookie = new SetCookie();
         $cookie->setExpires('this-is-not-a-date');
@@ -39,7 +39,7 @@ class SetCookieTest extends TestCase
         self::assertFalse($cookie->isExpired(), 'an unparseable Expires must not make the cookie permanently expired');
     }
 
-    public function testUnparseableExpiresFromStringBecomesNull()
+    public function testUnparseableExpiresFromStringBecomesNull(): void
     {
         $cookie = SetCookie::fromString('foo=bar; Expires=garbage');
 
