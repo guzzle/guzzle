@@ -24,8 +24,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Deprecated
 
 - Deprecated non-iterable `Pool` request collections, which will be rejected in 8.0
-- Deprecated non-uppercase easy request HTTP methods
-- Deprecated invalid `headers` request option values
+- Deprecated non-uppercase easy request methods; 8.0 preserves method casing
+- Deprecated non-string `headers` request option values, which will be rejected in 8.0
+- Deprecated empty `headers` request option value arrays, which will be rejected in 8.0
 - Deprecated empty and malformed request protocol versions, which will be rejected in 8.0
 - Deprecated conflicting raw cURL request options, including `CURLOPT_SHARE`, which will be rejected in 8.0
 - Deprecated scalar-coerced `idn_conversion` request option values, which will be rejected in 8.0
