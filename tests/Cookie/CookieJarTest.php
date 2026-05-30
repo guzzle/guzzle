@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Tests\CookieJar;
+namespace GuzzleHttp\Tests\Cookie;
 
 use DateInterval;
 use DateTime;

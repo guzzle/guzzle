@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Test\Handler;
+namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Handler\EasyHandle;
 use PHPUnit\Framework\TestCase;

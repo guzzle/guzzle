@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Test;
+namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Utils;

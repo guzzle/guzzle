@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Tests\CookieJar;
+namespace GuzzleHttp\Tests\Cookie;
 
 use GuzzleHttp\Cookie\SessionCookieJar;
 use GuzzleHttp\Cookie\SetCookie;

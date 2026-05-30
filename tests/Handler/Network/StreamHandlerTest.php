@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace GuzzleHttp\Test\Handler\Network;
+namespace GuzzleHttp\Tests\Handler\Network;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\StreamHandler;
