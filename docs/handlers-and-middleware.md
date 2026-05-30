@@ -220,10 +220,10 @@ A rejection reason may itself expose a response, for example when it is a
 
 ```php
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -240,7 +240,7 @@ $stack->push(Middleware::retry(
             return false;
         }
 
-        if ($reason instanceof NetworkException || $reason instanceof ResponseTransferException) {
+        if ($reason instanceof NetworkExceptionInterface || $reason instanceof ResponseTransferException) {
             return true;
         }
 

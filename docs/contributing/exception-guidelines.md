@@ -11,6 +11,11 @@ between — `InvalidArgumentException` (caller error) and `RequestException`
 (runtime request failure) — and the handful of cases where a bare SPL exception
 is correct.
 
+`GuzzleHttp\Exception\NetworkException` exists only in Guzzle 8.0 and newer. On
+Guzzle 7.x maintenance branches, network failures without a response use
+`ConnectException`, which implements `Psr\Http\Client\NetworkExceptionInterface`
+directly.
+
 ## The decision tree
 
 ```
