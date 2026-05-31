@@ -183,9 +183,9 @@ Timeouts that originate from caller-supplied PSR-7 streams are not transport
 timeouts. Reading the request body stream, including size detection,
 stringification, rewind, and upload reads, is a `RequestException` before a
 response and a `ResponseException` after response headers. A slow response `sink`
-write is also a `ResponseException`. Whenever the timeout comes from a PSR-7
-stream, the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available
-via `getPrevious()`.
+write is a `ResponseException` once a response exists, or a `RequestException`
+otherwise. Whenever the timeout comes from a PSR-7 stream, the original
+`GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
 
 Generic throwables from a cURL `sink` write are now wrapped instead of escaping
 the native cURL callback. They become plain `ResponseException` instances when a

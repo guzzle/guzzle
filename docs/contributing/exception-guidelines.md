@@ -55,7 +55,7 @@ failures when a response exists.
 
 **Timeouts: transport vs. caller-supplied streams.** A `*TimeoutException` means
 the network transport timed out, such as cURL `CURLE_OPERATION_TIMEDOUT` or a
-stream send/connect timeout message. A timeout surfaced as a psr7
+stream send/connect timeout message. A timeout surfaced as a PSR-7
 `TimeoutException` from a caller stream is classified like any other failure of
 that stream: `RequestException` while reading the request body before a response,
 or `ResponseException` once a response exists. It is never a

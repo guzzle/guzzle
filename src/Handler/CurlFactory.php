@@ -624,7 +624,7 @@ final class CurlFactory implements CurlFactoryInterface
             }
         } catch (\Throwable $e) {
             $reason = new ResponseException(
-                $e->getMessage() !== '' ? $e->getMessage() : 'The cURL handler failed to rewind the response body',
+                $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the response body',
                 $easy->request,
                 $response,
                 $e
@@ -713,6 +713,7 @@ final class CurlFactory implements CurlFactoryInterface
             || $easy->bodyReadException !== null
             || $easy->sinkWriteTimeoutException !== null
             || $easy->sinkWriteException !== null
+            || $easy->sinkWriteIncomplete
             || $easy->responseBodySizeException !== null;
     }
 
@@ -782,11 +783,10 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if ($easy->bodyReadTimeoutException) {
-            // Reading the request body stalled: a caller-source failure, not the
-            // network. Classify by phase (see contributing exception guidelines).
+            // Reading the request body stalled, which is a caller-stream failure.
             return self::createRequestOrResponseRejection(
                 $easy,
-                'The cURL handler timed out while reading the request body',
+                'Timed out while reading the request body',
                 $easy->bodyReadTimeoutException
             );
         }
@@ -794,18 +794,17 @@ final class CurlFactory implements CurlFactoryInterface
         if ($easy->bodyReadException) {
             $message = $easy->bodyReadException->getMessage() !== ''
                 ? $easy->bodyReadException->getMessage()
-                : 'The cURL handler failed while reading the request body';
+                : 'Failed to read the request body';
 
             return self::createRequestOrResponseRejection($easy, $message, $easy->bodyReadException);
         }
 
         if ($easy->sinkWriteTimeoutException) {
-            // Writing the response body to the caller's sink stalled: a
-            // caller-stream failure, not the network. Classify by phase (see
-            // contributing exception guidelines).
+            // Writing the response body to the caller's sink stalled, which is a
+            // caller-stream failure.
             return self::createRequestOrResponseRejection(
                 $easy,
-                'The cURL handler timed out while writing the response body',
+                'Timed out while writing the response body',
                 $easy->sinkWriteTimeoutException
             );
         }
@@ -813,9 +812,13 @@ final class CurlFactory implements CurlFactoryInterface
         if ($easy->sinkWriteException) {
             $message = $easy->sinkWriteException->getMessage() !== ''
                 ? $easy->sinkWriteException->getMessage()
-                : 'The cURL handler failed while writing the response body';
+                : 'Failed to write the response body';
 
             return self::createRequestOrResponseRejection($easy, $message, $easy->sinkWriteException);
+        }
+
+        if ($easy->sinkWriteIncomplete) {
+            return self::createRequestOrResponseRejection($easy, 'Unable to write to stream');
         }
 
         if ($easy->responseBodySizeException) {
@@ -1216,7 +1219,7 @@ final class CurlFactory implements CurlFactoryInterface
             $length = HeaderProcessor::parseContentLength($request->getHeader('Content-Length'));
         } catch (\RuntimeException $e) {
             throw new RequestException(
-                'Invalid Content-Length request header',
+                'Invalid Content-Length request header: '.$e->getMessage(),
                 $request,
                 0,
                 $e
@@ -1246,7 +1249,7 @@ final class CurlFactory implements CurlFactoryInterface
                 $conf[\CURLOPT_POSTFIELDS] = (string) $request->getBody();
             } catch (\Throwable $e) {
                 throw new RequestException(
-                    $e->getMessage() !== '' ? $e->getMessage() : 'The cURL handler failed while reading the request body',
+                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed to read the request body',
                     $request,
                     0,
                     $e
@@ -1274,7 +1277,7 @@ final class CurlFactory implements CurlFactoryInterface
                 }
             } catch (\Throwable $e) {
                 throw new RequestException(
-                    $e->getMessage() !== '' ? $e->getMessage() : 'The cURL handler failed to rewind the request body',
+                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the request body',
                     $request,
                     0,
                     $e
@@ -1460,9 +1463,13 @@ final class CurlFactory implements CurlFactoryInterface
                 return 0;
             }
 
-            if ($written === $length) {
-                $easy->responseBodyBytes = $newResponseBodyBytes;
+            if ($written !== $length) {
+                $easy->sinkWriteIncomplete = true;
+
+                return 0;
             }
+
+            $easy->responseBodyBytes = $newResponseBodyBytes;
 
             return $written;
         };

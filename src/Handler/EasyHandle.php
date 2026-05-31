@@ -88,6 +88,11 @@ final class EasyHandle
     public ?\Throwable $sinkWriteException = null;
 
     /**
+     * @var bool Whether the response sink accepted a different byte count.
+     */
+    public bool $sinkWriteIncomplete = false;
+
+    /**
      * @var int Number of response body bytes accepted by the sink.
      */
     public int $responseBodyBytes = 0;

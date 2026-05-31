@@ -412,7 +412,7 @@ final class StreamHandler
                 throw $e;
             } catch (TimeoutException $e) {
                 throw new ResponseTimeoutException(
-                    'The stream handler timed out while transferring the response body',
+                    'Timed out while transferring the response body',
                     $request,
                     $response,
                     $e
@@ -420,10 +420,10 @@ final class StreamHandler
             } catch (\OverflowException $e) {
                 throw new ResponseException($e->getMessage(), $request, $response, $e);
             } catch (\Throwable $e) {
-                // Any other failure while reading the response body off the network
-                // surfaces as a ResponseTransferException carrying the response.
+                // Any other response-body transfer failure surfaces as a
+                // ResponseTransferException carrying the response.
                 throw new ResponseTransferException(
-                    $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed while transferring the response body',
+                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed while transferring the response body',
                     $request,
                     $response,
                     $e
@@ -432,7 +432,7 @@ final class StreamHandler
 
             if ($declaredLength !== null && $copied < $declaredLength) {
                 throw new ResponseTransferException(
-                    'The stream handler received fewer bytes than the declared Content-Length',
+                    'Response body ended before the declared Content-Length was reached',
                     $request,
                     $response
                 );
@@ -444,7 +444,7 @@ final class StreamHandler
                 }
             } catch (\Throwable $e) {
                 throw new ResponseException(
-                    $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed to rewind the response body',
+                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the response body',
                     $request,
                     $response,
                     $e
@@ -486,7 +486,7 @@ final class StreamHandler
             $length = HeaderProcessor::parseContentLength($request->getHeader('Content-Length'));
         } catch (\RuntimeException $e) {
             throw new RequestException(
-                'Invalid Content-Length request header',
+                'Invalid Content-Length request header: '.$e->getMessage(),
                 $request,
                 0,
                 $e
@@ -516,14 +516,14 @@ final class StreamHandler
                     $written = $sink->write($data);
                 } catch (TimeoutException $e) {
                     throw new ResponseException(
-                        'The stream handler timed out while writing the response body',
+                        'Timed out while writing the response body',
                         $request,
                         $response,
                         $e
                     );
                 } catch (\Throwable $e) {
                     throw new ResponseException(
-                        $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed while writing the response body',
+                        $e->getMessage() !== '' ? $e->getMessage() : 'Failed to write the response body',
                         $request,
                         $response,
                         $e
@@ -661,7 +661,7 @@ final class StreamHandler
             function () use ($uri, $contextResource, $readTimeout) {
                 $resource = @\fopen((string) $uri, 'r', false, $contextResource);
 
-                // See https://wiki.php.net/rfc/deprecations_php_8_5#deprecate_the_http_response_header_predefined_variable
+                // PHP 8.5 deprecates the local $http_response_header variable.
                 if (function_exists('http_get_last_response_headers')) {
                     $http_response_header = \http_get_last_response_headers();
                 }

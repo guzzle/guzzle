@@ -148,7 +148,10 @@ class StreamHandlerTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('Invalid Content-Length request header', $e->getMessage());
+            self::assertSame(
+                'Invalid Content-Length request header: value is not a non-negative decimal integer',
+                $e->getMessage()
+            );
         }
 
         self::assertFalse($called);
@@ -743,7 +746,7 @@ class StreamHandlerTest extends TestCase
             $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler received fewer bytes than the declared Content-Length', $e->getMessage());
+            self::assertSame('Response body ended before the declared Content-Length was reached', $e->getMessage());
             self::assertNull($e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
@@ -999,7 +1002,7 @@ class StreamHandlerTest extends TestCase
             $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
-            self::assertSame('The stream handler received fewer bytes than the declared Content-Length', $e->getMessage());
+            self::assertSame('Response body ended before the declared Content-Length was reached', $e->getMessage());
             self::assertNull($e->getPrevious());
         }
 
@@ -1997,7 +2000,7 @@ class StreamHandlerTest extends TestCase
             $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler timed out while writing the response body', $e->getMessage());
+            self::assertSame('Timed out while writing the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
@@ -2178,7 +2181,7 @@ class StreamHandlerTest extends TestCase
         } catch (ResponseTransferException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler failed while transferring the response body', $e->getMessage());
+            self::assertSame('Failed while transferring the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
         }
     }
@@ -2199,7 +2202,7 @@ class StreamHandlerTest extends TestCase
             $handler($request, ['sink' => $sink])->wait();
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
-            self::assertSame('The stream handler failed while writing the response body', $e->getMessage());
+            self::assertSame('Failed to write the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
@@ -2652,7 +2655,7 @@ class StreamHandlerTest extends TestCase
             $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame('Timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
@@ -2687,7 +2690,7 @@ class StreamHandlerTest extends TestCase
             $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame('Timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }

@@ -78,7 +78,7 @@ final class HeaderProcessor
     }
 
     /**
-     * Returns a normalized decimal string.
+     * Returns a normalized decimal Content-Length, or null when absent.
      *
      * @param string[] $values
      *
@@ -92,13 +92,13 @@ final class HeaderProcessor
             foreach (\explode(',', $value) as $part) {
                 $part = \trim($part, " \t");
                 if (\preg_match('/^[0-9]+$/D', $part) !== 1) {
-                    throw new \RuntimeException('Content-Length header value is invalid');
+                    throw new \RuntimeException('value is not a non-negative decimal integer');
                 }
 
                 $part = \ltrim($part, '0');
                 $part = $part === '' ? '0' : $part;
                 if ($length !== null && $part !== $length) {
-                    throw new \RuntimeException('Content-Length header values conflict');
+                    throw new \RuntimeException('values conflict');
                 }
 
                 $length = $part;

@@ -3455,7 +3455,7 @@ class CurlFactoryTest extends TestCase
             // It is still a timeout, never a silent success.
             self::assertTrue(\PHP_VERSION_ID < 80117 || (\PHP_VERSION_ID >= 80200 && \PHP_VERSION_ID < 80204));
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while reading the request body', $e->getMessage());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
@@ -3465,7 +3465,7 @@ class CurlFactoryTest extends TestCase
             // (and on older PHP the progress callback may abort before a
             // response arrives), so no usable response is received.
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while reading the request body', $e->getMessage());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
@@ -3506,7 +3506,7 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while reading the request body', $e->getMessage());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
@@ -3614,7 +3614,7 @@ class CurlFactoryTest extends TestCase
         } catch (ResponseException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame($response, $e->getResponse());
-            self::assertSame('The cURL handler timed out while reading the request body', $e->getMessage());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
@@ -3844,7 +3844,7 @@ class CurlFactoryTest extends TestCase
         } catch (ResponseException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The cURL handler timed out while writing the response body', $e->getMessage());
+            self::assertSame('Timed out while writing the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
@@ -3982,7 +3982,7 @@ class CurlFactoryTest extends TestCase
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
-            self::assertSame('The cURL handler failed while writing the response body', $e->getMessage());
+            self::assertSame('Failed to write the response body', $e->getMessage());
         } finally {
             Server::flush();
 
@@ -4030,6 +4030,7 @@ class CurlFactoryTest extends TestCase
                 self::fail("Expected ResponseException ({$label})");
             } catch (ResponseException $e) {
                 self::assertSame(200, $e->getResponse()->getStatusCode(), $label);
+                self::assertSame('Unable to write to stream', $e->getMessage(), $label);
                 self::assertNull($e->getPrevious(), $label);
                 self::assertNotInstanceOf(ResponseTransferException::class, $e, $label);
             } finally {
@@ -4134,7 +4135,7 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while writing the response body', $e->getMessage());
+            self::assertSame('Timed out while writing the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);

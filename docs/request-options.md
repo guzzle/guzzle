@@ -827,7 +827,15 @@ The function accepts the following positional arguments:
 - the total number of bytes expected to be uploaded
 - the number of bytes uploaded so far
 
-With the built-in cURL handlers, returning a truthy value aborts the transfer and rejects the request promise with a `GuzzleHttp\Exception\ResponseException` when a response is available, or a `GuzzleHttp\Exception\RequestException` otherwise. If the callable throws, the built-in cURL handlers abort the transfer and reject the promise with the same response-aware classification while wrapping the thrown exception. The built-in stream handler treats progress callbacks as notifications only and ignores return values.
+With the built-in cURL handlers, returning a truthy value aborts the transfer and
+rejects the request promise with a `GuzzleHttp\Exception\ResponseException` when a
+response is available, or a `GuzzleHttp\Exception\RequestException` otherwise. If
+the callable throws, the built-in cURL handlers abort the transfer and reject the
+promise with the same response-aware classification while wrapping the thrown
+exception. If a built-in handler receives a progress byte count that cannot be
+represented as a PHP integer, the transfer is rejected before the callback is
+invoked. The built-in stream handler treats progress callbacks as notifications
+only and ignores return values.
 
 ```php
 // Send a GET request to /get?foo=bar

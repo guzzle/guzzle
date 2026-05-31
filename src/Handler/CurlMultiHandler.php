@@ -579,7 +579,8 @@ final class CurlMultiHandler
     {
         while ($done = \curl_multi_info_read($this->getMultiHandle())) {
             if ($done['msg'] !== \CURLMSG_DONE) {
-                // if it's not done, then it would be premature to remove the handle. ref https://github.com/guzzle/guzzle/pull/2892#issuecomment-945150216
+                // If it is not done, removing the handle would be premature.
+                // See https://github.com/guzzle/guzzle/pull/2892#issuecomment-945150216.
                 continue;
             }
             if (!isset($done['handle'])) {
