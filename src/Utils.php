@@ -310,31 +310,16 @@ final class Utils
      *
      * @internal
      */
-    public static function finiteNumber($value, string $option): float
-    {
-        if (!\is_int($value) && !\is_float($value)) {
-            throw new InvalidArgumentException($option.' must be a number');
-        }
-
-        $number = (float) $value;
-        if (!\is_finite($number)) {
-            throw new InvalidArgumentException($option.' must be finite');
-        }
-
-        return $number;
-    }
-
-    /**
-     * @param mixed $value
-     *
-     * @internal
-     */
     public static function delayToMicroseconds($value): int
     {
-        $milliseconds = self::finiteNumber($value, 'delay');
+        if (!\is_int($value) && !\is_float($value) && (!\is_string($value) || !\is_numeric($value))) {
+            throw new InvalidArgumentException('delay must be a number of milliseconds');
+        }
 
-        if ($milliseconds < 0) {
-            throw new InvalidArgumentException('delay must be greater than or equal to 0');
+        $milliseconds = (float) $value;
+
+        if (!\is_finite($milliseconds) || $milliseconds < 0) {
+            throw new InvalidArgumentException('delay must be a finite number of milliseconds greater than or equal to 0');
         }
 
         $microseconds = $milliseconds * 1000;

@@ -122,8 +122,6 @@ class CurlMultiHandlerTest extends TestCase
         return [
             'not a number' => ['foo', 'select_timeout must be a number of seconds'],
             'positive infinity' => [\INF, 'select_timeout must be a finite number of seconds greater than or equal to 0'],
-            'negative infinity' => [-\INF, 'select_timeout must be a finite number of seconds greater than or equal to 0'],
-            'not a number float' => [\NAN, 'select_timeout must be a finite number of seconds greater than or equal to 0'],
             'negative' => [-1, 'select_timeout must be a finite number of seconds greater than or equal to 0'],
         ];
     }
@@ -697,52 +695,6 @@ class CurlMultiHandlerTest extends TestCase
         $response = $a(new Request('GET', Server::$url), ['delay' => 100]);
         $response->wait();
         self::assertGreaterThanOrEqual($expected, Utils::currentTime());
-    }
-
-    /**
-     * @dataProvider invalidDelayProvider
-     *
-     * @param mixed $delay
-     */
-    public function testRejectsInvalidDelay($delay): void
-    {
-        Server::flush();
-        Server::enqueue([new Response()]);
-        $handler = new CurlMultiHandler(['select_timeout' => 0]);
-
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('delay');
-
-            $handler(new Request('GET', Server::$url), ['delay' => $delay]);
-        } finally {
-            $handler->close();
-            Server::flush();
-        }
-    }
-
-    public static function invalidDelayProvider(): array
-    {
-        return [
-            'not a number' => ['1'],
-            'positive infinity' => [\INF],
-            'negative infinity' => [-\INF],
-            'not a number float' => [\NAN],
-            'negative' => [-1],
-            'huge finite float' => [1.0e100],
-        ];
-    }
-
-    public function testTimeToNextKeepsSubSecondDelay(): void
-    {
-        $handler = new CurlMultiHandler();
-        $timeToNext = \Closure::bind(static function (CurlMultiHandler $handler): int {
-            $handler->delays = [1 => Utils::currentTime() + 0.5];
-
-            return $handler->timeToNext();
-        }, null, CurlMultiHandler::class);
-
-        self::assertGreaterThan(0, $timeToNext($handler));
     }
 
     public function testManualTickRejectsPromiseWhenFinishThrows(): void

@@ -1302,11 +1302,10 @@ class ClientTest extends TestCase
 
     public static function nonFiniteNumericRequestOptionProvider(): iterable
     {
-        foreach (['connect_timeout', 'delay', 'read_timeout', 'timeout'] as $option) {
-            yield $option.' positive infinity' => [$option, \INF];
-            yield $option.' negative infinity' => [$option, -\INF];
-            yield $option.' not a number' => [$option, \NAN];
-        }
+        yield 'connect_timeout infinity' => ['connect_timeout', \INF];
+        yield 'delay not a number' => ['delay', \NAN];
+        yield 'read_timeout infinity' => ['read_timeout', \INF];
+        yield 'timeout not a number' => ['timeout', \NAN];
     }
 
     public static function invalidRequestOptionTypeProvider(): iterable

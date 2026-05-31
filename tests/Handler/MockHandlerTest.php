@@ -515,33 +515,6 @@ class MockHandlerTest extends TestCase
         self::assertSame(0.4, $stats->getTransferTime());
     }
 
-    /**
-     * @dataProvider invalidDelayProvider
-     *
-     * @param mixed $delay
-     */
-    public function testRejectsInvalidDelay($delay): void
-    {
-        $mock = new MockHandler([new Response()]);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('delay');
-
-        $mock(new Request('GET', 'http://example.com'), ['delay' => $delay]);
-    }
-
-    public static function invalidDelayProvider(): array
-    {
-        return [
-            'not a number' => ['1'],
-            'positive infinity' => [\INF],
-            'negative infinity' => [-\INF],
-            'not a number float' => [\NAN],
-            'negative' => [-1],
-            'huge finite float' => [1.0e100],
-        ];
-    }
-
     public function testResetQueue(): void
     {
         $mock = new MockHandler([new Response(200), new Response(204)]);

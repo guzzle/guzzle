@@ -516,7 +516,7 @@ final class CurlMultiHandler
         $easy = $entry['easy'];
         $id = (int) $easy->handle;
         $this->handles[$id] = $entry;
-        if (!isset($easy->options['delay']) || $easy->options['delay'] === 0 || $easy->options['delay'] === 0.0) {
+        if (empty($easy->options['delay'])) {
             \curl_multi_add_handle($this->getMultiHandle(), $easy->handle);
         } else {
             $this->delays[$id] = Utils::currentTime() + Utils::delayToMicroseconds($easy->options['delay']) / 1000000;
@@ -628,9 +628,7 @@ final class CurlMultiHandler
             }
         }
 
-        $seconds = \max(0.0, $nextTime - $currentTime);
-
-        return (int) \ceil($seconds * 1000000);
+        return ((int) \max(0, $nextTime - $currentTime)) * 1000000;
     }
 
     /**

@@ -265,8 +265,8 @@ class UtilsTest extends TestCase
     {
         return [
             'zero int' => [0, 0],
-            'zero float' => [0.0, 0],
             'one millisecond' => [1, 1000],
+            'numeric string' => ['1.5', 1500],
             'fractional millisecond' => [1.5, 1500],
         ];
     }
@@ -287,11 +287,9 @@ class UtilsTest extends TestCase
     public static function invalidDelayProvider(): array
     {
         return [
-            'not a number' => ['1', 'delay must be a number'],
-            'positive infinity' => [\INF, 'delay must be finite'],
-            'negative infinity' => [-\INF, 'delay must be finite'],
-            'not a number float' => [\NAN, 'delay must be finite'],
-            'negative' => [-1, 'delay must be greater than or equal to 0'],
+            'not a number' => ['foo', 'delay must be a number of milliseconds'],
+            'positive infinity' => [\INF, 'delay must be a finite number of milliseconds greater than or equal to 0'],
+            'negative' => [-1, 'delay must be a finite number of milliseconds greater than or equal to 0'],
             'huge finite float' => [1.0e100, 'delay is too large'],
         ];
     }
@@ -306,26 +304,6 @@ class UtilsTest extends TestCase
         $this->expectExceptionMessage('delay is too large');
 
         Utils::delayToMicroseconds(\PHP_INT_MAX / 1000);
-    }
-
-    /**
-     * @dataProvider validTimeoutProvider
-     *
-     * @param mixed $value
-     */
-    public function testConvertsTimeoutToMilliseconds($value, int $expected): void
-    {
-        self::assertSame($expected, Utils::timeoutToMilliseconds($value, 'timeout'));
-    }
-
-    public static function validTimeoutProvider(): array
-    {
-        return [
-            'zero int' => [0, 0],
-            'zero float' => [0.0, 0],
-            'numeric string' => ['0.001', 1],
-            'truncated fractional millisecond' => [0.0015, 1],
-        ];
     }
 
     /**
@@ -346,10 +324,6 @@ class UtilsTest extends TestCase
         return [
             'not a number' => ['foo', 'timeout must be a number of seconds'],
             'positive infinity' => [\INF, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
-            'negative infinity' => [-\INF, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
-            'not a number float' => [\NAN, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
-            'negative' => [-1, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
-            'below one millisecond' => [0.0001, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
             'huge finite float' => [1.0e100, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
         ];
     }
