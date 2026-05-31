@@ -199,12 +199,12 @@ final class RequestOptions
 
     /**
      * on_headers: (callable(ResponseInterface, RequestInterface): mixed) A callable that is invoked when the HTTP headers
-     * of the response have been received but the body has not yet begun to
-     * download. The callable is passed the response and request as
-     * {@see ResponseInterface} and
-     * {@see RequestInterface} objects, respectively. If it
-     * throws, the request promise is rejected with a RequestException wrapping
-     * the thrown exception.
+     * of the final response, or a 101 Switching Protocols response, have been
+     * received but the body has not yet begun to download. The callable is
+     * passed the response and request as {@see ResponseInterface} and
+     * {@see RequestInterface} objects, respectively. If it throws, the request
+     * promise is rejected with a GuzzleHttp\Exception\ResponseException (a
+     * RequestException subtype) wrapping the thrown exception.
      */
     public const ON_HEADERS = 'on_headers';
 

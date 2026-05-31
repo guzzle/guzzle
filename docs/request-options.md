@@ -737,7 +737,7 @@ $client->request('POST', '/post', [
 ## on_headers
 
 Summary
-A callable that is invoked when the HTTP headers of the response have been received but the body has not yet begun to download.
+A callable that is invoked when the HTTP headers of the final response, or a `101 Switching Protocols` response, have been received but the body has not yet begun to download.
 
 Types
 - callable
@@ -745,7 +745,7 @@ Types
 Constant
 `GuzzleHttp\RequestOptions::ON_HEADERS`
 
-The callable accepts a `Psr\Http\Message\ResponseInterface` object and the corresponding `Psr\Http\Message\RequestInterface` object. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the exception that was thrown.
+The callable accepts a `Psr\Http\Message\ResponseInterface` object and the corresponding `Psr\Http\Message\RequestInterface` object. Built-in handlers do not invoke it for interim informational responses such as `100 Continue` or `103 Early Hints`. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the exception that was thrown.
 
 You may need to know what headers and status codes were received before data can be written to the sink.
 
@@ -764,7 +764,7 @@ $client->request('GET', 'http://httpbin.org/stream/1024', [
 ```
 
 > [!NOTE]
-> When writing HTTP handlers, the `on_headers` function must be invoked before writing data to the body of the response.
+> When writing HTTP handlers, the `on_headers` function must be invoked for the final response, or for a `101 Switching Protocols` response, before writing data to the body of the response.
 
 ## on_stats
 

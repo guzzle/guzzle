@@ -239,6 +239,16 @@ as `RequestException` or `ConnectException`:
 This applies to both the cURL and stream handlers; the exact error codes and
 messages each one maps onto these classes are an implementation detail.
 
+The cURL handler no longer treats non-`101` informational responses such as
+`100 Continue`, `102 Processing`, or `103 Early Hints` as the final response.
+If a cURL transfer fails after receiving only one of those interim responses,
+Guzzle now reports a no-response failure such as `NetworkException` instead of
+a `ResponseTransferException` carrying the interim `1xx` response. Code that
+previously caught this path with `RequestException` or
+`RequestExceptionInterface` should catch `NetworkExceptionInterface` or
+`TransferException` instead. `101 Switching Protocols` is unchanged and is still
+surfaced as a response.
+
 The stream handler now rejects a drained, non-streamed response when a valid,
 positive `Content-Length` declares more bytes than the handler receives, raising
 `ResponseTransferException`. This matches the cURL handler for identity-coded
@@ -320,6 +330,12 @@ argument. Existing userland callbacks that accept only the response continue to
 work, but callbacks that inspect all arguments, for example with
 `func_get_args()` or a variadic parameter, will observe the additional
 `Psr\Http\Message\RequestInterface` argument.
+
+The built-in handlers invoke `on_headers` for the final response headers and for
+`101 Switching Protocols`, but not for other informational `1xx` responses such
+as `100 Continue` or `103 Early Hints`. Guzzle does not expose a separate Early
+Hints API; a dedicated interim-response hook may be added in a future minor
+release.
 
 #### Sink Resource Ownership
 

@@ -471,7 +471,7 @@ First-party handlers should not silently ignore documented handler-owned options
 
 ### Callback Semantics
 
-The `on_headers` option is invoked after the response headers have been received and before response body bytes are written to the configured `sink`. In Guzzle 8, the callback receives the response object and the corresponding request object. If it throws, the request promise is rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the thrown exception.
+The `on_headers` option is invoked after the final response headers, or a `101 Switching Protocols` response, have been received and before response body bytes are written to the configured `sink`. Built-in handlers do not invoke it for other informational `1xx` responses. The callback receives the response object and the corresponding request object. If it throws, the request promise is rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the thrown exception.
 
 The `on_stats` option is invoked when the handler has finished sending a request, with a `GuzzleHttp\TransferStats` object that describes the response received or the error encountered. Exceptions thrown by `on_stats` are not wrapped by Guzzle and may escape from the handler wait path. Built-in cURL handlers release native cURL handles before invoking `on_stats` and may invoke it per low-level transfer attempt.
 

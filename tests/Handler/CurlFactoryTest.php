@@ -2345,6 +2345,60 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testInterimResponseFollowedByEmptyReplyIsNetworkException(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, []);
+        $easy->headers = ['HTTP/1.1 103 Early Hints', 'Link: </a.css>; rel=preload'];
+        $easy->createResponse();
+        self::assertNull($easy->response);
+        $easy->errno = \CURLE_GOT_NOTHING;
+
+        $promise = CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        );
+
+        try {
+            $promise->wait();
+            self::fail('Expected NetworkException');
+        } catch (NetworkException $e) {
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertSame($request, $e->getRequest());
+        }
+    }
+
+    public function testInterimResponseFollowedByRecvErrorIsNetworkException(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, []);
+        $easy->headers = ['HTTP/1.1 100 Continue'];
+        $easy->createResponse();
+        self::assertNull($easy->response);
+        $easy->errno = \CURLE_RECV_ERROR;
+
+        $promise = CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        );
+
+        try {
+            $promise->wait();
+            self::fail('Expected NetworkException');
+        } catch (NetworkException $e) {
+            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertSame($request, $e->getRequest());
+        }
+    }
+
     /**
      * @dataProvider curlNetworkErrorWithoutResponseProvider
      */
@@ -2827,6 +2881,69 @@ class CurlFactoryTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $handler($req, ['on_headers' => 'error!']);
+    }
+
+    public function testIgnoresInterim1xxAndInvokesOnHeadersOnceForFinalResponse(): void
+    {
+        $factory = new CurlFactory(1);
+        $statuses = [];
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function (ResponseInterface $response) use (&$statuses): void {
+                $statuses[] = $response->getStatusCode();
+            },
+        ]);
+
+        try {
+            /** @var callable $headerFn */
+            $headerFn = $_SERVER['_curl'][\CURLOPT_HEADERFUNCTION];
+
+            $headerFn($easy->handle, "HTTP/1.1 103 Early Hints\r\n");
+            $headerFn($easy->handle, "Link: </style.css>; rel=preload\r\n");
+            $headerFn($easy->handle, "\r\n");
+
+            self::assertNull($easy->response, 'interim 1xx is not stored');
+            self::assertSame([], $statuses, 'on_headers is not invoked for an interim 1xx');
+
+            $headerFn($easy->handle, "HTTP/1.1 200 OK\r\n");
+            $headerFn($easy->handle, "Content-Length: 0\r\n");
+            $headerFn($easy->handle, "\r\n");
+
+            self::assertNotNull($easy->response);
+            self::assertSame(200, $easy->response->getStatusCode());
+            self::assertSame([200], $statuses, 'on_headers fires once, for the final response');
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testKeeps101AndInvokesOnHeaders(): void
+    {
+        $factory = new CurlFactory(1);
+        $statuses = [];
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function (ResponseInterface $response) use (&$statuses): void {
+                $statuses[] = $response->getStatusCode();
+            },
+        ]);
+
+        try {
+            /** @var callable $headerFn */
+            $headerFn = $_SERVER['_curl'][\CURLOPT_HEADERFUNCTION];
+
+            $headerFn($easy->handle, "HTTP/1.1 101 Switching Protocols\r\n");
+            $headerFn($easy->handle, "Upgrade: websocket\r\n");
+            $headerFn($easy->handle, "\r\n");
+
+            self::assertNotNull($easy->response, '101 is kept as a response');
+            self::assertSame(101, $easy->response->getStatusCode());
+            self::assertSame([101], $statuses, 'on_headers fires for a 101 response');
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
     }
 
     public function testRejectsPromiseWhenOnHeadersFails(): void
