@@ -156,6 +156,34 @@ class SetCookieTest extends TestCase
         self::assertTrue($cookie->getHttpOnly());
     }
 
+    public function testIgnoresFloatLikeMaxAge(): void
+    {
+        $cookie = SetCookie::fromString('foo=bar; Max-Age=1.5');
+
+        self::assertNull($cookie->getMaxAge());
+    }
+
+    public function testIgnoresHugeMaxAge(): void
+    {
+        $cookie = SetCookie::fromString('foo=bar; Max-Age=999999999999999999999999');
+
+        self::assertNull($cookie->getMaxAge());
+    }
+
+    public function testIgnoresHugeNumericExpires(): void
+    {
+        $cookie = SetCookie::fromString('foo=bar; Expires=999999999999999999999999');
+
+        self::assertNull($cookie->getExpires());
+    }
+
+    public function testDerivedExpiresSaturatesAtIntegerMax(): void
+    {
+        $cookie = new SetCookie(['Name' => 'foo', 'Value' => 'bar', 'Max-Age' => \PHP_INT_MAX]);
+
+        self::assertSame(\PHP_INT_MAX, $cookie->getExpires());
+    }
+
     public function testDeterminesIfExpired(): void
     {
         $c = new SetCookie();

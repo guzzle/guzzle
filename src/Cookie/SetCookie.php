@@ -66,8 +66,11 @@ class SetCookie
                 foreach (\array_keys(self::DEFAULTS) as $search) {
                     if (!\strcasecmp($search, $key)) {
                         if ($search === 'Max-Age') {
-                            if (is_numeric($value)) {
-                                $data[$search] = (int) $value;
+                            if (\is_string($value)) {
+                                $maxAge = self::parseSignedDecimalInteger($value);
+                                if ($maxAge !== null) {
+                                    $data[$search] = $maxAge;
+                                }
                             }
                         } elseif ($search === 'Secure' || $search === 'Discard' || $search === 'HttpOnly') {
                             if ($value) {
@@ -146,8 +149,9 @@ class SetCookie
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         $maxAge = $this->getMaxAge();
         if (!$this->getExpires() && $maxAge) {
-            // Calculate the Expires date
-            $this->setExpires(\time() + $maxAge);
+            $now = \time();
+            $expires = $maxAge > \PHP_INT_MAX - $now ? \PHP_INT_MAX : $now + $maxAge;
+            $this->setExpires($expires);
         }
     }
 
@@ -314,8 +318,21 @@ class SetCookie
             return;
         }
 
-        if (\is_numeric($timestamp)) {
-            $this->data['Expires'] = (int) $timestamp;
+        if (\is_string($timestamp)) {
+            $expires = self::parseSignedDecimalInteger($timestamp);
+            if ($expires !== null) {
+                $this->data['Expires'] = $expires;
+
+                return;
+            }
+
+            if (\is_numeric($timestamp)) {
+                $this->data['Expires'] = null;
+
+                return;
+            }
+        } elseif (\is_int($timestamp)) {
+            $this->data['Expires'] = $timestamp;
 
             return;
         }
@@ -512,6 +529,25 @@ class SetCookie
         }
 
         return $domain;
+    }
+
+    private static function parseSignedDecimalInteger(string $value): ?int
+    {
+        if (\preg_match('/^[+-]?[0-9]+$/D', $value) !== 1) {
+            return null;
+        }
+
+        $negative = $value[0] === '-';
+        $digits = \ltrim($value, '+-');
+        $digits = \ltrim($digits, '0');
+        $digits = $digits === '' ? '0' : $digits;
+        $limit = $negative ? \substr((string) \PHP_INT_MIN, 1) : (string) \PHP_INT_MAX;
+
+        if (\strlen($digits) > \strlen($limit) || (\strlen($digits) === \strlen($limit) && \strcmp($digits, $limit) > 0)) {
+            return null;
+        }
+
+        return (int) ($negative ? '-'.$digits : $digits);
     }
 
     /**
