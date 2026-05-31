@@ -67,7 +67,7 @@ class SetCookie
                     if (!\strcasecmp($search, $key)) {
                         if ($search === 'Max-Age') {
                             if (\is_string($value)) {
-                                $maxAge = self::parseSignedDecimalInteger($value);
+                                $maxAge = self::parseNumericInteger($value);
                                 if ($maxAge !== null) {
                                     $data[$search] = $maxAge;
                                 }
@@ -149,9 +149,8 @@ class SetCookie
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         $maxAge = $this->getMaxAge();
         if (!$this->getExpires() && $maxAge) {
-            $now = \time();
-            $expires = $maxAge > \PHP_INT_MAX - $now ? \PHP_INT_MAX : $now + $maxAge;
-            $this->setExpires($expires);
+            // Calculate the Expires date
+            $this->setExpires(\time() + $maxAge);
         }
     }
 
@@ -319,15 +318,8 @@ class SetCookie
         }
 
         if (\is_string($timestamp)) {
-            $expires = self::parseSignedDecimalInteger($timestamp);
-            if ($expires !== null) {
-                $this->data['Expires'] = $expires;
-
-                return;
-            }
-
             if (\is_numeric($timestamp)) {
-                $this->data['Expires'] = null;
+                $this->data['Expires'] = self::parseNumericInteger($timestamp);
 
                 return;
             }
@@ -531,23 +523,36 @@ class SetCookie
         return $domain;
     }
 
-    private static function parseSignedDecimalInteger(string $value): ?int
+    private static function parseNumericInteger(string $value): ?int
     {
-        if (\preg_match('/^[+-]?[0-9]+$/D', $value) !== 1) {
+        if (!\is_numeric($value)) {
             return null;
         }
 
-        $negative = $value[0] === '-';
-        $digits = \ltrim($value, '+-');
-        $digits = \ltrim($digits, '0');
-        $digits = $digits === '' ? '0' : $digits;
-        $limit = $negative ? \substr((string) \PHP_INT_MIN, 1) : (string) \PHP_INT_MAX;
+        if (\preg_match('/^[+-]?[0-9]+$/D', $value) === 1) {
+            $negative = $value[0] === '-';
+            $digits = \ltrim($value, '+-');
+            $digits = \ltrim($digits, '0');
+            $digits = $digits === '' ? '0' : $digits;
+            $limit = $negative ? \substr((string) \PHP_INT_MIN, 1) : (string) \PHP_INT_MAX;
 
-        if (\strlen($digits) > \strlen($limit) || (\strlen($digits) === \strlen($limit) && \strcmp($digits, $limit) > 0)) {
+            if (\strlen($digits) > \strlen($limit) || (\strlen($digits) === \strlen($limit) && \strcmp($digits, $limit) > 0)) {
+                return null;
+            }
+
+            return (int) ($negative ? '-'.$digits : $digits);
+        }
+
+        $number = (float) $value;
+        if (!\is_finite($number) || $number < \PHP_INT_MIN || $number > \PHP_INT_MAX) {
             return null;
         }
 
-        return (int) ($negative ? '-'.$digits : $digits);
+        if (\PHP_INT_SIZE === 8 && ($number <= (float) \PHP_INT_MIN || $number >= (float) \PHP_INT_MAX)) {
+            return null;
+        }
+
+        return (int) $number;
     }
 
     /**
