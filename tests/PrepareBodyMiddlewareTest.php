@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests;
 
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -249,6 +250,55 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         self::assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * @dataProvider requestBodyGetSizeFailureMessageProvider
+     */
+    public function testRequestBodyGetSizeFailureUsesExpectedMessage(\RuntimeException $previous, string $expected): void
+    {
+        $body = FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function () use ($previous): ?int {
+                throw $previous;
+            },
+        ]);
+        $handler = new MockHandler([
+            static function (): ResponseInterface {
+                self::fail('The request should fail before reaching the handler.');
+            },
+        ]);
+        $stack = new HandlerStack($handler);
+        $stack->push(Middleware::prepareBody());
+        $composed = $stack->resolve();
+        $request = new Request('POST', 'http://example.com', [], $body);
+
+        try {
+            $composed($request, [])->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($expected, $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+        }
+    }
+
+    public static function requestBodyGetSizeFailureMessageProvider(): iterable
+    {
+        return [
+            'timeout' => [
+                new Psr7\Exception\TimeoutException('Unable to determine stream size: timed out'),
+                'Timed out while determining the request body size',
+            ],
+            'empty message' => [
+                new \RuntimeException(''),
+                'Failed to determine the request body size',
+            ],
+            'custom message' => [
+                new \RuntimeException('cannot stat custom stream'),
+                'cannot stat custom stream',
+            ],
+        ];
     }
 }
 

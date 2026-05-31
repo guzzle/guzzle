@@ -176,7 +176,7 @@ class StreamHandlerTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('Unable to determine stream size: timed out', $e->getMessage());
+            self::assertSame('Timed out while determining the request body size', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
@@ -184,6 +184,28 @@ class StreamHandlerTest extends TestCase
         }
 
         self::assertFalse($called);
+    }
+
+    public function testRequestBodyGetSizeFailureUsesFallbackMessageWhenMessageEmpty(): void
+    {
+        $handler = new StreamHandler();
+        $previous = new \RuntimeException('');
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            'getSize' => static function () use ($previous): ?int {
+                throw $previous;
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, []);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Failed to determine the request body size', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+        }
     }
 
     public function testNormalizesEquivalentRequestContentLengthValues(): void
@@ -322,7 +344,7 @@ class StreamHandlerTest extends TestCase
             $exceptionRequest = $e->getRequest();
             self::assertSame($request->getMethod(), $exceptionRequest->getMethod());
             self::assertSame((string) $request->getUri(), (string) $exceptionRequest->getUri());
-            self::assertSame('Unable to read stream contents: timed out', $e->getMessage());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
@@ -334,6 +356,30 @@ class StreamHandlerTest extends TestCase
         self::assertSame($exceptionRequest->getMethod(), $stats->getRequest()->getMethod());
         self::assertSame((string) $exceptionRequest->getUri(), (string) $stats->getRequest()->getUri());
         self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testRequestBodyReadFailureUsesFallbackMessageWhenMessageEmpty(): void
+    {
+        $handler = new StreamHandler();
+        $previous = new \RuntimeException('');
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            '__toString' => static function () use ($previous): string {
+                throw $previous;
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [])->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            $exceptionRequest = $e->getRequest();
+            self::assertSame($request->getMethod(), $exceptionRequest->getMethod());
+            self::assertSame((string) $request->getUri(), (string) $exceptionRequest->getUri());
+            self::assertSame('Failed to read the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+        }
     }
 
     /**

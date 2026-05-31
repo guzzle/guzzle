@@ -6,6 +6,7 @@ namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\Exception\TimeoutException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -118,7 +119,11 @@ class PrepareBodyMiddleware
         try {
             return $request->getBody()->getSize();
         } catch (\RuntimeException $e) {
-            throw new RequestException($e->getMessage(), $request, 0, $e);
+            $message = $e instanceof TimeoutException
+                ? 'Timed out while determining the request body size'
+                : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to determine the request body size');
+
+            throw new RequestException($message, $request, 0, $e);
         }
     }
 }

@@ -3541,11 +3541,33 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('Unable to determine stream size: timed out', $e->getMessage());
+            self::assertSame('Timed out while determining the request body size', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+    }
+
+    public function testRequestBodyGetSizeFailureUsesFallbackMessageWhenMessageEmpty(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \RuntimeException('');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function () use ($previous): ?int {
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $factory->create($request, []);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Failed to determine the request body size', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
         }
     }
 
@@ -3702,7 +3724,7 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('Unable to read from stream: timed out', $e->getMessage());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
@@ -3714,6 +3736,30 @@ class CurlFactoryTest extends TestCase
         }
 
         self::assertTrue($castCalled);
+    }
+
+    public function testBodyAsStringRequestBodyReadFailureUsesFallbackMessageWhenMessageEmpty(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \RuntimeException('');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            '__toString' => static function () use ($previous): string {
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $factory->create($request, [
+                'curl' => ['body_as_string' => true],
+            ]);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Failed to read the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+        }
     }
 
     public function testBodyAsStringRequestBodyReadFailureRejectsAsRequestException(): void
@@ -3804,7 +3850,7 @@ class CurlFactoryTest extends TestCase
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('Unable to rewind stream: timed out', $e->getMessage());
+            self::assertSame('Timed out while rewinding the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
@@ -3812,6 +3858,31 @@ class CurlFactoryTest extends TestCase
         }
 
         self::assertTrue($rewindCalled);
+    }
+
+    public function testStreamingRequestBodyRewindFailureUsesFallbackMessageWhenMessageEmpty(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \RuntimeException('');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'rewind' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $factory->create($request, []);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Failed to rewind the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+        }
     }
 
     /**

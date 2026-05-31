@@ -221,7 +221,7 @@ class RedirectMiddleware
             Psr7\Message::rewindBody($request);
         } catch (\RuntimeException $e) {
             throw new ResponseException(
-                'Redirect failed because the request body could not be rewound: '.$e->getMessage(),
+                'Redirect failed because the request body could not be rewound',
                 $request,
                 $response,
                 $e
