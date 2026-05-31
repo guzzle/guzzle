@@ -89,11 +89,11 @@ class TransferByteCounterTest extends TestCase
     public function testProgressFloatAtIntMaxBoundaryIsRejectedOnSixtyFourBit(): void
     {
         if (\PHP_INT_SIZE !== 8) {
-            self::markTestSkipped('The post-cast boundary re-check only triggers on 64-bit platforms.');
+            self::markTestSkipped('The rounded PHP_INT_MAX float guard only triggers on 64-bit platforms.');
         }
 
         // (float) PHP_INT_MAX rounds up to 2**63, which is not greater than
-        // PHP_INT_MAX after float promotion but casts to PHP_INT_MIN.
+        // PHP_INT_MAX after float promotion, so reject it before casting.
         $this->expectException(\OverflowException::class);
         $this->expectExceptionMessage('Progress byte count exceeds the maximum integer size supported on this platform');
 
