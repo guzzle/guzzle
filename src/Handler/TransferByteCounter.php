@@ -18,15 +18,28 @@ final class TransferByteCounter
      */
     public static function progressValueToInt($value): int
     {
-        if (\is_float($value) && (!\is_finite($value) || $value < 0 || $value > \PHP_INT_MAX)) {
+        if (\is_int($value)) {
+            if ($value < 0) {
+                throw new \OverflowException('Progress byte count exceeds the maximum integer size supported on this platform');
+            }
+
+            return $value;
+        }
+
+        if (!\is_float($value)) {
+            throw new \UnexpectedValueException('Progress byte count must be an integer or float');
+        }
+
+        if (!\is_finite($value) || $value < 0 || $value > \PHP_INT_MAX) {
             throw new \OverflowException('Progress byte count exceeds the maximum integer size supported on this platform');
         }
 
-        if (\is_int($value) && $value < 0) {
+        $intValue = (int) $value;
+        if ($intValue < 0) {
             throw new \OverflowException('Progress byte count exceeds the maximum integer size supported on this platform');
         }
 
-        return (int) $value;
+        return $intValue;
     }
 
     public static function add(int $current, int $delta, string $message): int
