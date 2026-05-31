@@ -73,6 +73,11 @@ final class EasyHandle
     public ?TimeoutException $bodyReadTimeoutException = null;
 
     /**
+     * @var \Throwable|null Exception during request body read.
+     */
+    public ?\Throwable $bodyReadException = null;
+
+    /**
      * @var TimeoutException|null Exception during response sink write timeout.
      */
     public ?TimeoutException $sinkWriteTimeoutException = null;

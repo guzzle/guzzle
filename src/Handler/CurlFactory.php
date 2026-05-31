@@ -710,6 +710,7 @@ final class CurlFactory implements CurlFactoryInterface
     private static function hasLocalFailure(EasyHandle $easy): bool
     {
         return $easy->bodyReadTimeoutException !== null
+            || $easy->bodyReadException !== null
             || $easy->sinkWriteTimeoutException !== null
             || $easy->sinkWriteException !== null
             || $easy->responseBodySizeException !== null;
@@ -803,6 +804,14 @@ final class CurlFactory implements CurlFactoryInterface
                     $easy->bodyReadTimeoutException
                 )
             );
+        }
+
+        if ($easy->bodyReadException) {
+            $message = $easy->bodyReadException->getMessage() !== ''
+                ? $easy->bodyReadException->getMessage()
+                : 'The cURL handler failed while reading the request body';
+
+            return self::createRequestOrResponseRejection($easy, $message, $easy->bodyReadException);
         }
 
         if ($easy->sinkWriteTimeoutException) {
@@ -1264,21 +1273,47 @@ final class CurlFactory implements CurlFactoryInterface
         // Send the body as a string if the size is less than 1MB OR if the
         // [curl][body_as_string] request value is set.
         if (($contentLength !== null && $contentLength < 1000000) || !empty($options['_body_as_string'])) {
-            $conf[\CURLOPT_POSTFIELDS] = (string) $request->getBody();
+            try {
+                $conf[\CURLOPT_POSTFIELDS] = (string) $request->getBody();
+            } catch (TimeoutException $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                throw new RequestException(
+                    $e->getMessage() !== '' ? $e->getMessage() : 'The cURL handler failed while reading the request body',
+                    $request,
+                    0,
+                    $e
+                );
+            }
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $conf);
             $this->removeHeader('Transfer-Encoding', $conf);
         } else {
             $conf[\CURLOPT_UPLOAD] = true;
-            if ($contentLength !== null) {
-                $conf[\CURLOPT_INFILESIZE] = $contentLength;
-                $this->removeHeader('Content-Length', $conf);
-            } elseif ($contentLengthHeader !== null) {
+
+            if ($contentLengthHeader !== null) {
+                // Never let cURL emit our header; it sizes the upload via CURLOPT_INFILESIZE.
                 $this->removeHeader('Content-Length', $conf);
             }
+
+            if ($contentLength !== null) {
+                $conf[\CURLOPT_INFILESIZE] = $contentLength;
+            }
+
             $body = $request->getBody();
-            if ($body->isSeekable()) {
-                $body->rewind();
+            try {
+                if ($body->isSeekable()) {
+                    $body->rewind();
+                }
+            } catch (TimeoutException $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                throw new RequestException(
+                    $e->getMessage() !== '' ? $e->getMessage() : 'The cURL handler failed to rewind the request body',
+                    $request,
+                    0,
+                    $e
+                );
             }
             /**
              * @return int|string
@@ -1288,6 +1323,10 @@ final class CurlFactory implements CurlFactoryInterface
                     return $body->read($length);
                 } catch (TimeoutException $e) {
                     $easy->bodyReadTimeoutException = $e;
+
+                    return self::CURL_READFUNC_ABORT;
+                } catch (\Throwable $e) {
+                    $easy->bodyReadException = $e;
 
                     return self::CURL_READFUNC_ABORT;
                 }
@@ -1626,22 +1665,22 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         // The streaming read callback (set by applyBody) aborts the upload on a
-        // body read timeout by returning CURL_READFUNC_ABORT, but PHP ignores
+        // body read failure by returning CURL_READFUNC_ABORT, but PHP ignores
         // that integer return before 8.1.17/8.2.4. Install a progress callback
         // so older PHP still has a cross-version abort path; the failure is
-        // classified from `$easy->bodyReadTimeoutException` regardless of errno
+        // classified from the stored request-body exception regardless of errno
         // (a truncated request may reach the server first on those versions).
-        $abortsOnBodyReadTimeout = isset($conf[\CURLOPT_READFUNCTION]);
+        $abortsOnBodyReadFailure = isset($conf[\CURLOPT_READFUNCTION]);
 
-        if ($progress !== null || $abortsOnBodyReadTimeout) {
+        if ($progress !== null || $abortsOnBodyReadFailure) {
             /** @var (callable(int, int, int, int): mixed)|null $progress */
             $conf[\CURLOPT_NOPROGRESS] = false;
             $progressCallback = static function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($easy, $progress): int {
-                // Abort the transfer when the request body read timed out (the
+                // Abort the transfer when the request body read failed (the
                 // cross-version abort path, since older PHP ignores the read
                 // callback's return). progressAborted is left unset so the
-                // failure is classified from `$easy->bodyReadTimeoutException`.
-                if ($easy->bodyReadTimeoutException !== null) {
+                // failure is classified from the stored request-body exception.
+                if ($easy->bodyReadTimeoutException !== null || $easy->bodyReadException !== null) {
                     return 1;
                 }
 
