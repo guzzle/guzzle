@@ -66,8 +66,11 @@ class SetCookie
                 foreach (\array_keys(self::DEFAULTS) as $search) {
                     if (!\strcasecmp($search, $key)) {
                         if ($search === 'Max-Age') {
-                            if (is_numeric($value)) {
-                                $data[$search] = (int) $value;
+                            if (\is_string($value)) {
+                                $maxAge = self::parseNumericInteger($value);
+                                if ($maxAge !== null) {
+                                    $data[$search] = $maxAge;
+                                }
                             }
                         } elseif ($search === 'Secure' || $search === 'Discard' || $search === 'HttpOnly') {
                             if ($value) {
@@ -314,8 +317,14 @@ class SetCookie
             return;
         }
 
-        if (\is_numeric($timestamp)) {
-            $this->data['Expires'] = (int) $timestamp;
+        if (\is_string($timestamp)) {
+            if (\is_numeric($timestamp)) {
+                $this->data['Expires'] = self::parseNumericInteger($timestamp);
+
+                return;
+            }
+        } elseif (\is_int($timestamp)) {
+            $this->data['Expires'] = $timestamp;
 
             return;
         }
@@ -512,6 +521,38 @@ class SetCookie
         }
 
         return $domain;
+    }
+
+    private static function parseNumericInteger(string $value): ?int
+    {
+        if (!\is_numeric($value)) {
+            return null;
+        }
+
+        if (\preg_match('/^[+-]?[0-9]+$/D', $value) === 1) {
+            $negative = $value[0] === '-';
+            $digits = \ltrim($value, '+-');
+            $digits = \ltrim($digits, '0');
+            $digits = $digits === '' ? '0' : $digits;
+            $limit = $negative ? \substr((string) \PHP_INT_MIN, 1) : (string) \PHP_INT_MAX;
+
+            if (\strlen($digits) > \strlen($limit) || (\strlen($digits) === \strlen($limit) && \strcmp($digits, $limit) > 0)) {
+                return null;
+            }
+
+            return (int) ($negative ? '-'.$digits : $digits);
+        }
+
+        $number = (float) $value;
+        if (!\is_finite($number) || $number < \PHP_INT_MIN || $number > \PHP_INT_MAX) {
+            return null;
+        }
+
+        if (\PHP_INT_SIZE === 8 && ($number <= (float) \PHP_INT_MIN || $number >= (float) \PHP_INT_MAX)) {
+            return null;
+        }
+
+        return (int) $number;
     }
 
     /**

@@ -345,13 +345,7 @@ final class ProxyOptions
 
     private static function parseNoProxyPort(string $port): ?int
     {
-        if ($port === '' || !\ctype_digit($port)) {
-            return null;
-        }
-
-        $port = (int) $port;
-
-        return $port <= 65535 ? $port : null;
+        return self::parseBoundedUnsignedInteger($port, 65535);
     }
 
     private static function getDefaultPort(string $scheme): ?int
@@ -378,9 +372,6 @@ final class ProxyOptions
         }
 
         $prefix = \substr($area, $slash + 1);
-        if ($prefix === '' || !\ctype_digit($prefix)) {
-            return null;
-        }
 
         $network = \substr($area, 0, $slash);
         if ($network !== '' && $network[0] === '[' && \substr($network, -1) === ']') {
@@ -392,8 +383,8 @@ final class ProxyOptions
             return null;
         }
 
-        $prefix = (int) $prefix;
-        if ($prefix > \strlen($network) * 8) {
+        $prefix = self::parseBoundedUnsignedInteger($prefix, \strlen($network) * 8);
+        if ($prefix === null) {
             return null;
         }
 
@@ -402,6 +393,23 @@ final class ProxyOptions
             'value' => $network,
             'prefix' => $prefix,
         ];
+    }
+
+    private static function parseBoundedUnsignedInteger(string $value, int $max): ?int
+    {
+        if ($value === '' || !\ctype_digit($value)) {
+            return null;
+        }
+
+        $normalized = \ltrim($value, '0');
+        $normalized = $normalized === '' ? '0' : $normalized;
+        $limit = (string) $max;
+
+        if (\strlen($normalized) > \strlen($limit) || (\strlen($normalized) === \strlen($limit) && \strcmp($normalized, $limit) > 0)) {
+            return null;
+        }
+
+        return (int) $normalized;
     }
 
     /**
