@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -219,7 +220,7 @@ class RedirectMiddleware
         try {
             Psr7\Message::rewindBody($request);
         } catch (\RuntimeException $e) {
-            throw new BadResponseException(
+            throw new ResponseException(
                 'Redirect failed because the request body could not be rewound: '.$e->getMessage(),
                 $request,
                 $response,

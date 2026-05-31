@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\ConnectTimeoutException;
-use GuzzleHttp\Exception\NetworkException;
-use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
@@ -252,7 +249,7 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Operation timed out'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'stream_socket_client(): Unable to connect to example.test:443 (Operation timed out)'));
         // Windows WSAETIMEDOUT (errno 10060) wording matches for both connect-phase
-        // and post-connect send timeouts; the end-to-end tests prove which classifier wins.
+        // and post-connect send timeouts; the send-error matcher is checked first.
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'Send of 65536 bytes failed with errno=10060 A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectTimeoutError', 'HTTP request failed!'));
@@ -335,14 +332,16 @@ class StreamHandlerTest extends TestCase
         self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
-    public function testClassifiesPostConnectSendTimeoutAsNetworkTimeout(): void
+    /**
+     * @dataProvider transportLookingRequestBodyFailureMessageProvider
+     */
+    public function testRequestBodyFailureIsNotRepromotedToNetworkExceptionByMessage(string $message): void
     {
-        // A real send() ETIMEDOUT can't be triggered, so the request-body read
-        // is only a seam to feed a representative send-failure message in.
         $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('Send of 65536 bytes failed with errno=110 Connection timed out');
+        $previous = new \RuntimeException($message);
+        $body = FnStream::decorate(Psr7\Utils::streamFor('x'), [
+            '__toString' => static function () use ($previous): string {
+                throw $previous;
             },
         ]);
         $request = new Request('PUT', Server::$url, [], $body);
@@ -350,177 +349,32 @@ class StreamHandlerTest extends TestCase
         try {
             $handler($request, [])->wait();
 
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            $exceptionRequest = $e->getRequest();
+            self::assertSame($request->getMethod(), $exceptionRequest->getMethod());
+            self::assertSame((string) $request->getUri(), (string) $exceptionRequest->getUri());
+            self::assertSame($message, $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
     }
 
-    public function testClassifiesConnectTimeoutMessageAsConnectTimeout(): void
+    public static function transportLookingRequestBodyFailureMessageProvider(): iterable
     {
-        // Without the "Send of ..." marker, a connect-timeout message stays a connect timeout.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('fopen(): Failed to open stream: Connection timed out');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected ConnectTimeoutException');
-        } catch (ConnectTimeoutException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(ConnectException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-        }
-    }
-
-    public function testClassifiesPostConnectSendFailureAsNetwork(): void
-    {
-        // A non-timeout send failure (e.g. peer reset) is a network error, not a timeout.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('Send of 65536 bytes failed with errno=104 Connection reset by peer');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected NetworkException');
-        } catch (NetworkException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
-            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
-        }
-    }
-
-    public function testClassifiesWindowsSendTimeoutAsNetworkTimeout(): void
-    {
-        // Windows WSAETIMEDOUT (errno 10060) write timeout on an established
-        // connection. The body-read seam only feeds a representative message in.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('Send of 65536 bytes failed with errno=10060 A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
-        }
-    }
-
-    public function testClassifiesWindowsConnectTimeoutAsConnectTimeout(): void
-    {
-        // The same WSAETIMEDOUT wording without the "Send of ..." marker is a
-        // connect-phase timeout and must be a ConnectTimeoutException.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected ConnectTimeoutException');
-        } catch (ConnectTimeoutException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(ConnectException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-        }
-    }
-
-    public function testClassifiesConnectionResetAsNetwork(): void
-    {
-        // A post-connect reset (e.g. TLS "SSL: Connection reset by peer") is a network error.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('SSL: Connection reset by peer');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected NetworkException');
-        } catch (NetworkException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
-            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
-        }
-    }
-
-    public function testClassifiesUnexpectedEofAsNetwork(): void
-    {
-        // OpenSSL 3.0+ surfaces a peer closing the connection without a TLS
-        // close_notify (an empty reply, like cURL's CURLE_GOT_NOTHING) as
-        // "unexpected eof while reading". The handshake already completed, so
-        // there is no "Failed to enable crypto", and it is a network error.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected NetworkException');
-        } catch (NetworkException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
-            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
-        }
-    }
-
-    public function testClassifiesHandshakeUnexpectedEofAsConnect(): void
-    {
-        // The same OpenSSL EOF during the handshake co-emits "Failed to enable
-        // crypto", which is matched as a connection error first, so it stays a
-        // connect error instead of being reclassified as a network error.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading. Failed to enable crypto');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected ConnectException');
-        } catch (ConnectException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
-        }
+        return [
+            'connect timeout' => ['Operation timed out'],
+            'fopen connect timeout' => ['fopen(): Failed to open stream: Connection timed out'],
+            'send timeout' => ['Send of 65536 bytes failed with errno=110 Connection timed out'],
+            'send failure' => ['Send of 65536 bytes failed with errno=104 Connection reset by peer'],
+            'windows timeout' => ['A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'],
+            'windows send timeout' => ['Send of 65536 bytes failed with errno=10060 A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'],
+            'tls reset' => ['SSL: Connection reset by peer'],
+            'unexpected eof' => ['SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading'],
+            'handshake eof' => ['SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading. Failed to enable crypto'],
+        ];
     }
 
     public function testRejectsHttp3(): void

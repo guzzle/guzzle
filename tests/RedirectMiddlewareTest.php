@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -320,6 +321,41 @@ class RedirectMiddlewareTest extends TestCase
         self::assertInstanceOf(RedirectTestRequest::class, $lastRequest);
         self::assertInstanceOf(RedirectTestUri::class, $lastRequest->getUri());
         self::assertSame('http://example.com/foo', (string) $lastRequest->getUri());
+    }
+
+    public function testRedirectRequestBodyRewindFailureThrowsResponseException(): void
+    {
+        $previous = new \RuntimeException('cannot rewind');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            'tell' => static function (): int {
+                return 4;
+            },
+            'rewind' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $mock = new MockHandler([
+            new Response(307, ['Location' => 'http://example.com/redirected']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('POST', 'http://example.com', [], $body);
+
+        try {
+            $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertNotInstanceOf(BadResponseException::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(307, $e->getResponse()->getStatusCode());
+            self::assertSame(
+                'Redirect failed because the request body could not be rewound: cannot rewind',
+                $e->getMessage()
+            );
+            self::assertSame($previous, $e->getPrevious());
+        }
     }
 
     public function testSendPreservesCustomUriImplementationForRelativeRedirectsWithDefaultUriFactory(): void

@@ -13,6 +13,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
+use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
@@ -120,7 +121,7 @@ final class StreamHandler
                 throw $e;
             }
 
-            if (!$e instanceof NetworkException) {
+            if (!$e instanceof TransferException) {
                 $message = $e->getMessage();
                 if (self::isSendError($message)) {
                     $e = self::isConnectTimeoutError($message)
@@ -132,7 +133,7 @@ final class StreamHandler
                     $e = new ConnectException($message, $request, $e);
                 } elseif (self::isNetworkError($message)) {
                     $e = new NetworkException($message, $request, $e);
-                } elseif (!$e instanceof RequestException) {
+                } else {
                     $e = new RequestException($message, $request, 0, $e);
                 }
             }

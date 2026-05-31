@@ -62,6 +62,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject unrepresentable built-in handler response sizes and byte counts as `ResponseException`
 - Ignore cURL informational responses other than `101 Switching Protocols` before the final response
 - Treat response sink rewind failures as `ResponseException` and skip non-seekable sink rewinds
+- Classify redirect request-body rewind failures as `ResponseException`
 - Ignore stream source close failures after a complete response body transfer
 - Throw `GuzzleHttp\Exception\InvalidArgumentException` for invalid built-in handler options
 - Classify built-in cURL handle, `sink`, and HTTP/3 setup failures as `RequestException`
