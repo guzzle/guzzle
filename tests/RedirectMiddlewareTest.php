@@ -351,7 +351,7 @@ class RedirectMiddlewareTest extends TestCase
             self::assertSame($request, $e->getRequest());
             self::assertSame(307, $e->getResponse()->getStatusCode());
             self::assertSame(
-                'Redirect failed because the request body could not be rewound: cannot rewind',
+                'Redirect failed because the request body could not be rewound',
                 $e->getMessage()
             );
             self::assertSame($previous, $e->getPrevious());

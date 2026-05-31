@@ -1189,7 +1189,11 @@ final class CurlFactory implements CurlFactoryInterface
         try {
             $size = $body->getSize();
         } catch (\RuntimeException $e) {
-            throw new RequestException($e->getMessage(), $easy->request, 0, $e);
+            $message = $e instanceof TimeoutException
+                ? 'Timed out while determining the request body size'
+                : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to determine the request body size');
+
+            throw new RequestException($message, $easy->request, 0, $e);
         }
 
         if ($size === null || $size > 0) {
@@ -1254,12 +1258,11 @@ final class CurlFactory implements CurlFactoryInterface
             try {
                 $conf[\CURLOPT_POSTFIELDS] = (string) $request->getBody();
             } catch (\Throwable $e) {
-                throw new RequestException(
-                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed to read the request body',
-                    $request,
-                    0,
-                    $e
-                );
+                $message = $e instanceof TimeoutException
+                    ? 'Timed out while reading the request body'
+                    : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to read the request body');
+
+                throw new RequestException($message, $request, 0, $e);
             }
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $conf);
@@ -1282,12 +1285,11 @@ final class CurlFactory implements CurlFactoryInterface
                     $body->rewind();
                 }
             } catch (\Throwable $e) {
-                throw new RequestException(
-                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the request body',
-                    $request,
-                    0,
-                    $e
-                );
+                $message = $e instanceof TimeoutException
+                    ? 'Timed out while rewinding the request body'
+                    : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the request body');
+
+                throw new RequestException($message, $request, 0, $e);
             }
             /**
              * @return int|string

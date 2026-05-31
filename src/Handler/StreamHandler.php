@@ -159,7 +159,11 @@ final class StreamHandler
         try {
             $bodySize = $request->getBody()->getSize();
         } catch (\RuntimeException $e) {
-            throw new RequestException($e->getMessage(), $request, 0, $e);
+            $message = $e instanceof TimeoutException
+                ? 'Timed out while determining the request body size'
+                : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to determine the request body size');
+
+            throw new RequestException($message, $request, 0, $e);
         }
 
         if (($request->getMethod() === 'PUT' || $request->getMethod() === 'POST') && 0 === $bodySize) {
@@ -799,7 +803,11 @@ final class StreamHandler
         try {
             $body = (string) $request->getBody();
         } catch (\RuntimeException $e) {
-            throw new RequestException($e->getMessage(), $request, 0, $e);
+            $message = $e instanceof TimeoutException
+                ? 'Timed out while reading the request body'
+                : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to read the request body');
+
+            throw new RequestException($message, $request, 0, $e);
         }
 
         if ('' !== $body) {
