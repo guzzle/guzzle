@@ -30,7 +30,12 @@ final class TransferByteCounter
             throw new \UnexpectedValueException('Progress byte count must be an integer or float');
         }
 
-        if (!\is_finite($value) || $value < 0 || $value > \PHP_INT_MAX) {
+        if (
+            !\is_finite($value)
+            || $value < 0
+            || $value > \PHP_INT_MAX
+            || (\PHP_INT_SIZE === 8 && $value >= (float) \PHP_INT_MAX)
+        ) {
             throw new \OverflowException('Progress byte count exceeds the maximum integer size supported on this platform');
         }
 
