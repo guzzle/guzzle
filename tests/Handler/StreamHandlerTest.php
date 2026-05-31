@@ -154,6 +154,38 @@ class StreamHandlerTest extends TestCase
         self::assertFalse($called);
     }
 
+    public function testRequestBodyGetSizeTimeoutRejectsAsRequestExceptionWithoutStats(): void
+    {
+        $handler = new StreamHandler();
+        $called = false;
+        $previous = new Psr7\Exception\TimeoutException('Unable to determine stream size: timed out');
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            'getSize' => static function () use ($previous): ?int {
+                throw $previous;
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [
+                'on_stats' => static function () use (&$called): void {
+                    $called = true;
+                },
+            ]);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Unable to determine stream size: timed out', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertFalse($called);
+    }
+
     public function testNormalizesEquivalentRequestContentLengthValues(): void
     {
         $request = new Request('GET', Server::$url, [
@@ -259,7 +291,7 @@ class StreamHandlerTest extends TestCase
         self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'HTTP request failed!'));
     }
 
-    public function testThrowsNetworkTimeoutExceptionWhenRequestBodyReadTimesOut(): void
+    public function testRejectsRequestExceptionWhenRequestBodyReadTimesOut(): void
     {
         $handler = new StreamHandler();
         $previous = new Psr7\Exception\TimeoutException('Unable to read stream contents: timed out');
@@ -271,6 +303,7 @@ class StreamHandlerTest extends TestCase
         $request = new Request('PUT', Server::$url, [], $body);
         $stats = null;
         $exception = null;
+        $exceptionRequest = null;
 
         try {
             $handler($request, [
@@ -279,21 +312,23 @@ class StreamHandlerTest extends TestCase
                 },
             ])->wait();
 
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
             $exception = $e;
-            self::assertSame($request, $e->getRequest());
-            self::assertSame('The stream handler timed out while transferring the request body', $e->getMessage());
+            $exceptionRequest = $e->getRequest();
+            self::assertSame($request->getMethod(), $exceptionRequest->getMethod());
+            self::assertSame((string) $request->getUri(), (string) $exceptionRequest->getUri());
+            self::assertSame('Unable to read stream contents: timed out', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertInstanceOf(NetworkException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
         self::assertFalse($stats->hasResponse());
-        self::assertSame($request, $stats->getRequest());
+        self::assertSame($exceptionRequest->getMethod(), $stats->getRequest()->getMethod());
+        self::assertSame((string) $exceptionRequest->getUri(), (string) $stats->getRequest()->getUri());
         self::assertSame($exception, $stats->getHandlerErrorData());
     }
 

@@ -782,27 +782,12 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if ($easy->bodyReadTimeoutException) {
-            $ctx['timed_out'] = true;
-
-            if ($easy->response) {
-                /** @var PromiseInterface<ResponseInterface, mixed> */
-                return P\Create::rejectionFor(
-                    new ResponseException(
-                        'The cURL handler timed out while transferring the request body',
-                        $easy->request,
-                        $easy->response,
-                        $easy->bodyReadTimeoutException
-                    )
-                );
-            }
-
-            /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(
-                new NetworkTimeoutException(
-                    'The cURL handler timed out while transferring the request body',
-                    $easy->request,
-                    $easy->bodyReadTimeoutException
-                )
+            // Reading the request body stalled: a caller-source failure, not the
+            // network. Classify by phase (see contributing exception guidelines).
+            return self::createRequestOrResponseRejection(
+                $easy,
+                'The cURL handler timed out while reading the request body',
+                $easy->bodyReadTimeoutException
             );
         }
 
@@ -1212,8 +1197,6 @@ final class CurlFactory implements CurlFactoryInterface
         $body = $easy->request->getBody();
         try {
             $size = $body->getSize();
-        } catch (TimeoutException $e) {
-            throw $e;
         } catch (\RuntimeException $e) {
             throw new RequestException($e->getMessage(), $easy->request, 0, $e);
         }
@@ -1275,8 +1258,6 @@ final class CurlFactory implements CurlFactoryInterface
         if (($contentLength !== null && $contentLength < 1000000) || !empty($options['_body_as_string'])) {
             try {
                 $conf[\CURLOPT_POSTFIELDS] = (string) $request->getBody();
-            } catch (TimeoutException $e) {
-                throw $e;
             } catch (\Throwable $e) {
                 throw new RequestException(
                     $e->getMessage() !== '' ? $e->getMessage() : 'The cURL handler failed while reading the request body',
@@ -1305,8 +1286,6 @@ final class CurlFactory implements CurlFactoryInterface
                 if ($body->isSeekable()) {
                     $body->rewind();
                 }
-            } catch (TimeoutException $e) {
-                throw $e;
             } catch (\Throwable $e) {
                 throw new RequestException(
                     $e->getMessage() !== '' ? $e->getMessage() : 'The cURL handler failed to rewind the request body',

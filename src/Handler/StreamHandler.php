@@ -120,9 +120,7 @@ final class StreamHandler
                 throw $e;
             }
 
-            if ($e instanceof TimeoutException) {
-                $e = new NetworkTimeoutException('The stream handler timed out while transferring the request body', $request, $e);
-            } elseif (!$e instanceof NetworkException) {
+            if (!$e instanceof NetworkException) {
                 $message = $e->getMessage();
                 if (self::isSendError($message)) {
                     $e = self::isConnectTimeoutError($message)
@@ -159,8 +157,6 @@ final class StreamHandler
         // the behavior of `CurlHandler`
         try {
             $bodySize = $request->getBody()->getSize();
-        } catch (TimeoutException $e) {
-            throw new NetworkTimeoutException('The stream handler timed out while preparing the request body', $request, $e);
         } catch (\RuntimeException $e) {
             throw new RequestException($e->getMessage(), $request, 0, $e);
         }
@@ -795,7 +791,11 @@ final class StreamHandler
             ],
         ];
 
-        $body = (string) $request->getBody();
+        try {
+            $body = (string) $request->getBody();
+        } catch (\RuntimeException $e) {
+            throw new RequestException($e->getMessage(), $request, 0, $e);
+        }
 
         if ('' !== $body) {
             $context['http']['content'] = $body;

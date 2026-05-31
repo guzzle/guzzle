@@ -169,24 +169,23 @@ code, followed by the previous exception. If you used the removed
 exception classes above instead. Use `on_stats` when you need handler timing or
 statistics.
 
-Timeout exception classes are now split by the phase the handler can determine.
-`ConnectTimeoutException` is thrown for detected connect timeouts (DNS
+Timeout exception classes are now split by the transport phase the handler can
+determine. `ConnectTimeoutException` is thrown for detected connect timeouts (DNS
 resolution, TCP connect, proxy CONNECT, or TLS handshake). It extends
 `ConnectException`, so code that catches `ConnectException` will also catch
 connect timeouts. `NetworkTimeoutException` is thrown for other detected
-timeouts before response headers are received. It extends `NetworkException`,
-but not `ConnectException`. `ResponseTimeoutException` is thrown for response
-transfer timeouts after response headers are received. It extends
-`ResponseTransferException` and exposes the response. These phases apply however
-the timeout is detected, including timeouts that originate from a slow PSR-7
-stream. A request body that stalls before any response is received is a
-`NetworkTimeoutException`, and a stall reading the response body off the network
-is a `ResponseTimeoutException`. A timeout from a caller-supplied PSR-7 stream
-after response headers are received is a plain `ResponseException` rather than
-`ResponseTimeoutException`. This covers a slow `sink` write and a request body
-that stalls after the server has already sent response headers. Whenever the
-timeout comes from a PSR-7 stream, the original
-`GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
+transport timeouts before response headers are received. It extends
+`NetworkException`, but not `ConnectException`. `ResponseTimeoutException` is
+thrown for response transfer timeouts after response headers are received. It
+extends `ResponseTransferException` and exposes the response.
+
+Timeouts that originate from caller-supplied PSR-7 streams are not transport
+timeouts. Reading the request body stream, including size detection,
+stringification, rewind, and upload reads, is a `RequestException` before a
+response and a `ResponseException` after response headers. A slow response `sink`
+write is also a `ResponseException`. Whenever the timeout comes from a PSR-7
+stream, the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available
+via `getPrevious()`.
 
 Generic throwables from a cURL `sink` write are now wrapped instead of escaping
 the native cURL callback. They become plain `ResponseException` instances when a

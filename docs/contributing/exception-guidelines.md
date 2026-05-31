@@ -53,6 +53,15 @@ Deterministic platform-limit failures, such as a response length or byte count
 that cannot be represented as a PHP integer, are also plain `ResponseException`
 failures when a response exists.
 
+**Timeouts: transport vs. caller-supplied streams.** A `*TimeoutException` means
+the network transport timed out, such as cURL `CURLE_OPERATION_TIMEDOUT` or a
+stream send/connect timeout message. A timeout surfaced as a psr7
+`TimeoutException` from a caller stream is classified like any other failure of
+that stream: `RequestException` while reading the request body before a response,
+or `ResponseException` once a response exists. It is never a
+`NetworkTimeoutException`. The original `TimeoutException` is attached via
+`getPrevious()`.
+
 ## `GuzzleHttp\Exception\InvalidArgumentException`
 
 `final class InvalidArgumentException extends \InvalidArgumentException implements GuzzleException`

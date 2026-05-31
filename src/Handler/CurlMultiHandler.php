@@ -7,11 +7,9 @@ namespace GuzzleHttp\Handler;
 use Closure;
 use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Exception\InvalidArgumentException;
-use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
@@ -141,16 +139,7 @@ final class CurlMultiHandler
     {
         $this->assertOpen();
 
-        try {
-            $easy = $this->factory->create($request, $options);
-        } catch (TimeoutException $e) {
-            /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(new NetworkTimeoutException(
-                'The cURL handler timed out while transferring the request body',
-                $request,
-                $e
-            ));
-        }
+        $easy = $this->factory->create($request, $options);
 
         $id = (int) $easy->handle;
 
