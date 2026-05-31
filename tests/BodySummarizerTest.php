@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\BodySummarizer;
+use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Utils;
 use PHPUnit\Framework\TestCase;
@@ -29,5 +30,17 @@ class BodySummarizerTest extends TestCase
 
         self::assertSame('abc (truncated...)', (new BodySummarizer(3))->summarize($response));
         self::assertSame(3, $body->tell());
+    }
+
+    public function testSummarizeReturnsNullWhenBodySummaryFails(): void
+    {
+        $body = FnStream::decorate(Utils::streamFor('abcdef'), [
+            'tell' => static function (): int {
+                throw new \RuntimeException('tell failed');
+            },
+        ]);
+        $response = new Response(200, [], $body);
+
+        self::assertNull((new BodySummarizer())->summarize($response));
     }
 }
