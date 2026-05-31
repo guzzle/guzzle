@@ -69,7 +69,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Throw `NetworkTimeoutException` for cURL no-response timeout errors
 - Throw `ResponseTimeoutException` for response-aware transfer timeouts
 - Classify request-body stream read timeouts as `RequestException` or `ResponseException` by phase
-- Classify cURL PSR-7 response sink write timeouts by response phase
+- Classify cURL PSR-7 response sink write timeouts as `ResponseException` or `RequestException` by phase
 - Classify cURL response sink write throwables as `ResponseException` or `RequestException`
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers

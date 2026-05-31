@@ -800,27 +800,13 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if ($easy->sinkWriteTimeoutException) {
-            $ctx['timed_out'] = true;
-
-            if ($easy->response) {
-                /** @var PromiseInterface<ResponseInterface, mixed> */
-                return P\Create::rejectionFor(
-                    new ResponseException(
-                        'The cURL handler timed out while writing the response body',
-                        $easy->request,
-                        $easy->response,
-                        $easy->sinkWriteTimeoutException
-                    )
-                );
-            }
-
-            /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(
-                new NetworkTimeoutException(
-                    'The cURL handler timed out while transferring the response body',
-                    $easy->request,
-                    $easy->sinkWriteTimeoutException
-                )
+            // Writing the response body to the caller's sink stalled: a
+            // caller-stream failure, not the network. Classify by phase (see
+            // contributing exception guidelines).
+            return self::createRequestOrResponseRejection(
+                $easy,
+                'The cURL handler timed out while writing the response body',
+                $easy->sinkWriteTimeoutException
             );
         }
 

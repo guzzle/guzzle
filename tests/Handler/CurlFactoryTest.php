@@ -4109,7 +4109,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame(0, $stats->getHandlerErrorData());
     }
 
-    public function testSinkWritePsr7TimeoutRejectsAsNetworkTimeoutWithoutResponse(): void
+    public function testSinkWritePsr7TimeoutRejectsAsRequestExceptionWithoutResponse(): void
     {
         $factory = new CurlFactory(3);
         $previous = new Psr7\Exception\TimeoutException('Unable to write to stream: timed out');
@@ -4131,15 +4131,14 @@ class CurlFactoryTest extends TestCase
         try {
             CurlFactory::finish($handler, $easy, $factory)->wait();
 
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame('The cURL handler timed out while writing the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertInstanceOf(NetworkException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
