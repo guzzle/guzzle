@@ -61,4 +61,28 @@ class EasyHandleTest extends TestCase
         self::assertNotNull($easy->response, '101 is terminal and must be kept as a response');
         self::assertSame(101, $easy->response->getStatusCode());
     }
+
+    public function testDecodedContentLengthIsOmittedWhenSinkSizeOverflows(): void
+    {
+        $easy = new EasyHandle();
+        $easy->headers = [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: 3',
+        ];
+        $easy->options = ['decode_content' => true];
+        $easy->sink = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'getSize' => static function (): int {
+                throw new \OverflowException('too large');
+            },
+        ]);
+
+        $easy->createResponse();
+
+        self::assertNotNull($easy->response);
+        self::assertFalse($easy->response->hasHeader('Content-Encoding'));
+        self::assertFalse($easy->response->hasHeader('Content-Length'));
+        self::assertSame('gzip', $easy->response->getHeaderLine('x-encoded-content-encoding'));
+        self::assertSame('3', $easy->response->getHeaderLine('x-encoded-content-length'));
+    }
 }

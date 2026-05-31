@@ -81,6 +81,17 @@ $client->request('GET', 'https://example.com');
 The convenience methods such as `$client->get()`, `$client->post()`, and their
 async variants continue to use uppercase standard methods.
 
+The built-in cURL and stream handlers now reject request `Content-Length` values
+that are malformed or conflicting before starting a transfer. Requests that
+previously succeeded after passing an invalid `Content-Length` header may now
+fail with `RequestException`. Duplicate `Content-Length` values are accepted
+only when every member has the same decimal value, including values with leading
+zeros. Valid lengths larger than `PHP_INT_MAX` now fail before the request is
+sent because built-in handlers cannot safely size such transfers on the current
+platform.
+Applications that set this header manually should send one valid non-negative
+decimal length or omit it and let Guzzle prepare the body headers.
+
 #### Exception Hierarchy and Classification
 
 Some Guzzle 8.0 exception changes add intermediate classes, while others
@@ -143,14 +154,17 @@ Guzzle 8.0 also makes response-aware request failures explicit. Guzzle 7.x does
 not have `ResponseException`; response-aware request failures remain under
 `RequestException` throughout Guzzle 7.x. In Guzzle 8.0, `ResponseException` is
 the base class for request failures where response headers were received and a
-response object is available. `ResponseTransferException`,
-`BadResponseException`, and `TooManyRedirectsException` extend it. Only this
-branch exposes response access: `RequestException` no longer stores responses,
-no longer accepts a response constructor argument, and no longer has
-`getResponse()` or `hasResponse()` methods. Catch `ResponseException`, or test
-with `instanceof ResponseException`, before calling `getResponse()`. If you
-instantiate `RequestException` directly, its third constructor argument is now
-the exception code, followed by the previous exception. If you used the removed
+response object is available. `ResponseTransferException` is used for
+transfer-level failures after headers, including response-aware network,
+protocol, content-decoding, partial-body, and response-body transfer failures.
+`BadResponseException` and
+`TooManyRedirectsException` also extend `ResponseException`. Only this branch
+exposes response access: `RequestException` no longer stores responses, no
+longer accepts a response constructor argument, and no longer has `getResponse()`
+or `hasResponse()` methods. Catch `ResponseException`, or test with `instanceof
+ResponseException`, before calling `getResponse()`. If you instantiate
+`RequestException` directly, its third constructor argument is now the exception
+code, followed by the previous exception. If you used the removed
 `getHandlerContext()` methods to classify failures, use the more granular
 exception classes above instead. Use `on_stats` when you need handler timing or
 statistics.
@@ -161,18 +175,18 @@ resolution, TCP connect, proxy CONNECT, or TLS handshake). It extends
 `ConnectException`, so code that catches `ConnectException` will also catch
 connect timeouts. `NetworkTimeoutException` is thrown for other detected
 timeouts before response headers are received. It extends `NetworkException`,
-but not `ConnectException`. `ResponseTimeoutException` is thrown for timeouts
-after response headers are received. It extends `ResponseTransferException` and
-exposes the response. These phases apply however the timeout is detected,
-including timeouts that originate from a slow PSR-7 stream. A request body that
-stalls before any response is received is a `NetworkTimeoutException`, and a
-stall reading the response body off the network is a `ResponseTimeoutException`.
-A timeout from a caller-supplied PSR-7 stream after response headers are
-received is a plain `ResponseException` rather than `ResponseTimeoutException`.
-This covers a slow `sink` write and a request body that stalls after the server
-has already sent response headers. Whenever the timeout comes from a PSR-7
-stream, the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available
-via `getPrevious()`.
+but not `ConnectException`. `ResponseTimeoutException` is thrown for response
+transfer timeouts after response headers are received. It extends
+`ResponseTransferException` and exposes the response. These phases apply however
+the timeout is detected, including timeouts that originate from a slow PSR-7
+stream. A request body that stalls before any response is received is a
+`NetworkTimeoutException`, and a stall reading the response body off the network
+is a `ResponseTimeoutException`. A timeout from a caller-supplied PSR-7 stream
+after response headers are received is a plain `ResponseException` rather than
+`ResponseTimeoutException`. This covers a slow `sink` write and a request body
+that stalls after the server has already sent response headers. Whenever the
+timeout comes from a PSR-7 stream, the original
+`GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
 
 Generic throwables from a cURL `sink` write are now wrapped instead of escaping
 the native cURL callback. They become plain `ResponseException` instances when a
@@ -226,15 +240,18 @@ as `RequestException` or `ConnectException`:
 - Other failures with no response, such as send and receive errors and
   no-response HTTP/2 and HTTP/3 protocol errors, are `NetworkException`.
 - Response-transfer failures after response headers were received are
-  `ResponseTransferException`. Response-body network stalls are
-  `ResponseTimeoutException`, while `sink` write failures or request-body stalls
-  after headers are plain `ResponseException` instances.
+  `ResponseTransferException`. This includes response-aware cURL connection,
+  network, protocol, content-decoding, partial-body, and response body transfer
+  failures. Response-body network stalls are
+  `ResponseTimeoutException`, while `sink` write failures, progress callback
+  failures, deterministic response size/platform-limit failures, or request-body
+  stalls after headers are plain `ResponseException` instances.
 - Post-transfer response finalization failures are also plain
   `ResponseException`. A seekable response sink that fails to rewind does not
   become a `ResponseTransferException`. Non-seekable sinks are not rewound, and
   source close cleanup after a complete stream-handler download is best effort.
-- Other failures that occur after a response was received are
-  `ResponseException`.
+- Other non-transfer or local failures that occur after a response was received
+  are `ResponseException`.
 
 This applies to both the cURL and stream handlers; the exact error codes and
 messages each one maps onto these classes are an implementation detail.
@@ -250,16 +267,19 @@ previously caught this path with `RequestException` or
 surfaced as a response.
 
 The stream handler now rejects a drained, non-streamed response when a valid,
-positive `Content-Length` declares more bytes than the handler receives, raising
-`ResponseTransferException`. This matches the cURL handler for identity-coded
-responses, compressed responses with `decode_content` disabled, and unsupported
-compressed codings that the stream handler leaves raw. It does not apply to
-`stream => true` responses, decoded gzip or deflate responses, chunked or other
-`Transfer-Encoding` responses, conflicting or malformed `Content-Length` values,
-or lengths above `PHP_INT_MAX`. Responses to `HEAD`, any `1xx`, `204`, `304`,
-and successful `CONNECT` requests are never checked because they are bodiless by
-framing. `205 Reset Content` is checked because it remains framed by
-`Content-Length`.
+positive `Content-Length` declares more bytes than the handler receives or
+cannot be represented as a PHP integer on the current platform. Short bodies
+raise `ResponseTransferException`; platform-size failures raise plain
+`ResponseException` with the underlying `OverflowException` available via
+`getPrevious()`. This matches the cURL handler for identity-coded responses,
+compressed responses with `decode_content` disabled, and unsupported compressed
+codings that the stream handler leaves raw. It does not apply to
+`stream => true` responses, decoded gzip or deflate responses after
+`Content-Length` has been removed, chunked or other `Transfer-Encoding`
+responses, or conflicting or malformed `Content-Length` values. Responses to
+`HEAD`, any `1xx`, `204`, `304`, and successful `CONNECT` requests are never
+checked because they are bodiless by framing. `205 Reset Content` is checked
+because it remains framed by `Content-Length`.
 
 The deprecated `RequestException::wrapException()` method was removed. Create a
 `RequestException` directly for request failures where Guzzle does not expose a

@@ -493,12 +493,12 @@ or moving bytes over the network. When the handler can determine a more specific
 failure, Guzzle uses a more specific subtype such as `ConnectException`,
 `ConnectTimeoutException`, or `NetworkTimeoutException`.
 
-If Guzzle has parsed response headers into a response object, later transfer
-failures use `ResponseException`. This is the only branch that exposes
-`getResponse()`. Failures while reading the response body off the network use
-`ResponseTransferException`, with response timeouts as
-`ResponseTimeoutException`. Local response finalization failures, such as a
-failed sink rewind, stay plain `ResponseException`. With Guzzle request methods,
+If Guzzle has parsed response headers into a response object, later failures use
+`ResponseException`. This is the only branch that exposes `getResponse()`.
+Transfer failures after headers use `ResponseTransferException`, with response
+timeouts as `ResponseTimeoutException`. Local response failures, such as a sink
+write, failed sink rewind, or response length that cannot be represented on the
+current platform, stay plain `ResponseException`. With Guzzle request methods,
 middleware can also turn completed responses into exceptions: `http_errors`
 turns 4xx responses into `ClientException` and 5xx responses into
 `ServerException`, and redirect middleware can throw

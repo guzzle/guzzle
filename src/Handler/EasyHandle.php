@@ -83,6 +83,16 @@ final class EasyHandle
     public ?\Throwable $sinkWriteException = null;
 
     /**
+     * @var int Number of response body bytes accepted by the sink.
+     */
+    public int $responseBodyBytes = 0;
+
+    /**
+     * @var \OverflowException|null Unrepresentable response body size or byte count.
+     */
+    public ?\OverflowException $responseBodySizeException = null;
+
+    /**
      * Attach a response to the easy handle based on the received headers.
      *
      * @throws \RuntimeException if no headers have been received or the first
@@ -91,6 +101,8 @@ final class EasyHandle
     public function createResponse(): void
     {
         $this->response = null;
+        $this->responseBodyBytes = 0;
+        $this->responseBodySizeException = null;
 
         [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($this->headers);
 
@@ -109,7 +121,11 @@ final class EasyHandle
             if (isset($normalizedKeys['content-length'])) {
                 $headers['x-encoded-content-length'] = $headers[$normalizedKeys['content-length']];
 
-                $bodyLength = (int) $this->sink->getSize();
+                try {
+                    $bodyLength = $this->sink->getSize();
+                } catch (\RuntimeException $e) {
+                    $bodyLength = null;
+                }
                 if ($bodyLength) {
                     $headers[$normalizedKeys['content-length']] = [(string) $bodyLength];
                 } else {

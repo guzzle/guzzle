@@ -29,6 +29,84 @@ class HeaderProcessorTest extends TestCase
         self::assertSame(['X-Foo' => ['bar', 'baz'], 'X-Bar' => ['qux']], $headers);
     }
 
+    /**
+     * @dataProvider validContentLengthProvider
+     *
+     * @param string[] $values
+     */
+    public function testParsesContentLength(array $values, ?string $expected): void
+    {
+        self::assertSame($expected, HeaderProcessor::parseContentLength($values));
+    }
+
+    public static function validContentLengthProvider(): iterable
+    {
+        $max = (string) \PHP_INT_MAX;
+
+        return [
+            'absent' => [[], null],
+            'zero' => [['0'], '0'],
+            'zero with leading zeros' => [['0000'], '0'],
+            'simple' => [['3'], '3'],
+            'leading zeros' => [['0003'], '3'],
+            'comma equivalent' => [['003, 3'], '3'],
+            'duplicate equivalent' => [['003', '3'], '3'],
+            'php int max' => [[$max], $max],
+            'larger than php int max' => [[$max.'0'], $max.'0'],
+        ];
+    }
+
+    /**
+     * @dataProvider contentLengthToIntProvider
+     */
+    public function testConvertsContentLengthToIntWhenRepresentable(?string $length, ?int $expected): void
+    {
+        self::assertSame($expected, HeaderProcessor::contentLengthToInt($length));
+    }
+
+    public static function contentLengthToIntProvider(): iterable
+    {
+        $max = (string) \PHP_INT_MAX;
+
+        return [
+            'absent' => [null, null],
+            'zero' => ['0', 0],
+            'simple' => ['3', 3],
+            'php int max' => [$max, \PHP_INT_MAX],
+            'equal length too large' => [\str_repeat('9', \strlen($max)), null],
+            'longer than php int max' => [$max.'0', null],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidContentLengthProvider
+     *
+     * @param string[] $values
+     */
+    public function testRejectsInvalidContentLength(array $values): void
+    {
+        $this->expectException(\RuntimeException::class);
+
+        HeaderProcessor::parseContentLength($values);
+    }
+
+    public static function invalidContentLengthProvider(): iterable
+    {
+        return [
+            'empty' => [['']],
+            'ows only' => [[" \t"]],
+            'empty first member' => [[', 3']],
+            'empty last member' => [['3,']],
+            'empty middle member' => [['3,,3']],
+            'signed positive' => [['+3']],
+            'signed negative' => [['-3']],
+            'decimal' => [['3.0']],
+            'partial numeric' => [['3abc']],
+            'conflicting comma' => [['3, 5']],
+            'conflicting duplicate' => [['3', '5']],
+        ];
+    }
+
     public function testRejectsEmptyHeaderData(): void
     {
         $this->expectException(\RuntimeException::class);

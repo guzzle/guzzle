@@ -1386,6 +1386,26 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testProgressOverflowValueAbortsCurlTransfer(): void
+    {
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url), [
+            'progress' => static function (): void {
+                self::fail('Progress callback should not receive overflowing values');
+            },
+        ]);
+
+        try {
+            $callback = $_SERVER['_curl'][self::progressCallbackOption()];
+
+            self::assertSame(1, $callback($easy->handle, \INF, 0.0, 0.0, 0.0));
+            self::assertFalse($easy->progressAborted);
+            self::assertInstanceOf(\OverflowException::class, $easy->progressException);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
     /**
      * @dataProvider curlHandlerProvider
      */
@@ -2471,6 +2491,121 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testUnrepresentableResponseContentLengthCreatesResponseException(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $stats = null;
+        $easy = $factory->create($request, [
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+        $overflow = ((string) \PHP_INT_MAX).'0';
+
+        $header = self::receiveCurlHeaders($easy, [
+            "HTTP/1.1 200 OK\r\n",
+            "Content-Length: {$overflow}\r\n",
+        ]);
+        self::assertSame(-1, $header($easy->handle, "\r\n"));
+        $easy->errno = \CURLE_WRITE_ERROR;
+
+        try {
+            self::finishEasy($easy, $factory);
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
+            self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertInstanceOf(\OverflowException::class, $stats->getHandlerErrorData());
+    }
+
+    public function testOnHeadersExceptionWinsOverUnrepresentableResponseContentLength(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $previous = new \RuntimeException('on headers failed');
+        $easy = $factory->create($request, [
+            'on_headers' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $overflow = ((string) \PHP_INT_MAX).'0';
+
+        $header = self::receiveCurlHeaders($easy, [
+            "HTTP/1.1 200 OK\r\n",
+            "Content-Length: {$overflow}\r\n",
+        ]);
+        self::assertSame(-1, $header($easy->handle, "\r\n"));
+        $easy->errno = \CURLE_WRITE_ERROR;
+
+        try {
+            self::finishEasy($easy, $factory);
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+        }
+    }
+
+    public function testResponseBodyByteCountOverflowCreatesResponseException(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $response = new Psr7\Response(200);
+        $easy = $factory->create($request, []);
+        $write = $_SERVER['_curl'][\CURLOPT_WRITEFUNCTION];
+        $easy->response = $response;
+        $easy->responseBodyBytes = \PHP_INT_MAX - 1;
+
+        self::assertSame(0, $write($easy->handle, 'ab'));
+        self::assertInstanceOf(\OverflowException::class, $easy->responseBodySizeException);
+
+        try {
+            self::finishEasy($easy, $factory);
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
+            self::assertSame($easy->responseBodySizeException, $e->getPrevious());
+        }
+    }
+
+    /**
+     * @param list<string> $headers
+     */
+    private static function receiveCurlHeaders(EasyHandle $easy, array $headers): callable
+    {
+        $header = $_SERVER['_curl'][\CURLOPT_HEADERFUNCTION];
+
+        foreach ($headers as $line) {
+            self::assertSame(\strlen($line), $header($easy->handle, $line));
+        }
+
+        return $header;
+    }
+
+    private static function finishEasy(EasyHandle $easy, CurlFactory $factory): void
+    {
+        CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        )->wait();
+    }
+
     public static function curlResponseTransferErrorProvider(): iterable
     {
         yield 'partial file' => [18];
@@ -2772,6 +2907,106 @@ class CurlFactoryTest extends TestCase
         $f->create($request, []);
         self::assertEquals(1, $_SERVER['_curl'][\CURLOPT_UPLOAD]);
         self::assertIsCallable($_SERVER['_curl'][\CURLOPT_READFUNCTION]);
+    }
+
+    /**
+     * @dataProvider validCurlRequestContentLengthProvider
+     *
+     * @param string|string[] $contentLength
+     */
+    public function testUsesParsedRequestContentLengthForCurlUpload($contentLength): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('PUT', Server::$url, [
+            'Content-Length' => $contentLength,
+        ], 'foo');
+
+        $factory->create($request, []);
+
+        self::assertTrue((bool) $_SERVER['_curl'][\CURLOPT_UPLOAD]);
+        self::assertSame(1000000, $_SERVER['_curl'][\CURLOPT_INFILESIZE]);
+    }
+
+    public static function validCurlRequestContentLengthProvider(): iterable
+    {
+        return [
+            'plain' => ['1000000'],
+            'leading zeros' => ['001000000'],
+            'comma equivalent' => ['001000000, 1000000'],
+            'duplicate equivalent' => [['001000000', '1000000']],
+        ];
+    }
+
+    public function testNormalizesEquivalentRequestContentLengthForCurlHeaders(): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('GET', Server::$url, [
+            'Content-Length' => ['0003', '3'],
+        ]);
+
+        $factory->create($request, []);
+
+        self::assertContains('Content-Length: 3', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        self::assertNotContains('Content-Length: 0003', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+    }
+
+    /**
+     * @dataProvider invalidCurlRequestContentLengthProvider
+     *
+     * @param string|string[] $contentLength
+     */
+    public function testRejectsInvalidCurlRequestContentLength($contentLength): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('PUT', Server::$url, [
+            'Content-Length' => $contentLength,
+        ], 'foo');
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Invalid Content-Length request header');
+
+        $factory->create($request, []);
+    }
+
+    public static function invalidCurlRequestContentLengthProvider(): iterable
+    {
+        return [
+            'empty' => [''],
+            'empty comma member' => ['3,'],
+            'non digit' => ['abc'],
+            'partial numeric' => ['3abc'],
+            'signed' => ['-1'],
+            'decimal' => ['3.0'],
+            'conflicting comma' => ['3, 5'],
+            'conflicting duplicate' => [['3', '5']],
+        ];
+    }
+
+    public function testRejectsUnrepresentableRequestContentLengthForCurlUpload(): void
+    {
+        $factory = new CurlFactory(3);
+        $length = ((string) \PHP_INT_MAX).'0';
+        $request = new Psr7\Request('PUT', Server::$url, [
+            'Content-Length' => $length,
+        ], 'foo');
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Content-Length exceeds the maximum integer size supported on this platform');
+
+        $factory->create($request, []);
+    }
+
+    public function testRejectsInvalidCurlRequestContentLengthWithEmptyBody(): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('POST', Server::$url, [
+            'Content-Length' => 'abc',
+        ]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Invalid Content-Length request header');
+
+        $factory->create($request, []);
     }
 
     public function testEnsuresDirExistsBeforeThrowingWarning(): void

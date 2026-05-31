@@ -216,7 +216,16 @@ class RedirectMiddleware
         }
 
         $modify['uri'] = $uri;
-        Psr7\Message::rewindBody($request);
+        try {
+            Psr7\Message::rewindBody($request);
+        } catch (\RuntimeException $e) {
+            throw new BadResponseException(
+                'Redirect failed because the request body could not be rewound: '.$e->getMessage(),
+                $request,
+                $response,
+                $e
+            );
+        }
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.

@@ -104,16 +104,9 @@ final class StreamHandler
 
         self::rejectUnsupportedRequestOptions($request, $options);
 
+        $request = self::prepareRequest($request);
+
         try {
-            // Does not support the expect header.
-            $request = $request->withoutHeader('Expect');
-
-            // Append a content-length header if body size is zero to match
-            // the behavior of `CurlHandler`
-            if (($request->getMethod() === 'PUT' || $request->getMethod() === 'POST') && 0 === $request->getBody()->getSize()) {
-                $request = $request->withHeader('Content-Length', '0');
-            }
-
             return $this->createResponse(
                 $request,
                 $options,
@@ -150,6 +143,33 @@ final class StreamHandler
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor($e);
         }
+    }
+
+    private static function prepareRequest(RequestInterface $request): RequestInterface
+    {
+        $contentLength = self::requestContentLength($request);
+        if ($contentLength !== null) {
+            $request = $request->withHeader('Content-Length', $contentLength);
+        }
+
+        // Does not support the expect header.
+        $request = $request->withoutHeader('Expect');
+
+        // Append a content-length header if body size is zero to match
+        // the behavior of `CurlHandler`
+        try {
+            $bodySize = $request->getBody()->getSize();
+        } catch (TimeoutException $e) {
+            throw new NetworkTimeoutException('The stream handler timed out while preparing the request body', $request, $e);
+        } catch (\RuntimeException $e) {
+            throw new RequestException($e->getMessage(), $request, 0, $e);
+        }
+
+        if (($request->getMethod() === 'PUT' || $request->getMethod() === 'POST') && 0 === $bodySize) {
+            $request = $request->withHeader('Content-Length', '0');
+        }
+
+        return $request;
     }
 
     private function isOnStatsException(\Throwable $e): bool
@@ -267,7 +287,7 @@ final class StreamHandler
         // no body.
         if ($sink !== $stream) {
             try {
-                $this->drain($request, $response, $stream, $sink, $response->getHeaderLine('Content-Length'));
+                $this->drain($request, $response, $stream, $sink);
             } catch (ResponseException $e) {
                 $this->invokeStats($options, $request, $startTime, $response, $e);
 
@@ -373,71 +393,69 @@ final class StreamHandler
     /**
      * Drains the source stream into the "sink" client option.
      *
-     * @param string $contentLength Header specifying the amount of
-     *                              data to read.
-     *
      * @throws \RuntimeException when the sink option is invalid.
      */
     private function drain(
         RequestInterface $request,
         ResponseInterface $response,
         StreamInterface $source,
-        StreamInterface $sink,
-        string $contentLength
+        StreamInterface $sink
     ): StreamInterface {
-        // Keep the existing loose read bound, but only reject short bodies when
-        // the Content-Length is a valid framing promise for this response.
-        $copyLimit = (\strlen($contentLength) > 0 && (int) $contentLength > 0) ? (int) $contentLength : -1;
-        $declaredLength = self::declaredResponseBodyLength($request, $response);
-
         try {
-            $target = $this->createResponseSink($request, $response, $sink);
-            // If a content-length header is provided, then stop reading once
-            // that number of bytes has been read. This can prevent infinitely
-            // reading from a stream when dealing with servers that do not
-            // honor Connection: Close headers.
-            $copied = Psr7\Utils::copyToStream($source, $target, $copyLimit);
-        } catch (ResponseException $e) {
-            throw $e;
-        } catch (TimeoutException $e) {
-            throw new ResponseTimeoutException(
-                'The stream handler timed out while transferring the response body',
-                $request,
-                $response,
-                $e
-            );
-        } catch (\Throwable $e) {
-            // Any other failure while reading the response body off the network
-            // surfaces as a ResponseTransferException carrying the response.
-            throw new ResponseTransferException(
-                $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed while transferring the response body',
-                $request,
-                $response,
-                $e
-            );
-        }
+            $declaredLength = self::declaredResponseBodyLength($request, $response);
+            $copyLimit = $declaredLength ?? -1;
 
-        $exception = null;
-
-        if ($declaredLength !== null && $copied < $declaredLength) {
-            $exception = new ResponseTransferException(
-                'The stream handler received fewer bytes than the declared Content-Length',
-                $request,
-                $response
-            );
-        }
-
-        try {
-            if ($exception === null && $sink->isSeekable()) {
-                $sink->rewind();
+            try {
+                $target = $this->createResponseSink($request, $response, $sink);
+                // If a content-length header is provided, then stop reading once
+                // that number of bytes has been read. This can prevent infinitely
+                // reading from a stream when dealing with servers that do not
+                // honor Connection: Close headers.
+                $copied = Psr7\Utils::copyToStream($source, $target, $copyLimit);
+            } catch (ResponseException $e) {
+                throw $e;
+            } catch (TimeoutException $e) {
+                throw new ResponseTimeoutException(
+                    'The stream handler timed out while transferring the response body',
+                    $request,
+                    $response,
+                    $e
+                );
+            } catch (\OverflowException $e) {
+                throw new ResponseException($e->getMessage(), $request, $response, $e);
+            } catch (\Throwable $e) {
+                // Any other failure while reading the response body off the network
+                // surfaces as a ResponseTransferException carrying the response.
+                throw new ResponseTransferException(
+                    $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed while transferring the response body',
+                    $request,
+                    $response,
+                    $e
+                );
             }
-        } catch (\Throwable $e) {
-            $exception = new ResponseException(
-                $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed to rewind the response body',
-                $request,
-                $response,
-                $e
-            );
+
+            if ($declaredLength !== null && $copied < $declaredLength) {
+                throw new ResponseTransferException(
+                    'The stream handler received fewer bytes than the declared Content-Length',
+                    $request,
+                    $response
+                );
+            }
+
+            try {
+                if ($sink->isSeekable()) {
+                    $sink->rewind();
+                }
+            } catch (\Throwable $e) {
+                throw new ResponseException(
+                    $e->getMessage() !== '' ? $e->getMessage() : 'The stream handler failed to rewind the response body',
+                    $request,
+                    $response,
+                    $e
+                );
+            }
+
+            return $sink;
         } finally {
             try {
                 $source->close();
@@ -445,58 +463,48 @@ final class StreamHandler
                 // Best-effort cleanup after the response body has been received.
             }
         }
-
-        if ($exception !== null) {
-            throw $exception;
-        }
-
-        return $sink;
     }
 
     private static function declaredResponseBodyLength(RequestInterface $request, ResponseInterface $response): ?int
     {
-        $status = $response->getStatusCode();
-        $method = $request->getMethod();
+        $parsed = HeaderProcessor::parseContentLengthForResponseBody($request, $response);
+        if (HeaderProcessor::contentLengthExceedsPlatformLimit($parsed)) {
+            $overflow = new \OverflowException('Content-Length exceeds the maximum integer size supported on this platform');
 
-        if (
-            $method === 'HEAD'
-            || ($method === 'CONNECT' && $status >= 200 && $status < 300)
-            || $status < 200
-            || $status === 204
-            || $status === 304
-            || $response->hasHeader('Transfer-Encoding')
-        ) {
-            return null;
+            throw new ResponseException(
+                'Content-Length exceeds the maximum integer size supported on this platform',
+                $request,
+                $response,
+                $overflow
+            );
         }
 
-        $length = null;
-        foreach ($response->getHeader('Content-Length') as $value) {
-            foreach (\explode(',', $value) as $part) {
-                $part = \trim($part, " \t");
-                if (\preg_match('/^[0-9]+$/', $part) !== 1) {
-                    return null;
-                }
+        $length = HeaderProcessor::contentLengthToInt($parsed);
 
-                $part = \ltrim($part, '0');
-                $part = $part === '' ? '0' : $part;
-                if ($length !== null && $part !== $length) {
-                    return null;
-                }
+        return $length !== null && $length > 0 ? $length : null;
+    }
 
-                $length = $part;
-            }
+    private static function requestContentLength(RequestInterface $request): ?string
+    {
+        try {
+            $length = HeaderProcessor::parseContentLength($request->getHeader('Content-Length'));
+        } catch (\RuntimeException $e) {
+            throw new RequestException(
+                'Invalid Content-Length request header',
+                $request,
+                0,
+                $e
+            );
         }
 
-        if ($length === null || $length === '0') {
-            return null;
+        if (HeaderProcessor::contentLengthExceedsPlatformLimit($length)) {
+            throw new RequestException(
+                'Content-Length exceeds the maximum integer size supported on this platform',
+                $request
+            );
         }
 
-        $max = (string) \PHP_INT_MAX;
-        if (\strlen($length) > \strlen($max) || (\strlen($length) === \strlen($max) && $length > $max)) {
-            return null;
-        }
-
-        return (int) $length;
+        return $length;
     }
 
     private function createResponseSink(
@@ -1099,7 +1107,12 @@ final class StreamHandler
                 if ($code == \STREAM_NOTIFY_PROGRESS) {
                     // The upload progress cannot be determined. Use 0 for cURL compatibility:
                     // https://curl.se/libcurl/c/CURLOPT_PROGRESSFUNCTION.html
-                    $value((int) $total, (int) $transferred, 0, 0);
+                    $value(
+                        TransferByteCounter::progressValueToInt($total),
+                        TransferByteCounter::progressValueToInt($transferred),
+                        0,
+                        0
+                    );
                 }
             }
         );

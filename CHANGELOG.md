@@ -35,6 +35,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Declare strict types across remaining source files
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use
 - Reject invalid `SetCookie` constructor field types instead of coercing them
+- Reject malformed or conflicting request `Content-Length` values in built-in handlers
 - Reject conflicting raw cURL request options, including request-level `CURLOPT_SHARE`
 - Reject selected request options ignored by incompatible built-in handlers
 - Support retry delay callbacks with retry count only or full retry context

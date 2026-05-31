@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Utils;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @internal
@@ -73,6 +75,89 @@ final class HeaderProcessor
         }
 
         return [$version, (int) $status, $reason, Utils::headersFromLines($headers)];
+    }
+
+    /**
+     * Returns a normalized decimal string.
+     *
+     * @param string[] $values
+     *
+     * @throws \RuntimeException when Content-Length is malformed or conflicting.
+     */
+    public static function parseContentLength(array $values): ?string
+    {
+        $length = null;
+
+        foreach ($values as $value) {
+            foreach (\explode(',', $value) as $part) {
+                $part = \trim($part, " \t");
+                if (\preg_match('/^[0-9]+$/D', $part) !== 1) {
+                    throw new \RuntimeException('Content-Length header value is invalid');
+                }
+
+                $part = \ltrim($part, '0');
+                $part = $part === '' ? '0' : $part;
+                if ($length !== null && $part !== $length) {
+                    throw new \RuntimeException('Content-Length header values conflict');
+                }
+
+                $length = $part;
+            }
+        }
+
+        if ($length === null) {
+            return null;
+        }
+
+        return $length;
+    }
+
+    public static function contentLengthToInt(?string $length): ?int
+    {
+        if ($length === null) {
+            return null;
+        }
+
+        $max = (string) \PHP_INT_MAX;
+        if (
+            \strlen($length) > \strlen($max)
+            || (\strlen($length) === \strlen($max) && \strcmp($length, $max) > 0)
+        ) {
+            return null;
+        }
+
+        return (int) $length;
+    }
+
+    public static function contentLengthExceedsPlatformLimit(?string $length): bool
+    {
+        return $length !== null && self::contentLengthToInt($length) === null;
+    }
+
+    public static function parseContentLengthForResponseBody(RequestInterface $request, ResponseInterface $response): ?string
+    {
+        if (!self::responseCanHaveContentLengthBody($request, $response)) {
+            return null;
+        }
+
+        try {
+            return self::parseContentLength($response->getHeader('Content-Length'));
+        } catch (\RuntimeException $e) {
+            return null;
+        }
+    }
+
+    private static function responseCanHaveContentLengthBody(RequestInterface $request, ResponseInterface $response): bool
+    {
+        $status = $response->getStatusCode();
+        $method = $request->getMethod();
+
+        return $method !== 'HEAD'
+            && !($method === 'CONNECT' && $status >= 200 && $status < 300)
+            && $status >= 200
+            && $status !== 204
+            && $status !== 304
+            && !$response->hasHeader('Transfer-Encoding');
     }
 
     /**

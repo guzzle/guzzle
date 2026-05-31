@@ -183,11 +183,16 @@ final class CurlFactory implements CurlFactoryInterface
         $this->rejectPersistentRequireConnectionReuseConflicts($options);
         self::rejectConflictingCurlOptions($options);
 
+        $contentLength = self::requestContentLength($request);
+        if ($contentLength !== null) {
+            $request = $request->withHeader('Content-Length', $contentLength);
+        }
+
         $easy = new EasyHandle();
         $easy->request = $request;
         $easy->options = $options;
         $conf = $this->getDefaultConf($easy);
-        $this->applyMethod($easy, $conf);
+        $this->applyMethod($easy, $conf, $contentLength);
         $this->applyHandlerOptions($easy, $conf);
         $this->applyHeaders($easy, $conf);
         unset($conf['_headers']);
@@ -661,11 +666,13 @@ final class CurlFactory implements CurlFactoryInterface
             ];
         }
 
+        $handlerErrorData = $easy->responseBodySizeException ?? $easy->errno;
+
         return new TransferStats(
             $easy->request,
             $easy->response,
             $curlStats['total_time'],
-            $easy->errno,
+            $handlerErrorData,
             $curlStats
         );
     }
@@ -697,18 +704,20 @@ final class CurlFactory implements CurlFactoryInterface
     {
         return !$easy->response
             || $easy->errno !== 0
-            || $easy->bodyReadTimeoutException !== null
+            || self::hasLocalFailure($easy);
+    }
+
+    private static function hasLocalFailure(EasyHandle $easy): bool
+    {
+        return $easy->bodyReadTimeoutException !== null
             || $easy->sinkWriteTimeoutException !== null
-            || $easy->sinkWriteException !== null;
+            || $easy->sinkWriteException !== null
+            || $easy->responseBodySizeException !== null;
     }
 
     private static function shouldRetryFailedRewind(EasyHandle $easy): bool
     {
-        if (
-            $easy->bodyReadTimeoutException !== null
-            || $easy->sinkWriteTimeoutException !== null
-            || $easy->sinkWriteException !== null
-        ) {
+        if (self::hasLocalFailure($easy)) {
             return false;
         }
 
@@ -739,7 +748,7 @@ final class CurlFactory implements CurlFactoryInterface
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private static function createRejection(EasyHandle $easy, array $ctx): PromiseInterface
+    private static function createRejection(EasyHandle $easy, array $ctx, ?\Throwable $previous = null): PromiseInterface
     {
         if ($easy->createResponseException) {
             /** @var PromiseInterface<ResponseInterface, mixed> */
@@ -756,50 +765,18 @@ final class CurlFactory implements CurlFactoryInterface
         // If an exception was encountered during the onHeaders event, then
         // return a rejected promise that wraps that exception.
         if ($easy->onHeadersException) {
-            if ($easy->response) {
-                /** @var PromiseInterface<ResponseInterface, mixed> */
-                return P\Create::rejectionFor(
-                    new ResponseException(
-                        'An error was encountered during the on_headers event',
-                        $easy->request,
-                        $easy->response,
-                        $easy->onHeadersException
-                    )
-                );
-            }
-
-            /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(
-                new RequestException(
-                    'An error was encountered during the on_headers event',
-                    $easy->request,
-                    0,
-                    $easy->onHeadersException
-                )
+            return self::createRequestOrResponseRejection(
+                $easy,
+                'An error was encountered during the on_headers event',
+                $easy->onHeadersException
             );
         }
 
         if ($easy->progressException) {
-            if ($easy->response) {
-                /** @var PromiseInterface<ResponseInterface, mixed> */
-                return P\Create::rejectionFor(
-                    new ResponseException(
-                        'An error was encountered during the progress event',
-                        $easy->request,
-                        $easy->response,
-                        $easy->progressException
-                    )
-                );
-            }
-
-            /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(
-                new RequestException(
-                    'An error was encountered during the progress event',
-                    $easy->request,
-                    0,
-                    $easy->progressException
-                )
+            return self::createRequestOrResponseRejection(
+                $easy,
+                'An error was encountered during the progress event',
+                $easy->progressException
             );
         }
 
@@ -858,50 +835,21 @@ final class CurlFactory implements CurlFactoryInterface
                 ? $easy->sinkWriteException->getMessage()
                 : 'The cURL handler failed while writing the response body';
 
-            if ($easy->response) {
-                /** @var PromiseInterface<ResponseInterface, mixed> */
-                return P\Create::rejectionFor(
-                    new ResponseException(
-                        $message,
-                        $easy->request,
-                        $easy->response,
-                        $easy->sinkWriteException
-                    )
-                );
-            }
+            return self::createRequestOrResponseRejection($easy, $message, $easy->sinkWriteException);
+        }
 
-            /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(
-                new RequestException(
-                    $message,
-                    $easy->request,
-                    0,
-                    $easy->sinkWriteException
-                )
+        if ($easy->responseBodySizeException) {
+            return self::createRequestOrResponseRejection(
+                $easy,
+                $easy->responseBodySizeException->getMessage(),
+                $easy->responseBodySizeException
             );
         }
 
         if ($easy->progressAborted && $easy->errno === \CURLE_ABORTED_BY_CALLBACK) {
-            if ($easy->response) {
-                /** @var PromiseInterface<ResponseInterface, mixed> */
-                return P\Create::rejectionFor(
-                    new ResponseException(
-                        'The transfer was aborted by the progress callback',
-                        $easy->request,
-                        $easy->response,
-                        null
-                    )
-                );
-            }
-
-            /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(
-                new RequestException(
-                    'The transfer was aborted by the progress callback',
-                    $easy->request,
-                    0,
-                    null
-                )
+            return self::createRequestOrResponseRejection(
+                $easy,
+                'The transfer was aborted by the progress callback'
             );
         }
 
@@ -925,26 +873,47 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ($easy->errno === \CURLE_OPERATION_TIMEOUTED) {
             if ($easy->response !== null) {
-                $error = new ResponseTimeoutException($message, $easy->request, $easy->response);
+                $error = new ResponseTimeoutException($message, $easy->request, $easy->response, $previous);
             } elseif (self::isConnectTimeoutError($ctx['error'] ?? '')) {
-                $error = new ConnectTimeoutException($message, $easy->request);
+                $error = new ConnectTimeoutException($message, $easy->request, $previous);
             } else {
-                $error = new NetworkTimeoutException($message, $easy->request);
+                $error = new NetworkTimeoutException($message, $easy->request, $previous);
             }
         } elseif ($easy->response) {
             $error = self::isResponseTransferError($easy->errno)
-                ? new ResponseTransferException($message, $easy->request, $easy->response)
-                : new ResponseException($message, $easy->request, $easy->response);
+                ? new ResponseTransferException($message, $easy->request, $easy->response, $previous)
+                : new ResponseException($message, $easy->request, $easy->response, $previous);
         } elseif (self::isConnectionError($easy->errno)) {
-            $error = new ConnectException($message, $easy->request);
+            $error = new ConnectException($message, $easy->request, $previous);
         } elseif (self::isNetworkError($easy->errno)) {
-            $error = new NetworkException($message, $easy->request);
+            $error = new NetworkException($message, $easy->request, $previous);
         } else {
-            $error = new RequestException($message, $easy->request);
+            $error = new RequestException($message, $easy->request, 0, $previous);
         }
 
         /** @var PromiseInterface<ResponseInterface, mixed> */
         return P\Create::rejectionFor($error);
+    }
+
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
+    private static function createRequestOrResponseRejection(
+        EasyHandle $easy,
+        string $message,
+        ?\Throwable $previous = null
+    ): PromiseInterface {
+        if ($easy->response !== null) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new ResponseException($message, $easy->request, $easy->response, $previous)
+            );
+        }
+
+        /** @var PromiseInterface<ResponseInterface, mixed> */
+        return P\Create::rejectionFor(
+            new RequestException($message, $easy->request, 0, $previous)
+        );
     }
 
     private static function isConnectionError(int $errno): bool
@@ -1213,13 +1182,35 @@ final class CurlFactory implements CurlFactoryInterface
         return $type !== 'ENG' && $type !== 'PROV';
     }
 
-    private function applyMethod(EasyHandle $easy, array &$conf): void
+    private static function responseContentLengthOverflows(EasyHandle $easy): bool
+    {
+        if ($easy->response === null) {
+            return false;
+        }
+
+        $length = HeaderProcessor::parseContentLengthForResponseBody($easy->request, $easy->response);
+        if (!HeaderProcessor::contentLengthExceedsPlatformLimit($length)) {
+            return false;
+        }
+
+        $easy->responseBodySizeException = new \OverflowException('Content-Length exceeds the maximum integer size supported on this platform');
+
+        return true;
+    }
+
+    private function applyMethod(EasyHandle $easy, array &$conf, ?string $contentLength): void
     {
         $body = $easy->request->getBody();
-        $size = $body->getSize();
+        try {
+            $size = $body->getSize();
+        } catch (TimeoutException $e) {
+            throw $e;
+        } catch (\RuntimeException $e) {
+            throw new RequestException($e->getMessage(), $easy->request, 0, $e);
+        }
 
         if ($size === null || $size > 0) {
-            $this->applyBody($easy, $conf);
+            $this->applyBody($easy, $conf, $contentLength);
 
             return;
         }
@@ -1241,25 +1232,48 @@ final class CurlFactory implements CurlFactoryInterface
         }
     }
 
-    private function applyBody(EasyHandle $easy, array &$conf): void
+    private static function requestContentLength(RequestInterface $request): ?string
+    {
+        try {
+            $length = HeaderProcessor::parseContentLength($request->getHeader('Content-Length'));
+        } catch (\RuntimeException $e) {
+            throw new RequestException(
+                'Invalid Content-Length request header',
+                $request,
+                0,
+                $e
+            );
+        }
+
+        if (HeaderProcessor::contentLengthExceedsPlatformLimit($length)) {
+            throw new RequestException(
+                'Content-Length exceeds the maximum integer size supported on this platform',
+                $request
+            );
+        }
+
+        return $length;
+    }
+
+    private function applyBody(EasyHandle $easy, array &$conf, ?string $contentLengthHeader): void
     {
         $request = $easy->request;
         $options = $easy->options;
-        $size = $request->hasHeader('Content-Length')
-            ? (int) $request->getHeaderLine('Content-Length')
-            : null;
+        $contentLength = HeaderProcessor::contentLengthToInt($contentLengthHeader);
 
         // Send the body as a string if the size is less than 1MB OR if the
         // [curl][body_as_string] request value is set.
-        if (($size !== null && $size < 1000000) || !empty($options['_body_as_string'])) {
+        if (($contentLength !== null && $contentLength < 1000000) || !empty($options['_body_as_string'])) {
             $conf[\CURLOPT_POSTFIELDS] = (string) $request->getBody();
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $conf);
             $this->removeHeader('Transfer-Encoding', $conf);
         } else {
             $conf[\CURLOPT_UPLOAD] = true;
-            if ($size !== null) {
-                $conf[\CURLOPT_INFILESIZE] = $size;
+            if ($contentLength !== null) {
+                $conf[\CURLOPT_INFILESIZE] = $contentLength;
+                $this->removeHeader('Content-Length', $conf);
+            } elseif ($contentLengthHeader !== null) {
                 $this->removeHeader('Content-Length', $conf);
             }
             $body = $request->getBody();
@@ -1416,8 +1430,22 @@ final class CurlFactory implements CurlFactoryInterface
         }
         $easy->sink = $sink;
         $conf[\CURLOPT_WRITEFUNCTION] = static function ($ch, string $write) use ($easy, $sink): int {
+            $length = \strlen($write);
+
             try {
-                return $sink->write($write);
+                $newResponseBodyBytes = TransferByteCounter::add(
+                    $easy->responseBodyBytes,
+                    $length,
+                    'Response body exceeds the maximum integer size supported on this platform'
+                );
+            } catch (\OverflowException $e) {
+                $easy->responseBodySizeException = $e;
+
+                return 0;
+            }
+
+            try {
+                $written = $sink->write($write);
             } catch (TimeoutException $e) {
                 $easy->sinkWriteTimeoutException = $e;
 
@@ -1427,6 +1455,12 @@ final class CurlFactory implements CurlFactoryInterface
 
                 return 0;
             }
+
+            if ($written === $length) {
+                $easy->responseBodyBytes = $newResponseBodyBytes;
+            }
+
+            return $written;
         };
 
         $timeoutRequiresNoSignal = false;
@@ -1616,7 +1650,12 @@ final class CurlFactory implements CurlFactoryInterface
                 }
 
                 try {
-                    if ($progress((int) $downloadSize, (int) $downloaded, (int) $uploadSize, (int) $uploaded)) {
+                    if ($progress(
+                        TransferByteCounter::progressValueToInt($downloadSize),
+                        TransferByteCounter::progressValueToInt($downloaded),
+                        TransferByteCounter::progressValueToInt($uploadSize),
+                        TransferByteCounter::progressValueToInt($uploaded)
+                    )) {
                         $easy->progressAborted = true;
 
                         return 1;
@@ -1670,7 +1709,7 @@ final class CurlFactory implements CurlFactoryInterface
                 .'but attempting to rewind the request body failed. '
                 .'Exception: '.$e;
 
-            return self::createRejection($easy, $ctx);
+            return self::createRejection($easy, $ctx, $e);
         }
 
         // Retry no more than 3 times before giving up.
@@ -1732,6 +1771,9 @@ final class CurlFactory implements CurlFactoryInterface
 
                         return -1;
                     }
+                }
+                if (self::responseContentLengthOverflows($easy)) {
+                    return -1;
                 }
             } elseif ($startingResponse) {
                 $startingResponse = false;

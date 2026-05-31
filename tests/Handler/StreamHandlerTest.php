@@ -13,6 +13,7 @@ use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Handler\TransferByteCounter;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
@@ -95,6 +96,83 @@ class StreamHandlerTest extends TestCase
             self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertSame('HTTP protocol version must be a valid HTTP version number.', $e->getMessage());
         }
+    }
+
+    /**
+     * @dataProvider invalidRequestContentLengthProvider
+     *
+     * @param string|string[] $contentLength
+     */
+    public function testRejectsInvalidRequestContentLength($contentLength): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url, [
+            'Content-Length' => $contentLength,
+        ]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Invalid Content-Length request header');
+
+        $handler($request, []);
+    }
+
+    public static function invalidRequestContentLengthProvider(): iterable
+    {
+        return [
+            'empty' => [''],
+            'empty comma member' => ['3,'],
+            'non digit' => ['abc'],
+            'partial numeric' => ['3abc'],
+            'signed' => ['-1'],
+            'decimal' => ['3.0'],
+            'conflicting comma' => ['3, 5'],
+            'conflicting duplicate' => [['3', '5']],
+        ];
+    }
+
+    public function testNormalizesEquivalentRequestContentLengthValues(): void
+    {
+        $request = new Request('GET', Server::$url, [
+            'Content-Length' => ['0000', '0'],
+        ]);
+        $reflection = new \ReflectionMethod(StreamHandler::class, 'prepareRequest');
+        if (\PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
+        $prepared = $reflection->invoke(null, $request);
+
+        self::assertInstanceOf(RequestInterface::class, $prepared);
+        self::assertSame(['0'], $prepared->getHeader('Content-Length'));
+    }
+
+    public function testRejectsUnrepresentableRequestContentLength(): void
+    {
+        $length = ((string) \PHP_INT_MAX).'0';
+        $request = new Request('GET', Server::$url, [
+            'Content-Length' => $length,
+        ]);
+        $reflection = new \ReflectionMethod(StreamHandler::class, 'prepareRequest');
+        if (\PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Content-Length exceeds the maximum integer size supported on this platform');
+
+        $reflection->invoke(null, $request);
+    }
+
+    public function testRejectsInvalidRequestContentLengthBeforeAddingEmptyBodyDefault(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('PUT', Server::$url, [
+            'Content-Length' => 'abc',
+        ]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Invalid Content-Length request header');
+
+        $handler($request, []);
     }
 
     public function testAddsErrorToResponse(): void
@@ -775,7 +853,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('ab', (string) $response->getBody());
     }
 
-    public function testContentLengthAbovePhpIntMaxSkipsShortBodyCheck(): void
+    public function testContentLengthAbovePhpIntMaxRejectsNonStreamedResponse(): void
     {
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -786,10 +864,58 @@ class StreamHandlerTest extends TestCase
             "Content-Length: {$overflow}",
         ]);
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertResponseContentLengthPlatformException($e);
+        }
+    }
+
+    public function testContentLengthAbovePhpIntMaxAllowsStreamedResponse(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $overflow = '99999999999999999999999999';
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            "Content-Length: {$overflow}",
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['stream' => true], Psr7\Utils::streamFor('ab'))->wait();
 
         self::assertSame(200, $response->getStatusCode());
+        self::assertSame($overflow, $response->getHeaderLine('Content-Length'));
         self::assertSame('ab', (string) $response->getBody());
+    }
+
+    public function testAttemptsSourceCloseWhenContentLengthOverflows(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $closeCalled = false;
+        $source = FnStream::decorate(Psr7\Utils::streamFor('ab'), [
+            'close' => static function () use (&$closeCalled): void {
+                $closeCalled = true;
+
+                throw new \RuntimeException('close failed');
+            },
+        ]);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 99999999999999999999999999',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertResponseContentLengthPlatformException($e);
+        }
+
+        self::assertTrue($closeCalled);
     }
 
     public function testAttemptsSourceCloseWhenContentLengthBodyIsShort(): void
@@ -1505,6 +1631,14 @@ class StreamHandlerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('hi there', (string) $response->getBody());
+    }
+
+    public function testProgressOverflowValueThrows(): void
+    {
+        $this->expectException(\OverflowException::class);
+        $this->expectExceptionMessage('Progress byte count exceeds the maximum integer size supported on this platform');
+
+        TransferByteCounter::progressValueToInt(\INF);
     }
 
     public function testEmitsProgressInformationAndDebugInformation(): void
@@ -2607,6 +2741,13 @@ class StreamHandlerTest extends TestCase
                 return $new;
             }
         };
+    }
+
+    private static function assertResponseContentLengthPlatformException(ResponseException $e): void
+    {
+        self::assertNotInstanceOf(ResponseTransferException::class, $e);
+        self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
+        self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
     }
 
     /**
