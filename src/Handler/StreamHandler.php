@@ -80,7 +80,7 @@ final class StreamHandler
 
         // Sleep if there is a delay specified.
         if (isset($options['delay'])) {
-            \usleep((int) ($options['delay'] * 1000));
+            \usleep(Utils::delayToMicroseconds($options['delay']));
         }
 
         $protocolVersion = $request->getProtocolVersion();

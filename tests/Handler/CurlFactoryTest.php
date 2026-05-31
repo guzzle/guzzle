@@ -2895,9 +2895,31 @@ class CurlFactoryTest extends TestCase
         return [
             ['timeout', 0.0001],
             ['timeout', -1],
+            ['timeout', \INF],
+            ['timeout', -\INF],
+            ['timeout', \NAN],
+            ['timeout', 1.0e100],
             ['connect_timeout', 0.0001],
             ['connect_timeout', -1],
+            ['connect_timeout', \INF],
+            ['connect_timeout', -\INF],
+            ['connect_timeout', \NAN],
+            ['connect_timeout', 1.0e100],
         ];
+    }
+
+    public function testRejectsRoundedCurlTimeoutFloatAtIntegerBoundaryOnSixtyFourBit(): void
+    {
+        if (\PHP_INT_SIZE !== 8) {
+            self::markTestSkipped('The rounded timeout boundary only applies on 64-bit platforms.');
+        }
+
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('timeout must be 0 or greater than or equal to 0.001 seconds');
+
+        $f->create(new Psr7\Request('GET', Server::$url), ['timeout' => \PHP_INT_MAX / 1000]);
     }
 
     public function testAddsStreamingBody(): void

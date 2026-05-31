@@ -251,6 +251,121 @@ class UtilsTest extends TestCase
         return [[0], [-1]];
     }
 
+    /**
+     * @dataProvider validDelayProvider
+     *
+     * @param mixed $value
+     */
+    public function testConvertsDelayToMicroseconds($value, int $expected): void
+    {
+        self::assertSame($expected, Utils::delayToMicroseconds($value));
+    }
+
+    public static function validDelayProvider(): array
+    {
+        return [
+            'zero int' => [0, 0],
+            'zero float' => [0.0, 0],
+            'one millisecond' => [1, 1000],
+            'fractional millisecond' => [1.5, 1500],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidDelayProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidDelayValues($value, string $message): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+
+        Utils::delayToMicroseconds($value);
+    }
+
+    public static function invalidDelayProvider(): array
+    {
+        return [
+            'not a number' => ['1', 'delay must be a number'],
+            'positive infinity' => [\INF, 'delay must be finite'],
+            'negative infinity' => [-\INF, 'delay must be finite'],
+            'not a number float' => [\NAN, 'delay must be finite'],
+            'negative' => [-1, 'delay must be greater than or equal to 0'],
+            'huge finite float' => [1.0e100, 'delay is too large'],
+        ];
+    }
+
+    public function testRejectsRoundedDelayFloatAtIntegerBoundaryOnSixtyFourBit(): void
+    {
+        if (\PHP_INT_SIZE !== 8) {
+            self::markTestSkipped('The rounded delay boundary only applies on 64-bit platforms.');
+        }
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('delay is too large');
+
+        Utils::delayToMicroseconds(\PHP_INT_MAX / 1000);
+    }
+
+    /**
+     * @dataProvider validTimeoutProvider
+     *
+     * @param mixed $value
+     */
+    public function testConvertsTimeoutToMilliseconds($value, int $expected): void
+    {
+        self::assertSame($expected, Utils::timeoutToMilliseconds($value, 'timeout'));
+    }
+
+    public static function validTimeoutProvider(): array
+    {
+        return [
+            'zero int' => [0, 0],
+            'zero float' => [0.0, 0],
+            'numeric string' => ['0.001', 1],
+            'truncated fractional millisecond' => [0.0015, 1],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidTimeoutProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidTimeoutValues($value, string $message): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+
+        Utils::timeoutToMilliseconds($value, 'timeout');
+    }
+
+    public static function invalidTimeoutProvider(): array
+    {
+        return [
+            'not a number' => ['foo', 'timeout must be a number of seconds'],
+            'positive infinity' => [\INF, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
+            'negative infinity' => [-\INF, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
+            'not a number float' => [\NAN, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
+            'negative' => [-1, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
+            'below one millisecond' => [0.0001, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
+            'huge finite float' => [1.0e100, 'timeout must be 0 or greater than or equal to 0.001 seconds'],
+        ];
+    }
+
+    public function testRejectsRoundedTimeoutFloatAtIntegerBoundaryOnSixtyFourBit(): void
+    {
+        if (\PHP_INT_SIZE !== 8) {
+            self::markTestSkipped('The rounded timeout boundary only applies on 64-bit platforms.');
+        }
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('timeout must be 0 or greater than or equal to 0.001 seconds');
+
+        Utils::timeoutToMilliseconds(\PHP_INT_MAX / 1000, 'timeout');
+    }
+
     private static function skipIfDefaultCurlHandlerIsUnavailable(): void
     {
         if (

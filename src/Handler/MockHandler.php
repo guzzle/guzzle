@@ -87,8 +87,8 @@ final class MockHandler implements \Countable
             throw new \OutOfBoundsException('Mock queue is empty');
         }
 
-        if (isset($options['delay']) && \is_numeric($options['delay'])) {
-            \usleep((int) ($options['delay'] * 1000));
+        if (isset($options['delay'])) {
+            \usleep(Utils::delayToMicroseconds($options['delay']));
         }
 
         if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {

@@ -127,6 +127,33 @@ class CurlHandlerTest extends TestCase
         self::assertGreaterThan(0.0001, Utils::currentTime() - $s);
     }
 
+    /**
+     * @dataProvider invalidDelayProvider
+     *
+     * @param mixed $delay
+     */
+    public function testRejectsInvalidDelay($delay): void
+    {
+        $handler = new CurlHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('delay');
+
+        $handler(new Request('GET', 'http://example.com'), ['delay' => $delay]);
+    }
+
+    public static function invalidDelayProvider(): array
+    {
+        return [
+            'not a number' => ['1'],
+            'positive infinity' => [\INF],
+            'negative infinity' => [-\INF],
+            'not a number float' => [\NAN],
+            'negative' => [-1],
+            'huge finite float' => [1.0e100],
+        ];
+    }
+
     public function testTransportSharingOptionAppliesCurlShare(): void
     {
         self::skipIfCurlShareIsUnavailable();

@@ -6,6 +6,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\TransportSharing;
+use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -67,7 +68,7 @@ final class CurlHandler
         $this->assertOpen();
 
         if (isset($options['delay'])) {
-            \usleep((int) ($options['delay'] * 1000));
+            \usleep(Utils::delayToMicroseconds($options['delay']));
         }
 
         $easy = $this->factory->create($request, $options);

@@ -829,11 +829,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         self::assertTlsFileOptionTypes($options, 'cert');
         self::assertIfPresentAndNotString($options, 'cert_type');
-        self::assertIfPresentAndNotNumber($options, 'connect_timeout');
+        self::assertIfPresentAndNotFiniteNumber($options, 'connect_timeout');
         self::assertIfPresentAndNotInt($options, 'crypto_method');
         self::assertIfPresentAndNotBoolOrResource($options, 'debug');
         self::assertIfPresentAndNotBoolOrString($options, 'decode_content');
-        self::assertIfPresentAndNotNumber($options, 'delay');
+        self::assertIfPresentAndNotFiniteNumber($options, 'delay');
         self::assertIfPresentAndNotBoolOrInt($options, 'expect');
 
         if (isset($options['form_params'])) {
@@ -859,7 +859,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertIfPresentAndNotCallable($options, 'progress');
         self::assertIfPresentAndNotStringArray($options, 'protocols', true);
         self::assertProxyOptionTypes($options);
-        self::assertIfPresentAndNotNumber($options, 'read_timeout');
+        self::assertIfPresentAndNotFiniteNumber($options, 'read_timeout');
         self::assertIfPresentAndNotInt($options, 'retries');
 
         if (isset($options['sink']) && !\is_resource($options['sink']) && !\is_string($options['sink']) && !$options['sink'] instanceof StreamInterface) {
@@ -871,7 +871,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertIfPresentAndNotBool($options, 'stream');
         self::assertIfPresentAndNotArray($options, 'stream_context', 'array<array-key, mixed>');
         self::assertIfPresentAndNotBool($options, 'synchronous');
-        self::assertIfPresentAndNotNumber($options, 'timeout');
+        self::assertIfPresentAndNotFiniteNumber($options, 'timeout');
         self::assertIfPresentAndNotBoolOrString($options, 'verify');
         self::assertIfPresentAndNotStringOrNumber($options, 'version');
         self::assertIfPresentAndNotArray($options, 'curl', 'array<int|string, mixed>');
@@ -1120,10 +1120,18 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertIfPresentAndNotNumber(array $options, string $option): void
+    private static function assertIfPresentAndNotFiniteNumber(array $options, string $option): void
     {
-        if (\array_key_exists($option, $options) && !\is_int($options[$option]) && !\is_float($options[$option])) {
+        if (!\array_key_exists($option, $options)) {
+            return;
+        }
+
+        if (!\is_int($options[$option]) && !\is_float($options[$option])) {
             self::invalidRequestOptionType($option, 'int|float', $options[$option]);
+        }
+
+        if (!\is_finite((float) $options[$option])) {
+            self::invalidRequestOptionType($option, 'finite int|float', $options[$option]);
         }
     }
 

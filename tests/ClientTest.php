@@ -1282,6 +1282,33 @@ class ClientTest extends TestCase
         $client->request('POST', 'http://foo.com', $options);
     }
 
+    /**
+     * @dataProvider nonFiniteNumericRequestOptionProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsNonFiniteNumericRequestOptions(string $option, $value): void
+    {
+        $client = new Client(['handler' => new MockHandler([new Response()])]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf(
+            'Passing float to request option "%s" is invalid; expected finite int|float.',
+            $option
+        ));
+
+        $client->request('GET', 'http://example.com', [$option => $value]);
+    }
+
+    public static function nonFiniteNumericRequestOptionProvider(): iterable
+    {
+        foreach (['connect_timeout', 'delay', 'read_timeout', 'timeout'] as $option) {
+            yield $option.' positive infinity' => [$option, \INF];
+            yield $option.' negative infinity' => [$option, -\INF];
+            yield $option.' not a number' => [$option, \NAN];
+        }
+    }
+
     public static function invalidRequestOptionTypeProvider(): iterable
     {
         yield 'handler' => [

@@ -113,7 +113,12 @@ final class CurlMultiHandler
             throw new InvalidArgumentException('select_timeout must be a number of seconds');
         }
 
-        $this->selectTimeout = (float) $selectTimeout;
+        $selectTimeout = (float) $selectTimeout;
+        if (!\is_finite($selectTimeout) || $selectTimeout < 0) {
+            throw new InvalidArgumentException('select_timeout must be a finite number of seconds greater than or equal to 0');
+        }
+
+        $this->selectTimeout = $selectTimeout;
 
         $multiOptions = $options['options'] ?? [];
         if (!\is_array($multiOptions)) {
@@ -511,10 +516,10 @@ final class CurlMultiHandler
         $easy = $entry['easy'];
         $id = (int) $easy->handle;
         $this->handles[$id] = $entry;
-        if (empty($easy->options['delay'])) {
+        if (!isset($easy->options['delay']) || $easy->options['delay'] === 0 || $easy->options['delay'] === 0.0) {
             \curl_multi_add_handle($this->getMultiHandle(), $easy->handle);
         } else {
-            $this->delays[$id] = Utils::currentTime() + ($easy->options['delay'] / 1000);
+            $this->delays[$id] = Utils::currentTime() + Utils::delayToMicroseconds($easy->options['delay']) / 1000000;
         }
     }
 
@@ -623,7 +628,9 @@ final class CurlMultiHandler
             }
         }
 
-        return ((int) \max(0, $nextTime - $currentTime)) * 1000000;
+        $seconds = \max(0.0, $nextTime - $currentTime);
+
+        return (int) \ceil($seconds * 1000000);
     }
 
     /**
