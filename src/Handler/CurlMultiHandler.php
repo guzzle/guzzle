@@ -7,11 +7,9 @@ namespace GuzzleHttp\Handler;
 use Closure;
 use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Exception\InvalidArgumentException;
-use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
@@ -141,16 +139,7 @@ final class CurlMultiHandler
     {
         $this->assertOpen();
 
-        try {
-            $easy = $this->factory->create($request, $options);
-        } catch (TimeoutException $e) {
-            /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(new NetworkTimeoutException(
-                'The cURL handler timed out while transferring the request body',
-                $request,
-                $e
-            ));
-        }
+        $easy = $this->factory->create($request, $options);
 
         $id = (int) $easy->handle;
 
@@ -590,7 +579,8 @@ final class CurlMultiHandler
     {
         while ($done = \curl_multi_info_read($this->getMultiHandle())) {
             if ($done['msg'] !== \CURLMSG_DONE) {
-                // if it's not done, then it would be premature to remove the handle. ref https://github.com/guzzle/guzzle/pull/2892#issuecomment-945150216
+                // If it is not done, removing the handle would be premature.
+                // See https://github.com/guzzle/guzzle/pull/2892#issuecomment-945150216.
                 continue;
             }
             if (!isset($done['handle'])) {

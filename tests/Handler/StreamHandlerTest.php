@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\ConnectTimeoutException;
-use GuzzleHttp\Exception\NetworkException;
-use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Handler\TransferByteCounter;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
@@ -97,6 +95,146 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider invalidRequestContentLengthProvider
+     *
+     * @param string|string[] $contentLength
+     */
+    public function testRejectsInvalidRequestContentLength($contentLength): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url, [
+            'Content-Length' => $contentLength,
+        ]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Invalid Content-Length request header');
+
+        $handler($request, []);
+    }
+
+    public static function invalidRequestContentLengthProvider(): iterable
+    {
+        return [
+            'empty' => [''],
+            'empty comma member' => ['3,'],
+            'non digit' => ['abc'],
+            'partial numeric' => ['3abc'],
+            'signed' => ['-1'],
+            'decimal' => ['3.0'],
+            'conflicting comma' => ['3, 5'],
+            'conflicting duplicate' => [['3', '5']],
+        ];
+    }
+
+    public function testPrepareRequestFailureDoesNotInvokeOnStats(): void
+    {
+        $handler = new StreamHandler();
+        $called = false;
+        $request = new Request('GET', Server::$url, [
+            'Content-Length' => 'abc',
+        ]);
+
+        try {
+            $handler($request, [
+                'on_stats' => static function () use (&$called): void {
+                    $called = true;
+                },
+            ]);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(
+                'Invalid Content-Length request header: value is not a non-negative decimal integer',
+                $e->getMessage()
+            );
+        }
+
+        self::assertFalse($called);
+    }
+
+    public function testRequestBodyGetSizeTimeoutRejectsAsRequestExceptionWithoutStats(): void
+    {
+        $handler = new StreamHandler();
+        $called = false;
+        $previous = new Psr7\Exception\TimeoutException('Unable to determine stream size: timed out');
+        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            'getSize' => static function () use ($previous): ?int {
+                throw $previous;
+            },
+        ]);
+        $request = new Request('PUT', Server::$url, [], $body);
+
+        try {
+            $handler($request, [
+                'on_stats' => static function () use (&$called): void {
+                    $called = true;
+                },
+            ]);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Unable to determine stream size: timed out', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertFalse($called);
+    }
+
+    public function testNormalizesEquivalentRequestContentLengthValues(): void
+    {
+        $request = new Request('GET', Server::$url, [
+            'Content-Length' => ['0000', '0'],
+        ]);
+        $reflection = new \ReflectionMethod(StreamHandler::class, 'prepareRequest');
+        if (\PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
+        $prepared = $reflection->invoke(null, $request);
+
+        self::assertInstanceOf(RequestInterface::class, $prepared);
+        self::assertSame(['0'], $prepared->getHeader('Content-Length'));
+    }
+
+    public function testRejectsUnrepresentableRequestContentLength(): void
+    {
+        $length = ((string) \PHP_INT_MAX).'0';
+        $request = new Request('GET', Server::$url, [
+            'Content-Length' => $length,
+        ]);
+        $reflection = new \ReflectionMethod(StreamHandler::class, 'prepareRequest');
+        if (\PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
+
+        try {
+            $reflection->invoke(null, $request);
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
+        }
+    }
+
+    public function testRejectsInvalidRequestContentLengthBeforeAddingEmptyBodyDefault(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('PUT', Server::$url, [
+            'Content-Length' => 'abc',
+        ]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Invalid Content-Length request header');
+
+        $handler($request, []);
+    }
+
     public function testAddsErrorToResponse(): void
     {
         $handler = new StreamHandler();
@@ -115,7 +253,7 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): Failed to open stream: Operation timed out'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'stream_socket_client(): Unable to connect to example.test:443 (Operation timed out)'));
         // Windows WSAETIMEDOUT (errno 10060) wording matches for both connect-phase
-        // and post-connect send timeouts; the end-to-end tests prove which classifier wins.
+        // and post-connect send timeouts; the send-error matcher is checked first.
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'));
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'Send of 65536 bytes failed with errno=10060 A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'));
         self::assertFalse($this->matchesStreamHandlerError('isConnectTimeoutError', 'HTTP request failed!'));
@@ -157,7 +295,7 @@ class StreamHandlerTest extends TestCase
         self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'HTTP request failed!'));
     }
 
-    public function testThrowsNetworkTimeoutExceptionWhenRequestBodyReadTimesOut(): void
+    public function testRejectsRequestExceptionWhenRequestBodyReadTimesOut(): void
     {
         $handler = new StreamHandler();
         $previous = new Psr7\Exception\TimeoutException('Unable to read stream contents: timed out');
@@ -169,6 +307,7 @@ class StreamHandlerTest extends TestCase
         $request = new Request('PUT', Server::$url, [], $body);
         $stats = null;
         $exception = null;
+        $exceptionRequest = null;
 
         try {
             $handler($request, [
@@ -177,32 +316,36 @@ class StreamHandlerTest extends TestCase
                 },
             ])->wait();
 
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
             $exception = $e;
-            self::assertSame($request, $e->getRequest());
-            self::assertSame('The stream handler timed out while transferring the request body', $e->getMessage());
+            $exceptionRequest = $e->getRequest();
+            self::assertSame($request->getMethod(), $exceptionRequest->getMethod());
+            self::assertSame((string) $request->getUri(), (string) $exceptionRequest->getUri());
+            self::assertSame('Unable to read stream contents: timed out', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertInstanceOf(NetworkException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
         self::assertFalse($stats->hasResponse());
-        self::assertSame($request, $stats->getRequest());
+        self::assertSame($exceptionRequest->getMethod(), $stats->getRequest()->getMethod());
+        self::assertSame((string) $exceptionRequest->getUri(), (string) $stats->getRequest()->getUri());
         self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
-    public function testClassifiesPostConnectSendTimeoutAsNetworkTimeout(): void
+    /**
+     * @dataProvider transportLookingRequestBodyFailureMessageProvider
+     */
+    public function testRequestBodyFailureIsNotRepromotedToNetworkExceptionByMessage(string $message): void
     {
-        // A real send() ETIMEDOUT can't be triggered, so the request-body read
-        // is only a seam to feed a representative send-failure message in.
         $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('Send of 65536 bytes failed with errno=110 Connection timed out');
+        $previous = new \RuntimeException($message);
+        $body = FnStream::decorate(Psr7\Utils::streamFor('x'), [
+            '__toString' => static function () use ($previous): string {
+                throw $previous;
             },
         ]);
         $request = new Request('PUT', Server::$url, [], $body);
@@ -210,177 +353,32 @@ class StreamHandlerTest extends TestCase
         try {
             $handler($request, [])->wait();
 
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            $exceptionRequest = $e->getRequest();
+            self::assertSame($request->getMethod(), $exceptionRequest->getMethod());
+            self::assertSame((string) $request->getUri(), (string) $exceptionRequest->getUri());
+            self::assertSame($message, $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
     }
 
-    public function testClassifiesConnectTimeoutMessageAsConnectTimeout(): void
+    public static function transportLookingRequestBodyFailureMessageProvider(): iterable
     {
-        // Without the "Send of ..." marker, a connect-timeout message stays a connect timeout.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('fopen(): Failed to open stream: Connection timed out');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected ConnectTimeoutException');
-        } catch (ConnectTimeoutException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(ConnectException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-        }
-    }
-
-    public function testClassifiesPostConnectSendFailureAsNetwork(): void
-    {
-        // A non-timeout send failure (e.g. peer reset) is a network error, not a timeout.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('Send of 65536 bytes failed with errno=104 Connection reset by peer');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected NetworkException');
-        } catch (NetworkException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
-            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
-        }
-    }
-
-    public function testClassifiesWindowsSendTimeoutAsNetworkTimeout(): void
-    {
-        // Windows WSAETIMEDOUT (errno 10060) write timeout on an established
-        // connection. The body-read seam only feeds a representative message in.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('Send of 65536 bytes failed with errno=10060 A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
-        }
-    }
-
-    public function testClassifiesWindowsConnectTimeoutAsConnectTimeout(): void
-    {
-        // The same WSAETIMEDOUT wording without the "Send of ..." marker is a
-        // connect-phase timeout and must be a ConnectTimeoutException.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected ConnectTimeoutException');
-        } catch (ConnectTimeoutException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(ConnectException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-        }
-    }
-
-    public function testClassifiesConnectionResetAsNetwork(): void
-    {
-        // A post-connect reset (e.g. TLS "SSL: Connection reset by peer") is a network error.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('SSL: Connection reset by peer');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected NetworkException');
-        } catch (NetworkException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
-            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
-        }
-    }
-
-    public function testClassifiesUnexpectedEofAsNetwork(): void
-    {
-        // OpenSSL 3.0+ surfaces a peer closing the connection without a TLS
-        // close_notify (an empty reply, like cURL's CURLE_GOT_NOTHING) as
-        // "unexpected eof while reading". The handshake already completed, so
-        // there is no "Failed to enable crypto", and it is a network error.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected NetworkException');
-        } catch (NetworkException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(ConnectException::class, $e);
-            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
-        }
-    }
-
-    public function testClassifiesHandshakeUnexpectedEofAsConnect(): void
-    {
-        // The same OpenSSL EOF during the handshake co-emits "Failed to enable
-        // crypto", which is matched as a connection error first, so it stays a
-        // connect error instead of being reclassified as a network error.
-        $handler = new StreamHandler();
-        $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
-            '__toString' => static function (): string {
-                throw new \RuntimeException('SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading. Failed to enable crypto');
-            },
-        ]);
-        $request = new Request('PUT', Server::$url, [], $body);
-
-        try {
-            $handler($request, [])->wait();
-
-            self::fail('Expected ConnectException');
-        } catch (ConnectException $e) {
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
-        }
+        return [
+            'connect timeout' => ['Operation timed out'],
+            'fopen connect timeout' => ['fopen(): Failed to open stream: Connection timed out'],
+            'send timeout' => ['Send of 65536 bytes failed with errno=110 Connection timed out'],
+            'send failure' => ['Send of 65536 bytes failed with errno=104 Connection reset by peer'],
+            'windows timeout' => ['A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'],
+            'windows send timeout' => ['Send of 65536 bytes failed with errno=10060 A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond'],
+            'tls reset' => ['SSL: Connection reset by peer'],
+            'unexpected eof' => ['SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading'],
+            'handshake eof' => ['SSL operation failed with code 1. OpenSSL Error messages: error:0A000126:SSL routines::unexpected eof while reading. Failed to enable crypto'],
+        ];
     }
 
     public function testRejectsHttp3(): void
@@ -606,7 +604,7 @@ class StreamHandlerTest extends TestCase
             $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler received fewer bytes than the declared Content-Length', $e->getMessage());
+            self::assertSame('Response body ended before the declared Content-Length was reached', $e->getMessage());
             self::assertNull($e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
@@ -775,7 +773,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('ab', (string) $response->getBody());
     }
 
-    public function testContentLengthAbovePhpIntMaxSkipsShortBodyCheck(): void
+    public function testContentLengthAbovePhpIntMaxRejectsNonStreamedResponse(): void
     {
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -786,10 +784,58 @@ class StreamHandlerTest extends TestCase
             "Content-Length: {$overflow}",
         ]);
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertResponseContentLengthPlatformException($e);
+        }
+    }
+
+    public function testContentLengthAbovePhpIntMaxAllowsStreamedResponse(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $overflow = '99999999999999999999999999';
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            "Content-Length: {$overflow}",
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['stream' => true], Psr7\Utils::streamFor('ab'))->wait();
 
         self::assertSame(200, $response->getStatusCode());
+        self::assertSame($overflow, $response->getHeaderLine('Content-Length'));
         self::assertSame('ab', (string) $response->getBody());
+    }
+
+    public function testAttemptsSourceCloseWhenContentLengthOverflows(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $closeCalled = false;
+        $source = FnStream::decorate(Psr7\Utils::streamFor('ab'), [
+            'close' => static function () use (&$closeCalled): void {
+                $closeCalled = true;
+
+                throw new \RuntimeException('close failed');
+            },
+        ]);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 99999999999999999999999999',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertResponseContentLengthPlatformException($e);
+        }
+
+        self::assertTrue($closeCalled);
     }
 
     public function testAttemptsSourceCloseWhenContentLengthBodyIsShort(): void
@@ -814,7 +860,7 @@ class StreamHandlerTest extends TestCase
             $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
-            self::assertSame('The stream handler received fewer bytes than the declared Content-Length', $e->getMessage());
+            self::assertSame('Response body ended before the declared Content-Length was reached', $e->getMessage());
             self::assertNull($e->getPrevious());
         }
 
@@ -1507,6 +1553,14 @@ class StreamHandlerTest extends TestCase
         self::assertSame('hi there', (string) $response->getBody());
     }
 
+    public function testProgressOverflowValueThrows(): void
+    {
+        $this->expectException(\OverflowException::class);
+        $this->expectExceptionMessage('Progress byte count exceeds the maximum integer size supported on this platform');
+
+        TransferByteCounter::progressValueToInt(\INF);
+    }
+
     public function testEmitsProgressInformationAndDebugInformation(): void
     {
         $called = [];
@@ -1804,7 +1858,7 @@ class StreamHandlerTest extends TestCase
             $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler timed out while writing the response body', $e->getMessage());
+            self::assertSame('Timed out while writing the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
@@ -1985,7 +2039,7 @@ class StreamHandlerTest extends TestCase
         } catch (ResponseTransferException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler failed while transferring the response body', $e->getMessage());
+            self::assertSame('Failed while transferring the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
         }
     }
@@ -2006,7 +2060,7 @@ class StreamHandlerTest extends TestCase
             $handler($request, ['sink' => $sink])->wait();
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
-            self::assertSame('The stream handler failed while writing the response body', $e->getMessage());
+            self::assertSame('Failed to write the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
@@ -2459,7 +2513,7 @@ class StreamHandlerTest extends TestCase
             $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame('Timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
@@ -2494,7 +2548,7 @@ class StreamHandlerTest extends TestCase
             $exception = $e;
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The stream handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame('Timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
@@ -2607,6 +2661,13 @@ class StreamHandlerTest extends TestCase
                 return $new;
             }
         };
+    }
+
+    private static function assertResponseContentLengthPlatformException(ResponseException $e): void
+    {
+        self::assertNotInstanceOf(ResponseTransferException::class, $e);
+        self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
+        self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
     }
 
     /**

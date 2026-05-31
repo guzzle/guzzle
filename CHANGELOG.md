@@ -35,6 +35,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Declare strict types across remaining source files
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use
 - Reject invalid `SetCookie` constructor field types instead of coercing them
+- Reject malformed, conflicting, or unrepresentable request `Content-Length` values in built-in handlers
 - Reject conflicting raw cURL request options, including request-level `CURLOPT_SHARE`
 - Reject selected request options ignored by incompatible built-in handlers
 - Support retry delay callbacks with retry count only or full retry context
@@ -58,17 +59,18 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify generic response-aware request failures as `ResponseException`
 - Classify response-aware transfer failures as `ResponseTransferException`
 - Reject short non-streamed stream-handler response bodies with valid `Content-Length` as `ResponseTransferException`
+- Reject unrepresentable built-in handler response sizes and byte counts as `ResponseException`
 - Ignore cURL informational responses other than `101 Switching Protocols` before the final response
 - Treat response sink rewind failures as `ResponseException` and skip non-seekable sink rewinds
+- Classify redirect request-body rewind failures as `ResponseException`
 - Ignore stream source close failures after a complete response body transfer
 - Throw `GuzzleHttp\Exception\InvalidArgumentException` for invalid built-in handler options
 - Classify built-in cURL handle, `sink`, and HTTP/3 setup failures as `RequestException`
 - Throw `ConnectTimeoutException` for connect timeouts
 - Throw `NetworkTimeoutException` for cURL no-response timeout errors
 - Throw `ResponseTimeoutException` for response-aware transfer timeouts
-- Classify cURL PSR-7 request-body upload timeouts by response phase
-- Classify cURL PSR-7 response sink write timeouts by response phase
-- Classify cURL response sink write throwables as `ResponseException` or `RequestException`
+- Classify request-body stream size detection, read, stringification, and rewind failures as `RequestException` or `ResponseException` by phase
+- Classify cURL response sink write failures, including timeouts, as `ResponseException` or `RequestException` by phase
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers

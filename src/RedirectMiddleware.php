@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -216,7 +217,16 @@ class RedirectMiddleware
         }
 
         $modify['uri'] = $uri;
-        Psr7\Message::rewindBody($request);
+        try {
+            Psr7\Message::rewindBody($request);
+        } catch (\RuntimeException $e) {
+            throw new ResponseException(
+                'Redirect failed because the request body could not be rewound: '.$e->getMessage(),
+                $request,
+                $response,
+                $e
+            );
+        }
 
         // Add the Referer header if it is told to do so and only
         // add the header if we are not redirecting from https to http.

@@ -1386,6 +1386,26 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testProgressOverflowValueAbortsCurlTransfer(): void
+    {
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url), [
+            'progress' => static function (): void {
+                self::fail('Progress callback should not receive overflowing values');
+            },
+        ]);
+
+        try {
+            $callback = $_SERVER['_curl'][self::progressCallbackOption()];
+
+            self::assertSame(1, $callback($easy->handle, \INF, 0.0, 0.0, 0.0));
+            self::assertFalse($easy->progressAborted);
+            self::assertInstanceOf(\OverflowException::class, $easy->progressException);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
     /**
      * @dataProvider curlHandlerProvider
      */
@@ -2471,6 +2491,121 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testUnrepresentableResponseContentLengthCreatesResponseException(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $stats = null;
+        $easy = $factory->create($request, [
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+        $overflow = ((string) \PHP_INT_MAX).'0';
+
+        $header = self::receiveCurlHeaders($easy, [
+            "HTTP/1.1 200 OK\r\n",
+            "Content-Length: {$overflow}\r\n",
+        ]);
+        self::assertSame(-1, $header($easy->handle, "\r\n"));
+        $easy->errno = \CURLE_WRITE_ERROR;
+
+        try {
+            self::finishEasy($easy, $factory);
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
+            self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertInstanceOf(\OverflowException::class, $stats->getHandlerErrorData());
+    }
+
+    public function testOnHeadersExceptionWinsOverUnrepresentableResponseContentLength(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $previous = new \RuntimeException('on headers failed');
+        $easy = $factory->create($request, [
+            'on_headers' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $overflow = ((string) \PHP_INT_MAX).'0';
+
+        $header = self::receiveCurlHeaders($easy, [
+            "HTTP/1.1 200 OK\r\n",
+            "Content-Length: {$overflow}\r\n",
+        ]);
+        self::assertSame(-1, $header($easy->handle, "\r\n"));
+        $easy->errno = \CURLE_WRITE_ERROR;
+
+        try {
+            self::finishEasy($easy, $factory);
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+        }
+    }
+
+    public function testResponseBodyByteCountOverflowCreatesResponseException(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $response = new Psr7\Response(200);
+        $easy = $factory->create($request, []);
+        $write = $_SERVER['_curl'][\CURLOPT_WRITEFUNCTION];
+        $easy->response = $response;
+        $easy->responseBodyBytes = \PHP_INT_MAX - 1;
+
+        self::assertSame(0, $write($easy->handle, 'ab'));
+        self::assertInstanceOf(\OverflowException::class, $easy->responseBodySizeException);
+
+        try {
+            self::finishEasy($easy, $factory);
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
+            self::assertSame($easy->responseBodySizeException, $e->getPrevious());
+        }
+    }
+
+    /**
+     * @param list<string> $headers
+     */
+    private static function receiveCurlHeaders(EasyHandle $easy, array $headers): callable
+    {
+        $header = $_SERVER['_curl'][\CURLOPT_HEADERFUNCTION];
+
+        foreach ($headers as $line) {
+            self::assertSame(\strlen($line), $header($easy->handle, $line));
+        }
+
+        return $header;
+    }
+
+    private static function finishEasy(EasyHandle $easy, CurlFactory $factory): void
+    {
+        CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        )->wait();
+    }
+
     public static function curlResponseTransferErrorProvider(): iterable
     {
         yield 'partial file' => [18];
@@ -2772,6 +2907,110 @@ class CurlFactoryTest extends TestCase
         $f->create($request, []);
         self::assertEquals(1, $_SERVER['_curl'][\CURLOPT_UPLOAD]);
         self::assertIsCallable($_SERVER['_curl'][\CURLOPT_READFUNCTION]);
+    }
+
+    /**
+     * @dataProvider validCurlRequestContentLengthProvider
+     *
+     * @param string|string[] $contentLength
+     */
+    public function testUsesParsedRequestContentLengthForCurlUpload($contentLength): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('PUT', Server::$url, [
+            'Content-Length' => $contentLength,
+        ], 'foo');
+
+        $factory->create($request, []);
+
+        self::assertTrue((bool) $_SERVER['_curl'][\CURLOPT_UPLOAD]);
+        self::assertSame(1000000, $_SERVER['_curl'][\CURLOPT_INFILESIZE]);
+    }
+
+    public static function validCurlRequestContentLengthProvider(): iterable
+    {
+        return [
+            'plain' => ['1000000'],
+            'leading zeros' => ['001000000'],
+            'comma equivalent' => ['001000000, 1000000'],
+            'duplicate equivalent' => [['001000000', '1000000']],
+        ];
+    }
+
+    public function testNormalizesEquivalentRequestContentLengthForCurlHeaders(): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('GET', Server::$url, [
+            'Content-Length' => ['0003', '3'],
+        ]);
+
+        $factory->create($request, []);
+
+        self::assertContains('Content-Length: 3', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        self::assertNotContains('Content-Length: 0003', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+    }
+
+    /**
+     * @dataProvider invalidCurlRequestContentLengthProvider
+     *
+     * @param string|string[] $contentLength
+     */
+    public function testRejectsInvalidCurlRequestContentLength($contentLength): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('PUT', Server::$url, [
+            'Content-Length' => $contentLength,
+        ], 'foo');
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Invalid Content-Length request header');
+
+        $factory->create($request, []);
+    }
+
+    public static function invalidCurlRequestContentLengthProvider(): iterable
+    {
+        return [
+            'empty' => [''],
+            'empty comma member' => ['3,'],
+            'non digit' => ['abc'],
+            'partial numeric' => ['3abc'],
+            'signed' => ['-1'],
+            'decimal' => ['3.0'],
+            'conflicting comma' => ['3, 5'],
+            'conflicting duplicate' => [['3', '5']],
+        ];
+    }
+
+    public function testRejectsUnrepresentableRequestContentLengthForCurlUpload(): void
+    {
+        $factory = new CurlFactory(3);
+        $length = ((string) \PHP_INT_MAX).'0';
+        $request = new Psr7\Request('PUT', Server::$url, [
+            'Content-Length' => $length,
+        ], 'foo');
+
+        try {
+            $factory->create($request, []);
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
+        }
+    }
+
+    public function testRejectsInvalidCurlRequestContentLengthWithEmptyBody(): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new Psr7\Request('POST', Server::$url, [
+            'Content-Length' => 'abc',
+        ]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Invalid Content-Length request header');
+
+        $factory->create($request, []);
     }
 
     public function testEnsuresDirExistsBeforeThrowingWarning(): void
@@ -3094,6 +3333,38 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testStreamingRequestBodyReadFailureAbortsReadCallback(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \RuntimeException('boom while reading');
+        $readCalled = false;
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'read' => static function (int $length) use (&$readCalled, $previous): string {
+                $readCalled = true;
+
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+        $easy = $factory->create($request, []);
+
+        try {
+            $callback = $_SERVER['_curl'][\CURLOPT_READFUNCTION];
+
+            self::assertSame(0x10000000, $callback($easy->handle, null, 8192));
+            self::assertTrue($readCalled);
+            self::assertSame($previous, $easy->bodyReadException);
+            self::assertNull($easy->bodyReadTimeoutException);
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
     public function testStreamingUploadInstallsProgressAbortForBodyReadTimeout(): void
     {
         $factory = new CurlFactory(3);
@@ -3116,6 +3387,33 @@ class CurlFactoryTest extends TestCase
             self::assertSame(0, $progress($easy->handle, 0, 0, 0, 0));
 
             $easy->bodyReadTimeoutException = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
+            self::assertSame(1, $progress($easy->handle, 0, 0, 0, 0));
+            self::assertFalse($easy->progressAborted);
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testStreamingUploadInstallsProgressAbortForBodyReadFailure(): void
+    {
+        $factory = new CurlFactory(3);
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+        $easy = $factory->create($request, []);
+
+        try {
+            self::assertArrayHasKey(self::progressCallbackOption(), $_SERVER['_curl']);
+            $progress = $_SERVER['_curl'][self::progressCallbackOption()];
+
+            self::assertSame(0, $progress($easy->handle, 0, 0, 0, 0));
+
+            $easy->bodyReadException = new \RuntimeException('boom while reading');
             self::assertSame(1, $progress($easy->handle, 0, 0, 0, 0));
             self::assertFalse($easy->progressAborted);
         } finally {
@@ -3153,14 +3451,6 @@ class CurlFactoryTest extends TestCase
             $handler($request, [])->wait();
 
             self::fail('Expected the upload read timeout to reject the transfer');
-        } catch (NetworkTimeoutException $e) {
-            // On PHP >= 8.1.17 / 8.2.4 the read callback aborts synchronously
-            // (and on older PHP the progress callback may abort before a
-            // response arrives), so no usable response is received.
-            self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
-            self::assertSame($previous, $e->getPrevious());
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
         } catch (ResponseException $e) {
             // PHP versions without read-callback abort support (< 8.1.17, and
             // 8.2.0-8.2.3 since the fix shipped in 8.1.17 and 8.2.4) ignore the
@@ -3169,10 +3459,20 @@ class CurlFactoryTest extends TestCase
             // It is still a timeout, never a silent success.
             self::assertTrue(\PHP_VERSION_ID < 80117 || (\PHP_VERSION_ID >= 80200 && \PHP_VERSION_ID < 80204));
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        } catch (RequestException $e) {
+            // On PHP >= 8.1.17 / 8.2.4 the read callback aborts synchronously
+            // (and on older PHP the progress callback may abort before a
+            // response arrives), so no usable response is received.
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         } finally {
             Server::flush();
@@ -3185,7 +3485,7 @@ class CurlFactoryTest extends TestCase
         self::assertTrue($readCalled);
     }
 
-    public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsNetworkTimeoutWithoutResponse(): void
+    public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsRequestExceptionWithoutResponse(): void
     {
         $factory = new CurlFactory(3);
         $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
@@ -3207,15 +3507,14 @@ class CurlFactoryTest extends TestCase
         try {
             CurlFactory::finish($handler, $easy, $factory)->wait();
 
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertInstanceOf(NetworkException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
@@ -3223,6 +3522,72 @@ class CurlFactoryTest extends TestCase
         self::assertNull($stats->getResponse());
         self::assertSame($request, $stats->getRequest());
         self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $stats->getHandlerErrorData());
+    }
+
+    public function testRequestBodyGetSizeTimeoutRejectsAsRequestException(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new Psr7\Exception\TimeoutException('Unable to determine stream size: timed out');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function () use ($previous): ?int {
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $factory->create($request, []);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Unable to determine stream size: timed out', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+    }
+
+    public function testRequestBodyReadFailureRejectsAsRequestExceptionWithoutResponseAndWithoutRetry(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \RuntimeException('boom while reading');
+        $stats = null;
+        $request = new Psr7\Request('PUT', Server::$url, [], 'payload');
+        $easy = $factory->create($request, [
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+        $easy->bodyReadException = $previous;
+        $easy->errno = 0;
+        $retried = false;
+        $handler = static function () use (&$retried): P\PromiseInterface {
+            $retried = true;
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('boom while reading', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertFalse($retried);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertFalse($stats->hasResponse());
+        self::assertNull($stats->getResponse());
+        self::assertSame($request, $stats->getRequest());
+        self::assertSame(0, $stats->getHandlerErrorData());
     }
 
     public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsResponseExceptionWithResponse(): void
@@ -3253,7 +3618,7 @@ class CurlFactoryTest extends TestCase
         } catch (ResponseException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame($response, $e->getResponse());
-            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
@@ -3268,10 +3633,54 @@ class CurlFactoryTest extends TestCase
         self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $stats->getHandlerErrorData());
     }
 
+    public function testRequestBodyReadFailureRejectsAsResponseExceptionWithResponseAndErrnoZero(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \RuntimeException('boom while reading');
+        $stats = null;
+        $request = new Psr7\Request('PUT', Server::$url, [], 'payload');
+        $response = new Psr7\Response(200, [], 'early');
+        $easy = $factory->create($request, [
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+        $easy->response = $response;
+        $easy->bodyReadException = $previous;
+        $easy->errno = 0;
+        $retried = false;
+        $handler = static function () use (&$retried): P\PromiseInterface {
+            $retried = true;
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame($response, $e->getResponse());
+            self::assertSame('boom while reading', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertFalse($retried);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($response, $stats->getResponse());
+        self::assertSame($request, $stats->getRequest());
+        self::assertSame(0, $stats->getHandlerErrorData());
+    }
+
     /**
      * @dataProvider curlHandlerProvider
      */
-    public function testStringRequestBodyReadPsr7TimeoutRejectsAsNetworkTimeoutThroughCurlHandlers(callable $handlerFactory): void
+    public function testBodyAsStringRequestBodyReadPsr7TimeoutRejectsAsRequestExceptionThroughCurlHandlers(callable $handlerFactory): void
     {
         $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
         $castCalled = false;
@@ -3290,15 +3699,14 @@ class CurlFactoryTest extends TestCase
                 'curl' => ['body_as_string' => true],
             ])->wait();
 
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while transferring the request body', $e->getMessage());
+            self::assertSame('Unable to read from stream: timed out', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertInstanceOf(NetworkException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         } finally {
             if (\method_exists($handler, 'close')) {
                 $handler->close();
@@ -3306,6 +3714,104 @@ class CurlFactoryTest extends TestCase
         }
 
         self::assertTrue($castCalled);
+    }
+
+    public function testBodyAsStringRequestBodyReadFailureRejectsAsRequestException(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \RuntimeException('boom while reading');
+        $castCalled = false;
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            '__toString' => static function () use (&$castCalled, $previous): string {
+                $castCalled = true;
+
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $factory->create($request, [
+                'curl' => ['body_as_string' => true],
+            ]);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('boom while reading', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertTrue($castCalled);
+    }
+
+    public function testStreamingRequestBodyRewindFailureRejectsAsRequestException(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \RuntimeException('boom while rewinding');
+        $rewindCalled = false;
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'rewind' => static function () use (&$rewindCalled, $previous): void {
+                $rewindCalled = true;
+
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $factory->create($request, []);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('boom while rewinding', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertTrue($rewindCalled);
+    }
+
+    public function testStreamingRequestBodyRewindTimeoutRejectsAsRequestException(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new Psr7\Exception\TimeoutException('Unable to rewind stream: timed out');
+        $rewindCalled = false;
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'rewind' => static function () use (&$rewindCalled, $previous): void {
+                $rewindCalled = true;
+
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $factory->create($request, []);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Unable to rewind stream: timed out', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertTrue($rewindCalled);
     }
 
     /**
@@ -3342,7 +3848,7 @@ class CurlFactoryTest extends TestCase
         } catch (ResponseException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('The cURL handler timed out while writing the response body', $e->getMessage());
+            self::assertSame('Timed out while writing the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
@@ -3480,7 +3986,7 @@ class CurlFactoryTest extends TestCase
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
-            self::assertSame('The cURL handler failed while writing the response body', $e->getMessage());
+            self::assertSame('Failed to write the response body', $e->getMessage());
         } finally {
             Server::flush();
 
@@ -3528,6 +4034,7 @@ class CurlFactoryTest extends TestCase
                 self::fail("Expected ResponseException ({$label})");
             } catch (ResponseException $e) {
                 self::assertSame(200, $e->getResponse()->getStatusCode(), $label);
+                self::assertSame('Unable to write to stream', $e->getMessage(), $label);
                 self::assertNull($e->getPrevious(), $label);
                 self::assertNotInstanceOf(ResponseTransferException::class, $e, $label);
             } finally {
@@ -3607,7 +4114,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame(0, $stats->getHandlerErrorData());
     }
 
-    public function testSinkWritePsr7TimeoutRejectsAsNetworkTimeoutWithoutResponse(): void
+    public function testSinkWritePsr7TimeoutRejectsAsRequestExceptionWithoutResponse(): void
     {
         $factory = new CurlFactory(3);
         $previous = new Psr7\Exception\TimeoutException('Unable to write to stream: timed out');
@@ -3629,15 +4136,14 @@ class CurlFactoryTest extends TestCase
         try {
             CurlFactory::finish($handler, $easy, $factory)->wait();
 
-            self::fail('Expected NetworkTimeoutException');
-        } catch (NetworkTimeoutException $e) {
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
-            self::assertSame('The cURL handler timed out while transferring the response body', $e->getMessage());
+            self::assertSame('Timed out while writing the response body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
-            self::assertInstanceOf(NetworkException::class, $e);
-            self::assertInstanceOf(NetworkExceptionInterface::class, $e);
-            self::assertNotInstanceOf(RequestExceptionInterface::class, $e);
+            self::assertInstanceOf(RequestExceptionInterface::class, $e);
             self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);

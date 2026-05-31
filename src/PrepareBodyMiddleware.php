@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp;
 
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -35,9 +36,10 @@ class PrepareBodyMiddleware
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $fn = $this->nextHandler;
+        $bodySize = self::bodySize($request);
 
         // Don't do anything if the request has no body.
-        if ($request->getBody()->getSize() === 0) {
+        if ($bodySize === 0) {
             return $fn($request, $options);
         }
 
@@ -56,16 +58,15 @@ class PrepareBodyMiddleware
         if (!$request->hasHeader('Content-Length')
             && !$request->hasHeader('Transfer-Encoding')
         ) {
-            $size = $request->getBody()->getSize();
-            if ($size !== null) {
-                $modify['set_headers']['Content-Length'] = (string) $size;
+            if ($bodySize !== null) {
+                $modify['set_headers']['Content-Length'] = (string) $bodySize;
             } else {
                 $modify['set_headers']['Transfer-Encoding'] = 'chunked';
             }
         }
 
         // Add the expect header if needed.
-        $this->addExpectHeader($request, $options, $modify);
+        $this->addExpectHeader($request, $options, $modify, $bodySize);
 
         return $fn(Psr7\Utils::modifyRequest($request, $modify), $options);
     }
@@ -73,8 +74,12 @@ class PrepareBodyMiddleware
     /**
      * Add expect header
      */
-    private function addExpectHeader(RequestInterface $request, array $options, array &$modify): void
-    {
+    private function addExpectHeader(
+        RequestInterface $request,
+        array $options,
+        array &$modify,
+        ?int $bodySize
+    ): void {
         // Determine if the Expect header should be used
         if ($request->hasHeader('Expect')) {
             return;
@@ -102,10 +107,18 @@ class PrepareBodyMiddleware
         // Always add if the body cannot be rewound, the size cannot be
         // determined, or the size is greater than the cutoff threshold
         $body = $request->getBody();
-        $size = $body->getSize();
 
-        if ($size === null || $size >= (int) $expect || !$body->isSeekable()) {
+        if ($bodySize === null || $bodySize >= (int) $expect || !$body->isSeekable()) {
             $modify['set_headers']['Expect'] = '100-Continue';
+        }
+    }
+
+    private static function bodySize(RequestInterface $request): ?int
+    {
+        try {
+            return $request->getBody()->getSize();
+        } catch (\RuntimeException $e) {
+            throw new RequestException($e->getMessage(), $request, 0, $e);
         }
     }
 }

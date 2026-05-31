@@ -30,8 +30,10 @@ that they could fix by changing their code?
    ├─ Is it happening while sending a specific request (RequestInterface in scope)?
    │  ├─ Network failure, no response yet ──► NetworkException / ConnectException
    │  │                                        / ConnectTimeoutException / NetworkTimeoutException
-   │  ├─ A response was received, then it failed ──► ResponseException / ResponseTransferException
-   │  │                                              / ResponseTimeoutException / BadResponseException
+   │  ├─ A response was received, then it failed
+   │  │  ├─ transfer failure ──► ResponseTransferException / ResponseTimeoutException
+   │  │  ├─ local/callback/finalization failure ──► ResponseException
+   │  │  └─ bad response policy failure ──► BadResponseException
    │  └─ Cannot even begin sending this request
    │     (curl handle init, sink directory missing, unsupported protocol) ──► RequestException
    │
@@ -39,10 +41,26 @@ that they could fix by changing their code?
       (e.g. "the cURL extension is not available") ──► \RuntimeException (bare SPL is fine here)
 ```
 
-Use `ResponseTransferException` only for failures reading the response body off
-the network after response headers were received. Local response finalization
-failures, such as rewinding a response sink after the body has been received,
-are plain `ResponseException` failures.
+Use `ResponseTransferException` for transfer-level failures after response
+headers were received and a response object exists. This includes response-aware
+connection, network, protocol, content-decoding, partial-body, and response-body
+transfer failures.
+
+Do not use `ResponseTransferException` for local sink writes, request-body stream
+failures, progress callback failures, `on_headers` failures, or response
+finalization such as rewinding a response sink after the body has been received.
+Deterministic platform-limit failures, such as a response length or byte count
+that cannot be represented as a PHP integer, are also plain `ResponseException`
+failures when a response exists.
+
+**Timeouts: transport vs. caller-supplied streams.** A `*TimeoutException` means
+the network transport timed out, such as cURL `CURLE_OPERATION_TIMEDOUT` or a
+stream send/connect timeout message. A timeout surfaced as a PSR-7
+`TimeoutException` from a caller stream is classified like any other failure of
+that stream: `RequestException` while reading the request body before a response,
+or `ResponseException` once a response exists. It is never a
+`NetworkTimeoutException`. The original `TimeoutException` is attached via
+`getPrevious()`.
 
 ## `GuzzleHttp\Exception\InvalidArgumentException`
 
@@ -171,9 +189,10 @@ of Guzzle's own lifecycle APIs.
    it a request — invalid options are not a malformed request.
 4. **Never** throw for 4xx/5xx from `sendRequest()` — that is `http_errors`
    middleware, which PSR-18 mode disables.
-5. Pick `Network*`/`Connect*` (no response) vs `Response*` (response received)
-   vs `RequestException` (can't start) by transfer phase; see the hierarchy in
-   `UPGRADING.md`.
+5. Pick `Network*`/`Connect*` (no response), `ResponseTransferException`
+   (response-aware transfer failure), plain `ResponseException` (other
+   response-aware failure), or `RequestException` (can't start) by transfer
+   phase; see the hierarchy in `UPGRADING.md`.
 
 ## For consumers (catching)
 

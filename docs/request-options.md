@@ -827,7 +827,15 @@ The function accepts the following positional arguments:
 - the total number of bytes expected to be uploaded
 - the number of bytes uploaded so far
 
-With the built-in cURL handlers, returning a truthy value aborts the transfer and rejects the request promise with a `GuzzleHttp\Exception\ResponseException` when a response is available, or a `GuzzleHttp\Exception\RequestException` otherwise. If the callable throws, the built-in cURL handlers abort the transfer and reject the promise with the same response-aware classification while wrapping the thrown exception. The built-in stream handler treats progress callbacks as notifications only and ignores return values.
+With the built-in cURL handlers, returning a truthy value aborts the transfer and
+rejects the request promise with a `GuzzleHttp\Exception\ResponseException` when a
+response is available, or a `GuzzleHttp\Exception\RequestException` otherwise. If
+the callable throws, the built-in cURL handlers abort the transfer and reject the
+promise with the same response-aware classification while wrapping the thrown
+exception. If a built-in handler receives a progress byte count that cannot be
+represented as a PHP integer, the transfer is rejected before the callback is
+invoked. The built-in stream handler treats progress callbacks as notifications
+only and ignores return values.
 
 ```php
 // Send a GET request to /get?foo=bar
@@ -1325,18 +1333,20 @@ Constant
 $client->request('GET', '/delay/5', ['timeout' => 3.14]);
 ```
 
-Built-in handlers use the most specific timeout exception they can determine
-from the underlying transfer. Connect timeouts throw
+Built-in handlers use the most specific transport timeout exception they can
+determine. Connect timeouts throw
 `GuzzleHttp\Exception\ConnectTimeoutException`, which extends
-`ConnectException`. Other timeouts before a response is received throw
-`GuzzleHttp\Exception\NetworkTimeoutException`. Timeouts after a response is
-received throw `GuzzleHttp\Exception\ResponseTimeoutException`, which extends
-`GuzzleHttp\Exception\ResponseTransferException` and exposes the response.
+`ConnectException`. Other transport timeouts before a response is received throw
+`GuzzleHttp\Exception\NetworkTimeoutException`. Transport timeouts after a
+response is received throw `GuzzleHttp\Exception\ResponseTimeoutException`, which
+extends `GuzzleHttp\Exception\ResponseTransferException` and exposes the
+response.
 
-Timeouts that originate from a slow PSR-7 stream follow the same phase rule, with
-one exception: a slow `sink` write, or a request body that stalls after response
-headers are received, throws a plain `GuzzleHttp\Exception\ResponseException`
-rather than `ResponseTimeoutException`. In every case the original
+Timeouts from caller-supplied PSR-7 streams are not transport timeouts. A request
+body stream timeout while detecting size, buffering, rewinding, or reading upload
+bytes throws `GuzzleHttp\Exception\RequestException` before a response and
+`GuzzleHttp\Exception\ResponseException` after response headers. A slow response
+`sink` write also throws `ResponseException`. In every case the original
 `GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
 
 ## version
