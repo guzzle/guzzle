@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
@@ -56,7 +57,7 @@ class RetryMiddleware
         if (!isset($options['retries'])) {
             $options['retries'] = 0;
         } elseif (!\is_int($options['retries'])) {
-            throw new \InvalidArgumentException('retries must be an integer');
+            throw new InvalidArgumentException('retries must be an integer');
         }
 
         /** @var PromiseInterface<ResponseInterface, mixed> */

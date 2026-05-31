@@ -65,6 +65,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify redirect request-body rewind failures as `ResponseException`
 - Ignore stream source close failures after a complete response body transfer
 - Throw `GuzzleHttp\Exception\InvalidArgumentException` for invalid built-in handler options
+- Throw `GuzzleHttp\Exception\InvalidArgumentException` for invalid redirect, cookie, and retry middleware options
 - Classify built-in cURL handle, `sink`, and HTTP/3 setup failures as `RequestException`
 - Throw `ConnectTimeoutException` for connect timeouts
 - Throw `NetworkTimeoutException` for cURL no-response timeout errors

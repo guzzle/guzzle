@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\Create;
@@ -127,6 +128,19 @@ class RetryMiddlewareTest extends TestCase
         $this->expectExceptionMessage('Passing string to request option "retries" is invalid; expected int.');
 
         $c->send(new Request('GET', 'http://test.com'), ['retries' => '0']);
+    }
+
+    public function testRejectsNonIntegerRetriesOptionDirectly(): void
+    {
+        $decider = static function (): bool {
+            return false;
+        };
+        $handler = Middleware::retry($decider)(new MockHandler([new Response(200)]));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('retries must be an integer');
+
+        $handler(new Request('GET', 'http://test.com'), ['retries' => '0']);
     }
 
     public function testCanRetryExceptions(): void

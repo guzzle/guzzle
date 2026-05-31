@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -67,7 +68,7 @@ class RedirectMiddleware
         if ($options['allow_redirects'] === true) {
             $options['allow_redirects'] = self::DEFAULT_SETTINGS;
         } elseif (!\is_array($options['allow_redirects'])) {
-            throw new \InvalidArgumentException('allow_redirects must be true, false, or array');
+            throw new InvalidArgumentException('allow_redirects must be true, false, or array');
         } else {
             // Merge the default settings with the provided settings
             $options['allow_redirects'] += self::DEFAULT_SETTINGS;
@@ -190,7 +191,7 @@ class RedirectMiddleware
             $requestMethod = $request->getMethod();
             $streamFactory = $options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory();
             if (!$streamFactory instanceof StreamFactoryInterface) {
-                throw new \InvalidArgumentException(\sprintf(
+                throw new InvalidArgumentException(\sprintf(
                     '%s must be an instance of %s',
                     RequestOptions::STREAM_FACTORY,
                     StreamFactoryInterface::class
@@ -203,7 +204,7 @@ class RedirectMiddleware
 
         $uriFactory = $options[RequestOptions::URI_FACTORY] ?? new HttpFactory();
         if (!$uriFactory instanceof UriFactoryInterface) {
-            throw new \InvalidArgumentException(\sprintf(
+            throw new InvalidArgumentException(\sprintf(
                 '%s must be an instance of %s',
                 RequestOptions::URI_FACTORY,
                 UriFactoryInterface::class

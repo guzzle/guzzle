@@ -8,6 +8,7 @@ use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Handler\MockHandler;
@@ -45,6 +46,18 @@ class MiddlewareTest extends TestCase
         $f = $m($h);
         $f(new Request('GET', 'http://foo.com'), ['cookies' => $jar])->wait();
         self::assertCount(1, $jar);
+    }
+
+    public function testRejectsInvalidCookiesOptionDirectly(): void
+    {
+        $f = Middleware::cookies()(new MockHandler([new Response(200)]));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('cookies must be an instance of GuzzleHttp\Cookie\CookieJarInterface');
+
+        $f(new Request('GET', 'http://foo.com'), [
+            'cookies' => new \stdClass(),
+        ]);
     }
 
     public function testThrowsExceptionOnHttpClientError(): void
