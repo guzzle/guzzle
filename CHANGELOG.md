@@ -69,9 +69,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Throw `ConnectTimeoutException` for connect timeouts
 - Throw `NetworkTimeoutException` for cURL no-response timeout errors
 - Throw `ResponseTimeoutException` for response-aware transfer timeouts
-- Classify request-body stream read timeouts as `RequestException` or `ResponseException` by phase
-- Classify cURL PSR-7 response sink write timeouts as `ResponseException` or `RequestException` by phase
-- Classify cURL response sink write failures as `ResponseException` or `RequestException`
+- Classify request-body stream size detection, read, stringification, and rewind failures as `RequestException` or `ResponseException` by phase
+- Classify cURL response sink write failures, including timeouts, as `ResponseException` or `RequestException` by phase
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers
