@@ -130,6 +130,30 @@ class StreamHandlerTest extends TestCase
         ];
     }
 
+    public function testPrepareRequestFailureDoesNotInvokeOnStats(): void
+    {
+        $handler = new StreamHandler();
+        $called = false;
+        $request = new Request('GET', Server::$url, [
+            'Content-Length' => 'abc',
+        ]);
+
+        try {
+            $handler($request, [
+                'on_stats' => static function () use (&$called): void {
+                    $called = true;
+                },
+            ]);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Invalid Content-Length request header', $e->getMessage());
+        }
+
+        self::assertFalse($called);
+    }
+
     public function testNormalizesEquivalentRequestContentLengthValues(): void
     {
         $request = new Request('GET', Server::$url, [
