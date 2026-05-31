@@ -78,6 +78,23 @@ class HeaderProcessorTest extends TestCase
         ];
     }
 
+    public function testAcceptsRepresentableContentLengthPlatformLimits(): void
+    {
+        HeaderProcessor::assertContentLengthWithinPlatformLimit(null);
+        HeaderProcessor::assertContentLengthWithinPlatformLimit('0');
+        HeaderProcessor::assertContentLengthWithinPlatformLimit((string) \PHP_INT_MAX);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testRejectsUnrepresentableContentLengthPlatformLimit(): void
+    {
+        $this->expectException(\OverflowException::class);
+        $this->expectExceptionMessage('Content-Length exceeds the maximum integer size supported on this platform');
+
+        HeaderProcessor::assertContentLengthWithinPlatformLimit(((string) \PHP_INT_MAX).'0');
+    }
+
     /**
      * @dataProvider invalidContentLengthProvider
      *

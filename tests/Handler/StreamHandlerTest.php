@@ -212,10 +212,14 @@ class StreamHandlerTest extends TestCase
             $reflection->setAccessible(true);
         }
 
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Content-Length exceeds the maximum integer size supported on this platform');
-
-        $reflection->invoke(null, $request);
+        try {
+            $reflection->invoke(null, $request);
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
+        }
     }
 
     public function testRejectsInvalidRequestContentLengthBeforeAddingEmptyBodyDefault(): void

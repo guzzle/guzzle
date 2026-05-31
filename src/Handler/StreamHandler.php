@@ -465,14 +465,14 @@ final class StreamHandler
     private static function declaredResponseBodyLength(RequestInterface $request, ResponseInterface $response): ?int
     {
         $parsed = HeaderProcessor::parseContentLengthForResponseBody($request, $response);
-        if (HeaderProcessor::contentLengthExceedsPlatformLimit($parsed)) {
-            $overflow = new \OverflowException('Content-Length exceeds the maximum integer size supported on this platform');
-
+        try {
+            HeaderProcessor::assertContentLengthWithinPlatformLimit($parsed);
+        } catch (\OverflowException $e) {
             throw new ResponseException(
-                'Content-Length exceeds the maximum integer size supported on this platform',
+                $e->getMessage(),
                 $request,
                 $response,
-                $overflow
+                $e
             );
         }
 
@@ -494,10 +494,14 @@ final class StreamHandler
             );
         }
 
-        if (HeaderProcessor::contentLengthExceedsPlatformLimit($length)) {
+        try {
+            HeaderProcessor::assertContentLengthWithinPlatformLimit($length);
+        } catch (\OverflowException $e) {
             throw new RequestException(
-                'Content-Length exceeds the maximum integer size supported on this platform',
-                $request
+                $e->getMessage(),
+                $request,
+                0,
+                $e
             );
         }
 

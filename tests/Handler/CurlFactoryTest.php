@@ -2990,10 +2990,14 @@ class CurlFactoryTest extends TestCase
             'Content-Length' => $length,
         ], 'foo');
 
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Content-Length exceeds the maximum integer size supported on this platform');
-
-        $factory->create($request, []);
+        try {
+            $factory->create($request, []);
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
+        }
     }
 
     public function testRejectsInvalidCurlRequestContentLengthWithEmptyBody(): void

@@ -129,9 +129,13 @@ final class HeaderProcessor
         return (int) $length;
     }
 
-    public static function contentLengthExceedsPlatformLimit(?string $length): bool
+    public static function assertContentLengthWithinPlatformLimit(?string $length): void
     {
-        return $length !== null && self::contentLengthToInt($length) === null;
+        if ($length === null || self::contentLengthToInt($length) !== null) {
+            return;
+        }
+
+        throw new \OverflowException('Content-Length exceeds the maximum integer size supported on this platform');
     }
 
     public static function parseContentLengthForResponseBody(RequestInterface $request, ResponseInterface $response): ?string

@@ -1172,13 +1172,15 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         $length = HeaderProcessor::parseContentLengthForResponseBody($easy->request, $easy->response);
-        if (!HeaderProcessor::contentLengthExceedsPlatformLimit($length)) {
-            return false;
+        try {
+            HeaderProcessor::assertContentLengthWithinPlatformLimit($length);
+        } catch (\OverflowException $e) {
+            $easy->responseBodySizeException = $e;
+
+            return true;
         }
 
-        $easy->responseBodySizeException = new \OverflowException('Content-Length exceeds the maximum integer size supported on this platform');
-
-        return true;
+        return false;
     }
 
     private function applyMethod(EasyHandle $easy, array &$conf, ?string $contentLength): void
@@ -1226,10 +1228,14 @@ final class CurlFactory implements CurlFactoryInterface
             );
         }
 
-        if (HeaderProcessor::contentLengthExceedsPlatformLimit($length)) {
+        try {
+            HeaderProcessor::assertContentLengthWithinPlatformLimit($length);
+        } catch (\OverflowException $e) {
             throw new RequestException(
-                'Content-Length exceeds the maximum integer size supported on this platform',
-                $request
+                $e->getMessage(),
+                $request,
+                0,
+                $e
             );
         }
 
