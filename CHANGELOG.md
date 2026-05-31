@@ -58,7 +58,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify generic response-aware request failures as `ResponseException`
 - Classify response-aware transfer failures as `ResponseTransferException`
 - Reject short non-streamed stream-handler response bodies with valid `Content-Length` as `ResponseTransferException`
-- Stop treating cURL non-`101` informational responses as final responses, so failures after only an interim `1xx` are no-response failures and `on_headers` runs for the final response instead
+- Ignore cURL informational responses other than `101 Switching Protocols` before the final response
 - Treat response sink rewind failures as `ResponseException` and skip non-seekable sink rewinds
 - Ignore stream source close failures after a complete response body transfer
 - Throw `GuzzleHttp\Exception\InvalidArgumentException` for invalid built-in handler options
