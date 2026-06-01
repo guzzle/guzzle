@@ -181,7 +181,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $options = $this->prepareDefaults($options);
         // Remove request modifying parameter because it can be done up-front.
         $headers = $options['headers'] ?? [];
-        self::castDeprecatedHeaderOptionValues($headers);
+        $droppedHeaderNames = self::castDeprecatedHeaderOptionValues($headers);
+        if ($droppedHeaderNames !== [] && isset($options['_conditional'])) {
+            $options['_conditional'] = Psr7\Utils::caselessRemove($droppedHeaderNames, $options['_conditional']);
+        }
         $body = $options['body'] ?? null;
         $version = self::normalizeProtocolVersion($options['version'] ?? '1.1');
         // Merge the URI into the base URI.
@@ -302,12 +305,22 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $this->config['headers'] = ['User-Agent' => Utils::defaultUserAgent()];
         } else {
             // Add the User-Agent header if one was not already set.
+            $hasUserAgent = false;
             foreach (\array_keys($this->config['headers']) as $name) {
                 if (\strtolower((string) $name) === 'user-agent') {
-                    return;
+                    $hasUserAgent = true;
+                    break;
                 }
             }
-            $this->config['headers']['User-Agent'] = Utils::defaultUserAgent();
+
+            if (!$hasUserAgent) {
+                $this->config['headers']['User-Agent'] = Utils::defaultUserAgent();
+            }
+        }
+
+        if (\is_array($this->config['headers'])) {
+            self::warnAboutInvalidHeaderOptionTypes($this->config['headers']);
+            self::castDeprecatedHeaderOptionValues($this->config['headers']);
         }
     }
 
@@ -812,7 +825,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 throw new InvalidArgumentException('The headers array must have header name as keys.');
             }
             $headers = $options['headers'];
-            self::castDeprecatedHeaderOptionValues($headers);
+            $droppedHeaderNames = self::castDeprecatedHeaderOptionValues($headers);
+            if ($droppedHeaderNames !== [] && isset($options['_conditional'])) {
+                $options['_conditional'] = Psr7\Utils::caselessRemove($droppedHeaderNames, $options['_conditional']);
+            }
             $modify['set_headers'] = $headers;
             unset($options['headers']);
         }
@@ -936,11 +952,22 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
     /**
      * @param array<array-key, mixed> $headers
+     *
+     * @return list<string>
      */
-    private static function castDeprecatedHeaderOptionValues(array &$headers): void
+    private static function castDeprecatedHeaderOptionValues(array &$headers): array
     {
+        $droppedHeaderNames = [];
+
         foreach ($headers as $name => $value) {
             if (\is_array($value)) {
+                if ($value === []) {
+                    $droppedHeaderNames[] = (string) $name;
+                    unset($headers[$name]);
+
+                    continue;
+                }
+
                 foreach ($value as $index => $item) {
                     if ($item === null || (!\is_string($item) && \is_scalar($item))) {
                         $value[$index] = (string) $item;
@@ -956,6 +983,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 $headers[$name] = (string) $value;
             }
         }
+
+        return $droppedHeaderNames;
     }
 
     /**
