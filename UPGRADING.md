@@ -404,10 +404,13 @@ undocumented internal lazy cURL multi handle. Applications that used it to set
 
 #### Timeout Option Validation
 
-The built-in cURL and stream handlers now validate timeout option values before
-applying them. `timeout`, `connect_timeout`, and `read_timeout` must be `0` or at
-least `0.001` seconds when provided. Positive values below 1 millisecond now
-throw `InvalidArgumentException` instead of being converted to no timeout.
+Built-in handlers validate timeout option values when they apply those options.
+`timeout` is applied by both built-in transports. `connect_timeout` is applied by
+cURL handlers and accepted without effect by the stream handler. `read_timeout`
+is applied by the stream handler and accepted without effect by cURL handlers.
+When a built-in handler applies a timeout option, positive values below `0.001`
+seconds now throw `InvalidArgumentException` instead of being converted to no
+timeout.
 
 #### Proxy Option Validation
 
@@ -480,8 +483,11 @@ timeouts, redirects, proxy URLs, TLS verification or client credentials,
 progress/debug callbacks, sink handling, cookies, protocols, or cURL share
 handles. Use first-class Guzzle request options for those settings.
 
-The cURL handlers also reject stream-only `stream_context` and `read_timeout`
-options, while the stream handler rejects cURL-only options it cannot honor.
+The cURL handlers also reject stream-only `stream_context` options, but accept
+`read_timeout` without effect. The stream handler rejects cURL-only options it
+cannot honor, but accepts `connect_timeout` without effect. These timeout options
+are intentionally best-effort so shared request configuration can be reused
+across transports.
 
 #### Native Type Declarations
 

@@ -1,10 +1,13 @@
 # Exception guidelines (contributor reference)
 
 Guzzle code must be deliberate about which exception it throws, because
-`GuzzleHttp\Client` is a PSR-18 client: PSR-18 requires that **every** exception
-escaping `sendRequest()` implement `Psr\Http\Client\ClientExceptionInterface`.
-All Guzzle exceptions implement it via `GuzzleHttp\Exception\GuzzleException`, so
-"throw a Guzzle exception" and "stay PSR-18 compliant" are the same rule.
+`GuzzleHttp\Client` is a PSR-18 client: PSR-18 requires transfer failures
+escaping `sendRequest()` to implement
+`Psr\Http\Client\ClientExceptionInterface`. All Guzzle transfer exceptions
+implement it via `GuzzleHttp\Exception\GuzzleException`, so "throw a Guzzle
+exception" and "stay PSR-18 compliant" are the same rule. Exceptions thrown by
+user callbacks that are documented to escape unwrapped, such as `on_stats`, are
+not normalized into Guzzle exceptions.
 
 This document covers the two exceptions contributors most often have to choose
 between — `InvalidArgumentException` (caller error) and `RequestException`
@@ -61,6 +64,14 @@ that stream: `RequestException` while reading the request body before a response
 or `ResponseException` once a response exists. It is never a
 `NetworkTimeoutException`. The original `TimeoutException` is attached via
 `getPrevious()`.
+
+Note: `ResponseException` extends `RequestException`, so it (and every subtype,
+including `ResponseTransferException` and `ResponseTimeoutException`) is a PSR-18
+`RequestExceptionInterface`. PSR-18 defines no interface for "a response was
+received, then the transfer failed": its `NetworkExceptionInterface` is a
+no-response interface, so among PSR-18's request-bound interfaces only
+`RequestExceptionInterface` remains once Guzzle holds a response. This is a
+deliberate classification, not a claim that the request message was malformed.
 
 ## `GuzzleHttp\Exception\InvalidArgumentException`
 
