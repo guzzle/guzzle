@@ -157,17 +157,23 @@ the base class for request failures where response headers were received and a
 response object is available. `ResponseTransferException` is used for
 transfer-level failures after headers, including response-aware network,
 protocol, content-decoding, partial-body, and response-body transfer failures.
-`BadResponseException` and
-`TooManyRedirectsException` also extend `ResponseException`. Only this branch
-exposes response access: `RequestException` no longer stores responses, no
-longer accepts a response constructor argument, and no longer has `getResponse()`
-or `hasResponse()` methods. Catch `ResponseException`, or test with `instanceof
-ResponseException`, before calling `getResponse()`. If you instantiate
-`RequestException` directly, its third constructor argument is now the exception
-code, followed by the previous exception. If you used the removed
-`getHandlerContext()` methods to classify failures, use the more granular
-exception classes above instead. Use `on_stats` when you need handler timing or
-statistics.
+`BadResponseException` and `TooManyRedirectsException` also extend
+`ResponseException`. Only this branch exposes response access:
+`RequestException` no longer stores responses, no longer accepts a response
+constructor argument, and no longer has `getResponse()` or `hasResponse()`
+methods. Catch `ResponseException`, or test with `instanceof ResponseException`,
+before calling `getResponse()`. If you instantiate `RequestException` directly,
+its third constructor argument is now the exception code, followed by the
+previous exception. If you used the removed `getHandlerContext()` methods to
+classify failures, use the more granular exception classes above instead. Use
+`on_stats` when you need handler timing or statistics. If a handler throws
+`Error`, `TypeError`, or another non-`Exception` `Throwable` before returning a
+promise, `Client::sendAsync()` now returns a rejected promise; waiting on it
+rethrows the original throwable. During request and response body handling,
+Guzzle still wraps `\Exception` failures as `RequestException` or
+`ResponseException` where appropriate, while non-`Exception` throwables
+propagate unchanged; native cURL callbacks continue to handle `\Throwable` where
+required.
 
 Timeout exception classes are now split by the transport phase the handler can
 determine. `ConnectTimeoutException` is thrown for detected connect timeouts (DNS
