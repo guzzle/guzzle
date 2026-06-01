@@ -22,7 +22,7 @@ final class BodySummarizer implements BodySummarizerInterface
     {
         try {
             return Psr7\Message::bodySummary($message, $this->truncateAt);
-        } catch (\RuntimeException $e) {
+        } catch (\Exception $e) {
             return null;
         }
     }

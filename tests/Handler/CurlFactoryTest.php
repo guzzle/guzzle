@@ -1442,7 +1442,7 @@ class CurlFactoryTest extends TestCase
         Server::flush();
         Server::enqueue([new Psr7\Response(200, [], 'abc')]);
         $handler = $handlerFactory();
-        $previous = new \RuntimeException('progress failed');
+        $previous = new \Error('progress failed');
 
         try {
             $handler(new Psr7\Request('GET', Server::$url), [
@@ -1493,7 +1493,7 @@ class CurlFactoryTest extends TestCase
     public function testProgressThrowableRejectsWithRequestException(): void
     {
         $factory = new CurlFactory(1);
-        $previous = new \RuntimeException('boom');
+        $previous = new \Error('boom');
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
             'progress' => static function () use ($previous): void {
                 throw $previous;
@@ -3336,7 +3336,7 @@ class CurlFactoryTest extends TestCase
     public function testStreamingRequestBodyReadFailureAbortsReadCallback(): void
     {
         $factory = new CurlFactory(3);
-        $previous = new \RuntimeException('boom while reading');
+        $previous = new \Error('boom while reading');
         $readCalled = false;
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
             'getSize' => static function (): ?int {
@@ -3574,7 +3574,7 @@ class CurlFactoryTest extends TestCase
     public function testRequestBodyReadFailureRejectsAsRequestExceptionWithoutResponseAndWithoutRetry(): void
     {
         $factory = new CurlFactory(3);
-        $previous = new \RuntimeException('boom while reading');
+        $previous = new \Exception('boom while reading');
         $stats = null;
         $request = new Psr7\Request('PUT', Server::$url, [], 'payload');
         $easy = $factory->create($request, [
@@ -3658,7 +3658,7 @@ class CurlFactoryTest extends TestCase
     public function testRequestBodyReadFailureRejectsAsResponseExceptionWithResponseAndErrnoZero(): void
     {
         $factory = new CurlFactory(3);
-        $previous = new \RuntimeException('boom while reading');
+        $previous = new \Exception('boom while reading');
         $stats = null;
         $request = new Psr7\Request('PUT', Server::$url, [], 'payload');
         $response = new Psr7\Response(200, [], 'early');
@@ -3765,7 +3765,7 @@ class CurlFactoryTest extends TestCase
     public function testBodyAsStringRequestBodyReadFailureRejectsAsRequestException(): void
     {
         $factory = new CurlFactory(3);
-        $previous = new \RuntimeException('boom while reading');
+        $previous = new \Exception('boom while reading');
         $castCalled = false;
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
             '__toString' => static function () use (&$castCalled, $previous): string {
@@ -3794,10 +3794,31 @@ class CurlFactoryTest extends TestCase
         self::assertTrue($castCalled);
     }
 
+    public function testBodyAsStringRequestBodyReadErrorPropagates(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \Error('boom while reading');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            '__toString' => static function () use ($previous): string {
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $factory->create($request, [
+                'curl' => ['body_as_string' => true],
+            ]);
+            self::fail('Expected Error');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
+        }
+    }
+
     public function testStreamingRequestBodyRewindFailureRejectsAsRequestException(): void
     {
         $factory = new CurlFactory(3);
-        $previous = new \RuntimeException('boom while rewinding');
+        $previous = new \Exception('boom while rewinding');
         $rewindCalled = false;
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
             'getSize' => static function (): ?int {
@@ -3825,6 +3846,28 @@ class CurlFactoryTest extends TestCase
         }
 
         self::assertTrue($rewindCalled);
+    }
+
+    public function testStreamingRequestBodyRewindErrorPropagates(): void
+    {
+        $factory = new CurlFactory(3);
+        $previous = new \Error('boom while rewinding');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'rewind' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+
+        try {
+            $factory->create($request, []);
+            self::fail('Expected Error');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
+        }
     }
 
     public function testStreamingRequestBodyRewindTimeoutRejectsAsRequestException(): void
@@ -4369,7 +4412,7 @@ class CurlFactoryTest extends TestCase
     {
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
-        $previous = new \RuntimeException('rewind failed');
+        $previous = new \Exception('rewind failed');
         $response = new Psr7\Response(
             200,
             [],
@@ -4419,6 +4462,39 @@ class CurlFactoryTest extends TestCase
         self::assertTrue($stats->hasResponse());
         self::assertSame($response, $stats->getResponse());
         self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testSeekableBodyRewindErrorPropagates(): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $previous = new \Error('rewind failed');
+        $response = new Psr7\Response(
+            200,
+            [],
+            Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+                'isSeekable' => static function (): bool {
+                    return true;
+                },
+                'rewind' => static function () use ($previous): void {
+                    throw $previous;
+                },
+            ])
+        );
+        $easy = $factory->create($request, []);
+        $easy->response = $response;
+
+        try {
+            CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $factory
+            )->wait();
+            self::fail('Expected Error');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
+        }
     }
 
     public function testOnStatsExceptionEscapesOnSeekableBodyRewindFailureAfterHandleRelease(): void

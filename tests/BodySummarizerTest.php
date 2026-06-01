@@ -36,11 +36,29 @@ class BodySummarizerTest extends TestCase
     {
         $body = FnStream::decorate(Utils::streamFor('abcdef'), [
             'tell' => static function (): int {
-                throw new \RuntimeException('tell failed');
+                throw new \Exception('tell failed');
             },
         ]);
         $response = new Response(200, [], $body);
 
         self::assertNull((new BodySummarizer())->summarize($response));
+    }
+
+    public function testSummarizePropagatesBodySummaryError(): void
+    {
+        $previous = new \Error('tell bug');
+        $body = FnStream::decorate(Utils::streamFor('abcdef'), [
+            'tell' => static function () use ($previous): int {
+                throw $previous;
+            },
+        ]);
+        $response = new Response(200, [], $body);
+
+        try {
+            (new BodySummarizer())->summarize($response);
+            self::fail('Expected Error');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
+        }
     }
 }

@@ -32,8 +32,6 @@ use Psr\Http\Message\UriInterface;
  */
 final class CurlFactory implements CurlFactoryInterface
 {
-    public const CURL_VERSION_STR = 'curl_version';
-
     private const CURL_CONNECTION_ERRORS = [
         5 => true,   // CURLE_COULDNT_RESOLVE_PROXY
         6 => true,   // CURLE_COULDNT_RESOLVE_HOST
@@ -622,7 +620,7 @@ final class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             $reason = new ResponseException(
                 $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the response body',
                 $easy->request,
@@ -732,19 +730,10 @@ final class CurlFactory implements CurlFactoryInterface
 
     private static function createErrorContext(EasyHandle $easy): array
     {
-        $ctx = [
+        return [
             'errno' => $easy->errno,
             'error' => \curl_error($easy->handle),
         ];
-
-        if (!$easy->createResponseException) {
-            $ctx['appconnect_time'] = \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME);
-            $ctx += \curl_getinfo($easy->handle);
-        }
-
-        CurlVersion::addToHandlerContext($ctx);
-
-        return $ctx;
     }
 
     /**
@@ -1188,7 +1177,7 @@ final class CurlFactory implements CurlFactoryInterface
         $body = $easy->request->getBody();
         try {
             $size = $body->getSize();
-        } catch (\RuntimeException $e) {
+        } catch (\Exception $e) {
             $message = $e instanceof TimeoutException
                 ? 'Timed out while determining the request body size'
                 : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to determine the request body size');
@@ -1257,7 +1246,7 @@ final class CurlFactory implements CurlFactoryInterface
         if (($contentLength !== null && $contentLength < 1000000) || !empty($options['_body_as_string'])) {
             try {
                 $conf[\CURLOPT_POSTFIELDS] = (string) $request->getBody();
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 $message = $e instanceof TimeoutException
                     ? 'Timed out while reading the request body'
                     : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to read the request body');
@@ -1284,7 +1273,7 @@ final class CurlFactory implements CurlFactoryInterface
                 if ($body->isSeekable()) {
                     $body->rewind();
                 }
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 $message = $e instanceof TimeoutException
                     ? 'Timed out while rewinding the request body'
                     : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the request body');
@@ -1722,7 +1711,7 @@ final class CurlFactory implements CurlFactoryInterface
             if ($body->tell() > 0) {
                 $body->rewind();
             }
-        } catch (\RuntimeException $e) {
+        } catch (\Exception $e) {
             $ctx['error'] = 'The connection unexpectedly failed without '
                 .'providing an error. The request would have been retried, '
                 .'but attempting to rewind the request body failed. '

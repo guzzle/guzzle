@@ -110,17 +110,6 @@ final class CurlVersion
         }
     }
 
-    public static function addToHandlerContext(array &$context): void
-    {
-        $version = self::get();
-
-        if (null === $version) {
-            throw new \RuntimeException('Unable to determine cURL version.');
-        }
-
-        $context[CurlFactory::CURL_VERSION_STR] = $version;
-    }
-
     private static function get(): ?string
     {
         $versionInfo = self::getVersionInfo();

@@ -158,7 +158,7 @@ final class StreamHandler
         // the behavior of `CurlHandler`
         try {
             $bodySize = $request->getBody()->getSize();
-        } catch (\RuntimeException $e) {
+        } catch (\Exception $e) {
             $message = $e instanceof TimeoutException
                 ? 'Timed out while determining the request body size'
                 : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to determine the request body size');
@@ -424,7 +424,7 @@ final class StreamHandler
                 );
             } catch (\OverflowException $e) {
                 throw new ResponseException($e->getMessage(), $request, $response, $e);
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 // Any other response-body transfer failure surfaces as a
                 // ResponseTransferException carrying the response.
                 throw new ResponseTransferException(
@@ -447,7 +447,7 @@ final class StreamHandler
                 if ($sink->isSeekable()) {
                     $sink->rewind();
                 }
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 throw new ResponseException(
                     $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the response body',
                     $request,
@@ -460,7 +460,7 @@ final class StreamHandler
         } finally {
             try {
                 $source->close();
-            } catch (\Throwable $e) {
+            } catch (\Exception $e) {
                 // Best-effort cleanup after the response body has been received.
             }
         }
@@ -530,7 +530,7 @@ final class StreamHandler
                         $response,
                         $e
                     );
-                } catch (\Throwable $e) {
+                } catch (\Exception $e) {
                     throw new ResponseException(
                         $e->getMessage() !== '' ? $e->getMessage() : 'Failed to write the response body',
                         $request,
@@ -805,7 +805,7 @@ final class StreamHandler
 
         try {
             $body = (string) $request->getBody();
-        } catch (\RuntimeException $e) {
+        } catch (\Exception $e) {
             $message = $e instanceof TimeoutException
                 ? 'Timed out while reading the request body'
                 : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to read the request body');

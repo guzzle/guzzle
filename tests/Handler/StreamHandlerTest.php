@@ -1925,7 +1925,7 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $stats = null;
         $exception = null;
-        $previous = new \RuntimeException('sink failed');
+        $previous = new \Exception('sink failed');
         $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
             'write' => static function (string $data) use ($previous): int {
                 throw $previous;
@@ -1959,11 +1959,31 @@ class StreamHandlerTest extends TestCase
         self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
+    public function testSinkWriteErrorPropagates(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $previous = new \Error('sink bug');
+        $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data) use ($previous): int {
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $handler($request, ['sink' => $sink]);
+            self::fail('Expected Error');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
+        }
+    }
+
     public function testThrowsResponseTransferExceptionWhenResponseBodyReadFails(): void
     {
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
-        $previous = new \RuntimeException('SSL: Connection reset by peer');
+        $previous = new \Exception('SSL: Connection reset by peer');
         $stats = null;
         $source = FnStream::decorate(Psr7\Utils::streamFor('abc'), [
             'read' => static function (int $length) use ($previous): string {
@@ -2000,6 +2020,30 @@ class StreamHandlerTest extends TestCase
             self::assertTrue($stats->hasResponse());
             self::assertSame($e->getResponse(), $stats->getResponse());
             self::assertSame($e, $stats->getHandlerErrorData());
+        }
+    }
+
+    public function testResponseBodyReadErrorPropagates(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $previous = new \Error('source bug');
+        $source = FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'read' => static function (int $length) use ($previous): string {
+                throw $previous;
+            },
+        ]);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Length: 3',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source);
+            self::fail('Expected Error');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
         }
     }
 
@@ -2118,7 +2162,7 @@ class StreamHandlerTest extends TestCase
         $this->queueRes();
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
-        $previous = new \RuntimeException('rewind failed');
+        $previous = new \Exception('rewind failed');
         $exception = null;
         $stats = null;
         $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
@@ -2150,6 +2194,26 @@ class StreamHandlerTest extends TestCase
         self::assertTrue($stats->hasResponse());
         self::assertSame($exception->getResponse(), $stats->getResponse());
         self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testSeekableSinkRewindErrorPropagates(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+        $previous = new \Error('rewind bug');
+        $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
+            'rewind' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $handler($request, ['sink' => $sink]);
+            self::fail('Expected Error');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
+        }
     }
 
     public function testNonSeekableSinkSucceedsWithoutRewind(): void
