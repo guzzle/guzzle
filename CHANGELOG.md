@@ -131,7 +131,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated `RetryMiddleware::exponentialDelay()`, which will be removed in 8.0
 
 
-## 7.10.6 - Upcoming
+## 7.10.6 - 2026-06-01
 
 ### Fixed
 
@@ -140,7 +140,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix stream handler decoded `gzip`/`deflate` truncation by dropping invalid `Content-Length`
 
 
-## 7.10.5 - 2025-05-27
+## 7.10.5 - 2026-05-27
 
 ### Fixed
 
@@ -148,7 +148,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify additional stream handler connection failures as `ConnectException`
 
 
-## 7.10.4 - 2025-05-22
+## 7.10.4 - 2026-05-22
 
 ### Fixed
 
@@ -157,7 +157,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix magic client request methods such as `options()` to uppercase inferred HTTP methods
 
 
-## 7.10.3 - 2025-05-20
+## 7.10.3 - 2026-05-20
 
 ### Fixed
 
