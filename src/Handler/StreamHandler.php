@@ -546,6 +546,9 @@ final class StreamHandler
                 return $written;
             },
             'getMetadata' => static function (?string $key = null) use ($sink) {
+                // Force timed_out to false so Utils::writeAll() can't reclassify a sink-write
+                // failure as a transport timeout. Sink write failures are ResponseException;
+                // source-read timeouts are ResponseTimeoutException.
                 if ($key === 'timed_out') {
                     return false;
                 }

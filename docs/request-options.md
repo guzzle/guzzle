@@ -1002,13 +1002,23 @@ Defaults to the value of the `default_socket_timeout` PHP ini setting
 Constant
 `GuzzleHttp\RequestOptions::READ_TIMEOUT`
 
-The timeout applies to individual read operations on a streamed body (when the `stream` option is enabled).
+The timeout applies to individual read operations on a streamed body (when the
+`stream` option is enabled). It is implemented by the PHP stream handler. cURL
+handlers accept this option without effect so shared request configuration can
+be reused across transports. With Guzzle's default handler selection, streamed
+responses (`stream` => `true`) use the stream handler when PHP streams are
+available.
 
 When a read on the streamed PSR-7 body times out, `read()` throws
-`GuzzleHttp\Psr7\Exception\TimeoutException`. This PSR-7 class sits outside the
-`GuzzleHttp\Exception\GuzzleException` hierarchy, so catch it explicitly. If you
-detach the body and read the raw PHP stream resource instead, functions such as
-`fgets()` return `false` on timeout, following PHP's stream semantics.
+`GuzzleHttp\Psr7\Exception\TimeoutException`. A non-timeout read failure, for
+example the connection is reset mid-body or the body stream has been detached,
+throws a plain `\RuntimeException`. Both types sit outside the
+`GuzzleHttp\Exception\GuzzleException` hierarchy: they are raised after the
+request has resolved and the response object has been returned, which is outside
+the `Client::sendRequest()` transfer that PSR-18 governs. Catch them explicitly
+when reading a streamed body. If you detach the body and read the raw PHP stream
+resource instead, functions such as `fgets()` return `false` on timeout,
+following PHP's stream semantics.
 
 ```php
 $response = $client->request('GET', '/stream', [
@@ -1348,6 +1358,13 @@ bytes throws `GuzzleHttp\Exception\RequestException` before a response and
 `GuzzleHttp\Exception\ResponseException` after response headers. A slow response
 `sink` write also throws `ResponseException`. In every case the original
 `GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
+
+Timeout detection is best-effort: it relies on the stream exposing PHP's
+`timed_out` metadata. The network socket Guzzle opens for the stream handler
+exposes this metadata, but a caller-supplied request-body or `sink` stream might
+not, for example a custom `StreamInterface` implementation. When the metadata is
+absent, the failure is not recognized as a timeout and surfaces as an ordinary
+read/write error instead.
 
 ## version
 
