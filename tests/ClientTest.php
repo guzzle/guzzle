@@ -13,6 +13,7 @@ use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise\Is;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
@@ -53,6 +54,27 @@ class ClientTest extends TestCase
         $received = Server::received(true);
         self::assertCount(1, $received);
         self::assertSame('test=foo', $received[0]->getUri()->getQuery());
+    }
+
+    public function testSendAsyncRejectsWhenHandlerThrowsThrowable(): void
+    {
+        $previous = new \Error('handler failed');
+        $client = new Client([
+            'handler' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+
+        $promise = $client->sendAsync(new Request('GET', 'http://example.com'));
+
+        self::assertTrue(Is::rejected($promise));
+
+        try {
+            $promise->wait();
+            self::fail('Expected Error');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
+        }
     }
 
     public function testCanSendSynchronously(): void

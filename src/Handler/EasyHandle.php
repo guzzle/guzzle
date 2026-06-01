@@ -133,7 +133,7 @@ final class EasyHandle
 
                 try {
                     $bodyLength = $this->sink->getSize();
-                } catch (\RuntimeException $e) {
+                } catch (\Exception $e) {
                     $bodyLength = null;
                 }
                 if ($bodyLength) {

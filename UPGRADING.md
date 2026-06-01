@@ -151,27 +151,23 @@ failures. Keep catching `ConnectException` only when handling connection
 establishment failures specifically.
 
 Guzzle 8.0 also makes response-aware request failures explicit. Guzzle 7.x does
-not have `ResponseException`; response-aware request failures remain under
+not have `ResponseException`, and response-aware request failures remain under
 `RequestException` throughout Guzzle 7.x. In Guzzle 8.0, `ResponseException` is
 the base class for request failures where response headers were received and a
 response object is available. `ResponseTransferException` is used for
 transfer-level failures after headers, including response-aware network,
 protocol, content-decoding, partial-body, and response-body transfer failures.
-`BadResponseException` and
-`TooManyRedirectsException` also extend `ResponseException`. Only this branch
-exposes response access: `RequestException` no longer stores responses, no
-longer accepts a response constructor argument, and no longer has `getResponse()`
-or `hasResponse()` methods. Catch `ResponseException`, or test with `instanceof
-ResponseException`, before calling `getResponse()`. If you instantiate
-`RequestException` directly, its third constructor argument is now the exception
-code, followed by the previous exception. If you used the removed
-`getHandlerContext()` methods to classify failures, use the more granular
-exception classes above instead. Use `on_stats` when you need handler timing or
-statistics.
+`BadResponseException` and `TooManyRedirectsException` also extend
+`ResponseException`.
+
+Only this branch exposes response access: `RequestException` no longer stores
+responses, no longer accepts a response constructor argument, and no longer has
+`getResponse()` or `hasResponse()` methods. Catch `ResponseException`, or test
+with `instanceof ResponseException`, before calling `getResponse()`.
 
 Timeout exception classes are now split by the transport phase the handler can
-determine. `ConnectTimeoutException` is thrown for detected connect timeouts (DNS
-resolution, TCP connect, proxy CONNECT, or TLS handshake). It extends
+determine. `ConnectTimeoutException` is thrown for detected connect timeouts
+(DNS resolution, TCP connect, proxy CONNECT, or TLS handshake). It extends
 `ConnectException`, so code that catches `ConnectException` will also catch
 connect timeouts. `NetworkTimeoutException` is thrown for other detected
 transport timeouts before response headers are received. It extends
@@ -182,17 +178,22 @@ extends `ResponseTransferException` and exposes the response.
 Timeouts that originate from caller-supplied PSR-7 streams are not transport
 timeouts. Reading the request body stream, including size detection,
 stringification, rewind, and upload reads, is a `RequestException` before a
-response and a `ResponseException` after response headers. A slow response `sink`
-write is a `ResponseException` once a response exists, or a `RequestException`
-otherwise. Whenever the timeout comes from a PSR-7 stream, the original
-`GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
+response and a `ResponseException` after response headers. A slow response
+`sink` write is a `ResponseException` once a response exists, or a
+`RequestException` otherwise. Whenever the timeout comes from a PSR-7 stream,
+the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available via
+`getPrevious()`.
 
-Generic throwables from a cURL `sink` write are now wrapped instead of escaping
-the native cURL callback. They become plain `ResponseException` instances when a
-response was received, or `RequestException` instances otherwise, with the
-original throwable available via `getPrevious()`. The cURL handlers continue to
-report `CURLE_WRITE_ERROR` as `on_stats` handler error data for these write
-callback failures.
+If a handler throws `Error`, `TypeError`, or another non-`Exception` `Throwable`
+before returning a promise, `Client::sendAsync()` returns a rejected promise.
+Waiting on it rethrows the original throwable. During request and response body
+handling outside native cURL callbacks, Guzzle still wraps `\Exception` failures
+as `RequestException` or `ResponseException` where appropriate, while
+non-`Exception` throwables propagate unchanged. Native cURL callbacks remain
+different. A throwable from a cURL `sink` write is wrapped as
+`ResponseException` when a response was received, or `RequestException`
+otherwise, and the cURL handlers continue to report `CURLE_WRITE_ERROR` as
+`on_stats` handler error data.
 
 `HandlerClosedException` is new in Guzzle 8.0. It extends `TransferException`
 and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
@@ -241,10 +242,10 @@ as `RequestException` or `ConnectException`:
 - Response-transfer failures after response headers were received are
   `ResponseTransferException`. This includes response-aware cURL connection,
   network, protocol, content-decoding, partial-body, and response body transfer
-  failures. Response-body network stalls are
-  `ResponseTimeoutException`, while `sink` write failures, progress callback
-  failures, deterministic response size/platform-limit failures, or request-body
-  stalls after headers are plain `ResponseException` instances.
+  failures. Response-body network stalls are `ResponseTimeoutException`, while
+  `sink` write failures, progress callback failures, deterministic response
+  size/platform-limit failures, or request-body stalls after headers are plain
+  `ResponseException` instances.
 - Post-transfer response finalization failures are also plain
   `ResponseException`. A seekable response sink that fails to rewind does not
   become a `ResponseTransferException`. Non-seekable sinks are not rewound, and
@@ -256,10 +257,10 @@ This applies to both the cURL and stream handlers; the exact error codes and
 messages each one maps onto these classes are an implementation detail.
 
 The cURL handler no longer treats non-`101` informational responses such as
-`100 Continue`, `102 Processing`, or `103 Early Hints` as the final response.
-If a cURL transfer fails after receiving only one of those interim responses,
-Guzzle now reports a no-response failure such as `NetworkException` instead of
-a `ResponseTransferException` carrying the interim `1xx` response. Code that
+`100 Continue`, `102 Processing`, or `103 Early Hints` as the final response. If
+a cURL transfer fails after receiving only one of those interim responses,
+Guzzle now reports a no-response failure such as `NetworkException` instead of a
+`ResponseTransferException` carrying the interim `1xx` response. Code that
 previously caught this path with `RequestException` or
 `RequestExceptionInterface` should catch `NetworkExceptionInterface` or
 `TransferException` instead. `101 Switching Protocols` is unchanged and is still
@@ -282,12 +283,16 @@ because it remains framed by `Content-Length`.
 
 The deprecated `RequestException::wrapException()` method was removed. Create a
 `RequestException` directly for request failures where Guzzle does not expose a
-response object. For failures with a response, create `ResponseException`,
-`ResponseTransferException`, `ResponseTimeoutException`, `BadResponseException`,
-`ClientException`, `ServerException`, or `TooManyRedirectsException` instead.
-`GuzzleHttp\Exception\InvalidArgumentException` remains outside the transfer
-exception hierarchy and is still used for invalid configuration or request
-option values that can be rejected before a transfer starts.
+response object. Its third constructor argument is now the exception code,
+followed by the previous exception. For failures with a response, create
+`ResponseException`, `ResponseTransferException`, `ResponseTimeoutException`,
+`BadResponseException`, `ClientException`, `ServerException`, or
+`TooManyRedirectsException` instead. If you used the removed
+`getHandlerContext()` methods to classify failures, use the more granular
+exception classes above instead, or use `on_stats` when you need handler timing
+or statistics. `GuzzleHttp\Exception\InvalidArgumentException` remains outside
+the transfer exception hierarchy and is still used for invalid configuration or
+request option values that can be rejected before a transfer starts.
 
 #### Body Summaries In HTTP Error Exceptions
 

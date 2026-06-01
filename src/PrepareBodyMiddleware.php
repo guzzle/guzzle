@@ -118,7 +118,7 @@ class PrepareBodyMiddleware
     {
         try {
             return $request->getBody()->getSize();
-        } catch (\RuntimeException $e) {
+        } catch (\Exception $e) {
             $message = $e instanceof TimeoutException
                 ? 'Timed out while determining the request body size'
                 : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to determine the request body size');

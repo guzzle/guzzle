@@ -219,7 +219,7 @@ class RedirectMiddleware
         $modify['uri'] = $uri;
         try {
             Psr7\Message::rewindBody($request);
-        } catch (\RuntimeException $e) {
+        } catch (\Exception $e) {
             throw new ResponseException(
                 'Redirect failed because the request body could not be rewound',
                 $request,

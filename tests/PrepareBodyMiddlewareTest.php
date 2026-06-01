@@ -255,7 +255,7 @@ class PrepareBodyMiddlewareTest extends TestCase
     /**
      * @dataProvider requestBodyGetSizeFailureMessageProvider
      */
-    public function testRequestBodyGetSizeFailureUsesExpectedMessage(\RuntimeException $previous, string $expected): void
+    public function testRequestBodyGetSizeFailureUsesExpectedMessage(\Exception $previous, string $expected): void
     {
         $body = FnStream::decorate(Psr7\Utils::streamFor('payload'), [
             'getSize' => static function () use ($previous): ?int {
@@ -298,7 +298,37 @@ class PrepareBodyMiddlewareTest extends TestCase
                 new \RuntimeException('cannot stat custom stream'),
                 'cannot stat custom stream',
             ],
+            'custom exception' => [
+                new \Exception('custom stream exception'),
+                'custom stream exception',
+            ],
         ];
+    }
+
+    public function testRequestBodyGetSizeErrorPropagates(): void
+    {
+        $previous = new \Error('custom stream bug');
+        $body = FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function () use ($previous): ?int {
+                throw $previous;
+            },
+        ]);
+        $handler = new MockHandler([
+            static function (): ResponseInterface {
+                self::fail('The request should fail before reaching the handler.');
+            },
+        ]);
+        $stack = new HandlerStack($handler);
+        $stack->push(Middleware::prepareBody());
+        $composed = $stack->resolve();
+        $request = new Request('POST', 'http://example.com', [], $body);
+
+        try {
+            $composed($request, [])->wait();
+            self::fail('Expected Error');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
+        }
     }
 }
 

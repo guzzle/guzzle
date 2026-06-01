@@ -1202,7 +1202,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         try {
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::promiseFor($handler($request, $options));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor($e);
         }
