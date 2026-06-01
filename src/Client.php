@@ -751,12 +751,21 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $this->config['headers'] = ['User-Agent' => Utils::defaultUserAgent()];
         } else {
             // Add the User-Agent header if one was not already set.
+            $hasUserAgent = false;
             foreach (\array_keys($this->config['headers']) as $name) {
                 if (\strtolower((string) $name) === 'user-agent') {
-                    return;
+                    $hasUserAgent = true;
+                    break;
                 }
             }
-            $this->config['headers']['User-Agent'] = Utils::defaultUserAgent();
+
+            if (!$hasUserAgent) {
+                $this->config['headers']['User-Agent'] = Utils::defaultUserAgent();
+            }
+        }
+
+        if (\is_array($this->config['headers'])) {
+            self::assertHeaderOptionTypes($this->config['headers']);
         }
     }
 
