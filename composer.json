@@ -53,10 +53,10 @@
     "require": {
         "php": "^7.2.5 || ^8.0",
         "ext-json": "*",
-        "guzzlehttp/promises": "^2.3",
-        "guzzlehttp/psr7": "^2.10.1",
+        "guzzlehttp/promises": "^2.5",
+        "guzzlehttp/psr7": "^2.11",
         "psr/http-client": "^1.0",
-        "symfony/deprecation-contracts": "^2.2 || ^3.0",
+        "symfony/deprecation-contracts": "^2.5 || ^3.0",
         "symfony/polyfill-php80": "^1.24"
     },
     "require-dev": {
