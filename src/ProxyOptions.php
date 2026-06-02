@@ -292,6 +292,14 @@ final class ProxyOptions
             return null;
         }
 
+        // Normalize a single DNS root dot for no-proxy domain matching.
+        if (\substr($host, -1) === '.') {
+            $host = \substr($host, 0, -1);
+            if ($host === '') {
+                return null;
+            }
+        }
+
         return [
             'type' => 'domain',
             'value' => \strtolower($host),

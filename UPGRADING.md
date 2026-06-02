@@ -425,10 +425,10 @@ comma-delimited string such as the value from the `NO_PROXY` environment
 variable. Other values now throw `InvalidArgumentException`.
 
 No-proxy matching is normalized more consistently. Domain entries are matched
-case-insensitively, exact IP literal entries compare normalized IP addresses,
-and `NO_PROXY` environment entries are trimmed with the same parser used for
-request options. Internal spaces in `NO_PROXY` entries are preserved instead of
-removed.
+case-insensitively, a single trailing DNS root dot is ignored for domain
+matching, exact IP literal entries compare normalized IP addresses, and
+`NO_PROXY` environment entries are trimmed with the same parser used for request
+options. Internal spaces in `NO_PROXY` entries are preserved instead of removed.
 
 Explicit proxy options also override environment no-proxy settings. If you pass
 a `proxy` request option and want to exclude hosts, provide the `no` value
@@ -758,8 +758,8 @@ when checking a host string directly.
 
 These helpers use Guzzle 8's normalized no-proxy matching rather than preserving
 the old `Utils::isHostInNoProxy()` semantics. Domain matching is
-case-insensitive, IP literals are normalized before comparison, and CIDR entries
-match IP literal hosts.
+case-insensitive and ignores a single trailing DNS root dot, IP literals are
+normalized before comparison, and CIDR entries match IP literal hosts.
 
 #### Non-instantiable Utility Classes
 
