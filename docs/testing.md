@@ -121,7 +121,7 @@ The test server is distributed separately from `guzzlehttp/guzzle` as the `guzzl
 You can add the test server as a dev dependency using Composer.
 
 ```bash
-composer require --dev guzzlehttp/test-server:^0.3
+composer require --dev guzzlehttp/test-server:^0.5
 ```
 
 Alternatively, you can include it as a dev dependency in your project's existing composer.json file:
@@ -129,7 +129,7 @@ Alternatively, you can include it as a dev dependency in your project's existing
 ```json
 {
     "require-dev": {
-        "guzzlehttp/test-server": "^0.3"
+        "guzzlehttp/test-server": "^0.5"
     }
 }
 ```
