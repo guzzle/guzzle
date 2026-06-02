@@ -97,7 +97,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
 
-## 7.11.0 - Upcoming
+## 7.11.0 - 2026-06-02
 
 ### Added
 
@@ -110,7 +110,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Adjusted `guzzlehttp/psr7` version constraint to `^2.10`
+- Adjusted `guzzlehttp/promises` version constraint to `^2.5`
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.11`
 - Allowed domainless `SetCookie` instances to be stored without wildcard request matching
 - Changed no-proxy matching to respect request ports for host-and-port rules
 - Prevented `CurlMultiHandler` destructors from throwing during cleanup
