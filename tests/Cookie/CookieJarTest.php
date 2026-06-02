@@ -493,6 +493,19 @@ class CookieJarTest extends TestCase
         self::assertTrue($cookie->getHostOnly());
     }
 
+    public function testExtractsCookieWithHugeMaxAge(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age='.\PHP_INT_MAX.'; Path=/'])
+        );
+
+        $cookie = $this->jar->getCookieByName('sid');
+
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertSame(\PHP_INT_MAX, $cookie->getExpires());
+    }
+
     public function testDoesNotSendHostOnlyCookieToSubdomain(): void
     {
         $this->jar->extractCookies(
