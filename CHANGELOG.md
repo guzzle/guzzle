@@ -30,7 +30,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added native property types to supported public cURL handler state properties
 - Added `string` return types to `__toString()` methods
 - Normalize and validate proxy no-proxy options consistently across handlers
-- Normalize no-proxy domain and IP literal matching consistently
+- Normalize no-proxy domain matching, including trailing-dot FQDNs, and IP literal matching consistently
 - Pass the request as the second argument to `on_headers` callbacks
 - Declare strict types across remaining source files
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use
