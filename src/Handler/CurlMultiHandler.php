@@ -602,7 +602,7 @@ final class CurlMultiHandler
             $entry['easy']->errno = $done['result'];
 
             try {
-                $result = CurlFactory::finish($this, $entry['easy'], $this->factory);
+                $result = CurlFactory::finish($entry['easy'], $this->factory);
             } catch (\Throwable $e) {
                 $entry['deferred']->reject($e);
 

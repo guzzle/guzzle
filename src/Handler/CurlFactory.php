@@ -78,11 +78,6 @@ final class CurlFactory implements CurlFactoryInterface
     private const CURL_READFUNC_ABORT = 0x10000000;
 
     /**
-     * libcurl's CURLE_SEND_FAIL_REWIND value.
-     */
-    private const CURLE_SEND_FAIL_REWIND = 65;
-
-    /**
      * @var resource[]|\CurlHandle[]
      */
     private array $handles = [];
@@ -405,6 +400,7 @@ final class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_UPLOAD', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_POSTFIELDS', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_READFUNCTION', 'the request body');
+        self::addConflictingCurlOption($options, 'CURLOPT_SEEKFUNCTION', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_READDATA', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_INFILE', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_INFILESIZE', 'the request body');
@@ -580,6 +576,7 @@ final class CurlFactory implements CurlFactoryInterface
     {
         curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
         curl_setopt($handle, \CURLOPT_READFUNCTION, null);
+        curl_setopt($handle, \CURLOPT_SEEKFUNCTION, null);
         curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
         curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
 
@@ -592,19 +589,18 @@ final class CurlFactory implements CurlFactoryInterface
      * Completes a cURL transaction, either returning a response promise or a
      * rejected promise.
      *
-     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
-     * @param CurlFactoryInterface                                                                            $factory Dictates how the handle is released
+     * @param CurlFactoryInterface $factory Dictates how the handle is released
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public static function finish(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
+    public static function finish(EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
         /** @var (callable(TransferStats): mixed)|null $onStats */
         $onStats = $easy->options['on_stats'] ?? null;
         $stats = $onStats !== null ? self::createStats($easy) : null;
 
         if (self::shouldFinishWithError($easy)) {
-            return self::finishError($handler, $easy, $factory, $stats, $onStats);
+            return self::finishError($easy, $factory, $stats, $onStats);
         }
 
         /** @var ResponseInterface $response */
@@ -676,12 +672,11 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
-     * @param (callable(TransferStats): mixed)|null                                                           $onStats
+     * @param (callable(TransferStats): mixed)|null $onStats
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private static function finishError(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory, ?TransferStats $stats, ?callable $onStats): PromiseInterface
+    private static function finishError(EasyHandle $easy, CurlFactoryInterface $factory, ?TransferStats $stats, ?callable $onStats): PromiseInterface
     {
         // Get error information and release the handle to the factory.
         $ctx = self::createErrorContext($easy);
@@ -689,10 +684,6 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ($onStats !== null && $stats !== null) {
             $onStats($stats);
-        }
-
-        if (self::shouldRetryFailedRewind($easy)) {
-            return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
         return self::createRejection($easy, $ctx);
@@ -713,29 +704,6 @@ final class CurlFactory implements CurlFactoryInterface
             || $easy->sinkWriteException !== null
             || $easy->sinkWriteIncomplete
             || $easy->responseBodySizeException !== null;
-    }
-
-    private static function shouldRetryFailedRewind(EasyHandle $easy): bool
-    {
-        if (self::hasLocalFailure($easy)) {
-            return false;
-        }
-
-        // Two transfer outcomes warrant rewinding the body and retrying:
-        //
-        // - errno === CURLE_SEND_FAIL_REWIND (65): libcurl needed to rewind an
-        //   already-partially-sent upload to resend it (a redirect, multi-pass
-        //   auth such as NTLM/Negotiate, or a reused connection that died) but
-        //   could not, because PHP registers no seek callback for a streamed
-        //   request body. See https://bugs.php.net/bug.php?id=47204.
-        //
-        // - errno === 0: libcurl reported success yet no usable response
-        //   reached us. This is the legacy curl_multi silent-failure variant of
-        //   the same rewind problem. libcurl 7.61.1 fixed it to surface as
-        //   CURLE_SEND_FAIL_REWIND instead (curl/curl@d6cf930), so this arm is
-        //   only load-bearing for libcurl < 7.61.1 and may be removed once the
-        //   minimum supported libcurl is >= 7.61.1.
-        return $easy->errno === 0 || $easy->errno === self::CURLE_SEND_FAIL_REWIND;
     }
 
     private static function createErrorContext(EasyHandle $easy): array
@@ -1306,6 +1274,19 @@ final class CurlFactory implements CurlFactoryInterface
                     return self::CURL_READFUNC_ABORT;
                 }
             };
+            $conf[\CURLOPT_SEEKFUNCTION] = static function ($ch, int $offset, int $origin) use ($body): int {
+                if ($origin !== \SEEK_SET || !$body->isSeekable()) {
+                    return \CURL_SEEKFUNC_CANTSEEK;
+                }
+
+                try {
+                    $body->seek($offset);
+
+                    return \CURL_SEEKFUNC_OK;
+                } catch (\Exception $e) {
+                    return \CURL_SEEKFUNC_FAIL;
+                }
+            };
         }
 
         // If the Expect header is not present, prevent curl from adding it
@@ -1698,55 +1679,6 @@ final class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_STDERR] = Utils::debugResource($options['debug']);
             $conf[\CURLOPT_VERBOSE] = true;
         }
-    }
-
-    /**
-     * This function ensures that a response was set on a transaction. If one
-     * was not set, then the request is retried if possible. This error
-     * typically means you are sending a payload, curl encountered a
-     * "Connection died, retrying a fresh connect" error, tried to rewind the
-     * stream, and then encountered a "necessary data rewind wasn't possible"
-     * error, causing the request to be sent through curl_multi_info_read()
-     * without an error status.
-     *
-     * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler
-     *
-     * @return PromiseInterface<ResponseInterface, mixed>
-     */
-    private static function retryFailedRewind(callable $handler, EasyHandle $easy, array $ctx): PromiseInterface
-    {
-        try {
-            // Only rewind if the body has been read from.
-            $body = $easy->request->getBody();
-            if ($body->tell() > 0) {
-                $body->rewind();
-            }
-        } catch (\Exception $e) {
-            $ctx['error'] = 'The connection unexpectedly failed without '
-                .'providing an error. The request would have been retried, '
-                .'but attempting to rewind the request body failed. '
-                .'Exception: '.$e;
-
-            return self::createRejection($easy, $ctx, $e);
-        }
-
-        // Retry no more than 3 times before giving up.
-        if (!isset($easy->options['_curl_retries'])) {
-            $easy->options['_curl_retries'] = 1;
-        } elseif ($easy->options['_curl_retries'] == 2) {
-            $ctx['error'] = 'The cURL request was retried 3 times '
-                .'and did not succeed. The most likely reason for the failure '
-                .'is that cURL was unable to rewind the body of the request '
-                .'and subsequent retries resulted in the same error. Turn on '
-                .'the debug option to see what went wrong. See '
-                .'https://bugs.php.net/bug.php?id=47204 for more information.';
-
-            return self::createRejection($easy, $ctx);
-        } else {
-            ++$easy->options['_curl_retries'];
-        }
-
-        return $handler($easy->request, $easy->options);
     }
 
     private function createHeaderFn(EasyHandle $easy): callable

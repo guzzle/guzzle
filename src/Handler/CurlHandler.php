@@ -75,7 +75,7 @@ final class CurlHandler
         \curl_exec($easy->handle);
         $easy->errno = \curl_errno($easy->handle);
 
-        return CurlFactory::finish($this, $easy, $this->factory);
+        return CurlFactory::finish($easy, $this->factory);
     }
 
     /**

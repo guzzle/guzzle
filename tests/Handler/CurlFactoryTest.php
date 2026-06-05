@@ -1478,12 +1478,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
 
         try {
-            CurlFactory::finish(
-                static function (): void {
-                },
-                $easy,
-                $factory
-            )->wait();
+            CurlFactory::finish($easy, $factory)->wait();
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame('The transfer was aborted by the progress callback', $e->getMessage());
@@ -1505,12 +1500,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
 
         try {
-            CurlFactory::finish(
-                static function (): void {
-                },
-                $easy,
-                $factory
-            )->wait();
+            CurlFactory::finish($easy, $factory)->wait();
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame('An error was encountered during the progress event', $e->getMessage());
@@ -1528,12 +1518,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
 
         try {
-            CurlFactory::finish(
-                static function (): void {
-                },
-                $easy,
-                $factory
-            )->wait();
+            CurlFactory::finish($easy, $factory)->wait();
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertSame('An error was encountered during the progress event', $e->getMessage());
@@ -1548,12 +1533,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
 
         try {
-            CurlFactory::finish(
-                static function (): void {
-                },
-                $easy,
-                $factory
-            )->wait();
+            CurlFactory::finish($easy, $factory)->wait();
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
             self::assertStringStartsWith('cURL error '.\CURLE_ABORTED_BY_CALLBACK.':', $e->getMessage());
@@ -2196,161 +2176,6 @@ class CurlFactoryTest extends TestCase
         self::assertSame('0', $received->getHeaderLine('content-length'));
     }
 
-    public function testFailsWhenCannotRewindRetryAfterNoResponse(): void
-    {
-        $factory = new CurlFactory(1);
-        $stream = Psr7\Utils::streamFor('abc');
-        $stream->read(1);
-        $stream = new Psr7\NoSeekStream($stream);
-        $request = new Psr7\Request('PUT', Server::$url, [], $stream);
-        $fn = static function (RequestInterface $request, array $options) use (&$fn, $factory): P\PromiseInterface {
-            $easy = $factory->create($request, $options);
-
-            return CurlFactory::finish($fn, $easy, $factory);
-        };
-
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('but attempting to rewind the request body failed');
-        $fn($request, [])->wait();
-    }
-
-    public function testRetriesWhenBodyCanBeRewound(): void
-    {
-        $callHandler = $called = false;
-
-        $fn = static function (RequestInterface $r, array $options) use (&$callHandler): P\PromiseInterface {
-            $callHandler = true;
-
-            return P\Create::promiseFor(new Psr7\Response());
-        };
-
-        $bd = Psr7\FnStream::decorate(Psr7\Utils::streamFor('test'), [
-            'tell' => static function (): int {
-                return 1;
-            },
-            'rewind' => static function () use (&$called): void {
-                $called = true;
-            },
-        ]);
-
-        $factory = new CurlFactory(1);
-        $req = new Psr7\Request('PUT', Server::$url, [], $bd);
-        $easy = $factory->create($req, []);
-        $res = CurlFactory::finish($fn, $easy, $factory);
-        $res = $res->wait();
-        self::assertTrue($callHandler);
-        self::assertTrue($called);
-        self::assertEquals('200', $res->getStatusCode());
-    }
-
-    public function testFailsWhenRetryMoreThanThreeTimes(): void
-    {
-        $factory = new CurlFactory(1);
-        $call = 0;
-        $fn = static function (RequestInterface $request, array $options) use (&$mock, &$call, $factory): P\PromiseInterface {
-            ++$call;
-            $easy = $factory->create($request, $options);
-
-            return CurlFactory::finish($mock, $easy, $factory);
-        };
-        $mock = new Handler\MockHandler([$fn, $fn, $fn]);
-        $p = $mock(new Psr7\Request('PUT', Server::$url, [], 'test'), []);
-        $p->wait(false);
-        self::assertEquals(3, $call);
-
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('The cURL request was retried 3 times');
-        $p->wait(true);
-    }
-
-    /**
-     * Regression coverage for the CURLE_SEND_FAIL_REWIND (errno 65) arm of
-     * shouldRetryFailedRewind()/retryFailedRewind(). libcurl returns errno 65
-     * when it must rewind an already-partially-sent upload body (after a
-     * redirect, multi-pass auth, or a dead reused connection) but cannot,
-     * because PHP exposes no seek callback for a streamed request body
-     * (https://bugs.php.net/bug.php?id=47204). Guzzle works around this by
-     * rewinding the PSR-7 body itself and re-issuing the request.
-     *
-     * Until this commit the errno === 0 arm was covered
-     * (testRetriesWhenBodyCanBeRewound, testFailsWhenRetryMoreThanThreeTimes)
-     * but the errno === 65 arm had none, so a regression in it would have
-     * passed CI unnoticed.
-     *
-     * This test and testFailsAfterThreeRetriesOnFailedRewindErrno may be
-     * removed once Guzzle registers a CURLOPT_SEEKFUNCTION for streamed bodies
-     * so libcurl can rewind natively and never surfaces errno 65 for a seekable
-     * body. That requires PHP to expose CURLOPT_SEEKFUNCTION (it does not as of
-     * PHP 8.4) and a minimum PHP/libcurl version that includes it.
-     */
-    public function testRetriesWhenCurlReportsFailedRewindErrno(): void
-    {
-        $rewound = false;
-        $handlerCalled = false;
-
-        $handler = static function (RequestInterface $request, array $options) use (&$handlerCalled): P\PromiseInterface {
-            $handlerCalled = true;
-
-            return P\Create::promiseFor(new Psr7\Response());
-        };
-
-        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('test'), [
-            'tell' => static function (): int {
-                return 1;
-            },
-            'rewind' => static function () use (&$rewound): void {
-                $rewound = true;
-            },
-        ]);
-
-        $factory = new CurlFactory(1);
-        $request = new Psr7\Request('PUT', Server::$url, [], $body);
-        $easy = $factory->create($request, []);
-        // Reset the flag so the assertion below observes the retry's rewind,
-        // not the rewind applyBody() performs while creating the handle.
-        $rewound = false;
-        // Simulate libcurl returning errno 65 (failed rewind) and no response.
-        $easy->errno = 65;
-        $easy->response = null;
-
-        $response = CurlFactory::finish($handler, $easy, $factory)->wait();
-
-        self::assertTrue($rewound, 'The request body should have been rewound before retrying');
-        self::assertTrue($handlerCalled, 'The request should have been retried');
-        self::assertSame(200, $response->getStatusCode());
-    }
-
-    /**
-     * Companion to testRetriesWhenCurlReportsFailedRewindErrno: when libcurl
-     * keeps reporting CURLE_SEND_FAIL_REWIND (errno 65) the retry is bounded to
-     * three attempts before giving up, mirroring
-     * testFailsWhenRetryMoreThanThreeTimes for the errno === 0 arm. See that
-     * test's docblock for the removal conditions that apply to both errno-65
-     * tests.
-     */
-    public function testFailsAfterThreeRetriesOnFailedRewindErrno(): void
-    {
-        $factory = new CurlFactory(1);
-        $calls = 0;
-        $handler = static function (RequestInterface $request, array $options) use (&$mock, &$calls, $factory): P\PromiseInterface {
-            ++$calls;
-            $easy = $factory->create($request, $options);
-            // Each attempt reports a failed rewind (errno 65) with no response.
-            $easy->errno = 65;
-            $easy->response = null;
-
-            return CurlFactory::finish($mock, $easy, $factory);
-        };
-        $mock = new Handler\MockHandler([$handler, $handler, $handler]);
-        $promise = $mock(new Psr7\Request('PUT', Server::$url, [], 'test'), []);
-        $promise->wait(false);
-        self::assertSame(3, $calls);
-
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('The cURL request was retried 3 times');
-        $promise->wait(true);
-    }
-
     public function testHandles100Continue(): void
     {
         Server::flush();
@@ -2395,12 +2220,7 @@ class CurlFactoryTest extends TestCase
         $request = new Psr7\Request('GET', Server::$url);
         $easy = $factory->create($request, []);
         $easy->errno = $errno;
-        $response = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $response = CurlFactory::finish($easy, $factory);
 
         try {
             $response->wait();
@@ -2433,12 +2253,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = $errno;
         $easy->response = null;
 
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         try {
             $promise->wait();
@@ -2463,12 +2278,7 @@ class CurlFactoryTest extends TestCase
         self::assertNull($easy->response);
         $easy->errno = \CURLE_GOT_NOTHING;
 
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         try {
             $promise->wait();
@@ -2490,12 +2300,7 @@ class CurlFactoryTest extends TestCase
         self::assertNull($easy->response);
         $easy->errno = \CURLE_RECV_ERROR;
 
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         try {
             $promise->wait();
@@ -2532,12 +2337,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = $errno;
         $easy->response = $response;
 
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         try {
             $promise->wait();
@@ -2562,12 +2362,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = $errno;
         $easy->response = $response;
 
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         try {
             $promise->wait();
@@ -2686,12 +2481,7 @@ class CurlFactoryTest extends TestCase
 
     private static function finishEasy(EasyHandle $easy, CurlFactory $factory): void
     {
-        CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        )->wait();
+        CurlFactory::finish($easy, $factory)->wait();
     }
 
     public static function curlResponseTransferErrorProvider(): iterable
@@ -2712,12 +2502,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = $errno;
         $easy->response = $response;
 
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         try {
             $promise->wait();
@@ -2745,12 +2530,7 @@ class CurlFactoryTest extends TestCase
         $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
         $easy->response = $response;
 
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         try {
             $promise->wait();
@@ -2769,12 +2549,7 @@ class CurlFactoryTest extends TestCase
         $request = new Psr7\Request('GET', Server::$url);
         $easy = $factory->create($request, []);
         $easy->errno = \CURLE_OPERATION_TIMEOUTED;
-        $response = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $response = CurlFactory::finish($easy, $factory);
 
         try {
             $response->wait();
@@ -2870,12 +2645,7 @@ class CurlFactoryTest extends TestCase
         $easy = $factory->create($request, []);
         $easy->errno = \CURLE_OPERATION_TIMEOUTED;
         $easy->response = $response;
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         try {
             $promise->wait();
@@ -3181,12 +2951,7 @@ class CurlFactoryTest extends TestCase
             'Status code must be an integer value between 1xx and 5xx.'
         );
 
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         try {
             $promise->wait();
@@ -3593,7 +3358,7 @@ class CurlFactoryTest extends TestCase
         };
 
         try {
-            CurlFactory::finish($handler, $easy, $factory)->wait();
+            CurlFactory::finish($easy, $factory)->wait();
 
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
@@ -3680,7 +3445,7 @@ class CurlFactoryTest extends TestCase
         };
 
         try {
-            CurlFactory::finish($handler, $easy, $factory)->wait();
+            CurlFactory::finish($easy, $factory)->wait();
 
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
@@ -3722,7 +3487,7 @@ class CurlFactoryTest extends TestCase
         };
 
         try {
-            CurlFactory::finish($handler, $easy, $factory)->wait();
+            CurlFactory::finish($easy, $factory)->wait();
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
@@ -3766,7 +3531,7 @@ class CurlFactoryTest extends TestCase
         };
 
         try {
-            CurlFactory::finish($handler, $easy, $factory)->wait();
+            CurlFactory::finish($easy, $factory)->wait();
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
@@ -4336,7 +4101,7 @@ class CurlFactoryTest extends TestCase
         };
 
         try {
-            CurlFactory::finish($handler, $easy, $factory)->wait();
+            CurlFactory::finish($easy, $factory)->wait();
 
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
@@ -4370,7 +4135,7 @@ class CurlFactoryTest extends TestCase
         };
 
         try {
-            CurlFactory::finish($handler, $easy, $factory)->wait();
+            CurlFactory::finish($easy, $factory)->wait();
 
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
@@ -4401,7 +4166,7 @@ class CurlFactoryTest extends TestCase
         };
 
         try {
-            CurlFactory::finish($handler, $easy, $factory)->wait();
+            CurlFactory::finish($easy, $factory)->wait();
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
@@ -4485,12 +4250,7 @@ class CurlFactoryTest extends TestCase
         ]);
         $easy->response = new Psr7\Response(200);
 
-        $promise = CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        );
+        $promise = CurlFactory::finish($easy, $factory);
 
         self::assertTrue($called);
         self::assertSame(200, $promise->wait()->getStatusCode());
@@ -4527,12 +4287,7 @@ class CurlFactoryTest extends TestCase
         $easy->response = $response;
 
         try {
-            CurlFactory::finish(
-                static function (): void {
-                },
-                $easy,
-                $factory
-            )->wait();
+            CurlFactory::finish($easy, $factory)->wait();
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
@@ -4573,12 +4328,7 @@ class CurlFactoryTest extends TestCase
         $easy->response = $response;
 
         try {
-            CurlFactory::finish(
-                static function (): void {
-                },
-                $easy,
-                $factory
-            )->wait();
+            CurlFactory::finish($easy, $factory)->wait();
             self::fail('Expected Error');
         } catch (\Error $e) {
             self::assertSame($previous, $e);
@@ -4627,12 +4377,7 @@ class CurlFactoryTest extends TestCase
         $easy->response = $response;
 
         try {
-            CurlFactory::finish(
-                static function (): void {
-                },
-                $easy,
-                $factory
-            );
+            CurlFactory::finish($easy, $factory);
 
             self::fail('Expected RuntimeException');
         } catch (\RuntimeException $e) {
@@ -4659,12 +4404,7 @@ class CurlFactoryTest extends TestCase
         ]);
         $easy->errno = \CURLE_COULDNT_CONNECT;
 
-        CurlFactory::finish(
-            static function (): void {
-            },
-            $easy,
-            $factory
-        )->wait(false);
+        CurlFactory::finish($easy, $factory)->wait(false);
 
         self::assertTrue($called);
     }
@@ -4686,12 +4426,7 @@ class CurlFactoryTest extends TestCase
         $easy->response = new Psr7\Response(200);
 
         try {
-            CurlFactory::finish(
-                static function (): void {
-                },
-                $easy,
-                $factory
-            );
+            CurlFactory::finish($easy, $factory);
             self::fail('Expected RuntimeException');
         } catch (\RuntimeException $e) {
             self::assertSame($previous, $e);
