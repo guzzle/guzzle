@@ -66,6 +66,23 @@ final class StreamHandler
 
     private ?\Throwable $onStatsException = null;
 
+    private string $transportSharingMode;
+
+    /**
+     * Accepts an associative array of options:
+     *
+     * - transport_sharing: Optional transport sharing mode.
+     *
+     * @param array{transport_sharing?: mixed} $options Array of options to use with the handler
+     */
+    public function __construct(array $options = [])
+    {
+        $this->transportSharingMode = CurlShareHandleState::normalizeMode(
+            $options['transport_sharing'] ?? null,
+            'transport_sharing'
+        );
+    }
+
     /**
      * Sends an HTTP request.
      *
@@ -104,6 +121,7 @@ final class StreamHandler
         $startTime = isset($options['on_stats']) ? Utils::currentTime() : null;
 
         self::rejectUnsupportedRequestOptions($request, $options);
+        $this->assertTransportSharingSupported();
 
         $request = self::prepareRequest($request);
 
@@ -828,14 +846,6 @@ final class StreamHandler
 
     private static function rejectUnsupportedRequestOptions(RequestInterface $request, array $options): void
     {
-        if (\array_key_exists('transport_sharing', $options)) {
-            $transportSharingMode = CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing');
-
-            if (\in_array($transportSharingMode, [TransportSharing::HANDLER_REQUIRE, TransportSharing::PERSISTENT_REQUIRE], true)) {
-                throw new InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
-            }
-        }
-
         if (
             \array_key_exists('curl', $options)
             && $options['curl'] !== null
@@ -851,6 +861,17 @@ final class StreamHandler
 
         if (\array_key_exists('expect', $options) && $options['expect'] !== false && $request->hasHeader('Expect')) {
             throw new InvalidArgumentException('Passing the "expect" request option to the stream handler is not supported when it adds an Expect header because the stream handler does not support Expect: 100-Continue.');
+        }
+    }
+
+    private function assertTransportSharingSupported(): void
+    {
+        if ($this->transportSharingMode === TransportSharing::PERSISTENT_REQUIRE) {
+            throw new InvalidArgumentException('The "transport_sharing" option requires persistent transport sharing, which is only available through cURL share handles.');
+        }
+
+        if ($this->transportSharingMode === TransportSharing::HANDLER_REQUIRE) {
+            throw new InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
         }
     }
 
