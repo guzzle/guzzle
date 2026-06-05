@@ -2263,6 +2263,94 @@ class CurlFactoryTest extends TestCase
         $p->wait(true);
     }
 
+    /**
+     * Regression coverage for the CURLE_SEND_FAIL_REWIND (errno 65) arm of
+     * shouldRetryFailedRewind()/retryFailedRewind(). libcurl returns errno 65
+     * when it must rewind an already-partially-sent upload body (after a
+     * redirect, multi-pass auth, or a dead reused connection) but cannot,
+     * because PHP exposes no seek callback for a streamed request body
+     * (https://bugs.php.net/bug.php?id=47204). Guzzle works around this by
+     * rewinding the PSR-7 body itself and re-issuing the request.
+     *
+     * Until this commit the errno === 0 arm was covered
+     * (testRetriesWhenBodyCanBeRewound, testFailsWhenRetryMoreThanThreeTimes)
+     * but the errno === 65 arm had none, so a regression in it would have
+     * passed CI unnoticed.
+     *
+     * This test and testFailsAfterThreeRetriesOnFailedRewindErrno may be
+     * removed once Guzzle registers a CURLOPT_SEEKFUNCTION for streamed bodies
+     * so libcurl can rewind natively and never surfaces errno 65 for a seekable
+     * body. That requires PHP to expose CURLOPT_SEEKFUNCTION (it does not as of
+     * PHP 8.4) and a minimum PHP/libcurl version that includes it.
+     */
+    public function testRetriesWhenCurlReportsFailedRewindErrno(): void
+    {
+        $rewound = false;
+        $handlerCalled = false;
+
+        $handler = static function (RequestInterface $request, array $options) use (&$handlerCalled): P\PromiseInterface {
+            $handlerCalled = true;
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('test'), [
+            'tell' => static function (): int {
+                return 1;
+            },
+            'rewind' => static function () use (&$rewound): void {
+                $rewound = true;
+            },
+        ]);
+
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('PUT', Server::$url, [], $body);
+        $easy = $factory->create($request, []);
+        // Reset the flag so the assertion below observes the retry's rewind,
+        // not the rewind applyBody() performs while creating the handle.
+        $rewound = false;
+        // Simulate libcurl returning errno 65 (failed rewind) and no response.
+        $easy->errno = 65;
+        $easy->response = null;
+
+        $response = CurlFactory::finish($handler, $easy, $factory)->wait();
+
+        self::assertTrue($rewound, 'The request body should have been rewound before retrying');
+        self::assertTrue($handlerCalled, 'The request should have been retried');
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * Companion to testRetriesWhenCurlReportsFailedRewindErrno: when libcurl
+     * keeps reporting CURLE_SEND_FAIL_REWIND (errno 65) the retry is bounded to
+     * three attempts before giving up, mirroring
+     * testFailsWhenRetryMoreThanThreeTimes for the errno === 0 arm. See that
+     * test's docblock for the removal conditions that apply to both errno-65
+     * tests.
+     */
+    public function testFailsAfterThreeRetriesOnFailedRewindErrno(): void
+    {
+        $factory = new CurlFactory(1);
+        $calls = 0;
+        $handler = static function (RequestInterface $request, array $options) use (&$mock, &$calls, $factory): P\PromiseInterface {
+            ++$calls;
+            $easy = $factory->create($request, $options);
+            // Each attempt reports a failed rewind (errno 65) with no response.
+            $easy->errno = 65;
+            $easy->response = null;
+
+            return CurlFactory::finish($mock, $easy, $factory);
+        };
+        $mock = new Handler\MockHandler([$handler, $handler, $handler]);
+        $promise = $mock(new Psr7\Request('PUT', Server::$url, [], 'test'), []);
+        $promise->wait(false);
+        self::assertSame(3, $calls);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('The cURL request was retried 3 times');
+        $promise->wait(true);
+    }
+
     public function testHandles100Continue(): void
     {
         Server::flush();
