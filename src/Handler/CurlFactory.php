@@ -721,10 +721,20 @@ final class CurlFactory implements CurlFactoryInterface
             return false;
         }
 
-        if (!empty($easy->options['_err_message'])) {
-            return false;
-        }
-
+        // Two transfer outcomes warrant rewinding the body and retrying:
+        //
+        // - errno === CURLE_SEND_FAIL_REWIND (65): libcurl needed to rewind an
+        //   already-partially-sent upload to resend it (a redirect, multi-pass
+        //   auth such as NTLM/Negotiate, or a reused connection that died) but
+        //   could not, because PHP registers no seek callback for a streamed
+        //   request body. See https://bugs.php.net/bug.php?id=47204.
+        //
+        // - errno === 0: libcurl reported success yet no usable response
+        //   reached us. This is the legacy curl_multi silent-failure variant of
+        //   the same rewind problem. libcurl 7.61.1 fixed it to surface as
+        //   CURLE_SEND_FAIL_REWIND instead (curl/curl@d6cf930), so this arm is
+        //   only load-bearing for libcurl < 7.61.1 and may be removed once the
+        //   minimum supported libcurl is >= 7.61.1.
         return $easy->errno === 0 || $easy->errno === self::CURLE_SEND_FAIL_REWIND;
     }
 
