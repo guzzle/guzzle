@@ -663,27 +663,6 @@ Constant
 $response = $client->request('PUT', '/put', ['json' => ['foo' => 'bar']]);
 ```
 
-Here's an example of using the `tap` middleware to see what request is sent over the wire.
-
-```php
-use GuzzleHttp\Middleware;
-
-// Create a middleware that echoes parts of the request.
-$tapMiddleware = Middleware::tap(function ($request) {
-    echo $request->getHeaderLine('Content-Type');
-    // application/json
-    echo $request->getBody();
-    // {"foo":"bar"}
-});
-
-// The $handler variable is the handler passed in the
-// options to the client constructor.
-$response = $client->request('PUT', '/put', [
-    'json'    => ['foo' => 'bar'],
-    'handler' => $tapMiddleware($handler)
-]);
-```
-
 > [!NOTE]
 > This request option does not support customizing the Content-Type header or any of the options from PHP's [json_encode()](http://www.php.net/manual/en/function.json-encode.php) function. If you need to customize these settings, then you must pass the JSON encoded data into the request yourself using the `body` request option and you must specify the correct Content-Type header using the `headers` request option.
 >
