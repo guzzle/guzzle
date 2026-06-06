@@ -97,6 +97,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
 
+## 7.12.0 - Upcoming
+
+### Deprecated
+
+- Deprecated the request-level `handler` option, which will be ignored in 8.0
+
+
 ## 7.11.1 - Upcoming
 
 ### Fixed
