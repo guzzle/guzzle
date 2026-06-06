@@ -488,7 +488,11 @@ class ClientTest extends TestCase
         self::assertTrue($sent->hasHeader('Accept-Encoding'));
 
         $mock = new MockHandler([new Response()]);
-        $client->get('http://foo.com', ['handler' => $mock]);
+        $client = new Client([
+            'curl' => [\CURLOPT_ENCODING => ''],
+            'handler' => $mock,
+        ]);
+        $client->get('http://foo.com');
         self::assertSame([\CURLOPT_ENCODING => ''], $mock->getLastOptions()['curl']);
     }
 
@@ -963,19 +967,6 @@ class ClientTest extends TestCase
         $sent = $mock->getLastRequest();
         self::assertNotNull($sent);
         self::assertSame(['bar', 'baz'], $sent->getHeader('X-Foo'));
-    }
-
-    public function testCanSetCustomHandler()
-    {
-        $mock = new MockHandler([new Response(500)]);
-        $client = new Client(['handler' => $mock]);
-        $mock2 = new MockHandler([new Response(200)]);
-        self::assertSame(
-            200,
-            $client->send(new Request('GET', 'http://foo.com'), [
-                'handler' => $mock2,
-            ])->getStatusCode()
-        );
     }
 
     public function testProperlyBuildsQuery()

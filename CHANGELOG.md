@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.12.0 - Upcoming
+
+### Deprecated
+
+- Deprecated the request-level `handler` option, which will be ignored in 8.0
+
+
 ## 7.11.1 - Upcoming
 
 ### Fixed
