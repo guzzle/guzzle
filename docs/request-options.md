@@ -1244,7 +1244,8 @@ while (!$body->eof()) {
 ## stream_context
 
 Summary
-PHP stream context options to merge into the context used by the built-in stream handler.
+PHP stream context options to merge into the context used by the built-in stream
+handler.
 
 Types
 array
