@@ -1345,31 +1345,48 @@ class StreamHandlerTest extends TestCase
         self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_3, $opts['ssl']['min_proto_version']);
     }
 
-    public function testStreamContextTlsMinimumOverridesCryptoMethod(): void
+    /**
+     * @dataProvider conflictingStreamContextProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsConflictingStreamContextOptions(string $wrapper, string $option, $value, ?string $replacement): void
     {
-        $res = $this->getSendResult([
-            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_context.'.$wrapper.'.'.$option);
+        $this->expectExceptionMessage('conflicts with Guzzle-managed');
+        if ($replacement !== null) {
+            $this->expectExceptionMessage($replacement);
+        }
+
+        $this->getSendResult([
             'stream_context' => [
-                'ssl' => ['min_proto_version' => \STREAM_CRYPTO_PROTO_TLSv1_0],
+                $wrapper => [$option => $value],
             ],
         ]);
-        $opts = \stream_context_get_options($res->getBody()->detach());
-
-        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_0, $opts['ssl']['min_proto_version']);
     }
 
-    public function testStreamContextCryptoMethodOverridesCryptoMethod(): void
+    public static function conflictingStreamContextProvider(): iterable
     {
-        $res = $this->getSendResult([
-            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
-            'stream_context' => [
-                'ssl' => ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT],
-            ],
-        ]);
-        $opts = \stream_context_get_options($res->getBody()->detach());
-
-        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT, $opts['ssl']['crypto_method']);
-        self::assertArrayNotHasKey('min_proto_version', $opts['ssl']);
+        yield 'http content' => ['http', 'content', 'body', 'request body'];
+        yield 'http follow location' => ['http', 'follow_location', 1, 'allow_redirects'];
+        yield 'http header' => ['http', 'header', 'X-Test: 1', 'request headers'];
+        yield 'http max redirects' => ['http', 'max_redirects', 5, 'allow_redirects'];
+        yield 'http method' => ['http', 'method', 'POST', 'request method'];
+        yield 'http protocol version' => ['http', 'protocol_version', '1.0', 'request protocol version'];
+        yield 'http proxy' => ['http', 'proxy', 'tcp://proxy.example.com:8125', 'proxy'];
+        yield 'http timeout' => ['http', 'timeout', 1, 'timeout'];
+        yield 'ssl allow self signed' => ['ssl', 'allow_self_signed', true, 'verify'];
+        yield 'ssl cafile' => ['ssl', 'cafile', __FILE__, 'verify'];
+        yield 'ssl capath' => ['ssl', 'capath', __DIR__, 'verify'];
+        yield 'ssl crypto method' => ['ssl', 'crypto_method', \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT, 'crypto_method'];
+        yield 'ssl local cert' => ['ssl', 'local_cert', __FILE__, 'cert'];
+        yield 'ssl local pk' => ['ssl', 'local_pk', __FILE__, 'ssl_key'];
+        yield 'ssl min protocol version' => ['ssl', 'min_proto_version', \STREAM_CRYPTO_PROTO_TLSv1_0, 'crypto_method'];
+        yield 'ssl passphrase' => ['ssl', 'passphrase', 'secret', 'cert'];
+        yield 'ssl peer name' => ['ssl', 'peer_name', 'example.com', 'request URI'];
+        yield 'ssl verify peer' => ['ssl', 'verify_peer', false, 'verify'];
+        yield 'ssl verify peer name' => ['ssl', 'verify_peer_name', false, 'verify'];
     }
 
     public function testCanSetPasswordWhenSettingCert(): void
@@ -1632,21 +1649,45 @@ class StreamHandlerTest extends TestCase
             'stream_context' => [
                 'http' => [
                     'request_fulluri' => true,
-                    'method' => 'HEAD',
                 ],
                 'socket' => [
                     'bindto' => '127.0.0.1:0',
                 ],
                 'ssl' => [
-                    'verify_peer' => false,
+                    'ciphers' => 'DEFAULT',
                 ],
             ],
         ]);
         $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertSame('HEAD', $opts['http']['method']);
         self::assertTrue($opts['http']['request_fulluri']);
         self::assertSame('127.0.0.1:0', $opts['socket']['bindto']);
-        self::assertFalse($opts['ssl']['verify_peer']);
+        self::assertSame('DEFAULT', $opts['ssl']['ciphers']);
+    }
+
+    public function testRejectsUnsupportedStreamContextOptions(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_context.http.unknown_option');
+        $this->expectExceptionMessage('stream_context.http.ignore_errors');
+        $this->expectExceptionMessage('stream_context.ssl.max_proto_version');
+        $this->expectExceptionMessage('stream_context.ssl.SNI_server_name');
+        $this->expectExceptionMessage('stream_context.custom.foo');
+
+        $this->getSendResult([
+            'stream_context' => [
+                'http' => [
+                    'ignore_errors' => true,
+                    'unknown_option' => true,
+                ],
+                'ssl' => [
+                    'max_proto_version' => \STREAM_CRYPTO_PROTO_TLSv1_2,
+                    'SNI_server_name' => 'example.com',
+                ],
+                'custom' => [
+                    'foo' => true,
+                ],
+            ],
+        ]);
     }
 
     public function testEnsuresThatStreamContextIsAnArray(): void
