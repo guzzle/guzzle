@@ -44,7 +44,6 @@ class Pool implements PromisorInterface
      * @param array{
      *     concurrency?: int|(callable(int): int),
      *     options?: array{
-     *         handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *         base_uri?: string|UriInterface,
      *         allow_redirects?: bool|array{
      *             max?: int,
@@ -169,7 +168,6 @@ class Pool implements PromisorInterface
      * @param array{
      *     concurrency?: int|(callable(int): int),
      *     options?: array{
-     *         handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *         base_uri?: string|UriInterface,
      *         allow_redirects?: bool|array{
      *             max?: int,

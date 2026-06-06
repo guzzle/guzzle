@@ -30,7 +30,6 @@ interface ClientInterface
      *
      * @param RequestInterface $request Request to send
      * @param array{
-     *     handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *     base_uri?: string|UriInterface,
      *     allow_redirects?: bool|array{
      *         max?: int,
@@ -110,7 +109,6 @@ interface ClientInterface
      *
      * @param RequestInterface $request Request to send
      * @param array{
-     *     handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *     base_uri?: string|UriInterface,
      *     allow_redirects?: bool|array{
      *         max?: int,
@@ -195,7 +193,6 @@ interface ClientInterface
      * @param string              $method HTTP method.
      * @param string|UriInterface $uri    URI object or string.
      * @param array{
-     *     handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *     base_uri?: string|UriInterface,
      *     allow_redirects?: bool|array{
      *         max?: int,
@@ -280,7 +277,6 @@ interface ClientInterface
      * @param string              $method HTTP method
      * @param string|UriInterface $uri    URI object or string.
      * @param array{
-     *     handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *     base_uri?: string|UriInterface,
      *     allow_redirects?: bool|array{
      *         max?: int,
