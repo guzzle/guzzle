@@ -291,6 +291,21 @@ class CurlFactoryTest extends TestCase
         new CurlFactory(3, TransportSharing::HANDLER_PREFER, false);
     }
 
+    public function testRejectsUnsupportedCurlOption(): void
+    {
+        $option = 999999;
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage((string) $option);
+        $this->expectExceptionMessage('outside the built-in cURL handlers\' allow-list');
+
+        (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [
+                $option => true,
+            ],
+        ]);
+    }
+
     public function testPersistentRequireRejectsFreshConnect(): void
     {
         self::skipIfCurlShareIsUnavailable();

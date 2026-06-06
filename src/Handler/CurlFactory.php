@@ -179,6 +179,7 @@ final class CurlFactory implements CurlFactoryInterface
         self::assertOnStatsCallable($options);
         $this->rejectRequestLevelShareConflict($options);
         $this->rejectPersistentRequireConnectionReuseConflicts($options);
+        self::rejectUnsupportedCurlOptions($options);
         self::rejectConflictingCurlOptions($options);
 
         $contentLength = self::requestContentLength($request);
@@ -360,6 +361,31 @@ final class CurlFactory implements CurlFactoryInterface
         }
     }
 
+    private static function rejectUnsupportedCurlOptions(array $options): void
+    {
+        if (!isset($options['curl']) || !\is_array($options['curl']) || $options['curl'] === []) {
+            return;
+        }
+
+        $supportedOptions = self::supportedCurlOptions();
+        $conflictingOptions = self::conflictingCurlOptions();
+
+        foreach ($options['curl'] as $option => $_) {
+            if (
+                !\is_int($option)
+                || \array_key_exists($option, $supportedOptions)
+                || \array_key_exists($option, $conflictingOptions)
+            ) {
+                continue;
+            }
+
+            throw new InvalidArgumentException(\sprintf(
+                'Passing %s in the "curl" request option is not supported because it is outside the built-in cURL handlers\' allow-list.',
+                self::formatCurlOption($option)
+            ));
+        }
+    }
+
     private static function rejectUnsupportedRequestOptions(array $options): void
     {
         if (\array_key_exists('stream_context', $options)) {
@@ -408,8 +434,6 @@ final class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_HEADERFUNCTION', 'the "on_headers" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_WRITEFUNCTION', 'the "sink" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_FILE', 'the "sink" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_RETURNTRANSFER', null);
-        self::addConflictingCurlOption($options, 'CURLOPT_HEADER', null);
         self::addConflictingCurlOption($options, 'CURLOPT_TIMEOUT', 'the "timeout" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_TIMEOUT_MS', 'the "timeout" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_CONNECTTIMEOUT', 'the "connect_timeout" request option');
@@ -429,7 +453,6 @@ final class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_REDIR_PROTOCOLS_STR', 'the "allow_redirects" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS', 'the "protocols" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS_STR', 'the "protocols" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_HTTP09_ALLOWED', null);
         self::addConflictingCurlOption($options, 'CURLOPT_HTTP_VERSION', 'the request protocol version');
         self::addConflictingCurlOption($options, 'CURLOPT_IPRESOLVE', 'the "force_ip_resolve" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYPEER', 'the "verify" request option');
@@ -451,6 +474,75 @@ final class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_COOKIESESSION', 'Guzzle cookie middleware');
 
         return $options;
+    }
+
+    /**
+     * @return array<int, true>
+     */
+    private static function supportedCurlOptions(): array
+    {
+        static $options = null;
+
+        if ($options !== null) {
+            return $options;
+        }
+
+        $options = [];
+
+        self::addSupportedCurlOption($options, 'CURLOPT_ADDRESS_SCOPE');
+        self::addSupportedCurlOption($options, 'CURLOPT_CONNECT_TO');
+        self::addSupportedCurlOption($options, 'CURLOPT_DNS_CACHE_TIMEOUT');
+        self::addSupportedCurlOption($options, 'CURLOPT_DNS_INTERFACE');
+        self::addSupportedCurlOption($options, 'CURLOPT_DNS_LOCAL_IP4');
+        self::addSupportedCurlOption($options, 'CURLOPT_DNS_LOCAL_IP6');
+        self::addSupportedCurlOption($options, 'CURLOPT_DNS_SERVERS');
+        self::addSupportedCurlOption($options, 'CURLOPT_DNS_SHUFFLE_ADDRESSES');
+        self::addSupportedCurlOption($options, 'CURLOPT_ENCODING');
+        self::addSupportedCurlOption($options, 'CURLOPT_FORBID_REUSE');
+        self::addSupportedCurlOption($options, 'CURLOPT_FRESH_CONNECT');
+        self::addSupportedCurlOption($options, 'CURLOPT_HAPPY_EYEBALLS_TIMEOUT_MS');
+        self::addSupportedCurlOption($options, 'CURLOPT_HTTPAUTH');
+        self::addSupportedCurlOption($options, 'CURLOPT_INTERFACE');
+        self::addSupportedCurlOption($options, 'CURLOPT_LOCALPORT');
+        self::addSupportedCurlOption($options, 'CURLOPT_LOCALPORTRANGE');
+        self::addSupportedCurlOption($options, 'CURLOPT_LOW_SPEED_LIMIT');
+        self::addSupportedCurlOption($options, 'CURLOPT_LOW_SPEED_TIME');
+        self::addSupportedCurlOption($options, 'CURLOPT_MAXAGE_CONN');
+        self::addSupportedCurlOption($options, 'CURLOPT_MAXCONNECTS');
+        self::addSupportedCurlOption($options, 'CURLOPT_MAXLIFETIME_CONN');
+        self::addSupportedCurlOption($options, 'CURLOPT_HTTPPROXYTUNNEL');
+        self::addSupportedCurlOption($options, 'CURLOPT_PROXYHEADER');
+        self::addSupportedCurlOption($options, 'CURLOPT_PROXYTYPE');
+        self::addSupportedCurlOption($options, 'CURLOPT_PROXYUSERPWD');
+        self::addSupportedCurlOption($options, 'CURLOPT_RESOLVE');
+        self::addSupportedCurlOption($options, 'CURLOPT_SSL_CIPHER_LIST');
+        self::addSupportedCurlOption($options, 'CURLOPT_SSL_EC_CURVES');
+        self::addSupportedCurlOption($options, 'CURLOPT_TCP_FASTOPEN');
+        self::addSupportedCurlOption($options, 'CURLOPT_TCP_KEEPALIVE');
+        self::addSupportedCurlOption($options, 'CURLOPT_TCP_KEEPIDLE');
+        self::addSupportedCurlOption($options, 'CURLOPT_TCP_KEEPINTVL');
+        self::addSupportedCurlOption($options, 'CURLOPT_TCP_KEEPCNT');
+        self::addSupportedCurlOption($options, 'CURLOPT_TCP_NODELAY');
+        self::addSupportedCurlOption($options, 'CURLOPT_TLS13_CIPHERS');
+        self::addSupportedCurlOption($options, 'CURLOPT_UNIX_SOCKET_PATH');
+        self::addSupportedCurlOption($options, 'CURLOPT_USERPWD');
+
+        return $options;
+    }
+
+    /**
+     * @param array<int, true> $options
+     */
+    private static function addSupportedCurlOption(array &$options, string $constant): void
+    {
+        if (!\defined($constant)) {
+            return;
+        }
+
+        $value = \constant($constant);
+        if (\is_int($value)) {
+            $options[$value] = true;
+        }
     }
 
     /**
