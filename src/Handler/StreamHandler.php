@@ -47,6 +47,26 @@ class StreamHandler
     private $lastHeaders = [];
 
     /**
+     * @var string
+     */
+    private $transportSharingMode;
+
+    /**
+     * Accepts an associative array of options:
+     *
+     * - transport_sharing: Optional transport sharing mode.
+     *
+     * @param array{transport_sharing?: mixed} $options Array of options to use with the handler
+     */
+    public function __construct(array $options = [])
+    {
+        $this->transportSharingMode = CurlShareHandleState::normalizeMode(
+            $options['transport_sharing'] ?? null,
+            'transport_sharing'
+        );
+    }
+
+    /**
      * Sends an HTTP request.
      *
      * @param RequestInterface $request Request to send.
@@ -75,6 +95,7 @@ class StreamHandler
         $startTime = isset($options['on_stats']) ? Utils::currentTime() : null;
 
         self::triggerUnsupportedRequestOptionDeprecations($request, $options);
+        $this->assertTransportSharingSupported();
 
         try {
             // Does not support the expect header.
@@ -474,14 +495,6 @@ class StreamHandler
 
     private static function triggerUnsupportedRequestOptionDeprecations(RequestInterface $request, array $options): void
     {
-        if (\array_key_exists('transport_sharing', $options)) {
-            $transportSharingMode = CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing');
-
-            if ($transportSharingMode === TransportSharing::HANDLER_REQUIRE) {
-                throw new \InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
-            }
-        }
-
         if (
             \array_key_exists('curl', $options)
             && $options['curl'] !== null
@@ -497,6 +510,13 @@ class StreamHandler
 
         if (\array_key_exists('expect', $options) && $options['expect'] !== false && $request->hasHeader('Expect')) {
             \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "expect" request option to the stream handler is deprecated when it adds an Expect header; guzzlehttp/guzzle 8.0 will reject this option because the stream handler does not support Expect: 100-Continue.');
+        }
+    }
+
+    private function assertTransportSharingSupported(): void
+    {
+        if ($this->transportSharingMode === TransportSharing::HANDLER_REQUIRE) {
+            throw new \InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
         }
     }
 

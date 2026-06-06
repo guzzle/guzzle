@@ -1053,55 +1053,74 @@ class StreamHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testStreamAcceptsDisabledTransportSharingOption()
+    public function testStreamAcceptsDisabledTransportSharingConstructorOption()
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
 
-        $handler = new StreamHandler();
-        $response = $handler(new Request('GET', Server::$url), [
-            'transport_sharing' => TransportSharing::NONE,
-        ])->wait();
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::NONE]);
+        $response = $handler(new Request('GET', Server::$url), [])->wait();
 
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testStreamAcceptsNullTransportSharingOption()
+    public function testStreamAcceptsNullTransportSharingConstructorOption()
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
 
-        $handler = new StreamHandler();
-        $response = $handler(new Request('GET', Server::$url), [
-            'transport_sharing' => null,
-        ])->wait();
+        $handler = new StreamHandler(['transport_sharing' => null]);
+        $response = $handler(new Request('GET', Server::$url), [])->wait();
 
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testStreamAcceptsPreferredTransportSharingOption()
+    public function testStreamAcceptsPreferredTransportSharingConstructorOption()
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
 
-        $handler = new StreamHandler();
-        $response = $handler(new Request('GET', Server::$url), [
-            'transport_sharing' => TransportSharing::HANDLER_PREFER,
-        ])->wait();
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+        $response = $handler(new Request('GET', Server::$url), [])->wait();
 
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testStreamRejectsRequiredTransportSharingOption()
+    public function testStreamRejectsRequiredTransportSharingConstructorOption()
     {
-        $handler = new StreamHandler();
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('transport_sharing');
 
-        $handler(new Request('GET', Server::$url), [
-            'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
-        ]);
+        $handler(new Request('GET', Server::$url), []);
+    }
+
+    /**
+     * @dataProvider requestTransportSharingOptionProvider
+     *
+     * @param mixed $transportSharing
+     */
+    public function testStreamIgnoresRequestLevelTransportSharingOption($transportSharing)
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), [
+            'transport_sharing' => $transportSharing,
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function requestTransportSharingOptionProvider(): iterable
+    {
+        yield 'null' => [null];
+        yield 'none' => [TransportSharing::NONE];
+        yield 'handler prefer' => [TransportSharing::HANDLER_PREFER];
+        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
+        yield 'invalid' => ['invalid'];
     }
 
     public function testDrainsResponseAndReadsAllContentWhenContentLengthIsZero()
