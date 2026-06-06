@@ -574,7 +574,7 @@ class StreamHandler
      */
     private static function supportedStreamContextOptions(): array
     {
-        $options = [
+        return [
             'http' => [
                 'request_fulluri' => true,
             ],
@@ -598,8 +598,6 @@ class StreamHandler
                 'verify_depth' => true,
             ],
         ];
-
-        return $options;
     }
 
     private function assertTransportSharingSupported(): void
