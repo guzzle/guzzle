@@ -1277,7 +1277,11 @@ class ClientTest extends TestCase
         self::assertTrue($sent->hasHeader('Accept-Encoding'));
 
         $mock = new MockHandler([new Response()]);
-        $client->get('http://foo.com', ['handler' => $mock]);
+        $client = new Client([
+            'curl' => [\CURLOPT_ENCODING => ''],
+            'handler' => $mock,
+        ]);
+        $client->get('http://foo.com');
         self::assertSame([\CURLOPT_ENCODING => ''], $mock->getLastOptions()['curl']);
     }
 
@@ -1306,11 +1310,6 @@ class ClientTest extends TestCase
 
     public static function invalidRequestOptionTypeProvider(): iterable
     {
-        yield 'handler' => [
-            ['handler' => false],
-            'Passing bool to request option "handler" is invalid; expected callable.',
-        ];
-
         yield 'allow_redirects' => [
             ['allow_redirects' => 'true'],
             'Passing string to request option "allow_redirects" is invalid; expected bool|array.',
@@ -2125,17 +2124,34 @@ class ClientTest extends TestCase
         self::assertSame(['zero'], $sent->getHeader('0'));
     }
 
-    public function testCanSetCustomHandler(): void
+    public function testRequestLevelHandlerIsIgnored(): void
     {
         $mock = new MockHandler([new Response(500)]);
         $client = new Client(['handler' => $mock]);
         $mock2 = new MockHandler([new Response(200)]);
+
         self::assertSame(
-            200,
+            500,
             $client->send(new Request('GET', 'http://foo.com'), [
                 'handler' => $mock2,
             ])->getStatusCode()
         );
+        self::assertSame($mock2, $mock->getLastOptions()['handler']);
+        self::assertCount(1, $mock2);
+    }
+
+    public function testNonCallableRequestLevelHandlerIsIgnored(): void
+    {
+        $mock = new MockHandler([new Response(200)]);
+        $client = new Client(['handler' => $mock]);
+
+        self::assertSame(
+            200,
+            $client->send(new Request('GET', 'http://foo.com'), [
+                'handler' => false,
+            ])->getStatusCode()
+        );
+        self::assertFalse($mock->getLastOptions()['handler']);
     }
 
     public function testProperlyBuildsQuery(): void

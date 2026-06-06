@@ -183,7 +183,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * Asynchronously send an HTTP request.
      *
      * @param array{
-     *     handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *     base_uri?: string|UriInterface,
      *     allow_redirects?: bool|array{
      *         max?: int,
@@ -271,7 +270,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * Send an HTTP request.
      *
      * @param array{
-     *     handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *     base_uri?: string|UriInterface,
      *     allow_redirects?: bool|array{
      *         max?: int,
@@ -375,7 +373,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string              $method HTTP method
      * @param string|UriInterface $uri    URI object or string.
      * @param array{
-     *     handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *     base_uri?: string|UriInterface,
      *     allow_redirects?: bool|array{
      *         max?: int,
@@ -491,7 +488,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @param string              $method HTTP method.
      * @param string|UriInterface $uri    URI object or string.
      * @param array{
-     *     handler?: callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>,
      *     base_uri?: string|UriInterface,
      *     allow_redirects?: bool|array{
      *         max?: int,
@@ -813,10 +809,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
     private static function assertRequestOptionTypes(array $options): void
     {
-        if (isset($options['handler']) && !\is_callable($options['handler'])) {
-            self::invalidRequestOptionType('handler', 'callable', $options['handler']);
-        }
-
         if (isset($options['allow_redirects'])) {
             if (!\is_bool($options['allow_redirects']) && !\is_array($options['allow_redirects'])) {
                 self::invalidRequestOptionType('allow_redirects', 'bool|array', $options['allow_redirects']);
@@ -1206,7 +1198,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertRequestProtocolVersion($request);
 
         /** @var callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler */
-        $handler = $options['handler'];
+        $handler = $this->config['handler'];
 
         try {
             /** @var PromiseInterface<ResponseInterface, mixed> */
