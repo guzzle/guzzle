@@ -599,19 +599,7 @@ class StreamHandler
             ],
         ];
 
-        if (self::isPhpAtLeast('8.6.0')) {
-            $options['socket']['so_keepalive'] = true;
-            $options['socket']['tcp_keepcnt'] = true;
-            $options['socket']['tcp_keepidle'] = true;
-            $options['socket']['tcp_keepintvl'] = true;
-        }
-
         return $options;
-    }
-
-    private static function isPhpAtLeast(string $version): bool
-    {
-        return \version_compare(\PHP_VERSION, $version, '>=');
     }
 
     private function assertTransportSharingSupported(): void

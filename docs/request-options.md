@@ -1140,12 +1140,10 @@ may still reject or ignore an option depending on the runtime. The allow-list is
 `ssl.capture_peer_cert`, `ssl.capture_peer_cert_chain`, `ssl.ciphers`,
 `ssl.disable_compression`, `ssl.max_proto_version`, `ssl.min_proto_version`,
 `ssl.no_ticket`, `ssl.peer_fingerprint`, `ssl.security_level`, and
-`ssl.verify_depth`. When available in the current PHP runtime,
-`socket.so_keepalive`, `socket.tcp_keepcnt`, `socket.tcp_keepidle`, and
-`socket.tcp_keepintvl` are also on the allow-list. Use Guzzle request options
-instead when configuring the request method, URI, body, headers, timeouts,
-redirects, proxy, TLS certificate files, TLS private keys, protocol versions,
-verification, progress, debug output, sinks, cookies, and allowed protocols.
+`ssl.verify_depth`. Use Guzzle request options instead when configuring the
+request method, URI, body, headers, timeouts, redirects, proxy, TLS certificate
+files, TLS private keys, protocol versions, verification, progress, debug
+output, sinks, cookies, and allowed protocols.
 
 ## synchronous
 
