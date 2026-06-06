@@ -238,8 +238,8 @@ class CurlFactoryTest extends TestCase
         Server::enqueue([new Psr7\Response()]);
         $a = new Handler\CurlMultiHandler();
         $req = new Psr7\Request('GET', Server::$url);
-        $a($req, ['curl' => [\CURLOPT_HTTP_VERSION => \CURL_HTTP_VERSION_1_0]]);
-        self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+        $a($req, ['curl' => [\CURLOPT_LOW_SPEED_TIME => 10]]);
+        self::assertEquals(10, $_SERVER['_curl'][\CURLOPT_LOW_SPEED_TIME]);
     }
 
     public function testProtocolsOptionCanRestrictCurlProtocols()

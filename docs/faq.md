@@ -33,9 +33,17 @@ $response = $promise->wait();
 
 ## How can I add custom cURL options?
 
-cURL offers a huge number of [customizable options](https://www.php.net/curl_setopt). While Guzzle normalizes many of these options across different handlers, there are times when you need to set custom cURL options. This can be accomplished by passing an array keyed by integer `CURLOPT_*` constants in the **curl** key of a request. The special `body_as_string` key is also recognized by Guzzle's cURL handler.
+cURL offers a huge number of
+[customizable options](https://www.php.net/curl_setopt). While Guzzle
+normalizes many of these options across different handlers, there are times
+when you need to set custom cURL options. This can be accomplished by passing
+an array keyed by allow-listed integer `CURLOPT_*` constants in the **curl**
+key of a request. Raw cURL options outside the built-in cURL handlers'
+allow-list are deprecated. The special `body_as_string` key is also recognized
+by Guzzle's cURL handler.
 
-For example, let's say you need to customize the outgoing network interface used with a client.
+For example, let's say you need to customize the outgoing network interface used
+with a client.
 
 ```php
 $client->request('GET', '/', [
@@ -45,7 +53,9 @@ $client->request('GET', '/', [
 ]);
 ```
 
-If you use asynchronous requests with cURL multi handler and want to tweak it, additional options can be specified as an array keyed by integer `CURLMOPT_*` constants in the **options** key of the `CurlMultiHandler` constructor.
+If you use asynchronous requests with cURL multi handler and want to tweak it,
+additional options can be specified as an array keyed by integer `CURLMOPT_*`
+constants in the **options** key of the `CurlMultiHandler` constructor.
 
 ```php
 use GuzzleHttp\Client;
@@ -60,13 +70,21 @@ $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler([
 ]))]);
 ```
 
-Custom cURL request options remain active during redirects unless Guzzle documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects) for cross-origin redirect credential behavior.
+Custom cURL request options remain active during redirects unless Guzzle
+documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects)
+for cross-origin redirect credential behavior.
 
 ## How can I add custom stream context options?
 
-You can pass custom [stream context options](https://www.php.net/manual/en/context.php) using the **stream_context** key of the request option. The **stream_context** array is an associative array where each key is a PHP transport, and each value is an associative array of transport options.
+You can pass allow-listed custom
+[stream context options](https://www.php.net/manual/en/context.php) using the
+**stream_context** key of the request option. The **stream_context** array is an
+associative array where each key is a PHP transport, and each value is an
+associative array of transport options. Stream context options outside the
+built-in stream handler allow-list are deprecated.
 
-For example, let's say you need to customize the outgoing network interface used with a client and allow self-signed certificates.
+For example, let's say you need to customize the outgoing network interface used
+with a client and allow self-signed certificates.
 
 ```php
 $client->request('GET', '/', [
@@ -82,7 +100,9 @@ $client->request('GET', '/', [
 ]);
 ```
 
-Custom stream context options remain active during redirects unless Guzzle documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects) for cross-origin redirect credential behavior.
+Custom stream context options remain active during redirects unless Guzzle
+documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects)
+for cross-origin redirect credential behavior.
 
 ## Why am I getting an SSL verification error?
 
