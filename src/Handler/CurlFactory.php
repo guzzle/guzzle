@@ -362,13 +362,6 @@ final class CurlFactory implements CurlFactoryInterface
 
     private static function rejectUnsupportedRequestOptions(array $options): void
     {
-        if (
-            \array_key_exists('transport_sharing', $options)
-            && CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing') !== TransportSharing::NONE
-        ) {
-            throw new InvalidArgumentException('The "transport_sharing" option is a client constructor option, not a request option. Configure transport sharing when creating the Client, CurlHandler, or CurlMultiHandler.');
-        }
-
         if (\array_key_exists('stream_context', $options)) {
             throw new InvalidArgumentException('Passing the "stream_context" request option to a cURL handler is not supported because cURL handlers ignore PHP stream context options.');
         }
