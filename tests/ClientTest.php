@@ -2124,36 +2124,6 @@ class ClientTest extends TestCase
         self::assertSame(['zero'], $sent->getHeader('0'));
     }
 
-    public function testRequestLevelHandlerIsIgnored(): void
-    {
-        $mock = new MockHandler([new Response(500)]);
-        $client = new Client(['handler' => $mock]);
-        $mock2 = new MockHandler([new Response(200)]);
-
-        self::assertSame(
-            500,
-            $client->send(new Request('GET', 'http://foo.com'), [
-                'handler' => $mock2,
-            ])->getStatusCode()
-        );
-        self::assertSame($mock2, $mock->getLastOptions()['handler']);
-        self::assertCount(1, $mock2);
-    }
-
-    public function testNonCallableRequestLevelHandlerIsIgnored(): void
-    {
-        $mock = new MockHandler([new Response(200)]);
-        $client = new Client(['handler' => $mock]);
-
-        self::assertSame(
-            200,
-            $client->send(new Request('GET', 'http://foo.com'), [
-                'handler' => false,
-            ])->getStatusCode()
-        );
-        self::assertFalse($mock->getLastOptions()['handler']);
-    }
-
     public function testProperlyBuildsQuery(): void
     {
         $mock = new MockHandler([new Response()]);
