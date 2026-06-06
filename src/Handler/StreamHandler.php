@@ -387,6 +387,7 @@ class StreamHandler
             if (!\is_array($options['stream_context'])) {
                 throw new \InvalidArgumentException('stream_context must be an array');
             }
+            self::triggerConflictingStreamContextOptionDeprecations($options['stream_context']);
             self::triggerUnsupportedStreamContextOptionDeprecations($options['stream_context']);
             $context = \array_replace_recursive($context, $options['stream_context']);
         }
@@ -514,6 +515,34 @@ class StreamHandler
         }
     }
 
+    private static function triggerConflictingStreamContextOptionDeprecations(array $streamContext): void
+    {
+        $conflictingOptions = self::conflictingStreamContextOptions();
+
+        foreach ($streamContext as $wrapper => $contextOptions) {
+            if (!\is_string($wrapper) || !isset($conflictingOptions[$wrapper]) || !\is_array($contextOptions)) {
+                continue;
+            }
+
+            foreach ($contextOptions as $option => $_) {
+                if (!\is_string($option) || !\array_key_exists($option, $conflictingOptions[$wrapper])) {
+                    continue;
+                }
+
+                \trigger_deprecation(
+                    'guzzlehttp/guzzle',
+                    '7.12',
+                    \sprintf(
+                        'Passing stream_context.%s.%s in the "stream_context" request option is deprecated; guzzlehttp/guzzle 8.0 will reject this option because it conflicts with Guzzle-managed request handling. Use %s instead.',
+                        $wrapper,
+                        $option,
+                        $conflictingOptions[$wrapper][$option]
+                    )
+                );
+            }
+        }
+    }
+
     private static function triggerUnsupportedStreamContextOptionDeprecations(array $streamContext): void
     {
         $unsupportedOptions = self::unsupportedStreamContextOptions($streamContext);
@@ -538,12 +567,17 @@ class StreamHandler
     private static function unsupportedStreamContextOptions(array $streamContext): array
     {
         $supportedOptions = self::supportedStreamContextOptions();
+        $conflictingOptions = self::conflictingStreamContextOptions();
         $unsupportedOptions = [];
 
         foreach ($streamContext as $wrapper => $contextOptions) {
             if (!\is_string($wrapper) || !isset($supportedOptions[$wrapper])) {
                 if (\is_array($contextOptions)) {
                     foreach ($contextOptions as $option => $_) {
+                        if (\is_string($wrapper) && \is_string($option) && isset($conflictingOptions[$wrapper]) && \array_key_exists($option, $conflictingOptions[$wrapper])) {
+                            continue;
+                        }
+
                         $unsupportedOptions[] = \sprintf('stream_context.%s.%s', (string) $wrapper, (string) $option);
                     }
                 } else {
@@ -560,6 +594,10 @@ class StreamHandler
             }
 
             foreach ($contextOptions as $option => $_) {
+                if (\is_string($option) && isset($conflictingOptions[$wrapper]) && \array_key_exists($option, $conflictingOptions[$wrapper])) {
+                    continue;
+                }
+
                 if (!\is_string($option) || !\array_key_exists($option, $supportedOptions[$wrapper])) {
                     $unsupportedOptions[] = \sprintf('stream_context.%s.%s', $wrapper, (string) $option);
                 }
@@ -584,18 +622,46 @@ class StreamHandler
             ],
             'ssl' => [
                 'SNI_enabled' => true,
-                'allow_self_signed' => true,
-                'capath' => true,
                 'capture_peer_cert' => true,
                 'capture_peer_cert_chain' => true,
                 'ciphers' => true,
                 'disable_compression' => true,
-                'max_proto_version' => true,
-                'min_proto_version' => true,
                 'no_ticket' => true,
                 'peer_fingerprint' => true,
                 'security_level' => true,
                 'verify_depth' => true,
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private static function conflictingStreamContextOptions(): array
+    {
+        return [
+            'http' => [
+                'content' => 'the request body',
+                'follow_location' => 'the "allow_redirects" request option',
+                'header' => 'the request headers',
+                'max_redirects' => 'the "allow_redirects" request option',
+                'method' => 'the request method',
+                'protocol_version' => 'the request protocol version',
+                'proxy' => 'the "proxy" request option',
+                'timeout' => 'the "timeout" request option',
+            ],
+            'ssl' => [
+                'allow_self_signed' => 'the "verify" request option',
+                'cafile' => 'the "verify" request option',
+                'capath' => 'the "verify" request option',
+                'crypto_method' => 'the "crypto_method" request option',
+                'local_cert' => 'the "cert" request option',
+                'local_pk' => 'the "ssl_key" request option',
+                'min_proto_version' => 'the "crypto_method" request option',
+                'passphrase' => 'the "cert" or "ssl_key" request option',
+                'peer_name' => 'the request URI',
+                'verify_peer' => 'the "verify" request option',
+                'verify_peer_name' => 'the "verify" request option',
             ],
         ];
     }

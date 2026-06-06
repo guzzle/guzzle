@@ -84,15 +84,12 @@ associative array of transport options. Stream context options outside the
 built-in stream handler allow-list are deprecated.
 
 For example, let's say you need to customize the outgoing network interface used
-with a client and allow self-signed certificates.
+with a client.
 
 ```php
 $client->request('GET', '/', [
     'stream' => true,
     'stream_context' => [
-        'ssl' => [
-            'allow_self_signed' => true
-        ],
         'socket' => [
             'bindto' => 'xxx.xxx.xxx.xxx'
         ]
