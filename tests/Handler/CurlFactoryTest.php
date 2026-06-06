@@ -164,6 +164,39 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider requestTransportSharingOptionProvider
+     *
+     * @param mixed $transportSharing
+     */
+    public function testIgnoresRequestLevelTransportSharingOption($transportSharing): void
+    {
+        unset($_SERVER['_curl']);
+
+        $easy = (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+            'transport_sharing' => $transportSharing,
+        ]);
+
+        try {
+            if (\defined('CURLOPT_SHARE')) {
+                self::assertArrayNotHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
+            }
+        } finally {
+            if (PHP_VERSION_ID < 80000) {
+                \curl_close($easy->handle);
+            }
+        }
+    }
+
+    public static function requestTransportSharingOptionProvider(): iterable
+    {
+        yield 'null' => [null];
+        yield 'none' => [TransportSharing::NONE];
+        yield 'handler prefer' => [TransportSharing::HANDLER_PREFER];
+        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
+        yield 'invalid' => ['invalid'];
+    }
+
     public function testRejectsEnabledShareModeWithoutShareHandle(): void
     {
         $this->expectException(\InvalidArgumentException::class);

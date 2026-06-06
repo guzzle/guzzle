@@ -121,10 +121,7 @@ final class Utils
         }
 
         if (\ini_get('allow_url_fopen')) {
-            $streamHandler = new StreamHandler();
-            if ($sharingRequired) {
-                $streamHandler = self::wrapStreamHandlerTransportSharing($streamHandler, $sharingMode);
-            }
+            $streamHandler = new StreamHandler(['transport_sharing' => $sharingMode]);
 
             $handler = $handler
                 ? Proxy::wrapStreaming($handler, $streamHandler)
@@ -134,19 +131,6 @@ final class Utils
         }
 
         return $handler;
-    }
-
-    private static function wrapStreamHandlerTransportSharing(callable $handler, string $sharingMode): callable
-    {
-        return static function (RequestInterface $request, array $options) use ($handler, $sharingMode): Promise\PromiseInterface {
-            if (\array_key_exists('transport_sharing', $options)) {
-                CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing');
-            }
-
-            $options['transport_sharing'] = $sharingMode;
-
-            return $handler($request, $options);
-        };
     }
 
     /**

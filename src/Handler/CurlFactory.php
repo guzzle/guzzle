@@ -279,13 +279,6 @@ class CurlFactory implements CurlFactoryInterface
 
     private static function triggerUnsupportedRequestOptionDeprecations(array $options): void
     {
-        if (
-            \array_key_exists('transport_sharing', $options)
-            && CurlShareHandleState::normalizeMode($options['transport_sharing'], 'transport_sharing') !== TransportSharing::NONE
-        ) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "transport_sharing" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because transport sharing must be configured when creating the Client, CurlHandler, or CurlMultiHandler.');
-        }
-
         if (\array_key_exists('stream_context', $options)) {
             \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "stream_context" request option to a cURL handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because cURL handlers ignore PHP stream context options.');
         }
