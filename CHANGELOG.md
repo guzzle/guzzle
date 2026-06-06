@@ -97,6 +97,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
 
+## 7.11.1 - Upcoming
+
+### Fixed
+
+- Ignore request-level `transport_sharing`, matching other unknown request options
+
+
 ## 7.11.0 - 2026-06-02
 
 ### Added
