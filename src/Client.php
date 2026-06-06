@@ -331,6 +331,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     private function prepareDefaults(array $options): array
     {
+        self::warnAboutRequestLevelHandler($options);
+
         $defaults = $this->config;
 
         if (!empty($defaults['headers'])) {
@@ -364,6 +366,19 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::warnAboutInvalidRequestOptionTypes($result);
 
         return $result;
+    }
+
+    private static function warnAboutRequestLevelHandler(array $options): void
+    {
+        if (!\array_key_exists('handler', $options)) {
+            return;
+        }
+
+        \trigger_deprecation(
+            'guzzlehttp/guzzle',
+            '7.12',
+            'Passing the "handler" request option is deprecated; guzzlehttp/guzzle 8.0 will ignore request-level handlers. Configure the handler when creating the Client, or use a separate Client instance for requests that need a different handler.'
+        );
     }
 
     private static function warnAboutInvalidRequestOptionTypes(array $options): void
