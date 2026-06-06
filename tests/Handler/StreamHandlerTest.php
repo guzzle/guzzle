@@ -786,21 +786,19 @@ class StreamHandlerTest extends TestCase
             'stream_context' => [
                 'http' => [
                     'request_fulluri' => true,
-                    'method' => 'HEAD',
                 ],
                 'socket' => [
                     'bindto' => '127.0.0.1:0',
                 ],
                 'ssl' => [
-                    'verify_peer' => false,
+                    'allow_self_signed' => true,
                 ],
             ],
         ]);
         $opts = \stream_context_get_options($res->getBody()->detach());
-        self::assertSame('HEAD', $opts['http']['method']);
         self::assertTrue($opts['http']['request_fulluri']);
         self::assertSame('127.0.0.1:0', $opts['socket']['bindto']);
-        self::assertFalse($opts['ssl']['verify_peer']);
+        self::assertTrue($opts['ssl']['allow_self_signed']);
     }
 
     public function testEnsuresThatStreamContextIsAnArray()

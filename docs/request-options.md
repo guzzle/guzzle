@@ -356,7 +356,30 @@ None
 Constant
 No `RequestOptions` constant is defined for this handler-specific option.
 
-The array is keyed by integer or string cURL option names and values are passed to cURL after Guzzle applies request options. Raw cURL options that conflict with Guzzle-managed request handling are deprecated and will be rejected by the built-in cURL handlers in 8.0.
+Except for Guzzle's special `body_as_string` key, the array is keyed by
+integer cURL option constants and values are passed to cURL after Guzzle
+applies request options. Raw cURL options that conflict with Guzzle-managed
+request handling are deprecated.
+
+Raw cURL options outside the built-in cURL handlers' allow-list are deprecated.
+Allow-listing means Guzzle passes the option through without its own
+deprecation warning; PHP, libcurl, or the TLS backend may still reject or ignore
+an option depending on the runtime. The allow-list is limited to the following
+`CURLOPT_*` constants when they are defined by the installed PHP cURL extension:
+`CURLOPT_ADDRESS_SCOPE`, `CURLOPT_CONNECT_TO`,
+`CURLOPT_DNS_CACHE_TIMEOUT`, `CURLOPT_DNS_INTERFACE`,
+`CURLOPT_DNS_LOCAL_IP4`, `CURLOPT_DNS_LOCAL_IP6`, `CURLOPT_DNS_SERVERS`,
+`CURLOPT_DNS_SHUFFLE_ADDRESSES`, `CURLOPT_ENCODING`,
+`CURLOPT_FORBID_REUSE`, `CURLOPT_FRESH_CONNECT`,
+`CURLOPT_HAPPY_EYEBALLS_TIMEOUT_MS`, `CURLOPT_HTTPAUTH`,
+`CURLOPT_INTERFACE`, `CURLOPT_LOCALPORT`, `CURLOPT_LOCALPORTRANGE`,
+`CURLOPT_LOW_SPEED_LIMIT`, `CURLOPT_LOW_SPEED_TIME`,
+`CURLOPT_MAXAGE_CONN`, `CURLOPT_MAXCONNECTS`, `CURLOPT_MAXLIFETIME_CONN`,
+`CURLOPT_PROXYHEADER`, `CURLOPT_RESOLVE`, `CURLOPT_SSL_CIPHER_LIST`,
+`CURLOPT_SSL_EC_CURVES`, `CURLOPT_TCP_FASTOPEN`, `CURLOPT_TCP_KEEPALIVE`,
+`CURLOPT_TCP_KEEPIDLE`, `CURLOPT_TCP_KEEPINTVL`, `CURLOPT_TCP_KEEPCNT`,
+`CURLOPT_TCP_NODELAY`, `CURLOPT_TLS13_CIPHERS`,
+`CURLOPT_UNIX_SOCKET_PATH`, and `CURLOPT_USERPWD`.
 
 ```php
 $client->request('GET', '/', [
@@ -847,12 +870,12 @@ $client->request('GET', 'https://example.com', [
 
 > [!NOTE]
 > `protocols` replaces raw cURL `CURLOPT_PROTOCOLS` when restricting request
-> schemes. Starting in Guzzle 7.11, raw cURL options that conflict with
-> Guzzle-managed request handling trigger deprecation warnings. Use Guzzle
-> request options instead when configuring the request method, URI, body,
-> headers, timeouts, redirects, proxy, TLS, progress, debug output, sinks,
-> cookies, and protocols. Redirect middleware also validates redirect targets
-> with `allow_redirects.protocols` before creating each redirect request.
+> schemes. Raw cURL options that conflict with Guzzle-managed request handling
+> trigger deprecation warnings. Prefer request options when configuring the
+> request method, URI, body, headers, timeouts, redirects, proxy, TLS,
+> progress, debug output, sinks, cookies, and protocols. Redirect middleware
+> also validates redirect targets with `allow_redirects.protocols` before
+> creating each redirect request.
 
 ## proxy
 
@@ -1093,7 +1116,8 @@ while (!$body->eof()) {
 ## stream_context
 
 Summary
-PHP stream context options to merge into the context used by the built-in stream handler.
+PHP stream context options to merge into the context used by the built-in stream
+handler.
 
 Types
 - array
@@ -1104,7 +1128,22 @@ None
 Constant
 No `RequestOptions` constant is defined for this handler-specific option.
 
-This option is only supported by the built-in stream handler. Built-in cURL handlers deprecate and will reject this option in 8.0 because cURL does not use PHP stream contexts.
+This option is only supported by the built-in stream handler. Built-in cURL
+handlers deprecate this option because cURL does not use PHP stream contexts.
+
+Stream context options outside the built-in stream handler allow-list, or not
+available in the current PHP runtime, are deprecated. Allow-listing means Guzzle
+passes the option through without its own deprecation warning; PHP or OpenSSL
+may still reject or ignore an option depending on the runtime. The allow-list is
+`http.request_fulluri`, `socket.bindto`, `socket.tcp_nodelay`,
+`ssl.SNI_enabled`, `ssl.allow_self_signed`, `ssl.capath`,
+`ssl.capture_peer_cert`, `ssl.capture_peer_cert_chain`, `ssl.ciphers`,
+`ssl.disable_compression`, `ssl.max_proto_version`, `ssl.min_proto_version`,
+`ssl.no_ticket`, `ssl.peer_fingerprint`, `ssl.security_level`, and
+`ssl.verify_depth`. Use Guzzle request options instead when configuring the
+request method, URI, body, headers, timeouts, redirects, proxy, TLS certificate
+files, TLS private keys, protocol versions, verification, progress, debug
+output, sinks, cookies, and allowed protocols.
 
 ## synchronous
 
