@@ -1771,7 +1771,7 @@ class ClientTest extends TestCase
     public function testAuthCanBeArrayForBasicAuth(): void
     {
         $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
+        $client = new Client(['handler' => HandlerStack::create($mock)]);
         $client->get('http://foo.com', ['auth' => ['a', 'b']]);
         $last = $mock->getLastRequest();
         self::assertSame('Basic YTpi', $last->getHeaderLine('Authorization'));
@@ -1780,7 +1780,7 @@ class ClientTest extends TestCase
     public function testAuthCanBeArrayForExplicitBasicAuth(): void
     {
         $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
+        $client = new Client(['handler' => HandlerStack::create($mock)]);
         $client->get('http://foo.com', ['auth' => ['a', 'b', 'basic']]);
 
         $last = $mock->getLastRequest();
@@ -1790,7 +1790,7 @@ class ClientTest extends TestCase
     public function testAuthCanUseNullTypeForDefaultBasicAuth(): void
     {
         $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
+        $client = new Client(['handler' => HandlerStack::create($mock)]);
         $client->get('http://foo.com', ['auth' => ['a', 'b', null]]);
 
         $last = $mock->getLastRequest();
@@ -1803,22 +1803,29 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mock]);
         $client->get('http://foo.com', ['auth' => ['a', 'b', 'digest']]);
         $last = $mock->getLastOptions();
-        self::assertSame([
-            \CURLOPT_HTTPAUTH => 2,
-            \CURLOPT_USERPWD => 'a:b',
-        ], $last['curl']);
+        self::assertSame(['a', 'b', 'digest'], $last['auth']);
+        self::assertArrayNotHasKey('curl', $last);
     }
 
-    public function testAuthCanBeArrayForNtlmAuth(): void
+    public function testUnknownArrayAuthTypePassesThroughForCustomMiddleware(): void
     {
         $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
+        $client = new Client(['handler' => HandlerStack::create($mock)]);
+        $client->get('http://foo.com', ['auth' => ['a', 'b', 'custom']]);
+
+        self::assertSame(['a', 'b', 'custom'], $mock->getLastOptions()['auth']);
+        self::assertFalse($mock->getLastRequest()->hasHeader('Authorization'));
+    }
+
+    public function testLegacyNtlmAuthTypePassesThroughForCustomMiddleware(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => HandlerStack::create($mock)]);
         $client->get('http://foo.com', ['auth' => ['a', 'b', 'ntlm']]);
-        $last = $mock->getLastOptions();
-        self::assertSame([
-            \CURLOPT_HTTPAUTH => 8,
-            \CURLOPT_USERPWD => 'a:b',
-        ], $last['curl']);
+
+        self::assertSame(['a', 'b', 'ntlm'], $mock->getLastOptions()['auth']);
+        self::assertFalse($mock->getLastRequest()->hasHeader('Authorization'));
+        self::assertArrayNotHasKey('curl', $mock->getLastOptions());
     }
 
     /**
@@ -1843,7 +1850,6 @@ class ClientTest extends TestCase
             [['user', ['pass']]],
             [['user', 'pass', 1]],
             [['user', 'pass', []]],
-            [['user', 'pass', 'unknown']],
         ];
     }
 

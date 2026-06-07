@@ -19,6 +19,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add `HandlerClosedException` for pending transfers rejected by `CurlMultiHandler::close()`
 - Add `ProxyOptions` for proxy option resolution
 - Add `ResponseException` for request failures with responses
+- Add auth middleware for built-in Basic and Digest authentication
 
 ### Changed
 
@@ -43,6 +44,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays
 - Stop forwarding the generic `auth` request option when following cross-origin redirects
+- Move built-in Basic and Digest authentication handling to the default auth middleware
+- Stop implementing Digest authentication through cURL HTTP authentication options
+- Remove first-class NTLM authentication from the `auth` request option
 - Reject invalid `HandlerStack::remove()` arguments
 - Require `Pool` request collections to be iterable
 - Raised the minimum supported libcurl version for the built-in cURL handlers to 7.34.0

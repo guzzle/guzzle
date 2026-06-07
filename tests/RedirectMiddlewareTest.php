@@ -632,13 +632,9 @@ class RedirectMiddlewareTest extends TestCase
         self::assertTrue($call);
     }
 
-    /**
-     * @testWith ["digest"]
-     *           ["ntlm"]
-     */
-    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossHost(string $auth): void
+    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossHost(): void
     {
-        if (!defined('\CURLOPT_HTTPAUTH')) {
+        if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_USERPWD') || !defined('\CURLAUTH_NTLM')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
@@ -659,16 +655,12 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
+        $client->get('http://example.com?a=b', ['curl' => self::curlNtlmAuthOptions()]);
     }
 
-    /**
-     * @testWith ["digest"]
-     *           ["ntlm"]
-     */
-    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossPort(string $auth): void
+    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossPort(): void
     {
-        if (!defined('\CURLOPT_HTTPAUTH')) {
+        if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_USERPWD') || !defined('\CURLAUTH_NTLM')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
@@ -689,16 +681,12 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
+        $client->get('http://example.com?a=b', ['curl' => self::curlNtlmAuthOptions()]);
     }
 
-    /**
-     * @testWith ["digest"]
-     *           ["ntlm"]
-     */
-    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossScheme(string $auth): void
+    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossScheme(): void
     {
-        if (!defined('\CURLOPT_HTTPAUTH')) {
+        if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_USERPWD') || !defined('\CURLAUTH_NTLM')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
@@ -719,16 +707,12 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $client->get('https://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
+        $client->get('https://example.com?a=b', ['curl' => self::curlNtlmAuthOptions()]);
     }
 
-    /**
-     * @testWith ["digest"]
-     *           ["ntlm"]
-     */
-    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossSchemeSamePort(string $auth): void
+    public function testRemoveCurlAuthorizationOptionsOnRedirectCrossSchemeSamePort(): void
     {
-        if (!defined('\CURLOPT_HTTPAUTH')) {
+        if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_USERPWD') || !defined('\CURLAUTH_NTLM')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
@@ -749,16 +733,12 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $client->get('https://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
+        $client->get('https://example.com?a=b', ['curl' => self::curlNtlmAuthOptions()]);
     }
 
-    /**
-     * @testWith ["digest"]
-     *           ["ntlm"]
-     */
-    public function testNotRemoveCurlAuthorizationOptionsOnRedirect(string $auth): void
+    public function testNotRemoveCurlAuthorizationOptionsOnRedirect(): void
     {
-        if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_USERPWD')) {
+        if (!defined('\CURLOPT_HTTPAUTH') || !defined('\CURLOPT_USERPWD') || !defined('\CURLAUTH_NTLM')) {
             self::markTestSkipped('ext-curl is required for this test');
         }
 
@@ -779,7 +759,15 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $client->get('http://example.com?a=b', ['auth' => ['testuser', 'testpass', $auth]]);
+        $client->get('http://example.com?a=b', ['curl' => self::curlNtlmAuthOptions()]);
+    }
+
+    private static function curlNtlmAuthOptions(): array
+    {
+        return [
+            \CURLOPT_HTTPAUTH => \CURLAUTH_NTLM,
+            \CURLOPT_USERPWD => 'testuser:testpass',
+        ];
     }
 
     /**
@@ -787,7 +775,7 @@ class RedirectMiddlewareTest extends TestCase
      */
     public function testAuthOptionTreatmentOnRedirect(string $originalUri, string $targetUri, bool $isCrossOrigin): void
     {
-        $auth = ['testuser', 'testpass'];
+        $auth = 'custom';
 
         $mock = new MockHandler([
             new Response(302, ['Location' => $targetUri]),

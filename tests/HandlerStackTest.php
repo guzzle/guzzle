@@ -219,6 +219,18 @@ class HandlerStackTest extends TestCase
         self::assertSame('foo=bar', $lastRequest->getHeaderLine('Cookie'));
     }
 
+    public function testDefaultStackIncludesAuthMiddlewareInOrder(): void
+    {
+        $stack = HandlerStack::create(new MockHandler([new Response()]));
+        $lines = \explode("\n", (string) $stack);
+
+        self::assertStringContainsString("< 1) Name: 'prepare_body'", $lines[6]);
+        self::assertStringContainsString("< 2) Name: 'cookies'", $lines[7]);
+        self::assertStringContainsString("< 3) Name: 'auth'", $lines[8]);
+        self::assertStringContainsString("< 4) Name: 'allow_redirects'", $lines[9]);
+        self::assertStringContainsString("< 5) Name: 'http_errors'", $lines[10]);
+    }
+
     /**
      * @return array{0: array<int, array{string, string}>, 1: callable, 2: callable, 3: callable, 4: callable}
      */

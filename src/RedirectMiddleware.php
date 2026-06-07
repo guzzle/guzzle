@@ -99,9 +99,9 @@ class RedirectMiddleware
 
         // Remove HTTP origin credentials if URI is cross-origin.
         if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $nextRequest->getUri())) {
-            unset($options['auth']);
+            unset($options['auth'], $options['__guzzle_digest_retries']);
 
-            if (defined('\CURLOPT_HTTPAUTH')) {
+            if (defined('\CURLOPT_HTTPAUTH') && defined('\CURLOPT_USERPWD')) {
                 unset(
                     $options['curl'][\CURLOPT_HTTPAUTH],
                     $options['curl'][\CURLOPT_USERPWD]

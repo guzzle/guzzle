@@ -24,16 +24,18 @@ The `create` method adds default handlers to the `HandlerStack`. When the `Handl
 
 > 1.  `http_errors` - No op when sending a request. The response status code is checked in the response processing when returning a response promise up the stack.
 > 2.  `allow_redirects` - No op when sending a request. Following redirects occurs when a response promise is being returned up the stack.
-> 3.  `cookies` - Adds cookies to requests.
-> 4.  `prepare_body` - The body of an HTTP request will be prepared (e.g., add default headers like Content-Length, Content-Type, etc.).
-> 5.  <send request with handler>
+> 3.  `auth` - Adds Basic authentication headers and handles Digest authentication challenges when the `auth` request option is set.
+> 4.  `cookies` - Adds cookies to requests.
+> 5.  `prepare_body` - The body of an HTTP request will be prepared (e.g., add default headers like Content-Length, Content-Type, etc.).
+> 6.  <send request with handler>
 
 2.  Processing response:
 
 > 1.  `prepare_body` - no op on response processing.
 > 2.  `cookies` - extracts response cookies into the cookie jar.
-> 3.  `allow_redirects` - Follows redirects.
-> 4.  `http_errors` - throws exceptions when the response status code `>=` 400.
+> 3.  `auth` - handles Digest authentication challenges before HTTP errors are raised.
+> 4.  `allow_redirects` - Follows redirects.
+> 5.  `http_errors` - throws exceptions when the response status code `>=` 400.
 
 When provided no `$handler` argument, `GuzzleHttp\HandlerStack::create()` will choose the most appropriate handler based on the extensions available on your system.
 
@@ -444,11 +446,13 @@ Request options are applied by different parts of Guzzle. A custom handler shoul
 
 | Owner | Examples | Notes |
 | --- | --- | --- |
-| Client-applied options | `base_uri`, `headers`, `body`, `form_params`, `multipart`, `json`, `query`, `version`, `idn_conversion`, basic `auth` | These options affect request construction or request mutation before the final handler sends the request. |
-| Middleware-dependent options | `allow_redirects`, `cookies`, `http_errors`, `expect` | These options require the relevant middleware, normally from `HandlerStack::create()`. |
+| Client-applied options | `base_uri`, `headers`, `body`, `form_params`, `multipart`, `json`, `query`, `version`, `idn_conversion` | These options affect request construction or request mutation before the final handler sends the request. |
+| Middleware-dependent options | `allow_redirects`, Basic and Digest `auth`, `cookies`, `http_errors`, `expect` | These options require the relevant middleware, normally from `HandlerStack::create()`. |
 | Handler-owned options | `delay`, `timeout`, `connect_timeout`, `read_timeout`, `stream`, `sink`, `verify`, `cert`, `ssl_key`, `proxy`, `force_ip_resolve`, `decode_content`, `progress`, `on_headers`, `on_stats`, `debug` | These options describe transport behavior and need explicit handler support or clear unsupported behavior. |
 
-Some options have split responsibilities. Basic `auth` adds an `Authorization` header before the handler runs, while digest and NTLM authentication are implemented through cURL options by Guzzle's built-in cURL handlers. The `expect` option is used by the body preparation middleware to add `Expect: 100-Continue`, but the transport still determines whether the protocol workflow is supported. The `decode_content` option can affect the `Accept-Encoding` request header, but response decoding is handled by the transport. Redirect middleware validates redirect targets with `allow_redirects.protocols`, but the handler is still responsible for enforcing which schemes it can send.
+Some options have split responsibilities. Basic and Digest `auth` are applied by the auth middleware. Legacy NTLM authentication is not a built-in `auth` type; configure cURL HTTP authentication options directly if it is required. The `expect` option is used by the body preparation middleware to add `Expect: 100-Continue`, but the transport still determines whether the protocol workflow is supported. The `decode_content` option can affect the `Accept-Encoding` request header, but response decoding is handled by the transport. Redirect middleware validates redirect targets with `allow_redirects.protocols`, but the handler is still responsible for enforcing which schemes it can send.
+
+Raw custom handlers do not receive Basic or Digest authentication automatically. Wrap custom handlers with `HandlerStack::create($handler)` or add `Middleware::auth()` to a custom stack when those built-in authentication types are needed.
 
 ### Handler-Owned Transfer Options
 
