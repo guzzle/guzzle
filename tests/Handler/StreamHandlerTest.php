@@ -18,6 +18,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\Tests\Psr17SpyFactory;
+use GuzzleHttp\Tests\StrictReadableResourceStreamFactory;
 use GuzzleHttp\Tests\SpyResponse;
 use GuzzleHttp\Tests\SpyStream;
 use GuzzleHttp\TransferStats;
@@ -2990,6 +2991,40 @@ class StreamHandlerTest extends TestCase
         $response->getBody()->close();
         self::assertIsResource($sink);
         \fclose($sink);
+    }
+
+    public function testCallerOwnedWriteOnlyResourceSinkDoesNotUseStreamFactory(): void
+    {
+        $tmpfname = \tempnam(\sys_get_temp_dir(), 'guzzle-sink');
+        self::assertIsString($tmpfname);
+        $sink = null;
+
+        try {
+            $this->queueRes();
+            $handler = new StreamHandler();
+            $factory = new StrictReadableResourceStreamFactory();
+            $sink = Psr7\Utils::tryFopen($tmpfname, 'w');
+
+            $response = $handler(new Request('GET', Server::$url), [
+                RequestOptions::SINK => $sink,
+                RequestOptions::STREAM_FACTORY => $factory,
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            // Only the transport resource should go through the factory; the
+            // caller-owned write-only sink must keep Guzzle's resource wrapper.
+            self::assertSame(1, $factory->createStreamFromResourceCalls);
+            $response->getBody()->close();
+            self::assertIsResource($sink);
+            \fclose($sink);
+            $sink = null;
+            self::assertSame('hi there', \file_get_contents($tmpfname));
+        } finally {
+            if (\is_resource($sink)) {
+                \fclose($sink);
+            }
+            @\unlink($tmpfname);
+        }
     }
 
     public function testFilePathSinkUsesLazyOpenStreamWithCustomStreamFactory(): void

@@ -1532,9 +1532,10 @@ final class CurlFactory implements CurlFactoryInterface
             $options['sink'] = Psr7\Utils::tryFopen('php://temp', 'w+');
         }
         $sink = $options['sink'];
-        if (\is_resource($sink)) {
-            $sinkStream = $streamFactory->createStreamFromResource($sink);
-            $sink = $hasSink ? self::streamForResourceSink($sinkStream) : $sinkStream;
+        if ($hasSink && \is_resource($sink)) {
+            $sink = self::streamForResourceSink(Psr7\Utils::streamFor($sink));
+        } elseif (\is_resource($sink)) {
+            $sink = $streamFactory->createStreamFromResource($sink);
         } elseif (!\is_string($sink)) {
             $sink = Psr7\Utils::streamFor($sink);
         } elseif (!\is_dir(\dirname($sink))) {

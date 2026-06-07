@@ -374,9 +374,11 @@ final class StreamHandler
             return Psr7\Utils::streamFor($sink);
         }
 
-        $sinkStream = $streamFactory->createStreamFromResource($sink);
+        if ($hasSink) {
+            return self::streamForResourceSink(Psr7\Utils::streamFor($sink));
+        }
 
-        return $hasSink ? self::streamForResourceSink($sinkStream) : $sinkStream;
+        return $streamFactory->createStreamFromResource($sink);
     }
 
     /**
