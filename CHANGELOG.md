@@ -12,7 +12,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated PHP stream context options outside the built-in stream handler allow-list
 
 
-## 7.11.1 - Upcoming
+## 7.11.1 - 2026-06-07
 
 ### Fixed
 
