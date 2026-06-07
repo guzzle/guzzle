@@ -6,7 +6,12 @@ namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Psr7;
+use GuzzleHttp\RequestOptions;
+use GuzzleHttp\Tests\Psr17SpyFactory;
+use GuzzleHttp\Tests\SpyResponse;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\EasyHandle
@@ -84,5 +89,67 @@ class EasyHandleTest extends TestCase
         self::assertFalse($easy->response->hasHeader('Content-Length'));
         self::assertSame('gzip', $easy->response->getHeaderLine('x-encoded-content-encoding'));
         self::assertSame('3', $easy->response->getHeaderLine('x-encoded-content-length'));
+    }
+
+    public function testCreateResponseIsBuiltViaConfiguredResponseFactory(): void
+    {
+        $factory = new Psr17SpyFactory();
+        $easy = new EasyHandle();
+        $easy->sink = Psr7\Utils::streamFor('hi');
+        $easy->headers = ['HTTP/1.1 200 OK', 'Foo: Bar'];
+        $easy->options = [RequestOptions::RESPONSE_FACTORY => $factory];
+
+        $easy->createResponse();
+
+        self::assertInstanceOf(SpyResponse::class, $easy->response);
+        self::assertSame(1, $factory->createResponseCalls);
+        self::assertSame(200, $easy->response->getStatusCode());
+        self::assertSame('Bar', $easy->response->getHeaderLine('Foo'));
+        self::assertSame('hi', (string) $easy->response->getBody());
+    }
+
+    public function testCreateResponsePreservesMixedCaseDuplicateHeaders(): void
+    {
+        $easy = new EasyHandle();
+        $easy->sink = Psr7\Utils::streamFor('');
+        $easy->headers = ['HTTP/1.1 200 OK', 'Set-Cookie: a=1', 'set-cookie: b=2'];
+
+        $easy->createResponse();
+
+        self::assertNotNull($easy->response);
+        self::assertSame(['a=1', 'b=2'], $easy->response->getHeader('Set-Cookie'));
+    }
+
+    public function testCreateResponsePropagatesResponseFactoryExceptions(): void
+    {
+        $easy = new EasyHandle();
+        $easy->sink = Psr7\Utils::streamFor('');
+        $easy->headers = ['HTTP/1.1 200 OK'];
+        $easy->options = [
+            RequestOptions::RESPONSE_FACTORY => new class implements ResponseFactoryInterface {
+                public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface
+                {
+                    throw new \RuntimeException('factory failed');
+                }
+            },
+        ];
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('factory failed');
+
+        $easy->createResponse();
+    }
+
+    public function testCreateResponseRejectsInvalidResponseFactory(): void
+    {
+        $easy = new EasyHandle();
+        $easy->sink = Psr7\Utils::streamFor('');
+        $easy->headers = ['HTTP/1.1 200 OK'];
+        $easy->options = [RequestOptions::RESPONSE_FACTORY => new \stdClass()];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('response_factory must be an instance of Psr\\Http\\Message\\ResponseFactoryInterface');
+
+        $easy->createResponse();
     }
 }

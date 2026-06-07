@@ -19,11 +19,14 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -276,8 +279,14 @@ final class StreamHandler
             return $this->rejectResponseCreation($options, $request, $startTime, $e);
         }
 
-        [$stream, $headers] = $this->checkDecode($options, $headers, $stream);
-        $stream = Psr7\Utils::streamFor($stream);
+        $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new Psr7\HttpFactory());
+        $responseFactory = self::requireResponseFactory($options[RequestOptions::RESPONSE_FACTORY] ?? new Psr7\HttpFactory());
+
+        // Wrap the transport resource with the configured stream factory before
+        // optional content decoding layers an InflateStream on top.
+        $stream = $streamFactory->createStreamFromResource($stream);
+        [$stream, $headers] = self::checkDecode($options, $headers, $stream);
+
         $sink = $stream;
 
         if ($request->getMethod() !== 'HEAD') {
@@ -285,7 +294,11 @@ final class StreamHandler
         }
 
         try {
-            $response = new Psr7\Response($status, $headers, $sink, $ver, $reason);
+            $response = $responseFactory->createResponse($status, $reason ?? '')->withProtocolVersion($ver);
+            foreach ($headers as $name => $value) {
+                $response = $response->withAddedHeader((string) $name, $value);
+            }
+            $response = $response->withBody($sink);
         } catch (\Throwable $e) {
             return $this->rejectResponseCreation($options, $request, $startTime, $e);
         }
@@ -349,28 +362,29 @@ final class StreamHandler
             return $stream;
         }
 
+        $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new Psr7\HttpFactory());
         $hasSink = isset($options['sink']);
         $sink = $hasSink ? $options['sink'] : Psr7\Utils::tryFopen('php://temp', 'r+');
 
-        if ($hasSink && \is_resource($sink)) {
-            return self::streamForResourceSink($sink);
+        if (\is_string($sink)) {
+            return new Psr7\LazyOpenStream($sink, 'w+');
         }
 
-        return \is_string($sink) ? new Psr7\LazyOpenStream($sink, 'w+') : Psr7\Utils::streamFor($sink);
+        if (!\is_resource($sink)) {
+            return Psr7\Utils::streamFor($sink);
+        }
+
+        $sinkStream = $streamFactory->createStreamFromResource($sink);
+
+        return $hasSink ? self::streamForResourceSink($sinkStream) : $sinkStream;
     }
 
     /**
-     * Creates a response body stream for a caller-owned sink resource.
-     *
-     * Closing the response body must detach Guzzle's wrapper without closing
-     * the original PHP resource.
-     *
-     * @param resource $resource
+     * Decorates a caller-owned sink stream so that closing the response body
+     * detaches Guzzle's wrapper without closing the original PHP resource.
      */
-    private static function streamForResourceSink($resource): StreamInterface
+    private static function streamForResourceSink(StreamInterface $stream): StreamInterface
     {
-        $stream = Psr7\Utils::streamFor($resource);
-
         return Psr7\FnStream::decorate($stream, [
             'close' => static function () use ($stream): void {
                 $stream->detach();
@@ -379,9 +393,38 @@ final class StreamHandler
     }
 
     /**
-     * @param resource $stream
+     * @param mixed $factory
      */
-    private function checkDecode(array $options, array $headers, $stream): array
+    private static function requireStreamFactory($factory): StreamFactoryInterface
+    {
+        if (!$factory instanceof StreamFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::STREAM_FACTORY,
+                StreamFactoryInterface::class
+            ));
+        }
+
+        return $factory;
+    }
+
+    /**
+     * @param mixed $factory
+     */
+    private static function requireResponseFactory($factory): ResponseFactoryInterface
+    {
+        if (!$factory instanceof ResponseFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::RESPONSE_FACTORY,
+                ResponseFactoryInterface::class
+            ));
+        }
+
+        return $factory;
+    }
+
+    private static function checkDecode(array $options, array $headers, StreamInterface $stream): array
     {
         // Automatically decode responses when instructed.
         if (!empty($options['decode_content'])) {
@@ -389,7 +432,7 @@ final class StreamHandler
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
-                    $stream = new Psr7\InflateStream(Psr7\Utils::streamFor($stream));
+                    $stream = new Psr7\InflateStream($stream);
                     $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
 
                     // Remove content-encoding header

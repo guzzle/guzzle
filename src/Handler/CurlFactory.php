@@ -16,14 +16,18 @@ use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
+use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\FnStream;
+use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\LazyOpenStream;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -932,7 +936,7 @@ final class CurlFactory implements CurlFactoryInterface
         );
 
         if ('' !== $sanitizedError) {
-            $redactedUriString = \GuzzleHttp\Psr7\Utils::redactUserInfo($uri)->__toString();
+            $redactedUriString = Psr7\Utils::redactUserInfo($uri)->__toString();
             if ($redactedUriString !== '' && false === \strpos($sanitizedError, $redactedUriString)) {
                 $message .= \sprintf(' for %s', $redactedUriString);
             }
@@ -1029,7 +1033,7 @@ final class CurlFactory implements CurlFactoryInterface
             return $error;
         }
 
-        $redactedUriString = \GuzzleHttp\Psr7\Utils::redactUserInfo($baseUri)->__toString();
+        $redactedUriString = Psr7\Utils::redactUserInfo($baseUri)->__toString();
 
         return str_replace($baseUriString, $redactedUriString, $error);
     }
@@ -1443,22 +1447,32 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * Creates a response body stream for a caller-owned sink resource.
-     *
-     * Closing the response body must detach Guzzle's wrapper without closing
-     * the original PHP resource.
-     *
-     * @param resource $resource
+     * Decorates a caller-owned sink stream so that closing the response body
+     * detaches Guzzle's wrapper without closing the original PHP resource.
      */
-    private static function streamForResourceSink($resource): StreamInterface
+    private static function streamForResourceSink(StreamInterface $stream): StreamInterface
     {
-        $stream = \GuzzleHttp\Psr7\Utils::streamFor($resource);
-
         return FnStream::decorate($stream, [
             'close' => static function () use ($stream): void {
                 $stream->detach();
             },
         ]);
+    }
+
+    /**
+     * @param mixed $factory
+     */
+    private static function requireStreamFactory($factory): StreamFactoryInterface
+    {
+        if (!$factory instanceof StreamFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::STREAM_FACTORY,
+                StreamFactoryInterface::class
+            ));
+        }
+
+        return $factory;
     }
 
     private function applyHandlerOptions(EasyHandle $easy, array &$conf): void
@@ -1511,16 +1525,18 @@ final class CurlFactory implements CurlFactoryInterface
             }
         }
 
+        $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory());
         $hasSink = isset($options['sink']);
         if (!$hasSink) {
             // Use a default temp stream if no sink was set.
-            $options['sink'] = \GuzzleHttp\Psr7\Utils::tryFopen('php://temp', 'w+');
+            $options['sink'] = Psr7\Utils::tryFopen('php://temp', 'w+');
         }
         $sink = $options['sink'];
-        if ($hasSink && \is_resource($sink)) {
-            $sink = self::streamForResourceSink($sink);
+        if (\is_resource($sink)) {
+            $sinkStream = $streamFactory->createStreamFromResource($sink);
+            $sink = $hasSink ? self::streamForResourceSink($sinkStream) : $sinkStream;
         } elseif (!\is_string($sink)) {
-            $sink = \GuzzleHttp\Psr7\Utils::streamFor($sink);
+            $sink = Psr7\Utils::streamFor($sink);
         } elseif (!\is_dir(\dirname($sink))) {
             // Ensure that the directory exists before failing in curl.
             throw new RequestException(\sprintf('Directory %s does not exist for sink value of %s', \dirname($sink), $sink), $easy->request);

@@ -14,7 +14,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add `NetworkException` for no-response network failures
 - Add `NetworkTimeoutException` for no-response transport timeouts
 - Add `ResponseTransferException`, with `ResponseTimeoutException` for response-transfer timeouts
-- Add PSR-17 `request_factory`, `stream_factory`, and `uri_factory` request options for client-created requests, request body streams, and URIs
+- Add PSR-17 `request_factory`, `response_factory`, `stream_factory`, and `uri_factory` request options
 - Add explicit `close()` lifecycle methods to the built-in cURL handlers and concrete cURL factory
 - Add `HandlerClosedException` for pending transfers rejected by `CurlMultiHandler::close()`
 - Add `ProxyOptions` for proxy option resolution

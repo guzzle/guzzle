@@ -273,9 +273,17 @@ final class RequestOptions
     /**
      * stream_factory: (Psr\Http\Message\StreamFactoryInterface) PSR-17
      * stream factory used when creating request body streams from body,
-     * form_params, and json request options.
+     * form_params, and json request options, and when the built-in handlers
+     * create response body streams.
      */
     public const STREAM_FACTORY = 'stream_factory';
+
+    /**
+     * response_factory: (Psr\Http\Message\ResponseFactoryInterface) PSR-17
+     * response factory used by the built-in handlers when creating the
+     * response message.
+     */
+    public const RESPONSE_FACTORY = 'response_factory';
 
     /**
      * sink: (resource|string|StreamInterface) Where the data of the

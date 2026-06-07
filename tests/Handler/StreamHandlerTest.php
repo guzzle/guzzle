@@ -17,6 +17,9 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
+use GuzzleHttp\Tests\Psr17SpyFactory;
+use GuzzleHttp\Tests\SpyResponse;
+use GuzzleHttp\Tests\SpyStream;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
@@ -2800,6 +2803,225 @@ class StreamHandlerTest extends TestCase
                 RequestOptions::STREAM => true,
             ]
         )->wait();
+    }
+
+    public function testResponseMessageIsBuiltViaResponseFactory(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+        $factory = new Psr17SpyFactory();
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 201 Created',
+            'Foo: Bar',
+        ]);
+
+        /** @var ResponseInterface $response */
+        $response = $this->invokeStreamHandlerCreateResponse(
+            $handler,
+            $request,
+            [RequestOptions::RESPONSE_FACTORY => $factory],
+            Psr7\Utils::streamFor('body')
+        )->wait();
+
+        self::assertInstanceOf(SpyResponse::class, $response);
+        self::assertSame(1, $factory->createResponseCalls);
+        self::assertSame(201, $response->getStatusCode());
+        self::assertSame('Created', $response->getReasonPhrase());
+        self::assertSame('Bar', $response->getHeaderLine('Foo'));
+        self::assertSame('1.1', $response->getProtocolVersion());
+        self::assertSame('body', (string) $response->getBody());
+    }
+
+    public function testResponsePreservesMixedCaseDuplicateHeaders(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+
+        // Different-case duplicates are kept as separate keys by parseHeaders;
+        // the response must merge them (withAddedHeader), not drop one.
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Set-Cookie: a=1',
+            'set-cookie: b=2',
+        ]);
+
+        /** @var ResponseInterface $response */
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+
+        self::assertSame(['a=1', 'b=2'], $response->getHeader('Set-Cookie'));
+        self::assertSame('a=1, b=2', $response->getHeaderLine('Set-Cookie'));
+    }
+
+    public function testResponseAppliesDefaultReasonPhraseForAbsentReason(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+
+        $this->setStreamHandlerLastHeaders($handler, ['HTTP/1.1 200']);
+        /** @var ResponseInterface $ok */
+        $ok = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+        self::assertSame('OK', $ok->getReasonPhrase());
+
+        $unknown = new StreamHandler();
+        $this->setStreamHandlerLastHeaders($unknown, ['HTTP/1.1 599']);
+        /** @var ResponseInterface $unknownResponse */
+        $unknownResponse = $this->invokeStreamHandlerCreateResponse($unknown, $request, [], Psr7\Utils::streamFor(''))->wait();
+        self::assertSame(599, $unknownResponse->getStatusCode());
+        self::assertSame('', $unknownResponse->getReasonPhrase());
+    }
+
+    public function testResponsePreservesProtocolVersion(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+
+        $this->setStreamHandlerLastHeaders($handler, ['HTTP/1.0 200 OK']);
+        /** @var ResponseInterface $response */
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+
+        self::assertSame('1.0', $response->getProtocolVersion());
+    }
+
+    public function testResponseBodyIsBuiltViaStreamFactory(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $factory = new Psr17SpyFactory();
+
+        $response = $handler(new Request('GET', Server::$url), [
+            RequestOptions::STREAM_FACTORY => $factory,
+            RequestOptions::RESPONSE_FACTORY => $factory,
+        ])->wait();
+
+        self::assertInstanceOf(SpyResponse::class, $response);
+        self::assertInstanceOf(SpyStream::class, $response->getBody());
+        self::assertSame('hi there', (string) $response->getBody());
+        self::assertGreaterThanOrEqual(1, $factory->createStreamFromResourceCalls);
+    }
+
+    public function testStreamOptionBodyIsBuiltViaStreamFactory(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $factory = new Psr17SpyFactory();
+
+        $response = $handler(new Request('GET', Server::$url), [
+            RequestOptions::STREAM => true,
+            RequestOptions::STREAM_FACTORY => $factory,
+            RequestOptions::RESPONSE_FACTORY => $factory,
+        ])->wait();
+
+        self::assertInstanceOf(SpyStream::class, $response->getBody());
+        self::assertSame('hi there', (string) $response->getBody());
+        // The stream option short-circuits sink creation, so only the body
+        // source is wrapped by the stream factory.
+        self::assertSame(1, $factory->createStreamFromResourceCalls);
+    }
+
+    public function testGzipDecodeRoutesBodySourceThroughStreamFactory(): void
+    {
+        $gzip = \gzencode('decoded');
+        self::assertIsString($gzip);
+
+        $resource = Psr7\Utils::tryFopen('php://temp', 'r+');
+        \fwrite($resource, $gzip);
+        \rewind($resource);
+
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+        $factory = new Psr17SpyFactory();
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+        ]);
+
+        /** @var ResponseInterface $response */
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [
+            RequestOptions::STREAM => true,
+            RequestOptions::DECODE_CONTENT => true,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ], $resource)->wait();
+
+        self::assertSame('decoded', (string) $response->getBody());
+        // The transport resource is wrapped via the stream factory once, up
+        // front; the decode path then layers an InflateStream over that stream.
+        self::assertSame(1, $factory->createStreamFromResourceCalls);
+
+        // A non-decoded streamed body source is wrapped exactly the same way.
+        $plainResource = Psr7\Utils::tryFopen('php://temp', 'r+');
+        \fwrite($plainResource, 'plain');
+        \rewind($plainResource);
+
+        $plainHandler = new StreamHandler();
+        $this->setStreamHandlerLastHeaders($plainHandler, ['HTTP/1.1 200 OK']);
+        $plainFactory = new Psr17SpyFactory();
+
+        /** @var ResponseInterface $plainResponse */
+        $plainResponse = $this->invokeStreamHandlerCreateResponse($plainHandler, $request, [
+            RequestOptions::STREAM => true,
+            RequestOptions::STREAM_FACTORY => $plainFactory,
+        ], $plainResource)->wait();
+
+        self::assertInstanceOf(SpyStream::class, $plainResponse->getBody());
+        self::assertSame('plain', (string) $plainResponse->getBody());
+        self::assertSame(1, $plainFactory->createStreamFromResourceCalls);
+    }
+
+    public function testCallerResourceSinkIsNotClosedWhenBodyClosesWithCustomStreamFactory(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $factory = new Psr17SpyFactory();
+        $sink = Psr7\Utils::tryFopen('php://temp', 'r+');
+
+        $response = $handler(new Request('GET', Server::$url), [
+            RequestOptions::SINK => $sink,
+            RequestOptions::STREAM_FACTORY => $factory,
+            RequestOptions::RESPONSE_FACTORY => $factory,
+        ])->wait();
+
+        self::assertSame('hi there', (string) $response->getBody());
+        self::assertGreaterThanOrEqual(1, $factory->createStreamFromResourceCalls);
+
+        // Closing the response body must detach the caller's resource without
+        // closing it (the FnStream close => detach contract).
+        $response->getBody()->close();
+        self::assertIsResource($sink);
+        \fclose($sink);
+    }
+
+    public function testFilePathSinkUsesLazyOpenStreamWithCustomStreamFactory(): void
+    {
+        $tmpfname = \tempnam(\sys_get_temp_dir(), 'guzzle-sink');
+        self::assertIsString($tmpfname);
+
+        $body = null;
+        try {
+            $this->queueRes();
+            $handler = new StreamHandler();
+            $factory = new Psr17SpyFactory();
+
+            $response = $handler(new Request('GET', Server::$url), [
+                RequestOptions::SINK => $tmpfname,
+                RequestOptions::STREAM_FACTORY => $factory,
+                RequestOptions::RESPONSE_FACTORY => $factory,
+            ])->wait();
+
+            $body = $response->getBody();
+            // String path sinks keep lazy open semantics and must not be routed
+            // through the stream factory.
+            self::assertInstanceOf(Psr7\LazyOpenStream::class, $body);
+            self::assertNotInstanceOf(SpyStream::class, $body);
+            self::assertSame($tmpfname, $body->getMetadata('uri'));
+            self::assertSame('hi there', (string) $body);
+        } finally {
+            if ($body !== null) {
+                $body->close();
+            }
+            @\unlink($tmpfname);
+        }
     }
 
     private static function requestWithProtocolVersion(string $protocolVersion): RequestInterface

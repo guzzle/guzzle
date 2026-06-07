@@ -6,8 +6,6 @@ Guzzle is an HTTP client that sends HTTP requests to a server and receives HTTP 
 
 Guzzle relies on the `guzzlehttp/psr7` Composer package for its message implementation of PSR-7.
 
-By default, Guzzle uses `GuzzleHttp\Psr7\HttpFactory` as its PSR-17 request, URI, and stream factory when it creates requests through a client. Applications that need another PSR-7 implementation can provide PSR-17 factories with the `request_factory`, `uri_factory`, and `stream_factory` request options.
-
 You can create a request using the `GuzzleHttp\Psr7\Request` class:
 
 ```php
@@ -237,7 +235,7 @@ echo $request->getUri()->getPath(); // /get
 
 The contents of the path will be automatically filtered to ensure that only allowed characters are present in the path. Any characters that are not allowed in the path will be percent-encoded according to [RFC 3986 section 3.3](https://datatracker.ietf.org/doc/html/rfc3986#section-3.3)
 
-### Query string
+### Query String
 
 The query string of a request can be accessed using the `getQuery()` of the URI object owned by the request.
 
@@ -291,13 +289,17 @@ Streams expose their capabilities using three methods: `isReadable()`, `isWritab
 
 Each stream instance has various capabilities: they can be read-only, write-only, read-write, allow arbitrary random access (seeking forwards or backwards to any location), or only allow sequential access (for example in the case of a socket or pipe).
 
-Guzzle uses the `guzzlehttp/psr7` package to provide stream support. More information on using streams, creating streams, converting streams to PHP stream resource, and stream decorators can be found in the [Guzzle PSR-7 documentation](https://github.com/guzzle/psr7/blob/master/README.md).
+Guzzle uses the `guzzlehttp/psr7` package to provide stream support. More information on using streams, creating streams, converting streams to PHP stream resource, and stream decorators can be found in the [Guzzle PSR-7 documentation](https://github.com/guzzle/psr7/blob/3.0/README.md).
 
 ### Creating Streams
 
 The best way to create a stream is using the `GuzzleHttp\Psr7\Utils::streamFor` method. This method accepts strings, resources returned from `fopen()`, an object that implements `__toString()`, iterators, callable arrays, closures, invokable objects, and instances of `Psr\Http\Message\StreamInterface`. Callable sources receive a suggested read length, may return fewer or more bytes, and end the stream by returning `false` or `null`. Strings remain literal body contents, even when they name a callable.
 
+Guzzle uses `GuzzleHttp\Psr7\HttpFactory` by default. As an advanced feature, applications that need a different PSR-7 implementation can supply their own PSR-17 factories through the `request_factory`, `response_factory`, `uri_factory`, and `stream_factory` request options. Guzzle only checks that each value implements the relevant interface, not that the objects it returns behave correctly, so an implementation that does not honor the contracts Guzzle relies on can introduce bugs or security issues. See each option's notes in [Request Options](request-options.md) for the specifics.
+
 When Guzzle creates request body streams from supported `body`, `form_params`, or `json` option values, the `stream_factory` request option can replace the default PSR-17 stream factory. Streams supplied directly as `Psr\Http\Message\StreamInterface` instances are used as provided, while callable and iterator bodies use Guzzle's existing stream handling.
+
+The built-in cURL and stream handlers also create response body streams with the configured `stream_factory` where practical: the underlying transport resource (and the default `php://temp` sink) is wrapped via `createStreamFromResource()`, while Guzzle's own decorators (`InflateStream` for content decoding, `FnStream` for caller-owned sinks) are layered on top. Content decoding wraps the same factory-created stream, since PSR-17 cannot express a decoding stream. Because the handlers read response bodies through that stream — including read-timeout detection, which inspects the underlying resource's live `timed_out` metadata — a custom factory's `createStreamFromResource()` must return a stream backed by the supplied resource that exposes its live metadata and closes the resource when the stream is closed. File-path sinks keep using `GuzzleHttp\Psr7\LazyOpenStream` so the file is not opened until first use, which PSR-17's `createStreamFromFile()` cannot express. The response message itself is created with the `response_factory` request option.
 
 ```php
 use GuzzleHttp\Psr7;

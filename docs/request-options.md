@@ -1065,6 +1065,39 @@ This option can be set on a client or per request. It affects request-side objec
 > [!NOTE]
 > This option only affects requests created by `request()`, `requestAsync()`, and shortcut methods such as `get()` and `post()`. Requests passed to `send()`, `sendAsync()`, or `sendRequest()` are used as provided.
 
+> [!WARNING]
+> Guzzle only checks that the value implements `Psr\Http\Message\RequestFactoryInterface`; it does not validate the requests it returns. Per PSR-7 the `Host` header is derived from the request URI, and Guzzle does not recompute it afterwards, so a factory that fails to set `Host` from the URI — or that lets a caller-controlled `Host` diverge from the URI actually dialed — can cause host confusion, cache poisoning, or requests routed to an unexpected origin. Supply a request implementation you trust to follow PSR-7.
+
+## response_factory
+
+Summary
+PSR-17 response factory used by the built-in handlers when creating the response message.
+
+Types
+`Psr\Http\Message\ResponseFactoryInterface`
+
+Default
+`GuzzleHttp\Psr7\HttpFactory`
+
+Constant
+`GuzzleHttp\RequestOptions::RESPONSE_FACTORY`
+
+```php
+$factory = new \GuzzleHttp\Psr7\HttpFactory();
+
+$client->request('GET', '/get', [
+    'response_factory' => $factory,
+]);
+```
+
+This option can be set on a client or per request. The built-in cURL and stream handlers build the response message (status code, reason phrase, headers, and protocol version) with this factory, and create the response body stream with the configured `stream_factory` where practical. The factory should return an empty, header-less response, because the handlers apply the parsed status line, headers, and body themselves.
+
+> [!NOTE]
+> This option is consumed by the built-in handlers when they create a response. `MockHandler` returns the responses you queue, and custom handlers are responsible for honoring this option themselves.
+
+> [!WARNING]
+> Guzzle only checks that the value implements `Psr\Http\Message\ResponseFactoryInterface`; it does not validate the responses it returns. The handlers add each parsed header to the returned response with `withAddedHeader()`, so a factory that pre-seeds headers (or returns a non-empty response) duplicates them — for example emitting two `Content-Type` or `Content-Length` values and corrupting the message. The factory should return an empty, header-less response, and must reject CR/LF in any header it sets itself, or it can re-introduce header-injection and response-splitting issues. Supply a response implementation you trust.
+
 ## retries
 
 Summary
@@ -1084,7 +1117,7 @@ The retry middleware initializes this option to `0` before the first attempt and
 ## stream_factory
 
 Summary
-PSR-17 stream factory used when Guzzle creates request body streams.
+PSR-17 stream factory used when Guzzle creates request body streams and, for the built-in handlers, response body streams where practical.
 
 Types
 `Psr\Http\Message\StreamFactoryInterface`
@@ -1104,10 +1137,13 @@ $client->request('POST', '/post', [
 ]);
 ```
 
-This option can be set on a client or per request. It is used when Guzzle converts supported `body`, `form_params`, or `json` request option values into `Psr\Http\Message\StreamInterface` instances, and when redirect handling resets a request body. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+This option can be set on a client or per request. It is used when Guzzle converts supported `body`, `form_params`, or `json` request option values into `Psr\Http\Message\StreamInterface` instances, when redirect handling resets a request body, and by the built-in cURL and stream handlers when they wrap response body resources where practical. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
 
 > [!NOTE]
-> This option affects request-side body stream creation only. It does not affect response body implementations returned by handlers, response sinks, callable or iterator bodies, or multipart internals.
+> This option does not replace every stream. Callable and iterator request bodies use Guzzle's existing PSR-7 stream handling, multipart internals are left untouched, string path sinks open lazily, and `MockHandler` queued responses and custom handler responses are used as provided. When decoding gzip/deflate responses, the factory still wraps the underlying transport resource, but Guzzle layers its own `InflateStream` decorator on top because PSR-17 cannot express a decoding stream.
+
+> [!WARNING]
+> Guzzle only checks that the value implements `Psr\Http\Message\StreamFactoryInterface`; it does not validate the streams it returns. For responses, `createStreamFromResource()` wraps the live transport socket, so the returned stream must behave like the default `GuzzleHttp\Psr7\Stream`. It must expose the resource's **live** `timed_out` metadata: a stream that snapshots metadata, or omits the `timed_out` key, silently disables read-timeout detection, so a stalled read is reported as a successful but truncated response instead of a timeout — with no error at all for chunked or `Connection: close` bodies. It must also **close the underlying resource** when closed, or each request leaks a socket or file descriptor (including `HEAD` and `stream => true` responses, which are not drained), eventually exhausting the descriptor limit. The stream must be readable for gzip/deflate decoding, and should stream the resource rather than buffer it entirely into memory. The full contract is described under *Creating Streams* in the [PSR-7 documentation](psr7.md). Supply a stream implementation you trust.
 
 ## uri_factory
 
@@ -1136,6 +1172,9 @@ This option can be set on a client or per request. It is used for string request
 
 > [!NOTE]
 > This option affects request-side URI creation only. It does not affect response implementations returned by handlers. `GuzzleHttp\Client::sendRequest()` still returns redirect responses as-is for PSR-18 compliance.
+
+> [!WARNING]
+> Guzzle only checks that the value implements `Psr\Http\Message\UriFactoryInterface`; it does not validate the URIs it returns. When following redirects Guzzle strips credentials by comparing the origin (scheme, host, port) of the current and redirect-target URIs: on a cross-origin redirect it removes the `Authorization` and `Cookie` headers and clears HTTP auth, and it drops `Referer` on an `https` to `http` downgrade — all by reading `getScheme()`, `getHost()`, and `getPort()` from the URI built from the `Location` header. A custom URI that misreports those, or whose getters disagree with the address actually dialed, can make a cross-origin redirect look same-origin and leak credentials to the target (the class of issue behind CVE-2022-31042, CVE-2022-31043, CVE-2022-31090, and CVE-2022-31091), or enable SSRF and protocol allow-list bypass. The default `GuzzleHttp\Psr7\Uri` lower-cases and validates the scheme and host and strips default ports; supply a URI implementation you trust.
 
 ## sink
 

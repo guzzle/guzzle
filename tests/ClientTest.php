@@ -27,6 +27,7 @@ use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
@@ -409,6 +410,8 @@ class ClientTest extends TestCase
         self::assertInstanceOf(UriFactoryInterface::class, $config[RequestOptions::URI_FACTORY]);
         self::assertArrayHasKey(RequestOptions::STREAM_FACTORY, $config);
         self::assertInstanceOf(StreamFactoryInterface::class, $config[RequestOptions::STREAM_FACTORY]);
+        self::assertArrayHasKey(RequestOptions::RESPONSE_FACTORY, $config);
+        self::assertInstanceOf(ResponseFactoryInterface::class, $config[RequestOptions::RESPONSE_FACTORY]);
     }
 
     public function testRequestUsesConfiguredRequestAndUriFactories(): void
@@ -885,6 +888,53 @@ class ClientTest extends TestCase
         self::assertSame([], $factory->streamCalls());
     }
 
+    public function testResponseFactoryIsForwardedToHandler(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::RESPONSE_FACTORY => $factory,
+        ]);
+
+        $client->request('GET', 'http://example.com/path');
+
+        self::assertSame($factory, $mock->getLastOptions()[RequestOptions::RESPONSE_FACTORY]);
+    }
+
+    public function testPerRequestResponseFactoryOverridesClientResponseFactory(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $clientFactory = new ClientTestFactory();
+        $requestFactory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::RESPONSE_FACTORY => $clientFactory,
+        ]);
+
+        $client->request('GET', 'http://example.com/path', [
+            RequestOptions::RESPONSE_FACTORY => $requestFactory,
+        ]);
+
+        self::assertSame($requestFactory, $mock->getLastOptions()[RequestOptions::RESPONSE_FACTORY]);
+    }
+
+    public function testNullPerRequestResponseFactoryRemovesClientDefaultBeforeHandler(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => $mock,
+            RequestOptions::RESPONSE_FACTORY => $factory,
+        ]);
+
+        $client->request('GET', 'http://example.com/path', [
+            RequestOptions::RESPONSE_FACTORY => null,
+        ]);
+
+        self::assertArrayNotHasKey(RequestOptions::RESPONSE_FACTORY, $mock->getLastOptions());
+    }
+
     public function testCallableBodyFallsBackToGuzzleStreamHandling(): void
     {
         $mock = new MockHandler([new Response()]);
@@ -1022,6 +1072,16 @@ class ClientTest extends TestCase
         ]);
     }
 
+    public function testInvalidResponseFactoryIsRejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('response_factory must be an instance of Psr\\Http\\Message\\ResponseFactoryInterface');
+
+        new Client([
+            RequestOptions::RESPONSE_FACTORY => new \stdClass(),
+        ]);
+    }
+
     public function testInvalidPerRequestRequestFactoryIsRejected(): void
     {
         $client = new Client([
@@ -1062,6 +1122,68 @@ class ClientTest extends TestCase
         $client->request('POST', 'http://example.com', [
             RequestOptions::BODY => 'payload',
             RequestOptions::STREAM_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testInvalidPerRequestResponseFactoryIsRejected(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('response_factory must be an instance of Psr\\Http\\Message\\ResponseFactoryInterface');
+
+        // A body-less GET must still reject an invalid per-request response
+        // factory: response factory validation is unconditional because every
+        // request yields a response.
+        $client->request('GET', 'http://example.com', [
+            RequestOptions::RESPONSE_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testInvalidPerRequestStreamFactoryIsRejectedForBodylessRequest(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_factory must be an instance of Psr\\Http\\Message\\StreamFactoryInterface');
+
+        // A body-less GET must still reject an invalid per-request stream
+        // factory: the built-in handlers use it for the response body stream,
+        // so its validation is unconditional rather than body-gated.
+        $client->request('GET', 'http://example.com', [
+            RequestOptions::STREAM_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testSendRejectsInvalidPerRequestStreamFactory(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('stream_factory must be an instance of Psr\\Http\\Message\\StreamFactoryInterface');
+
+        $client->send(new Request('GET', 'http://example.com'), [
+            RequestOptions::STREAM_FACTORY => new \stdClass(),
+        ]);
+    }
+
+    public function testSendRejectsInvalidPerRequestResponseFactory(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('response_factory must be an instance of Psr\\Http\\Message\\ResponseFactoryInterface');
+
+        $client->send(new Request('GET', 'http://example.com'), [
+            RequestOptions::RESPONSE_FACTORY => new \stdClass(),
         ]);
     }
 
@@ -2467,7 +2589,11 @@ final class ClientTestAlternateStream extends Psr7\Stream
 {
 }
 
-final class ClientTestFactory implements RequestFactoryInterface, StreamFactoryInterface, UriFactoryInterface
+final class ClientTestResponse extends Response
+{
+}
+
+final class ClientTestFactory implements RequestFactoryInterface, ResponseFactoryInterface, StreamFactoryInterface, UriFactoryInterface
 {
     /** @var class-string<Request> */
     private $requestClass;
@@ -2477,6 +2603,9 @@ final class ClientTestFactory implements RequestFactoryInterface, StreamFactoryI
 
     /** @var class-string<Psr7\Stream> */
     private $streamClass;
+
+    /** @var class-string<Response> */
+    private $responseClass;
 
     /** @var array<int, array{0: string, 1: mixed}> */
     private $requestCalls = [];
@@ -2490,19 +2619,25 @@ final class ClientTestFactory implements RequestFactoryInterface, StreamFactoryI
     /** @var int */
     private $streamResourceCalls = 0;
 
+    /** @var array<int, array{0: int, 1: string}> */
+    private $responseCalls = [];
+
     /**
      * @param class-string<Request>     $requestClass
      * @param class-string<Uri>         $uriClass
      * @param class-string<Psr7\Stream> $streamClass
+     * @param class-string<Response>    $responseClass
      */
     public function __construct(
         string $requestClass = ClientTestRequest::class,
         string $uriClass = ClientTestUri::class,
-        string $streamClass = ClientTestStream::class
+        string $streamClass = ClientTestStream::class,
+        string $responseClass = ClientTestResponse::class
     ) {
         $this->requestClass = $requestClass;
         $this->uriClass = $uriClass;
         $this->streamClass = $streamClass;
+        $this->responseClass = $responseClass;
     }
 
     public function createRequest(string $method, $uri): RequestInterface
@@ -2550,6 +2685,15 @@ final class ClientTestFactory implements RequestFactoryInterface, StreamFactoryI
         return new $class($resource);
     }
 
+    public function createResponse(int $code = 200, string $reasonPhrase = ''): ResponseInterface
+    {
+        $this->responseCalls[] = [$code, $reasonPhrase];
+
+        $class = $this->responseClass;
+
+        return new $class($code, [], null, '1.1', $reasonPhrase);
+    }
+
     /**
      * @return array<int, array{0: string, 1: mixed}>
      */
@@ -2577,5 +2721,13 @@ final class ClientTestFactory implements RequestFactoryInterface, StreamFactoryI
     public function streamResourceCalls(): int
     {
         return $this->streamResourceCalls;
+    }
+
+    /**
+     * @return array<int, array{0: int, 1: string}>
+     */
+    public function responseCalls(): array
+    {
+        return $this->responseCalls;
     }
 }

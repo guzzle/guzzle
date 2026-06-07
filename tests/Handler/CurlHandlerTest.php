@@ -14,7 +14,11 @@ use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
+use GuzzleHttp\Tests\Psr17SpyFactory;
+use GuzzleHttp\Tests\SpyResponse;
+use GuzzleHttp\Tests\SpyStream;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
@@ -51,6 +55,27 @@ class CurlHandlerTest extends TestCase
         } catch (\Throwable $e) {
             $this->assertStringNotContainsString('secretPass', $e->getMessage());
         }
+    }
+
+    public function testResponseMessageAndBodyAreBuiltViaConfiguredFactories(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200, ['Foo' => 'Bar'], 'hi there')]);
+        $handler = new CurlHandler();
+        $factory = new Psr17SpyFactory();
+
+        $response = $handler(new Request('GET', Server::$url), [
+            RequestOptions::STREAM_FACTORY => $factory,
+            RequestOptions::RESPONSE_FACTORY => $factory,
+        ])->wait();
+
+        self::assertInstanceOf(SpyResponse::class, $response);
+        self::assertInstanceOf(SpyStream::class, $response->getBody());
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('Bar', $response->getHeaderLine('Foo'));
+        self::assertSame('hi there', (string) $response->getBody());
+        self::assertSame(1, $factory->createResponseCalls);
+        self::assertGreaterThanOrEqual(1, $factory->createStreamFromResourceCalls);
     }
 
     public function testReusesHandles(): void
