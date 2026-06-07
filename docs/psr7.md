@@ -287,7 +287,7 @@ Streams expose their capabilities using three methods: `isReadable()`, `isWritab
 
 Each stream instance has various capabilities: they can be read-only, write-only, read-write, allow arbitrary random access (seeking forwards or backwards to any location), or only allow sequential access (for example in the case of a socket or pipe).
 
-Guzzle uses the `guzzlehttp/psr7` package to provide stream support. More information on using streams, creating streams, converting streams to PHP stream resource, and stream decorators can be found in the [Guzzle PSR-7 documentation](https://github.com/guzzle/psr7/blob/master/README.md).
+Guzzle uses the `guzzlehttp/psr7` package to provide stream support. More information on using streams, creating streams, converting streams to PHP stream resource, and stream decorators can be found in the [Guzzle PSR-7 documentation](https://github.com/guzzle/psr7/blob/2.11/README.md).
 
 ### Creating Streams
 
