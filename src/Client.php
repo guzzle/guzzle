@@ -15,6 +15,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\HttpFactory;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
@@ -117,6 +118,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -167,7 +169,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $config[RequestOptions::STREAM_FACTORY] = $factory;
         }
 
+        if (!isset($config[RequestOptions::RESPONSE_FACTORY])) {
+            $config[RequestOptions::RESPONSE_FACTORY] = $factory;
+        }
+
         self::requireRequestFactory($config[RequestOptions::REQUEST_FACTORY]);
+        self::requireResponseFactory($config[RequestOptions::RESPONSE_FACTORY]);
         self::requireStreamFactory($config[RequestOptions::STREAM_FACTORY]);
         $uriFactory = self::requireUriFactory($config[RequestOptions::URI_FACTORY]);
 
@@ -235,6 +242,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -322,6 +330,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -425,6 +434,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -540,6 +550,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -610,6 +621,22 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 '%s must be an instance of %s',
                 RequestOptions::REQUEST_FACTORY,
                 RequestFactoryInterface::class
+            ));
+        }
+
+        return $factory;
+    }
+
+    /**
+     * @param mixed $factory
+     */
+    private static function requireResponseFactory($factory): ResponseFactoryInterface
+    {
+        if (!$factory instanceof ResponseFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::RESPONSE_FACTORY,
+                ResponseFactoryInterface::class
             ));
         }
 
@@ -1218,6 +1245,13 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             'set_headers' => [],
         ];
 
+        // Validate the response and stream factories up front. Every request
+        // yields a response, and the built-in handlers build the response body
+        // stream via the stream factory even when the request has no body, so
+        // both must be validated unconditionally.
+        self::requireResponseFactory($options[RequestOptions::RESPONSE_FACTORY] ?? new HttpFactory());
+        $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory());
+
         if (isset($options['headers'])) {
             if (array_keys($options['headers']) === range(0, count($options['headers']) - 1)) {
                 throw new InvalidArgumentException('The headers array must have header name as keys.');
@@ -1266,7 +1300,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (\is_array($options['body'])) {
                 throw $this->invalidBody();
             }
-            $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory());
             $modify['body'] = self::createBodyStream($options['body'], $streamFactory);
             unset($options['body']);
         }

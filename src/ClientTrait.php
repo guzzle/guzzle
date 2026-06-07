@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
@@ -82,6 +83,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -165,6 +167,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -251,6 +254,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -337,6 +341,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -423,6 +428,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -509,6 +515,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -595,6 +602,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -682,6 +690,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -765,6 +774,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -851,6 +861,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -937,6 +948,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -1023,6 +1035,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -1109,6 +1122,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,
@@ -1195,6 +1209,7 @@ trait ClientTrait
      *     read_timeout?: int|float,
      *     retries?: int,
      *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
      *     sink?: resource|string|StreamInterface,
      *     ssl_key?: string|array{
      *         0: string,

@@ -40,6 +40,16 @@ When provided no `$handler` argument, `GuzzleHttp\HandlerStack::create()` will c
 > [!IMPORTANT]
 > The handler provided to a client determines how request options are applied and utilized for each request sent by a client. For example, if you do not have a cookie middleware associated with a client, then setting the `cookies` request option will have no effect on the request.
 
+### PSR-17 factories
+
+The PSR-17 factory request options are owned by different layers:
+
+- `request_factory` and `uri_factory` are used by the client when it builds the outgoing request and resolves URIs.
+- `response_factory` is handler-owned: the built-in cURL and stream handlers use it to create the response message (status code, reason phrase, headers, and protocol version). It should return an empty, header-less response.
+- `stream_factory` has split responsibility. The client uses it for request body creation (`body`, `form_params`, `json`) and redirect body resets, while the built-in handlers use it to wrap response body resources where practical.
+
+The default handlers consume `response_factory` and `stream_factory` when constructing responses. `MockHandler` returns the responses you queue, and custom handlers are responsible for honoring these options themselves.
+
 ### Closing cURL Handlers
 
 The cURL handlers own native cURL resources. These resources are normally released automatically when the handler is garbage collected. Applications that need deterministic cleanup may call `close()` on `GuzzleHttp\Handler\CurlHandler` or `GuzzleHttp\Handler\CurlMultiHandler`. Applications that construct `GuzzleHttp\Handler\CurlFactory` directly may also call `close()` on the factory to close idle easy handles.

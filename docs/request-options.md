@@ -1065,6 +1065,33 @@ This option can be set on a client or per request. It affects request-side objec
 > [!NOTE]
 > This option only affects requests created by `request()`, `requestAsync()`, and shortcut methods such as `get()` and `post()`. Requests passed to `send()`, `sendAsync()`, or `sendRequest()` are used as provided.
 
+## response_factory
+
+Summary
+PSR-17 response factory used by the built-in handlers when creating the response message.
+
+Types
+`Psr\Http\Message\ResponseFactoryInterface`
+
+Default
+`GuzzleHttp\Psr7\HttpFactory`
+
+Constant
+`GuzzleHttp\RequestOptions::RESPONSE_FACTORY`
+
+```php
+$factory = new \GuzzleHttp\Psr7\HttpFactory();
+
+$client->request('GET', '/get', [
+    'response_factory' => $factory,
+]);
+```
+
+This option can be set on a client or per request. The built-in cURL and stream handlers build the response message (status code, reason phrase, headers, and protocol version) with this factory, and create the response body stream with the configured `stream_factory` where practical. The factory should return an empty, header-less response, because the handlers apply the parsed status line, headers, and body themselves.
+
+> [!NOTE]
+> This option is consumed by the built-in handlers when they create a response. `MockHandler` returns the responses you queue, and custom handlers are responsible for honoring this option themselves.
+
 ## retries
 
 Summary
@@ -1084,7 +1111,7 @@ The retry middleware initializes this option to `0` before the first attempt and
 ## stream_factory
 
 Summary
-PSR-17 stream factory used when Guzzle creates request body streams.
+PSR-17 stream factory used when Guzzle creates request body streams and, for the built-in handlers, response body streams where practical.
 
 Types
 `Psr\Http\Message\StreamFactoryInterface`
@@ -1104,10 +1131,10 @@ $client->request('POST', '/post', [
 ]);
 ```
 
-This option can be set on a client or per request. It is used when Guzzle converts supported `body`, `form_params`, or `json` request option values into `Psr\Http\Message\StreamInterface` instances, and when redirect handling resets a request body. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+This option can be set on a client or per request. It is used when Guzzle converts supported `body`, `form_params`, or `json` request option values into `Psr\Http\Message\StreamInterface` instances, when redirect handling resets a request body, and by the built-in cURL and stream handlers when they wrap response body resources where practical. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
 
 > [!NOTE]
-> This option affects request-side body stream creation only. It does not affect response body implementations returned by handlers, response sinks, callable or iterator bodies, or multipart internals.
+> This option does not replace every stream. Callable and iterator request bodies use Guzzle's existing PSR-7 stream handling, multipart internals are left untouched, string path sinks open lazily, and `MockHandler` queued responses and custom handler responses are used as provided. When decoding gzip/deflate responses, the factory still wraps the underlying transport resource, but Guzzle layers its own `InflateStream` decorator on top because PSR-17 cannot express a decoding stream.
 
 ## uri_factory
 

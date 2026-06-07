@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
-use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\HttpFactory;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
@@ -144,14 +147,31 @@ final class EasyHandle
             }
         }
 
-        // Attach a response to the easy handle with the parsed headers.
-        $this->response = new Response(
-            $status,
-            $headers,
-            $this->sink,
-            $ver,
-            $reason
-        );
+        // Attach a response to the easy handle with the parsed headers. Any
+        // exception propagates to the caller (CurlFactory), which records it as
+        // the createResponseException — do not catch it here.
+        $responseFactory = self::requireResponseFactory($this->options[RequestOptions::RESPONSE_FACTORY] ?? new HttpFactory());
+        $response = $responseFactory->createResponse($status, $reason ?? '')->withProtocolVersion($ver);
+        foreach ($headers as $name => $value) {
+            $response = $response->withAddedHeader((string) $name, $value);
+        }
+        $this->response = $response->withBody($this->sink);
+    }
+
+    /**
+     * @param mixed $factory
+     */
+    private static function requireResponseFactory($factory): ResponseFactoryInterface
+    {
+        if (!$factory instanceof ResponseFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::RESPONSE_FACTORY,
+                ResponseFactoryInterface::class
+            ));
+        }
+
+        return $factory;
     }
 
     /**
