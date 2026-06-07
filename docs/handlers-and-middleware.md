@@ -40,7 +40,7 @@ When provided no `$handler` argument, `GuzzleHttp\HandlerStack::create()` will c
 > [!IMPORTANT]
 > The handler provided to a client determines how request options are applied and utilized for each request sent by a client. For example, if you do not have a cookie middleware associated with a client, then setting the `cookies` request option will have no effect on the request.
 
-### PSR-17 factories
+### PSR-17 Factories
 
 The PSR-17 factory request options are owned by different layers:
 

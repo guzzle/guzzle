@@ -235,7 +235,7 @@ echo $request->getUri()->getPath(); // /get
 
 The contents of the path will be automatically filtered to ensure that only allowed characters are present in the path. Any characters that are not allowed in the path will be percent-encoded according to [RFC 3986 section 3.3](https://datatracker.ietf.org/doc/html/rfc3986#section-3.3)
 
-### Query string
+### Query String
 
 The query string of a request can be accessed using the `getQuery()` of the URI object owned by the request.
 
