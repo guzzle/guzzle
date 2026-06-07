@@ -50,6 +50,9 @@ The PSR-17 factory request options are owned by different layers:
 
 The default handlers consume `response_factory` and `stream_factory` when constructing responses. `MockHandler` returns the responses you queue, and custom handlers are responsible for honoring these options themselves.
 
+> [!WARNING]
+> Replacing Guzzle's PSR-7 implementation through these options is an advanced feature that moves responsibility for correctness and security to your code. Guzzle validates only that each value implements the relevant PSR-17 interface — it does not validate the objects a factory returns. An implementation that does not honor the documented contracts can introduce bugs or security issues: streams that drop live `timed_out` metadata silently disable read-timeout detection, streams that do not close their resource leak file descriptors, response factories that pre-seed headers corrupt the message, and URIs that misreport scheme, host, or port can defeat the cross-origin credential stripping that protects against credential leaks on redirects. See the per-option notes under [Request Options](request-options.md) for specifics.
+
 ### Closing cURL Handlers
 
 The cURL handlers own native cURL resources. These resources are normally released automatically when the handler is garbage collected. Applications that need deterministic cleanup may call `close()` on `GuzzleHttp\Handler\CurlHandler` or `GuzzleHttp\Handler\CurlMultiHandler`. Applications that construct `GuzzleHttp\Handler\CurlFactory` directly may also call `close()` on the factory to close idle easy handles.
