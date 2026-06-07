@@ -881,19 +881,11 @@ final class StreamHandler
                 }
 
                 $replacement = $conflictingOptions[$wrapper][$option];
-                if ($replacement !== null) {
-                    throw new InvalidArgumentException(\sprintf(
-                        'Passing stream_context.%s.%s in the "stream_context" request option is not supported because it conflicts with Guzzle-managed request handling. Use %s instead.',
-                        $wrapper,
-                        $option,
-                        $replacement
-                    ));
-                }
-
                 throw new InvalidArgumentException(\sprintf(
-                    'Passing stream_context.%s.%s in the "stream_context" request option is not supported because it conflicts with Guzzle-managed stream handler internals.',
+                    'Passing stream_context.%s.%s in the "stream_context" request option is not supported because it conflicts with Guzzle-managed request handling. Use %s instead.',
                     $wrapper,
-                    $option
+                    $option,
+                    $replacement
                 ));
             }
         }
@@ -919,12 +911,17 @@ final class StreamHandler
     private static function unsupportedStreamContextOptions(array $streamContext): array
     {
         $supportedOptions = self::supportedStreamContextOptions();
+        $conflictingOptions = self::conflictingStreamContextOptions();
         $unsupportedOptions = [];
 
         foreach ($streamContext as $wrapper => $contextOptions) {
             if (!\is_string($wrapper) || !isset($supportedOptions[$wrapper])) {
                 if (\is_array($contextOptions)) {
                     foreach ($contextOptions as $option => $_) {
+                        if (\is_string($wrapper) && \is_string($option) && isset($conflictingOptions[$wrapper]) && \array_key_exists($option, $conflictingOptions[$wrapper])) {
+                            continue;
+                        }
+
                         $unsupportedOptions[] = \sprintf('stream_context.%s.%s', (string) $wrapper, (string) $option);
                     }
                 } else {
@@ -941,6 +938,10 @@ final class StreamHandler
             }
 
             foreach ($contextOptions as $option => $_) {
+                if (\is_string($option) && isset($conflictingOptions[$wrapper]) && \array_key_exists($option, $conflictingOptions[$wrapper])) {
+                    continue;
+                }
+
                 if (!\is_string($option) || !\array_key_exists($option, $supportedOptions[$wrapper])) {
                     $unsupportedOptions[] = \sprintf('stream_context.%s.%s', $wrapper, (string) $option);
                 }
@@ -978,7 +979,7 @@ final class StreamHandler
     }
 
     /**
-     * @return array<string, array<string, string|null>>
+     * @return array<string, array<string, string>>
      */
     private static function conflictingStreamContextOptions(): array
     {
