@@ -372,14 +372,14 @@ an option depending on the runtime. The allow-list is limited to the following
 `CURLOPT_DNS_SHUFFLE_ADDRESSES`, `CURLOPT_ENCODING`,
 `CURLOPT_FORBID_REUSE`, `CURLOPT_FRESH_CONNECT`,
 `CURLOPT_HAPPY_EYEBALLS_TIMEOUT_MS`, `CURLOPT_HTTPAUTH`,
-`CURLOPT_INTERFACE`, `CURLOPT_LOCALPORT`, `CURLOPT_LOCALPORTRANGE`,
-`CURLOPT_LOW_SPEED_LIMIT`, `CURLOPT_LOW_SPEED_TIME`,
+`CURLOPT_HTTPPROXYTUNNEL`, `CURLOPT_INTERFACE`, `CURLOPT_LOCALPORT`,
+`CURLOPT_LOCALPORTRANGE`, `CURLOPT_LOW_SPEED_LIMIT`, `CURLOPT_LOW_SPEED_TIME`,
 `CURLOPT_MAXAGE_CONN`, `CURLOPT_MAXCONNECTS`, `CURLOPT_MAXLIFETIME_CONN`,
-`CURLOPT_PROXYHEADER`, `CURLOPT_RESOLVE`, `CURLOPT_SSL_CIPHER_LIST`,
-`CURLOPT_SSL_EC_CURVES`, `CURLOPT_TCP_FASTOPEN`, `CURLOPT_TCP_KEEPALIVE`,
-`CURLOPT_TCP_KEEPIDLE`, `CURLOPT_TCP_KEEPINTVL`, `CURLOPT_TCP_KEEPCNT`,
-`CURLOPT_TCP_NODELAY`, `CURLOPT_TLS13_CIPHERS`,
-`CURLOPT_UNIX_SOCKET_PATH`, and `CURLOPT_USERPWD`.
+`CURLOPT_PROXYHEADER`, `CURLOPT_PROXYTYPE`, `CURLOPT_PROXYUSERPWD`,
+`CURLOPT_RESOLVE`, `CURLOPT_SSL_CIPHER_LIST`, `CURLOPT_SSL_EC_CURVES`,
+`CURLOPT_TCP_FASTOPEN`, `CURLOPT_TCP_KEEPALIVE`, `CURLOPT_TCP_KEEPIDLE`,
+`CURLOPT_TCP_KEEPINTVL`, `CURLOPT_TCP_KEEPCNT`, `CURLOPT_TCP_NODELAY`,
+`CURLOPT_TLS13_CIPHERS`, `CURLOPT_UNIX_SOCKET_PATH`, and `CURLOPT_USERPWD`.
 
 ```php
 $client->request('GET', '/', [
@@ -1136,14 +1136,15 @@ available in the current PHP runtime, are deprecated. Allow-listing means Guzzle
 passes the option through without its own deprecation warning; PHP or OpenSSL
 may still reject or ignore an option depending on the runtime. The allow-list is
 `http.request_fulluri`, `socket.bindto`, `socket.tcp_nodelay`,
-`ssl.SNI_enabled`, `ssl.allow_self_signed`, `ssl.capath`,
-`ssl.capture_peer_cert`, `ssl.capture_peer_cert_chain`, `ssl.ciphers`,
-`ssl.disable_compression`, `ssl.max_proto_version`, `ssl.min_proto_version`,
-`ssl.no_ticket`, `ssl.peer_fingerprint`, `ssl.security_level`, and
-`ssl.verify_depth`. Use Guzzle request options instead when configuring the
-request method, URI, body, headers, timeouts, redirects, proxy, TLS certificate
-files, TLS private keys, protocol versions, verification, progress, debug
-output, sinks, cookies, and allowed protocols.
+`ssl.SNI_enabled`, `ssl.capture_peer_cert`, `ssl.capture_peer_cert_chain`,
+`ssl.ciphers`, `ssl.disable_compression`, `ssl.no_ticket`,
+`ssl.peer_fingerprint`, `ssl.security_level`, and `ssl.verify_depth`. Use
+Guzzle request options instead when configuring the request method, URI, body,
+headers, timeouts, redirects, proxy, TLS certificate files, TLS private keys,
+protocol versions, verification, progress, debug output, sinks, cookies, and
+allowed protocols. TLS protocol versions are managed through the
+`crypto_method` request option, and TLS verification is managed through the
+`verify` request option.
 
 ## synchronous
 

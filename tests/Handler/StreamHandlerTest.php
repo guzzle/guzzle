@@ -791,14 +791,14 @@ class StreamHandlerTest extends TestCase
                     'bindto' => '127.0.0.1:0',
                 ],
                 'ssl' => [
-                    'allow_self_signed' => true,
+                    'ciphers' => 'DEFAULT',
                 ],
             ],
         ]);
         $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertTrue($opts['http']['request_fulluri']);
         self::assertSame('127.0.0.1:0', $opts['socket']['bindto']);
-        self::assertTrue($opts['ssl']['allow_self_signed']);
+        self::assertSame('DEFAULT', $opts['ssl']['ciphers']);
     }
 
     public function testEnsuresThatStreamContextIsAnArray()

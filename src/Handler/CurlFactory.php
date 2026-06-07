@@ -348,8 +348,6 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_HEADERFUNCTION', 'the "on_headers" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_WRITEFUNCTION', 'the "sink" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_FILE', 'the "sink" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_RETURNTRANSFER', null);
-        self::addConflictingCurlOption($options, 'CURLOPT_HEADER', null);
         self::addConflictingCurlOption($options, 'CURLOPT_TIMEOUT', 'the "timeout" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_TIMEOUT_MS', 'the "timeout" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_CONNECTTIMEOUT', 'the "connect_timeout" request option');
@@ -369,7 +367,6 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_REDIR_PROTOCOLS_STR', 'the "allow_redirects" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS', 'the "protocols" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS_STR', 'the "protocols" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_HTTP09_ALLOWED', null);
         self::addConflictingCurlOption($options, 'CURLOPT_HTTP_VERSION', 'the request protocol version');
         self::addConflictingCurlOption($options, 'CURLOPT_IPRESOLVE', 'the "force_ip_resolve" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYPEER', 'the "verify" request option');
@@ -427,7 +424,10 @@ class CurlFactory implements CurlFactoryInterface
         self::addSupportedCurlOption($options, 'CURLOPT_MAXAGE_CONN');
         self::addSupportedCurlOption($options, 'CURLOPT_MAXCONNECTS');
         self::addSupportedCurlOption($options, 'CURLOPT_MAXLIFETIME_CONN');
+        self::addSupportedCurlOption($options, 'CURLOPT_HTTPPROXYTUNNEL');
         self::addSupportedCurlOption($options, 'CURLOPT_PROXYHEADER');
+        self::addSupportedCurlOption($options, 'CURLOPT_PROXYTYPE');
+        self::addSupportedCurlOption($options, 'CURLOPT_PROXYUSERPWD');
         self::addSupportedCurlOption($options, 'CURLOPT_RESOLVE');
         self::addSupportedCurlOption($options, 'CURLOPT_SSL_CIPHER_LIST');
         self::addSupportedCurlOption($options, 'CURLOPT_SSL_EC_CURVES');
