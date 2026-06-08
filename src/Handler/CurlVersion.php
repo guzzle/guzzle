@@ -40,19 +40,20 @@ final class CurlVersion
 
     public static function supportsCurlHandler(): bool
     {
-        $version = self::get();
+        $versionInfo = self::getVersionInfo();
 
-        return self::supportsSsl()
+        return \defined('CURL_VERSION_SSL')
             && \defined('CURL_SSLVERSION_TLSv1_2')
-            && null !== $version
-            && version_compare($version, self::MIN_VERSION, '>=');
+            && null !== $versionInfo
+            && version_compare($versionInfo['version'], self::MIN_VERSION, '>=')
+            && 0 !== (\CURL_VERSION_SSL & $versionInfo['features']);
     }
 
     public static function supportsTls13(): bool
     {
         $version = self::get();
 
-        return self::supportsSsl()
+        return self::supportsCurlHandler()
             && \defined('CURL_SSLVERSION_TLSv1_3')
             && null !== $version
             && version_compare($version, self::TLS_13_VERSION, '>=');
@@ -79,7 +80,7 @@ final class CurlVersion
             return false;
         }
 
-        return self::supportsSsl()
+        return self::supportsCurlHandler()
             && 0 !== ((int) \constant('CURL_VERSION_HTTP3') & self::getInfo()['features']);
     }
 
@@ -105,7 +106,7 @@ final class CurlVersion
     {
         $version = self::get();
 
-        return self::supportsSsl()
+        return self::supportsCurlHandler()
             && null !== $version
             && version_compare($version, self::SSL_SESSION_SHARING_VERSION, '>=');
     }
@@ -178,20 +179,7 @@ final class CurlVersion
             ), $request);
         }
 
-        if (!self::supportsSsl()) {
-            throw new ConnectException('The cURL handler requires libcurl SSL support.', $request);
-        }
-
-        throw new ConnectException('The installed cURL version is not supported by the cURL handler.', $request);
-    }
-
-    private static function supportsSsl(): bool
-    {
-        $versionInfo = self::getVersionInfo();
-
-        return \defined('CURL_VERSION_SSL')
-            && null !== $versionInfo
-            && 0 !== (\CURL_VERSION_SSL & $versionInfo['features']);
+        throw new ConnectException('The cURL handler requires libcurl SSL support.', $request);
     }
 
     private static function get(): ?string
