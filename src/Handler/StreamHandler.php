@@ -721,11 +721,6 @@ final class StreamHandler
 
         $this->addDefaultTlsMinimum($request, $context);
 
-        // Microsoft NTLM authentication only supported with curl handler
-        if (isset($options['auth'][2]) && 'ntlm' === $options['auth'][2]) {
-            throw new InvalidArgumentException('Microsoft NTLM authentication only supported with curl handler');
-        }
-
         $uri = $this->resolveHost($request, $options);
 
         $contextResource = $this->createResource(
@@ -897,13 +892,8 @@ final class StreamHandler
             \array_key_exists('curl', $options)
             && $options['curl'] !== null
             && $options['curl'] !== []
-            && !self::isCurlOptionGeneratedByAuth($options)
         ) {
             throw new InvalidArgumentException('Passing the "curl" request option to the stream handler is not supported because the stream handler ignores cURL options.');
-        }
-
-        if (self::usesDigestAuth($options)) {
-            throw new InvalidArgumentException('Digest authentication is not supported by the stream handler because it is only supported by cURL handlers.');
         }
 
         if (\array_key_exists('expect', $options) && $options['expect'] !== false && $request->hasHeader('Expect')) {
@@ -1064,38 +1054,6 @@ final class StreamHandler
         if ($this->transportSharingMode === TransportSharing::HANDLER_REQUIRE) {
             throw new InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
         }
-    }
-
-    private static function isCurlOptionGeneratedByAuth(array $options): bool
-    {
-        if (!isset($options['curl']) || !\is_array($options['curl']) || !isset($options['auth'][2]) || !\is_string($options['auth'][2])) {
-            return false;
-        }
-
-        if (!\defined('CURLOPT_HTTPAUTH') || !\defined('CURLOPT_USERPWD')) {
-            return false;
-        }
-
-        $type = \strtolower($options['auth'][2]);
-        if ($type === 'digest') {
-            $httpAuth = \defined('CURLAUTH_DIGEST') ? \constant('CURLAUTH_DIGEST') : null;
-        } elseif ($type === 'ntlm') {
-            $httpAuth = \defined('CURLAUTH_NTLM') ? \constant('CURLAUTH_NTLM') : null;
-        } else {
-            return false;
-        }
-
-        return $httpAuth !== null
-            && \count($options['curl']) === 2
-            && isset($options['curl'][\CURLOPT_HTTPAUTH], $options['curl'][\CURLOPT_USERPWD])
-            && $options['curl'][\CURLOPT_HTTPAUTH] === $httpAuth;
-    }
-
-    private static function usesDigestAuth(array $options): bool
-    {
-        return isset($options['auth'][2])
-            && \is_string($options['auth'][2])
-            && \strtolower($options['auth'][2]) === 'digest';
     }
 
     /**

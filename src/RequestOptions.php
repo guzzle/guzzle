@@ -53,7 +53,9 @@ final class RequestOptions
      * The array must contain the username in index [0], the password in index
      * [1], and you can optionally provide a built-in authentication type in
      * index [2]. Pass false or null to disable authentication for a request.
-     * String values are passed through for custom handlers.
+     * Built-in Basic and Digest authentication are applied by the auth
+     * middleware, normally from HandlerStack::create(). String values are
+     * passed through for custom handlers.
      */
     public const AUTH = 'auth';
 

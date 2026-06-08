@@ -23,6 +23,19 @@ final class Middleware
     }
 
     /**
+     * Middleware that applies built-in Basic authentication and handles Digest
+     * authentication challenges when the "auth" request option is set.
+     *
+     * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
+     */
+    public static function auth(): callable
+    {
+        return static function (callable $handler): AuthMiddleware {
+            return new AuthMiddleware($handler);
+        };
+    }
+
+    /**
      * Middleware that adds cookies to requests.
      *
      * The options array must be set to a CookieJarInterface in order to use

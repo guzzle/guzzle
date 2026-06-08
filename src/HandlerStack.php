@@ -38,8 +38,8 @@ class HandlerStack
      *
      * The returned handler will wrap the provided handler or use the most
      * appropriate default handler for your system. The returned HandlerStack has
-     * support for cookies, redirects, HTTP error exceptions, and preparing a body
-     * before sending.
+     * support for authentication, cookies, redirects, HTTP error exceptions,
+     * and preparing a body before sending.
      *
      * The returned handler stack can be passed to a client in the "handler"
      * option.
@@ -55,6 +55,7 @@ class HandlerStack
         $stack = new self($handler ?: Utils::chooseHandler());
         $stack->push(Middleware::httpErrors(), 'http_errors');
         $stack->push(Middleware::redirect(), 'allow_redirects');
+        $stack->push(Middleware::auth(), 'auth');
         $stack->push(Middleware::cookies(), 'cookies');
         $stack->push(Middleware::prepareBody(), 'prepare_body');
 

@@ -855,6 +855,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             self::invalidRequestOptionType('auth', 'array{0: string, 1: string, 2?: string|null}|string|false|null', $options['auth']);
         }
 
+        if (isset($options['auth']) && \is_array($options['auth']) && $options['auth'] !== []) {
+            self::assertAuthOptionTypes($options['auth']);
+        }
+
         self::assertTlsFileOptionTypes($options, 'cert');
         self::assertIfPresentAndNotString($options, 'cert_type');
         self::assertIfPresentAndNotNumber($options, 'connect_timeout');
@@ -917,6 +921,24 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertIfPresentAndNotStringArray($allowRedirects, 'protocols', true, 'allow_redirects.protocols');
         self::assertIfPresentAndNotCallable($allowRedirects, 'on_redirect', 'allow_redirects.on_redirect');
         self::assertIfPresentAndNotBool($allowRedirects, 'track_redirects', 'allow_redirects.track_redirects');
+    }
+
+    /**
+     * @param array<array-key, mixed> $auth
+     */
+    private static function assertAuthOptionTypes(array $auth): void
+    {
+        if (!\array_key_exists(0, $auth) || !\is_string($auth[0])) {
+            self::invalidRequestOptionType('auth.0', 'string', $auth[0] ?? null);
+        }
+
+        if (!\array_key_exists(1, $auth) || !\is_string($auth[1])) {
+            self::invalidRequestOptionType('auth.1', 'string', $auth[1] ?? null);
+        }
+
+        if (\array_key_exists(2, $auth) && $auth[2] !== null && !\is_string($auth[2])) {
+            self::invalidRequestOptionType('auth.2', 'string|null', $auth[2]);
+        }
     }
 
     /**
@@ -1302,49 +1324,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
             $modify['body'] = self::createBodyStream($options['body'], $streamFactory);
             unset($options['body']);
-        }
-
-        if (isset($options['auth']) && \is_array($options['auth']) && $options['auth'] !== []) {
-            $value = $options['auth'];
-
-            if (!\array_key_exists(0, $value) || !\array_key_exists(1, $value)) {
-                throw new InvalidArgumentException('auth must contain username and password strings');
-            }
-
-            $username = $value[0];
-            $password = $value[1];
-
-            if (!\is_string($username) || !\is_string($password)) {
-                throw new InvalidArgumentException('auth must contain username and password strings');
-            }
-
-            $type = 'basic';
-            if (\array_key_exists(2, $value) && $value[2] !== null) {
-                $type = $value[2];
-                if (!\is_string($type)) {
-                    throw new InvalidArgumentException('auth type must be a string');
-                }
-            }
-
-            switch (\strtolower($type)) {
-                case 'basic':
-                    // Ensure that we don't have the header in different case and set the new value.
-                    $modify['set_headers'] = Psr7\Utils::caselessRemove(['Authorization'], $modify['set_headers']);
-                    $modify['set_headers']['Authorization'] = 'Basic '
-                        .\base64_encode($username.':'.$password);
-                    break;
-                case 'digest':
-                    // @todo: Do not rely on curl
-                    $options['curl'][\CURLOPT_HTTPAUTH] = \CURLAUTH_DIGEST;
-                    $options['curl'][\CURLOPT_USERPWD] = $username.':'.$password;
-                    break;
-                case 'ntlm':
-                    $options['curl'][\CURLOPT_HTTPAUTH] = \CURLAUTH_NTLM;
-                    $options['curl'][\CURLOPT_USERPWD] = $username.':'.$password;
-                    break;
-                default:
-                    throw new InvalidArgumentException(\sprintf('Unsupported auth type "%s"', $type));
-            }
         }
 
         if (isset($options['query'])) {

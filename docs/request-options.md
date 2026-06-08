@@ -120,6 +120,8 @@ If TLS client credentials are only trusted for the original origin, disable auto
 Summary
 Pass HTTP authentication parameters to use with the request. An array must contain the username in index `[0]`, the password in index `[1]`, and can optionally provide a built-in authentication type in index `[2]`. Pass `false` or `null` to disable authentication for a request. String values are passed through for custom handlers.
 
+Built-in Basic and Digest authentication are applied by `GuzzleHttp\Middleware::auth`, which is included by default when using `GuzzleHttp\HandlerStack::create()` or when the client creates its default handler. Raw custom handlers must be wrapped in `HandlerStack::create($handler)` or explicitly include `Middleware::auth()` to use built-in Basic or Digest authentication. Unrecognized array auth types are left in the request options for custom middleware or custom handlers.
+
 Types
 - array
 - string
@@ -142,7 +144,7 @@ $client->request('GET', '/get', ['auth' => ['username', 'password']]);
 ```
 
 digest
-Use [digest authentication](http://www.ietf.org/rfc/rfc2069.txt) (must be supported by the HTTP handler).
+Use [digest authentication](https://www.rfc-editor.org/rfc/rfc7616.html) through Guzzle's auth middleware. Digest authentication sends an initial unauthenticated request, processes a `WWW-Authenticate: Digest ...` challenge, then retries with an `Authorization: Digest ...` header.
 
 ```php
 $client->request('GET', '/get', [
@@ -150,20 +152,18 @@ $client->request('GET', '/get', [
 ]);
 ```
 
-> [!NOTE]
-> This is currently only supported when using the cURL handler, but creating a replacement that can be used with any HTTP handler is planned.
+Supported Digest algorithms are `MD5`, `MD5-sess`, `SHA-256`, `SHA-256-sess`, and the `SHA-512-256` variants when PHP supports the `sha512/256` hash algorithm. Guzzle supports legacy challenges without `qop` and challenges with `qop=auth`. `auth-int` is not supported.
 
-ntlm
-Use [Microsoft NTLM authentication](https://msdn.microsoft.com/en-us/library/windows/desktop/aa378749(v=vs.85).aspx) (must be supported by the HTTP handler).
+Legacy NTLM authentication is no longer a built-in `auth` type. If it is required, configure the built-in cURL handler directly with cURL HTTP authentication options.
 
 ```php
 $client->request('GET', '/get', [
-    'auth' => ['username', 'password', 'ntlm']
+    'curl' => [
+        CURLOPT_HTTPAUTH => CURLAUTH_NTLM,
+        CURLOPT_USERPWD => 'username:password',
+    ],
 ]);
 ```
-
-> [!NOTE]
-> This is currently only supported when using the cURL handler.
 
 ## body
 

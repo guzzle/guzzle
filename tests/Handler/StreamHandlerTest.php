@@ -2600,16 +2600,19 @@ class StreamHandlerTest extends TestCase
         ]);
     }
 
-    public function testStreamRejectsDigestAuth(): void
+    public function testStreamHandlerDoesNotRejectDigestAuthOption(): void
     {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
         $handler = new StreamHandler();
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Digest authentication');
-
-        $handler(new Request('GET', Server::$url), [
+        $response = $handler(new Request('GET', Server::$url), [
             'auth' => ['user', 'pass', 'digest'],
-        ]);
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertFalse(Server::received()[0]->hasHeader('Authorization'));
     }
 
     public function testStreamRejectsExpectOptionWhenHeaderIsPresent(): void

@@ -92,6 +92,60 @@ platform.
 Applications that set this header manually should send one valid non-negative
 decimal length or omit it and let Guzzle prepare the body headers.
 
+#### Auth Request Option Changes
+
+Digest authentication is no longer implemented with cURL `CURLOPT_HTTPAUTH` and
+`CURLOPT_USERPWD`. Guzzle supports legacy Digest challenges without `qop` and
+challenges with `qop=auth`; `auth-int` is not supported. Legacy NTLM
+authentication is no longer a built-in `auth` type. If NTLM is still required,
+configure cURL HTTP authentication options directly with a cURL handler:
+
+```php
+$client->request('GET', '/', [
+    'curl' => [
+        CURLOPT_HTTPAUTH => CURLAUTH_NTLM,
+        CURLOPT_USERPWD => 'username:password',
+    ],
+]);
+```
+
+Built-in Basic and Digest authentication continue to work for clients using
+Guzzle's default handler or `GuzzleHttp\HandlerStack::create($handler)`, but
+they are now applied by the default auth middleware instead of while the client
+constructs the request. If you pass a raw custom handler directly to `Client`,
+remove default middleware, or build a handler stack manually, Basic and Digest
+authentication will only be applied when your stack includes
+`Middleware::auth()`. Unknown auth type strings are left in the request options
+for custom middleware or custom handlers.
+
+Guzzle also validates non-empty auth arrays before applying them: indexes `0`
+and `1` must be username and password strings, and index `2`, when present, must
+be a string or `null`. Invalid auth arrays that previously emitted warnings,
+coerced values, or did nothing now throw
+`GuzzleHttp\Exception\InvalidArgumentException`.
+
+```php
+// Valid:
+$client->request('GET', '/', [
+    'auth' => ['username', 'password', 'basic'],
+]);
+
+// Invalid in 8.0:
+$client->request('GET', '/', [
+    'auth' => ['username'],
+]);
+```
+
+Guzzle 8 also no longer forwards the generic `auth` request option when
+automatic redirects cross origin. Guzzle already removed the `Authorization` and
+`Cookie` headers and cURL HTTP authentication options on cross-origin redirects;
+this now also applies to handler-visible `auth` state.
+
+Same-origin redirects continue to preserve `auth`. If an application or custom
+handler intentionally reused `auth` across redirected origins, disable automatic
+redirects or handle redirects manually so each origin receives explicit
+credentials.
+
 #### Exception Hierarchy and Classification
 
 Some Guzzle 8.0 exception changes add intermediate classes, while others
@@ -444,40 +498,6 @@ $client->request('GET', '/', [
     ],
 ]);
 ```
-
-#### Auth Option Validation
-
-The `auth` request option now validates array values before applying them. Auth
-arrays must contain username and password strings at indexes `0` and `1`. If an
-auth type is provided at index `2`, it must be one of `basic`, `digest`, or
-`ntlm`.
-
-Invalid auth arrays that previously emitted warnings, coerced values, or did
-nothing now throw `GuzzleHttp\Exception\InvalidArgumentException`.
-
-```php
-// Valid:
-$client->request('GET', '/', [
-    'auth' => ['username', 'password', 'basic'],
-]);
-
-// Invalid in 8.0:
-$client->request('GET', '/', [
-    'auth' => ['username'],
-]);
-```
-
-#### Cross-Origin Redirect Auth Cleanup
-
-Guzzle 8 no longer forwards the generic `auth` request option when automatic
-redirects cross origin. Guzzle already removed the `Authorization` and `Cookie`
-headers and cURL HTTP authentication options on cross-origin redirects; this now
-also applies to handler-visible `auth` state.
-
-Same-origin redirects continue to preserve `auth`. If an application or custom
-handler intentionally reused `auth` across redirected origins, disable automatic
-redirects or handle redirects manually so each origin receives explicit
-credentials.
 
 #### Handler-Specific Option Overrides
 
