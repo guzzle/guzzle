@@ -7,7 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Centralized cURL feature detection and sharing floors
+- Require cURL SSL support for TLS and SSL-session detection
 
 ### Deprecated
 

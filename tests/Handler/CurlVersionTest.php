@@ -26,16 +26,19 @@ class CurlVersionTest extends TestCase
 
     public function testSupportsTls12UsesMinimumVersion(): void
     {
-        if (!\defined('CURL_SSLVERSION_TLSv1_2')) {
-            self::markTestSkipped('CURL_SSLVERSION_TLSv1_2 is unavailable.');
+        if (!\defined('CURL_SSLVERSION_TLSv1_2') || !\defined('CURL_VERSION_SSL')) {
+            self::markTestSkipped('TLS 1.2 cURL constants are unavailable.');
         }
 
-        $previous = self::setCurlVersionInfo(['version' => '7.33.0', 'features' => 0]);
+        $previous = self::setCurlVersionInfo(['version' => '7.33.0', 'features' => \CURL_VERSION_SSL]);
 
         try {
             self::assertFalse(CurlVersion::supportsTls12());
 
             self::setCurlVersionInfo(['version' => '7.34.0', 'features' => 0]);
+            self::assertFalse(CurlVersion::supportsTls12());
+
+            self::setCurlVersionInfo(['version' => '7.34.0', 'features' => \CURL_VERSION_SSL]);
             self::assertTrue(CurlVersion::supportsTls12());
         } finally {
             self::setCurlVersionInfo($previous);
@@ -44,16 +47,19 @@ class CurlVersionTest extends TestCase
 
     public function testSupportsTls13UsesMinimumVersion(): void
     {
-        if (!\defined('CURL_SSLVERSION_TLSv1_3')) {
-            self::markTestSkipped('CURL_SSLVERSION_TLSv1_3 is unavailable.');
+        if (!\defined('CURL_SSLVERSION_TLSv1_3') || !\defined('CURL_VERSION_SSL')) {
+            self::markTestSkipped('TLS 1.3 cURL constants are unavailable.');
         }
 
-        $previous = self::setCurlVersionInfo(['version' => '7.51.0', 'features' => 0]);
+        $previous = self::setCurlVersionInfo(['version' => '7.51.0', 'features' => \CURL_VERSION_SSL]);
 
         try {
             self::assertFalse(CurlVersion::supportsTls13());
 
             self::setCurlVersionInfo(['version' => '7.52.0', 'features' => 0]);
+            self::assertFalse(CurlVersion::supportsTls13());
+
+            self::setCurlVersionInfo(['version' => '7.52.0', 'features' => \CURL_VERSION_SSL]);
             self::assertTrue(CurlVersion::supportsTls13());
         } finally {
             self::setCurlVersionInfo($previous);
@@ -62,7 +68,7 @@ class CurlVersionTest extends TestCase
 
     public function testSupportsHttp2RequiresTls12AndHttp2Feature(): void
     {
-        if (!\defined('CURL_SSLVERSION_TLSv1_2') || !\defined('CURL_VERSION_HTTP2')) {
+        if (!\defined('CURL_SSLVERSION_TLSv1_2') || !\defined('CURL_VERSION_HTTP2') || !\defined('CURL_VERSION_SSL')) {
             self::markTestSkipped('HTTP/2 cURL constants are unavailable.');
         }
 
@@ -81,6 +87,12 @@ class CurlVersionTest extends TestCase
                 'version' => '7.34.0',
                 'features' => \CURL_VERSION_HTTP2,
             ]);
+            self::assertFalse(CurlVersion::supportsHttp2());
+
+            self::setCurlVersionInfo([
+                'version' => '7.34.0',
+                'features' => \CURL_VERSION_HTTP2 | \CURL_VERSION_SSL,
+            ]);
             self::assertTrue(CurlVersion::supportsHttp2());
         } finally {
             self::setCurlVersionInfo($previous);
@@ -89,16 +101,24 @@ class CurlVersionTest extends TestCase
 
     public function testSupportsTransportSharingUsesSharingFloors(): void
     {
-        $previous = self::setCurlVersionInfo(['version' => '7.34.0', 'features' => 0]);
+        if (!\defined('CURL_VERSION_SSL')) {
+            self::markTestSkipped('CURL_VERSION_SSL is unavailable.');
+        }
+
+        $previous = self::setCurlVersionInfo(['version' => '7.34.0', 'features' => \CURL_VERSION_SSL]);
 
         try {
             self::assertFalse(CurlVersion::supportsHandlerSharing());
 
-            self::setCurlVersionInfo(['version' => '7.35.0', 'features' => 0]);
+            self::setCurlVersionInfo(['version' => '7.35.0', 'features' => \CURL_VERSION_SSL]);
             self::assertTrue(CurlVersion::supportsHandlerSharing());
             self::assertFalse(CurlVersion::supportsSslSessionSharing());
 
             self::setCurlVersionInfo(['version' => '8.6.0', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsHandlerSharing());
+            self::assertFalse(CurlVersion::supportsSslSessionSharing());
+
+            self::setCurlVersionInfo(['version' => '8.6.0', 'features' => \CURL_VERSION_SSL]);
             self::assertTrue(CurlVersion::supportsHandlerSharing());
             self::assertTrue(CurlVersion::supportsSslSessionSharing());
         } finally {

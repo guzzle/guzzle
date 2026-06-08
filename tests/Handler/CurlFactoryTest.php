@@ -467,7 +467,7 @@ class CurlFactoryTest extends TestCase
 
     public function testAddsCryptoMethodTls12()
     {
-        $previous = self::setCurlVersionInfo(['version' => '7.34.0', 'features' => 0]);
+        $previous = self::setCurlVersionInfo(['version' => '7.34.0', 'features' => self::curlSslFeature()]);
         $f = new CurlFactory(3);
 
         try {
@@ -487,7 +487,7 @@ class CurlFactoryTest extends TestCase
             self::markTestSkipped('CURL_SSLVERSION_TLSv1_3 is unavailable.');
         }
 
-        $previous = self::setCurlVersionInfo(['version' => '7.52.0', 'features' => 0]);
+        $previous = self::setCurlVersionInfo(['version' => '7.52.0', 'features' => self::curlSslFeature()]);
         $f = new CurlFactory(3);
 
         try {
@@ -1453,6 +1453,15 @@ class CurlFactoryTest extends TestCase
         if (!\function_exists('curl_share_init') || !\defined('CURLOPT_SHARE')) {
             self::markTestSkipped('cURL share handles are unavailable.');
         }
+    }
+
+    private static function curlSslFeature(): int
+    {
+        if (!\defined('CURL_VERSION_SSL')) {
+            self::markTestSkipped('CURL_VERSION_SSL is unavailable.');
+        }
+
+        return \CURL_VERSION_SSL;
     }
 
     /**

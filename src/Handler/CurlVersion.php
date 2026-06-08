@@ -37,7 +37,8 @@ final class CurlVersion
     {
         $version = self::getVersion();
 
-        return \defined('CURL_SSLVERSION_TLSv1_2')
+        return self::supportsSsl()
+            && \defined('CURL_SSLVERSION_TLSv1_2')
             && $version !== null
             && \version_compare($version, self::TLS_12_VERSION, '>=');
     }
@@ -46,7 +47,8 @@ final class CurlVersion
     {
         $version = self::getVersion();
 
-        return \defined('CURL_SSLVERSION_TLSv1_3')
+        return self::supportsSsl()
+            && \defined('CURL_SSLVERSION_TLSv1_3')
             && $version !== null
             && \version_compare($version, self::TLS_13_VERSION, '>=');
     }
@@ -82,17 +84,28 @@ final class CurlVersion
     {
         $version = self::getVersion();
 
-        return $version !== null && \version_compare($version, self::SSL_SESSION_SHARING_VERSION, '>=');
+        return self::supportsSsl()
+            && $version !== null
+            && \version_compare($version, self::SSL_SESSION_SHARING_VERSION, '>=');
     }
 
     public static function ensureSslSessionSharingSupported(): void
     {
         if (!self::supportsSslSessionSharing()) {
             throw new \InvalidArgumentException(\sprintf(
-                'The "transport_sharing" option requires libcurl %s or higher for SSL session sharing.',
+                'The "transport_sharing" option requires libcurl %s or higher with SSL support for SSL session sharing.',
                 self::SSL_SESSION_SHARING_VERSION
             ));
         }
+    }
+
+    private static function supportsSsl(): bool
+    {
+        $versionInfo = self::getVersionInfo();
+
+        return \defined('CURL_VERSION_SSL')
+            && $versionInfo !== null
+            && 0 !== (\CURL_VERSION_SSL & $versionInfo['features']);
     }
 
     public static function getVersion(): ?string

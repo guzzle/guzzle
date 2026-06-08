@@ -90,7 +90,7 @@ class UtilsTest extends TestCase
     public function testChooseHandlerAcceptsPreferredTransportSharing(): void
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();
-        $previous = self::setCurlVersionInfo(['version' => '8.6.0', 'features' => 0]);
+        $previous = self::setCurlVersionInfo(['version' => '8.6.0', 'features' => self::curlSslFeature()]);
 
         $_SERVER['curl_test'] = true;
         unset($_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
@@ -113,7 +113,7 @@ class UtilsTest extends TestCase
     public function testChooseHandlerAcceptsRequiredTransportSharing(): void
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();
-        $previous = self::setCurlVersionInfo(['version' => '8.6.0', 'features' => 0]);
+        $previous = self::setCurlVersionInfo(['version' => '8.6.0', 'features' => self::curlSslFeature()]);
 
         $_SERVER['curl_test'] = true;
         unset($_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
@@ -359,6 +359,15 @@ class UtilsTest extends TestCase
         ) {
             self::markTestSkipped('Default cURL handler with share handles is unavailable.');
         }
+    }
+
+    private static function curlSslFeature(): int
+    {
+        if (!\defined('CURL_VERSION_SSL')) {
+            self::markTestSkipped('CURL_VERSION_SSL is unavailable.');
+        }
+
+        return \CURL_VERSION_SSL;
     }
 
     /**

@@ -73,7 +73,7 @@ class CurlHandlerTest extends TestCase
     public function testTransportSharingOptionAppliesCurlShare(): void
     {
         self::skipIfCurlShareIsUnavailable();
-        $previous = self::setCurlVersionInfo(['version' => '8.6.0', 'features' => 0]);
+        $previous = self::setCurlVersionInfo(['version' => '8.6.0', 'features' => self::curlSslFeature()]);
 
         $_SERVER['curl_test'] = true;
         unset($_SERVER['_curl'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
@@ -153,6 +153,15 @@ class CurlHandlerTest extends TestCase
         if (!\function_exists('curl_share_init') || !\function_exists('curl_share_setopt') || !\defined('CURLOPT_SHARE')) {
             self::markTestSkipped('cURL share handles are unavailable.');
         }
+    }
+
+    private static function curlSslFeature(): int
+    {
+        if (!\defined('CURL_VERSION_SSL')) {
+            self::markTestSkipped('CURL_VERSION_SSL is unavailable.');
+        }
+
+        return \CURL_VERSION_SSL;
     }
 
     /**
