@@ -7,7 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Require cURL SSL support for TLS and SSL-session detection
+- Constrain cURL transport sharing to safe libcurl DNS and SSL session support
 
 ### Deprecated
 
@@ -15,6 +15,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated raw cURL request options outside the built-in cURL handlers' allow-list
 - Deprecated PHP stream context options outside the built-in stream handler allow-list
 - Deprecated passing `ntlm` as a built-in `auth` type
+
+### Fixed
+
+- Fix cURL TLS and HTTP/2 capability detection using libcurl feature checks
 
 
 ## 7.11.1 - 2026-06-07
