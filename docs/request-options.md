@@ -354,7 +354,7 @@ Default
 None
 
 Constant
-No `RequestOptions` constant is defined for this handler-specific option.
+`GuzzleHttp\RequestOptions::CURL`
 
 Except for Guzzle's special `body_as_string` key, the array is keyed by integer
 cURL option constants and values are passed to cURL after Guzzle applies request
@@ -1110,7 +1110,7 @@ Default
 `0` when retry middleware is used
 
 Constant
-No `RequestOptions` constant is defined for this middleware-specific option.
+`GuzzleHttp\RequestOptions::RETRIES`
 
 The retry middleware initializes this option to `0` before the first attempt and increments it before each retry. Applications may seed it on a per-request basis when using the retry middleware.
 
@@ -1316,7 +1316,7 @@ Default
 None
 
 Constant
-No `RequestOptions` constant is defined for this handler-specific option.
+`GuzzleHttp\RequestOptions::STREAM_CONTEXT`
 
 This option is only supported by the built-in stream handler. Built-in cURL
 handlers reject this option because cURL does not use PHP stream contexts.

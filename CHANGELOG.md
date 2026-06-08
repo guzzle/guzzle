@@ -103,6 +103,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 7.12.0 - Upcoming
 
+### Added
+
+- Added `RequestOptions` constants for `curl`, `retries`, and `stream_context`
+
 ### Changed
 
 - Constrain cURL transport sharing to safe libcurl DNS and SSL session support
