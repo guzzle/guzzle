@@ -829,7 +829,7 @@ class CurlFactoryTest extends TestCase
         self::assertAuthenticatedProxyConnectionReuseOptions();
     }
 
-    public function testForcesFreshConnectionForProxyAuthorizationProxyHeaderOnFixedCurlVersion(): void
+    public function testProxyAuthorizationProxyHeaderReuseOptionsCannotBeOverriddenOnFixedCurlVersion(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
 
@@ -837,6 +837,8 @@ class CurlFactoryTest extends TestCase
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
                 $proxyHeaderOption => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+                \CURLOPT_FRESH_CONNECT => false,
+                \CURLOPT_FORBID_REUSE => false,
             ],
         ]);
 
