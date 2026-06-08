@@ -135,27 +135,6 @@ class HandlerStackTest extends TestCase
         self::assertSame([], $meths[0]);
     }
 
-    public function testCanPrintMiddleware(): void
-    {
-        $meths = $this->getFunctions();
-        $builder = new HandlerStack();
-        $builder->setHandler($meths[1]);
-        $builder->push($meths[2], 'a');
-        $builder->push([__CLASS__, 'foo']);
-        $builder->push([$this, 'bar']);
-        $builder->push(__CLASS__.'::foo');
-        $lines = \explode("\n", (string) $builder);
-        self::assertStringContainsString("> 4) Name: 'a', Function: callable(", $lines[0]);
-        self::assertStringContainsString("> 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[1]);
-        self::assertStringContainsString("> 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[2]);
-        self::assertStringContainsString("> 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[3]);
-        self::assertStringContainsString('< 0) Handler: callable(', $lines[4]);
-        self::assertStringContainsString("< 1) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[5]);
-        self::assertStringContainsString("< 2) Name: '', Function: callable(['GuzzleHttp\\Tests\\HandlerStackTest', 'bar'])", $lines[6]);
-        self::assertStringContainsString("< 3) Name: '', Function: callable(GuzzleHttp\\Tests\\HandlerStackTest::foo)", $lines[7]);
-        self::assertStringContainsString("< 4) Name: 'a', Function: callable(", $lines[8]);
-    }
-
     public function testCanAddBeforeByName(): void
     {
         $meths = $this->getFunctions();
@@ -165,11 +144,13 @@ class HandlerStackTest extends TestCase
         $builder->before('foo', $meths[3], 'baz');
         $builder->before('baz', $meths[4], 'bar');
         $builder->before('baz', $meths[4], 'qux');
-        $lines = \explode("\n", (string) $builder);
-        self::assertStringContainsString('> 4) Name: \'bar\'', $lines[0]);
-        self::assertStringContainsString('> 3) Name: \'qux\'', $lines[1]);
-        self::assertStringContainsString('> 2) Name: \'baz\'', $lines[2]);
-        self::assertStringContainsString('> 1) Name: \'foo\'', $lines[3]);
+
+        $composed = $builder->resolve();
+        self::assertSame('Hello - test3321', $composed('test'));
+        self::assertSame(
+            [['c', 'test'], ['c', 'test3'], ['b', 'test33'], ['a', 'test332']],
+            $meths[0]
+        );
     }
 
     public function testEnsuresHandlerExistsByName(): void
@@ -190,11 +171,13 @@ class HandlerStackTest extends TestCase
         $builder->push($meths[3], 'b');
         $builder->after('a', $meths[4], 'c');
         $builder->after('b', $meths[4], 'd');
-        $lines = \explode("\n", (string) $builder);
-        self::assertStringContainsString('4) Name: \'a\'', $lines[0]);
-        self::assertStringContainsString('3) Name: \'c\'', $lines[1]);
-        self::assertStringContainsString('2) Name: \'b\'', $lines[2]);
-        self::assertStringContainsString('1) Name: \'d\'', $lines[3]);
+
+        $composed = $builder->resolve();
+        self::assertSame('Hello - test1323', $composed('test'));
+        self::assertSame(
+            [['a', 'test'], ['c', 'test1'], ['b', 'test13'], ['c', 'test132']],
+            $meths[0]
+        );
     }
 
     public function testPicksUpCookiesFromRedirects(): void
@@ -217,18 +200,6 @@ class HandlerStackTest extends TestCase
         $lastRequest = $mock->getLastRequest();
         self::assertSame('http://foo.com/baz', (string) $lastRequest->getUri());
         self::assertSame('foo=bar', $lastRequest->getHeaderLine('Cookie'));
-    }
-
-    public function testDefaultStackIncludesAuthMiddlewareInOrder(): void
-    {
-        $stack = HandlerStack::create(new MockHandler([new Response()]));
-        $lines = \explode("\n", (string) $stack);
-
-        self::assertStringContainsString("< 1) Name: 'prepare_body'", $lines[6]);
-        self::assertStringContainsString("< 2) Name: 'cookies'", $lines[7]);
-        self::assertStringContainsString("< 3) Name: 'auth'", $lines[8]);
-        self::assertStringContainsString("< 4) Name: 'allow_redirects'", $lines[9]);
-        self::assertStringContainsString("< 5) Name: 'http_errors'", $lines[10]);
     }
 
     /**

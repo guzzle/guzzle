@@ -29,7 +29,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Quote multipart `Content-Type` boundary parameters when required
 - Added parameter and return types to `SetCookie` methods
 - Added native property types to supported public cURL handler state properties
-- Added `string` return types to `__toString()` methods
+- Added a `string` return type to `SetCookie::__toString()`
 - Normalize and validate proxy no-proxy options consistently across handlers
 - Normalize no-proxy domain matching, including trailing-dot FQDNs, and IP literal matching consistently
 - Pass the request as the second argument to `on_headers` callbacks
@@ -97,6 +97,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
 - Removed the deprecated `RequestException::wrapException()` method
 - Removed the deprecated `Utils::describeType()` method
+- Removed `HandlerStack::__toString()`
 - Removed `RequestException::getHandlerContext()` and `ConnectException::getHandlerContext()`
 - Removed response access from `RequestException`; use `ResponseException`
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
