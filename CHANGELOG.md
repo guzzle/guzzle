@@ -106,6 +106,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Constrain cURL transport sharing to safe libcurl DNS and SSL session support
+- Prevent authenticated proxy tunnel reuse on libcurl versions older than 8.20.0
 
 ### Deprecated
 
