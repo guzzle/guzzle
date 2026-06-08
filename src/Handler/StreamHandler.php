@@ -366,6 +366,10 @@ final class StreamHandler
         $hasSink = isset($options['sink']);
         $sink = $hasSink ? $options['sink'] : Psr7\Utils::tryFopen('php://temp', 'r+');
 
+        if ($hasSink && \is_resource($sink)) {
+            return self::streamForResourceSink(Psr7\Utils::streamFor($sink));
+        }
+
         if (\is_string($sink)) {
             return new Psr7\LazyOpenStream($sink, 'w+');
         }
@@ -374,9 +378,7 @@ final class StreamHandler
             return Psr7\Utils::streamFor($sink);
         }
 
-        $sinkStream = $streamFactory->createStreamFromResource($sink);
-
-        return $hasSink ? self::streamForResourceSink($sinkStream) : $sinkStream;
+        return $streamFactory->createStreamFromResource($sink);
     }
 
     /**

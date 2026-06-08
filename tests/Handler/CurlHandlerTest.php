@@ -19,6 +19,7 @@ use GuzzleHttp\Server\Server;
 use GuzzleHttp\Tests\Psr17SpyFactory;
 use GuzzleHttp\Tests\SpyResponse;
 use GuzzleHttp\Tests\SpyStream;
+use GuzzleHttp\Tests\StrictReadableResourceStreamFactory;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
@@ -76,6 +77,39 @@ class CurlHandlerTest extends TestCase
         self::assertSame('hi there', (string) $response->getBody());
         self::assertSame(1, $factory->createResponseCalls);
         self::assertGreaterThanOrEqual(1, $factory->createStreamFromResourceCalls);
+    }
+
+    public function testCallerOwnedWriteOnlyResourceSinkDoesNotUseStreamFactory(): void
+    {
+        $tmpfname = \tempnam(\sys_get_temp_dir(), 'guzzle-sink');
+        self::assertIsString($tmpfname);
+        $sink = null;
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response(200, [], 'hi there')]);
+            $handler = new CurlHandler();
+            $factory = new StrictReadableResourceStreamFactory();
+            $sink = Psr7\Utils::tryFopen($tmpfname, 'w');
+
+            $response = $handler(new Request('GET', Server::$url), [
+                RequestOptions::SINK => $sink,
+                RequestOptions::STREAM_FACTORY => $factory,
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(0, $factory->createStreamFromResourceCalls);
+            $response->getBody()->close();
+            self::assertIsResource($sink);
+            \fclose($sink);
+            $sink = null;
+            self::assertSame('hi there', \file_get_contents($tmpfname));
+        } finally {
+            if (\is_resource($sink)) {
+                \fclose($sink);
+            }
+            @\unlink($tmpfname);
+        }
     }
 
     public function testReusesHandles(): void
