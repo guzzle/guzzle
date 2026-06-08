@@ -83,34 +83,6 @@ class HandlerStack
     }
 
     /**
-     * Dumps a string representation of the stack.
-     */
-    public function __toString(): string
-    {
-        $depth = 0;
-        $stack = [];
-
-        if ($this->handler !== null) {
-            $stack[] = '0) Handler: '.$this->debugCallable($this->handler);
-        }
-
-        $result = '';
-        foreach (\array_reverse($this->stack) as $tuple) {
-            ++$depth;
-            $str = "{$depth}) Name: '{$tuple[1]}', ";
-            $str .= 'Function: '.$this->debugCallable($tuple[0]);
-            $result = "> {$str}\n{$result}";
-            $stack[] = $str;
-        }
-
-        foreach (\array_keys($stack) as $k) {
-            $result .= "< {$stack[$k]}\n";
-        }
-
-        return $result;
-    }
-
-    /**
      * Set the HTTP handler that actually returns a promise.
      *
      * @param callable&THandler $handler Accepts a request and array of options and returns a value expected by the stack.
@@ -270,26 +242,5 @@ class HandlerStack
             $replacement = [$this->stack[$idx], $tuple];
             \array_splice($this->stack, $idx, 1, $replacement);
         }
-    }
-
-    /**
-     * Provides a debug string for a given callable.
-     *
-     * @param callable $fn Function to write as a string.
-     */
-    private function debugCallable(callable $fn): string
-    {
-        if (\is_string($fn)) {
-            return "callable({$fn})";
-        }
-
-        if (\is_array($fn)) {
-            return \is_string($fn[0])
-                ? "callable({$fn[0]}::{$fn[1]})"
-                : "callable(['".\get_class($fn[0])."', '{$fn[1]}'])";
-        }
-
-        /** @var callable&object $fn */
-        return 'callable('.\spl_object_hash($fn).')';
     }
 }

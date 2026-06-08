@@ -521,7 +521,7 @@ across transports.
 Guzzle 8 adds native parameter and return types where PHP 7.4 allows. Code
 overriding affected methods must update method signatures accordingly.
 
-`HandlerStack::__toString()` and `SetCookie::__toString()` now return `string`.
+`SetCookie::__toString()` now returns `string`.
 
 `HandlerStack::remove()` now throws `TypeError` when passed a value that is
 neither a callable nor a middleware name string.
@@ -796,6 +796,10 @@ private constructors. `GuzzleHttp\Handler\Proxy` is also declared `final`.
 
 These classes only expose static members. Replace any accidental instantiation
 with static method calls or constant access.
+
+#### Removed HandlerStack String Dump
+
+`HandlerStack::__toString()` has been removed.
 
 6.0 to 7.0
 ----------
