@@ -95,10 +95,11 @@ decimal length or omit it and let Guzzle prepare the body headers.
 #### Auth Request Option Changes
 
 Digest authentication is no longer implemented with cURL `CURLOPT_HTTPAUTH` and
-`CURLOPT_USERPWD`. Guzzle supports legacy Digest challenges without `qop` and
-challenges with `qop=auth`; `auth-int` is not supported. Legacy NTLM
-authentication is no longer a built-in `auth` type. If NTLM is still required,
-configure cURL HTTP authentication options directly with a cURL handler:
+`CURLOPT_USERPWD`. Guzzle supports legacy non-session Digest challenges without
+`qop` and challenges with `qop=auth`; session algorithms require `qop`.
+`auth-int` is not supported. Legacy NTLM authentication is no longer a built-in
+`auth` type. If NTLM is still required, configure cURL HTTP authentication
+options directly with a cURL handler:
 
 ```php
 $client->request('GET', '/', [

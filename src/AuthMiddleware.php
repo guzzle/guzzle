@@ -5,12 +5,21 @@ declare(strict_types=1);
 namespace GuzzleHttp;
 
 use GuzzleHttp\Auth\DigestAuth;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\ResponseTransferException;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\TooManyRedirectsException;
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\LazyOpenStream;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Applies built-in Basic authentication and handles Digest authentication challenges.
@@ -120,6 +129,9 @@ final class AuthMiddleware
         return ($this->nextHandler)($request->withoutHeader('Authorization'), $probeOptions)->then(
             function (ResponseInterface $response) use ($request, $options, $probeOptions, $username, $password) {
                 return $this->handleDigestResponse($request, $options, $probeOptions, $response, $username, $password);
+            },
+            static function ($reason) use ($probeOptions) {
+                return self::restoreOriginalSinkOnRejection($probeOptions, $reason);
             }
         );
     }
@@ -136,12 +148,12 @@ final class AuthMiddleware
         string $password
     ) {
         if ($response->getStatusCode() !== 401) {
-            return self::restoreOriginalSink($response, $probeOptions);
+            return self::restoreOriginalSink($request, $response, $probeOptions);
         }
 
         $challenge = DigestAuth::selectChallenge($response);
         if ($challenge === null) {
-            return self::restoreOriginalSink($response, $probeOptions);
+            return self::restoreOriginalSink($request, $response, $probeOptions);
         }
 
         $retries = $options['__guzzle_digest_retries'] ?? 0;
@@ -150,7 +162,7 @@ final class AuthMiddleware
         }
 
         if (($retries > 0 && !$challenge->stale) || $retries >= self::DIGEST_MAX_RETRIES) {
-            return self::restoreOriginalSink($response, $probeOptions);
+            return self::restoreOriginalSink($request, $response, $probeOptions);
         }
 
         try {
@@ -173,7 +185,7 @@ final class AuthMiddleware
         );
 
         if ($authorization === null) {
-            return self::restoreOriginalSink($response, $probeOptions);
+            return self::restoreOriginalSink($request, $response, $probeOptions);
         }
 
         $response->getBody()->close();
@@ -189,43 +201,157 @@ final class AuthMiddleware
         return ($this->nextHandler)($retryRequest, $downstreamOptions)->then(
             function (ResponseInterface $retryResponse) use ($retryRequest, $retryOptions, $downstreamOptions, $username, $password) {
                 return $this->handleDigestResponse($retryRequest, $retryOptions, $downstreamOptions, $retryResponse, $username, $password);
+            },
+            static function ($reason) use ($downstreamOptions) {
+                return self::restoreOriginalSinkOnRejection($downstreamOptions, $reason);
             }
         );
     }
 
     private static function withTemporarySink(array $options): array
     {
-        if (!empty($options['stream']) || !\array_key_exists('sink', $options)) {
+        if (!empty($options['stream']) || !isset($options[RequestOptions::SINK])) {
             return $options;
         }
 
-        $options['__guzzle_auth_original_sink'] = $options['sink'];
-        $options['sink'] = Psr7\Utils::tryFopen('php://temp', 'w+');
+        $streamFactory = self::requireStreamFactory(
+            $options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory()
+        );
+
+        $options['__guzzle_auth_original_sink'] = $options[RequestOptions::SINK];
+        $options[RequestOptions::SINK] = $streamFactory->createStreamFromResource(
+            Psr7\Utils::tryFopen('php://temp', 'w+')
+        );
 
         return $options;
     }
 
-    private static function restoreOriginalSink(ResponseInterface $response, array $options): ResponseInterface
-    {
+    private static function restoreOriginalSink(
+        RequestInterface $request,
+        ResponseInterface $response,
+        array $options
+    ): ResponseInterface {
         if (!\array_key_exists('__guzzle_auth_original_sink', $options)) {
             return $response;
         }
 
-        $source = $response->getBody();
-        if ($source->isSeekable()) {
-            $source->rewind();
+        try {
+            $source = $response->getBody();
+            if ($source->isSeekable()) {
+                $source->rewind();
+            }
+
+            $target = self::streamForOriginalSink($options['__guzzle_auth_original_sink']);
+
+            Psr7\Utils::copyToStream($source, $target);
+
+            if ($target->isSeekable()) {
+                $target->rewind();
+            }
+
+            return $response->withBody($target);
+        } catch (\Throwable $e) {
+            throw new ResponseException(
+                $e->getMessage() !== '' ? $e->getMessage() : 'Failed to write the response body',
+                $request,
+                $response,
+                $e
+            );
+        }
+    }
+
+    /**
+     * @param mixed $reason
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
+    private static function restoreOriginalSinkOnRejection(array $options, $reason): PromiseInterface
+    {
+        if (!$reason instanceof ResponseException || !\array_key_exists('__guzzle_auth_original_sink', $options)) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor($reason);
         }
 
-        $target = \is_string($options['__guzzle_auth_original_sink'])
-            ? new LazyOpenStream($options['__guzzle_auth_original_sink'], 'w+')
-            : Psr7\Utils::streamFor($options['__guzzle_auth_original_sink']);
+        try {
+            $response = self::restoreOriginalSink($reason->getRequest(), $reason->getResponse(), $options);
 
-        Psr7\Utils::copyToStream($source, $target);
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(self::withRestoredResponse($reason, $response));
+        } catch (\Throwable $e) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor($e);
+        }
+    }
 
-        if ($target->isSeekable()) {
-            $target->rewind();
+    private static function withRestoredResponse(
+        ResponseException $reason,
+        ResponseInterface $response
+    ): ResponseException {
+        if ($reason instanceof ResponseTransferException) {
+            return new ResponseTransferException($reason->getMessage(), $reason->getRequest(), $response, $reason);
         }
 
-        return $response->withBody($target);
+        if ($reason instanceof TooManyRedirectsException) {
+            return new TooManyRedirectsException($reason->getMessage(), $reason->getRequest(), $response, $reason);
+        }
+
+        if ($reason instanceof ClientException) {
+            return new ClientException($reason->getMessage(), $reason->getRequest(), $response, $reason);
+        }
+
+        if ($reason instanceof ServerException) {
+            return new ServerException($reason->getMessage(), $reason->getRequest(), $response, $reason);
+        }
+
+        if ($reason instanceof BadResponseException) {
+            return new BadResponseException($reason->getMessage(), $reason->getRequest(), $response, $reason);
+        }
+
+        return new ResponseException($reason->getMessage(), $reason->getRequest(), $response, $reason);
+    }
+
+    /**
+     * @param mixed $sink
+     */
+    private static function streamForOriginalSink($sink): StreamInterface
+    {
+        if (\is_string($sink)) {
+            return new LazyOpenStream($sink, 'w+');
+        }
+
+        if (\is_resource($sink)) {
+            $stream = Psr7\Utils::streamFor($sink);
+
+            return Psr7\FnStream::decorate($stream, [
+                'close' => static function () use ($stream): void {
+                    $stream->detach();
+                },
+            ]);
+        }
+
+        if (!$sink instanceof StreamInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                'sink must be a resource, string, or %s',
+                StreamInterface::class
+            ));
+        }
+
+        return Psr7\Utils::streamFor($sink);
+    }
+
+    /**
+     * @param mixed $factory
+     */
+    private static function requireStreamFactory($factory): StreamFactoryInterface
+    {
+        if (!$factory instanceof StreamFactoryInterface) {
+            throw new InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::STREAM_FACTORY,
+                StreamFactoryInterface::class
+            ));
+        }
+
+        return $factory;
     }
 }

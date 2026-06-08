@@ -152,7 +152,7 @@ $client->request('GET', '/get', [
 ]);
 ```
 
-Supported Digest algorithms are `MD5`, `MD5-sess`, `SHA-256`, `SHA-256-sess`, and the `SHA-512-256` variants when PHP supports the `sha512/256` hash algorithm. Guzzle supports legacy challenges without `qop` and challenges with `qop=auth`. `auth-int` is not supported.
+Supported Digest algorithms are `MD5`, `MD5-sess`, `SHA-256`, `SHA-256-sess`, and the `SHA-512-256` variants when PHP supports the `sha512/256` hash algorithm. Guzzle supports legacy non-session challenges without `qop` and challenges with `qop=auth`. Session algorithms require `qop`. `auth-int` is not supported.
 
 Legacy NTLM authentication is no longer a built-in `auth` type. If it is required, configure the built-in cURL handler directly with cURL HTTP authentication options.
 

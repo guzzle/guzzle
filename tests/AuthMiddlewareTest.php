@@ -13,6 +13,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -188,6 +189,121 @@ class AuthMiddlewareTest extends TestCase
             ]);
 
             self::assertSame('ok', \file_get_contents($sink));
+        } finally {
+            if (\file_exists($sink)) {
+                \unlink($sink);
+            }
+        }
+    }
+
+    public function testDigestTemporarySinkUsesConfiguredStreamFactory(): void
+    {
+        $sink = \tempnam(\sys_get_temp_dir(), 'guzzle-auth-sink');
+        self::assertIsString($sink);
+
+        try {
+            $factory = new Psr17SpyFactory();
+            $mock = new MockHandler([
+                new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'], 'challenge'),
+                new Response(200, [], 'ok'),
+            ]);
+            $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+            $response = $client->get('http://example.com', [
+                'auth' => ['a', 'b', 'digest'],
+                RequestOptions::SINK => $sink,
+                RequestOptions::STREAM_FACTORY => $factory,
+            ]);
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(2, $factory->createStreamFromResourceCalls);
+            self::assertSame('ok', \file_get_contents($sink));
+        } finally {
+            if (\file_exists($sink)) {
+                \unlink($sink);
+            }
+        }
+    }
+
+    public function testDigestRestoredResourceSinkDetachesOnClose(): void
+    {
+        $sink = Psr7\Utils::tryFopen('php://temp', 'w+');
+
+        try {
+            $mock = new MockHandler([
+                new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'], 'challenge'),
+                new Response(200, [], 'ok'),
+            ]);
+            $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+            $response = $client->get('http://example.com', [
+                'auth' => ['a', 'b', 'digest'],
+                RequestOptions::SINK => $sink,
+            ]);
+
+            self::assertSame('ok', (string) $response->getBody());
+
+            $response->getBody()->close();
+
+            self::assertIsResource($sink);
+        } finally {
+            if (\is_resource($sink)) {
+                \fclose($sink);
+            }
+        }
+    }
+
+    public function testDigestSinkRestoreFailureRejectsWithResponseException(): void
+    {
+        $sink = \sys_get_temp_dir().'/guzzle-auth-missing-'.\bin2hex(\random_bytes(4)).'/error.txt';
+        $mock = new MockHandler([
+            new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"']),
+            new Response(200, [], 'ok'),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        try {
+            $client->get('http://example.com', [
+                'auth' => ['a', 'b', 'digest'],
+                RequestOptions::SINK => $sink,
+            ]);
+
+            self::fail('Expected ResponseException.');
+        } catch (ResponseException $e) {
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+        }
+    }
+
+    public function testDigestRestoresOriginalSinkOnResponseException(): void
+    {
+        $sink = \tempnam(\sys_get_temp_dir(), 'guzzle-auth-sink');
+        self::assertIsString($sink);
+
+        try {
+            $mock = new MockHandler([
+                static function (RequestInterface $request): ResponseException {
+                    return new ResponseException(
+                        'response failed',
+                        $request,
+                        new Response(500, [], 'failed')
+                    );
+                },
+            ]);
+            $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+            try {
+                $client->get('http://example.com', [
+                    'auth' => ['a', 'b', 'digest'],
+                    RequestOptions::SINK => $sink,
+                ]);
+
+                self::fail('Expected ResponseException.');
+            } catch (ResponseException $e) {
+                self::assertSame('response failed', $e->getMessage());
+                self::assertSame(500, $e->getResponse()->getStatusCode());
+                self::assertSame('failed', \file_get_contents($sink));
+                self::assertSame('failed', (string) $e->getResponse()->getBody());
+            }
         } finally {
             if (\file_exists($sink)) {
                 \unlink($sink);

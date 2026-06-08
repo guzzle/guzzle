@@ -60,6 +60,10 @@ final class DigestAuth
         string $cnonce,
         string $nc = '00000001'
     ): ?string {
+        if ($challenge->algorithm['sess'] && $challenge->qop === null) {
+            return null;
+        }
+
         $uri = $request->getRequestTarget();
         if ($uri === '') {
             $uri = '/';
@@ -144,6 +148,16 @@ final class DigestAuth
 
             self::skipWhitespace($header, $offset, $length);
 
+            if (self::skipToken68Challenge($header, $offset, $length)) {
+                $challenges[] = [
+                    'scheme' => \strtolower($scheme),
+                    'params' => [],
+                    'invalid' => false,
+                ];
+
+                continue;
+            }
+
             $params = [];
             $invalid = false;
 
@@ -225,6 +239,10 @@ final class DigestAuth
             return null;
         }
 
+        if ($algorithm['sess'] && $qop === null) {
+            return null;
+        }
+
         $challenge = new DigestChallenge();
         $challenge->algorithm = $algorithm;
         $challenge->realm = $params['realm'] ?? '';
@@ -302,6 +320,35 @@ final class DigestAuth
         return $nextOffset >= $length || $header[$nextOffset] !== '=';
     }
 
+    private static function skipToken68Challenge(string $header, int &$offset, int $length): bool
+    {
+        $cursor = $offset;
+        $hasValue = false;
+        while ($cursor < $length && self::isToken68Char($header[$cursor])) {
+            $hasValue = true;
+            ++$cursor;
+        }
+
+        while ($cursor < $length && $header[$cursor] === '=') {
+            ++$cursor;
+        }
+
+        if (!$hasValue) {
+            return false;
+        }
+
+        $after = $cursor;
+        self::skipWhitespace($header, $after, $length);
+
+        if ($after < $length && $header[$after] !== ',') {
+            return false;
+        }
+
+        $offset = $after;
+
+        return true;
+    }
+
     private static function skipSeparators(string $header, int &$offset, int $length): void
     {
         while ($offset < $length) {
@@ -345,6 +392,11 @@ final class DigestAuth
     private static function isTokenChar(string $char): bool
     {
         return \strspn($char, "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") === 1;
+    }
+
+    private static function isToken68Char(string $char): bool
+    {
+        return \strspn($char, '-._~+/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz') === 1;
     }
 
     private static function readValue(string $header, int &$offset, int $length): ?string

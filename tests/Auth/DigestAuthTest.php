@@ -88,6 +88,28 @@ class DigestAuthTest extends TestCase
         self::assertSame('auth', $challenge->qop);
     }
 
+    /**
+     * @dataProvider token68ChallengeProvider
+     */
+    public function testSkipsToken68ChallengeAndUsesLaterDigest(string $prefix): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => $prefix.', Digest realm="good", nonce="n", qop="auth"',
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertSame('good', $challenge->realm);
+        self::assertSame('n', $challenge->nonce);
+        self::assertSame('auth', $challenge->qop);
+    }
+
+    public static function token68ChallengeProvider(): iterable
+    {
+        yield 'basic padding' => ['Basic dGVzdA=='];
+        yield 'negotiate slash padding' => ['Negotiate abc/def+ghi=='];
+        yield 'unknown token68 chars' => ['Newauth a+b/c_~=='];
+    }
+
     public function testSkipsInvalidChallengeAndUsesLaterValidChallenge(): void
     {
         $challenge = DigestAuth::selectChallenge(new Response(401, [
@@ -106,5 +128,35 @@ class DigestAuthTest extends TestCase
         ]));
 
         self::assertNull($challenge);
+    }
+
+    /**
+     * @dataProvider sessAlgorithmProvider
+     */
+    public function testSessAlgorithmWithoutQopIsUnsupported(string $algorithm): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => \sprintf('Digest realm="r", nonce="n", algorithm=%s', $algorithm),
+        ]));
+
+        self::assertNull($challenge);
+    }
+
+    public static function sessAlgorithmProvider(): iterable
+    {
+        yield 'MD5-sess' => ['MD5-sess'];
+        yield 'SHA-256-sess' => ['SHA-256-sess'];
+        yield 'SHA-512-256-sess' => ['SHA-512-256-sess'];
+    }
+
+    public function testSkipsSessWithoutQopAndUsesLaterValidDigest(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="bad", nonce="one", algorithm=MD5-sess, Digest realm="good", nonce="two", algorithm=MD5',
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertSame('good', $challenge->realm);
+        self::assertSame('two', $challenge->nonce);
     }
 }
