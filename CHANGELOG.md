@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Constrain cURL transport sharing to safe libcurl DNS and SSL session support
+- Prevent authenticated proxy tunnel reuse on libcurl versions older than 8.20.0
 
 ### Deprecated
 
@@ -19,7 +20,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fix cURL TLS and HTTP/2 capability detection using libcurl feature checks
-- Prevent reuse of authenticated proxy tunnel connections on libcurl versions older than 8.20.0
 
 
 ## 7.11.1 - 2026-06-07
