@@ -163,7 +163,9 @@ class CurlHandlerTest extends TestCase
     private static function setCurlVersionInfo($versionInfo)
     {
         $property = new \ReflectionProperty(CurlVersion::class, 'versionInfo');
-        $property->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
 
         $previousVersionInfo = $property->getValue();
         $property->setValue(null, $versionInfo);
