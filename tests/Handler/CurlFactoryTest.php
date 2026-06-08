@@ -968,10 +968,22 @@ class CurlFactoryTest extends TestCase
         self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
-    public function testAuthenticatedHttpsProxyReuseOptionsCanBeOverridden(): void
+    public function testAuthenticatedHttpsProxyReuseOptionsCannotBeOverriddenOnAffectedCurlVersion(): void
     {
-        $f = new CurlFactory(3);
-        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+        self::createWithCurlVersion('8.19.0', 'https://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+            'curl' => [
+                \CURLOPT_FRESH_CONNECT => false,
+                \CURLOPT_FORBID_REUSE => false,
+            ],
+        ]);
+
+        self::assertAuthenticatedProxyConnectionReuseOptions();
+    }
+
+    public function testAuthenticatedHttpsProxyReuseOptionsCanBeSetOnFixedCurlVersion(): void
+    {
+        self::createWithCurlVersion('8.20.0', 'https://example.com', [
             'proxy' => 'http://username:password@proxy.example.com:8080',
             'curl' => [
                 \CURLOPT_FRESH_CONNECT => false,
