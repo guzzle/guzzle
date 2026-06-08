@@ -163,6 +163,8 @@ final class AuthMiddleware
         try {
             Psr7\Message::rewindBody($request);
         } catch (\Throwable $e) {
+            $response = self::restoreOriginalSink($request, $response, $probeOptions);
+
             throw new ResponseException(
                 'Digest authentication failed because the request body could not be rewound',
                 $request,
@@ -288,13 +290,7 @@ final class AuthMiddleware
         }
 
         if (\is_resource($sink)) {
-            $stream = Psr7\Utils::streamFor($sink);
-
-            return Psr7\FnStream::decorate($stream, [
-                'close' => static function () use ($stream): void {
-                    $stream->detach();
-                },
-            ]);
+            return self::streamForResourceSink(Psr7\Utils::streamFor($sink));
         }
 
         if (!$sink instanceof StreamInterface) {
@@ -305,6 +301,19 @@ final class AuthMiddleware
         }
 
         return Psr7\Utils::streamFor($sink);
+    }
+
+    /**
+     * Decorates a caller-owned sink stream so that closing the response body
+     * detaches Guzzle's wrapper without closing the original PHP resource.
+     */
+    private static function streamForResourceSink(StreamInterface $stream): StreamInterface
+    {
+        return Psr7\FnStream::decorate($stream, [
+            'close' => static function () use ($stream): void {
+                $stream->detach();
+            },
+        ]);
     }
 
     /**

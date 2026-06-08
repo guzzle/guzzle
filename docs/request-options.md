@@ -120,7 +120,7 @@ If TLS client credentials are only trusted for the original origin, disable auto
 Summary
 Pass HTTP authentication parameters to use with the request. An array must contain the username in index `[0]`, the password in index `[1]`, and can optionally provide a built-in authentication type in index `[2]`. Pass `false` or `null` to disable authentication for a request. String values are passed through for custom handlers.
 
-Built-in Basic and Digest authentication are applied by `GuzzleHttp\Middleware::auth`, which is included by default when using `GuzzleHttp\HandlerStack::create()` or when the client creates its default handler. Raw custom handlers must be wrapped in `HandlerStack::create($handler)` or explicitly include `Middleware::auth()` to use built-in Basic or Digest authentication. Unrecognized array auth types are left in the request options for custom middleware or custom handlers.
+Built-in Basic and Digest authentication are applied by `GuzzleHttp\Middleware::auth()`, which is included by default when using `GuzzleHttp\HandlerStack::create()` or when the client creates its default handler. Raw custom handlers must be wrapped in `GuzzleHttp\HandlerStack::create($handler)` or explicitly include `GuzzleHttp\Middleware::auth()` to use built-in Basic or Digest authentication. Unrecognized array auth types are left in the request options for custom middleware or custom handlers.
 
 Types
 - array
@@ -154,7 +154,7 @@ $client->request('GET', '/get', [
 
 Supported Digest algorithms are `MD5`, `MD5-sess`, `SHA-256`, `SHA-256-sess`, and the `SHA-512-256` variants when PHP supports the `sha512/256` hash algorithm. Guzzle supports legacy non-session challenges without `qop` and challenges with `qop=auth`. Session algorithms require `qop`. `auth-int` is not supported.
 
-Legacy NTLM authentication is no longer a built-in `auth` type. If it is required, configure the built-in cURL handler directly with cURL HTTP authentication options.
+To use libcurl's native Digest implementation instead, omit `auth` and configure cURL options such as `CURLOPT_HTTPAUTH => CURLAUTH_DIGEST` and `CURLOPT_USERPWD` directly with a cURL handler. The same direct cURL configuration is required for legacy NTLM, which is no longer a built-in `auth` type.
 
 ```php
 $client->request('GET', '/get', [
@@ -1414,8 +1414,7 @@ Timeouts from caller-supplied PSR-7 streams are not transport timeouts. A reques
 body stream timeout while detecting size, buffering, rewinding, or reading upload
 bytes throws `GuzzleHttp\Exception\RequestException` before a response and
 `GuzzleHttp\Exception\ResponseException` after response headers. A slow response
-`sink` write also throws `ResponseException`. In every case the original
-`GuzzleHttp\Psr7\Exception\TimeoutException` is available via `getPrevious()`.
+`sink` write also throws `ResponseException`.
 
 Timeout detection is best-effort: it relies on the stream exposing PHP's
 `timed_out` metadata. The network socket Guzzle opens for the stream handler

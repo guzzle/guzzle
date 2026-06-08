@@ -14,7 +14,6 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -172,6 +171,47 @@ class AuthMiddlewareTest extends TestCase
         }
     }
 
+    public function testDigestBodyRewindFailureRestoresOriginalSink(): void
+    {
+        $sink = \tempnam(\sys_get_temp_dir(), 'guzzle-auth-sink');
+        self::assertIsString($sink);
+
+        try {
+            $previous = new \RuntimeException('cannot rewind');
+            $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('data'), [
+                'tell' => static function (): int {
+                    return 4;
+                },
+                'rewind' => static function () use ($previous): void {
+                    throw $previous;
+                },
+            ]);
+            $mock = new MockHandler([
+                new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'], 'challenge'),
+            ]);
+            $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+            try {
+                $client->send(new Request('POST', 'http://example.com', [], $body), [
+                    'auth' => ['a', 'b', 'digest'],
+                    'sink' => $sink,
+                ]);
+
+                self::fail('Expected ResponseException.');
+            } catch (ResponseException $e) {
+                self::assertSame('Digest authentication failed because the request body could not be rewound', $e->getMessage());
+                self::assertSame($previous, $e->getPrevious());
+                self::assertSame(401, $e->getResponse()->getStatusCode());
+                self::assertSame('challenge', \file_get_contents($sink));
+                self::assertSame('challenge', (string) $e->getResponse()->getBody());
+            }
+        } finally {
+            if (\file_exists($sink)) {
+                \unlink($sink);
+            }
+        }
+    }
+
     public function testDigestDoesNotWriteChallengeBodyToUserSink(): void
     {
         $sink = \tempnam(\sys_get_temp_dir(), 'guzzle-auth-sink');
@@ -212,8 +252,8 @@ class AuthMiddlewareTest extends TestCase
 
             $response = $client->get('http://example.com', [
                 'auth' => ['a', 'b', 'digest'],
-                RequestOptions::SINK => $sink,
-                RequestOptions::STREAM_FACTORY => $factory,
+                'sink' => $sink,
+                'stream_factory' => $factory,
             ]);
 
             self::assertSame(200, $response->getStatusCode());
@@ -239,7 +279,7 @@ class AuthMiddlewareTest extends TestCase
 
             $response = $client->get('http://example.com', [
                 'auth' => ['a', 'b', 'digest'],
-                RequestOptions::SINK => $sink,
+                'sink' => $sink,
             ]);
 
             self::assertSame('ok', (string) $response->getBody());
@@ -266,7 +306,7 @@ class AuthMiddlewareTest extends TestCase
         try {
             $client->get('http://example.com', [
                 'auth' => ['a', 'b', 'digest'],
-                RequestOptions::SINK => $sink,
+                'sink' => $sink,
             ]);
 
             self::fail('Expected ResponseException.');
@@ -295,7 +335,7 @@ class AuthMiddlewareTest extends TestCase
             try {
                 $client->get('http://example.com', [
                     'auth' => ['a', 'b', 'digest'],
-                    RequestOptions::SINK => $sink,
+                    'sink' => $sink,
                 ]);
 
                 self::fail('Expected ResponseException.');
@@ -332,7 +372,7 @@ class AuthMiddlewareTest extends TestCase
             try {
                 $client->get('http://example.com', [
                     'auth' => ['a', 'b', 'digest'],
-                    RequestOptions::SINK => $sink,
+                    'sink' => $sink,
                 ]);
 
                 self::fail('Expected ResponseTimeoutException.');

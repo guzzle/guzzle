@@ -97,9 +97,11 @@ decimal length or omit it and let Guzzle prepare the body headers.
 Digest authentication is no longer implemented with cURL `CURLOPT_HTTPAUTH` and
 `CURLOPT_USERPWD`. Guzzle supports legacy non-session Digest challenges without
 `qop` and challenges with `qop=auth`; session algorithms require `qop`.
-`auth-int` is not supported. Legacy NTLM authentication is no longer a built-in
-`auth` type. If NTLM is still required, configure cURL HTTP authentication
-options directly with a cURL handler:
+`auth-int` is not supported. To use libcurl's native Digest implementation
+instead, omit `auth` and configure cURL options directly with a cURL handler,
+including `CURLOPT_HTTPAUTH => CURLAUTH_DIGEST` and `CURLOPT_USERPWD`. The same
+direct cURL configuration is required for legacy NTLM, which is no longer a
+built-in `auth` type:
 
 ```php
 $client->request('GET', '/', [
@@ -116,8 +118,8 @@ they are now applied by the default auth middleware instead of while the client
 constructs the request. If you pass a raw custom handler directly to `Client`,
 remove default middleware, or build a handler stack manually, Basic and Digest
 authentication will only be applied when your stack includes
-`Middleware::auth()`. Unknown auth type strings are left in the request options
-for custom middleware or custom handlers.
+`GuzzleHttp\Middleware::auth()`. Unknown auth type strings are left in the
+request options for custom middleware or custom handlers.
 
 Guzzle also validates non-empty auth arrays before applying them: indexes `0`
 and `1` must be username and password strings, and index `2`, when present, must
@@ -213,7 +215,9 @@ response object is available. `ResponseTransferException` is used for
 transfer-level failures after headers, including response-aware network,
 protocol, content-decoding, partial-body, and response-body transfer failures.
 `BadResponseException` and `TooManyRedirectsException` also extend
-`ResponseException`.
+`ResponseException`; custom subclasses of those existing classes, or of
+`ClientException` and `ServerException`, must not override the now-final
+`ResponseException::__construct()`.
 
 Only this branch exposes response access: `RequestException` no longer stores
 responses, no longer accepts a response constructor argument, and no longer has
@@ -235,9 +239,7 @@ timeouts. Reading the request body stream, including size detection,
 stringification, rewind, and upload reads, is a `RequestException` before a
 response and a `ResponseException` after response headers. A slow response
 `sink` write is a `ResponseException` once a response exists, or a
-`RequestException` otherwise. Whenever the timeout comes from a PSR-7 stream,
-the original `GuzzleHttp\Psr7\Exception\TimeoutException` is available via
-`getPrevious()`.
+`RequestException` otherwise.
 
 If a handler throws `Error`, `TypeError`, or another non-`Exception` `Throwable`
 before returning a promise, `Client::sendAsync()` returns a rejected promise.
