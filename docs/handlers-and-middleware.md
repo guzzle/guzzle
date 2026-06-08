@@ -382,6 +382,13 @@ cURL share handles to share DNS and SSL session cache state. If sharing cannot
 be configured, or if the selected handler does not support sharing, Guzzle
 continues without sharing.
 
+Guzzle only enables cURL transport sharing for libcurl versions that support the
+requested shared state safely. Handler-lifetime cURL sharing requires libcurl
+7.35.0 or newer. SSL session cache sharing requires libcurl 8.6.0 or newer and
+libcurl SSL support. On older libcurl versions that still meet the
+handler-lifetime sharing floor, `TransportSharing::HANDLER_PREFER` shares DNS
+cache state without sharing SSL session cache state.
+
 `TransportSharing::HANDLER_REQUIRE` requires handler-lifetime transport
 sharing. Guzzle fails when it cannot select a cURL handler with cURL share
 support, when sharing cannot be configured, or when a request is routed to a
@@ -393,6 +400,13 @@ handles, which can share DNS, connection, and SSL session cache state across
 handler lifetimes. If persistent sharing is unavailable or cannot be created,
 Guzzle falls back to `TransportSharing::HANDLER_PREFER`. If handler-lifetime
 sharing is also unavailable, Guzzle continues without sharing.
+
+Persistent cURL sharing requires PHP persistent cURL share handle support and
+libcurl 8.20.0 or newer because persistent sharing includes libcurl connection
+cache state. `TransportSharing::PERSISTENT_PREFER` falls back to
+handler-lifetime sharing when persistent connection sharing is unavailable.
+`TransportSharing::PERSISTENT_REQUIRE` fails when persistent connection sharing
+is unavailable.
 
 `TransportSharing::PERSISTENT_REQUIRE` requires PHP persistent cURL share
 handles and does not fall back to handler-lifetime sharing. If persistent

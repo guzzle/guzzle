@@ -103,11 +103,11 @@ final class Utils
         $sharingRequested = $sharingMode !== TransportSharing::NONE;
         $sharingRequired = \in_array($sharingMode, [TransportSharing::HANDLER_REQUIRE, TransportSharing::PERSISTENT_REQUIRE], true);
         $curlHandlerOptions = [];
-        $curlSupported = CurlVersion::supportsTls12()
+        $curlSupported = CurlVersion::supportsCurlHandler()
             && (\function_exists('curl_multi_exec') || \function_exists('curl_exec'));
 
         if ($sharingRequired && !$curlSupported) {
-            throw new \RuntimeException('Required transport sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and a supported libcurl version.');
+            throw new \RuntimeException('Required transport sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and a supported libcurl version with SSL support.');
         }
 
         if ($curlSupported) {
@@ -134,7 +134,7 @@ final class Utils
                 ? Proxy::wrapStreaming($handler, $streamHandler)
                 : $streamHandler;
         } elseif (!$handler) {
-            throw new \RuntimeException('GuzzleHttp requires a supported cURL version, the allow_url_fopen ini setting, or a custom HTTP handler.');
+            throw new \RuntimeException('GuzzleHttp requires a supported cURL version with SSL support, the allow_url_fopen ini setting, or a custom HTTP handler.');
         }
 
         return $handler;

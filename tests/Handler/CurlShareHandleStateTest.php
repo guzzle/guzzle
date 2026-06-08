@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlShareHandleState;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
 
@@ -15,8 +16,14 @@ use PHPUnit\Framework\TestCase;
  */
 class CurlShareHandleStateTest extends TestCase
 {
+    /**
+     * @var array{version: string, features: int}|false|null
+     */
+    private $versionInfo;
+
     public function setUp(): void
     {
+        $this->versionInfo = self::getVersionInfo();
         $_SERVER['curl_test'] = true;
         unset(
             $_SERVER['_curl_share'],
@@ -31,6 +38,7 @@ class CurlShareHandleStateTest extends TestCase
 
     public function tearDown(): void
     {
+        self::setVersionInfo($this->versionInfo);
         unset(
             $_SERVER['curl_test'],
             $_SERVER['_curl_share'],
@@ -56,6 +64,10 @@ class CurlShareHandleStateTest extends TestCase
     public function testHandlerPreferCreatesShareHandleForDnsAndSslSession(): void
     {
         self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.6.0',
+            'features' => self::curlSslFeature(),
+        ]);
 
         $state = CurlShareHandleState::fromOption(TransportSharing::HANDLER_PREFER);
 
@@ -75,6 +87,10 @@ class CurlShareHandleStateTest extends TestCase
     public function testHandlerRequireCreatesShareHandleForDnsAndSslSession(): void
     {
         self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.6.0',
+            'features' => self::curlSslFeature(),
+        ]);
 
         $state = CurlShareHandleState::fromOption(TransportSharing::HANDLER_REQUIRE);
 
@@ -83,9 +99,111 @@ class CurlShareHandleStateTest extends TestCase
         self::assertHandlerShareWasCreated();
     }
 
+    public function testHandlerPreferFallsBackToNoSharingBelowHandlerSharingFloor(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '7.34.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        self::assertNull(CurlShareHandleState::fromOption(TransportSharing::HANDLER_PREFER));
+        self::assertArrayNotHasKey('_curl_share_init_count', $_SERVER);
+    }
+
+    public function testHandlerRequireRejectsBelowHandlerSharingFloor(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '7.34.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('libcurl 7.35.0');
+
+        CurlShareHandleState::fromOption(TransportSharing::HANDLER_REQUIRE);
+    }
+
+    public function testHandlerPreferCreatesDnsOnlyShareHandleBelowSslSessionFloor(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.5.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        $state = CurlShareHandleState::fromOption(TransportSharing::HANDLER_PREFER);
+
+        self::assertInstanceOf(CurlShareHandleState::class, $state);
+        self::assertSame(TransportSharing::HANDLER_PREFER, $state->mode);
+        self::assertDnsOnlyShareWasCreated();
+    }
+
+    public function testHandlerRequireRejectsBelowSslSessionFloor(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.5.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('SSL session sharing');
+
+        CurlShareHandleState::fromOption(TransportSharing::HANDLER_REQUIRE);
+    }
+
+    public function testHandlerRequireRejectsWhenCurlLacksSslSupport(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.6.0',
+            'features' => 0,
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('SSL session sharing');
+
+        CurlShareHandleState::fromOption(TransportSharing::HANDLER_REQUIRE);
+    }
+
+    public function testPersistentPreferFallsBackToHandlerSharingBelowConnectionSharingFloor(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.19.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        $state = CurlShareHandleState::fromOption(TransportSharing::PERSISTENT_PREFER);
+
+        self::assertInstanceOf(CurlShareHandleState::class, $state);
+        self::assertSame(TransportSharing::HANDLER_PREFER, $state->mode);
+        self::assertHandlerShareWasCreated();
+        self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
+    }
+
+    public function testPersistentRequireRejectsBelowConnectionSharingFloor(): void
+    {
+        self::setVersionInfo([
+            'version' => '8.19.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('persistent connection sharing');
+
+        CurlShareHandleState::fromOption(TransportSharing::PERSISTENT_REQUIRE);
+    }
+
     public function testPersistentPreferFallsBackToHandlerSharingWhenPersistentSharingIsUnavailable(): void
     {
         self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.20.0',
+            'features' => self::curlSslFeature(),
+        ]);
 
         if (self::persistentCurlShareIsAvailable()) {
             $_SERVER['curl_share_init_persistent_fail'] = true;
@@ -101,6 +219,10 @@ class CurlShareHandleStateTest extends TestCase
     public function testPersistentPreferFallsBackToNoSharingWhenHandlerSharingFallbackFails(): void
     {
         self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.20.0',
+            'features' => self::curlSslFeature(),
+        ]);
 
         if (self::persistentCurlShareIsAvailable()) {
             $_SERVER['curl_share_init_persistent_fail'] = true;
@@ -112,6 +234,10 @@ class CurlShareHandleStateTest extends TestCase
 
     public function testPersistentPreferUsesPersistentSharingWhenAvailable(): void
     {
+        self::setVersionInfo([
+            'version' => '8.20.0',
+            'features' => self::curlSslFeature(),
+        ]);
         self::skipIfPersistentCurlShareIsUnavailable();
 
         $state = CurlShareHandleState::fromOption(TransportSharing::PERSISTENT_PREFER);
@@ -124,6 +250,11 @@ class CurlShareHandleStateTest extends TestCase
 
     public function testPersistentRequireRejectsWhenPersistentSharingIsUnavailable(): void
     {
+        self::setVersionInfo([
+            'version' => '8.20.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
         if (\function_exists('curl_share_init_persistent') && \class_exists('CurlSharePersistentHandle')) {
             self::markTestSkipped('Persistent cURL share handles are available.');
         }
@@ -136,6 +267,10 @@ class CurlShareHandleStateTest extends TestCase
 
     public function testPersistentRequireRejectsWhenPersistentInitializationFails(): void
     {
+        self::setVersionInfo([
+            'version' => '8.20.0',
+            'features' => self::curlSslFeature(),
+        ]);
         self::skipIfPersistentCurlShareIsUnavailable();
 
         $_SERVER['curl_share_init_persistent_fail'] = true;
@@ -148,6 +283,10 @@ class CurlShareHandleStateTest extends TestCase
 
     public function testPersistentRequireUsesPersistentSharingWhenAvailable(): void
     {
+        self::setVersionInfo([
+            'version' => '8.20.0',
+            'features' => self::curlSslFeature(),
+        ]);
         self::skipIfPersistentCurlShareIsUnavailable();
 
         $state = CurlShareHandleState::fromOption(TransportSharing::PERSISTENT_REQUIRE);
@@ -220,6 +359,10 @@ class CurlShareHandleStateTest extends TestCase
     public function testHandlerPreferFallsBackToNoSharingWhenShareSetupFails(): void
     {
         self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.6.0',
+            'features' => self::curlSslFeature(),
+        ]);
 
         $_SERVER['curl_share_setopt_fail'] = \CURL_LOCK_DATA_DNS;
 
@@ -229,6 +372,10 @@ class CurlShareHandleStateTest extends TestCase
     public function testHandlerRequireShareSetoptFailureThrows(): void
     {
         self::skipIfCurlShareIsUnavailable();
+        self::setVersionInfo([
+            'version' => '8.6.0',
+            'features' => self::curlSslFeature(),
+        ]);
 
         $_SERVER['curl_share_setopt_fail'] = \CURL_LOCK_DATA_DNS;
 
@@ -240,7 +387,7 @@ class CurlShareHandleStateTest extends TestCase
 
     private static function skipIfCurlShareIsUnavailable(): void
     {
-        if (!\function_exists('curl_share_init') || !\function_exists('curl_share_setopt')) {
+        if (!\function_exists('curl_share_init') || !\function_exists('curl_share_setopt') || !\defined('CURLOPT_SHARE')) {
             self::markTestSkipped('cURL share handles are unavailable.');
         }
     }
@@ -259,6 +406,49 @@ class CurlShareHandleStateTest extends TestCase
             && \defined('CURL_LOCK_DATA_DNS')
             && \defined('CURL_LOCK_DATA_CONNECT')
             && \defined('CURL_LOCK_DATA_SSL_SESSION');
+    }
+
+    private static function curlSslFeature(): int
+    {
+        if (!\defined('CURL_VERSION_SSL')) {
+            self::markTestSkipped('CURL_VERSION_SSL is unavailable.');
+        }
+
+        return \CURL_VERSION_SSL;
+    }
+
+    /**
+     * @return array{version: string, features: int}|false|null
+     */
+    private static function getVersionInfo()
+    {
+        $property = new \ReflectionProperty(CurlVersion::class, 'versionInfo');
+        if (\PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
+
+        return $property->getValue();
+    }
+
+    /**
+     * @param array{version: string, features: int}|false|null $versionInfo
+     */
+    private static function setVersionInfo($versionInfo): void
+    {
+        $property = new \ReflectionProperty(CurlVersion::class, 'versionInfo');
+        if (\PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
+
+        $property->setValue(null, $versionInfo);
+    }
+
+    private static function assertDnsOnlyShareWasCreated(): void
+    {
+        self::assertSame(1, $_SERVER['_curl_share_init_count']);
+        self::assertSame([
+            \CURL_LOCK_DATA_DNS,
+        ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
     }
 
     private static function assertHandlerShareWasCreated(): void

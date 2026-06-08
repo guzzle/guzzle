@@ -48,7 +48,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Stop forwarding the generic `auth` request option when following cross-origin redirects
 - Reject invalid `HandlerStack::remove()` arguments
 - Require `Pool` request collections to be iterable
-- Raised the minimum supported libcurl version for the built-in cURL handlers to 7.34.0
+- Raised the built-in cURL handler floor to libcurl 7.34.0 with SSL support
 - Store response cookies without a `Domain` attribute as host-only cookies
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
 - Reject malformed response protocol versions and reason phrases
