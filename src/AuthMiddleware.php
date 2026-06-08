@@ -162,7 +162,7 @@ final class AuthMiddleware
 
         try {
             Psr7\Message::rewindBody($request);
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             $response = self::restoreOriginalSink($request, $response, $probeOptions);
 
             throw new ResponseException(
@@ -247,7 +247,7 @@ final class AuthMiddleware
             }
 
             return $response->withBody($target);
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             throw new ResponseException(
                 $e->getMessage() !== '' ? $e->getMessage() : 'Failed to write the response body',
                 $request,
@@ -273,7 +273,7 @@ final class AuthMiddleware
             $response = self::restoreOriginalSink($reason->getRequest(), $reason->getResponse(), $options);
 
             /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor($reason->withResponse($response, $reason));
+            return P\Create::rejectionFor($reason->withResponse($response));
         } catch (\Throwable $e) {
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor($e);

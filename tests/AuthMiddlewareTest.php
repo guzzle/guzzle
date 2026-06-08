@@ -212,6 +212,43 @@ class AuthMiddlewareTest extends TestCase
         }
     }
 
+    public function testDigestBodyRewindErrorPropagates(): void
+    {
+        $sink = \tempnam(\sys_get_temp_dir(), 'guzzle-auth-sink');
+        self::assertIsString($sink);
+
+        try {
+            $previous = new \Error('cannot rewind');
+            $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('data'), [
+                'tell' => static function (): int {
+                    return 4;
+                },
+                'rewind' => static function () use ($previous): void {
+                    throw $previous;
+                },
+            ]);
+            $mock = new MockHandler([
+                new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'], 'challenge'),
+            ]);
+            $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+            try {
+                $client->send(new Request('POST', 'http://example.com', [], $body), [
+                    'auth' => ['a', 'b', 'digest'],
+                    'sink' => $sink,
+                ]);
+
+                self::fail('Expected Error.');
+            } catch (\Error $e) {
+                self::assertSame($previous, $e);
+            }
+        } finally {
+            if (\file_exists($sink)) {
+                \unlink($sink);
+            }
+        }
+    }
+
     public function testDigestDoesNotWriteChallengeBodyToUserSink(): void
     {
         $sink = \tempnam(\sys_get_temp_dir(), 'guzzle-auth-sink');
@@ -315,6 +352,31 @@ class AuthMiddlewareTest extends TestCase
         }
     }
 
+    public function testDigestSinkRestoreErrorPropagates(): void
+    {
+        $previous = new \Error('sink bug');
+        $sink = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
+            'write' => static function (string $data) use ($previous): int {
+                throw $previous;
+            },
+        ]);
+        $mock = new MockHandler([
+            new Response(200, [], 'ok'),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        try {
+            $client->get('http://example.com', [
+                'auth' => ['a', 'b', 'digest'],
+                'sink' => $sink,
+            ]);
+
+            self::fail('Expected Error.');
+        } catch (\Error $e) {
+            self::assertSame($previous, $e);
+        }
+    }
+
     public function testDigestRestoresOriginalSinkOnResponseException(): void
     {
         $sink = \tempnam(\sys_get_temp_dir(), 'guzzle-auth-sink');
@@ -358,12 +420,14 @@ class AuthMiddlewareTest extends TestCase
         self::assertIsString($sink);
 
         try {
+            $previous = new \RuntimeException('timeout cause');
             $mock = new MockHandler([
-                static function (RequestInterface $request): ResponseTimeoutException {
+                static function (RequestInterface $request) use ($previous): ResponseTimeoutException {
                     return new ResponseTimeoutException(
                         'response timed out',
                         $request,
-                        new Response(200, [], 'partial')
+                        new Response(200, [], 'partial'),
+                        $previous
                     );
                 },
             ]);
@@ -379,7 +443,7 @@ class AuthMiddlewareTest extends TestCase
             } catch (ResponseTimeoutException $e) {
                 self::assertSame('response timed out', $e->getMessage());
                 self::assertSame(200, $e->getResponse()->getStatusCode());
-                self::assertInstanceOf(ResponseTimeoutException::class, $e->getPrevious());
+                self::assertSame($previous, $e->getPrevious());
                 self::assertSame('partial', \file_get_contents($sink));
                 self::assertSame('partial', (string) $e->getResponse()->getBody());
             }
