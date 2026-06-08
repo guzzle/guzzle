@@ -6,7 +6,6 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\TransportSharing;
-use GuzzleHttp\Utils;
 
 /**
  * @internal
@@ -83,7 +82,7 @@ final class CurlShareHandleState
         throw new InvalidArgumentException(\sprintf(
             'The "%s" option must be null or a GuzzleHttp\\TransportSharing::* constant; received %s.',
             $option,
-            Utils::describeType($sharing)
+            \get_debug_type($sharing)
         ));
     }
 
