@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 7.12.0 - Upcoming
 
+### Changed
+
+- Require cURL SSL support for TLS and SSL-session detection
+
 ### Deprecated
 
 - Deprecated the request-level `handler` option, which will be ignored in 8.0

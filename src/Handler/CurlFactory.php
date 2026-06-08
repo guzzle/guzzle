@@ -96,7 +96,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
-            if (!self::supportsHttp2()) {
+            if (!CurlVersion::supportsHttp2()) {
                 throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
             }
         } elseif ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
@@ -474,42 +474,6 @@ class CurlFactory implements CurlFactoryInterface
         }
     }
 
-    private static function supportsHttp2(): bool
-    {
-        static $supportsHttp2 = null;
-
-        if (null === $supportsHttp2) {
-            $supportsHttp2 = self::supportsTls12()
-                && defined('CURL_VERSION_HTTP2')
-                && (\CURL_VERSION_HTTP2 & \curl_version()['features']);
-        }
-
-        return $supportsHttp2;
-    }
-
-    private static function supportsTls12(): bool
-    {
-        static $supportsTls12 = null;
-
-        if (null === $supportsTls12) {
-            $supportsTls12 = \CURL_SSLVERSION_TLSv1_2 & \curl_version()['features'];
-        }
-
-        return $supportsTls12;
-    }
-
-    private static function supportsTls13(): bool
-    {
-        static $supportsTls13 = null;
-
-        if (null === $supportsTls13) {
-            $supportsTls13 = defined('CURL_SSLVERSION_TLSv1_3')
-                && (\CURL_SSLVERSION_TLSv1_3 & \curl_version()['features']);
-        }
-
-        return $supportsTls13;
-    }
-
     public function release(EasyHandle $easy): void
     {
         $resource = $easy->handle;
@@ -587,7 +551,7 @@ class CurlFactory implements CurlFactoryInterface
             'error' => \curl_error($easy->handle),
             'appconnect_time' => \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME),
         ] + \curl_getinfo($easy->handle);
-        $ctx[self::CURL_VERSION_STR] = self::getCurlVersion();
+        $ctx[self::CURL_VERSION_STR] = CurlVersion::getVersion() ?? '';
         $factory->release($easy);
 
         // Retry when nothing is present or when curl failed to rewind.
@@ -596,17 +560,6 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         return self::createRejection($easy, $ctx);
-    }
-
-    private static function getCurlVersion(): string
-    {
-        static $curlVersion = null;
-
-        if (null === $curlVersion) {
-            $curlVersion = \curl_version()['version'];
-        }
-
-        return $curlVersion;
     }
 
     private static function createRejection(EasyHandle $easy, array $ctx): PromiseInterface
@@ -988,7 +941,7 @@ class CurlFactory implements CurlFactoryInterface
                 ) {
                     $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
                 } elseif (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $options['crypto_method']) {
-                    if (!self::supportsTls13()) {
+                    if (!CurlVersion::supportsTls13()) {
                         throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
                     }
                     $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
@@ -1000,12 +953,12 @@ class CurlFactory implements CurlFactoryInterface
             } elseif (\STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $options['crypto_method']) {
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_1;
             } elseif (\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $options['crypto_method']) {
-                if (!self::supportsTls12()) {
+                if (!CurlVersion::supportsTls12()) {
                     throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.2 not supported by your version of cURL');
                 }
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
             } elseif (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $options['crypto_method']) {
-                if (!self::supportsTls13()) {
+                if (!CurlVersion::supportsTls13()) {
                     throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
                 }
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
