@@ -1458,6 +1458,11 @@ class ClientTest extends TestCase
             'Passing bool to request option "auth" is invalid; expected array{0: string, 1: string, 2?: string|null}|string|false|null.',
         ];
 
+        yield 'body' => [
+            ['body' => new \stdClass()],
+            'Passing stdClass to request option "body" is invalid; expected resource|string|null|int|float|bool|StreamInterface|callable&object|Iterator|Stringable.',
+        ];
+
         yield 'cert password' => [
             ['cert' => ['cert.pem', new \stdClass()]],
             'Passing stdClass to request option "cert.1" is invalid; expected string|null.',
