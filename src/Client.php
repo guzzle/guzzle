@@ -724,7 +724,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             return Psr7\Utils::streamFor($body);
         }
 
-        throw new InvalidArgumentException('Invalid resource type: '.\gettype($body));
+        throw new InvalidArgumentException(\sprintf(
+            'Passing %s to request option "body" is invalid; expected resource|string|null|int|float|bool|StreamInterface|callable&object|Iterator|Stringable.',
+            \get_debug_type($body)
+        ));
     }
 
     /**
