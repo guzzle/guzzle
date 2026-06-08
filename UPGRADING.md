@@ -439,13 +439,10 @@ $client->request('GET', 'https://legacy.example.com', [
 
 #### cURL Minimum Version
 
-Guzzle 8 requires libcurl 7.34.0 or higher when using the built-in cURL
-handlers. The linked libcurl must also be built with SSL support. If the default
-handler stack detects an older libcurl version or a libcurl build without SSL
-support, it will not select the cURL handler automatically. Manually configured
-cURL handlers also reject requests when the linked libcurl version is lower than
-7.34.0, the PHP cURL extension does not expose TLS 1.2 support, or libcurl does
-not advertise SSL support.
+Guzzle 8 requires libcurl 7.34.0 or higher with SSL/TLS support when using the
+built-in cURL handlers. If this requirement is not met, the default handler
+stack will not select cURL automatically, and manually configured cURL handlers
+reject requests.
 
 #### cURL Handler Lifecycle
 
