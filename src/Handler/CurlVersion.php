@@ -17,6 +17,8 @@ final class CurlVersion
 
     private const SSL_SESSION_SHARING_VERSION = '8.6.0';
 
+    private const PROXY_CREDENTIAL_REUSE_VERSION = '8.20.0';
+
     /**
      * @var array{version: string, features: int}|false|null
      */
@@ -97,6 +99,14 @@ final class CurlVersion
                 self::SSL_SESSION_SHARING_VERSION
             ));
         }
+    }
+
+    public static function supportsProxyCredentialAwareConnectionReuse(): bool
+    {
+        $version = self::getVersion();
+
+        return $version !== null
+            && \version_compare($version, self::PROXY_CREDENTIAL_REUSE_VERSION, '>=');
     }
 
     private static function supportsSsl(): bool
