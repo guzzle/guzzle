@@ -205,6 +205,8 @@ final class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
+        $this->forceFreshConnectionForAuthenticatedProxy($request, $conf);
+
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         if ($this->shareHandle !== null) {
             if (!\defined('CURLOPT_SHARE')) {
@@ -1038,9 +1040,45 @@ final class CurlFactory implements CurlFactoryInterface
         return str_replace($baseUriString, $redactedUriString, $error);
     }
 
-    private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $options): bool
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private function forceFreshConnectionForAuthenticatedProxy(RequestInterface $request, array &$conf): void
     {
-        if (!self::usesProxyTunnel($request, $options) || !self::isHttpProxyForConnectionReuse($proxy, $options)) {
+        $proxy = self::getProxyForConnectionReuse($conf);
+
+        if ($proxy === null || !self::requiresFreshConnectionForAuthenticatedProxy($request, $proxy, $conf)) {
+            return;
+        }
+
+        if ($this->shareMode === TransportSharing::PERSISTENT_REQUIRE) {
+            throw new InvalidArgumentException('Persistent cURL sharing is required, but this request requires a fresh proxy tunnel connection.');
+        }
+
+        $conf[\CURLOPT_FRESH_CONNECT] = true;
+        $conf[\CURLOPT_FORBID_REUSE] = true;
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function getProxyForConnectionReuse(array $conf): ?string
+    {
+        if (!\array_key_exists(\CURLOPT_PROXY, $conf)) {
+            return null;
+        }
+
+        $proxy = $conf[\CURLOPT_PROXY];
+
+        return \is_string($proxy) && $proxy !== '' ? $proxy : null;
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $conf): bool
+    {
+        if (!self::usesProxyTunnel($request, $conf) || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {
             return false;
         }
 
@@ -1050,7 +1088,7 @@ final class CurlFactory implements CurlFactoryInterface
             return false;
         }
 
-        if (self::hasCurlProxyAuthorizationHeader($options)) {
+        if (self::hasCurlProxyAuthorizationHeader($conf)) {
             return true;
         }
 
@@ -1058,32 +1096,27 @@ final class CurlFactory implements CurlFactoryInterface
             && (
                 \array_key_exists('user', $proxyParts)
                 || \array_key_exists('pass', $proxyParts)
-                || self::hasCurlProxyCredentials($options)
+                || self::hasCurlProxyCredentials($conf)
             );
     }
 
-    private static function usesProxyTunnel(RequestInterface $request, array $options): bool
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function usesProxyTunnel(RequestInterface $request, array $conf): bool
     {
         return 'https' === $request->getUri()->getScheme()
             || (
-                isset($options['curl'])
-                && \array_key_exists(\CURLOPT_HTTPPROXYTUNNEL, $options['curl'])
-                && (bool) $options['curl'][\CURLOPT_HTTPPROXYTUNNEL]
+                \defined('CURLOPT_HTTPPROXYTUNNEL')
+                && \array_key_exists((int) \constant('CURLOPT_HTTPPROXYTUNNEL'), $conf)
+                && (bool) $conf[(int) \constant('CURLOPT_HTTPPROXYTUNNEL')]
             );
     }
 
-    private static function getEffectiveProxyForConnectionReuse(?string $selectedProxy, array $options): ?string
-    {
-        if (!isset($options['curl']) || !\array_key_exists(\CURLOPT_PROXY, $options['curl'])) {
-            return $selectedProxy;
-        }
-
-        $proxy = $options['curl'][\CURLOPT_PROXY];
-
-        return \is_string($proxy) && $proxy !== '' ? $proxy : null;
-    }
-
-    private static function isHttpProxyForConnectionReuse(string $proxy, array $options): bool
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function isHttpProxyForConnectionReuse(string $proxy, array $conf): bool
     {
         if (\strpos($proxy, '://') !== false) {
             $proxyParts = \parse_url($proxy);
@@ -1096,7 +1129,7 @@ final class CurlFactory implements CurlFactoryInterface
             return $proxyScheme === 'http' || $proxyScheme === 'https';
         }
 
-        return !self::isSocksProxyType($options['curl'][\CURLOPT_PROXYTYPE] ?? null);
+        return !self::isSocksProxyType($conf[\CURLOPT_PROXYTYPE] ?? null);
     }
 
     /**
@@ -1123,28 +1156,35 @@ final class CurlFactory implements CurlFactoryInterface
         return false;
     }
 
-    private static function hasCurlProxyCredentials(array $options): bool
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function hasCurlProxyCredentials(array $conf): bool
     {
-        return isset($options['curl'])
-            && (
-                \array_key_exists(\CURLOPT_PROXYUSERPWD, $options['curl'])
-                || \array_key_exists(\CURLOPT_PROXYUSERNAME, $options['curl'])
-                || \array_key_exists(\CURLOPT_PROXYPASSWORD, $options['curl'])
-            );
+        foreach (['CURLOPT_PROXYUSERPWD', 'CURLOPT_PROXYUSERNAME', 'CURLOPT_PROXYPASSWORD'] as $option) {
+            if (\defined($option) && \array_key_exists((int) \constant($option), $conf)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    private static function hasCurlProxyAuthorizationHeader(array $options): bool
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function hasCurlProxyAuthorizationHeader(array $conf): bool
     {
         if (!\defined('CURLOPT_PROXYHEADER')) {
             return false;
         }
 
         $option = (int) \constant('CURLOPT_PROXYHEADER');
-        if (!isset($options['curl']) || !\array_key_exists($option, $options['curl'])) {
+        if (!\array_key_exists($option, $conf)) {
             return false;
         }
 
-        $headers = $options['curl'][$option];
+        $headers = $conf[$option];
         if (!\is_array($headers)) {
             return false;
         }
@@ -1617,16 +1657,6 @@ final class CurlFactory implements CurlFactoryInterface
         } elseif ($proxy->shouldDisableProxy()) {
             $conf[\CURLOPT_PROXY] = '';
             $conf[\CURLOPT_NOPROXY] = $proxy->isBypassed() ? '*' : '';
-        }
-
-        $proxyForConnectionReuse = self::getEffectiveProxyForConnectionReuse($selectedProxy, $options);
-        if ($proxyForConnectionReuse !== null && self::requiresFreshConnectionForAuthenticatedProxy($easy->request, $proxyForConnectionReuse, $options)) {
-            if ($this->shareMode === TransportSharing::PERSISTENT_REQUIRE) {
-                throw new InvalidArgumentException('Persistent cURL sharing is required, but this request requires a fresh proxy tunnel connection.');
-            }
-
-            $conf[\CURLOPT_FRESH_CONNECT] = true;
-            $conf[\CURLOPT_FORBID_REUSE] = true;
         }
 
         $cryptoMethod = $options['crypto_method'] ?? null;
