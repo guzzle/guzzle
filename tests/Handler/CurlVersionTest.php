@@ -52,42 +52,40 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsCurlHandler());
     }
 
-    public function testSupportsTls13RequiresSslFeature(): void
+    public function testSupportsTls13UsesRuntimeVersion(): void
     {
         if (!\defined('CURL_SSLVERSION_TLSv1_3')) {
             self::markTestSkipped('CURL_SSLVERSION_TLSv1_3 is not available.');
         }
-        self::requiresCurlSslConstants();
 
         self::setVersionInfo([
-            'version' => '7.52.0',
+            'version' => '7.51.0',
             'features' => 0,
         ]);
         self::assertFalse(CurlVersion::supportsTls13());
 
         self::setVersionInfo([
             'version' => '7.52.0',
-            'features' => self::curlSslFeature(),
+            'features' => 0,
         ]);
         self::assertTrue(CurlVersion::supportsTls13());
     }
 
-    public function testSupportsHttp2RequiresSslFeature(): void
+    public function testSupportsHttp2UsesHttp2Feature(): void
     {
-        self::requiresCurlSslConstants();
         if (!\defined('CURL_VERSION_HTTP2')) {
             self::markTestSkipped('CURL_VERSION_HTTP2 is not available.');
         }
 
         self::setVersionInfo([
             'version' => '7.34.0',
-            'features' => \CURL_VERSION_HTTP2,
+            'features' => 0,
         ]);
         self::assertFalse(CurlVersion::supportsHttp2());
 
         self::setVersionInfo([
             'version' => '7.34.0',
-            'features' => \CURL_VERSION_HTTP2 | self::curlSslFeature(),
+            'features' => \CURL_VERSION_HTTP2,
         ]);
         self::assertTrue(CurlVersion::supportsHttp2());
     }
@@ -126,31 +124,12 @@ class CurlVersionTest extends TestCase
     public function testSupportsHttp3WhenVersionAndFeatureAreAvailable(): void
     {
         self::requiresHttp3Constants();
-        self::requiresCurlSslFeature();
-
-        self::setVersionInfo([
-            'version' => '7.66.0',
-            'features' => self::http3Feature() | self::curlSslFeature(),
-        ]);
-
-        self::assertTrue(CurlVersion::supportsHttp3());
-    }
-
-    public function testSupportsHttp3RequiresSslFeature(): void
-    {
-        self::requiresHttp3Constants();
-        self::requiresCurlSslFeature();
 
         self::setVersionInfo([
             'version' => '7.66.0',
             'features' => self::http3Feature(),
         ]);
-        self::assertFalse(CurlVersion::supportsHttp3());
 
-        self::setVersionInfo([
-            'version' => '7.66.0',
-            'features' => self::http3Feature() | self::curlSslFeature(),
-        ]);
         self::assertTrue(CurlVersion::supportsHttp3());
     }
 

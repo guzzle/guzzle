@@ -53,20 +53,18 @@ final class CurlVersion
     {
         $version = self::get();
 
-        return self::supportsCurlHandler()
-            && \defined('CURL_SSLVERSION_TLSv1_3')
+        return \defined('CURL_SSLVERSION_TLSv1_3')
             && null !== $version
             && version_compare($version, self::TLS_13_VERSION, '>=');
     }
 
     public static function supportsHttp2(): bool
     {
-        if (!\defined('CURL_VERSION_HTTP2')) {
-            return false;
-        }
+        $versionInfo = self::getVersionInfo();
 
-        return self::supportsCurlHandler()
-            && 0 !== (\CURL_VERSION_HTTP2 & self::getInfo()['features']);
+        return \defined('CURL_VERSION_HTTP2')
+            && null !== $versionInfo
+            && 0 !== (\CURL_VERSION_HTTP2 & $versionInfo['features']);
     }
 
     public static function supportsHttp3(): bool
@@ -75,13 +73,12 @@ final class CurlVersion
             return false;
         }
 
-        $version = self::get();
-        if (null === $version || version_compare($version, self::HTTP_3_VERSION, '<')) {
+        $versionInfo = self::getVersionInfo();
+        if (null === $versionInfo || version_compare($versionInfo['version'], self::HTTP_3_VERSION, '<')) {
             return false;
         }
 
-        return self::supportsCurlHandler()
-            && 0 !== ((int) \constant('CURL_VERSION_HTTP3') & self::getInfo()['features']);
+        return 0 !== ((int) \constant('CURL_VERSION_HTTP3') & $versionInfo['features']);
     }
 
     public static function supportsHandlerSharing(): bool
@@ -104,11 +101,12 @@ final class CurlVersion
 
     public static function supportsSslSessionSharing(): bool
     {
-        $version = self::get();
+        $versionInfo = self::getVersionInfo();
 
-        return self::supportsCurlHandler()
-            && null !== $version
-            && version_compare($version, self::SSL_SESSION_SHARING_VERSION, '>=');
+        return \defined('CURL_VERSION_SSL')
+            && null !== $versionInfo
+            && version_compare($versionInfo['version'], self::SSL_SESSION_SHARING_VERSION, '>=')
+            && 0 !== (\CURL_VERSION_SSL & $versionInfo['features']);
     }
 
     public static function ensureSslSessionSharingSupported(): void
@@ -187,20 +185,6 @@ final class CurlVersion
         $versionInfo = self::getVersionInfo();
 
         return null === $versionInfo ? null : $versionInfo['version'];
-    }
-
-    /**
-     * @return array{version: string, features: int}
-     */
-    private static function getInfo(): array
-    {
-        $versionInfo = self::getVersionInfo();
-
-        if (null === $versionInfo) {
-            throw new \RuntimeException('Unable to determine cURL version.');
-        }
-
-        return $versionInfo;
     }
 
     /**
