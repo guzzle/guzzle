@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -184,6 +185,7 @@ class ClientTest extends TestCase
     public function testHandlerPreferTransportSharingCreatesDefaultShareHandle(): void
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();
+        $previous = self::setCurlVersionInfo(['version' => '8.6.0', 'features' => 0]);
 
         $_SERVER['curl_test'] = true;
         unset($_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
@@ -199,6 +201,7 @@ class ClientTest extends TestCase
                 \CURL_LOCK_DATA_SSL_SESSION,
             ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
         } finally {
+            self::setCurlVersionInfo($previous);
             unset($_SERVER['curl_test'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
         }
     }
@@ -347,11 +350,26 @@ class ClientTest extends TestCase
             !\function_exists('curl_share_init')
             || !\function_exists('curl_share_setopt')
             || !\function_exists('curl_exec')
-            || !\function_exists('curl_version')
-            || version_compare(curl_version()['version'], '7.21.2') < 0
+            || !CurlVersion::supportsCurlHandler()
         ) {
             self::markTestSkipped('Default cURL handler with share handles is unavailable.');
         }
+    }
+
+    /**
+     * @param array{version: string, features: int}|false|null $versionInfo
+     *
+     * @return array{version: string, features: int}|false|null
+     */
+    private static function setCurlVersionInfo($versionInfo)
+    {
+        $property = new \ReflectionProperty(CurlVersion::class, 'versionInfo');
+        $property->setAccessible(true);
+
+        $previousVersionInfo = $property->getValue();
+        $property->setValue(null, $versionInfo);
+
+        return $previousVersionInfo;
     }
 
     public function testDoesNotOverwriteHeaderWithDefaultInRequest()

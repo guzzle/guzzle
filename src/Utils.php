@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlShareHandleState;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use Psr\Http\Message\RequestInterface;
@@ -95,8 +96,7 @@ final class Utils
         $sharingRequired = $sharingMode === TransportSharing::HANDLER_REQUIRE;
         $curlHandlerOptions = [];
         $curlSupported = \defined('CURLOPT_CUSTOMREQUEST')
-            && \function_exists('curl_version')
-            && version_compare(curl_version()['version'], '7.21.2') >= 0
+            && CurlVersion::supportsCurlHandler()
             && (\function_exists('curl_multi_exec') || \function_exists('curl_exec'));
 
         if ($sharingRequired && !$curlSupported) {

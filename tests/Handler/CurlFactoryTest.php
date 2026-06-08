@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
@@ -466,9 +467,15 @@ class CurlFactoryTest extends TestCase
 
     public function testAddsCryptoMethodTls12()
     {
+        $previous = self::setCurlVersionInfo(['version' => '7.34.0', 'features' => 0]);
         $f = new CurlFactory(3);
-        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
-        self::assertEquals(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+
+        try {
+            $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT]);
+            self::assertEquals(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
     }
 
     /**
@@ -476,9 +483,19 @@ class CurlFactoryTest extends TestCase
      */
     public function testAddsCryptoMethodTls13()
     {
+        if (!\defined('CURL_SSLVERSION_TLSv1_3')) {
+            self::markTestSkipped('CURL_SSLVERSION_TLSv1_3 is unavailable.');
+        }
+
+        $previous = self::setCurlVersionInfo(['version' => '7.52.0', 'features' => 0]);
         $f = new CurlFactory(3);
-        $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
-        self::assertEquals(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+
+        try {
+            $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
+            self::assertEquals(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
     }
 
     public function testValidatesSslKey()
@@ -1436,5 +1453,21 @@ class CurlFactoryTest extends TestCase
         if (!\function_exists('curl_share_init') || !\defined('CURLOPT_SHARE')) {
             self::markTestSkipped('cURL share handles are unavailable.');
         }
+    }
+
+    /**
+     * @param array{version: string, features: int}|false|null $versionInfo
+     *
+     * @return array{version: string, features: int}|false|null
+     */
+    private static function setCurlVersionInfo($versionInfo)
+    {
+        $property = new \ReflectionProperty(CurlVersion::class, 'versionInfo');
+        $property->setAccessible(true);
+
+        $previousVersionInfo = $property->getValue();
+        $property->setValue(null, $versionInfo);
+
+        return $previousVersionInfo;
     }
 }
