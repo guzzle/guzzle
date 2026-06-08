@@ -163,7 +163,7 @@ $client->request('GET', '/get', [
 ```
 
 > [!NOTE]
-> This is currently only supported when using the cURL handler.
+> This is currently only supported when using the cURL handler. The `ntlm` auth type is deprecated. Configure NTLM with cURL HTTP authentication options instead.
 
 ## body
 

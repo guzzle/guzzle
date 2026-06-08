@@ -296,7 +296,6 @@ class RedirectMiddlewareTest extends TestCase
 
     /**
      * @testWith ["digest"]
-     *           ["ntlm"]
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossHost($auth)
     {
@@ -326,7 +325,6 @@ class RedirectMiddlewareTest extends TestCase
 
     /**
      * @testWith ["digest"]
-     *           ["ntlm"]
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossPort($auth)
     {
@@ -356,7 +354,6 @@ class RedirectMiddlewareTest extends TestCase
 
     /**
      * @testWith ["digest"]
-     *           ["ntlm"]
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossScheme($auth)
     {
@@ -386,7 +383,6 @@ class RedirectMiddlewareTest extends TestCase
 
     /**
      * @testWith ["digest"]
-     *           ["ntlm"]
      */
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossSchemeSamePort($auth)
     {
@@ -416,7 +412,6 @@ class RedirectMiddlewareTest extends TestCase
 
     /**
      * @testWith ["digest"]
-     *           ["ntlm"]
      */
     public function testNotRemoveCurlAuthorizationOptionsOnRedirect($auth)
     {

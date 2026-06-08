@@ -506,10 +506,6 @@ class StreamHandler
             \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "curl" request option to the stream handler is deprecated; guzzlehttp/guzzle 8.0 will reject this option because the stream handler ignores cURL options.');
         }
 
-        if (self::usesDigestAuth($options)) {
-            \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing digest authentication to the stream handler is deprecated; guzzlehttp/guzzle 8.0 will reject digest authentication with the stream handler because it is only supported by cURL handlers.');
-        }
-
         if (\array_key_exists('expect', $options) && $options['expect'] !== false && $request->hasHeader('Expect')) {
             \trigger_deprecation('guzzlehttp/guzzle', '7.11', 'Passing the "expect" request option to the stream handler is deprecated when it adds an Expect header; guzzlehttp/guzzle 8.0 will reject this option because the stream handler does not support Expect: 100-Continue.');
         }
@@ -696,13 +692,6 @@ class StreamHandler
             && \count($options['curl']) === 2
             && isset($options['curl'][\CURLOPT_HTTPAUTH], $options['curl'][\CURLOPT_USERPWD])
             && $options['curl'][\CURLOPT_HTTPAUTH] === $httpAuth;
-    }
-
-    private static function usesDigestAuth(array $options): bool
-    {
-        return isset($options['auth'][2])
-            && \is_string($options['auth'][2])
-            && \strtolower($options['auth'][2]) === 'digest';
     }
 
     /**

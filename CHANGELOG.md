@@ -10,6 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated the request-level `handler` option, which will be ignored in 8.0
 - Deprecated raw cURL request options outside the built-in cURL handlers' allow-list
 - Deprecated PHP stream context options outside the built-in stream handler allow-list
+- Deprecated passing `ntlm` as a built-in `auth` type
 
 
 ## 7.11.1 - 2026-06-07

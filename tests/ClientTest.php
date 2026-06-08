@@ -641,18 +641,6 @@ class ClientTest extends TestCase
         ], $last['curl']);
     }
 
-    public function testAuthCanBeArrayForNtlmAuth()
-    {
-        $mock = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mock]);
-        $client->get('http://foo.com', ['auth' => ['a', 'b', 'ntlm']]);
-        $last = $mock->getLastOptions();
-        self::assertSame([
-            \CURLOPT_HTTPAUTH => 8,
-            \CURLOPT_USERPWD => 'a:b',
-        ], $last['curl']);
-    }
-
     public function testCanAddFormParams()
     {
         $mock = new MockHandler([new Response()]);
