@@ -21,9 +21,18 @@ final class Utils
      *
      * @return string Returns a string containing the type of the variable and
      *                if a class is provided, the class name.
+     *
+     * @deprecated Utils::describeType() will be removed in guzzlehttp/guzzle:8.0. Use get_debug_type() instead.
      */
     public static function describeType($input): string
     {
+        \trigger_deprecation(
+            'guzzlehttp/guzzle',
+            '7.12',
+            '%s() is deprecated and will be removed in 8.0. Use get_debug_type() instead.',
+            __METHOD__
+        );
+
         switch (\gettype($input)) {
             case 'object':
                 return 'object('.\get_class($input).')';
@@ -550,7 +559,7 @@ EOT
                 'guzzlehttp/guzzle',
                 '7.11',
                 'Passing %s as the "idn_conversion" request option is deprecated; guzzlehttp/guzzle 8.0 will reject values that are not true, false, null, or an integer IDNA_* bitmask.',
-                self::describeType($value)
+                \get_debug_type($value)
             );
 
             return (int) $value;

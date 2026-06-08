@@ -15,44 +15,6 @@ class UtilsTest extends TestCase
         return [['get'], ['head'], ['delete']];
     }
 
-    public static function typeProvider()
-    {
-        return [
-            ['foo', 'string(3) "foo"'],
-            [true, 'bool(true)'],
-            [false, 'bool(false)'],
-            [10, 'int(10)'],
-            [1.0, 'float(1)'],
-            [new StrClass(), 'object(GuzzleHttp\Test\StrClass)'],
-            [['foo'], 'array(1)'],
-        ];
-    }
-
-    /**
-     * @dataProvider typeProvider
-     */
-    public function testDescribesType($input, $output)
-    {
-        /**
-         * Output may not match if Xdebug is loaded and overloading var_dump().
-         *
-         * @see https://xdebug.org/docs/display#overload_var_dump
-         */
-        if (extension_loaded('xdebug')) {
-            $originalOverload = ini_get('xdebug.overload_var_dump');
-            ini_set('xdebug.overload_var_dump', 0);
-        }
-
-        try {
-            self::assertSame($output, Utils::describeType($input));
-            self::assertSame($output, GuzzleHttp\describe_type($input));
-        } finally {
-            if (extension_loaded('xdebug')) {
-                ini_set('xdebug.overload_var_dump', $originalOverload);
-            }
-        }
-    }
-
     public function testParsesHeadersFromLines()
     {
         $lines = [
