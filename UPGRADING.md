@@ -783,6 +783,10 @@ the old `Utils::isHostInNoProxy()` semantics. Domain matching is
 case-insensitive and ignores a single trailing DNS root dot, IP literals are
 normalized before comparison, and CIDR entries match IP literal hosts.
 
+#### Removed Type Description Helper API
+
+`Utils::describeType()` has been removed. Use PHP's `get_debug_type()` instead.
+
 #### Non-instantiable Utility Classes
 
 Static utility and constant classes such as `GuzzleHttp\Middleware`,
