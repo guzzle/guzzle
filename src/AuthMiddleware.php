@@ -5,13 +5,8 @@ declare(strict_types=1);
 namespace GuzzleHttp;
 
 use GuzzleHttp\Auth\DigestAuth;
-use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\ResponseException;
-use GuzzleHttp\Exception\ResponseTransferException;
-use GuzzleHttp\Exception\ServerException;
-use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -276,38 +271,11 @@ final class AuthMiddleware
             $response = self::restoreOriginalSink($reason->getRequest(), $reason->getResponse(), $options);
 
             /** @var PromiseInterface<ResponseInterface, mixed> */
-            return P\Create::rejectionFor(self::withRestoredResponse($reason, $response));
+            return P\Create::rejectionFor($reason->withResponse($response, $reason));
         } catch (\Throwable $e) {
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor($e);
         }
-    }
-
-    private static function withRestoredResponse(
-        ResponseException $reason,
-        ResponseInterface $response
-    ): ResponseException {
-        if ($reason instanceof ResponseTransferException) {
-            return new ResponseTransferException($reason->getMessage(), $reason->getRequest(), $response, $reason);
-        }
-
-        if ($reason instanceof TooManyRedirectsException) {
-            return new TooManyRedirectsException($reason->getMessage(), $reason->getRequest(), $response, $reason);
-        }
-
-        if ($reason instanceof ClientException) {
-            return new ClientException($reason->getMessage(), $reason->getRequest(), $response, $reason);
-        }
-
-        if ($reason instanceof ServerException) {
-            return new ServerException($reason->getMessage(), $reason->getRequest(), $response, $reason);
-        }
-
-        if ($reason instanceof BadResponseException) {
-            return new BadResponseException($reason->getMessage(), $reason->getRequest(), $response, $reason);
-        }
-
-        return new ResponseException($reason->getMessage(), $reason->getRequest(), $response, $reason);
     }
 
     /**

@@ -8,6 +8,7 @@ use GuzzleHttp\AuthMiddleware;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7;
@@ -303,6 +304,44 @@ class AuthMiddlewareTest extends TestCase
                 self::assertSame(500, $e->getResponse()->getStatusCode());
                 self::assertSame('failed', \file_get_contents($sink));
                 self::assertSame('failed', (string) $e->getResponse()->getBody());
+            }
+        } finally {
+            if (\file_exists($sink)) {
+                \unlink($sink);
+            }
+        }
+    }
+
+    public function testDigestRestoresOriginalSinkOnResponseTimeoutException(): void
+    {
+        $sink = \tempnam(\sys_get_temp_dir(), 'guzzle-auth-sink');
+        self::assertIsString($sink);
+
+        try {
+            $mock = new MockHandler([
+                static function (RequestInterface $request): ResponseTimeoutException {
+                    return new ResponseTimeoutException(
+                        'response timed out',
+                        $request,
+                        new Response(200, [], 'partial')
+                    );
+                },
+            ]);
+            $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+            try {
+                $client->get('http://example.com', [
+                    'auth' => ['a', 'b', 'digest'],
+                    RequestOptions::SINK => $sink,
+                ]);
+
+                self::fail('Expected ResponseTimeoutException.');
+            } catch (ResponseTimeoutException $e) {
+                self::assertSame('response timed out', $e->getMessage());
+                self::assertSame(200, $e->getResponse()->getStatusCode());
+                self::assertInstanceOf(ResponseTimeoutException::class, $e->getPrevious());
+                self::assertSame('partial', \file_get_contents($sink));
+                self::assertSame('partial', (string) $e->getResponse()->getBody());
             }
         } finally {
             if (\file_exists($sink)) {
