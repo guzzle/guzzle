@@ -62,8 +62,7 @@ stream send/connect timeout message. A timeout surfaced as a PSR-7
 `TimeoutException` from a caller stream is classified like any other failure of
 that stream: `RequestException` while reading the request body before a response,
 or `ResponseException` once a response exists. It is never a
-`NetworkTimeoutException`. The original `TimeoutException` is attached via
-`getPrevious()`.
+`NetworkTimeoutException`.
 
 Note: `ResponseException` extends `RequestException`, so it (and every subtype,
 including `ResponseTransferException` and `ResponseTimeoutException`) is a PSR-18
