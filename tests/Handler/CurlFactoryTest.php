@@ -543,7 +543,7 @@ class CurlFactoryTest extends TestCase
     {
         $previousVersionInfo = self::setCurlVersionInfo([
             'version' => '7.84.0',
-            'features' => 0,
+            'features' => self::curlSslFeature(),
         ]);
 
         try {
@@ -567,7 +567,7 @@ class CurlFactoryTest extends TestCase
 
         $previousVersionInfo = self::setCurlVersionInfo([
             'version' => '7.85.0',
-            'features' => 0,
+            'features' => self::curlSslFeature(),
         ]);
 
         try {
@@ -750,7 +750,7 @@ class CurlFactoryTest extends TestCase
 
     public function testForcesFreshConnectionForAuthenticatedHttpsProxyOnAffectedCurlVersion(): void
     {
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+        self::createWithCurlVersion('8.19.0', 'https://example.com', [
             'proxy' => 'http://username:password@proxy.example.com:8080',
         ]);
 
@@ -759,7 +759,7 @@ class CurlFactoryTest extends TestCase
 
     public function testDoesNotForceFreshConnectionForAuthenticatedHttpsProxyOnFixedCurlVersion(): void
     {
-        self::createWithCurlVersion('8.19.0', 'https://example.com', [
+        self::createWithCurlVersion('8.20.0', 'https://example.com', [
             'proxy' => 'http://username:password@proxy.example.com:8080',
         ]);
 
@@ -769,7 +769,7 @@ class CurlFactoryTest extends TestCase
 
     public function testDoesNotForceFreshConnectionForCurlProxyCredentialsOnFixedCurlVersion(): void
     {
-        self::createWithCurlVersion('8.19.0', 'https://example.com', [
+        self::createWithCurlVersion('8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
                 \CURLOPT_PROXYUSERPWD => 'username:password',
@@ -782,7 +782,7 @@ class CurlFactoryTest extends TestCase
 
     public function testForcesFreshConnectionForAuthenticatedHttpsProxyWithCurlProxyCredentialsOnAffectedCurlVersion(): void
     {
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+        self::createWithCurlVersion('8.19.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
                 \CURLOPT_PROXYUSERPWD => 'username:password',
@@ -819,7 +819,7 @@ class CurlFactoryTest extends TestCase
 
     public function testForcesFreshConnectionForAuthenticatedHttpProxyTunnelOnAffectedCurlVersion(): void
     {
-        self::createWithCurlVersion('8.18.0', 'http://example.com', [
+        self::createWithCurlVersion('8.19.0', 'http://example.com', [
             'proxy' => 'http://username:password@proxy.example.com:8080',
             'curl' => [
                 \CURLOPT_HTTPPROXYTUNNEL => true,
@@ -833,7 +833,7 @@ class CurlFactoryTest extends TestCase
     {
         $proxyHeaderOption = self::proxyHeaderOption();
 
-        self::createWithCurlVersion('8.19.0', 'https://example.com', [
+        self::createWithCurlVersion('8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
                 $proxyHeaderOption => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
@@ -1810,7 +1810,7 @@ class CurlFactoryTest extends TestCase
     {
         $previousVersionInfo = self::setCurlVersionInfo([
             'version' => '7.66.0',
-            'features' => 0,
+            'features' => self::curlSslFeature(),
         ]);
 
         try {
@@ -1833,7 +1833,7 @@ class CurlFactoryTest extends TestCase
     {
         $previousVersionInfo = self::setCurlVersionInfo([
             'version' => '7.66.0',
-            'features' => 0,
+            'features' => self::curlSslFeature(),
         ]);
 
         try {
@@ -1989,7 +1989,7 @@ class CurlFactoryTest extends TestCase
     {
         $previousVersionInfo = self::setCurlVersionInfo([
             'version' => '7.66.0',
-            'features' => 0,
+            'features' => self::curlSslFeature(),
         ]);
 
         try {
@@ -4881,7 +4881,7 @@ class CurlFactoryTest extends TestCase
     {
         $previousVersionInfo = self::setCurlVersionInfo([
             'version' => $version,
-            'features' => 0,
+            'features' => self::curlSslFeature(),
         ]);
 
         try {
@@ -4934,7 +4934,7 @@ class CurlFactoryTest extends TestCase
     {
         self::requireHttp3TestConstants();
 
-        $features = (int) \constant('CURL_VERSION_HTTP3');
+        $features = (int) \constant('CURL_VERSION_HTTP3') | self::curlSslFeature();
         if ($withHttp2) {
             if (!\defined('CURL_VERSION_HTTP2')) {
                 self::markTestSkipped('CURL_VERSION_HTTP2 is not available.');
@@ -4944,6 +4944,15 @@ class CurlFactoryTest extends TestCase
         }
 
         return $features;
+    }
+
+    private static function curlSslFeature(): int
+    {
+        if (!\defined('CURL_VERSION_SSL')) {
+            self::markTestSkipped('CURL_VERSION_SSL is not available.');
+        }
+
+        return \CURL_VERSION_SSL;
     }
 
     public static function curlHandlerProvider(): array

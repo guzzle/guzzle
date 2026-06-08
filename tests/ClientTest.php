@@ -206,11 +206,7 @@ class ClientTest extends TestCase
                 'transport_sharing' => TransportSharing::HANDLER_PREFER,
             ]);
 
-            self::assertSame(1, $_SERVER['_curl_share_init_count']);
-            self::assertSame([
-                \CURL_LOCK_DATA_DNS,
-                \CURL_LOCK_DATA_SSL_SESSION,
-            ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+            self::assertHandlerShareWasCreated();
         } finally {
             unset($_SERVER['curl_test'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
         }
@@ -1233,7 +1229,8 @@ class ClientTest extends TestCase
             !\function_exists('curl_share_init')
             || !\function_exists('curl_share_setopt')
             || !\function_exists('curl_exec')
-            || !CurlVersion::supportsTls12()
+            || !CurlVersion::supportsCurlHandler()
+            || !CurlVersion::supportsHandlerSharing()
         ) {
             self::markTestSkipped('Default cURL handler with share handles is unavailable.');
         }
@@ -1242,7 +1239,9 @@ class ClientTest extends TestCase
     private static function assertPersistentPreferShareWasCreated(): void
     {
         if (
-            \function_exists('curl_share_init_persistent')
+            CurlVersion::supportsConnectionSharing()
+            && CurlVersion::supportsSslSessionSharing()
+            && \function_exists('curl_share_init_persistent')
             && \class_exists('CurlSharePersistentHandle')
             && \defined('CURL_LOCK_DATA_DNS')
             && \defined('CURL_LOCK_DATA_CONNECT')
@@ -1258,11 +1257,18 @@ class ClientTest extends TestCase
             return;
         }
 
+        self::assertHandlerShareWasCreated();
+    }
+
+    private static function assertHandlerShareWasCreated(): void
+    {
+        $locks = [\CURL_LOCK_DATA_DNS];
+        if (CurlVersion::supportsSslSessionSharing()) {
+            $locks[] = \CURL_LOCK_DATA_SSL_SESSION;
+        }
+
         self::assertSame(1, $_SERVER['_curl_share_init_count']);
-        self::assertSame([
-            \CURL_LOCK_DATA_DNS,
-            \CURL_LOCK_DATA_SSL_SESSION,
-        ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+        self::assertSame($locks, $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
     }
 
     public function testDoesNotOverwriteHeaderWithDefaultInRequest(): void
