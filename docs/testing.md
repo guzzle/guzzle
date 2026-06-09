@@ -113,62 +113,11 @@ Using mock responses is almost always enough when testing a web service client. 
 - Tests do not require a network connection
 - Tests have no external dependencies
 
-### Using the test server
+### Using the Test Server
 
 > [!TIP]
 > You almost never need to use this test web server. You should only ever consider using it when developing HTTP handlers. The test web server is not necessary for mocking requests. For that, please use the Mock handler and history middleware.
 
-The test server is distributed separately from `guzzlehttp/guzzle` as the `guzzlehttp/test-server` Composer package. It is not installed with Guzzle by default. The package provides a node.js server that receives requests and returns responses from a queue. It requires Node.js `^20.19 || ^22.13 || >=24` available as `node`. The test server exposes a simple API that is used to enqueue responses and inspect the requests that it has received.
+The test server is distributed separately as [`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/docs/usage.md). It is not installed with Guzzle by default. The package provides a Node.js server that receives requests, returns responses from a queue, and records received requests for inspection.
 
-You can add the test server as a dev dependency using Composer.
-
-```bash
-composer require --dev guzzlehttp/test-server:^1.0
-```
-
-Alternatively, you can include it as a dev dependency in your project's existing composer.json file:
-
-```json
-{
-    "require-dev": {
-        "guzzlehttp/test-server": "^1.0"
-    }
-}
-```
-
-Any operation on the `Server` object will ensure that the server is running and wait until it is able to receive requests before returning.
-
-`GuzzleHttp\Server\Server` provides a static interface to the test server. You can queue an HTTP response or an array of responses by calling `Server::enqueue()`. This method accepts an array of `Psr\Http\Message\ResponseInterface` and `Exception` objects.
-
-```php
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Server\Server;
-
-// Start the server and queue a response
-Server::enqueue([
-    new Response(200, ['Content-Length' => '0'])
-]);
-
-$client = new Client(['base_uri' => Server::$url]);
-echo $client->request('GET', '/foo')->getStatusCode();
-// 200
-```
-
-When a response is queued on the test server, the test server will remove any previously queued responses. As the server receives requests, queued responses are dequeued and returned to the request. When the queue is empty, the server will return a 500 response.
-
-You can inspect the requests that the server has retrieved by calling `Server::received()`.
-
-```php
-foreach (Server::received() as $response) {
-    echo $response->getStatusCode();
-}
-```
-
-You can clear the list of received requests from the web server using the `Server::flush()` method.
-
-```php
-Server::flush();
-echo count(Server::received());
-// 0
-```
+See the [Test Server Usage](https://github.com/guzzle/test-server/blob/1.0/docs/usage.md) documentation for installation, lifecycle, response queueing, request inspection, and shutdown details.
