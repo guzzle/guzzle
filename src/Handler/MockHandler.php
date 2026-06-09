@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
-use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\TransferStats;
