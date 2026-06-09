@@ -206,6 +206,7 @@ class FileCookieJarTest extends TestCase
 
         // Start from a world-readable file to prove save() restricts it.
         \chmod($this->file, 0644);
+        \clearstatcache(true, $this->file);
         self::assertSame(0644, \fileperms($this->file) & 0777);
 
         $jar = new FileCookieJar($this->file);
@@ -217,6 +218,7 @@ class FileCookieJarTest extends TestCase
         ]));
         $jar->save($this->file);
 
+        \clearstatcache(true, $this->file);
         self::assertSame(0600, \fileperms($this->file) & 0777);
     }
 
