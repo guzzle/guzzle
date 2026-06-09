@@ -1,10 +1,18 @@
 # Testing Guzzle Clients
 
-Guzzle provides several tools that will enable you to easily mock the HTTP layer without needing to send requests over the internet.
+This page covers Guzzle's local testing tools for client code and handler development. Most tests should mock the HTTP layer without sending requests over the internet.
 
 - Mock handler
 - History middleware
 - Node.js web server for integration testing
+
+## Choosing a Test Tool
+
+Use `MockHandler` when your test needs predictable responses, errors, or response ordering. Combine it with history middleware when your test also needs to assert the request method, URI, headers, body, or request options that your code sent.
+
+Use the separate [`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/README.md) package only when you need a local HTTP server, usually while developing or testing a custom handler. Unit tests and most application client tests should not use the test server.
+
+Avoid remote services in automated tests unless the test is an explicit, opt-in integration test for that service.
 
 ## Mock Handler
 
@@ -64,22 +72,30 @@ When using things like the `Mock` handler, you often need to know if the request
 
 ```php
 use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Response;
 
 $container = [];
 $history = Middleware::history($container);
+$mock = new MockHandler([
+    new Response(200, ['Content-Type' => 'application/json'], '{"ok":true}'),
+    new Response(204),
+]);
 
-$handlerStack = HandlerStack::create();
-// or $handlerStack = HandlerStack::create($mock); if using the Mock handler.
+$handlerStack = HandlerStack::create($mock);
 
 // Add the history middleware to the handler stack.
 $handlerStack->push($history);
 
-$client = new Client(['handler' => $handlerStack]);
+$client = new Client([
+    'base_uri' => 'https://example.test',
+    'handler' => $handlerStack,
+]);
 
-$client->request('GET', 'http://httpbin.org/get');
-$client->request('HEAD', 'http://httpbin.org/get');
+$client->request('GET', '/users/123');
+$client->request('DELETE', '/users/123');
 
 // Count the number of transactions
 echo count($container);
@@ -92,10 +108,10 @@ echo count($container);
 // - options: the request options used for the transfer
 foreach ($container as $transaction) {
     echo $transaction['request']->getMethod();
-    //> GET, HEAD
+    //> GET, DELETE
     if ($transaction['response']) {
         echo $transaction['response']->getStatusCode();
-        //> 200, 200
+        //> 200, 204
     } elseif ($transaction['error']) {
         echo $transaction['error'];
         //> exception
@@ -113,62 +129,18 @@ Using mock responses is almost always enough when testing a web service client. 
 - Tests do not require a network connection
 - Tests have no external dependencies
 
-### Using the test server
+### Using the Test Server
 
 > [!TIP]
 > You almost never need to use this test web server. You should only ever consider using it when developing HTTP handlers. The test web server is not necessary for mocking requests. For that, please use the Mock handler and history middleware.
 
-The test server is distributed separately from `guzzlehttp/guzzle` as the `guzzlehttp/test-server` Composer package. It is not installed with Guzzle by default. The package provides a node.js server that receives requests and returns responses from a queue. It requires Node.js `^20.19 || ^22.13 || >=24` available as `node`. The test server exposes a simple API that is used to enqueue responses and inspect the requests that it has received.
+The test server is distributed separately as [`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/README.md). It is not installed with Guzzle by default. The package provides a Node.js server that receives requests, returns responses from a queue, and records received requests for inspection.
 
-You can add the test server as a dev dependency using Composer.
+See the [Test Server Usage](https://github.com/guzzle/test-server/blob/1.0/docs/test-server-usage.md) documentation for lifecycle, response queuing, request inspection, and shutdown details.
 
-```bash
-composer require --dev guzzlehttp/test-server:^1.0
-```
+## Related
 
-Alternatively, you can include it as a dev dependency in your project's existing composer.json file:
-
-```json
-{
-    "require-dev": {
-        "guzzlehttp/test-server": "^1.0"
-    }
-}
-```
-
-Any operation on the `Server` object will ensure that the server is running and wait until it is able to receive requests before returning.
-
-`GuzzleHttp\Server\Server` provides a static interface to the test server. You can queue an HTTP response or an array of responses by calling `Server::enqueue()`. This method accepts an array of `Psr\Http\Message\ResponseInterface` and `Exception` objects.
-
-```php
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Server\Server;
-
-// Start the server and queue a response
-Server::enqueue([
-    new Response(200, ['Content-Length' => '0'])
-]);
-
-$client = new Client(['base_uri' => Server::$url]);
-echo $client->request('GET', '/foo')->getStatusCode();
-// 200
-```
-
-When a response is queued on the test server, the test server will remove any previously queued responses. As the server receives requests, queued responses are dequeued and returned to the request. When the queue is empty, the server will return a 500 response.
-
-You can inspect the requests that the server has retrieved by calling `Server::received()`.
-
-```php
-foreach (Server::received() as $response) {
-    echo $response->getStatusCode();
-}
-```
-
-You can clear the list of received requests from the web server using the `Server::flush()` method.
-
-```php
-Server::flush();
-echo count(Server::received());
-// 0
-```
+- [Quick Start](quick-start.md)
+- [Request Options](request-options.md)
+- [Handlers and Middleware](handlers-and-middleware.md)
+- [Test Server Usage](https://github.com/guzzle/test-server/blob/1.0/docs/test-server-usage.md)
