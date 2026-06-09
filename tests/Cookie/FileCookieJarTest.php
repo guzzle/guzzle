@@ -200,7 +200,7 @@ class FileCookieJarTest extends TestCase
 
     public function testSavesCookieFileWithOwnerOnlyPermissions(): void
     {
-        if (\DIRECTORY_SEPARATOR === '\\') {
+        if (\PHP_OS_FAMILY === 'Windows') {
             self::markTestSkipped('POSIX file permissions are not enforced on Windows');
         }
 
