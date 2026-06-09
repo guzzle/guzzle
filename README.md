@@ -1,6 +1,6 @@
 ![Guzzle](.github/logo.png?raw=true)
 
-# Guzzle, PHP HTTP client
+# Guzzle, PHP HTTP Client
 
 [![Latest Version](https://img.shields.io/github/release/guzzle/guzzle.svg?style=flat-square)](https://github.com/guzzle/guzzle/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/guzzle/guzzle/ci.yml?label=ci%20build&style=flat-square)](https://github.com/guzzle/guzzle/actions?query=workflow%3ACI)
@@ -38,7 +38,7 @@ $promise = $client->sendAsync($request)->then(function ($response) {
 $promise->wait();
 ```
 
-## Help and docs
+## Help and Docs
 
 We use GitHub issues only to discuss bugs and new features. For support please refer to:
 
@@ -73,13 +73,13 @@ Most users should install `guzzlehttp/guzzle` when they want to send HTTP reques
 | Package | Use it for |
 |---------|------------|
 | [`guzzlehttp/guzzle`](docs/index.md) | Sending HTTP requests from applications and libraries. |
-| [`guzzlehttp/psr7`](https://github.com/guzzle/psr7/blob/3.0/docs/index.md) | Creating and manipulating PSR-7 requests, responses, streams, and URIs. |
-| [`guzzlehttp/promises`](https://github.com/guzzle/promises/blob/3.0/docs/index.md) | Working with promises returned by asynchronous Guzzle operations. |
-| [`guzzlehttp/uri-template`](https://github.com/guzzle/uri-template/blob/2.0/docs/index.md) | Expanding RFC 6570 URI templates. |
-| [`guzzlehttp/command`](https://github.com/guzzle/command/blob/2.0/docs/index.md) | Building command-based SDK-style service clients. |
-| [`guzzlehttp/guzzle-services`](https://github.com/guzzle/guzzle-services/blob/2.0/docs/index.md) | Building service-description-driven clients on top of Guzzle Command. |
-| [`guzzlehttp/oauth-subscriber`](https://github.com/guzzle/oauth-subscriber/blob/1.0/docs/index.md) | Signing Guzzle requests with OAuth 1.0. |
-| [`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/docs/index.md) | Testing HTTP clients against a local controllable server. |
+| [`guzzlehttp/psr7`](https://github.com/guzzle/psr7/blob/3.0/docs/messages.md) | Creating and manipulating PSR-7 requests, responses, streams, and URIs. |
+| [`guzzlehttp/promises`](https://github.com/guzzle/promises/blob/3.0/docs/quickstart.md) | Working with promises returned by asynchronous Guzzle operations. |
+| [`guzzlehttp/uri-template`](https://github.com/guzzle/uri-template/blob/2.0/docs/usage.md) | Expanding RFC 6570 URI templates. |
+| [`guzzlehttp/command`](https://github.com/guzzle/command/blob/2.0/docs/service-clients.md) | Building command-based SDK-style service clients. |
+| [`guzzlehttp/guzzle-services`](https://github.com/guzzle/guzzle-services/blob/2.0/docs/service-descriptions.md) | Building service-description-driven clients on top of Guzzle Command. |
+| [`guzzlehttp/oauth-subscriber`](https://github.com/guzzle/oauth-subscriber/blob/1.0/docs/usage.md) | Signing Guzzle requests with OAuth 1.0. |
+| [`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/docs/usage.md) | Testing HTTP clients against a local controllable server. |
 
 See the [package roadmap](docs/package-roadmap.md) for more guidance on which package to use.
 

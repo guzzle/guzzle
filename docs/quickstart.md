@@ -1,4 +1,4 @@
-# Quickstart
+# Quick Start
 
 This page provides a quick introduction to Guzzle and introductory examples. If you have not already installed Guzzle, head over to the [installation](overview.md#installation) section.
 
@@ -119,7 +119,7 @@ $promise = $client->requestAsync('OPTIONS', 'http://httpbin.org/get');
 
 The promise returned by these methods is a
 `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>`
-provided by the [Guzzle promises library](https://github.com/guzzle/promises/blob/3.0/docs/index.md).
+provided by the [Guzzle promises library](https://github.com/guzzle/promises/blob/3.0/docs/quickstart.md).
 This means that you can chain `then()` calls off of the promise. These then
 calls are either fulfilled with a successful
 `Psr\Http\Message\ResponseInterface` or rejected with a reason. The reason is
@@ -143,7 +143,7 @@ $promise->then(
 );
 ```
 
-### Concurrent requests
+### Concurrent Requests
 
 You can send multiple requests concurrently using promises and asynchronous requests.
 
@@ -333,7 +333,7 @@ $r = $client->request('PUT', 'http://httpbin.org/put', [
 
 In addition to specifying the raw data of a request using the `body` request option, Guzzle provides helpful abstractions over sending POST data.
 
-#### Sending form fields
+#### Sending Form Fields
 
 Sending `application/x-www-form-urlencoded` POST requests requires that you specify the POST fields as an array in the `form_params` request options.
 
@@ -349,7 +349,7 @@ $response = $client->request('POST', 'http://httpbin.org/post', [
 ]);
 ```
 
-#### Sending form files
+#### Sending Form Files
 
 You can send files along with a form (`multipart/form-data` POST requests), using the `multipart` request option. `multipart` accepts an array of part arrays, where each part array contains the following keys:
 
@@ -557,7 +557,7 @@ Defines the proxy to use when sending requests using the "https" protocol.
 `NO_PROXY`
 Defines hosts and IP rules for which a proxy should not be used. See the [`proxy` option](request-options.md#proxy).
 
-### Relevant ini Settings
+### Relevant INI Settings
 
 Guzzle can utilize PHP ini settings when configuring clients.
 

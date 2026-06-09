@@ -31,7 +31,7 @@ $promise->wait();
 ## User Guide
 
 - [Overview](overview.md)
-- [Quickstart](quickstart.md)
+- [Quick Start](quickstart.md)
 - [Request Options](request-options.md)
 - [Guzzle and PSR-7](psr7.md)
 - [Handlers and Middleware](handlers-and-middleware.md)
