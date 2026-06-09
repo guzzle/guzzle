@@ -594,6 +594,22 @@ Automatically generated boundaries are unchanged.
 You can still pass an explicit `Content-Length` header in a multipart element's
 `headers` array if a non-standard peer requires it.
 
+#### Cross-Origin Redirect Referer Header
+
+With the optional `referer` redirect setting enabled (off by default), Guzzle
+now sends only the request origin (scheme, host, and port) in the `Referer`
+header on a cross-origin redirect. It previously sent the full URL, including
+the path and query string, which could leak secrets such as reset tokens or
+signed query parameters to the new origin.
+
+Same-origin redirects still send the full URL, with any user information
+removed. The `Referer` header is omitted entirely when the scheme changes,
+including an `https` to `http` downgrade. This matches the
+`strict-origin-when-cross-origin` policy that modern browsers use by default.
+
+If you relied on the full URL crossing origins, collect it with the
+`on_redirect` setting, or disable automatic redirects and follow them manually.
+
 #### Host-Only Cookies
 
 Cookies extracted from responses without a `Domain` attribute are now stored as

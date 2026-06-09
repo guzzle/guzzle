@@ -54,7 +54,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - strict: (bool, default=false) Set to true to use strict redirects. Strict RFC compliant redirects mean that POST redirect requests are sent as POST requests vs. doing what most browsers do which is redirect POST requests with GET requests.
 
-- referer: (bool, default=false) Set to true to enable adding the Referer header when redirecting.
+- referer: (bool, default=false) Set to true to add a `Referer` header when redirecting. On a cross-origin redirect only the origin (scheme, host, and port) is sent, and the header is omitted entirely when the scheme changes, including an `https` to `http` downgrade. See [Cross-Origin Redirects](#cross-origin-redirects).
 
 - protocols: (non-empty array of strings, default=`['http', 'https']`) Specifies which protocols are allowed for redirect requests. Redirect matching is case-sensitive; use `http` and `https`.
 
@@ -112,6 +112,8 @@ Guzzle considers a redirect cross-origin when the scheme, host, or effective por
 On cross-origin redirects, Guzzle removes origin-scoped HTTP credentials before sending the redirected request. This includes the `Authorization` and `Cookie` headers, the generic `auth` request option, and cURL HTTP authentication options such as `CURLOPT_HTTPAUTH` and `CURLOPT_USERPWD`.
 
 Same-origin redirects preserve those values. Guzzle does not automatically remove transport identity or TLS client credential options solely because the redirect is cross-origin. In particular, TLS client authentication options such as `cert`, `ssl_key`, custom cURL TLS options, and stream context TLS options are not removed automatically on cross-origin redirects.
+
+When the optional `referer` setting is enabled, Guzzle also limits what it discloses to the new origin. On a cross-origin redirect it sends only the request's origin (scheme, host, and port) in the `Referer` header instead of the full URL, and it omits the header entirely when the scheme changes, including an `https` to `http` downgrade. Same-origin redirects send the full URL. This matches the `strict-origin-when-cross-origin` policy that modern browsers use by default.
 
 If TLS client credentials are only trusted for the original origin, disable automatic redirects and handle redirect responses manually, or use separate clients and request options for trusted origins.
 
@@ -1174,7 +1176,7 @@ This option can be set on a client or per request. It is used for string request
 > This option affects request-side URI creation only. It does not affect response implementations returned by handlers. `GuzzleHttp\Client::sendRequest()` still returns redirect responses as-is for PSR-18 compliance.
 
 > [!WARNING]
-> Guzzle only checks that the value implements `Psr\Http\Message\UriFactoryInterface`; it does not validate the URIs it returns. When following redirects Guzzle strips credentials by comparing the origin (scheme, host, port) of the current and redirect-target URIs: on a cross-origin redirect it removes the `Authorization` and `Cookie` headers and clears HTTP auth, and it drops `Referer` on an `https` to `http` downgrade — all by reading `getScheme()`, `getHost()`, and `getPort()` from the URI built from the `Location` header. A custom URI that misreports those, or whose getters disagree with the address actually dialed, can make a cross-origin redirect look same-origin and leak credentials to the target (the class of issue behind CVE-2022-31042, CVE-2022-31043, CVE-2022-31090, and CVE-2022-31091), or enable SSRF and protocol allow-list bypass. The default `GuzzleHttp\Psr7\Uri` lower-cases and validates the scheme and host and strips default ports; supply a URI implementation you trust.
+> Guzzle only checks that the value implements `Psr\Http\Message\UriFactoryInterface`; it does not validate the URIs it returns. When following redirects Guzzle strips credentials by comparing the origin (scheme, host, port) of the current and redirect-target URIs: on a cross-origin redirect it removes the `Authorization` and `Cookie` headers and clears HTTP auth, and it drops `Referer` whenever the scheme changes (including an `https` to `http` downgrade) and otherwise sends only the origin on cross-origin redirects — all by reading `getScheme()`, `getHost()`, and `getPort()` from the URI built from the `Location` header. A custom URI that misreports those, or whose getters disagree with the address actually dialed, can make a cross-origin redirect look same-origin and leak credentials to the target (the class of issue behind CVE-2022-31042, CVE-2022-31043, CVE-2022-31090, and CVE-2022-31091), or enable SSRF and protocol allow-list bypass. The default `GuzzleHttp\Psr7\Uri` lower-cases and validates the scheme and host and strips default ports; supply a URI implementation you trust.
 
 ## sink
 

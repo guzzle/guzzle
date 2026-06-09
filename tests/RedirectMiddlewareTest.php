@@ -493,7 +493,7 @@ class RedirectMiddlewareTest extends TestCase
         ])->wait();
     }
 
-    public function testAddsRefererHeader(): void
+    public function testReducesRefererToOriginOnCrossOriginRedirect(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
@@ -508,12 +508,12 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $promise->wait();
         self::assertSame(
-            'http://example.com?a=b',
+            'http://example.com/',
             $mock->getLastRequest()->getHeaderLine('Referer')
         );
     }
 
-    public function testAddsRefererHeaderButClearsUserInfo(): void
+    public function testReducesRefererToOriginAndClearsUserInfoOnCrossOriginRedirect(): void
     {
         $mock = new MockHandler([
             new Response(302, ['Location' => 'http://test.com']),
@@ -528,9 +528,66 @@ class RedirectMiddlewareTest extends TestCase
         ]);
         $promise->wait();
         self::assertSame(
-            'http://example.com?a=b',
+            'http://example.com/',
             $mock->getLastRequest()->getHeaderLine('Referer')
         );
+    }
+
+    public function testAddsFullRefererHeaderOnSameOriginRedirect(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://example.com/other']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com/path?a=b');
+        $promise = $handler($request, [
+            'allow_redirects' => ['max' => 2, 'referer' => true],
+        ]);
+        $promise->wait();
+        self::assertSame(
+            'http://example.com/path?a=b',
+            $mock->getLastRequest()->getHeaderLine('Referer')
+        );
+    }
+
+    public function testReducesRefererToOriginOnCrossPortRedirect(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://example.com:9090/']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com:8080/path?a=b');
+        $promise = $handler($request, [
+            'allow_redirects' => ['max' => 2, 'referer' => true],
+        ]);
+        $promise->wait();
+        self::assertSame(
+            'http://example.com:8080/',
+            $mock->getLastRequest()->getHeaderLine('Referer')
+        );
+    }
+
+    public function testDoesNotAddRefererWhenSchemeChangesOnUpgrade(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'https://example.com/']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com/path?a=b');
+        $promise = $handler($request, [
+            'allow_redirects' => ['max' => 2, 'referer' => true],
+        ]);
+        $promise->wait();
+        self::assertFalse($mock->getLastRequest()->hasHeader('Referer'));
     }
 
     public function testAddsGuzzleRedirectHeader(): void
