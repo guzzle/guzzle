@@ -57,29 +57,30 @@ The recommended way to install Guzzle is through
 composer require guzzlehttp/guzzle
 ```
 
+## Package Roadmap
+
+Most users should install `guzzlehttp/guzzle` when they want to send HTTP requests. The Guzzle organization also maintains smaller packages for PSR-7 messages, promises, service clients, OAuth 1.0 signing, URI templates, and testing.
+
+| Package | Use it for |
+|---------|------------|
+| [`guzzlehttp/guzzle`](docs/index.md) | Sending HTTP requests from applications and libraries. |
+| [`guzzlehttp/psr7`](https://github.com/guzzle/psr7/blob/3.0/docs/index.md) | Creating and manipulating PSR-7 requests, responses, streams, and URIs. |
+| [`guzzlehttp/promises`](https://github.com/guzzle/promises/blob/3.0/docs/index.md) | Working with promises returned by asynchronous Guzzle operations. |
+| [`guzzlehttp/uri-template`](https://github.com/guzzle/uri-template/blob/2.0/docs/index.md) | Expanding RFC 6570 URI templates. |
+| [`guzzlehttp/command`](https://github.com/guzzle/command/blob/2.0/docs/index.md) | Building command-based SDK-style service clients. |
+| [`guzzlehttp/guzzle-services`](https://github.com/guzzle/guzzle-services/blob/2.0/docs/index.md) | Building service-description-driven clients on top of Guzzle Command. |
+| [`guzzlehttp/oauth-subscriber`](https://github.com/guzzle/oauth-subscriber/blob/1.0/docs/index.md) | Signing Guzzle requests with OAuth 1.0. |
+| [`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/docs/index.md) | Testing HTTP clients against a local controllable server. |
+
+See the [package roadmap](docs/package-roadmap.md) for more guidance on which package to use.
+
 
 ## Version Guidance
 
-| Version | Status              | Packagist           | Namespace    | Repo                | Docs                | PSR-7 | PHP Version  |
-|---------|---------------------|---------------------|--------------|---------------------|---------------------|-------|--------------|
-| 3.x     | EOL (2016-10-31)    | `guzzle/guzzle`     | `Guzzle`     | [v3][guzzle-3-repo] | [v3][guzzle-3-docs] | No    | >=5.3.3,<7.0 |
-| 4.x     | EOL (2016-10-31)    | `guzzlehttp/guzzle` | `GuzzleHttp` | [v4][guzzle-4-repo] | N/A                 | No    | >=5.4,<7.0   |
-| 5.x     | EOL (2019-10-31)    | `guzzlehttp/guzzle` | `GuzzleHttp` | [v5][guzzle-5-repo] | [v5][guzzle-5-docs] | No    | >=5.4,<7.4   |
-| 6.x     | EOL (2023-10-31)    | `guzzlehttp/guzzle` | `GuzzleHttp` | [v6][guzzle-6-repo] | [v6][guzzle-6-docs] | Yes   | >=5.5,<8.0   |
-| 7.x     | Latest              | `guzzlehttp/guzzle` | `GuzzleHttp` | [v7][guzzle-7-repo] | [v7][guzzle-7-docs] | Yes   | >=7.2.5,<8.6 |
-| 8.x     | Experimental        | `guzzlehttp/guzzle` | `GuzzleHttp` | [v8][guzzle-8-repo] | [v8][guzzle-8-docs] | Yes   | >=7.4,<8.6   |
-
-[guzzle-3-repo]: https://github.com/guzzle/guzzle3
-[guzzle-4-repo]: https://github.com/guzzle/guzzle/tree/4.x
-[guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
-[guzzle-6-repo]: https://github.com/guzzle/guzzle/tree/6.5
-[guzzle-7-repo]: https://github.com/guzzle/guzzle/tree/7.12
-[guzzle-8-repo]: https://github.com/guzzle/guzzle/tree/8.0
-[guzzle-3-docs]: https://github.com/guzzle/guzzle3/tree/master/docs
-[guzzle-5-docs]: https://github.com/guzzle/guzzle/tree/5.3/docs
-[guzzle-6-docs]: https://github.com/guzzle/guzzle/tree/6.5/docs
-[guzzle-7-docs]: https://github.com/guzzle/guzzle/blob/7.12/docs/index.md
-[guzzle-8-docs]: docs/index.md
+| Version | Status       | Documentation | PHP Version  |
+|---------|--------------|---------------|--------------|
+| 8.x     | Experimental | [8.x docs](docs/index.md) | >=7.4,<8.6   |
+| 7.x     | Latest       | [7.x docs](https://github.com/guzzle/guzzle/blob/7.12/docs/index.md) | >=7.2.5,<8.6 |
 
 
 ## Security

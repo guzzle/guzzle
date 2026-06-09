@@ -36,4 +36,5 @@ $promise->wait();
 - [Guzzle and PSR-7](psr7.md)
 - [Handlers and Middleware](handlers-and-middleware.md)
 - [Testing Guzzle Clients](testing.md)
+- [Package Roadmap](package-roadmap.md)
 - [FAQ](faq.md)
