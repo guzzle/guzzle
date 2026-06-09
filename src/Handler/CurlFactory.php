@@ -1645,7 +1645,7 @@ final class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_CONNECTTIMEOUT_MS] = $connectTimeout;
         }
 
-        if ($timeoutRequiresNoSignal && \strtoupper(\substr(\PHP_OS, 0, 3)) !== 'WIN') {
+        if ($timeoutRequiresNoSignal && \PHP_OS_FAMILY !== 'Windows') {
             $conf[\CURLOPT_NOSIGNAL] = true;
         }
 
