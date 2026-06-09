@@ -81,6 +81,7 @@ See the [package roadmap](docs/package-roadmap.md) for more guidance on which pa
 |---------|--------------|---------------|--------------|
 | 8.x     | Experimental | [8.x docs](docs/index.md) | >=7.4,<8.6   |
 | 7.x     | Latest       | [7.x docs](https://github.com/guzzle/guzzle/blob/7.12/docs/index.md) | >=7.2.5,<8.6 |
+| 6.x     | End of Life  | [6.x docs](https://github.com/guzzle/guzzle/blob/6.5/docs/index.md) | >=5.5,<8.0   |
 
 
 ## Security
