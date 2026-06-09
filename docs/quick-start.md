@@ -83,7 +83,7 @@ $response = $client->send($request, ['timeout' => 2]);
 
 Client objects provide a great deal of flexibility in how request are transferred including default request options, default handler stack middleware that are used by each request, and a base URI that allows you to send requests with relative URIs.
 
-You can find out more about client middleware in [Handlers and Middleware](handlers-and-middleware.md).
+You can find out more about client middleware in [Middleware](middleware.md).
 
 ### Async Requests
 
@@ -230,6 +230,37 @@ $requests = function ($total) use ($client) {
 $pool = new Pool($client, $requests(100));
 ```
 
+### Batching Requests
+
+When you have a fixed set of requests and just want them sent concurrently with the results collected for you, use the static `GuzzleHttp\Pool::batch()` helper. It sends the requests, blocks until they all settle, and returns an array containing each response — or the rejection reason for a failed transfer — in the same order as the requests.
+
+```php
+use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
+use Psr\Http\Message\ResponseInterface;
+
+$client = new Client();
+
+$requests = [
+    new Request('GET', 'http://httpbin.org/get'),
+    new Request('GET', 'http://httpbin.org/status/500'),
+];
+
+$results = Pool::batch($client, $requests, ['concurrency' => 5]);
+
+foreach ($results as $index => $result) {
+    if ($result instanceof ResponseInterface) {
+        echo $index . ': ' . $result->getStatusCode() . "\n";
+    } else {
+        // The transfer failed; $result is the rejection reason, usually an exception.
+        echo $index . ': failed' . "\n";
+    }
+}
+```
+
+`Pool::batch()` accepts the same options as the `Pool` constructor (`concurrency`, `options`, `fulfilled`, and `rejected`). Because it keeps every request and response in memory, it is not suited to a very large or indeterminate number of requests; use the `Pool` object directly in that case.
+
 ## Using Responses
 
 In the previous examples, we retrieved a `$response` variable or we were delivered a response from a promise. The response object implements a PSR-7 response, `Psr\Http\Message\ResponseInterface`, and contains lots of helpful information.
@@ -300,138 +331,11 @@ $client->request('GET', 'http://httpbin.org', ['query' => 'foo=bar']);
 
 ## Uploading Data
 
-Guzzle provides several methods for uploading data.
-
-You can send requests that contain a stream of data by passing a string, resource returned from `fopen`, or an instance of a `Psr\Http\Message\StreamInterface` to the `body` request option.
-
-```php
-use GuzzleHttp\Psr7;
-
-// Provide the body as a string.
-$r = $client->request('POST', 'http://httpbin.org/post', [
-    'body' => 'raw data'
-]);
-
-// Provide an fopen resource.
-$body = Psr7\Utils::tryFopen('/path/to/file', 'r');
-$r = $client->request('POST', 'http://httpbin.org/post', ['body' => $body]);
-
-// Use the Utils::streamFor method to create a PSR-7 stream.
-$body = Psr7\Utils::streamFor('hello!');
-$r = $client->request('POST', 'http://httpbin.org/post', ['body' => $body]);
-```
-
-An easy way to upload JSON data and set the appropriate header is using the `json` request option:
-
-```php
-$r = $client->request('PUT', 'http://httpbin.org/put', [
-    'json' => ['foo' => 'bar']
-]);
-```
-
-### POST/Form Requests
-
-In addition to specifying the raw data of a request using the `body` request option, Guzzle provides helpful abstractions over sending POST data.
-
-#### Sending Form Fields
-
-Sending `application/x-www-form-urlencoded` POST requests requires that you specify the POST fields as an array in the `form_params` request options.
-
-```php
-$response = $client->request('POST', 'http://httpbin.org/post', [
-    'form_params' => [
-        'field_name' => 'abc',
-        'other_field' => '123',
-        'nested_field' => [
-            'nested' => 'hello'
-        ]
-    ]
-]);
-```
-
-#### Sending Form Files
-
-You can send files along with a form (`multipart/form-data` POST requests), using the `multipart` request option. `multipart` accepts an array of part arrays, where each part array contains the following keys:
-
-- name: (required, string|int) key mapping to the form field name.
-- contents: (required, mixed) Provide a string to send the contents of the file as a string, provide an fopen resource to stream the contents from a PHP stream, provide a `Psr\Http\Message\StreamInterface` to stream the contents from a PSR-7 stream, or provide an array to expand nested multipart fields.
-
-```php
-use GuzzleHttp\Psr7;
-
-$response = $client->request('POST', 'http://httpbin.org/post', [
-    'multipart' => [
-        [
-            'name'     => 'field_name',
-            'contents' => 'abc'
-        ],
-        [
-            'name'     => 'file_name',
-            'contents' => Psr7\Utils::tryFopen('/path/to/file', 'r')
-        ],
-        [
-            'name'     => 'other_file',
-            'contents' => 'hello',
-            'filename' => 'filename.txt',
-            'headers'  => [
-                'X-Foo' => 'this is an extra header to include'
-            ]
-        ]
-    ]
-]);
-```
+Guzzle provides several ways to upload data, including raw request bodies, JSON, form fields, and multipart file uploads. See [Uploading Data](uploading-data.md).
 
 ## Cookies
 
-Guzzle can maintain a cookie session for you if instructed using the `cookies` request option. When sending a request, the `cookies` option must be set to an instance of `GuzzleHttp\Cookie\CookieJarInterface`.
-
-```php
-// Use a specific cookie jar
-$jar = new \GuzzleHttp\Cookie\CookieJar;
-$r = $client->request('GET', 'http://httpbin.org/cookies', [
-    'cookies' => $jar
-]);
-```
-
-You can set `cookies` to `true` in a client constructor if you would like to use a shared cookie jar for all requests.
-
-```php
-// Use a shared client cookie jar
-$client = new \GuzzleHttp\Client(['cookies' => true]);
-$r = $client->request('GET', 'http://httpbin.org/cookies');
-```
-
-Different implementations exist for the `GuzzleHttp\Cookie\CookieJarInterface` :
-
-- The `GuzzleHttp\Cookie\CookieJar` class stores cookies as an array.
-- The `GuzzleHttp\Cookie\FileCookieJar` class persists non-session cookies using a JSON formatted file.
-- The `GuzzleHttp\Cookie\SessionCookieJar` class persists cookies in the client session.
-
-You can manually set cookies into a cookie jar with the named constructor `fromArray(array $cookies, $domain)`.
-
-```php
-$jar = \GuzzleHttp\Cookie\CookieJar::fromArray(
-    [
-        'some_cookie' => 'foo',
-        'other_cookie' => 'barbaz1234'
-    ],
-    'example.org'
-);
-```
-
-Domainless `SetCookie` instances can be stored in a cookie jar for representing or forwarding `Set-Cookie` headers. Because manually-created domainless cookies do not include an origin host, Guzzle will not send them on outgoing requests.
-
-You can get a cookie by its name with the `getCookieByName($name)` method which returns a `GuzzleHttp\Cookie\SetCookie` instance.
-
-```php
-$cookie = $jar->getCookieByName('some_cookie');
-
-$cookie->getValue(); // 'foo'
-$cookie->getDomain(); // 'example.org'
-$cookie->getExpires(); // expiration date as a Unix timestamp
-```
-
-The cookies can be also fetched into an array thanks to the `toArray()` method. The `GuzzleHttp\Cookie\CookieJarInterface` interface extends `Traversable` so it can be iterated in a foreach loop.
+Guzzle can manage cookies for you using a cookie jar. See [Cookies](cookies.md) for using, persisting, and inspecting cookies.
 
 ## Redirects
 
@@ -461,86 +365,7 @@ echo $response->getStatusCode();
 
 ## Exceptions
 
-When a transfer fails, first ask whether Guzzle has a response object yet. The
-answer determines which branch below to catch: `NetworkException` for
-no-response network failures, `ResponseException` for failures with a response,
-and `RequestException` for other request failures. Transfer-level failures after
-response headers are received use `ResponseTransferException`. Use
-`TransferException` or `GuzzleException` only when one catch block should handle
-every Guzzle transfer failure.
-
-```
-. \RuntimeException
-└── TransferException (implements GuzzleException)
-    ├── HandlerClosedException
-    ├── NetworkException (implements NetworkExceptionInterface)
-    │   ├── ConnectException
-    │   │   └── ConnectTimeoutException
-    │   └── NetworkTimeoutException
-    └── RequestException (implements RequestExceptionInterface)
-        └── ResponseException
-            ├── BadResponseException
-            │   ├── ClientException
-            │   └── ServerException
-            ├── ResponseTransferException
-            │   └── ResponseTimeoutException
-            └── TooManyRedirectsException
-```
-
-If a network problem prevents Guzzle from receiving a response, it throws
-`NetworkException`. This covers transport failures while opening the connection
-or moving bytes over the network. When the handler can determine a more specific
-failure, Guzzle uses a more specific subtype such as `ConnectException`,
-`ConnectTimeoutException`, or `NetworkTimeoutException`.
-
-If Guzzle has parsed response headers into a response object, later failures use
-`ResponseException`. This is the only branch that exposes `getResponse()`.
-Transfer failures after headers use `ResponseTransferException`, with response
-timeouts as `ResponseTimeoutException`. Local response failures, such as a sink
-write, failed sink rewind, or response length that cannot be represented on the
-current platform, stay plain `ResponseException`. With Guzzle request methods,
-middleware can also turn completed responses into exceptions: `http_errors`
-turns 4xx responses into `ClientException` and 5xx responses into
-`ServerException`, and redirect middleware can throw
-`TooManyRedirectsException`. `Client::sendRequest()` follows PSR-18 and returns
-redirect, 4xx, and 5xx responses normally instead.
-
-All `TransferException` instances expose `getRequest()`. If a non-network
-request failure occurs before Guzzle has a response object, it throws
-`RequestException`. This includes invalid or handler-unsupported HTTP protocol
-versions, malformed response data that cannot be parsed into a PSR-7 response,
-and no-response transfers aborted by application code. `RequestException` does
-not expose `getResponse()`. When handling these cases separately, catch
-no-response transport failures first, response-aware failures second, and other
-request failures last.
-
-```php
-use GuzzleHttp\Exception\NetworkException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ResponseException;
-use GuzzleHttp\Exception\ResponseTransferException;
-use GuzzleHttp\Psr7\Message;
-
-try {
-    $client->request('GET', 'https://github.com/_abc_123_404');
-} catch (NetworkException $e) {
-    echo Message::toString($e->getRequest());
-} catch (ResponseTransferException $e) {
-    echo Message::toString($e->getRequest());
-    echo Message::toString($e->getResponse());
-} catch (ResponseException $e) {
-    echo Message::toString($e->getRequest());
-    echo Message::toString($e->getResponse());
-} catch (RequestException $e) {
-    echo Message::toString($e->getRequest());
-}
-```
-
-`HandlerClosedException` sits outside the request/response lifecycle. It is used
-when a built-in handler rejects a transfer because the handler was explicitly
-closed before the transfer completed. For example, pending `CurlMultiHandler`
-transfers are rejected with this exception when `CurlMultiHandler::close()` is
-called.
+When a transfer fails, Guzzle throws an exception from its exception hierarchy. See [Exceptions](exceptions.md) for the hierarchy and how to catch transfer failures.
 
 ## Environment Variables
 

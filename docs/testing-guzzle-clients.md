@@ -123,7 +123,7 @@ foreach ($container as $transaction) {
 
 ## Test Web Server
 
-Using mock responses is almost always enough when testing a web service client. When implementing custom [HTTP handlers](handlers-and-middleware.md), you'll need to send actual HTTP requests in order to sufficiently test the handler. However, a best practice is to contact a local web server rather than a server over the internet.
+Using mock responses is almost always enough when testing a web service client. When implementing custom [HTTP handlers](handlers.md), you'll need to send actual HTTP requests in order to sufficiently test the handler. However, a best practice is to contact a local web server rather than a server over the internet.
 
 - Tests are more reliable
 - Tests do not require a network connection
@@ -142,5 +142,6 @@ See the [Test Server Usage](https://github.com/guzzle/test-server/blob/1.0/docs/
 
 - [Quick Start](quick-start.md)
 - [Request Options](request-options.md)
-- [Handlers and Middleware](handlers-and-middleware.md)
+- [Handlers](handlers.md)
+- [Middleware](middleware.md)
 - [Test Server Usage](https://github.com/guzzle/test-server/blob/1.0/docs/test-server-usage.md)
