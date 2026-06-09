@@ -18,6 +18,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class HandlerStack
 {
+    use NonSerializableTrait;
+
     /**
      * @var (callable&THandler)|null
      */
@@ -197,14 +199,35 @@ class HandlerStack
                 throw new \LogicException('No handler has been specified');
             }
 
+            if (!\is_callable($prev)) {
+                throw new \LogicException('Handler must be callable');
+            }
+
             foreach (\array_reverse($this->stack) as $fn) {
+                if (!\is_array($fn) || !\array_key_exists(0, $fn) || !\is_callable($fn[0])) {
+                    throw new \LogicException('Middleware must be callable');
+                }
+
                 $prev = $fn[0]($prev);
+
+                if (!\is_callable($prev)) {
+                    throw new \LogicException('Middleware must return a callable');
+                }
             }
 
             $this->cached = $prev;
         }
 
         return $this->cached;
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->handler = null;
+        $this->stack = [];
+        $this->cached = null;
+
+        throw new \LogicException(self::class.' should never be unserialized');
     }
 
     private function findByName(string $name): int

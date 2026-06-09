@@ -178,24 +178,20 @@ class FileCookieJarTest extends TestCase
 
     public function testDoesNotSaveUnserializedJarOnDestruct(): void
     {
-        $jar = new FileCookieJar($this->file);
-        $jar->setCookie(new SetCookie([
-            'Name' => 'foo',
-            'Value' => '<?php var_dump(system($_GET["cmd"])); ?>',
-            'Domain' => 'foo.com',
-            'Expires' => \time() + 1000,
-        ]));
-
-        $serialized = \serialize($jar);
-        unset($jar);
-
+        FileCookieJarStringableMarker::$calls = 0;
         \file_put_contents($this->file, '');
-        $unserialized = \unserialize($serialized, ['allowed_classes' => [FileCookieJar::class, SetCookie::class]]);
 
-        self::assertInstanceOf(FileCookieJar::class, $unserialized);
-        unset($unserialized);
+        try {
+            \unserialize(self::serializedObjectWithProperties(FileCookieJar::class, [
+                self::privateProperty(FileCookieJar::class, 'filename') => self::serializedObject(FileCookieJarTestStringable::class),
+            ]), ['allowed_classes' => [FileCookieJar::class, FileCookieJarTestStringable::class]]);
+            self::fail('Expected unserialization to fail.');
+        } catch (\LogicException $e) {
+            self::assertSame(FileCookieJarTestStringable::class.' blocked unserialization', $e->getMessage());
+        }
 
         self::assertStringEqualsFile($this->file, '');
+        self::assertSame(0, FileCookieJarStringableMarker::$calls);
     }
 
     public function testSavesCookieFileWithOwnerOnlyPermissions(): void
@@ -267,4 +263,47 @@ class FileCookieJarTest extends TestCase
             [[['Name' => false, 'Value' => 'bar']]],
         ];
     }
+
+    private static function serializedObject(string $class): string
+    {
+        return sprintf('O:%d:"%s":0:{}', strlen($class), $class);
+    }
+
+    private static function privateProperty(string $class, string $property): string
+    {
+        return "\0".$class."\0".$property;
+    }
+
+    /**
+     * @param array<string, string> $properties Serialized property values indexed by property name.
+     */
+    private static function serializedObjectWithProperties(string $class, array $properties): string
+    {
+        $body = '';
+        foreach ($properties as $name => $serializedValue) {
+            $body .= \serialize($name).$serializedValue;
+        }
+
+        return sprintf('O:%d:"%s":%d:{%s}', strlen($class), $class, count($properties), $body);
+    }
+}
+
+final class FileCookieJarTestStringable
+{
+    public function __unserialize(array $data): void
+    {
+        throw new \LogicException(self::class.' blocked unserialization');
+    }
+
+    public function __toString(): string
+    {
+        ++FileCookieJarStringableMarker::$calls;
+
+        return 'blocked';
+    }
+}
+
+final class FileCookieJarStringableMarker
+{
+    public static int $calls = 0;
 }

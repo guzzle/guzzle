@@ -169,15 +169,39 @@ parameters:
 			path: src/Handler/EasyHandle.php
 
 		-
-			message: '#^Call to function is_callable\(\) with callable\(callable&THandler\)\: \(callable&THandler\) will always evaluate to true\.$#'
+			message: '#^Call to function array_key_exists\(\) with 0 and array\{callable\(callable&THandler\)\: \(callable&THandler\), string\|null\} will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
+			path: src/HandlerStack.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\{callable\(callable&THandler\)\: \(callable&THandler\), string\|null\} will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/HandlerStack.php
+
+		-
+			message: '#^Call to function is_callable\(\) with callable\(\)\: mixed&THandler will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/HandlerStack.php
+
+		-
+			message: '#^Call to function is_callable\(\) with callable\(callable&THandler\)\: \(callable&THandler\) will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
 			path: src/HandlerStack.php
 
 		-
 			message: '#^Result of && is always false\.$#'
 			identifier: booleanAnd.alwaysFalse
 			count: 1
+			path: src/HandlerStack.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 2
 			path: src/HandlerStack.php
 
 		-

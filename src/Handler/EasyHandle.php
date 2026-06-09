@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\RequestOptions;
@@ -21,6 +22,8 @@ use Psr\Http\Message\StreamInterface;
  */
 final class EasyHandle
 {
+    use NonSerializableTrait;
+
     /**
      * @var resource|\CurlHandle cURL resource
      */

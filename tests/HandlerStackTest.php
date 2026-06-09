@@ -43,6 +43,57 @@ class HandlerStackTest extends TestCase
         $h->resolve();
     }
 
+    public function testResolveRejectsNonCallableHandler(): void
+    {
+        $stack = new HandlerStack();
+        $handler = new \ReflectionProperty($stack, 'handler');
+
+        if (\PHP_VERSION_ID < 80100) {
+            $handler->setAccessible(true);
+        }
+
+        $handler->setValue($stack, 'id');
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Handler must be callable');
+
+        $stack->resolve();
+    }
+
+    public function testResolveRejectsNonCallableMiddleware(): void
+    {
+        $stack = new HandlerStack(static function (string $value): string {
+            return $value;
+        });
+        $middleware = new \ReflectionProperty($stack, 'stack');
+
+        if (\PHP_VERSION_ID < 80100) {
+            $middleware->setAccessible(true);
+        }
+
+        $middleware->setValue($stack, [[null, 'bad']]);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Middleware must be callable');
+
+        $stack->resolve();
+    }
+
+    public function testResolveRejectsMiddlewareReturningNonCallable(): void
+    {
+        $stack = new HandlerStack(static function (string $value): string {
+            return $value;
+        });
+        $stack->push(static function (callable $next): string {
+            return 'not callable';
+        });
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Middleware must return a callable');
+
+        $stack->resolve();
+    }
+
     public function testPushInOrder(): void
     {
         $meths = $this->getFunctions();

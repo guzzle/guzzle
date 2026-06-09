@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\TransportSharing;
 use Psr\Http\Message\RequestInterface;
@@ -18,6 +19,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class CurlHandler
 {
+    use NonSerializableTrait;
+
     private CurlFactoryInterface $factory;
 
     private bool $ownsFactory;
@@ -95,6 +98,13 @@ final class CurlHandler
         } catch (\Throwable $e) {
             // Destructors must not throw.
         }
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->closed = true;
+
+        throw new \LogicException(self::class.' should never be unserialized');
     }
 
     private function assertOpen(): void

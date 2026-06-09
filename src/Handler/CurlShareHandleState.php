@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\TransportSharing;
 
 /**
@@ -12,6 +13,8 @@ use GuzzleHttp\TransportSharing;
  */
 final class CurlShareHandleState
 {
+    use NonSerializableTrait;
+
     /**
      * @var resource|\CurlShareHandle|\CurlSharePersistentHandle|null
      */
