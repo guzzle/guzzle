@@ -119,7 +119,7 @@ $promise = $client->requestAsync('OPTIONS', 'http://httpbin.org/get');
 
 The promise returned by these methods is a
 `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>`
-provided by the [Guzzle promises library](https://github.com/guzzle/promises/blob/3.0/docs/quickstart.md).
+provided by the [Guzzle Promises library](https://github.com/guzzle/promises/blob/3.0/README.md).
 This means that you can chain `then()` calls off of the promise. These then
 calls are either fulfilled with a successful
 `Psr\Http\Message\ResponseInterface` or rejected with a reason. The reason is

@@ -15,40 +15,13 @@ trivial to integrate with web services.
 - Can send both synchronous and asynchronous requests using the same interface.
 - Uses PSR-7 interfaces for requests, responses, and streams. This allows you
   to utilize other PSR-7 compatible libraries with Guzzle.
-- Supports PSR-18 allowing interoperability between other PSR-18 HTTP Clients.
+- Supports PSR-18, allowing interoperability with other PSR-18 HTTP clients.
 - Abstracts away the underlying HTTP transport, allowing you to write
   environment and transport agnostic code; i.e., no hard dependency on cURL,
   PHP streams, sockets, or non-blocking event loops.
 - Middleware system allows you to augment and compose client behavior.
 
-```php
-$client = new \GuzzleHttp\Client();
-$response = $client->request('GET', 'https://api.github.com/repos/guzzle/guzzle');
-
-echo $response->getStatusCode(); // 200
-echo $response->getHeaderLine('content-type'); // 'application/json; charset=utf8'
-echo $response->getBody(); // '{"id": 1420053, "name": "guzzle", ...}'
-
-// Send an asynchronous request.
-$request = new \GuzzleHttp\Psr7\Request('GET', 'http://httpbin.org');
-$promise = $client->sendAsync($request)->then(function ($response) {
-    echo 'I completed! ' . $response->getBody();
-});
-
-$promise->wait();
-```
-
-## Help and Docs
-
-We use GitHub issues only to discuss bugs and new features. For support please refer to:
-
-- [Documentation](docs/index.md)
-- [Stack Overflow](https://stackoverflow.com/questions/tagged/guzzle)
-- [#guzzle](https://app.slack.com/client/T0D2S9JCT/CE6UAAKL4) channel on [PHP-HTTP Slack](https://slack.httplug.io/)
-- [Gitter](https://gitter.im/guzzle/guzzle)
-
-
-## Installing Guzzle
+## Installation
 
 The recommended way to install Guzzle is through
 [Composer](https://getcomposer.org/).
@@ -61,28 +34,37 @@ composer require guzzlehttp/guzzle
 
 | Version | Status       | Documentation | PHP Version  |
 |---------|--------------|---------------|--------------|
-| 8.x     | Experimental | [8.x docs](docs/index.md) | >=7.4,<8.6   |
-| 7.x     | Latest       | [7.x docs](https://github.com/guzzle/guzzle/blob/7.12/docs/index.md) | >=7.2.5,<8.6 |
-| 6.x     | End of Life  | [6.x docs](https://github.com/guzzle/guzzle/blob/6.5/docs/index.md) | >=5.5,<8.0   |
+| 8.x     | Experimental | [8.x docs](docs/quick-start.md) | >=7.4,<8.6   |
+| 7.x     | Latest       | [7.x docs](https://github.com/guzzle/guzzle/blob/7.12/docs/quickstart.md) | >=7.2.5,<8.6 |
+| 6.x     | End of Life  | [6.x docs](https://github.com/guzzle/guzzle/blob/6.5/docs/index.rst) | >=5.5,<8.0   |
 
+## Quick Start
 
-## Package Roadmap
+```php
+$client = new \GuzzleHttp\Client();
+$response = $client->request('GET', 'https://api.example.com/users/123');
 
-Most users should install `guzzlehttp/guzzle` when they want to send HTTP requests. The Guzzle organization also maintains smaller packages for PSR-7 messages, promises, service clients, OAuth 1.0 signing, URI templates, and testing.
+echo $response->getStatusCode(); // 200
+echo $response->getHeaderLine('content-type'); // 'application/json'
+echo $response->getBody(); // '{"id": 123, "name": "Ada"}'
+```
 
-| Package | Use it for |
-|---------|------------|
-| [`guzzlehttp/guzzle`](docs/index.md) | Sending HTTP requests from applications and libraries. |
-| [`guzzlehttp/psr7`](https://github.com/guzzle/psr7/blob/3.0/docs/messages.md) | Creating and manipulating PSR-7 requests, responses, streams, and URIs. |
-| [`guzzlehttp/promises`](https://github.com/guzzle/promises/blob/3.0/docs/quickstart.md) | Working with promises returned by asynchronous Guzzle operations. |
-| [`guzzlehttp/uri-template`](https://github.com/guzzle/uri-template/blob/2.0/docs/usage.md) | Expanding RFC 6570 URI templates. |
-| [`guzzlehttp/command`](https://github.com/guzzle/command/blob/2.0/docs/service-clients.md) | Building command-based SDK-style service clients. |
-| [`guzzlehttp/guzzle-services`](https://github.com/guzzle/guzzle-services/blob/2.0/docs/service-descriptions.md) | Building service-description-driven clients on top of Guzzle Command. |
-| [`guzzlehttp/oauth-subscriber`](https://github.com/guzzle/oauth-subscriber/blob/1.0/docs/usage.md) | Signing Guzzle requests with OAuth 1.0. |
-| [`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/docs/usage.md) | Testing HTTP clients against a local controllable server. |
+For more examples, see the [Quick Start](docs/quick-start.md).
 
-See the [package roadmap](docs/package-roadmap.md) for more guidance on which package to use.
+## Documentation
 
+- [Quick Start](docs/quick-start.md)
+- [Overview](docs/overview.md)
+- [Request Options](docs/request-options.md)
+- [Guzzle and PSR-7](docs/guzzle-and-psr-7.md)
+- [Handlers and Middleware](docs/handlers-and-middleware.md)
+- [Testing Guzzle Clients](docs/testing-guzzle-clients.md)
+- [FAQ](docs/faq.md)
+- [Package Ecosystem](docs/package-ecosystem.md)
+- [Upgrade Guide](UPGRADING.md)
+- [Changelog](CHANGELOG.md)
+
+We use GitHub issues only to discuss bugs and new features. For support, use [Stack Overflow](https://stackoverflow.com/questions/tagged/guzzle), the [#guzzle](https://app.slack.com/client/T0D2S9JCT/CE6UAAKL4) channel on [PHP-HTTP Slack](https://slack.httplug.io/), or [Gitter](https://gitter.im/guzzle/guzzle).
 
 ## Security
 
