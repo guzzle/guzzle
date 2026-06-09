@@ -57,6 +57,15 @@ The recommended way to install Guzzle is through
 composer require guzzlehttp/guzzle
 ```
 
+## Version Guidance
+
+| Version | Status       | Documentation | PHP Version  |
+|---------|--------------|---------------|--------------|
+| 8.x     | Experimental | [8.x docs](docs/index.md) | >=7.4,<8.6   |
+| 7.x     | Latest       | [7.x docs](https://github.com/guzzle/guzzle/blob/7.12/docs/index.md) | >=7.2.5,<8.6 |
+| 6.x     | End of Life  | [6.x docs](https://github.com/guzzle/guzzle/blob/6.5/docs/index.md) | >=5.5,<8.0   |
+
+
 ## Package Roadmap
 
 Most users should install `guzzlehttp/guzzle` when they want to send HTTP requests. The Guzzle organization also maintains smaller packages for PSR-7 messages, promises, service clients, OAuth 1.0 signing, URI templates, and testing.
@@ -73,15 +82,6 @@ Most users should install `guzzlehttp/guzzle` when they want to send HTTP reques
 | [`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/docs/index.md) | Testing HTTP clients against a local controllable server. |
 
 See the [package roadmap](docs/package-roadmap.md) for more guidance on which package to use.
-
-
-## Version Guidance
-
-| Version | Status       | Documentation | PHP Version  |
-|---------|--------------|---------------|--------------|
-| 8.x     | Experimental | [8.x docs](docs/index.md) | >=7.4,<8.6   |
-| 7.x     | Latest       | [7.x docs](https://github.com/guzzle/guzzle/blob/7.12/docs/index.md) | >=7.2.5,<8.6 |
-| 6.x     | End of Life  | [6.x docs](https://github.com/guzzle/guzzle/blob/6.5/docs/index.md) | >=5.5,<8.0   |
 
 
 ## Security
