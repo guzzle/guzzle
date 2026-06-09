@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Promise as P;
@@ -19,6 +20,8 @@ use Psr\Http\Message\StreamInterface;
  */
 final class MockHandler implements \Countable
 {
+    use NonSerializableTrait;
+
     /**
      * @var list<ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>|callable(RequestInterface, array<array-key, mixed>): (ResponseInterface|\Throwable|PromiseInterface<ResponseInterface, mixed>)>
      */

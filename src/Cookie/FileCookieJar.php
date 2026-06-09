@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Cookie;
 
+use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Utils;
 
 /**
@@ -11,6 +12,8 @@ use GuzzleHttp\Utils;
  */
 class FileCookieJar extends CookieJar
 {
+    use NonSerializableTrait;
+
     /**
      * @var string filename
      */
@@ -28,7 +31,7 @@ class FileCookieJar extends CookieJar
      * PHP object injection file-write gadget when an application unserializes
      * attacker-controlled data.
      */
-    private bool $autoSave = true;
+    private bool $autoSave = false;
 
     /**
      * Create a new FileCookieJar object
@@ -48,6 +51,8 @@ class FileCookieJar extends CookieJar
         if (\file_exists($cookieFile)) {
             $this->load($cookieFile);
         }
+
+        $this->autoSave = true;
     }
 
     /**
@@ -66,6 +71,13 @@ class FileCookieJar extends CookieJar
     public function __wakeup(): void
     {
         $this->autoSave = false;
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->autoSave = false;
+
+        throw new \LogicException(self::class.' should never be unserialized');
     }
 
     /**

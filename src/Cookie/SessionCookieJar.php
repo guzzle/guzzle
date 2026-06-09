@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Cookie;
 
+use GuzzleHttp\NonSerializableTrait;
+
 /**
  * Persists cookies in the client session
  */
 class SessionCookieJar extends CookieJar
 {
+    use NonSerializableTrait;
+
     /**
      * @var string session key
      */
@@ -26,7 +30,7 @@ class SessionCookieJar extends CookieJar
      * PHP object injection $_SESSION-write gadget when an application
      * unserializes attacker-controlled data.
      */
-    private bool $autoSave = true;
+    private bool $autoSave = false;
 
     /**
      * Create a new SessionCookieJar object
@@ -42,6 +46,7 @@ class SessionCookieJar extends CookieJar
         $this->sessionKey = $sessionKey;
         $this->storeSessionCookies = $storeSessionCookies;
         $this->load();
+        $this->autoSave = true;
     }
 
     /**
@@ -60,6 +65,13 @@ class SessionCookieJar extends CookieJar
     public function __wakeup(): void
     {
         $this->autoSave = false;
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->autoSave = false;
+
+        throw new \LogicException(self::class.' should never be unserialized');
     }
 
     /**

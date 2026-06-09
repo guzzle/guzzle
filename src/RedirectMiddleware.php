@@ -25,6 +25,8 @@ use Psr\Http\Message\UriInterface;
  */
 class RedirectMiddleware
 {
+    use NonSerializableTrait;
+
     public const HISTORY_HEADER = 'X-Guzzle-Redirect-History';
 
     public const STATUS_HISTORY_HEADER = 'X-Guzzle-Redirect-Status-History';

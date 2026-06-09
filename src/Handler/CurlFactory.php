@@ -25,6 +25,7 @@ use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
+use GuzzleHttp\NonSerializableTrait;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -36,6 +37,8 @@ use Psr\Http\Message\UriInterface;
  */
 final class CurlFactory implements CurlFactoryInterface
 {
+    use NonSerializableTrait;
+
     private const CURL_CONNECTION_ERRORS = [
         5 => true,   // CURLE_COULDNT_RESOLVE_PROXY
         6 => true,   // CURLE_COULDNT_RESOLVE_HOST
@@ -1943,5 +1946,14 @@ final class CurlFactory implements CurlFactoryInterface
         } catch (\Throwable $e) {
             // Destructors must not throw.
         }
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->closed = true;
+        $this->handles = [];
+        $this->shareHandle = null;
+
+        throw new \LogicException(self::class.' should never be unserialized');
     }
 }

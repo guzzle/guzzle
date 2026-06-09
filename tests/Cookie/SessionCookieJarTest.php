@@ -163,24 +163,20 @@ class SessionCookieJarTest extends TestCase
 
     public function testDoesNotSaveUnserializedJarOnDestruct(): void
     {
-        $jar = new SessionCookieJar($this->sessionVar, true);
-        $jar->setCookie(new SetCookie([
-            'Name' => 'foo',
-            'Value' => 'bar',
-            'Domain' => 'foo.com',
-            'Expires' => \time() + 1000,
-        ]));
-
-        $serialized = \serialize($jar);
-        unset($jar);
-
+        SessionCookieJarStringableMarker::$calls = 0;
         unset($_SESSION[$this->sessionVar]);
-        $unserialized = \unserialize($serialized, ['allowed_classes' => [SessionCookieJar::class, SetCookie::class]]);
 
-        self::assertInstanceOf(SessionCookieJar::class, $unserialized);
-        unset($unserialized);
+        try {
+            \unserialize(self::serializedObjectWithProperties(SessionCookieJar::class, [
+                self::privateProperty(SessionCookieJar::class, 'sessionKey') => self::serializedObject(SessionCookieJarTestStringable::class),
+            ]), ['allowed_classes' => [SessionCookieJar::class, SessionCookieJarTestStringable::class]]);
+            self::fail('Expected unserialization to fail.');
+        } catch (\LogicException $e) {
+            self::assertSame(SessionCookieJarTestStringable::class.' blocked unserialization', $e->getMessage());
+        }
 
         self::assertArrayNotHasKey($this->sessionVar, $_SESSION);
+        self::assertSame(0, SessionCookieJarStringableMarker::$calls);
     }
 
     public static function providerPersistsToSessionParameters(): array
@@ -200,4 +196,47 @@ class SessionCookieJarTest extends TestCase
             ['[{"Name":false,"Value":"bar"}]'],
         ];
     }
+
+    private static function serializedObject(string $class): string
+    {
+        return sprintf('O:%d:"%s":0:{}', strlen($class), $class);
+    }
+
+    private static function privateProperty(string $class, string $property): string
+    {
+        return "\0".$class."\0".$property;
+    }
+
+    /**
+     * @param array<string, string> $properties Serialized property values indexed by property name.
+     */
+    private static function serializedObjectWithProperties(string $class, array $properties): string
+    {
+        $body = '';
+        foreach ($properties as $name => $serializedValue) {
+            $body .= \serialize($name).$serializedValue;
+        }
+
+        return sprintf('O:%d:"%s":%d:{%s}', strlen($class), $class, count($properties), $body);
+    }
+}
+
+final class SessionCookieJarTestStringable
+{
+    public function __unserialize(array $data): void
+    {
+        throw new \LogicException(self::class.' blocked unserialization');
+    }
+
+    public function __toString(): string
+    {
+        ++SessionCookieJarStringableMarker::$calls;
+
+        return 'blocked';
+    }
+}
+
+final class SessionCookieJarStringableMarker
+{
+    public static int $calls = 0;
 }

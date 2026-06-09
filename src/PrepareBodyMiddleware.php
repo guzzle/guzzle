@@ -18,6 +18,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class PrepareBodyMiddleware
 {
+    use NonSerializableTrait;
+
     /**
      * @var callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
      */

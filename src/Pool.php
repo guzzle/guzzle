@@ -34,6 +34,8 @@ use Psr\Http\Message\UriInterface;
  */
 class Pool implements PromisorInterface
 {
+    use NonSerializableTrait;
+
     /**
      * @var EachPromise<array-key, ResponseInterface, mixed>
      */

@@ -7,6 +7,7 @@ namespace GuzzleHttp\Handler;
 use Closure;
 use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -24,6 +25,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 final class CurlMultiHandler
 {
+    use NonSerializableTrait;
+
     private CurlFactoryInterface $factory;
 
     private bool $ownsFactory;
@@ -130,6 +133,13 @@ final class CurlMultiHandler
         } catch (\Throwable $e) {
             // Destructors must not throw.
         }
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->closed = true;
+
+        throw new \LogicException(self::class.' should never be unserialized');
     }
 
     /**

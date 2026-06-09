@@ -36,6 +36,13 @@ Guzzle 8 now requires `psr/http-factory:^1.0` directly.
 [psr7-upgrade-guide]: https://github.com/guzzle/psr7/blob/3.0/UPGRADING.md
 [promises-upgrade-guide]: https://github.com/guzzle/promises/blob/3.0/UPGRADING.md
 
+#### Native PHP Serialization Of Runtime Objects
+
+Runtime objects such as clients, handler stacks, middleware, handlers, pools,
+mock handlers, cURL transport objects, and persistent cookie jars no longer
+support native PHP `serialize()` or `unserialize()`. Persist configuration or
+cookie data explicitly and rebuild runtime objects during bootstrap.
+
 #### PSR-7 Header Values and Request Methods
 
 Guzzle 8 uses Guzzle PSR-7 3.x, and several of its behavior changes surface

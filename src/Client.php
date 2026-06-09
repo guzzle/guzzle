@@ -28,6 +28,7 @@ use Psr\Http\Message\UriInterface;
 class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 {
     use ClientTrait;
+    use NonSerializableTrait;
 
     /**
      * @var array Default request options

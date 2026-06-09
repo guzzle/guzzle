@@ -17,6 +17,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class RetryMiddleware
 {
+    use NonSerializableTrait;
+
     /**
      * @var callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
      */

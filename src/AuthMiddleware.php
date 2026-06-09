@@ -21,6 +21,8 @@ use Psr\Http\Message\StreamInterface;
  */
 final class AuthMiddleware
 {
+    use NonSerializableTrait;
+
     private const DIGEST_MAX_RETRIES = 2;
 
     /**

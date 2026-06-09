@@ -19,6 +19,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
+use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
@@ -35,6 +36,8 @@ use Psr\Http\Message\UriInterface;
  */
 final class StreamHandler
 {
+    use NonSerializableTrait;
+
     private const CONNECTION_ERRORS = [
         'php_network_getaddresses:',
         'getaddrinfo',
