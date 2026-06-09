@@ -69,6 +69,9 @@ $jar = new SessionCookieJar('guzzle_cookies');
 
 The `storeSessionCookies` flag controls which cookies are persisted. When it is `false` (the default), only cookies with an expiry are saved; set it to `true` to also persist session cookies that have no expiry.
 
+> [!NOTE]
+> `FileCookieJar` writes the cookie file with owner-only permissions (`0600`) where the filesystem supports them. Persisted cookies can include credentials, so store the file in a directory only the owner can access and keep it out of any web-served location.
+
 ## Managing Cookies
 
 `CookieJar` implements the full `CookieJarInterface`, so you can inspect and mutate the jar directly. The constructor accepts a strict-mode flag and an optional set of cookies to seed the jar:

@@ -89,6 +89,10 @@ class FileCookieJar extends CookieJar
         if (false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
+
+        // Best-effort: restrict the cookie file to the owner so persisted
+        // cookies are not world-readable.
+        @\chmod($filename, 0600);
     }
 
     /**

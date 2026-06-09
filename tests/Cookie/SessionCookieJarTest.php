@@ -161,6 +161,28 @@ class SessionCookieJarTest extends TestCase
         unset($jar, $reloaded, $_SESSION[$this->sessionVar]);
     }
 
+    public function testDoesNotSaveUnserializedJarOnDestruct(): void
+    {
+        $jar = new SessionCookieJar($this->sessionVar, true);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
+        ]));
+
+        $serialized = \serialize($jar);
+        unset($jar);
+
+        unset($_SESSION[$this->sessionVar]);
+        $unserialized = \unserialize($serialized, ['allowed_classes' => [SessionCookieJar::class, SetCookie::class]]);
+
+        self::assertInstanceOf(SessionCookieJar::class, $unserialized);
+        unset($unserialized);
+
+        self::assertArrayNotHasKey($this->sessionVar, $_SESSION);
+    }
+
     public static function providerPersistsToSessionParameters(): array
     {
         return [

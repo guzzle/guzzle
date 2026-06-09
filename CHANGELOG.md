@@ -23,7 +23,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Hardened `FileCookieJar` persistence against unsafe unserialization
+- Hardened `FileCookieJar` and `SessionCookieJar` persistence against unsafe unserialization
+- Restrict persisted `FileCookieJar` cookie files to owner-only permissions
 - Adjusted `guzzlehttp/promises` version constraint to `^3.0`
 - Adjusted `guzzlehttp/psr7` version constraint to `^3.0`
 - Quote multipart `Content-Type` boundary parameters when required

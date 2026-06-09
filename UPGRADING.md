@@ -662,14 +662,18 @@ $jar->clear();
 
 If you pass a path or name, that value is now treated as provided.
 
-#### FileCookieJar Serialization
+#### Cookie Jar Persistence
 
-`FileCookieJar` instances restored with `unserialize()` no longer save cookies
-automatically on destruction. If your application intentionally unserializes a
-`FileCookieJar` and expects changes to persist, call `save()` explicitly.
+`FileCookieJar` and `SessionCookieJar` instances restored with `unserialize()`
+no longer save automatically on destruction. If your application intentionally
+unserializes one of these jars and expects changes to persist, call `save()`
+explicitly.
 
-Saved cookie files now JSON-escape tag characters. Existing cookie files remain
-readable, and cookie values are unchanged when loaded.
+`FileCookieJar` now writes its cookie file with owner-only permissions (`0600`),
+so persisted cookies are not world-readable under the default umask; if another
+user or process must read the file, adjust its permissions after saving. Saved
+cookie files also JSON-escape tag characters, and existing cookie files remain
+readable with unchanged cookie values.
 
 #### Retry Delay Callbacks
 
