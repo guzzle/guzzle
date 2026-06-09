@@ -47,6 +47,11 @@ class HandlerStackTest extends TestCase
     {
         $stack = new HandlerStack();
         $handler = new \ReflectionProperty($stack, 'handler');
+
+        if (\PHP_VERSION_ID < 80100) {
+            $handler->setAccessible(true);
+        }
+
         $handler->setValue($stack, 'id');
 
         $this->expectException(\LogicException::class);
@@ -61,6 +66,11 @@ class HandlerStackTest extends TestCase
             return $value;
         });
         $middleware = new \ReflectionProperty($stack, 'stack');
+
+        if (\PHP_VERSION_ID < 80100) {
+            $middleware->setAccessible(true);
+        }
+
         $middleware->setValue($stack, [[null, 'bad']]);
 
         $this->expectException(\LogicException::class);
