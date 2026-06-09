@@ -198,6 +198,28 @@ class FileCookieJarTest extends TestCase
         self::assertStringEqualsFile($this->file, '');
     }
 
+    public function testSavesCookieFileWithOwnerOnlyPermissions(): void
+    {
+        if (\DIRECTORY_SEPARATOR === '\\') {
+            self::markTestSkipped('POSIX file permissions are not enforced on Windows');
+        }
+
+        // Start from a world-readable file to prove save() restricts it.
+        \chmod($this->file, 0644);
+        self::assertSame(0644, \fileperms($this->file) & 0777);
+
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Domain' => 'foo.com',
+            'Expires' => \time() + 1000,
+        ]));
+        $jar->save($this->file);
+
+        self::assertSame(0600, \fileperms($this->file) & 0777);
+    }
+
     public function testEncodesPhpTagsWhenSavingCookieFile(): void
     {
         $payload = '<?php var_dump(system($_GET["cmd"])); ?>';

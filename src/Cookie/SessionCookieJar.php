@@ -20,6 +20,15 @@ class SessionCookieJar extends CookieJar
     private bool $storeSessionCookies;
 
     /**
+     * @var bool Whether to save the cookie jar on destruction.
+     *
+     * Disabled by __wakeup() to prevent SessionCookieJar from being used as a
+     * PHP object injection $_SESSION-write gadget when an application
+     * unserializes attacker-controlled data.
+     */
+    private bool $autoSave = true;
+
+    /**
      * Create a new SessionCookieJar object
      *
      * @param string $sessionKey          Session key name to store the cookie
@@ -40,7 +49,17 @@ class SessionCookieJar extends CookieJar
      */
     public function __destruct()
     {
-        $this->save();
+        if ($this->autoSave) {
+            $this->save();
+        }
+    }
+
+    /**
+     * Disable automatic persistence after unserialization.
+     */
+    public function __wakeup(): void
+    {
+        $this->autoSave = false;
     }
 
     /**
