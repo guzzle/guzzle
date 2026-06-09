@@ -228,19 +228,25 @@ class RedirectMiddleware
             );
         }
 
-        // Add the Referer header if it is told to do so and only
-        // add the header if we are not redirecting from https to http.
+        $crossOrigin = Psr7\UriComparator::isCrossOrigin($request->getUri(), $modify['uri']);
+
+        // Add a Referer only when the scheme is unchanged, and reduce it to the
+        // origin on cross-origin redirects so a secret-bearing path or query is
+        // not leaked (strict-origin-when-cross-origin, like modern browsers).
         if ($options['allow_redirects']['referer']
             && $modify['uri']->getScheme() === $request->getUri()->getScheme()
         ) {
-            $uri = $request->getUri()->withUserInfo('');
-            $modify['set_headers']['Referer'] = (string) $uri;
+            $referer = $request->getUri()->withUserInfo('')->withFragment('');
+            if ($crossOrigin) {
+                $referer = $referer->withPath('/')->withQuery('');
+            }
+            $modify['set_headers']['Referer'] = (string) $referer;
         } else {
             $modify['remove_headers'][] = 'Referer';
         }
 
         // Remove Authorization and Cookie headers if URI is cross-origin.
-        if (Psr7\UriComparator::isCrossOrigin($request->getUri(), $modify['uri'])) {
+        if ($crossOrigin) {
             $modify['remove_headers'][] = 'Authorization';
             $modify['remove_headers'][] = 'Cookie';
         }

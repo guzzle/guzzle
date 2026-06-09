@@ -46,6 +46,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Move built-in Basic and Digest authentication handling to the default auth middleware
 - Remove first-class NTLM authentication from the `auth` request option
 - Stop forwarding the generic `auth` request option when following cross-origin redirects
+- Limit the `Referer` header to the origin on cross-origin redirects
 - Reject invalid `HandlerStack::remove()` arguments
 - Require `Pool` request collections to be iterable
 - Raised the built-in cURL handler floor to libcurl 7.34.0 with SSL support
