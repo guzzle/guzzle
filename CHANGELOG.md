@@ -34,6 +34,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix `no` list and `NO_PROXY` matching to support IP CIDR ranges, matching libcurl
 
 
+## 7.11.2 - 2026-06-12
+
+### Fixed
+
+- Fixed non-finite float values emitting coercion warnings on PHP 8.5
+
+
 ## 7.11.1 - 2026-06-07
 
 ### Fixed
