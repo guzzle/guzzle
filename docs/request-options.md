@@ -898,7 +898,7 @@ Pass a string to specify a proxy for all protocols.
 $client->request('GET', '/', ['proxy' => 'http://localhost:8125']);
 ```
 
-Pass an associative array to specify HTTP proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair as a comma-delimited string or an array to provide a list of host names that should not be proxied to. No-proxy entries may include ports, for example `example.com:8080` or `[::1]:8080`. The `http`, `https`, and `no` entries may be set to `null` to leave that entry unconfigured.
+Pass an associative array to specify HTTP proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair as a comma-delimited string or an array to provide a list of host names that should not be proxied to. No-proxy entries may include ports, for example `example.com:8080` or `[::1]:8080`, or IP CIDR ranges, for example `10.0.0.0/8` or `fd00::/8`. The `http`, `https`, and `no` entries may be set to `null` to leave that entry unconfigured.
 
 > [!NOTE]
 > Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
@@ -915,6 +915,21 @@ $client->request('GET', '/', [
 
 > [!NOTE]
 > You can provide proxy URLs that contain a scheme, username, and password. For example, `"http://username:password@192.168.16.1:10"`.
+
+### Proxy environment variables
+
+The cURL handlers always configure libcurl's proxy options explicitly, so libcurl never reads proxy environment variables itself. When the `proxy` request option makes a decision for a request — a string proxy, or an array whose key matches the request scheme (including a `no` list match) — that decision is final, and proxy environment variables are ignored for the request. In particular, the `no_proxy`/`NO_PROXY` environment variables do not bypass an explicitly configured proxy; add the hosts to the option's `no` list instead.
+
+When the `proxy` request option makes no decision for a request, the cURL handlers resolve the proxy from the environment with the same semantics libcurl uses:
+
+1. The lowercase scheme-specific variable, e.g. `https_proxy` for an "https" request. For "http" requests, the uppercase `HTTP_PROXY` variant is never read (see <https://httpoxy.org>, and the Windows note below); for other schemes the uppercase variant is read when the lowercase one is not set.
+2. `all_proxy`, then `ALL_PROXY`.
+
+The first variable with a non-empty value ends the lookup; variables set to an empty string are treated as unset, matching libcurl. When an environment proxy is found, the `no_proxy` (or `NO_PROXY`) environment variable is matched against the request by Guzzle, using the same rules as the option's `no` list (including CIDR ranges); a match disables the proxy for the request.
+
+Only the real process environment is consulted, matching libcurl: values injected per-request by the SAPI (e.g. `fastcgi_param` or `SetEnv`) are not read. On Windows, environment variable names are case-insensitive, so the lowercase-only protection for `HTTP_PROXY` is not possible; outside the CLI SAPI on Windows, proxy environment variables are therefore not resolved at all, and the `proxy` request option must be used instead.
+
+Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps the uppercase `HTTP_PROXY` (CLI SAPI only), `HTTPS_PROXY`, and `NO_PROXY` environment variables into a default for the `proxy` request option. See [Environment Variables](quickstart.md#environment-variables).
 
 ## query
 
