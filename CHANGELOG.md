@@ -32,7 +32,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added native property types to supported public cURL handler state properties
 - Added a `string` return type to `SetCookie::__toString()`
 - Validate proxy and no-proxy option types strictly across handlers
-- Downgrade HTTP/3 requests to HTTP/2 when the proxy is resolved from environment variables
+- Downgrade HTTP/3 requests to HTTP/2 or HTTP/1.1 when the proxy is resolved from environment variables
 - Pass the request as the second argument to `on_headers` callbacks
 - Declare strict types across remaining source files
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use

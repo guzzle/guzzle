@@ -487,8 +487,9 @@ preserved instead of removed.
 
 When a request uses HTTP/3 and a proxy is resolved from the environment, the
 request is now downgraded to HTTP/2 or HTTP/1.1 in the same way as for proxies
-configured through the `proxy` request option, since HTTP/3 cannot be carried
-over an HTTP proxy.
+configured through the `proxy` request option, since current libcurl releases
+cannot carry HTTP/3 over an HTTP proxy. A request excluded by the environment
+`no_proxy` list stays direct and keeps HTTP/3.
 
 #### Handler-Specific Option Overrides
 
@@ -785,7 +786,9 @@ pass a custom delay callable to `Middleware::retry()`.
 Use `ProxyOptions::resolve()` when implementing Guzzle-compatible proxy handling
 in a custom handler. Use `ProxyOptions::isUriInNoProxy()` when checking whether a
 request URI matches a no-proxy list. Use `ProxyOptions::isHostInNoProxy()` only
-when checking a host string directly.
+when checking a host string directly. The environment-variable fallback performed
+by the built-in cURL handlers is not part of `ProxyOptions::resolve()`; custom
+handlers that want it must implement their own environment lookup.
 
 These helpers use the same normalized no-proxy matching as the `Utils` helpers
 in Guzzle 7.12 and later: domain matching is case-insensitive and ignores a

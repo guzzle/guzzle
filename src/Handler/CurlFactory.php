@@ -1128,9 +1128,9 @@ final class CurlFactory implements CurlFactoryInterface
      * Resolves the proxy selection for a request, falling back to the proxy
      * environment variables when the proxy request option makes no decision.
      *
-     * The environment no_proxy list is matched here with the same rules as
-     * the proxy option's "no" list, so behavior does not depend on the
-     * installed libcurl's matcher.
+     * The environment no_proxy list is tokenized the way libcurl tokenizes
+     * it and matched here with the same rules as the proxy option's "no"
+     * list, so behavior does not depend on the installed libcurl's matcher.
      *
      * @param mixed $proxyOption
      */
@@ -1150,7 +1150,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         $noProxy = ProxyEnvironment::getNoProxy();
-        if ($noProxy !== null && ProxyOptions::isUriInNoProxy($uri, ProxyOptions::normalizeNoProxy($noProxy))) {
+        if ($noProxy !== null && ProxyOptions::isUriInNoProxy($uri, ProxyEnvironment::splitNoProxy($noProxy))) {
             return ProxySelection::bypassed();
         }
 

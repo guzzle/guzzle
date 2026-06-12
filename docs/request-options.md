@@ -920,7 +920,7 @@ Pass an associative array to specify HTTP proxies for specific URI schemes (i.e.
 > [!NOTE]
 > Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
 
-Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply Guzzle-compatible proxy selection. The helper resolves the documented `proxy` request option shape, including scheme-specific proxy entries and `no` exclusion rules. Handlers remain responsible for translating the selected proxy string into their transport-specific configuration.
+Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply Guzzle-compatible proxy selection. The helper resolves the documented `proxy` request option shape, including scheme-specific proxy entries and `no` exclusion rules. Handlers remain responsible for translating the selected proxy string into their transport-specific configuration. The environment-variable fallback performed by the built-in cURL handlers is not part of this helper; custom handlers that want it must implement their own environment lookup.
 
 ```php
 use GuzzleHttp\ProxyOptions;
@@ -952,27 +952,28 @@ $client->request('GET', '/', [
 
 The cURL handlers always configure libcurl's proxy options explicitly, so libcurl never reads proxy environment variables itself. When the `proxy` request option makes a decision for a request — a string proxy, or an array whose key matches the request scheme (including a `no` list match) — that decision is final, and proxy environment variables are ignored for the request. In particular, the `no_proxy`/`NO_PROXY` environment variables do not bypass an explicitly configured proxy; add the hosts to the option's `no` list instead.
 
-When the `proxy` request option makes no decision for a request, the cURL handlers resolve the proxy from the environment with the same lookup conventions libcurl uses:
+When the `proxy` request option makes no decision for a request, the cURL handlers resolve the proxy from the environment with the same lookup semantics libcurl uses:
 
 1. The lowercase scheme-specific variable, e.g. `https_proxy` for an "https" request. For "http" requests, the uppercase `HTTP_PROXY` variant is never read (see <https://httpoxy.org>, and the Windows note below); for other schemes the uppercase variant is read when the lowercase one is not set.
 2. `all_proxy`, then `ALL_PROXY`.
 
-The first variable with a non-empty value ends the lookup; variables set to an empty string are treated as unset, matching libcurl. When an environment proxy is found, the `no_proxy` (or `NO_PROXY`) environment variable is matched against the request by Guzzle, using the same rules as the option's `no` list (including CIDR ranges); a match disables the proxy for the request.
+The first variable with a non-empty value ends the lookup; variables set to an empty string are treated as unset, matching libcurl. When an environment proxy is found, the `no_proxy` (or `NO_PROXY`) environment variable is matched against the request by Guzzle. The value is tokenized the way libcurl tokenizes it — entries may be separated by commas or whitespace, and a single leading dot is ignored, so `.example.com` bypasses `example.com` and its subdomains — and each entry is then matched using the same rules as the option's `no` list (including CIDR ranges); a match disables the proxy for the request.
 
-Only the real process environment is consulted, matching libcurl: values injected per-request by the SAPI (e.g. `fastcgi_param` or `SetEnv`) are not read. On Windows, environment variable names are case-insensitive, so the lowercase-only protection for `HTTP_PROXY` is not possible; outside the CLI SAPI on Windows, proxy environment variables are therefore not resolved at all, and the `proxy` request option must be used instead.
+Only the real process environment is consulted, matching libcurl: values injected per-request by the SAPI (e.g. `fastcgi_param` or `SetEnv`) are not read by this handler-level resolution. On Windows, environment variable names are case-insensitive, so the lowercase-only protection for `HTTP_PROXY` is not possible; outside the CLI SAPI on Windows, proxy environment variables are therefore not resolved at all, and the `proxy` request option must be used instead.
 
-Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps the uppercase `HTTP_PROXY` (CLI SAPI only), `HTTPS_PROXY`, and `NO_PROXY` environment variables into a default for the `proxy` request option. See [Environment Variables](quick-start.md#environment-variables).
+Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps the uppercase `HTTP_PROXY` (CLI SAPI only), `HTTPS_PROXY`, and `NO_PROXY` environment variables into a default for the `proxy` request option. The client mapping reads `$_SERVER` first, so it does honor SAPI-provided values such as those set with `fastcgi_param` or `SetEnv`. See [Environment Variables](quick-start.md#environment-variables).
 
 > [!NOTE]
 > When sending HTTPS requests, or requests explicitly tunneled with
 > `CURLOPT_HTTPPROXYTUNNEL`, through an authenticated HTTP or HTTPS proxy,
-> libcurl versions before 8.20.0 could reuse an existing proxy tunnel even
-> after proxy credentials changed. Guzzle avoids that reuse on affected libcurl
-> versions when the proxy URL is configured through the `proxy` option or
-> resolved from the environment, including cURL proxy credential options
-> supplied through the `curl` request option. Raw `CURLOPT_PROXY` is rejected;
-> use the `proxy` request option for the proxy URL. Custom proxy authentication
-> sent with `CURLOPT_PROXYHEADER`
+> libcurl versions before 8.19.0 could reuse an existing proxy tunnel even
+> after proxy credentials changed, and 8.19.0 still contains related proxy
+> credential leak flaws that were fixed in 8.20.0. Guzzle therefore avoids
+> tunnel reuse on libcurl versions older than 8.20.0 when the proxy URL is
+> configured through the `proxy` option or resolved from the environment,
+> including cURL proxy credential options supplied through the `curl` request
+> option. Raw `CURLOPT_PROXY` is rejected; use the `proxy` request option for
+> the proxy URL. Custom proxy authentication sent with `CURLOPT_PROXYHEADER`
 > also avoids tunnel reuse because libcurl does not include those header values
 > in its connection matching. Fixed libcurl versions keep normal connection
 > reuse behavior for proxy URL and cURL proxy credential options. Advanced
@@ -1478,6 +1479,6 @@ HTTP/2 uses libcurl's `CURL_HTTP_VERSION_2_0`. HTTP/3 uses libcurl's `CURL_HTTP_
 
 HTTP/3 support requires PHP to expose cURL's HTTP/3 constants, runtime libcurl 7.66.0 or higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3` feature. A libcurl version number is not enough by itself: libcurl must also be built with HTTP/3 and QUIC support, commonly through an HTTP/3 backend such as ngtcp2 with nghttp3 or quiche.
 
-A request configured with `version => 3.0` must pass HTTP/3 support checks even if it uses a proxy. If a proxy is actually selected, Guzzle does not try HTTP/3 through the proxy; it sends the transfer as HTTP/2 when available, otherwise HTTP/1.1. A matching proxy `no` rule makes the request direct, so HTTP/3 can still be attempted.
+A request configured with `version => 3.0` must pass HTTP/3 support checks even if it uses a proxy. If a proxy is actually selected — whether through the `proxy` option or resolved from the environment — Guzzle does not try HTTP/3 through the proxy; it sends the transfer as HTTP/2 when available, otherwise HTTP/1.1. A matching proxy `no` rule or environment `no_proxy` entry makes the request direct, so HTTP/3 can still be attempted.
 
 For HTTPS cURL requests, Guzzle sets a minimum of TLS 1.2 by default. That minimum also applies when HTTP/2 or HTTP/3 is requested, because cURL may fall back to a TLS-based HTTP/1.1 or HTTP/2 connection. If you set `crypto_method` to TLS 1.3, Guzzle keeps that stricter setting when the cURL stack exposes TLS 1.3 configuration. Raw `CURLOPT_SSLVERSION` values passed through the `curl` option are rejected because TLS version handling is managed by Guzzle.

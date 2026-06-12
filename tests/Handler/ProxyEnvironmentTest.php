@@ -143,6 +143,27 @@ class ProxyEnvironmentTest extends TestCase
         });
     }
 
+    public function testSplitsNoProxyOnCommasAndBlanks(): void
+    {
+        self::assertSame(
+            ['host1.test', 'host2.test', 'host3.test', 'host4.test'],
+            ProxyEnvironment::splitNoProxy("host1.test host2.test,host3.test ,\thost4.test")
+        );
+    }
+
+    public function testIgnoresASingleLeadingDotInNoProxyEntries(): void
+    {
+        self::assertSame(
+            ['example.com', '.foo.com'],
+            ProxyEnvironment::splitNoProxy('.example.com,..foo.com')
+        );
+    }
+
+    public function testDropsEmptyNoProxyEntries(): void
+    {
+        self::assertSame([], ProxyEnvironment::splitNoProxy(' ,, . '));
+    }
+
     private static function skipIfWindows(): void
     {
         if (\PHP_OS_FAMILY === 'Windows') {
