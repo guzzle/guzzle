@@ -9,7 +9,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
 - Add generic and structured PHPDoc annotations to client request/config option, async promise, handler, middleware, pool, and mock handler APIs
-- Add CIDR notation support for IP no-proxy rules
 - Add `ConnectTimeoutException` for connect-phase timeouts, extending `ConnectException`
 - Add `NetworkException` for no-response network failures
 - Add `NetworkTimeoutException` for no-response transport timeouts
@@ -32,8 +31,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added parameter and return types to `SetCookie` methods
 - Added native property types to supported public cURL handler state properties
 - Added a `string` return type to `SetCookie::__toString()`
-- Normalize and validate proxy no-proxy options consistently across handlers
-- Normalize no-proxy domain matching, including trailing-dot FQDNs, and IP literal matching consistently
+- Validate proxy and no-proxy option types strictly across handlers
+- Downgrade HTTP/3 requests to HTTP/2 when the proxy is resolved from environment variables
 - Pass the request as the second argument to `on_headers` callbacks
 - Declare strict types across remaining source files
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use

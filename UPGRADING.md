@@ -478,28 +478,17 @@ timeout.
 The `proxy` request option is validated more strictly. Proxy values must be
 strings, and the `proxy['no']` value may be either an array of strings or a
 comma-delimited string such as the value from the `NO_PROXY` environment
-variable. Other values now throw `InvalidArgumentException`.
+variable. Other values now throw `InvalidArgumentException`. Guzzle 7 skips
+invalid `no` entries instead of rejecting them.
 
-No-proxy matching is normalized more consistently. Domain entries are matched
-case-insensitively, a single trailing DNS root dot is ignored for domain
-matching, exact IP literal entries compare normalized IP addresses, and
-`NO_PROXY` environment entries are trimmed with the same parser used for request
-options. Internal spaces in `NO_PROXY` entries are preserved instead of removed.
+`NO_PROXY` environment entries mapped by the client are trimmed with the same
+parser used for request options, and internal spaces in `NO_PROXY` entries are
+preserved instead of removed.
 
-Explicit proxy options also override environment no-proxy settings. If you pass
-a `proxy` request option and want to exclude hosts, provide the `no` value
-explicitly:
-
-```php
-$noProxy = getenv('NO_PROXY');
-
-$client->request('GET', '/', [
-    'proxy' => [
-        'http' => 'http://localhost:8125',
-        'no' => $noProxy === false ? '' : $noProxy,
-    ],
-]);
-```
+When a request uses HTTP/3 and a proxy is resolved from the environment, the
+request is now downgraded to HTTP/2 or HTTP/1.1 in the same way as for proxies
+configured through the `proxy` request option, since HTTP/3 cannot be carried
+over an HTTP proxy.
 
 #### Handler-Specific Option Overrides
 
@@ -798,10 +787,12 @@ in a custom handler. Use `ProxyOptions::isUriInNoProxy()` when checking whether 
 request URI matches a no-proxy list. Use `ProxyOptions::isHostInNoProxy()` only
 when checking a host string directly.
 
-These helpers use Guzzle 8's normalized no-proxy matching rather than preserving
-the old `Utils::isHostInNoProxy()` semantics. Domain matching is
-case-insensitive and ignores a single trailing DNS root dot, IP literals are
-normalized before comparison, and CIDR entries match IP literal hosts.
+These helpers use the same normalized no-proxy matching as the `Utils` helpers
+in Guzzle 7.12 and later: domain matching is case-insensitive and ignores a
+single trailing DNS root dot, IP literals are normalized before comparison, and
+CIDR entries match IP literal hosts. The remaining difference is strictness —
+the `ProxyOptions` helpers throw `InvalidArgumentException` for non-string list
+entries, where the Guzzle 7 `Utils` helpers skip them.
 
 #### Removed Type Description Helper API
 

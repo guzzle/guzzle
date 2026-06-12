@@ -948,15 +948,31 @@ $client->request('GET', '/', [
 > [!NOTE]
 > You can provide proxy URLs that contain a scheme, username, and password. For example, `"http://username:password@192.168.16.1:10"`.
 
+### Proxy environment variables
+
+The cURL handlers always configure libcurl's proxy options explicitly, so libcurl never reads proxy environment variables itself. When the `proxy` request option makes a decision for a request — a string proxy, or an array whose key matches the request scheme (including a `no` list match) — that decision is final, and proxy environment variables are ignored for the request. In particular, the `no_proxy`/`NO_PROXY` environment variables do not bypass an explicitly configured proxy; add the hosts to the option's `no` list instead.
+
+When the `proxy` request option makes no decision for a request, the cURL handlers resolve the proxy from the environment with the same lookup conventions libcurl uses:
+
+1. The lowercase scheme-specific variable, e.g. `https_proxy` for an "https" request. For "http" requests, the uppercase `HTTP_PROXY` variant is never read (see <https://httpoxy.org>, and the Windows note below); for other schemes the uppercase variant is read when the lowercase one is not set.
+2. `all_proxy`, then `ALL_PROXY`.
+
+The first variable with a non-empty value ends the lookup; variables set to an empty string are treated as unset, matching libcurl. When an environment proxy is found, the `no_proxy` (or `NO_PROXY`) environment variable is matched against the request by Guzzle, using the same rules as the option's `no` list (including CIDR ranges); a match disables the proxy for the request.
+
+Only the real process environment is consulted, matching libcurl: values injected per-request by the SAPI (e.g. `fastcgi_param` or `SetEnv`) are not read. On Windows, environment variable names are case-insensitive, so the lowercase-only protection for `HTTP_PROXY` is not possible; outside the CLI SAPI on Windows, proxy environment variables are therefore not resolved at all, and the `proxy` request option must be used instead.
+
+Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps the uppercase `HTTP_PROXY` (CLI SAPI only), `HTTPS_PROXY`, and `NO_PROXY` environment variables into a default for the `proxy` request option. See [Environment Variables](quick-start.md#environment-variables).
+
 > [!NOTE]
 > When sending HTTPS requests, or requests explicitly tunneled with
 > `CURLOPT_HTTPPROXYTUNNEL`, through an authenticated HTTP or HTTPS proxy,
-> libcurl versions before 8.19.0 could reuse an existing proxy tunnel even
+> libcurl versions before 8.20.0 could reuse an existing proxy tunnel even
 > after proxy credentials changed. Guzzle avoids that reuse on affected libcurl
-> versions when the proxy URL is configured through the `proxy` option,
-> including cURL proxy credential options supplied through the `curl` request
-> option. Raw `CURLOPT_PROXY` is rejected; use the `proxy` request option for
-> the proxy URL. Custom proxy authentication sent with `CURLOPT_PROXYHEADER`
+> versions when the proxy URL is configured through the `proxy` option or
+> resolved from the environment, including cURL proxy credential options
+> supplied through the `curl` request option. Raw `CURLOPT_PROXY` is rejected;
+> use the `proxy` request option for the proxy URL. Custom proxy authentication
+> sent with `CURLOPT_PROXYHEADER`
 > also avoids tunnel reuse because libcurl does not include those header values
 > in its connection matching. Fixed libcurl versions keep normal connection
 > reuse behavior for proxy URL and cURL proxy credential options. Advanced

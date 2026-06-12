@@ -17,6 +17,7 @@ use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
+use GuzzleHttp\ProxySelection;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\FnStream;
@@ -1124,6 +1125,40 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
+     * Resolves the proxy selection for a request, falling back to the proxy
+     * environment variables when the proxy request option makes no decision.
+     *
+     * The environment no_proxy list is matched here with the same rules as
+     * the proxy option's "no" list, so behavior does not depend on the
+     * installed libcurl's matcher.
+     *
+     * @param mixed $proxyOption
+     */
+    private static function resolveProxySelection(UriInterface $uri, $proxyOption): ProxySelection
+    {
+        $selection = ProxyOptions::resolve($uri, $proxyOption);
+
+        // Any option decision (proxy, bypassed, or disabled) is final; only
+        // a none() selection leaves room for the environment.
+        if ($selection->hasProxy() || $selection->shouldDisableProxy()) {
+            return $selection;
+        }
+
+        $envProxy = ProxyEnvironment::getProxyForScheme($uri->getScheme());
+        if ($envProxy === null) {
+            return $selection;
+        }
+
+        $noProxy = ProxyEnvironment::getNoProxy();
+        if ($noProxy !== null && ProxyOptions::isUriInNoProxy($uri, ProxyOptions::normalizeNoProxy($noProxy))) {
+            return ProxySelection::bypassed();
+        }
+
+        // $envProxy is never '' (empty env values are treated as unset).
+        return ProxySelection::proxy($envProxy);
+    }
+
+    /**
      * @param array<int|string, mixed> $conf
      */
     private static function getProxyForConnectionReuse(array $conf): ?string
@@ -1307,7 +1342,7 @@ final class CurlFactory implements CurlFactoryInterface
                 throw new RequestException('HTTP/3 is not supported by this cURL installation.', $easy->request);
             }
 
-            $proxy = ProxyOptions::resolve($easy->request->getUri(), $easy->options['proxy'] ?? null);
+            $proxy = self::resolveProxySelection($easy->request->getUri(), $easy->options['proxy'] ?? null);
             $conf[\CURLOPT_HTTP_VERSION] = $proxy->hasProxy()
                 ? (CurlVersion::supportsHttp2() ? \CURL_HTTP_VERSION_2_0 : \CURL_HTTP_VERSION_1_1)
                 : (int) \constant('CURL_HTTP_VERSION_3');
@@ -1713,12 +1748,14 @@ final class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_NOSIGNAL] = true;
         }
 
-        $proxy = ProxyOptions::resolve($easy->request->getUri(), $options['proxy'] ?? null);
+        // Always pin CURLOPT_PROXY and CURLOPT_NOPROXY so that libcurl never
+        // falls back to reading proxy environment variables itself.
+        $proxy = self::resolveProxySelection($easy->request->getUri(), $options['proxy'] ?? null);
         $selectedProxy = $proxy->getProxy();
         if ($selectedProxy !== null) {
             $conf[\CURLOPT_PROXY] = $selectedProxy;
             $conf[\CURLOPT_NOPROXY] = '';
-        } elseif ($proxy->shouldDisableProxy()) {
+        } else {
             $conf[\CURLOPT_PROXY] = '';
             $conf[\CURLOPT_NOPROXY] = $proxy->isBypassed() ? '*' : '';
         }
