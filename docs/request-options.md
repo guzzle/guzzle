@@ -925,11 +925,33 @@ When the `proxy` request option makes no decision for a request, the cURL handle
 1. The lowercase scheme-specific variable, e.g. `https_proxy` for an "https" request. For "http" requests, the uppercase `HTTP_PROXY` variant is never read (see <https://httpoxy.org>, and the Windows note below); for other schemes the uppercase variant is read when the lowercase one is not set.
 2. `all_proxy`, then `ALL_PROXY`.
 
-The first variable with a non-empty value ends the lookup; variables set to an empty string are treated as unset, matching libcurl. When an environment proxy is found, the `no_proxy` (or `NO_PROXY`) environment variable is matched against the request by Guzzle, using the same rules as the option's `no` list (including CIDR ranges); a match disables the proxy for the request.
+The first variable with a non-empty value ends the lookup; variables set to an empty string are treated as unset, matching libcurl. When an environment proxy is found, the `no_proxy` (or `NO_PROXY`) environment variable is matched against the request by Guzzle. The value is tokenized the way libcurl tokenizes it — entries may be separated by commas or whitespace, and a single leading dot is ignored, so `.example.com` bypasses `example.com` and its subdomains — and each entry is then matched using the same rules as the option's `no` list (including CIDR ranges); a match disables the proxy for the request.
 
-Only the real process environment is consulted, matching libcurl: values injected per-request by the SAPI (e.g. `fastcgi_param` or `SetEnv`) are not read. On Windows, environment variable names are case-insensitive, so the lowercase-only protection for `HTTP_PROXY` is not possible; outside the CLI SAPI on Windows, proxy environment variables are therefore not resolved at all, and the `proxy` request option must be used instead.
+Only the real process environment is consulted, matching libcurl: values injected per-request by the SAPI (e.g. `fastcgi_param` or `SetEnv`) are not read by this handler-level resolution. On Windows, environment variable names are case-insensitive, so the lowercase-only protection for `HTTP_PROXY` is not possible; outside the CLI SAPI on Windows, proxy environment variables are therefore not resolved at all, and the `proxy` request option must be used instead.
 
-Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps the uppercase `HTTP_PROXY` (CLI SAPI only), `HTTPS_PROXY`, and `NO_PROXY` environment variables into a default for the `proxy` request option. See [Environment Variables](quickstart.md#environment-variables).
+Proxy decisions are made once per request, from the request's initial URI. If libcurl-internal redirect following is enabled with the deprecated raw `CURLOPT_FOLLOWLOCATION` cURL option, every redirect hop inherits that decision, and the environment `no_proxy` list is not re-evaluated per hop; use the `allow_redirects` option instead, which re-resolves the proxy for each hop.
+
+Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps the uppercase `HTTP_PROXY` (CLI SAPI only), `HTTPS_PROXY`, and `NO_PROXY` environment variables into a default for the `proxy` request option. The client mapping reads `$_SERVER` first, so it does honor SAPI-provided values such as those set with `fastcgi_param` or `SetEnv`. See [Environment Variables](quickstart.md#environment-variables).
+
+> [!NOTE]
+> When sending HTTPS requests, or requests explicitly tunneled with
+> `CURLOPT_HTTPPROXYTUNNEL`, through an authenticated HTTP or HTTPS proxy,
+> libcurl versions before 8.19.0 could reuse an existing proxy tunnel even
+> after proxy credentials changed, and 8.19.0 still contains related proxy
+> credential leak flaws that were fixed in 8.20.0. Guzzle therefore avoids
+> tunnel reuse on libcurl versions older than 8.20.0 when the proxy URL is
+> configured through the `proxy` option or resolved from the environment,
+> including cURL proxy credential options supplied through the `curl` request
+> option. Raw `CURLOPT_PROXY` supplied through the `curl` request option is
+> deprecated but still honored, and receives the same protection. Custom proxy
+> authentication sent with `CURLOPT_PROXYHEADER` also avoids tunnel reuse
+> because libcurl does not include those header values in its connection
+> matching. Fixed libcurl versions keep normal connection reuse behavior for
+> proxy URL and cURL proxy credential options. Advanced users can still
+> control cURL connection reuse explicitly with the `curl` request option and
+> `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`; raw `CURLOPT_PROXYTYPE`
+> is respected when deciding whether a scheme-less `proxy` option value is an
+> HTTP(S) proxy.
 
 ## query
 

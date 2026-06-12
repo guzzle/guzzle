@@ -18,9 +18,10 @@ final class ProxyEnvironment
     /**
      * Resolves the proxy to use for the given request scheme.
      *
-     * The lookup mirrors libcurl: the lowercase scheme-specific variable
-     * first, its uppercase variant next (except for "http", where uppercase
-     * HTTP_PROXY is never read), then all_proxy/ALL_PROXY.
+     * The lookup mirrors libcurl for the http and https schemes the handlers
+     * accept: the lowercase scheme-specific variable first, its uppercase
+     * variant next (except for "http", where uppercase HTTP_PROXY is never
+     * read), then all_proxy/ALL_PROXY.
      *
      * @return string|null The proxy to use; null when the environment
      *                     configures none.
@@ -61,6 +62,32 @@ final class ProxyEnvironment
         }
 
         return null;
+    }
+
+    /**
+     * Splits a no_proxy environment value into matchable entries.
+     *
+     * Mirrors libcurl's tokenization: entries may be separated by commas or
+     * blanks, and a single leading dot is ignored, so ".example.com" bypasses
+     * example.com and its subdomains exactly as a bare domain entry does.
+     *
+     * @return string[]
+     */
+    public static function splitNoProxy(string $noProxy): array
+    {
+        $entries = [];
+
+        foreach (\preg_split('/[\s,]+/', $noProxy) ?: [] as $entry) {
+            if ($entry !== '' && $entry[0] === '.') {
+                $entry = \substr($entry, 1);
+            }
+
+            if ($entry !== '') {
+                $entries[] = $entry;
+            }
+        }
+
+        return $entries;
     }
 
     private static function getenv(string $name): ?string
