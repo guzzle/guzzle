@@ -496,9 +496,10 @@ interpretation follows libcurl's. This changes three behaviors compared to
 Guzzle 7.
 
 A leading-dot entry such as `.example.com` now matches `example.com` as well
-as its subdomains, exactly like the bare `example.com` entry. Guzzle 7 matched
-subdomains only; Guzzle 8 has no way to exclude subdomains without also
-excluding the bare domain.
+as its subdomains, exactly like the bare `example.com` entry. Guzzle 7's
+option matching covered subdomains only, while its environment `no_proxy`
+handling already included the bare domain; Guzzle 8 has no way to exclude
+subdomains without also excluding the bare domain.
 
 String `no` lists are split on whitespace as well as commas, the way libcurl
 tokenizes the `no_proxy` environment variable. Guzzle 7's client mapping
