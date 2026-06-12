@@ -22,6 +22,7 @@ use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\LazyOpenStream;
+use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
@@ -209,6 +210,8 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         $this->forceFreshConnectionForAuthenticatedProxy($request, $conf);
+
+        $easy->effectiveProxy = self::getProxyForConnectionReuse($conf);
 
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         if ($this->shareHandle !== null) {
@@ -931,7 +934,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         $uri = $easy->request->getUri();
 
-        $sanitizedError = self::sanitizeCurlError($ctx['error'] ?? '', $uri);
+        $sanitizedError = self::sanitizeCurlError($ctx['error'] ?? '', $uri, $easy->effectiveProxy);
 
         $message = \sprintf(
             'cURL error %s: %s (%s)',
@@ -1025,11 +1028,13 @@ final class CurlFactory implements CurlFactoryInterface
             && \stripos($error, 'timeout') !== false;
     }
 
-    private static function sanitizeCurlError(string $error, UriInterface $uri): string
+    private static function sanitizeCurlError(string $error, UriInterface $uri, ?string $proxy = null): string
     {
         if ('' === $error) {
             return $error;
         }
+
+        $error = self::redactProxyUserInfo($error, $proxy);
 
         $baseUri = $uri->withQuery('')->withFragment('');
         $baseUriString = $baseUri->__toString();
@@ -1041,6 +1046,62 @@ final class CurlFactory implements CurlFactoryInterface
         $redactedUriString = Psr7\Utils::redactUserInfo($baseUri)->__toString();
 
         return str_replace($baseUriString, $redactedUriString, $error);
+    }
+
+    private static function redactProxyUserInfo(string $error, ?string $proxy): string
+    {
+        if ($proxy === null || $proxy === '' || \strpos($proxy, '@') === false) {
+            return $error;
+        }
+
+        // The error message embeds the proxy string exactly as configured,
+        // so the userinfo needle is extracted with parse_url(): Psr7\Uri
+        // normalizes the components, which could make the replacement miss.
+        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
+        $proxyParts = \parse_url($proxyForParsing);
+
+        if (!\is_array($proxyParts)) {
+            // Proxy strings that defeat parse_url() are exactly the ones
+            // libcurl embeds verbatim in error text such as "Unsupported
+            // proxy syntax in '...'": redact everything up to the last '@'
+            // of the authority as a safe-side fallback.
+            $authority = \substr($proxyForParsing, \strpos($proxyForParsing, '://') + 3);
+            $atPosition = \strrpos($authority, '@');
+
+            if ($atPosition === false || $atPosition === 0) {
+                return $error;
+            }
+
+            return \str_replace(\substr($authority, 0, $atPosition).'@', '***@', $error);
+        }
+
+        if (!isset($proxyParts['user']) && !isset($proxyParts['pass'])) {
+            return $error;
+        }
+
+        $userInfo = $proxyParts['user'] ?? '';
+        if (isset($proxyParts['pass'])) {
+            $userInfo .= ':'.$proxyParts['pass'];
+        }
+
+        if ($userInfo === '') {
+            return $error;
+        }
+
+        $redactedUserInfo = '***';
+
+        try {
+            $proxyUri = new Uri($proxyForParsing);
+            $redactedUserInfo = Psr7\Utils::redactUserInfo($proxyUri)->getUserInfo();
+
+            if ($redactedUserInfo === $proxyUri->getUserInfo()) {
+                return $error;
+            }
+        } catch (\InvalidArgumentException $e) {
+            // Unparseable as a URI: fall back to redacting the whole userinfo.
+        }
+
+        return \str_replace($userInfo.'@', $redactedUserInfo.'@', $error);
     }
 
     /**
