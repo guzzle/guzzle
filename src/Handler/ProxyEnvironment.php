@@ -69,9 +69,8 @@ final class ProxyEnvironment
     /**
      * Splits a no_proxy environment value into matchable entries.
      *
-     * Tokenization only - entries may be separated by commas or blanks, the
-     * way libcurl tokenizes the value. All dot semantics live in the
-     * matching engine.
+     * Entries may be separated by commas or blanks, the way libcurl tokenizes
+     * the value.
      *
      * @return string[]
      */
