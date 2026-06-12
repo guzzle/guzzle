@@ -492,20 +492,18 @@ cannot carry HTTP/3 over an HTTP proxy. A request excluded by the environment
 No-proxy lists are interpreted identically everywhere they appear — the
 option's `no` list, the client-mapped `NO_PROXY` environment variable, and the
 environment `no_proxy` consulted by the cURL handlers — and the shared
-interpretation follows libcurl's. This changes three behaviors compared to
-Guzzle 7.
+interpretation follows libcurl's. Compared to Guzzle 7, this changes how
+string lists are tokenized, how leading-dot entries match, and what a match
+means.
 
-A leading-dot entry such as `.example.com` now matches `example.com` as well
-as its subdomains, exactly like the bare `example.com` entry. This aligns the
+String `no` lists are split on whitespace as well as commas, and a leading-dot
+entry such as `.example.com` now matches `example.com` as well as its
+subdomains, exactly like the bare `example.com` entry. Both changes align the
 option's matching with libcurl's interpretation of `no_proxy`, which the
-environment path already followed. The old subdomains-only form has no
-libcurl equivalent: Guzzle 8 offers no way to exclude subdomains without also
-excluding the bare domain.
-
-String `no` lists are split on whitespace as well as commas, the way libcurl
-tokenizes the `no_proxy` environment variable. Guzzle 7's client mapping
-removed spaces from `NO_PROXY` values, and its option form treated
-space-joined values as a single entry that never matched anything.
+environment path already followed. In Guzzle 7, the client mapping removes
+spaces from `NO_PROXY` values, while the option form treats space-joined
+values as a single entry that never matches and limits leading-dot entries to
+subdomains.
 
 A matching `no` entry now applies even when the array does not configure a
 proxy for the request scheme: the request goes direct, and the cURL handlers
