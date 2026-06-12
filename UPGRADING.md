@@ -477,19 +477,41 @@ timeout.
 
 The `proxy` request option is validated more strictly. Proxy values must be
 strings, and the `proxy['no']` value may be either an array of strings or a
-comma-delimited string such as the value from the `NO_PROXY` environment
-variable. Other values now throw `InvalidArgumentException`. Guzzle 7 skips
-invalid `no` entries instead of rejecting them.
+comma- or whitespace-delimited string such as the value from the `NO_PROXY`
+environment variable. Other values now throw `InvalidArgumentException`.
+Guzzle 7 skips invalid `no` entries instead of rejecting them.
 
-`NO_PROXY` environment entries mapped by the client are trimmed with the same
-parser used for request options, and internal spaces in `NO_PROXY` entries are
-preserved instead of removed.
+`NO_PROXY` environment entries mapped by the client are tokenized with the
+same parser used for request option strings, so the two forms cannot disagree.
 
 When a request uses HTTP/3 and a proxy is resolved from the environment, the
 request is now downgraded to HTTP/2 or HTTP/1.1 in the same way as for proxies
 configured through the `proxy` request option, since current libcurl releases
 cannot carry HTTP/3 over an HTTP proxy. A request excluded by the environment
 `no_proxy` list stays direct and keeps HTTP/3.
+
+#### No-Proxy Interpretation
+
+No-proxy lists are interpreted identically everywhere they appear — the
+option's `no` list, the client-mapped `NO_PROXY` environment variable, and the
+environment `no_proxy` consulted by the cURL handlers — and the interpretation
+matches libcurl. This changes three behaviors compared to Guzzle 7.
+
+A leading-dot entry such as `.example.com` now matches `example.com` as well
+as its subdomains, exactly like the bare `example.com` entry. Guzzle 7 matched
+subdomains only; that subdomains-only form has been removed without
+replacement.
+
+String `no` lists are split on whitespace as well as commas, the way libcurl
+tokenizes the `no_proxy` environment variable. Guzzle 7's client mapping
+removed spaces from `NO_PROXY` values, and its option form treated
+space-joined values as a single entry that never matched anything.
+
+A matching `no` entry now applies even when the array does not configure a
+proxy for the request scheme: the request goes direct, and the cURL handlers
+no longer fall back to an environment proxy for it. The `no` list is also
+validated in that case. Guzzle 7 ignores the `no` list entirely unless the
+array selects a proxy for the request scheme.
 
 #### Handler-Specific Option Overrides
 
@@ -790,12 +812,13 @@ when checking a host string directly. The environment-variable fallback performe
 by the built-in cURL handlers is not part of `ProxyOptions::resolve()`; custom
 handlers that want it must implement their own environment lookup.
 
-These helpers use the same normalized no-proxy matching as the `Utils` helpers
-in Guzzle 7.12 and later: domain matching is case-insensitive and ignores a
-single trailing DNS root dot, IP literals are normalized before comparison, and
-CIDR entries match IP literal hosts. The remaining difference is strictness —
-the `ProxyOptions` helpers throw `InvalidArgumentException` for non-string list
-entries, where the Guzzle 7 `Utils` helpers skip them.
+These helpers share the normalized no-proxy matching of the Guzzle 7 `Utils`
+helpers: domain matching is case-insensitive and ignores a single trailing DNS
+root dot, IP literals are normalized before comparison, and CIDR entries match
+IP literal hosts. They differ from the Guzzle 7 helpers in three ways — they
+throw `InvalidArgumentException` for non-string list entries where Guzzle 7
+skips them, a leading-dot entry such as `.example.com` also matches the bare
+domain, and string no-proxy lists are split on whitespace as well as commas.
 
 #### Removed Type Description Helper API
 

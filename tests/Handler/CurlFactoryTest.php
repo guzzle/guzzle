@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests\Handler;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\NetworkException;
@@ -731,7 +732,7 @@ class CurlFactoryTest extends TestCase
         $this->checkNoProxyForHost('http://test.test.com:8080', ['test.test.com:8080'], false);
         $this->checkNoProxyForHost('http://test.test.com:8081', ['test.test.com:8080'], true);
         $this->checkNoProxyForHost('http://foo.test.com:8080', ['.test.com:8080'], false);
-        $this->checkNoProxyForHost('http://test.com:8080', ['.test.com:8080'], true);
+        $this->checkNoProxyForHost('http://test.com:8080', ['.test.com:8080'], false);
         $this->checkNoProxyForHost('http://[::1]:8080', ['[::1]:8080'], false);
         $this->checkNoProxyForHost('http://[::1]:8081', ['[::1]:8080'], true);
         $this->checkNoProxyForHost('http://[0:0:0:0:0:0:0:1]', ['::1'], false);
@@ -886,6 +887,24 @@ class CurlFactoryTest extends TestCase
         });
     }
 
+    public function testMultiDotEnvironmentNoProxyEntriesAreInert(): void
+    {
+        self::withProxyEnvironment([
+            'https_proxy' => 'http://proxy.example.com:8125',
+            'NO_PROXY' => '..internal.test',
+        ], static function (): void {
+            $f = new CurlFactory(3);
+
+            $f->create(new Psr7\Request('GET', 'https://internal.test'), []);
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+
+            $f->create(new Psr7\Request('GET', 'https://foo.internal.test'), []);
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
     public function testLowercaseNoProxyEnvironmentVariableTakesPrecedence(): void
     {
         self::skipIfWindows();
@@ -960,6 +979,55 @@ class CurlFactoryTest extends TestCase
                 'proxy' => ['http' => 'http://option.example.com:8125'],
             ]);
 
+            self::assertSame('http://env.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testNoListWithoutSchemeKeyBeatsEnvironmentProxy(): void
+    {
+        self::withProxyEnvironment(['https_proxy' => 'http://env.example.com:8125'], static function (): void {
+            $f = new CurlFactory(3);
+
+            $f->create(new Psr7\Request('GET', 'https://internal.example.com'), [
+                'proxy' => ['no' => ['internal.example.com']],
+            ]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => ['no' => ['internal.example.com']],
+            ]);
+            self::assertSame('http://env.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testClientMappedUppercaseNoProxyBeatsLowercaseEnvironmentProxy(): void
+    {
+        self::skipIfWindows();
+
+        unset($_SERVER['HTTP_PROXY'], $_SERVER['HTTPS_PROXY'], $_SERVER['NO_PROXY']);
+
+        self::withProxyEnvironment([
+            'https_proxy' => 'http://env.example.com:8125',
+            'NO_PROXY' => '.example.com internal.test other.test',
+        ], static function (): void {
+            // The Client maps uppercase NO_PROXY into the option's "no" list
+            // without a scheme key; the lowercase proxy variable is visible
+            // only to the handler-level environment fallback.
+            $proxy = (new Client())->getConfig()['proxy'];
+            self::assertSame(['no' => ['.example.com', 'internal.test', 'other.test']], $proxy);
+
+            $f = new CurlFactory(3);
+
+            foreach (['example.com', 'foo.example.com', 'internal.test', 'other.test'] as $host) {
+                $f->create(new Psr7\Request('GET', 'https://'.$host), ['proxy' => $proxy]);
+                self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+                self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+            }
+
+            $f->create(new Psr7\Request('GET', 'https://unrelated.test'), ['proxy' => $proxy]);
             self::assertSame('http://env.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
             self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
         });
@@ -2344,6 +2412,31 @@ class CurlFactoryTest extends TestCase
             );
 
             self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testHttp3WithMatchingNoListWithoutSchemeKeyKeepsHttp3(): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            // The environment proxy is what makes this discriminate: without
+            // it, no proxy applies either way and HTTP/3 is trivially kept.
+            self::withProxyEnvironment(['https_proxy' => 'http://proxy.example.com:8080'], static function (): void {
+                $conf = self::getDefaultCurlConf(
+                    new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                    ['proxy' => ['no' => ['example.com']]]
+                );
+
+                self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
+            });
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }

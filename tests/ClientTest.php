@@ -2171,7 +2171,7 @@ class ClientTest extends TestCase
             $client = new Client();
             $config = $client->getConfig();
             self::assertArrayHasKey('proxy', $config);
-            self::assertSame(['no' => ['exa mple.com', 'foo.com']], $config['proxy']);
+            self::assertSame(['no' => ['exa', 'mple.com', 'foo.com']], $config['proxy']);
         } finally {
             \putenv('HTTP_PROXY=');
             \putenv('HTTPS_PROXY=');

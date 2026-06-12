@@ -151,17 +151,18 @@ class ProxyEnvironmentTest extends TestCase
         );
     }
 
-    public function testIgnoresASingleLeadingDotInNoProxyEntries(): void
+    public function testPreservesLeadingDotsInNoProxyEntries(): void
     {
         self::assertSame(
-            ['example.com', '.foo.com'],
+            ['.example.com', '..foo.com'],
             ProxyEnvironment::splitNoProxy('.example.com,..foo.com')
         );
     }
 
     public function testDropsEmptyNoProxyEntries(): void
     {
-        self::assertSame([], ProxyEnvironment::splitNoProxy(' ,, . '));
+        self::assertSame(['.'], ProxyEnvironment::splitNoProxy(' ,, . '));
+        self::assertSame([], ProxyEnvironment::splitNoProxy(' ,, '));
     }
 
     private static function skipIfWindows(): void

@@ -69,9 +69,9 @@ final class ProxyEnvironment
     /**
      * Splits a no_proxy environment value into matchable entries.
      *
-     * Mirrors libcurl's tokenization: entries may be separated by commas or
-     * blanks, and a single leading dot is ignored, so ".example.com" bypasses
-     * example.com and its subdomains exactly as a bare domain entry does.
+     * Tokenization only - entries may be separated by commas or blanks, the
+     * way libcurl tokenizes the value. All dot semantics live in the
+     * matching engine.
      *
      * @return string[]
      */
@@ -80,10 +80,6 @@ final class ProxyEnvironment
         $entries = [];
 
         foreach (\preg_split('/[\s,]+/', $noProxy) ?: [] as $entry) {
-            if ($entry !== '' && $entry[0] === '.') {
-                $entry = \substr($entry, 1);
-            }
-
             if ($entry !== '') {
                 $entries[] = $entry;
             }

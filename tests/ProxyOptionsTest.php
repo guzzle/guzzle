@@ -25,7 +25,13 @@ class ProxyOptionsTest extends TestCase
             ['http://example.com', ['http' => 'http://proxy.example.com:8080', 'no' => 'example.com,localhost'], null, true, false],
             ['http://example.com', ['http' => 'http://proxy.example.com:8080', 'no' => ''], 'http://proxy.example.com:8080', false, false],
             ['http://foo.example.com', ['http' => 'http://proxy.example.com:8080', 'no' => ['.example.com']], null, true, false],
-            ['https://example.com', ['http' => 'http://proxy.example.com:8080', 'no' => ['*']], null, false, false],
+            ['https://example.com', ['http' => 'http://proxy.example.com:8080', 'no' => ['*']], null, true, false],
+            ['http://internal.test', ['no' => ['internal.test']], null, true, false],
+            ['http://example.com', ['no' => ['internal.test']], null, false, false],
+            ['http://internal.test', ['no' => 'internal.test other.test'], null, true, false],
+            ['http://other.test', ['no' => 'internal.test other.test'], null, true, false],
+            ['http://anything.test', ['no' => ['*']], null, true, false],
+            ['/relative-path', ['no' => ['*']], null, false, false],
         ];
     }
 
@@ -64,7 +70,7 @@ class ProxyOptionsTest extends TestCase
     public static function noProxyProvider(): array
     {
         return [
-            ['mit.edu', ['.mit.edu'], false],
+            ['mit.edu', ['.mit.edu'], true],
             ['foo.mit.edu', ['.mit.edu'], true],
             ['foo.mit.edu:123', ['.mit.edu'], true],
             ['mit.edu', ['mit.edu'], true],
@@ -80,13 +86,16 @@ class ProxyOptionsTest extends TestCase
             ['foo.example.com.', ['example.com'], true],
             ['example.com', ['example.com.'], true],
             ['foo.example.com', ['example.com.'], true],
-            ['example.com.', ['.example.com'], false],
+            ['example.com.', ['.example.com'], true],
             ['foo.example.com.', ['.example.com'], true],
             ['foo.example.com', ['.example.com.'], true],
+            ['example.com', ['.example.com.'], true],
+            ['example.com', ['..example.com'], false],
+            ['foo.example.com', ['..example.com'], false],
             ['example.com..', ['example.com'], false],
             ['.', ['*'], false],
             ['foo.example.com:123', ['.EXAMPLE.com'], true],
-            ['example.com', ['.EXAMPLE.com'], false],
+            ['example.com', ['.EXAMPLE.com'], true],
             ['example.com', ['example.com:443'], false],
             ['[::1]', ['[::1]'], true],
             ['[::1]', ['::1'], true],
@@ -108,9 +117,10 @@ class ProxyOptionsTest extends TestCase
             ['127.0.0.1.', ['127.0.0.0/8'], false],
             ['[::1].', ['[::1]'], false],
             ['::1.', ['::1'], false],
-            ['127.0.0.1', ['.127.0.0.1'], false],
+            ['127.0.0.1', ['.127.0.0.1'], true],
             ['foo.127.0.0.1', ['127.0.0.1'], false],
             ['192.168.1.10', ['192.168.0.0/16'], true],
+            ['192.168.1.10', ['.192.168.0.0/16'], true],
             ['192.169.1.10', ['192.168.0.0/16'], false],
             ['[fd00::1]', ['fd00::/8'], true],
             ['[fe80::1]', ['fd00::/8'], false],
@@ -131,13 +141,16 @@ class ProxyOptionsTest extends TestCase
         self::assertSame(['foo.com', 'bar.com'], ProxyOptions::normalizeNoProxy(' foo.com , bar.com , '));
         self::assertSame(['foo.com', 'bar.com'], ProxyOptions::normalizeNoProxy('foo.com,,bar.com,'));
         self::assertSame(['foo.com', 'bar.com'], ProxyOptions::normalizeNoProxy(" \tfoo.com\t , \nbar.com\n "));
-        self::assertSame(['exa mple.com', 'foo.com'], ProxyOptions::normalizeNoProxy('exa mple.com, foo.com'));
+        self::assertSame(['exa', 'mple.com', 'foo.com'], ProxyOptions::normalizeNoProxy('exa mple.com, foo.com'));
+        self::assertSame(['a', 'b', 'c', 'd'], ProxyOptions::normalizeNoProxy("a b,c\td"));
+        self::assertSame(['..example.com', '.example.org'], ProxyOptions::normalizeNoProxy('..example.com, .example.org'));
     }
 
     public function testNormalizesNoProxyArray(): void
     {
         self::assertSame(['foo.com', '.bar.com'], ProxyOptions::normalizeNoProxy([' foo.com ', '', '.bar.com']));
         self::assertSame(['foo.com', 'bar.com'], ProxyOptions::normalizeNoProxy([' foo.com ', '', ' bar.com ']));
+        self::assertSame(['host1 host2'], ProxyOptions::normalizeNoProxy(['host1 host2']));
     }
 
     public function testNormalizesNullNoProxyValue(): void
@@ -183,6 +196,27 @@ class ProxyOptionsTest extends TestCase
         ]);
     }
 
+    public function testValidatesNoProxyArrayValueWhenResolvingProxyWithoutSchemeKey(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('proxy no list must be null, a string, or an array of strings');
+
+        ProxyOptions::resolve(Psr7\Utils::uriFor('http://example.com'), [
+            'no' => [123],
+        ]);
+    }
+
+    public function testValidatesSchemeProxyValueBeforeNoProxyBypass(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('proxy values must be strings');
+
+        ProxyOptions::resolve(Psr7\Utils::uriFor('https://example.com'), [
+            'https' => 123,
+            'no' => ['example.com'],
+        ]);
+    }
+
     public static function uriNoProxyProvider(): array
     {
         return [
@@ -191,14 +225,17 @@ class ProxyOptionsTest extends TestCase
             ['http://example.com', ['EXAMPLE.com'], true],
             ['http://foo.example.com', ['EXAMPLE.com'], true],
             ['http://foo.example.com', ['.EXAMPLE.com'], true],
-            ['http://example.com', ['.EXAMPLE.com'], false],
+            ['http://example.com', ['.EXAMPLE.com'], true],
             ['http://example.com.', ['example.com'], true],
             ['http://foo.example.com.', ['example.com'], true],
             ['http://example.com', ['example.com.'], true],
             ['http://foo.example.com', ['example.com.'], true],
-            ['http://example.com.', ['.example.com'], false],
+            ['http://example.com.', ['.example.com'], true],
             ['http://foo.example.com.', ['.example.com'], true],
             ['http://foo.example.com', ['.example.com.'], true],
+            ['http://example.com', ['.example.com.'], true],
+            ['http://example.com', ['..example.com'], false],
+            ['http://foo.example.com', ['..example.com'], false],
             ['http://example.com.:8080', ['example.com:8080'], true],
             ['http://example.com.', ['example.com:80'], true],
             ['https://example.com.', ['example.com:443'], true],
@@ -211,11 +248,11 @@ class ProxyOptionsTest extends TestCase
             ['http://foo.example.com:8080', ['.example.com:8080'], true],
             ['http://foo.example.com:8080', ['.EXAMPLE.com:8080'], true],
             ['http://foo.example.com:8081', ['.EXAMPLE.com:8080'], false],
-            ['http://example.com:8080', ['.example.com:8080'], false],
+            ['http://example.com:8080', ['.example.com:8080'], true],
             ['http://127.0.0.1', ['127.0.0.1'], true],
             ['http://127.0.0.1:8080', ['127.0.0.1:8080'], true],
             ['http://127.0.0.1:8081', ['127.0.0.1:8080'], false],
-            ['http://127.0.0.1', ['.127.0.0.1'], false],
+            ['http://127.0.0.1', ['.127.0.0.1'], true],
             ['http://127.0.0.1.', ['127.0.0.1'], false],
             ['http://127.0.0.1.', ['127.0.0.0/8'], false],
             ['http://[::1]:8080', ['[::1]:8080'], true],
@@ -229,7 +266,7 @@ class ProxyOptionsTest extends TestCase
             ['http://[::1]:8080', ['[0:0:0:0:0:0:0:1]:8080'], true],
             ['http://[::1]:8081', ['[0:0:0:0:0:0:0:1]:8080'], false],
             ['http://[::1:80]', ['::1:80'], true],
-            ['http://[::1]', ['.[::1]'], false],
+            ['http://[::1]', ['.[::1]'], true],
             ['http://test.test.com', ['*.test.com'], false],
             ['http://127.0.0.1', ['127.0.0.*'], false],
             ['http://0', ['0'], true],
@@ -239,8 +276,9 @@ class ProxyOptionsTest extends TestCase
             ['http://example.com:8080', ['*:80'], false],
             ['http://example.com:80', ['example.com:00080'], true],
             ['http://example.com:65535', ['example.com:65535'], true],
-            ['http://example.com', ['.*'], false],
-            ['http://example.com', ['.*:80'], false],
+            ['http://example.com', ['.*'], true],
+            ['http://example.com', ['.*:80'], true],
+            ['https://example.com', ['.*:80'], false],
             ['http://example.com', ['example.com:abc'], false],
             ['http://example.com', ['example.com:99999'], false],
             ['http://example.com', ['example.com:999999999999999999999999'], false],
@@ -253,6 +291,7 @@ class ProxyOptionsTest extends TestCase
             ['http://192.169.0.0', ['192.168.0.0/16'], false],
             ['http://127.0.0.1', ['127.0.0.0/8'], true],
             ['http://10.1.2.3:8080', ['10.0.0.0/8'], true],
+            ['http://10.1.2.3', ['.10.0.0.0/8'], true],
             ['http://[fd00::1]', ['fd00::/8'], true],
             ['http://[fd00::1]', ['[fd00::]/8'], true],
             ['http://[fdff:ffff::1]', ['fd00::/8'], true],
