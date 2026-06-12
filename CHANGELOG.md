@@ -13,6 +13,11 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Constrain cURL transport sharing to safe libcurl DNS and SSL session support
 - Prevent authenticated proxy tunnel reuse on libcurl versions older than 8.20.0
+- Resolve proxy environment variables in the cURL handlers; libcurl no longer reads the environment itself
+- Ignore proxy environment variables when the `proxy` request option makes a decision
+- Disable proxy environment variables on Windows SAPIs other than CLI (httpoxy hardening)
+- Redact proxy credentials from cURL handler error messages, following `Psr7\Utils::redactUserInfo()`
+- Normalize no-proxy domain and IP literal matching across the cURL and stream handlers
 
 ### Deprecated
 
@@ -25,6 +30,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fix cURL TLS and HTTP/2 capability detection using libcurl feature checks
+- Fix proxy `no` list matches being re-proxied through environment-configured proxies by libcurl
+- Fix `no` list and `NO_PROXY` matching to support IP CIDR ranges, matching libcurl
 
 
 ## 7.11.1 - 2026-06-07

@@ -268,19 +268,22 @@ EOT
     /**
      * Returns true if the provided host matches any of the no proxy areas.
      *
-     * This method will strip a port from the host if it is present. Each pattern
-     * can be matched with an exact match (e.g., "foo.com" == "foo.com") or a
-     * partial match: (e.g., "foo.com" == "baz.foo.com" and ".foo.com" ==
-     * "baz.foo.com", but ".foo.com" != "foo.com").
+     * This method will strip a port from the host if it is present. Domain
+     * patterns are matched case-insensitively. Exact IP literal patterns are
+     * matched by their normalized binary address.
      *
      * Areas are matched in the following cases:
      * 1. "*" (without quotes) always matches any hosts.
-     * 2. An exact match.
-     * 3. The area starts with "." and the area is the last part of the host. e.g.
+     * 2. An exact domain or IP literal match.
+     * 3. A bare domain matches itself and its subdomains. e.g. 'mit.edu' will
+     *    match 'mit.edu' and 'foo.mit.edu'.
+     * 4. The area starts with "." and the area is the last part of the host. e.g.
      *    '.mit.edu' will match any host that ends with '.mit.edu'.
+     * 5. IP CIDR entries match IP literal hosts. e.g. '192.168.0.0/16' will
+     *    match '192.168.1.10' and 'fd00::/8' will match '[fd00::1]'.
      *
      * @param string   $host         Host to check against the patterns.
-     * @param string[] $noProxyArray An array of host patterns.
+     * @param string[] $noProxyArray An array of host or CIDR patterns.
      *
      * @throws InvalidArgumentException
      */
@@ -290,43 +293,23 @@ EOT
             throw new InvalidArgumentException('Empty host provided');
         }
 
-        $host = self::normalizeNoProxyHost($host, true);
-
-        foreach ($noProxyArray as $area) {
-            // Always match on wildcards.
-            if ($area === '*') {
-                return true;
-            }
-
-            if ($area === '') {
-                continue;
-            }
-
-            $area = self::normalizeNoProxyHost($area, false);
-
-            if ($area === $host) {
-                // Exact matches.
-                return true;
-            }
-            // Special match if the area when prefixed with ".". Remove any
-            // existing leading "." and add a new leading ".".
-            $area = '.'.\ltrim($area, '.');
-            if (
-                \strpos($host, ':') === false
-                && \strpos($area, ':') === false
-                && \substr($host, -\strlen($area)) === $area
-            ) {
-                return true;
-            }
+        $target = self::parseNoProxyHostString($host);
+        if ($target === null) {
+            return false;
         }
 
-        return false;
+        return self::matchesNoProxyList($target, $noProxyArray);
     }
 
     /**
      * Returns true if the provided URI matches any of the no proxy areas.
      *
-     * @param mixed $noProxy No-proxy host patterns.
+     * Matching follows the same rules as isHostInNoProxy(), with the
+     * addition that areas may carry a port (e.g. "example.com:8080" or
+     * "[::1]:8080") which is compared against the URI port (or the scheme
+     * default port when the URI has none).
+     *
+     * @param mixed $noProxy No-proxy host, host-and-port, or CIDR patterns.
      *
      * @internal
      */
@@ -340,16 +323,20 @@ EOT
             return false;
         }
 
-        $host = $uri->getHost();
-        if ($host === '') {
+        $target = self::parseNoProxyTarget($uri);
+        if ($target === null) {
             return false;
         }
 
-        $port = $uri->getPort();
-        if ($port === null) {
-            $port = self::getDefaultPort($uri->getScheme());
-        }
+        return self::matchesNoProxyList($target, $noProxy);
+    }
 
+    /**
+     * @param array{type: string, value: string, port: int|null, matchesRoot: bool} $target
+     * @param array<array-key, mixed>                                               $noProxy
+     */
+    private static function matchesNoProxyList(array $target, array $noProxy): bool
+    {
         foreach ($noProxy as $area) {
             if (!\is_string($area)) {
                 continue;
@@ -362,16 +349,8 @@ EOT
                 return true;
             }
 
-            if ($area === '') {
-                continue;
-            }
-
-            [$area, $areaPort] = self::splitNoProxyHostAndPort($area);
-            if ($areaPort !== null && $areaPort !== $port) {
-                continue;
-            }
-
-            if (self::isHostInNoProxy($host, [$area])) {
+            $rule = self::parseNoProxyRule($area);
+            if ($rule !== null && self::noProxyRuleMatches($target, $rule)) {
                 return true;
             }
         }
@@ -379,58 +358,157 @@ EOT
         return false;
     }
 
-    private static function normalizeNoProxyHost(string $host, bool $stripPort): string
+    /**
+     * @return array{type: string, value: string, port: int|null, matchesRoot: bool}|null
+     */
+    private static function parseNoProxyTarget(UriInterface $uri): ?array
     {
-        if ($host !== '' && $host[0] === '[') {
-            $closingBracket = \strpos($host, ']');
-
-            if ($closingBracket !== false) {
-                $address = \substr($host, 1, $closingBracket - 1);
-                $tail = \substr($host, $closingBracket + 1);
-
-                if (
-                    ($tail === '' || ($stripPort && \preg_match('/^:\d+$/', $tail)))
-                    && \filter_var($address, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6)
-                ) {
-                    return \strtolower($address);
-                }
-            }
+        $host = $uri->getHost();
+        if ($host === '') {
+            return null;
         }
 
-        if (\filter_var($host, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6)) {
-            return \strtolower($host);
-        }
-
-        if ($stripPort) {
-            [$host] = \explode(':', $host, 2);
-        }
-
-        return $host;
+        return self::parseNoProxyHost($host, $uri->getPort() ?? self::getDefaultPort($uri->getScheme()), true);
     }
 
     /**
-     * @return array{0: string, 1: int|null}
+     * @return array{type: string, value: string, port: int|null, matchesRoot: bool}|null
      */
-    private static function splitNoProxyHostAndPort(string $area): array
+    private static function parseNoProxyHostString(string $host): ?array
+    {
+        $hostAndPort = self::splitNoProxyHostAndPort($host);
+        if ($hostAndPort === null) {
+            return null;
+        }
+
+        [$host] = $hostAndPort;
+
+        return self::parseNoProxyHost($host, null, true);
+    }
+
+    /**
+     * @return array{type: string, value: string, port: int|null, matchesRoot: bool}|array{type: string, value: string, prefix: int}|null
+     */
+    private static function parseNoProxyRule(string $area): ?array
+    {
+        $area = \trim($area);
+        if ($area === '' || $area === '*') {
+            return null;
+        }
+
+        if (\strpos($area, '/') !== false) {
+            return self::parseNoProxyCidrRule($area);
+        }
+
+        $matchesRoot = true;
+        if ($area[0] === '.') {
+            $matchesRoot = false;
+            $area = \substr($area, 1);
+        }
+
+        $hostAndPort = self::splitNoProxyHostAndPort($area);
+        if ($hostAndPort === null) {
+            return null;
+        }
+
+        [$host, $port] = $hostAndPort;
+
+        if ($host === '*') {
+            if (!$matchesRoot) {
+                return null;
+            }
+
+            return [
+                'type' => 'wildcard',
+                'value' => '*',
+                'port' => $port,
+                'matchesRoot' => true,
+            ];
+        }
+
+        $rule = self::parseNoProxyHost($host, $port, $matchesRoot);
+        if ($rule !== null && !$matchesRoot && $rule['type'] === 'ip') {
+            return null;
+        }
+
+        return $rule;
+    }
+
+    /**
+     * @return array{type: string, value: string, port: int|null, matchesRoot: bool}|null
+     */
+    private static function parseNoProxyHost(string $host, ?int $port, bool $matchesRoot): ?array
+    {
+        if ($host !== '' && $host[0] === '[') {
+            if (\substr($host, -1) !== ']') {
+                return null;
+            }
+
+            $address = \substr($host, 1, -1);
+            if (!\filter_var($address, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6)) {
+                return null;
+            }
+
+            $host = $address;
+        }
+
+        $packedIp = self::packIpAddress($host);
+        if ($packedIp !== false) {
+            return [
+                'type' => 'ip',
+                'value' => $packedIp,
+                'port' => $port,
+                'matchesRoot' => $matchesRoot,
+            ];
+        }
+
+        if ($host === '' || \strpos($host, ':') !== false) {
+            return null;
+        }
+
+        // Normalize a single DNS root dot for no-proxy domain matching.
+        if (\substr($host, -1) === '.') {
+            $host = \substr($host, 0, -1);
+            if ($host === '') {
+                return null;
+            }
+        }
+
+        return [
+            'type' => 'domain',
+            'value' => \strtolower($host),
+            'port' => $port,
+            'matchesRoot' => $matchesRoot,
+        ];
+    }
+
+    /**
+     * @return array{0: string, 1: int|null}|null
+     */
+    private static function splitNoProxyHostAndPort(string $area): ?array
     {
         if ($area !== '' && $area[0] === '[') {
             $closingBracket = \strpos($area, ']');
-
-            if ($closingBracket !== false) {
-                $tail = \substr($area, $closingBracket + 1);
-                if ($tail !== '' && $tail[0] === ':') {
-                    $port = self::parseNoProxyPort(\substr($tail, 1));
-
-                    if ($port !== null) {
-                        return [\substr($area, 0, $closingBracket + 1), $port];
-                    }
-                }
+            if ($closingBracket === false) {
+                return null;
             }
 
-            return [$area, null];
+            $host = \substr($area, 0, $closingBracket + 1);
+            $tail = \substr($area, $closingBracket + 1);
+            if ($tail === '') {
+                return [$host, null];
+            }
+
+            if ($tail[0] !== ':') {
+                return null;
+            }
+
+            $port = self::parseNoProxyPort(\substr($tail, 1));
+
+            return $port === null ? null : [$host, $port];
         }
 
-        if (\filter_var($area, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6)) {
+        if (self::packIpAddress($area) !== false) {
             return [$area, null];
         }
 
@@ -441,7 +519,7 @@ EOT
 
         $port = self::parseNoProxyPort(\substr($area, $colon + 1));
         if ($port === null) {
-            return [$area, null];
+            return null;
         }
 
         return [\substr($area, 0, $colon), $port];
@@ -449,13 +527,131 @@ EOT
 
     private static function parseNoProxyPort(string $port): ?int
     {
-        if ($port === '' || !\ctype_digit($port)) {
+        return self::parseBoundedUnsignedInteger($port, 65535);
+    }
+
+    /**
+     * @return array{type: string, value: string, prefix: int}|null
+     */
+    private static function parseNoProxyCidrRule(string $area): ?array
+    {
+        $slash = \strpos($area, '/');
+        if ($slash === false) {
             return null;
         }
 
-        $port = (int) $port;
+        $prefix = \substr($area, $slash + 1);
 
-        return $port <= 65535 ? $port : null;
+        $network = \substr($area, 0, $slash);
+        if ($network !== '' && $network[0] === '[' && \substr($network, -1) === ']') {
+            $network = \substr($network, 1, -1);
+        }
+
+        $network = self::packIpAddress($network);
+        if ($network === false) {
+            return null;
+        }
+
+        $prefix = self::parseBoundedUnsignedInteger($prefix, \strlen($network) * 8);
+        if ($prefix === null) {
+            return null;
+        }
+
+        return [
+            'type' => 'cidr',
+            'value' => $network,
+            'prefix' => $prefix,
+        ];
+    }
+
+    private static function parseBoundedUnsignedInteger(string $value, int $max): ?int
+    {
+        if ($value === '' || !\ctype_digit($value)) {
+            return null;
+        }
+
+        $normalized = \ltrim($value, '0');
+        $normalized = $normalized === '' ? '0' : $normalized;
+        $limit = (string) $max;
+
+        if (\strlen($normalized) > \strlen($limit) || (\strlen($normalized) === \strlen($limit) && \strcmp($normalized, $limit) > 0)) {
+            return null;
+        }
+
+        return (int) $normalized;
+    }
+
+    /**
+     * @param array{type: string, value: string, port: int|null, matchesRoot: bool}                      $target
+     * @param array{type: string, value: string, port?: int|null, matchesRoot?: bool, prefix?: int|null} $rule
+     */
+    private static function noProxyRuleMatches(array $target, array $rule): bool
+    {
+        if ($rule['type'] === 'wildcard') {
+            return ($rule['port'] ?? null) === null || $rule['port'] === $target['port'];
+        }
+
+        if ($rule['type'] === 'cidr') {
+            if ($target['type'] !== 'ip' || !isset($rule['prefix'])) {
+                return false;
+            }
+
+            if (\strlen($target['value']) !== \strlen($rule['value'])) {
+                return false;
+            }
+
+            return self::ipMatchesPrefix($target['value'], $rule['value'], $rule['prefix']);
+        }
+
+        if (($rule['port'] ?? null) !== null && $rule['port'] !== $target['port']) {
+            return false;
+        }
+
+        if ($rule['type'] !== $target['type']) {
+            return false;
+        }
+
+        if ($rule['type'] === 'ip') {
+            return $rule['value'] === $target['value'];
+        }
+
+        if (($rule['matchesRoot'] ?? false) && $target['value'] === $rule['value']) {
+            return true;
+        }
+
+        $suffix = '.'.$rule['value'];
+
+        return \substr($target['value'], -\strlen($suffix)) === $suffix;
+    }
+
+    /**
+     * @return string|false
+     */
+    private static function packIpAddress(string $ip)
+    {
+        if (!\filter_var($ip, \FILTER_VALIDATE_IP)) {
+            return false;
+        }
+
+        return \inet_pton($ip);
+    }
+
+    private static function ipMatchesPrefix(string $address, string $network, int $prefix): bool
+    {
+        $fullBytes = \intdiv($prefix, 8);
+        $remainingBits = $prefix % 8;
+
+        if ($fullBytes > 0 && \substr($address, 0, $fullBytes) !== \substr($network, 0, $fullBytes)) {
+            return false;
+        }
+
+        if ($remainingBits === 0) {
+            return true;
+        }
+
+        $mask = (0xFF << (8 - $remainingBits)) & 0xFF;
+
+        return (\ord($address[$fullBytes]) & $mask) === (\ord($network[$fullBytes]) & $mask);
     }
 
     private static function getDefaultPort(string $scheme): ?int

@@ -517,6 +517,8 @@ Defines the proxy to use when sending requests using the "https" protocol.
 `NO_PROXY`
 Defines URLs for which a proxy should not be used. See the [`proxy` option](request-options.md#proxy).
 
+In addition to the uppercase variables above, which a `GuzzleHttp\Client` maps into a default for the `proxy` request option, the cURL handlers resolve the standard lowercase `http_proxy`, `https_proxy`, and `no_proxy` variables (and their uppercase variants, except `HTTP_PROXY`) plus the `all_proxy`/`ALL_PROXY` fallbacks — with the same lookup semantics libcurl uses — whenever the `proxy` request option makes no decision for a request. libcurl itself never reads the environment: Guzzle always configures the proxy options explicitly. See [proxy environment variables](request-options.md#proxy-environment-variables) for the full lookup order and the Windows caveats.
+
 ### Relevant ini Settings
 
 Guzzle can utilize PHP ini settings when configuring clients.
