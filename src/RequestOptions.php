@@ -258,7 +258,8 @@ final class RequestOptions
      * case-insensitively. Exact IP literals are normalized before matching.
      * CIDR rules match IP literals only and are not port-specific. Custom
      * handlers can use ProxyOptions::resolve() to apply Guzzle-compatible
-     * proxy selection.
+     * proxy selection; the built-in cURL handlers' environment-variable
+     * fallback is not part of that helper.
      */
     public const PROXY = 'proxy';
 

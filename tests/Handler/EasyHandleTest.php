@@ -28,6 +28,13 @@ class EasyHandleTest extends TestCase
         $easy->handle;
     }
 
+    public function testEffectiveProxyDefaultsToNull(): void
+    {
+        $easy = new EasyHandle();
+
+        self::assertNull($easy->effectiveProxy);
+    }
+
     public function testCreateResponseIgnoresInterim1xxResponses(): void
     {
         $easy = new EasyHandle();

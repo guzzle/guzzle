@@ -27,6 +27,9 @@ final class CurlVersion
 
     private const CONNECTION_SHARING_VERSION = '8.20.0';
 
+    // curl 8.19.0 fixed proxy tunnel reuse after credential changes
+    // (CVE-2026-3784), but related proxy credential leak flaws were only
+    // fixed in 8.20.0, so connection reuse is trusted from 8.20.0 onwards.
     private const PROXY_CREDENTIAL_REUSE_VERSION = '8.20.0';
 
     /**

@@ -748,6 +748,325 @@ class CurlFactoryTest extends TestCase
         $this->checkNoProxyForHost('http://[fe80::1]', ['fd00::/8'], true);
     }
 
+    public function testPinsProxyOptionsWhenNoProxyIsConfigured(): void
+    {
+        self::withProxyEnvironment([], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', Server::$url), []);
+
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testResolvesLowercaseProxyEnvironmentVariable(): void
+    {
+        self::withProxyEnvironment(['http_proxy' => 'http://proxy.example.com:8125'], static function (): void {
+            $f = new CurlFactory(3);
+            $easy = $f->create(new Psr7\Request('GET', 'http://example.com'), []);
+
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+            self::assertSame('http://proxy.example.com:8125', $easy->effectiveProxy);
+        });
+    }
+
+    public function testResolvesUppercaseHttpsProxyEnvironmentVariable(): void
+    {
+        self::withProxyEnvironment(['HTTPS_PROXY' => 'http://proxy.example.com:8125'], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testLowercaseProxyEnvironmentVariableTakesPrecedence(): void
+    {
+        self::skipIfWindows();
+
+        self::withProxyEnvironment([
+            'https_proxy' => 'http://lower.example.com:8125',
+            'HTTPS_PROXY' => 'http://upper.example.com:8125',
+        ], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+
+            self::assertSame('http://lower.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testNeverReadsUppercaseHttpProxyEnvironmentVariable(): void
+    {
+        self::skipIfWindows();
+
+        self::withProxyEnvironment(['HTTP_PROXY' => 'http://proxy.example.com:8125'], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'http://example.com'), []);
+
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testResolvesAllProxyEnvironmentVariableForAnyScheme(): void
+    {
+        self::withProxyEnvironment(['ALL_PROXY' => 'http://proxy.example.com:8125'], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'http://example.com'), []);
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+
+            $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testTreatsEmptyProxyEnvironmentVariableAsUnset(): void
+    {
+        self::withProxyEnvironment([
+            'https_proxy' => '',
+            'ALL_PROXY' => 'http://proxy.example.com:8125',
+        ], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testMatchesEnvironmentNoProxyAgainstTheRequest(): void
+    {
+        self::withProxyEnvironment([
+            'https_proxy' => 'http://proxy.example.com:8125',
+            'NO_PROXY' => '10.0.0.0/8,example.com, .internal',
+        ], static function (): void {
+            $f = new CurlFactory(3);
+
+            $easy = $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+            self::assertNull($easy->effectiveProxy);
+
+            $f->create(new Psr7\Request('GET', 'https://10.1.2.3'), []);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+
+            $f->create(new Psr7\Request('GET', 'https://foo.com'), []);
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testTokenizesEnvironmentNoProxyLikeLibcurl(): void
+    {
+        self::withProxyEnvironment([
+            'https_proxy' => 'http://proxy.example.com:8125',
+            'NO_PROXY' => '.internal.test host1.test host2.test',
+        ], static function (): void {
+            $f = new CurlFactory(3);
+
+            // A leading dot is ignored, so the root domain is bypassed too.
+            $f->create(new Psr7\Request('GET', 'https://internal.test'), []);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+
+            // Blanks separate entries just like commas.
+            $f->create(new Psr7\Request('GET', 'https://host2.test'), []);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+
+            $f->create(new Psr7\Request('GET', 'https://other.test'), []);
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testLowercaseNoProxyEnvironmentVariableTakesPrecedence(): void
+    {
+        self::skipIfWindows();
+
+        self::withProxyEnvironment([
+            'https_proxy' => 'http://proxy.example.com:8125',
+            'no_proxy' => 'lower.example.com',
+            'NO_PROXY' => 'upper.example.com',
+        ], static function (): void {
+            $f = new CurlFactory(3);
+
+            $f->create(new Psr7\Request('GET', 'https://lower.example.com'), []);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+
+            $f->create(new Psr7\Request('GET', 'https://upper.example.com'), []);
+            self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testProxyOptionDisablesEnvironmentProxyResolution(): void
+    {
+        self::withProxyEnvironment([
+            'https_proxy' => 'http://env.example.com:8125',
+            'NO_PROXY' => 'example.com',
+        ], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => 'http://option.example.com:8125',
+            ]);
+
+            self::assertSame('http://option.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testProxyOptionEmptyStringDisablesEnvironmentProxyResolution(): void
+    {
+        self::withProxyEnvironment(['https_proxy' => 'http://env.example.com:8125'], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => '',
+            ]);
+
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testNoProxyMatchIsNotReProxiedFromEnvironment(): void
+    {
+        self::withProxyEnvironment(['http_proxy' => 'http://env.example.com:8125'], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'http://internal.example.com'), [
+                'proxy' => [
+                    'http' => 'http://option.example.com:8125',
+                    'no' => ['internal.example.com'],
+                ],
+            ]);
+
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testFallsBackToEnvironmentWhenSchemeIsNotConfigured(): void
+    {
+        self::withProxyEnvironment(['https_proxy' => 'http://env.example.com:8125'], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => ['http' => 'http://option.example.com:8125'],
+            ]);
+
+            self::assertSame('http://env.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        });
+    }
+
+    public function testForcesFreshConnectionForEnvironmentCredentialedProxyOnAffectedCurlVersion(): void
+    {
+        self::withProxyEnvironment(['https_proxy' => 'http://username:password@proxy.example.com:8080'], static function (): void {
+            self::createWithCurlVersion('8.19.0', 'https://example.com', []);
+
+            self::assertAuthenticatedProxyConnectionReuseOptions();
+        });
+    }
+
+    public function testDoesNotForceFreshConnectionForEnvironmentCredentialedProxyOnFixedCurlVersion(): void
+    {
+        self::withProxyEnvironment(['https_proxy' => 'http://username:password@proxy.example.com:8080'], static function (): void {
+            self::createWithCurlVersion('8.20.0', 'https://example.com', []);
+
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        });
+    }
+
+    public function testRedactsProxyCredentialsInCurlErrorMessages(): void
+    {
+        $handler = new Handler\CurlHandler();
+
+        try {
+            $handler(new Psr7\Request('GET', Server::$url), [
+                'proxy' => 'foo://user:secret@127.0.0.1:1',
+            ])->wait();
+            self::fail('Expected a transfer exception');
+        } catch (\GuzzleHttp\Exception\TransferException $e) {
+            self::assertStringNotContainsString('secret', $e->getMessage());
+            if (\strpos($e->getMessage(), 'foo://') !== false) {
+                // The redacted form follows the installed psr7 version:
+                // 'user:***' on psr7 2, '***' on psr7 3.
+                $redactedUserInfo = Psr7\Utils::redactUserInfo(
+                    new Psr7\Uri('foo://user:secret@127.0.0.1:1')
+                )->getUserInfo();
+
+                self::assertStringContainsString('foo://'.$redactedUserInfo.'@127.0.0.1:1', $e->getMessage());
+            }
+        }
+    }
+
+    public function testRedactsProxyCredentialsWhenProxyDefeatsUrlParsing(): void
+    {
+        $handler = new Handler\CurlHandler();
+
+        try {
+            $handler(new Psr7\Request('GET', Server::$url), [
+                'proxy' => 'http://user:secret@127.0.0.1:99999999',
+                'connect_timeout' => 1,
+            ])->wait();
+            self::fail('Expected a transfer exception');
+        } catch (\GuzzleHttp\Exception\TransferException $e) {
+            self::assertStringNotContainsString('secret', $e->getMessage());
+            if (\strpos($e->getMessage(), '127.0.0.1:99999999') !== false) {
+                self::assertStringContainsString('***@127.0.0.1:99999999', $e->getMessage());
+            }
+        }
+    }
+
+    public function testRedactsEnvironmentProxyCredentialsInCurlErrorMessages(): void
+    {
+        self::withProxyEnvironment(['http_proxy' => 'foo://user:secret@127.0.0.1:1'], static function (): void {
+            $handler = new Handler\CurlHandler();
+
+            try {
+                $handler(new Psr7\Request('GET', Server::$url), [])->wait();
+                self::fail('Expected a transfer exception');
+            } catch (\GuzzleHttp\Exception\TransferException $e) {
+                self::assertStringNotContainsString('secret', $e->getMessage());
+            }
+        });
+    }
+
+    public function testRedactsParseableProxyCredentialsIndependentlyOfCurlErrorText(): void
+    {
+        $proxy = 'http://user:secret@proxy.example.com:8125';
+        $redactedUserInfo = Psr7\Utils::redactUserInfo(new Psr7\Uri($proxy))->getUserInfo();
+
+        $redacted = self::redactProxyUserInfo('Failed to connect via '.$proxy, $proxy);
+
+        self::assertStringNotContainsString('secret', $redacted);
+        self::assertSame('Failed to connect via http://'.$redactedUserInfo.'@proxy.example.com:8125', $redacted);
+    }
+
+    public function testRedactsUnparsableProxyCredentialsIndependentlyOfCurlErrorText(): void
+    {
+        $proxy = 'http://user:secret@127.0.0.1:99999999';
+
+        $redacted = self::redactProxyUserInfo("Unsupported proxy syntax in '".$proxy."'", $proxy);
+
+        self::assertStringNotContainsString('secret', $redacted);
+        self::assertSame("Unsupported proxy syntax in 'http://***@127.0.0.1:99999999'", $redacted);
+    }
+
+    public function testLeavesCurlErrorsUntouchedForProxiesWithoutCredentials(): void
+    {
+        $error = 'Failed to connect to proxy.example.com:8125';
+
+        self::assertSame($error, self::redactProxyUserInfo($error, 'http://proxy.example.com:8125'));
+    }
+
     public function testForcesFreshConnectionForAuthenticatedHttpsProxyOnAffectedCurlVersion(): void
     {
         self::createWithCurlVersion('8.19.0', 'https://example.com', [
@@ -1925,6 +2244,58 @@ class CurlFactoryTest extends TestCase
             self::assertSame('http://proxy.example.com:8080', $_SERVER['_curl'][\CURLOPT_PROXY]);
             self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
             self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testHttp3WithEnvironmentProxyFallsBackToHttp2WhenSupported(): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            self::withProxyEnvironment(['https_proxy' => 'http://proxy.example.com:8080'], static function (): void {
+                $factory = new CurlFactory(3);
+                $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), []);
+
+                self::assertSame('http://proxy.example.com:8080', $_SERVER['_curl'][\CURLOPT_PROXY]);
+                self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+                self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testHttp3IsKeptWhenEnvironmentNoProxyExcludesTheTarget(): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.66.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            self::withProxyEnvironment([
+                'https_proxy' => 'http://proxy.example.com:8080',
+                'NO_PROXY' => 'example.com',
+            ], static function (): void {
+                // Asserted on the default conf, like the other keep-HTTP/3
+                // tests: applying CURL_HTTP_VERSION_3 to a real handle fails
+                // on libcurl builds without HTTP/3 support.
+                $conf = self::getDefaultCurlConf(
+                    new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                    []
+                );
+
+                self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
+            });
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
@@ -4846,6 +5217,45 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    private static function skipIfWindows(): void
+    {
+        if (\PHP_OS_FAMILY === 'Windows') {
+            self::markTestSkipped('Environment variables are case-insensitive on Windows.');
+        }
+    }
+
+    /**
+     * Runs the callback with only the given proxy environment variables set,
+     * restoring the process environment afterwards.
+     *
+     * @param array<string, string> $env
+     */
+    private static function withProxyEnvironment(array $env, callable $test): void
+    {
+        $names = ['http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY', 'no_proxy', 'NO_PROXY'];
+        $previous = [];
+        foreach ($names as $name) {
+            $previous[$name] = \getenv($name, true);
+            \putenv($name);
+        }
+        foreach ($env as $name => $value) {
+            \putenv($name.'='.$value);
+        }
+
+        try {
+            $test();
+        } finally {
+            foreach ($names as $name) {
+                \putenv($name);
+            }
+            foreach ($previous as $name => $value) {
+                if ($value !== false) {
+                    \putenv($name.'='.$value);
+                }
+            }
+        }
+    }
+
     private static function assertAuthenticatedProxyConnectionReuseOptions(): void
     {
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
@@ -4933,6 +5343,16 @@ class CurlFactoryTest extends TestCase
         }
 
         return $method->invoke($factory, $easy);
+    }
+
+    private static function redactProxyUserInfo(string $error, ?string $proxy): string
+    {
+        $method = new \ReflectionMethod(CurlFactory::class, 'redactProxyUserInfo');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        return $method->invoke(null, $error, $proxy);
     }
 
     private static function requireHttp3TestConstants(): void
