@@ -255,6 +255,8 @@ class UtilsTest extends TestCase
             ['http://foo.example.com:8080', ['example.com:8080'], true],
             ['http://foo.example.com:8080', ['.example.com:8080'], true],
             ['http://example.com:8080', ['.example.com:8080'], false],
+            ['http://foo.example.com:8080', ['.EXAMPLE.com:8080'], true],
+            ['http://foo.example.com:8081', ['.EXAMPLE.com:8080'], false],
             ['http://[::1]:8080', ['[::1]:8080'], true],
             ['http://[::1]:8081', ['[::1]:8080'], false],
             ['http://[::1]', ['[::1]:80'], true],
