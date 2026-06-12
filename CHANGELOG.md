@@ -26,6 +26,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated PHP stream context options outside the built-in stream handler allow-list
 - Deprecated passing `ntlm` as a built-in `auth` type
 - Deprecated `Utils::describeType()`
+- Deprecated non-finite floats in the `query` and `form_params` options; 8.0 rejects them
 
 ### Fixed
 
