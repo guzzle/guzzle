@@ -481,9 +481,6 @@ comma- or whitespace-delimited string such as the value from the `NO_PROXY`
 environment variable. Other values now throw `InvalidArgumentException`.
 Guzzle 7 skips invalid `no` entries instead of rejecting them.
 
-`NO_PROXY` environment entries mapped by the client are tokenized with the
-same parser used for request option strings, so the two forms cannot disagree.
-
 When a request uses HTTP/3 and a proxy is resolved from the environment, the
 request is now downgraded to HTTP/2 or HTTP/1.1 in the same way as for proxies
 configured through the `proxy` request option, since current libcurl releases
@@ -494,13 +491,14 @@ cannot carry HTTP/3 over an HTTP proxy. A request excluded by the environment
 
 No-proxy lists are interpreted identically everywhere they appear — the
 option's `no` list, the client-mapped `NO_PROXY` environment variable, and the
-environment `no_proxy` consulted by the cURL handlers — and the interpretation
-matches libcurl. This changes three behaviors compared to Guzzle 7.
+environment `no_proxy` consulted by the cURL handlers — and the shared
+interpretation follows libcurl's. This changes three behaviors compared to
+Guzzle 7.
 
 A leading-dot entry such as `.example.com` now matches `example.com` as well
 as its subdomains, exactly like the bare `example.com` entry. Guzzle 7 matched
-subdomains only; that subdomains-only form has been removed without
-replacement.
+subdomains only; Guzzle 8 has no way to exclude subdomains without also
+excluding the bare domain.
 
 String `no` lists are split on whitespace as well as commas, the way libcurl
 tokenizes the `no_proxy` environment variable. Guzzle 7's client mapping
