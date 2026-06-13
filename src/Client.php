@@ -721,6 +721,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             return $streamFactory->createStream((string) $body);
         }
 
+        // Only invokable objects reach this branch: callable-name strings are
+        // stored as literal bodies above, and array callables are rejected
+        // before createBodyStream() is called, so the documented body type
+        // narrows the callable arm to callable&object rather than callable.
         if (\is_callable($body)) {
             return Psr7\Utils::streamFor($body);
         }
