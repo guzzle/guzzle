@@ -1341,7 +1341,18 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (\is_array($options['body'])) {
                 throw $this->invalidBody();
             }
-            $modify['body'] = self::createBodyStream($options['body'], $streamFactory);
+            $body = $options['body'];
+            if (!\is_string($body) && \is_scalar($body)) {
+                \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-string scalar to the "body" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-string scalar bodies.');
+
+                // Normalize non-finite floats to dodge PHP 8.5's (string) NAN
+                // coercion warning while the value is still accepted.
+                if (\is_float($body) && !\is_finite($body)) {
+                    $body = \is_nan($body) ? 'NAN' : ($body > 0 ? 'INF' : '-INF');
+                }
+                $body = (string) $body;
+            }
+            $modify['body'] = self::createBodyStream($body, $streamFactory);
             unset($options['body']);
         }
 
