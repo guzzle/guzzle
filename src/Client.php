@@ -957,6 +957,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         self::assertFormParamArray($value, 'form_params');
+        self::assertFiniteFloats($value, 'form_params');
     }
 
     private static function assertFormParamArray(array $values, string $path): bool
@@ -979,6 +980,20 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         return true;
+    }
+
+    private static function assertFiniteFloats(array $values, string $option): void
+    {
+        foreach ($values as $key => $value) {
+            if (\is_array($value)) {
+                self::assertFiniteFloats($value, $option.'.'.(string) $key);
+            } elseif (\is_float($value) && !\is_finite($value)) {
+                throw new InvalidArgumentException(\sprintf(
+                    'Passing a non-finite float to request option "%s" is invalid; non-finite floats are not supported.',
+                    $option.'.'.(string) $key
+                ));
+            }
+        }
     }
 
     /**
@@ -1294,7 +1309,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     .'x-www-form-urlencoded requests, and the multipart '
                     .'option to send multipart/form-data requests.');
             }
-            $options['body'] = \http_build_query(self::normalizeNonFiniteFloats($options['form_params'], 'form_params'), '', '&');
+            $options['body'] = \http_build_query($options['form_params'], '', '&');
             unset($options['form_params']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Content-Type'], $options['_conditional']);
@@ -1333,7 +1348,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (isset($options['query'])) {
             $value = $options['query'];
             if (\is_array($value)) {
-                $value = \http_build_query(self::normalizeNonFiniteFloats($value, 'query'), '', '&', \PHP_QUERY_RFC3986);
+                self::assertFiniteFloats($value, 'query');
+                $value = \http_build_query($value, '', '&', \PHP_QUERY_RFC3986);
             }
             if (!\is_string($value)) {
                 throw new InvalidArgumentException('query must be a string or array');
@@ -1370,68 +1386,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         return $request;
-    }
-
-    /**
-     * @param array<array-key, mixed> $headers
-     *
-     * @return list<string>
-     */
-    private static function castDeprecatedHeaderOptionValues(array &$headers): array
-    {
-        $droppedHeaderNames = [];
-
-        foreach ($headers as $name => $value) {
-            if (\is_array($value)) {
-                if ($value === []) {
-                    $droppedHeaderNames[] = (string) $name;
-                    unset($headers[$name]);
-
-                    continue;
-                }
-
-                foreach ($value as $index => $item) {
-                    if ($item === null || (!\is_string($item) && \is_scalar($item))) {
-                        if (\is_float($item) && !\is_finite($item)) {
-                            $item = \is_nan($item) ? 'NAN' : ($item > 0 ? 'INF' : '-INF');
-                        }
-                        $value[$index] = (string) $item;
-                    }
-                }
-
-                $headers[$name] = $value;
-
-                continue;
-            }
-
-            if ($value === null || (!\is_string($value) && \is_scalar($value))) {
-                if (\is_float($value) && !\is_finite($value)) {
-                    $value = \is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
-                }
-                $headers[$name] = (string) $value;
-            }
-        }
-
-        return $droppedHeaderNames;
-    }
-
-    /**
-     * Converts non-finite floats in the array to the strings PHP coerces
-     * them to, as implicit coercion of NAN emits a warning on PHP 8.5.
-     */
-    private static function normalizeNonFiniteFloats(array $values, string $option): array
-    {
-        foreach ($values as $key => $value) {
-            if (\is_array($value)) {
-                $values[$key] = self::normalizeNonFiniteFloats($value, $option);
-            } elseif (\is_float($value) && !\is_finite($value)) {
-                \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-finite float in the "%s" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-finite floats.', $option);
-
-                $values[$key] = \is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
-            }
-        }
-
-        return $values;
     }
 
     /**
