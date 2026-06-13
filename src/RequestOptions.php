@@ -60,7 +60,7 @@ final class RequestOptions
     public const AUTH = 'auth';
 
     /**
-     * body: (resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable)
+     * body: (resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable)
      * Body to send in the request. Scalar, resource, and stringable object
      * values are converted using the configured stream_factory. Callable and
      * iterator bodies use Guzzle's existing stream handling. Strings are used

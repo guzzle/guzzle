@@ -81,7 +81,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -205,7 +205,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -293,7 +293,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -397,7 +397,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -513,7 +513,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -709,8 +709,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             return $streamFactory->createStream();
         }
 
-        if (\is_scalar($body)) {
-            return $streamFactory->createStream((string) $body);
+        if (\is_string($body)) {
+            return $streamFactory->createStream($body);
         }
 
         if ($body instanceof \Iterator) {
@@ -726,7 +726,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         throw new InvalidArgumentException(\sprintf(
-            'Passing %s to request option "body" is invalid; expected resource|string|null|int|float|bool|StreamInterface|callable&object|Iterator|Stringable.',
+            'Passing %s to request option "body" is invalid; expected resource|string|null|StreamInterface|callable&object|Iterator|Stringable.',
             \get_debug_type($body)
         ));
     }
@@ -1341,18 +1341,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (\is_array($options['body'])) {
                 throw $this->invalidBody();
             }
-            $body = $options['body'];
-            if (!\is_string($body) && \is_scalar($body)) {
-                \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-string scalar to the "body" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-string scalar bodies.');
-
-                // Normalize non-finite floats to dodge PHP 8.5's (string) NAN
-                // coercion warning while the value is still accepted.
-                if (\is_float($body) && !\is_finite($body)) {
-                    $body = \is_nan($body) ? 'NAN' : ($body > 0 ? 'INF' : '-INF');
-                }
-                $body = (string) $body;
-            }
-            $modify['body'] = self::createBodyStream($body, $streamFactory);
+            $modify['body'] = self::createBodyStream($options['body'], $streamFactory);
             unset($options['body']);
         }
 

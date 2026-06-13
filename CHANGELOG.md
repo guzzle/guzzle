@@ -39,6 +39,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Declare strict types across remaining source files
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use
 - Reject non-finite floats in the `query` and `form_params` options
+- Reject non-string scalar values in the `body` option
 - Reject invalid `SetCookie` constructor field types instead of coercing them
 - Reject malformed, conflicting, or unrepresentable request `Content-Length` values in built-in handlers
 - Reject raw cURL request options outside the built-in cURL handlers' allow-list
