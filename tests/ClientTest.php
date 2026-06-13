@@ -1907,6 +1907,39 @@ class ClientTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider nonFiniteFloatProvider
+     */
+    public function testFormParamsRejectNonFiniteFloats(float $value): void
+    {
+        $client = new Client(['handler' => new MockHandler([new Response()])]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing a non-finite float to request option "form_params.score" is invalid; non-finite floats are not supported.');
+        $client->post('http://foo.com', ['form_params' => ['score' => $value]]);
+    }
+
+    /**
+     * @dataProvider nonFiniteFloatProvider
+     */
+    public function testQueryRejectsNonFiniteFloats(float $value): void
+    {
+        $client = new Client(['handler' => new MockHandler([new Response()])]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing a non-finite float to request option "query.score" is invalid; non-finite floats are not supported.');
+        $client->get('http://foo.com', ['query' => ['score' => $value]]);
+    }
+
+    public static function nonFiniteFloatProvider(): array
+    {
+        return [
+            'NAN' => [\NAN],
+            'INF' => [\INF],
+            '-INF' => [-\INF],
+        ];
+    }
+
     public function testTlsPassphraseOptionsAcceptNullPasswordSlot(): void
     {
         $mock = new MockHandler([new Response()]);
