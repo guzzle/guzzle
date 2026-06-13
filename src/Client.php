@@ -856,7 +856,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     .'x-www-form-urlencoded requests, and the multipart '
                     .'option to send multipart/form-data requests.');
             }
-            $options['body'] = \http_build_query(self::normalizeNonFiniteFloats($options['form_params']), '', '&');
+            $options['body'] = \http_build_query(self::normalizeNonFiniteFloats($options['form_params'], 'form_params'), '', '&');
             unset($options['form_params']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Content-Type'], $options['_conditional']);
@@ -922,7 +922,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (isset($options['query'])) {
             $value = $options['query'];
             if (\is_array($value)) {
-                $value = \http_build_query(self::normalizeNonFiniteFloats($value), '', '&', \PHP_QUERY_RFC3986);
+                $value = \http_build_query(self::normalizeNonFiniteFloats($value, 'query'), '', '&', \PHP_QUERY_RFC3986);
             }
             if (!\is_string($value)) {
                 throw new InvalidArgumentException('query must be a string or array');
@@ -1017,12 +1017,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * Converts non-finite floats in the array to the strings PHP coerces
      * them to, as implicit coercion of NAN emits a warning on PHP 8.5.
      */
-    private static function normalizeNonFiniteFloats(array $values): array
+    private static function normalizeNonFiniteFloats(array $values, string $option): array
     {
         foreach ($values as $key => $value) {
             if (\is_array($value)) {
-                $values[$key] = self::normalizeNonFiniteFloats($value);
+                $values[$key] = self::normalizeNonFiniteFloats($value, $option);
             } elseif (\is_float($value) && !\is_finite($value)) {
+                \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-finite float in the "%s" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-finite floats.', $option);
+
                 $values[$key] = \is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
             }
         }
