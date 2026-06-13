@@ -1460,7 +1460,12 @@ class ClientTest extends TestCase
 
         yield 'body' => [
             ['body' => new \stdClass()],
-            'Passing stdClass to request option "body" is invalid; expected resource|string|null|int|float|bool|StreamInterface|callable&object|Iterator|Stringable.',
+            'Passing stdClass to request option "body" is invalid; expected resource|string|null|StreamInterface|callable&object|Iterator|Stringable.',
+        ];
+
+        yield 'body int' => [
+            ['body' => 1],
+            'Passing int to request option "body" is invalid; expected resource|string|null|StreamInterface|callable&object|Iterator|Stringable.',
         ];
 
         yield 'cert password' => [

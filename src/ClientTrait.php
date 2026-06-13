@@ -45,7 +45,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -129,7 +129,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -216,7 +216,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -303,7 +303,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -390,7 +390,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -477,7 +477,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -564,7 +564,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -652,7 +652,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -736,7 +736,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -823,7 +823,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -910,7 +910,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -997,7 +997,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -1084,7 +1084,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
@@ -1171,7 +1171,7 @@ trait ClientTrait
      *         1: string,
      *         2?: string|null
      *     }|string|false|null,
-     *     body?: resource|string|null|int|float|bool|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
      *     cert?: string|array{
      *         0: string,
      *         1?: string|null
