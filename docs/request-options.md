@@ -915,7 +915,21 @@ Pass a string to specify a proxy for all protocols.
 $client->request('GET', '/', ['proxy' => 'http://localhost:8125']);
 ```
 
-Pass an associative array to specify HTTP proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair as a comma- or whitespace-delimited string or an array of entries that should not be proxied to. No-proxy entries may include host names, host-and-port pairs, IP literals, or IP CIDR rules. The wildcard entry `*` matches all hosts, and a port-specific wildcard such as `*:80` matches any host using effective port `80`. Domain entries are matched case-insensitively, and one final DNS root dot is ignored before matching; repeated trailing dots are not collapsed. A bare domain such as `example.com` and a leading-dot domain such as `.example.com` are equivalent: both match `example.com` and its subdomains. Entries with repeated leading dots match nothing. No-proxy entries may include ports, for example `example.com:8080` or `[::1]:8080`. IP literals are normalized before matching, so equivalent IPv6 spellings such as `::1` and `0:0:0:0:0:0:0:1` match. CIDR entries match IP literals only and are not port-specific. Trailing-dot domain normalization does not apply to IP literals or CIDR rules. The `http`, `https`, and `no` entries may be set to `null` to leave that entry unconfigured.
+Pass an associative array to specify HTTP proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair as a comma- or whitespace-delimited string or an array of entries that should not be proxied to; array entries are taken as-is and are never re-split. The `http`, `https`, and `no` entries may be set to `null` to leave that entry unconfigured.
+
+The `no` list supports the following entry forms:
+
+| `no` entry | Bypasses the proxy for |
+| --- | --- |
+| `*` | every request |
+| `*:80` | any host on effective port `80` |
+| `example.com`, `.example.com` | `example.com` and its subdomains |
+| `example.com:8080` | `example.com` and its subdomains on port `8080` |
+| `127.0.0.1`, `::1`, `[::1]` | requests whose host is that IP literal |
+| `[::1]:8080` | that IP literal on port `8080` |
+| `10.0.0.0/8`, `fd00::/8` | IP-literal hosts inside the range |
+
+Domain entries are matched case-insensitively, and one final DNS root dot is ignored on each side before matching; repeated trailing dots are not collapsed, and only a single leading dot is ignored — entries with repeated leading dots match nothing. IP literals are normalized before matching, so equivalent IPv6 spellings such as `::1` and `0:0:0:0:0:0:0:1` match; trailing-dot normalization does not apply to IP literals or CIDR rules. IP and CIDR entries match only requests whose host is itself an IP literal: host names are never resolved to addresses when deciding whether to proxy. Ports are matched against the request's effective port — an explicit port in the URI, otherwise the scheme default (`80` for "http", `443` for "https") — and CIDR entries are not port-specific.
 
 > [!NOTE]
 > Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
@@ -948,9 +962,36 @@ $client->request('GET', '/', [
 > [!NOTE]
 > You can provide proxy URLs that contain a scheme, username, and password. For example, `"http://username:password@192.168.16.1:10"`.
 
+### Handler support
+
+The `proxy` option — including the `no` list and its validation — means the same thing on every built-in handler: which proxy, if any, applies to a request is decided by the same rules everywhere. What differs is the transport executing that decision:
+
+| Capability | cURL handlers | Stream handler |
+| --- | --- | --- |
+| HTTP proxy for "http" requests | yes | yes |
+| HTTP proxy for "https" requests (CONNECT tunnel) | yes | no |
+| HTTPS proxy (TLS to the proxy itself) | yes (libcurl 7.52+) | no |
+| SOCKS proxies (`socks4://`, `socks4a://`, `socks5://`, `socks5h://`) | yes | no |
+| Proxy credentials in the proxy URL | yes | yes (Basic only) |
+| Proxy resolution from environment variables | yes | no |
+
+The stream handler forwards requests through PHP's HTTP stream wrapper, which supports plain HTTP proxying only: it cannot establish CONNECT tunnels, so "https" requests through a proxy fail with a connection error, and SOCKS proxies are not supported. Use a cURL handler for tunneled or SOCKS proxying. The last row is by design — only the cURL handlers resolve proxy environment variables (see below).
+
 ### Proxy environment variables
 
-The cURL handlers always configure libcurl's proxy options explicitly, so libcurl never reads proxy environment variables itself. When the `proxy` request option makes a decision for a request — a string proxy, an array whose key matches the request scheme, or a matching `no` list entry (with or without a scheme-specific proxy entry) — that decision is final, and proxy environment variables are ignored for the request. In particular, the `no_proxy`/`NO_PROXY` environment variables do not bypass an explicitly configured proxy; add the hosts to the option's `no` list instead.
+The cURL handlers always configure libcurl's proxy options explicitly, so libcurl never reads proxy environment variables itself. When the `proxy` request option makes a decision for a request, that decision is final, and proxy environment variables are ignored for the request. For an "https" request, the option resolves like this:
+
+| `proxy` option value | Result |
+| --- | --- |
+| option not set, or `null` | environment proxies apply |
+| `'http://proxy.example.com:8080'` | that proxy is used; environment ignored |
+| `''` | no proxy; environment ignored |
+| `['https' => 'http://proxy.example.com:8080']` | that proxy is used; environment ignored |
+| `['https' => '']` | no proxy; environment ignored |
+| `['https' => null]`, or an array without an `https` entry | environment proxies apply |
+| any array whose `no` list matches the request | direct connection; environment ignored (takes precedence over the array rows above) |
+
+In particular, the `no_proxy`/`NO_PROXY` environment variables do not bypass an explicitly configured proxy; add the hosts to the option's `no` list instead.
 
 When the `proxy` request option makes no decision for a request, the cURL handlers resolve the proxy from the environment with the same lookup semantics libcurl uses:
 
