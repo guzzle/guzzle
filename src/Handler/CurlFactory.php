@@ -432,7 +432,6 @@ class CurlFactory implements CurlFactoryInterface
         self::addSupportedCurlOption($options, 'CURLOPT_MAXLIFETIME_CONN');
         self::addSupportedCurlOption($options, 'CURLOPT_HTTPPROXYTUNNEL');
         self::addSupportedCurlOption($options, 'CURLOPT_PROXYHEADER');
-        self::addSupportedCurlOption($options, 'CURLOPT_PROXYTYPE');
         self::addSupportedCurlOption($options, 'CURLOPT_PROXYUSERPWD');
         self::addSupportedCurlOption($options, 'CURLOPT_RESOLVE');
         self::addSupportedCurlOption($options, 'CURLOPT_SSL_CIPHER_LIST');
