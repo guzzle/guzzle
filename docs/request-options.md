@@ -367,21 +367,44 @@ Raw cURL options outside the built-in cURL handlers' allow-list are rejected.
 Allow-listing means Guzzle passes the option through; PHP, libcurl, or the TLS
 backend may still reject or ignore an option depending on the runtime. The
 allow-list is limited to the following `CURLOPT_*` constants when they are
-defined by the installed PHP cURL extension: `CURLOPT_ADDRESS_SCOPE`,
-`CURLOPT_CONNECT_TO`, `CURLOPT_DNS_CACHE_TIMEOUT`,
-`CURLOPT_DNS_INTERFACE`, `CURLOPT_DNS_LOCAL_IP4`,
-`CURLOPT_DNS_LOCAL_IP6`, `CURLOPT_DNS_SERVERS`,
-`CURLOPT_DNS_SHUFFLE_ADDRESSES`, `CURLOPT_ENCODING`,
-`CURLOPT_FORBID_REUSE`, `CURLOPT_FRESH_CONNECT`,
-`CURLOPT_HAPPY_EYEBALLS_TIMEOUT_MS`, `CURLOPT_HTTPAUTH`,
-`CURLOPT_HTTPPROXYTUNNEL`, `CURLOPT_INTERFACE`, `CURLOPT_LOCALPORT`,
-`CURLOPT_LOCALPORTRANGE`, `CURLOPT_LOW_SPEED_LIMIT`, `CURLOPT_LOW_SPEED_TIME`,
-`CURLOPT_MAXAGE_CONN`, `CURLOPT_MAXCONNECTS`, `CURLOPT_MAXLIFETIME_CONN`,
-`CURLOPT_PROXYHEADER`, `CURLOPT_PROXYTYPE`, `CURLOPT_PROXYUSERPWD`,
-`CURLOPT_RESOLVE`, `CURLOPT_SSL_CIPHER_LIST`, `CURLOPT_SSL_EC_CURVES`,
-`CURLOPT_TCP_FASTOPEN`, `CURLOPT_TCP_KEEPALIVE`, `CURLOPT_TCP_KEEPIDLE`,
-`CURLOPT_TCP_KEEPINTVL`, `CURLOPT_TCP_KEEPCNT`, `CURLOPT_TCP_NODELAY`,
-`CURLOPT_TLS13_CIPHERS`, `CURLOPT_UNIX_SOCKET_PATH`, and `CURLOPT_USERPWD`.
+defined by the installed PHP cURL extension:
+
+- `CURLOPT_ADDRESS_SCOPE`
+- `CURLOPT_CONNECT_TO`
+- `CURLOPT_DNS_CACHE_TIMEOUT`
+- `CURLOPT_DNS_INTERFACE`
+- `CURLOPT_DNS_LOCAL_IP4`
+- `CURLOPT_DNS_LOCAL_IP6`
+- `CURLOPT_DNS_SERVERS`
+- `CURLOPT_DNS_SHUFFLE_ADDRESSES`
+- `CURLOPT_ENCODING`
+- `CURLOPT_FORBID_REUSE`
+- `CURLOPT_FRESH_CONNECT`
+- `CURLOPT_HAPPY_EYEBALLS_TIMEOUT_MS`
+- `CURLOPT_HTTPAUTH`
+- `CURLOPT_HTTPPROXYTUNNEL`
+- `CURLOPT_INTERFACE`
+- `CURLOPT_LOCALPORT`
+- `CURLOPT_LOCALPORTRANGE`
+- `CURLOPT_LOW_SPEED_LIMIT`
+- `CURLOPT_LOW_SPEED_TIME`
+- `CURLOPT_MAXAGE_CONN`
+- `CURLOPT_MAXCONNECTS`
+- `CURLOPT_MAXLIFETIME_CONN`
+- `CURLOPT_PROXYHEADER`
+- `CURLOPT_PROXYUSERPWD`
+- `CURLOPT_RESOLVE`
+- `CURLOPT_SSL_CIPHER_LIST`
+- `CURLOPT_SSL_EC_CURVES`
+- `CURLOPT_TCP_FASTOPEN`
+- `CURLOPT_TCP_KEEPALIVE`
+- `CURLOPT_TCP_KEEPIDLE`
+- `CURLOPT_TCP_KEEPINTVL`
+- `CURLOPT_TCP_KEEPCNT`
+- `CURLOPT_TCP_NODELAY`
+- `CURLOPT_TLS13_CIPHERS`
+- `CURLOPT_UNIX_SOCKET_PATH`
+- `CURLOPT_USERPWD`
 
 ```php
 $client->request('GET', '/', [
@@ -897,7 +920,7 @@ $client->request('GET', 'https://example.com', [
 ## proxy
 
 Summary
-Pass a string to specify an HTTP proxy, or an array to specify different proxies for different protocols.
+Pass a string to specify a proxy, or an array to specify different proxies for different protocols.
 
 Types
 - string
@@ -915,7 +938,7 @@ Pass a string to specify a proxy for all protocols.
 $client->request('GET', '/', ['proxy' => 'http://localhost:8125']);
 ```
 
-Pass an associative array to specify HTTP proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair as a comma- or whitespace-delimited string or an array of entries that should not be proxied to; array entries are taken as-is and are never re-split. The `http`, `https`, and `no` entries may be set to `null` to leave that entry unconfigured.
+Pass an associative array to specify proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair as a comma- or whitespace-delimited string or an array of entries that should not be proxied to; array entries are taken as-is and are never re-split. The `http`, `https`, and `no` entries may be set to `null` to leave that entry unconfigured.
 
 The `no` list supports the following entry forms:
 
@@ -1019,9 +1042,7 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > in its connection matching. Fixed libcurl versions keep normal connection
 > reuse behavior for proxy URL and cURL proxy credential options. Advanced
 > users can still control cURL connection reuse explicitly with the `curl`
-> request option and `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`; raw
-> `CURLOPT_PROXYTYPE` is respected when deciding whether a scheme-less `proxy`
-> option value is an HTTP(S) proxy.
+> request option and `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`.
 
 ## query
 

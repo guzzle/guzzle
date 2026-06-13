@@ -1282,6 +1282,18 @@ class CurlFactoryTest extends TestCase
         ]);
     }
 
+    public function testRejectsRawCurlProxyTypeOption(): void
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXYTYPE');
+
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'curl' => [\CURLOPT_PROXYTYPE => \defined('CURLPROXY_HTTPS') ? \constant('CURLPROXY_HTTPS') : 2],
+        ]);
+    }
+
     public function testRejectsRawCurlProxyOverride(): void
     {
         $f = new CurlFactory(3);
