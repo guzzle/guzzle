@@ -459,6 +459,7 @@ final class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_STDERR', 'the "debug" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_PROXY', 'the "proxy" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_NOPROXY', 'the "proxy" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_PROXYTYPE', 'the "proxy" request option with a scheme-prefixed URL');
         self::addConflictingCurlOption($options, 'CURLOPT_FOLLOWLOCATION', 'the "allow_redirects" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_MAXREDIRS', 'the "allow_redirects" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_POSTREDIR', 'the "allow_redirects" request option');
@@ -525,7 +526,6 @@ final class CurlFactory implements CurlFactoryInterface
         self::addSupportedCurlOption($options, 'CURLOPT_MAXLIFETIME_CONN');
         self::addSupportedCurlOption($options, 'CURLOPT_HTTPPROXYTUNNEL');
         self::addSupportedCurlOption($options, 'CURLOPT_PROXYHEADER');
-        self::addSupportedCurlOption($options, 'CURLOPT_PROXYTYPE');
         self::addSupportedCurlOption($options, 'CURLOPT_PROXYUSERPWD');
         self::addSupportedCurlOption($options, 'CURLOPT_RESOLVE');
         self::addSupportedCurlOption($options, 'CURLOPT_SSL_CIPHER_LIST');
