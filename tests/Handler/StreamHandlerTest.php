@@ -1173,6 +1173,15 @@ class StreamHandlerTest extends TestCase
         self::assertArrayNotHasKey('proxy', $opts['http']);
     }
 
+    public function testHonorsNoProxyWithoutSchemeSpecificProxy(): void
+    {
+        $res = $this->getSendResult(['proxy' => [
+            'no' => ['*'],
+        ]]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertArrayNotHasKey('proxy', $opts['http']);
+    }
+
     /**
      * @dataProvider invalidProxyOptionProvider
      *
@@ -1192,6 +1201,7 @@ class StreamHandlerTest extends TestCase
             [['http' => new \stdClass()]],
             [['http' => 'http://proxy.example.com:8125', 'no' => new \stdClass()]],
             [['http' => 'http://proxy.example.com:8125', 'no' => [new \stdClass()]]],
+            [['no' => [new \stdClass()]]],
         ];
     }
 

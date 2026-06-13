@@ -34,21 +34,26 @@ final class ProxyOptions
             return ProxySelection::proxy($proxy);
         }
 
-        $scheme = $uri->getScheme();
-        if (!isset($proxy[$scheme])) {
-            return ProxySelection::none();
-        }
-
-        if (!\is_string($proxy[$scheme])) {
+        $schemeProxy = $proxy[$uri->getScheme()] ?? null;
+        if ($schemeProxy !== null && !\is_string($schemeProxy)) {
             throw new InvalidArgumentException('proxy values must be strings');
         }
 
+        // A matching "no" entry is always a final decision, even when the
+        // array selects no proxy for the request scheme. Without this, the
+        // same option input routes differently per handler: StreamHandler
+        // (no environment fallback) goes direct, while the cURL handlers
+        // fall through to an environment proxy the user excluded.
         $noProxy = isset($proxy['no']) ? self::normalizeNoProxy($proxy['no']) : [];
         if ($noProxy !== [] && self::isUriInNoProxy($uri, $noProxy)) {
             return ProxySelection::bypassed();
         }
 
-        return ProxySelection::proxy($proxy[$scheme]);
+        if ($schemeProxy === null) {
+            return ProxySelection::none();
+        }
+
+        return ProxySelection::proxy($schemeProxy);
     }
 
     /**
@@ -67,7 +72,9 @@ final class ProxyOptions
         }
 
         if (\is_string($noProxy)) {
-            $noProxy = \explode(',', $noProxy);
+            // Entries may be separated by whitespace as well as commas,
+            // matching the no_proxy environment variable conventions.
+            $noProxy = \preg_split('/[\s,]+/', $noProxy) ?: [];
         } elseif (!\is_array($noProxy)) {
             throw new InvalidArgumentException('proxy no list must be null, a string, or an array of strings');
         }
@@ -129,11 +136,10 @@ final class ProxyOptions
      * Areas are matched in the following cases:
      * 1. "*" (without quotes) always matches any hosts.
      * 2. An exact domain or IP literal match.
-     * 3. A bare domain matches itself and its subdomains. e.g. 'mit.edu' will
-     *    match 'mit.edu' and 'foo.mit.edu'.
-     * 4. The area starts with "." and the area is the last part of the host. e.g.
-     *    '.mit.edu' will match any host that ends with '.mit.edu'.
-     * 5. IP CIDR entries match IP literal hosts. e.g. '192.168.0.0/16' will
+     * 3. A bare domain or a leading-dot domain matches itself and its
+     *    subdomains. e.g. 'mit.edu' and '.mit.edu' both match 'mit.edu'
+     *    and 'foo.mit.edu'.
+     * 4. IP CIDR entries match IP literal hosts. e.g. '192.168.0.0/16' will
      *    match '192.168.1.10' and 'fd00::/8' will match '[fd00::1]'.
      *
      * @param string   $host    Host to check against the patterns.
@@ -185,7 +191,7 @@ final class ProxyOptions
     }
 
     /**
-     * @return array{type: string, value: string, port: int|null, matchesRoot: bool}|null
+     * @return array{type: string, value: string, port: int|null}|null
      */
     private static function parseNoProxyTarget(UriInterface $uri): ?array
     {
@@ -194,11 +200,11 @@ final class ProxyOptions
             return null;
         }
 
-        return self::parseNoProxyHost($host, $uri->getPort() ?? self::getDefaultPort($uri->getScheme()), true);
+        return self::parseNoProxyHost($host, $uri->getPort() ?? self::getDefaultPort($uri->getScheme()));
     }
 
     /**
-     * @return array{type: string, value: string, port: int|null, matchesRoot: bool}|null
+     * @return array{type: string, value: string, port: int|null}|null
      */
     private static function parseNoProxyHostString(string $host): ?array
     {
@@ -209,11 +215,11 @@ final class ProxyOptions
 
         [$host] = $hostAndPort;
 
-        return self::parseNoProxyHost($host, null, true);
+        return self::parseNoProxyHost($host, null);
     }
 
     /**
-     * @return array{type: string, value: string, port: int|null, matchesRoot: bool}|array{type: string, value: string, prefix: int}|null
+     * @return array{type: string, value: string, port: int|null}|array{type: string, value: string, prefix: int}|null
      */
     private static function parseNoProxyRule(string $area): ?array
     {
@@ -222,14 +228,19 @@ final class ProxyOptions
             return null;
         }
 
-        if (\strpos($area, '/') !== false) {
-            return self::parseNoProxyCidrRule($area);
+        // A single leading dot is ignored: ".example.com" matches
+        // example.com and its subdomains exactly like a bare domain,
+        // consistent with every libcurl era. The strip runs before the
+        // CIDR check so ".10.0.0.0/8" is a live rule on every path.
+        if ($area[0] === '.') {
+            $area = \substr($area, 1);
+            if ($area === '') {
+                return null;
+            }
         }
 
-        $matchesRoot = true;
-        if ($area[0] === '.') {
-            $matchesRoot = false;
-            $area = \substr($area, 1);
+        if (\strpos($area, '/') !== false) {
+            return self::parseNoProxyCidrRule($area);
         }
 
         $hostAndPort = self::splitNoProxyHostAndPort($area);
@@ -240,30 +251,20 @@ final class ProxyOptions
         [$host, $port] = $hostAndPort;
 
         if ($host === '*') {
-            if (!$matchesRoot) {
-                return null;
-            }
-
             return [
                 'type' => 'wildcard',
                 'value' => '*',
                 'port' => $port,
-                'matchesRoot' => true,
             ];
         }
 
-        $rule = self::parseNoProxyHost($host, $port, $matchesRoot);
-        if ($rule !== null && !$matchesRoot && $rule['type'] === 'ip') {
-            return null;
-        }
-
-        return $rule;
+        return self::parseNoProxyHost($host, $port);
     }
 
     /**
-     * @return array{type: string, value: string, port: int|null, matchesRoot: bool}|null
+     * @return array{type: string, value: string, port: int|null}|null
      */
-    private static function parseNoProxyHost(string $host, ?int $port, bool $matchesRoot): ?array
+    private static function parseNoProxyHost(string $host, ?int $port): ?array
     {
         if ($host !== '' && $host[0] === '[') {
             if (\substr($host, -1) !== ']') {
@@ -284,7 +285,6 @@ final class ProxyOptions
                 'type' => 'ip',
                 'value' => $packedIp,
                 'port' => $port,
-                'matchesRoot' => $matchesRoot,
             ];
         }
 
@@ -304,7 +304,6 @@ final class ProxyOptions
             'type' => 'domain',
             'value' => \strtolower($host),
             'port' => $port,
-            'matchesRoot' => $matchesRoot,
         ];
     }
 
@@ -421,8 +420,8 @@ final class ProxyOptions
     }
 
     /**
-     * @param array{type: string, value: string, port: int|null, matchesRoot: bool}                      $target
-     * @param array{type: string, value: string, port?: int|null, matchesRoot?: bool, prefix?: int|null} $rule
+     * @param array{type: string, value: string, port: int|null}                     $target
+     * @param array{type: string, value: string, port?: int|null, prefix?: int|null} $rule
      */
     private static function noProxyRuleMatches(array $target, array $rule): bool
     {
@@ -454,7 +453,7 @@ final class ProxyOptions
             return $rule['value'] === $target['value'];
         }
 
-        if (($rule['matchesRoot'] ?? false) && $target['value'] === $rule['value']) {
+        if ($target['value'] === $rule['value']) {
             return true;
         }
 
