@@ -939,7 +939,7 @@ $client->request('GET', '/', [
 > [!NOTE]
 > You can provide proxy URLs that contain a scheme, username, and password. For example, `"http://username:password@192.168.16.1:10"`.
 
-HTTPS proxies (an `https://` proxy URL, where the connection to the proxy itself is encrypted) require libcurl 7.52.0 or newer built with HTTPS-proxy support. Without it, libcurl mishandles such a proxy — versions before 7.50.2 silently downgrade it to a plaintext HTTP proxy, while 7.50.2 and later, and builds lacking the feature, fail only at connect time with a cryptic error — so the cURL handlers reject the request up front instead.
+HTTPS proxies (an `https://` proxy URL, where the connection to the proxy itself is encrypted) require libcurl 7.52.0 or newer built with HTTPS-proxy support. When libcurl lacks that support, it mishandles such a proxy: versions before 7.50.2 silently downgrade it to a plaintext HTTP proxy, and later versions fail at connect time with a cryptic error. To avoid both outcomes, the cURL handlers reject the request up front. They also reject a proxy URL with a malformed scheme, such as one with junk before the scheme, which libcurl would otherwise downgrade to a plaintext HTTP proxy.
 
 ### Proxy environment variables
 

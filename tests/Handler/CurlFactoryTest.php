@@ -694,6 +694,27 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public static function malformedProxyUrlProvider(): array
+    {
+        return [
+            [' https://proxy.example.com:3128'],        // leading space before the scheme
+            ["\u{00A0}https://proxy.example.com:3128"], // leading non-breaking space
+            ['ht tps://proxy.example.com:3128'],        // space inside the scheme prefix
+        ];
+    }
+
+    /**
+     * @dataProvider malformedProxyUrlProvider
+     */
+    public function testRejectsMalformedProxyUrls(string $proxy): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('The proxy URL is malformed.');
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+    }
+
     public static function rejectedHttpsProxyEnvironmentProvider(): array
     {
         return [
