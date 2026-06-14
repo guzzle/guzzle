@@ -717,6 +717,13 @@ class CurlFactory implements CurlFactoryInterface
         return \is_string($proxy) && $proxy !== '' ? $proxy : null;
     }
 
+    private static function proxyScheme(string $proxy): ?string
+    {
+        $position = \strpos($proxy, '://');
+
+        return $position === false ? null : \strtolower(\substr($proxy, 0, $position));
+    }
+
     /**
      * @return array<int|string, mixed>
      */
@@ -1025,6 +1032,16 @@ class CurlFactory implements CurlFactoryInterface
                 // the installed libcurl's matcher.
                 $proxyConf = '';
                 $noProxyConf = '*';
+            }
+        }
+
+        if (\is_string($proxyConf) && $proxyConf !== '') {
+            if (self::proxyScheme($proxyConf) === 'https' && !CurlVersion::supportsHttpsProxy()) {
+                // libcurl before 7.50.2 silently downgrades an https:// proxy
+                // to a plaintext HTTP proxy; 7.50.2 through 7.51, and builds
+                // without HTTPS-proxy support, fail at connect time. Fail
+                // closed before any bytes reach the wire.
+                throw new RequestException('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.', $easy->request);
             }
         }
 
