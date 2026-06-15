@@ -399,6 +399,38 @@ class CookieJarTest extends TestCase
         self::assertCount(1, $this->jar);
     }
 
+    public static function dotOnlySetCookieDomainProvider()
+    {
+        return [
+            ['.'],
+            ['..'],
+            ['...'],
+            [' . '],
+        ];
+    }
+
+    /**
+     * @dataProvider dotOnlySetCookieDomainProvider
+     */
+    public function testDoesNotStoreDotOnlyDomainCookiesFromResponse($domain)
+    {
+        $jar = new CookieJar();
+
+        $jar->extractCookies(
+            new Request('GET', 'https://attacker.example/'),
+            (new Response(200))->withAddedHeader(
+                'Set-Cookie',
+                'sid=attacker-controlled; Domain='.$domain
+            )
+        );
+
+        self::assertCount(0, $jar);
+
+        $request = $jar->withCookieHeader(new Request('GET', 'https://victim.com/'));
+
+        self::assertFalse($request->hasHeader('Cookie'));
+    }
+
     public static function getMatchingCookiesDataProvider()
     {
         return [
