@@ -146,6 +146,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix cURL TLS and HTTP/2 capability detection using libcurl feature checks
 - Fix proxy `no` list matches being re-proxied through environment-configured proxies by libcurl
 - Fix `no` list and `NO_PROXY` matching to support IP CIDR ranges, matching libcurl
+- Fix the stream handler not applying scheme-less proxies and their credentials
 
 
 ## 7.11.2 - 2026-06-12
