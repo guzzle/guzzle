@@ -192,6 +192,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (\is_array($body)) {
             throw $this->invalidBody();
         }
+        $body = self::createBodyStream($body);
         $request = new Psr7\Request($method, $uri, $headers, $body, $version);
         // Remove the option so that they are not doubly-applied.
         unset($options['headers'], $options['body'], $options['version']);
@@ -888,18 +889,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (\is_array($options['body'])) {
                 throw $this->invalidBody();
             }
-            $body = $options['body'];
-            if (!\is_string($body) && \is_scalar($body)) {
-                \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-string scalar to the "body" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-string scalar bodies.');
-
-                // Normalize non-finite floats to dodge PHP 8.5's (string) NAN
-                // coercion warning while the value is still accepted.
-                if (\is_float($body) && !\is_finite($body)) {
-                    $body = \is_nan($body) ? 'NAN' : ($body > 0 ? 'INF' : '-INF');
-                }
-                $body = (string) $body;
-            }
-            $modify['body'] = Psr7\Utils::streamFor($body);
+            $modify['body'] = self::createBodyStream($options['body']);
             unset($options['body']);
         }
 
@@ -1022,6 +1012,53 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         return $droppedHeaderNames;
+    }
+
+    /**
+     * @param mixed $body
+     */
+    private static function createBodyStream($body): StreamInterface
+    {
+        if ($body instanceof StreamInterface) {
+            return $body;
+        }
+
+        if (\is_resource($body) || $body === null || \is_string($body) || $body instanceof \Iterator) {
+            return Psr7\Utils::streamFor($body);
+        }
+
+        if (\is_scalar($body)) {
+            \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-string scalar to the "body" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-string scalar bodies.');
+
+            return Psr7\Utils::streamFor(self::stringifyScalar($body));
+        }
+
+        if (\is_object($body) && \method_exists($body, '__toString')) {
+            return Psr7\Utils::streamFor((string) $body);
+        }
+
+        if (\is_callable($body)) {
+            return Psr7\Utils::streamFor($body);
+        }
+
+        throw new InvalidArgumentException(\sprintf(
+            'Passing %s to request option "body" is invalid; expected resource|string|null|int|float|bool|StreamInterface|callable&object|Iterator|Stringable.',
+            \get_debug_type($body)
+        ));
+    }
+
+    /**
+     * @param bool|float|int|string $value
+     */
+    private static function stringifyScalar($value): string
+    {
+        // Normalize non-finite floats to dodge PHP 8.5's (string) NAN
+        // coercion warning while the value is still accepted.
+        if (\is_float($value) && !\is_finite($value)) {
+            $value = \is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
+        }
+
+        return (string) $value;
     }
 
     /**

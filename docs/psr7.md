@@ -287,7 +287,7 @@ Streams expose their capabilities using three methods: `isReadable()`, `isWritab
 
 Each stream instance has various capabilities: they can be read-only, write-only, read-write, allow arbitrary random access (seeking forwards or backwards to any location), or only allow sequential access (for example in the case of a socket or pipe).
 
-Guzzle uses the `guzzlehttp/psr7` package to provide stream support. More information on using streams, creating streams, converting streams to PHP stream resource, and stream decorators can be found in the [Guzzle PSR-7 documentation](https://github.com/guzzle/psr7/blob/2.11/README.md).
+Guzzle uses the `guzzlehttp/psr7` package to provide stream support. More information on using streams, creating streams, converting streams to PHP stream resource, and stream decorators can be found in the [Guzzle PSR-7 documentation](https://github.com/guzzle/psr7/blob/2.12/README.md).
 
 ### Creating Streams
 
@@ -348,14 +348,14 @@ var_export($stream->isSeekable());
 
 Adding custom functionality to streams is very simple with stream decorators. Guzzle provides several built-in decorators that provide additional stream functionality.
 
-- [AppendStream](https://github.com/guzzle/psr7#appendstream)
-- [BufferStream](https://github.com/guzzle/psr7#bufferstream)
-- [CachingStream](https://github.com/guzzle/psr7#cachingstream)
-- [DroppingStream](https://github.com/guzzle/psr7#droppingstream)
-- [FnStream](https://github.com/guzzle/psr7#fnstream)
-- [InflateStream](https://github.com/guzzle/psr7#inflatestream)
-- [LazyOpenStream](https://github.com/guzzle/psr7#lazyopenstream)
-- [LimitStream](https://github.com/guzzle/psr7#limitstream)
-- [MultipartStream](https://github.com/guzzle/psr7#multipartstream)
-- [NoSeekStream](https://github.com/guzzle/psr7#noseekstream)
-- [PumpStream](https://github.com/guzzle/psr7#pumpstream)
+- [AppendStream](https://github.com/guzzle/psr7/blob/2.12/README.md#appendstream)
+- [BufferStream](https://github.com/guzzle/psr7/blob/2.12/README.md#bufferstream)
+- [CachingStream](https://github.com/guzzle/psr7/blob/2.12/README.md#cachingstream)
+- [DroppingStream](https://github.com/guzzle/psr7/blob/2.12/README.md#droppingstream)
+- [FnStream](https://github.com/guzzle/psr7/blob/2.12/README.md#fnstream)
+- [InflateStream](https://github.com/guzzle/psr7/blob/2.12/README.md#inflatestream)
+- [LazyOpenStream](https://github.com/guzzle/psr7/blob/2.12/README.md#lazyopenstream)
+- [LimitStream](https://github.com/guzzle/psr7/blob/2.12/README.md#limitstream)
+- [MultipartStream](https://github.com/guzzle/psr7/blob/2.12/README.md#multipartstream)
+- [NoSeekStream](https://github.com/guzzle/psr7/blob/2.12/README.md#noseekstream)
+- [PumpStream](https://github.com/guzzle/psr7/blob/2.12/README.md#pumpstream)
