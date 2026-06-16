@@ -437,7 +437,7 @@ Running the above example would output something like the following:
     *   Trying 107.21.213.98... * Connected to httpbin.org (107.21.213.98) port 80 (#0)
     > GET /get HTTP/1.1
     Host: httpbin.org
-    User-Agent: Guzzle/4.0 curl/7.21.4 PHP/5.5.7
+    User-Agent: GuzzleHttp/7
 
     < HTTP/1.1 200 OK
     < Access-Control-Allow-Origin: *
