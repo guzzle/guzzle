@@ -35,6 +35,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix proxy `no` list matches being re-proxied through environment-configured proxies by libcurl
 - Fix `no` list and `NO_PROXY` matching to support IP CIDR ranges, matching libcurl
 - Fix the stream handler not applying scheme-less proxies and their credentials
+- Prevent accepted request option values from triggering equivalent PSR-7 2.12 deprecations inside Guzzle
 
 
 ## 7.11.2 - 2026-06-12
