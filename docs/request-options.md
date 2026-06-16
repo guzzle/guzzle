@@ -983,7 +983,7 @@ $client->request('GET', '/', [
 ```
 
 > [!NOTE]
-> You can provide proxy URLs that contain a scheme, username, and password. For example, `"http://username:password@192.168.16.1:10"`.
+> You can provide proxy URLs that contain a scheme, username, and password. For example, `"http://username:password@192.168.16.1:10"`. A scheme-less value such as `"127.0.0.1:8125"` is treated as an HTTP proxy. Both built-in handlers validate the proxy URL up front and reject a malformed one (an invalid host, an out-of-range port, or leading junk before the scheme) with an `InvalidArgumentException`.
 
 ### Handler support
 
@@ -998,7 +998,9 @@ The `proxy` option — including the `no` list and its validation — means the 
 | Proxy credentials in the proxy URL | yes | yes (Basic only) |
 | Proxy resolution from environment variables | yes | no |
 
-The stream handler forwards requests through PHP's HTTP stream wrapper, which supports plain HTTP proxying only: it cannot establish CONNECT tunnels, so "https" requests through a proxy fail with a connection error, and SOCKS proxies are not supported. Use a cURL handler for tunneled or SOCKS proxying. The last row is by design — only the cURL handlers resolve proxy environment variables (see below).
+The stream handler forwards requests through PHP's HTTP stream wrapper, which supports plain HTTP proxying only: it cannot establish CONNECT tunnels, so "https" requests through a proxy fail with a connection error. It rejects any proxy URL whose scheme it cannot execute, throwing an `InvalidArgumentException` before the request is sent. That covers `https://`, SOCKS (`socks4://`, `socks4a://`, `socks5://`, `socks5h://`), and anything other than `http://` or a raw PHP transport such as `tcp://`, `ssl://`, or `tls://`. The last row is by design, since only the cURL handlers resolve proxy environment variables (see below).
+
+HTTPS proxies (an `https://` proxy URL, where the connection to the proxy itself is encrypted) require libcurl 7.52.0 or newer built with HTTPS-proxy support. When libcurl lacks that support, it mishandles such a proxy: versions before 7.50.2 silently downgrade it to a plaintext HTTP proxy, and later versions fail at connect time with a cryptic error. To avoid both outcomes, the cURL handlers reject the request up front. They also reject any `proxy` URL whose scheme libcurl cannot use as a proxy, with an `InvalidArgumentException`.
 
 ### Proxy environment variables
 

@@ -1033,6 +1033,218 @@ class CurlFactoryTest extends TestCase
         });
     }
 
+    public static function unsupportedHttpsProxyCurlVersionProvider(): array
+    {
+        return [
+            ['7.34.0'],
+            ['7.50.0'],
+            ['7.51.0'],
+            ['7.52.0'],
+            ['7.61.0'],
+        ];
+    }
+
+    /**
+     * @dataProvider unsupportedHttpsProxyCurlVersionProvider
+     */
+    public function testRejectsHttpsProxyWhenLibcurlLacksSupport(string $version): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => $version, 'features' => self::curlSslFeature()]);
+
+        try {
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.');
+
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => 'https://proxy.example.com:3128',
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public static function rejectedHttpsProxyOptionProvider(): array
+    {
+        return [
+            ['HTTPS://proxy.example.com:3128'],
+            [['https' => 'https://proxy.example.com:3128']],
+        ];
+    }
+
+    /**
+     * @dataProvider rejectedHttpsProxyOptionProvider
+     *
+     * @param string|array $proxy
+     */
+    public function testRejectsHttpsProxyFormsWhenLibcurlLacksSupport($proxy): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+
+        try {
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('HTTPS proxies are not supported by the installed libcurl');
+
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public static function rejectedHttpsProxyEnvironmentProvider(): array
+    {
+        return [
+            [['https_proxy' => 'https://proxy.example.com:3128']],
+            [['HTTPS_PROXY' => 'https://proxy.example.com:3128']],
+            [['all_proxy' => 'https://proxy.example.com:3128']],
+            [['ALL_PROXY' => 'https://proxy.example.com:3128']],
+        ];
+    }
+
+    /**
+     * @dataProvider rejectedHttpsProxyEnvironmentProvider
+     */
+    public function testRejectsEnvironmentHttpsProxyWhenLibcurlLacksSupport(array $env): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('HTTPS proxies are not supported by the installed libcurl');
+
+        self::withProxyEnvironment($env, static function (): void {
+            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+
+            try {
+                $f = new CurlFactory(3);
+                $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+            } finally {
+                self::setCurlVersionInfo($previousVersionInfo);
+            }
+        });
+    }
+
+    public static function unaffectedProxyOptionProvider(): array
+    {
+        return [
+            ['http://proxy.example.com:3128'],
+            ['127.0.0.1:8125'],
+            ['socks5://proxy.example.com:1080'],
+        ];
+    }
+
+    /**
+     * @dataProvider unaffectedProxyOptionProvider
+     */
+    public function testDoesNotRejectNonHttpsProxiesOnOldLibcurl(string $proxy): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+
+        try {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+
+            self::assertSame($proxy, $_SERVER['_curl'][\CURLOPT_PROXY]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public static function rejectedCurlProxySchemeProvider(): array
+    {
+        return [
+            ['ftp://proxy.example.com:21'],
+            ['gopher://proxy.example.com:70'],
+            ['ws://proxy.example.com:80'],
+            ['tcp://proxy.example.com:8125'],
+            ['ssl://proxy.example.com:8125'],
+            ['tls://proxy.example.com:8125'],
+            ['socks6://proxy.example.com:1080'],
+            ['htps://proxy.example.com:3128'],
+            [['https' => 'ftp://proxy.example.com:21']],
+        ];
+    }
+
+    /**
+     * @dataProvider rejectedCurlProxySchemeProvider
+     *
+     * @param string|array $proxy
+     */
+    public function testRejectsUnsupportedCurlProxySchemes($proxy): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('proxy scheme is not supported by the cURL handler');
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+    }
+
+    public function testRejectsEnvironmentUnsupportedCurlProxyScheme(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('proxy scheme is not supported by the cURL handler');
+
+        self::withProxyEnvironment(['https_proxy' => 'ftp://proxy.example.com:21'], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+        });
+    }
+
+    public function testAllowsHttpsProxyWhenLibcurlSupportsIt(): void
+    {
+        $httpsProxyFeature = \defined('CURL_VERSION_HTTPS_PROXY') ? \CURL_VERSION_HTTPS_PROXY : (1 << 21);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.52.0', 'features' => self::curlSslFeature() | $httpsProxyFeature]);
+
+        try {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => 'https://proxy.example.com:3128',
+            ]);
+
+            self::assertSame('https://proxy.example.com:3128', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testDoesNotRejectBypassedHttpsProxyOnOldLibcurl(): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+
+        try {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => [
+                    'https' => 'https://proxy.example.com:3128',
+                    'no' => ['example.com'],
+                ],
+            ]);
+
+            self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+            self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testDoesNotRejectBypassedEnvironmentHttpsProxyOnOldLibcurl(): void
+    {
+        self::withProxyEnvironment([
+            'https_proxy' => 'https://proxy.example.com:3128',
+            'NO_PROXY' => 'example.com',
+        ], static function (): void {
+            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+
+            try {
+                $f = new CurlFactory(3);
+                $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+
+                self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+                self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
+            } finally {
+                self::setCurlVersionInfo($previousVersionInfo);
+            }
+        });
+    }
+
     public function testForcesFreshConnectionForEnvironmentCredentialedProxyOnAffectedCurlVersion(): void
     {
         self::withProxyEnvironment(['https_proxy' => 'http://username:password@proxy.example.com:8080'], static function (): void {
@@ -1052,59 +1264,80 @@ class CurlFactoryTest extends TestCase
         });
     }
 
-    public function testRedactsProxyCredentialsInCurlErrorMessages(): void
+    public function testRejectingUnsupportedProxySchemeDoesNotLeakCredentials(): void
     {
-        $handler = new Handler\CurlHandler();
+        $f = new CurlFactory(3);
 
         try {
-            $handler(new Psr7\Request('GET', Server::$url), [
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
                 'proxy' => 'foo://user:secret@127.0.0.1:1',
-            ])->wait();
-            self::fail('Expected a transfer exception');
-        } catch (\GuzzleHttp\Exception\TransferException $e) {
+            ]);
+            self::fail('Expected an InvalidArgumentException');
+        } catch (\InvalidArgumentException $e) {
             self::assertStringNotContainsString('secret', $e->getMessage());
-            if (\strpos($e->getMessage(), 'foo://') !== false) {
-                // The redacted form follows the installed psr7 version:
-                // 'user:***' on psr7 2, '***' on psr7 3.
-                $redactedUserInfo = Psr7\Utils::redactUserInfo(
-                    new Psr7\Uri('foo://user:secret@127.0.0.1:1')
-                )->getUserInfo();
-
-                self::assertStringContainsString('foo://'.$redactedUserInfo.'@127.0.0.1:1', $e->getMessage());
-            }
         }
     }
 
-    public function testRedactsProxyCredentialsWhenProxyDefeatsUrlParsing(): void
+    public function testRejectsMalformedProxyUrlWithoutLeakingCredentials(): void
     {
-        $handler = new Handler\CurlHandler();
+        $f = new CurlFactory(3);
 
         try {
-            $handler(new Psr7\Request('GET', Server::$url), [
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
                 'proxy' => 'http://user:secret@127.0.0.1:99999999',
-                'connect_timeout' => 1,
-            ])->wait();
-            self::fail('Expected a transfer exception');
-        } catch (\GuzzleHttp\Exception\TransferException $e) {
+            ]);
+            self::fail('Expected an InvalidArgumentException');
+        } catch (\InvalidArgumentException $e) {
             self::assertStringNotContainsString('secret', $e->getMessage());
-            if (\strpos($e->getMessage(), '127.0.0.1:99999999') !== false) {
-                self::assertStringContainsString('***@127.0.0.1:99999999', $e->getMessage());
-            }
         }
     }
 
-    public function testRedactsEnvironmentProxyCredentialsInCurlErrorMessages(): void
+    public function testRejectsMalformedEnvironmentProxyUrlWithoutLeakingCredentials(): void
     {
-        self::withProxyEnvironment(['http_proxy' => 'foo://user:secret@127.0.0.1:1'], static function (): void {
-            $handler = new Handler\CurlHandler();
+        self::withProxyEnvironment(['http_proxy' => 'http://user:secret@127.0.0.1:99999999'], static function (): void {
+            $f = new CurlFactory(3);
 
             try {
-                $handler(new Psr7\Request('GET', Server::$url), [])->wait();
-                self::fail('Expected a transfer exception');
-            } catch (\GuzzleHttp\Exception\TransferException $e) {
+                $f->create(new Psr7\Request('GET', 'http://example.com'), []);
+                self::fail('Expected an InvalidArgumentException');
+            } catch (\InvalidArgumentException $e) {
                 self::assertStringNotContainsString('secret', $e->getMessage());
             }
         });
+    }
+
+    public static function malformedProxyUrlProvider(): array
+    {
+        return [
+            ['http://exa mple.com:3128'],          // space in host
+            ['http://127.0.0.1:99999999'],         // port out of range
+            ['127.0.0.1:99999999'],                // scheme-less, port out of range
+            ["\u{00A0}https://proxy.example.com:3128"], // leading junk before the scheme
+            [' https://proxy.example.com:3128'],   // leading space before the scheme
+            [' 127.0.0.1:8125'],                   // leading space, scheme-less
+        ];
+    }
+
+    /**
+     * @dataProvider malformedProxyUrlProvider
+     */
+    public function testRejectsMalformedProxyUrls(string $proxy): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid proxy URL');
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+    }
+
+    public function testAcceptsSchemeLessProxyWithCredentials(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'user:pass@127.0.0.1:8125',
+        ]);
+
+        self::assertSame('user:pass@127.0.0.1:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
     }
 
     public function testRedactsParseableProxyCredentialsIndependentlyOfCurlErrorText(): void

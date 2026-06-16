@@ -1753,6 +1753,25 @@ final class CurlFactory implements CurlFactoryInterface
         $proxy = self::resolveProxySelection($easy->request->getUri(), $options['proxy'] ?? null);
         $selectedProxy = $proxy->getProxy();
         if ($selectedProxy !== null) {
+            if ($selectedProxy !== '') {
+                // Validate the whole proxy URL up front (ProxyOptions leans on
+                // Psr7\Uri), so a malformed proxy fails the same way on every
+                // handler, then check the scheme against what libcurl can use.
+                $scheme = ProxyOptions::proxyScheme($selectedProxy);
+
+                if (!\in_array($scheme, ['http', 'https', 'socks4', 'socks4a', 'socks5', 'socks5h'], true)) {
+                    throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the cURL handler.', $scheme));
+                }
+
+                if ($scheme === 'https' && !CurlVersion::supportsHttpsProxy()) {
+                    // libcurl before 7.50.2 silently downgrades an https://
+                    // proxy to a plaintext HTTP proxy; 7.50.2 through 7.51, and
+                    // builds without HTTPS-proxy support, fail at connect time.
+                    // Fail closed before any bytes reach the wire.
+                    throw new RequestException('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.', $easy->request);
+                }
+            }
+
             $conf[\CURLOPT_PROXY] = $selectedProxy;
             $conf[\CURLOPT_NOPROXY] = '';
         } else {

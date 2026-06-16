@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
@@ -1131,6 +1132,23 @@ class StreamHandlerTest extends TestCase
         return $context;
     }
 
+    /**
+     * @param mixed $value
+     */
+    private function applyProxyOption(string $uri, array $context, $value): array
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', $uri);
+        $method = new \ReflectionMethod(StreamHandler::class, 'applyProxyOption');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs($handler, [$request, &$context, $value]);
+
+        return $context;
+    }
+
     private function matchesStreamHandlerError(string $method, string $message): bool
     {
         $reflection = new \ReflectionMethod(StreamHandler::class, $method);
@@ -1217,6 +1235,78 @@ class StreamHandlerTest extends TestCase
         $opts = \stream_context_get_options($res->getBody()->detach());
 
         self::assertArrayNotHasKey('proxy', $opts['http']);
+    }
+
+    public static function rejectedProxySchemeProvider(): array
+    {
+        $https = 'HTTPS proxies are not supported by the stream handler.';
+        $socks = 'SOCKS proxies are not supported by the stream handler.';
+        $generic = static function (string $scheme): string {
+            return \sprintf('The "%s" proxy scheme is not supported by the stream handler.', $scheme);
+        };
+
+        return [
+            ['https://proxy.example.com:3128', $https],
+            ['HTTPS://proxy.example.com:3128', $https],
+            ['socks4://proxy.example.com:1080', $socks],
+            ['socks4a://proxy.example.com:1080', $socks],
+            ['socks5://proxy.example.com:1080', $socks],
+            ['socks5h://proxy.example.com:1080', $socks],
+            [['http' => 'socks5://proxy.example.com:1080'], $socks],
+            ['ftp://proxy.example.com:21', $generic('ftp')],
+            ['ws://proxy.example.com:80', $generic('ws')],
+            ['gopher://proxy.example.com:70', $generic('gopher')],
+            ['socks6://proxy.example.com:1080', $generic('socks6')],
+            ['htps://proxy.example.com:3128', $generic('htps')],
+            ['udp://127.0.0.1:8125', $generic('udp')],
+            [['http' => 'ftp://proxy.example.com:21'], $generic('ftp')],
+        ];
+    }
+
+    /**
+     * @dataProvider rejectedProxySchemeProvider
+     *
+     * @param string|array $proxy
+     */
+    public function testRejectsUnsupportedProxySchemes($proxy, string $message): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+
+        $context = [];
+        $this->applyProxyOption('http://example.com', $context, $proxy);
+    }
+
+    public function testPassesRawTransportProxySchemesThrough(): void
+    {
+        foreach (['tcp://127.0.0.1:8125', 'ssl://127.0.0.1:8125', 'tls://127.0.0.1:8125'] as $proxy) {
+            $context = [];
+            $result = $this->applyProxyOption('http://example.com', $context, $proxy);
+
+            self::assertSame($proxy, $result['http']['proxy']);
+        }
+    }
+
+    public static function malformedProxyUrlProvider(): array
+    {
+        return [
+            ['http://exa mple.com:3128'],               // space in host
+            ['127.0.0.1:99999999'],                     // scheme-less, port out of range
+            [' https://proxy.example.com:3128'],        // leading space before the scheme
+            ["\u{00A0}https://proxy.example.com:3128"], // leading non-breaking space
+        ];
+    }
+
+    /**
+     * @dataProvider malformedProxyUrlProvider
+     */
+    public function testRejectsMalformedProxyUrl(string $proxy): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid proxy URL');
+
+        $context = [];
+        $this->applyProxyOption('http://example.com', $context, $proxy);
     }
 
     public function testUsesProxy(): void
