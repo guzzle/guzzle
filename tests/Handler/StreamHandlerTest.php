@@ -3152,4 +3152,106 @@ class StreamHandlerTest extends TestCase
             ]
         )->wait();
     }
+
+    private function parseProxyResult(string $url): array
+    {
+        $method = new \ReflectionMethod(StreamHandler::class, 'parseProxy');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        return $method->invokeArgs(new StreamHandler(), [$url]);
+    }
+
+    private function getProxyContext(string $proxy, string $uri = 'http://example.com'): array
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', $uri);
+        $context = ['http' => []];
+        $method = new \ReflectionMethod(StreamHandler::class, 'applyProxyOption');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs($handler, [$request, &$context, $proxy]);
+
+        return $context;
+    }
+
+    public function proxyParseProvider(): array
+    {
+        return [
+            'scheme-less host' => [
+                'proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => null],
+            ],
+            'scheme-less credentials' => [
+                'user:pass@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user:pass')],
+            ],
+            'scheme-less username only' => [
+                'user@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user:')],
+            ],
+            'scheme-less empty password' => [
+                'user:@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user:')],
+            ],
+            'scheme-less empty userinfo' => [
+                '@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => null],
+            ],
+            'scheme-less ipv6' => [
+                '[::1]:8125',
+                ['proxy' => 'tcp://[::1]:8125', 'auth' => null],
+            ],
+            'scheme-less ipv6 credentials' => [
+                'user:pass@[::1]:8125',
+                ['proxy' => 'tcp://[::1]:8125', 'auth' => 'Basic '.\base64_encode('user:pass')],
+            ],
+            'explicit http credentials' => [
+                'http://user:pass@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user:pass')],
+            ],
+            'uppercase http scheme' => [
+                'HTTP://user:pass@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user:pass')],
+            ],
+            'raw transport unchanged' => [
+                'ssl://proxy.example.com:8125',
+                ['proxy' => 'ssl://proxy.example.com:8125', 'auth' => null],
+            ],
+            'malformed socks-like unchanged' => [
+                'socks5:127.0.0.1:1080',
+                ['proxy' => 'socks5:127.0.0.1:1080', 'auth' => null],
+            ],
+            'malformed http-like unchanged' => [
+                'http:127.0.0.1:8125',
+                ['proxy' => 'http:127.0.0.1:8125', 'auth' => null],
+            ],
+            'protocol-relative unchanged' => [
+                '//proxy.example.com:8125',
+                ['proxy' => '//proxy.example.com:8125', 'auth' => null],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider proxyParseProvider
+     */
+    public function testTranslatesProxyForStreamContext(string $url, array $expected): void
+    {
+        self::assertSame($expected, $this->parseProxyResult($url));
+    }
+
+    public function testAddsProxyAuthorizationHeaderForSchemeLessCredentials(): void
+    {
+        $context = $this->getProxyContext('user:pass@proxy.example.com:8125');
+
+        self::assertSame('tcp://proxy.example.com:8125', $context['http']['proxy']);
+        self::assertStringContainsString(
+            'Proxy-Authorization: Basic '.\base64_encode('user:pass'),
+            $context['http']['header']
+        );
+    }
 }
