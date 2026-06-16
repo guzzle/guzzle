@@ -11,6 +11,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.12`
 - Constrain cURL transport sharing to safe libcurl DNS and SSL session support
 - Resolve proxy environment variables in the cURL handlers; libcurl no longer reads the environment itself
 - Ignore proxy environment variables when the `proxy` request option makes a decision
