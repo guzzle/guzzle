@@ -956,6 +956,24 @@ Proxy decisions are made once per request, from the request's initial URI. If li
 
 Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps the uppercase `HTTP_PROXY` (CLI SAPI only), `HTTPS_PROXY`, and `NO_PROXY` environment variables into a default for the `proxy` request option. The client mapping reads `$_SERVER` first, so it does honor SAPI-provided values such as those set with `fastcgi_param` or `SetEnv`. See [Environment Variables](quickstart.md#environment-variables).
 
+> [!NOTE]
+> When sending HTTPS requests, or requests explicitly tunneled with
+> `CURLOPT_HTTPPROXYTUNNEL`, through an authenticated HTTP or HTTPS proxy,
+> libcurl versions before 8.19.0 could reuse an existing proxy tunnel even
+> after proxy credentials changed, and 8.19.0 still contains related proxy
+> credential leak flaws that were fixed in 8.20.0. Guzzle therefore avoids
+> tunnel reuse on libcurl versions older than 8.20.0 when the proxy URL is
+> configured through the `proxy` option or resolved from the environment,
+> including cURL proxy credential options supplied through the `curl` request
+> option. Raw `CURLOPT_PROXY` supplied through the `curl` request option is
+> deprecated but still honored, and receives the same protection. Custom proxy
+> authentication sent with `CURLOPT_PROXYHEADER` also avoids tunnel reuse
+> because libcurl does not include those header values in its connection
+> matching. Fixed libcurl versions keep normal connection reuse behavior for
+> proxy URL and cURL proxy credential options. Advanced users can still
+> control cURL connection reuse explicitly with the `curl` request option and
+> `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`.
+
 ## query
 
 Summary

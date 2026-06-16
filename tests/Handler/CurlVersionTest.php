@@ -126,6 +126,20 @@ class CurlVersionTest extends TestCase
         }
     }
 
+    public function testSupportsProxyCredentialAwareConnectionReuseUsesSafeVersion(): void
+    {
+        $previous = self::setCurlVersionInfo(['version' => '8.19.0', 'features' => 0]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsProxyCredentialAwareConnectionReuse());
+
+            self::setCurlVersionInfo(['version' => '8.20.0', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsProxyCredentialAwareConnectionReuse());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
     public function testGetVersionReturnsNullWhenVersionIsUnavailable(): void
     {
         $previous = self::setCurlVersionInfo(false);
