@@ -1054,7 +1054,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         throw new InvalidArgumentException(\sprintf(
-            'Passing %s to request option "body" is invalid; expected resource|string|null|StreamInterface|callable&object|Iterator|Stringable.',
+            'Passing %s to request option "body" is invalid; expected resource|string|null|int|float|bool|StreamInterface|callable&object|Iterator|Stringable.',
             \get_debug_type($body)
         ));
     }
