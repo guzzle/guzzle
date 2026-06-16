@@ -129,9 +129,7 @@ class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
-        self::forceFreshConnectionForAuthenticatedProxy($request, $conf);
-
-        $easy->effectiveProxy = self::getProxyForConnectionReuse($conf);
+        $easy->effectiveProxy = self::getEffectiveProxy($conf);
 
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         if ($this->shareHandle !== null) {
@@ -708,22 +706,7 @@ class CurlFactory implements CurlFactoryInterface
     /**
      * @param array<int|string, mixed> $conf
      */
-    private static function forceFreshConnectionForAuthenticatedProxy(RequestInterface $request, array &$conf): void
-    {
-        $proxy = self::getProxyForConnectionReuse($conf);
-
-        if ($proxy === null || !self::requiresFreshConnectionForAuthenticatedProxy($request, $proxy, $conf)) {
-            return;
-        }
-
-        $conf[\CURLOPT_FRESH_CONNECT] = true;
-        $conf[\CURLOPT_FORBID_REUSE] = true;
-    }
-
-    /**
-     * @param array<int|string, mixed> $conf
-     */
-    private static function getProxyForConnectionReuse(array $conf): ?string
+    private static function getEffectiveProxy(array $conf): ?string
     {
         if (!\array_key_exists(\CURLOPT_PROXY, $conf)) {
             return null;
@@ -732,145 +715,6 @@ class CurlFactory implements CurlFactoryInterface
         $proxy = $conf[\CURLOPT_PROXY];
 
         return \is_string($proxy) && $proxy !== '' ? $proxy : null;
-    }
-
-    /**
-     * @param array<int|string, mixed> $conf
-     */
-    private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $conf): bool
-    {
-        if (!self::usesProxyTunnel($request, $conf) || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {
-            return false;
-        }
-
-        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
-        $proxyParts = \parse_url($proxyForParsing);
-
-        if (!\is_array($proxyParts)) {
-            return false;
-        }
-
-        if (self::hasCurlProxyAuthorizationHeader($conf)) {
-            return true;
-        }
-
-        return !CurlVersion::supportsProxyCredentialAwareConnectionReuse()
-            && (
-                \array_key_exists('user', $proxyParts)
-                || \array_key_exists('pass', $proxyParts)
-                || self::hasCurlProxyCredentials($conf)
-            );
-    }
-
-    /**
-     * @param array<int|string, mixed> $conf
-     */
-    private static function usesProxyTunnel(RequestInterface $request, array $conf): bool
-    {
-        return 'https' === $request->getUri()->getScheme()
-            || (
-                \defined('CURLOPT_HTTPPROXYTUNNEL')
-                && \array_key_exists((int) \constant('CURLOPT_HTTPPROXYTUNNEL'), $conf)
-                && (bool) $conf[(int) \constant('CURLOPT_HTTPPROXYTUNNEL')]
-            );
-    }
-
-    /**
-     * @param array<int|string, mixed> $conf
-     */
-    private static function isHttpProxyForConnectionReuse(string $proxy, array $conf): bool
-    {
-        if (\strpos($proxy, '://') !== false) {
-            $proxyParts = \parse_url($proxy);
-
-            if (!\is_array($proxyParts) || !isset($proxyParts['scheme'])) {
-                return false;
-            }
-
-            $proxyScheme = \strtolower($proxyParts['scheme']);
-
-            return $proxyScheme === 'http' || $proxyScheme === 'https';
-        }
-
-        return !self::isSocksProxyType($conf[\CURLOPT_PROXYTYPE] ?? null);
-    }
-
-    /**
-     * @param mixed $proxyType
-     */
-    private static function isSocksProxyType($proxyType): bool
-    {
-        if (!\is_int($proxyType)) {
-            return false;
-        }
-
-        foreach ([
-            'CURLPROXY_SOCKS4' => 4,
-            'CURLPROXY_SOCKS5' => 5,
-            'CURLPROXY_SOCKS4A' => 6,
-            'CURLPROXY_SOCKS5_HOSTNAME' => 7,
-        ] as $name => $fallback) {
-            $value = \defined($name) ? (int) \constant($name) : $fallback;
-            if ($proxyType === $value) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param array<int|string, mixed> $conf
-     */
-    private static function hasCurlProxyCredentials(array $conf): bool
-    {
-        foreach (['CURLOPT_PROXYUSERPWD', 'CURLOPT_PROXYUSERNAME', 'CURLOPT_PROXYPASSWORD'] as $option) {
-            if (\defined($option) && \array_key_exists((int) \constant($option), $conf)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param array<int|string, mixed> $conf
-     */
-    private static function hasCurlProxyAuthorizationHeader(array $conf): bool
-    {
-        if (!\defined('CURLOPT_PROXYHEADER')) {
-            return false;
-        }
-
-        $option = (int) \constant('CURLOPT_PROXYHEADER');
-        if (!\array_key_exists($option, $conf)) {
-            return false;
-        }
-
-        $headers = $conf[$option];
-        if (!\is_array($headers)) {
-            return false;
-        }
-
-        foreach ($headers as $header) {
-            if (!\is_string($header)) {
-                continue;
-            }
-
-            $parts = \explode(':', $header, 2);
-            if (\count($parts) !== 2) {
-                continue;
-            }
-
-            if (
-                0 === \strcasecmp(\trim($parts[0]), 'Proxy-Authorization')
-                && \trim($parts[1]) !== ''
-            ) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
