@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.13.0 - Upcoming
+
+### Changed
+
+- Prevent authenticated proxy tunnel reuse on libcurl versions older than 8.20.0
+
+
 ## 7.12.0 - Upcoming
 
 ### Added
