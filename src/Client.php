@@ -1023,7 +1023,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             return $body;
         }
 
-        if (\is_resource($body) || $body === null || \is_string($body)) {
+        if (\is_resource($body) || $body === null || \is_string($body) || $body instanceof \Iterator) {
             return Psr7\Utils::streamFor($body);
         }
 
@@ -1031,10 +1031,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-string scalar to the "body" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-string scalar bodies.');
 
             return Psr7\Utils::streamFor(self::stringifyScalar($body));
-        }
-
-        if ($body instanceof \Iterator) {
-            return Psr7\Utils::streamFor($body);
         }
 
         if (\is_object($body) && \method_exists($body, '__toString')) {
