@@ -1050,6 +1050,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
             if (!\array_key_exists('contents', $part)) {
                 self::invalidRequestOptionType($path, 'array{name: string|int, contents: mixed, headers?: array<array-key, string>, filename?: string}', $part);
+            } else {
+                self::assertMultipartContentsFinite($part['contents'], $path.'.contents');
             }
 
             if (\array_key_exists('headers', $part)) {
@@ -1069,6 +1071,27 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (\array_key_exists('filename', $part) && !\is_string($part['filename'])) {
                 self::invalidRequestOptionType($path.'.filename', 'string', $part['filename']);
             }
+        }
+    }
+
+    /**
+     * @param mixed $contents
+     */
+    private static function assertMultipartContentsFinite($contents, string $path): void
+    {
+        if (\is_array($contents)) {
+            foreach ($contents as $key => $value) {
+                self::assertMultipartContentsFinite($value, $path.'.'.(string) $key);
+            }
+
+            return;
+        }
+
+        if (\is_float($contents) && !\is_finite($contents)) {
+            throw new InvalidArgumentException(\sprintf(
+                'Passing a non-finite float to request option "%s" is invalid; non-finite floats are not supported.',
+                $path
+            ));
         }
     }
 

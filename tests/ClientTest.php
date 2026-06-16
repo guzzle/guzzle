@@ -1936,6 +1936,34 @@ class ClientTest extends TestCase
         $client->get('http://foo.com', ['query' => ['score' => $value]]);
     }
 
+    /**
+     * @dataProvider nonFiniteFloatProvider
+     */
+    public function testMultipartRejectsNonFiniteFloatContents(float $value): void
+    {
+        $client = new Client(['handler' => new MockHandler([new Response()])]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing a non-finite float to request option "multipart.0.contents" is invalid; non-finite floats are not supported.');
+        $client->post('http://foo.com', [
+            'multipart' => [['name' => 'score', 'contents' => $value]],
+        ]);
+    }
+
+    /**
+     * @dataProvider nonFiniteFloatProvider
+     */
+    public function testMultipartRejectsNestedNonFiniteFloatContents(float $value): void
+    {
+        $client = new Client(['handler' => new MockHandler([new Response()])]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing a non-finite float to request option "multipart.0.contents.score" is invalid; non-finite floats are not supported.');
+        $client->post('http://foo.com', [
+            'multipart' => [['name' => 'data', 'contents' => ['score' => $value]]],
+        ]);
+    }
+
     public static function nonFiniteFloatProvider(): array
     {
         return [
