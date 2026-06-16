@@ -27,8 +27,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecated passing `ntlm` as a built-in `auth` type
 - Deprecated `Utils::describeType()`
 - Deprecated non-finite floats in the `query` and `form_params` options; 8.0 rejects them
-- Deprecated non-string scalar values in the `body` option; 8.0 rejects them
 - Deprecated non-finite floats in the `multipart` option; 8.0 rejects them
+- Deprecated non-string scalar values in the `body` option; 8.0 rejects them
 
 ### Fixed
 
