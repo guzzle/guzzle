@@ -1156,7 +1156,7 @@ final class StreamHandler
             throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the stream handler.', $scheme));
         }
 
-        $parsed = $this->parseProxy($proxyUri);
+        $parsed = $this->parseProxy($proxyUri, $scheme);
         $context['http']['proxy'] = $parsed['proxy'];
 
         if ($parsed['auth']) {
@@ -1170,38 +1170,31 @@ final class StreamHandler
     /**
      * Parses the given proxy URL to make it compatible with the format PHP's stream context expects.
      */
-    private function parseProxy(string $url): array
+    private function parseProxy(string $url, string $scheme): array
     {
-        $parsed = \parse_url($url);
-
-        // parse_url() misreads scheme-less proxy authorities like
-        // "user:pass@host"; re-parse only those forms as HTTP.
-        $schemeLessAuthority = \strpos($url, '://') === false && \strncmp($url, '//', 2) !== 0;
-        if ($schemeLessAuthority) {
-            if (\is_array($parsed) && !isset($parsed['scheme']) && isset($parsed['host'], $parsed['port'])) {
-                $parsed['scheme'] = 'http';
-            } elseif (
-                (!\is_array($parsed) || !isset($parsed['host']))
-                && (\strpos($url, '@') !== false || \strncmp($url, '[', 1) === 0)
-            ) {
-                $parsed = \parse_url('http://'.$url);
-            }
+        // applyProxyOption() has already validated the scheme, so only an http
+        // proxy needs translating to the tcp:// form the wrapper expects; a
+        // port-less proxy defaults to 1080 to match libcurl's HTTP default.
+        if ($scheme !== 'http') {
+            return [
+                'proxy' => $url,
+                'auth' => null,
+            ];
         }
 
-        if (\is_array($parsed) && isset($parsed['scheme']) && \strcasecmp($parsed['scheme'], 'http') === 0) {
-            if (isset($parsed['host'], $parsed['port'])) {
-                $user = $parsed['user'] ?? '';
-                $pass = $parsed['pass'] ?? '';
-                $auth = ($user !== '' || $pass !== '') ? 'Basic '.\base64_encode("{$user}:{$pass}") : null;
+        $parsed = \parse_url(\strpos($url, '://') === false ? 'http://'.$url : $url);
+        if (\is_array($parsed) && isset($parsed['host'])) {
+            $port = $parsed['port'] ?? 1080;
+            $user = $parsed['user'] ?? '';
+            $pass = $parsed['pass'] ?? '';
+            $auth = ($user !== '' || $pass !== '') ? 'Basic '.\base64_encode("{$user}:{$pass}") : null;
 
-                return [
-                    'proxy' => "tcp://{$parsed['host']}:{$parsed['port']}",
-                    'auth' => $auth,
-                ];
-            }
+            return [
+                'proxy' => "tcp://{$parsed['host']}:{$port}",
+                'auth' => $auth,
+            ];
         }
 
-        // Return proxy as-is.
         return [
             'proxy' => $url,
             'auth' => null,

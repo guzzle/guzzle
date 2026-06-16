@@ -35,6 +35,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Match leading-dot no-proxy entries against the bare domain and split string no-proxy lists on whitespace
 - Treat a matching proxy `no` entry as final even without a scheme-specific proxy entry
 - Validate proxy URLs in the built-in handlers and reject malformed or unsupported ones up front
+- Default a port-less proxy to 1080 in the stream handler, matching libcurl
 - Downgrade HTTP/3 requests to HTTP/2 or HTTP/1.1 when the proxy is resolved from environment variables
 - Pass the request as the second argument to `on_headers` callbacks
 - Declare strict types across remaining source files
