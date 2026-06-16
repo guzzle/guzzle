@@ -609,7 +609,7 @@ class CurlFactory implements CurlFactoryInterface
             'cURL error %s: %s (%s)',
             $ctx['errno'],
             $sanitizedError,
-            'see https://curl.haxx.se/libcurl/c/libcurl-errors.html'
+            'see https://curl.se/libcurl/c/libcurl-errors.html'
         );
 
         if ('' !== $sanitizedError) {
