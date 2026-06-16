@@ -1023,15 +1023,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             return $body;
         }
 
-        if (\is_resource($body)) {
-            return Psr7\Utils::streamFor($body);
-        }
-
-        if ($body === null) {
-            return Psr7\Utils::streamFor();
-        }
-
-        if (\is_string($body)) {
+        if (\is_resource($body) || $body === null || \is_string($body)) {
             return Psr7\Utils::streamFor($body);
         }
 
