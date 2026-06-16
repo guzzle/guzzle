@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.13.0 - Upcoming
+
+### Changed
+
+- Prevent authenticated proxy tunnel reuse on libcurl versions older than 8.20.0
+
+
 ## 7.12.0 - Upcoming
 
 ### Added
@@ -12,7 +19,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Constrain cURL transport sharing to safe libcurl DNS and SSL session support
-- Prevent authenticated proxy tunnel reuse on libcurl versions older than 8.20.0
 - Resolve proxy environment variables in the cURL handlers; libcurl no longer reads the environment itself
 - Ignore proxy environment variables when the `proxy` request option makes a decision
 - Disable proxy environment variables on Windows SAPIs other than CLI (httpoxy hardening)
