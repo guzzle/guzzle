@@ -1082,6 +1082,13 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $contents;
     }
 
+    private static function normalizeNonFiniteFloat(float $value, string $option): string
+    {
+        \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-finite float in the "%s" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-finite floats.', $option);
+
+        return \is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
+    }
+
     /**
      * Converts non-finite floats in the array to the strings PHP coerces
      * them to, as implicit coercion of NAN emits a warning on PHP 8.5.
@@ -1097,13 +1104,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         return $values;
-    }
-
-    private static function normalizeNonFiniteFloat(float $value, string $option): string
-    {
-        \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-finite float in the "%s" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-finite floats.', $option);
-
-        return \is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
     }
 
     /**
