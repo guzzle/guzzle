@@ -84,7 +84,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
 - Treat PHP resources passed as `sink` as caller-owned in the built-in cURL and stream handlers
 - Use the configured PSR-17 URI factory when parsing redirect `Location` headers
-- Avoid stale authenticated proxy tunnels on affected libcurl versions
 - Allow built-in cURL handler `progress` callbacks to abort transfers with truthy return values
 - Normalize built-in handler `progress` callback arguments to integer byte counts
 - Reject built-in cURL `progress` throwables with `ResponseException` when a response exists, otherwise `RequestException`
@@ -109,6 +108,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
 
+## 7.13.0 - Upcoming
+
+### Changed
+
+- Prevent authenticated proxy tunnel reuse on libcurl versions older than 8.20.0
+
+
 ## 7.12.0 - Upcoming
 
 ### Added
@@ -118,7 +124,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Constrain cURL transport sharing to safe libcurl DNS and SSL session support
-- Prevent authenticated proxy tunnel reuse on libcurl versions older than 8.20.0
 - Resolve proxy environment variables in the cURL handlers; libcurl no longer reads the environment itself
 - Ignore proxy environment variables when the `proxy` request option makes a decision
 - Disable proxy environment variables on Windows SAPIs other than CLI (httpoxy hardening)

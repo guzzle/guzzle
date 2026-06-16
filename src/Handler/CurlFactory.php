@@ -212,7 +212,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         $this->forceFreshConnectionForAuthenticatedProxy($request, $conf);
 
-        $easy->effectiveProxy = self::getProxyForConnectionReuse($conf);
+        $easy->effectiveProxy = self::getEffectiveProxy($conf);
 
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         if ($this->shareHandle !== null) {
@@ -1110,7 +1110,7 @@ final class CurlFactory implements CurlFactoryInterface
      */
     private function forceFreshConnectionForAuthenticatedProxy(RequestInterface $request, array &$conf): void
     {
-        $proxy = self::getProxyForConnectionReuse($conf);
+        $proxy = self::getEffectiveProxy($conf);
 
         if ($proxy === null || !self::requiresFreshConnectionForAuthenticatedProxy($request, $proxy, $conf)) {
             return;
@@ -1161,7 +1161,7 @@ final class CurlFactory implements CurlFactoryInterface
     /**
      * @param array<int|string, mixed> $conf
      */
-    private static function getProxyForConnectionReuse(array $conf): ?string
+    private static function getEffectiveProxy(array $conf): ?string
     {
         if (!\array_key_exists(\CURLOPT_PROXY, $conf)) {
             return null;
