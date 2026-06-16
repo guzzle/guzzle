@@ -865,7 +865,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (isset($options['multipart'])) {
-            $options['body'] = new Psr7\MultipartStream(self::normalizeMultipartContents($options['multipart']));
+            $options['body'] = new Psr7\MultipartStream($options['multipart']);
             unset($options['multipart']);
         }
 
@@ -1061,53 +1061,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return (string) $value;
     }
 
-    private static function normalizeMultipartContents(array $parts): array
-    {
-        foreach ($parts as $index => $part) {
-            if (!\is_array($part) || !\array_key_exists('contents', $part)) {
-                continue;
-            }
-
-            $part['contents'] = self::normalizeMultipartContent($part['contents']);
-            $parts[$index] = $part;
-        }
-
-        return $parts;
-    }
-
-    /**
-     * @param mixed $contents
-     *
-     * @return mixed
-     */
-    private static function normalizeMultipartContent($contents)
-    {
-        if (\is_array($contents)) {
-            foreach ($contents as $key => $value) {
-                $contents[$key] = self::normalizeMultipartContent($value);
-            }
-
-            return $contents;
-        }
-
-        if (\is_float($contents) && !\is_finite($contents)) {
-            return self::normalizeNonFiniteFloat($contents, 'multipart');
-        }
-
-        if (!\is_string($contents) && \is_scalar($contents)) {
-            return (string) $contents;
-        }
-
-        return $contents;
-    }
-
-    private static function normalizeNonFiniteFloat(float $value, string $option): string
-    {
-        \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-finite float in the "%s" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-finite floats.', $option);
-
-        return \is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
-    }
-
     /**
      * Converts non-finite floats in the array to the strings PHP coerces
      * them to, as implicit coercion of NAN emits a warning on PHP 8.5.
@@ -1118,7 +1071,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (\is_array($value)) {
                 $values[$key] = self::normalizeNonFiniteFloats($value, $option);
             } elseif (\is_float($value) && !\is_finite($value)) {
-                $values[$key] = self::normalizeNonFiniteFloat($value, $option);
+                \trigger_deprecation('guzzlehttp/guzzle', '7.12', 'Passing a non-finite float in the "%s" request option is deprecated; guzzlehttp/guzzle 8.0 will reject non-finite floats.', $option);
+
+                $values[$key] = \is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
             }
         }
 
