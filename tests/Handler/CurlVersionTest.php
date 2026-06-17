@@ -99,6 +99,28 @@ class CurlVersionTest extends TestCase
         }
     }
 
+    public function testSupportsHttpsProxyUsesMinimumVersionAndFeature(): void
+    {
+        $httpsProxyFeature = \defined('CURL_VERSION_HTTPS_PROXY') ? \CURL_VERSION_HTTPS_PROXY : (1 << 21);
+
+        $previous = self::setCurlVersionInfo(['version' => '7.51.0', 'features' => $httpsProxyFeature]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsHttpsProxy());
+
+            self::setCurlVersionInfo(['version' => '7.52.0', 'features' => 0]);
+            self::assertFalse(CurlVersion::supportsHttpsProxy());
+
+            self::setCurlVersionInfo(['version' => '7.52.0', 'features' => $httpsProxyFeature]);
+            self::assertTrue(CurlVersion::supportsHttpsProxy());
+
+            self::setCurlVersionInfo(false);
+            self::assertFalse(CurlVersion::supportsHttpsProxy());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
     public function testSupportsTransportSharingUsesSharingFloors(): void
     {
         if (!\defined('CURL_VERSION_SSL')) {
