@@ -1036,7 +1036,16 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (\is_string($proxyConf) && $proxyConf !== '') {
-            if (self::proxyScheme($proxyConf) === 'https' && !CurlVersion::supportsHttpsProxy()) {
+            $scheme = self::proxyScheme($proxyConf);
+            if ($scheme !== null && \preg_match('/^[a-z][a-z0-9.+-]*$/D', $scheme) !== 1) {
+                // A "://" with a prefix that is not a valid scheme (leading
+                // junk such as a space or non-breaking space) is treated by
+                // libcurl as an unknown scheme and silently downgraded to a
+                // plaintext HTTP proxy. Fail closed before any bytes reach the
+                // wire.
+                throw new RequestException('The proxy URL is malformed.', $easy->request);
+            }
+            if ($scheme === 'https' && !CurlVersion::supportsHttpsProxy()) {
                 // libcurl before 7.50.2 silently downgrades an https:// proxy
                 // to a plaintext HTTP proxy; 7.50.2 through 7.51, and builds
                 // without HTTPS-proxy support, fail at connect time. Fail
