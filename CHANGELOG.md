@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.12.1 - Upcoming
+
+### Fixed
+
+- Reject HTTPS proxies when the installed libcurl lacks HTTPS-proxy support
+
+
 ## 7.12.0 - 2026-06-16
 
 ### Added
