@@ -1126,6 +1126,36 @@ final class StreamHandler
             return;
         }
 
+        // Validate the whole proxy authority up front (ProxyOptions leans on
+        // Psr7\Rfc3986), so a malformed proxy fails the same way on every
+        // handler. PHP's HTTP stream wrapper can only carry HTTP over a
+        // TCP-family socket, so reject any scheme it can never execute instead
+        // of letting PHP fail with a misleading "unable to find the socket
+        // transport" error. The supported set is a scheme-less value, http, or
+        // a TCP-family transport (tcp://, ssl://, tls://, tlsv1.*) the build has.
+        $scheme = ProxyOptions::proxyScheme($proxyUri);
+
+        if ($scheme === 'https') {
+            throw new InvalidArgumentException('HTTPS proxies are not supported by the stream handler.');
+        }
+
+        if (\in_array($scheme, ['socks4', 'socks4a', 'socks5', 'socks5h'], true)) {
+            throw new InvalidArgumentException('SOCKS proxies are not supported by the stream handler.');
+        }
+
+        // Only TCP-family transports can carry HTTP; udp/unix/udg cannot, so
+        // reject them rather than install an unusable proxy.
+        $rawTransports = \array_filter(
+            \stream_get_transports(),
+            static function (string $transport): bool {
+                return $transport === 'tcp' || $transport === 'ssl' || \strncmp($transport, 'tls', 3) === 0;
+            }
+        );
+
+        if ($scheme !== 'http' && !\in_array($scheme, $rawTransports, true)) {
+            throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the stream handler.', $scheme));
+        }
+
         $parsed = $this->parseProxy($proxyUri);
         $context['http']['proxy'] = $parsed['proxy'];
 

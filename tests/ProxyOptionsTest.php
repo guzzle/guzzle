@@ -334,4 +334,69 @@ class ProxyOptionsTest extends TestCase
 
         ProxyOptions::isHostInNoProxy('', []);
     }
+
+    public static function validProxyProvider(): array
+    {
+        return [
+            'http with port' => ['http://proxy.example.com:8080', 'http'],
+            'https' => ['https://proxy.example.com:3128', 'https'],
+            'uppercase scheme is lowercased' => ['HTTP://proxy.example.com', 'http'],
+            'socks5' => ['socks5://proxy.example.com:1080', 'socks5'],
+            'scheme-less is http' => ['127.0.0.1:8125', 'http'],
+            'scheme-less with credentials' => ['user:pass@127.0.0.1:8125', 'http'],
+            'credentials in url' => ['http://user:pass@proxy.example.com:8080', 'http'],
+            'ipv6 literal' => ['http://[::1]:8080', 'http'],
+            'zero port left to the transport' => ['http://proxy.example.com:0', 'http'],
+            'single trailing slash tolerated' => ['http://proxy.example.com:8080/', 'http'],
+            'dangling colon is no port' => ['http://proxy.example.com:', 'http'],
+            'scheme-less dangling colon is no port' => ['proxy.example.com:', 'http'],
+            'ipv6 literal without port' => ['http://[::1]', 'http'],
+        ];
+    }
+
+    /**
+     * @dataProvider validProxyProvider
+     */
+    public function testProxySchemeReturnsLowercasedSchemeForValidProxies(string $proxy, string $expected): void
+    {
+        self::assertSame($expected, ProxyOptions::proxyScheme($proxy));
+    }
+
+    public static function malformedProxyProvider(): array
+    {
+        return [
+            'leading space before scheme' => [' https://proxy.example.com:3128'],
+            'non-breaking space before scheme' => ["\u{00A0}https://proxy.example.com:3128"],
+            'space inside scheme' => ['ht tps://proxy.example.com:3128'],
+            'empty scheme' => ['://proxy.example.com:3128'],
+            'space in host' => ['http://exa mple.com:3128'],
+            'leading space, scheme-less' => [' 127.0.0.1:8125'],
+            'port out of range' => ['http://127.0.0.1:99999999'],
+            'non-numeric port' => ['http://127.0.0.1:8a'],
+            'path after authority' => ['http://proxy.example.com:8080/path'],
+            'query after authority' => ['http://proxy.example.com:8080?x=1'],
+            'fragment after authority' => ['http://proxy.example.com:8080#frag'],
+            'slash before the userinfo @' => ['http://user/path@proxy.example.com:8080'],
+            'query before the userinfo @' => ['http://user?x@proxy.example.com:8080'],
+            'hash before the userinfo @' => ['http://user#x@proxy.example.com:8080'],
+            'bare ipv6 without brackets' => ['http://::1:8080'],
+            'empty string' => [''],
+            'userinfo only, empty authority' => ['http://user@'],
+            'at sign then empty authority' => ['http://@'],
+            'scheme-less userinfo only' => ['user@'],
+            'bare at sign' => ['@'],
+            'unclosed ipv6 bracket' => ['http://[::1:8080'],
+        ];
+    }
+
+    /**
+     * @dataProvider malformedProxyProvider
+     */
+    public function testProxySchemeRejectsMalformedProxies(string $proxy): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid proxy URL.');
+
+        ProxyOptions::proxyScheme($proxy);
+    }
 }

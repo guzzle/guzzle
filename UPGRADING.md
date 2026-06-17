@@ -511,6 +511,22 @@ no longer fall back to an environment proxy for it. The `no` list is also
 validated in that case. Guzzle 7 ignores the `no` list entirely unless the
 array selects a proxy for the request scheme.
 
+#### Proxy URL Validation
+
+The stream handler now throws `InvalidArgumentException` for any proxy URL
+whose scheme it cannot execute: `https://`, SOCKS (`socks4://`, `socks4a://`,
+`socks5://`, `socks5h://`), and anything other than `http://` or a raw PHP
+transport such as `tcp://`, `ssl://`, or `tls://`. Guzzle 7 passed these to
+PHP, which failed later with an "unable to find the socket transport" error.
+The cURL handlers reject a `proxy` URL whose scheme libcurl cannot use as a
+proxy with the same exception. Raw PHP transport values still pass through the
+stream wrapper unchanged.
+
+Both handlers also reject a malformed proxy URL (an invalid host, an
+out-of-range port, or leading junk before the scheme) up front with the same
+`InvalidArgumentException`, instead of passing it to libcurl or PHP to fail on
+later.
+
 #### Handler-Specific Option Overrides
 
 Handler-specific overrides remain available for finer transport control when

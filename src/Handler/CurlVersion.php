@@ -17,6 +17,12 @@ final class CurlVersion
 
     private const TLS_13_VERSION = '7.52.0';
 
+    // curl 7.52.0 introduced HTTPS proxy support, advertised by a feature bit
+    // (a build can meet the version yet lack the feature). Earlier libcurl
+    // mishandles an https:// proxy: before 7.50.2 it silently downgrades to a
+    // plaintext HTTP proxy, and 7.50.2 through 7.51 reject it at connect time.
+    private const HTTPS_PROXY_VERSION = '7.52.0';
+
     private const HTTP_3_VERSION = '7.66.0';
 
     private const PROTOCOLS_STR_VERSION = '7.85.0';
@@ -82,6 +88,16 @@ final class CurlVersion
         }
 
         return 0 !== ((int) \constant('CURL_VERSION_HTTP3') & $versionInfo['features']);
+    }
+
+    public static function supportsHttpsProxy(): bool
+    {
+        $versionInfo = self::getVersionInfo();
+
+        return \defined('CURL_VERSION_HTTPS_PROXY')
+            && null !== $versionInfo
+            && version_compare($versionInfo['version'], self::HTTPS_PROXY_VERSION, '>=')
+            && 0 !== (\CURL_VERSION_HTTPS_PROXY & $versionInfo['features']);
     }
 
     public static function supportsHandlerSharing(): bool

@@ -133,6 +133,34 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsHttp3());
     }
 
+    public function testSupportsHttpsProxyUsesMinimumVersionAndFeature(): void
+    {
+        if (!\defined('CURL_VERSION_HTTPS_PROXY')) {
+            self::markTestSkipped('CURL_VERSION_HTTPS_PROXY is not available.');
+        }
+
+        self::setVersionInfo([
+            'version' => '7.51.0',
+            'features' => \CURL_VERSION_HTTPS_PROXY,
+        ]);
+        self::assertFalse(CurlVersion::supportsHttpsProxy());
+
+        self::setVersionInfo([
+            'version' => '7.52.0',
+            'features' => 0,
+        ]);
+        self::assertFalse(CurlVersion::supportsHttpsProxy());
+
+        self::setVersionInfo([
+            'version' => '7.52.0',
+            'features' => \CURL_VERSION_HTTPS_PROXY,
+        ]);
+        self::assertTrue(CurlVersion::supportsHttpsProxy());
+
+        self::setVersionInfo(false);
+        self::assertFalse(CurlVersion::supportsHttpsProxy());
+    }
+
     public function testSupportsTransportSharingUsesSharingFloors(): void
     {
         self::requiresCurlSslFeature();
