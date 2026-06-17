@@ -527,6 +527,12 @@ out-of-range port, or leading junk before the scheme) up front with the same
 `InvalidArgumentException`, instead of passing it to libcurl or PHP to fail on
 later.
 
+An `http://` or scheme-less proxy that omits the port now defaults to 1080,
+libcurl's default HTTP proxy port, so `proxy.example.com` resolves to
+`tcp://proxy.example.com:1080`. Guzzle 7 passed a port-less proxy through
+unchanged, which PHP's stream wrapper could not use because it requires an
+explicit port.
+
 #### Handler-Specific Option Overrides
 
 Handler-specific overrides remain available for finer transport control when

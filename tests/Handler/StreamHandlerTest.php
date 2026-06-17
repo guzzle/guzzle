@@ -12,6 +12,7 @@ use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Handler\TransferByteCounter;
+use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
@@ -1294,6 +1295,9 @@ class StreamHandlerTest extends TestCase
             ['127.0.0.1:99999999'],                     // scheme-less, port out of range
             [' https://proxy.example.com:3128'],        // leading space before the scheme
             ["\u{00A0}https://proxy.example.com:3128"], // leading non-breaking space
+            ['socks5:127.0.0.1:1080'],                  // single-colon scheme-like, not an authority
+            ['http:127.0.0.1:8125'],                    // single-colon scheme-like, not an authority
+            ['//proxy.example.com:8125'],               // protocol-relative, not an authority
         ];
     }
 
@@ -3250,7 +3254,7 @@ class StreamHandlerTest extends TestCase
             $method->setAccessible(true);
         }
 
-        return $method->invokeArgs(new StreamHandler(), [$url]);
+        return $method->invokeArgs(new StreamHandler(), [$url, ProxyOptions::proxyScheme($url)]);
     }
 
     private function getProxyContext(string $proxy, string $uri = 'http://example.com'): array
@@ -3311,17 +3315,17 @@ class StreamHandlerTest extends TestCase
                 'ssl://proxy.example.com:8125',
                 ['proxy' => 'ssl://proxy.example.com:8125', 'auth' => null],
             ],
-            'malformed socks-like unchanged' => [
-                'socks5:127.0.0.1:1080',
-                ['proxy' => 'socks5:127.0.0.1:1080', 'auth' => null],
+            'scheme-less host without port defaults to 1080' => [
+                'proxy.example.com',
+                ['proxy' => 'tcp://proxy.example.com:1080', 'auth' => null],
             ],
-            'malformed http-like unchanged' => [
-                'http:127.0.0.1:8125',
-                ['proxy' => 'http:127.0.0.1:8125', 'auth' => null],
+            'scheme-less credentials without port defaults to 1080' => [
+                'user:pass@proxy.example.com',
+                ['proxy' => 'tcp://proxy.example.com:1080', 'auth' => 'Basic '.\base64_encode('user:pass')],
             ],
-            'protocol-relative unchanged' => [
-                '//proxy.example.com:8125',
-                ['proxy' => '//proxy.example.com:8125', 'auth' => null],
+            'explicit http without port defaults to 1080' => [
+                'http://proxy.example.com',
+                ['proxy' => 'tcp://proxy.example.com:1080', 'auth' => null],
             ],
         ];
     }
