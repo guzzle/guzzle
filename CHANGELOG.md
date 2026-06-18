@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 7.12.1 - Upcoming
 
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.12.1`
+
 ### Fixed
 
 - Reject HTTPS proxies when the installed libcurl lacks HTTPS-proxy support
