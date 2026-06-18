@@ -453,7 +453,6 @@ class SetCookie
             return $domain === $cookieDomain;
         }
 
-        // Exact match.
         if ($domain === $cookieDomain) {
             return true;
         }
