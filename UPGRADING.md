@@ -351,6 +351,17 @@ or statistics. `GuzzleHttp\Exception\InvalidArgumentException` remains outside
 the transfer exception hierarchy and is still used for invalid configuration or
 request option values that can be rejected before a transfer starts.
 
+A few build- or version-specific rejections that previously threw
+`InvalidArgumentException` now throw `RequestException`, matching how the
+HTTP-version capability checks already behave: requesting `crypto_method` TLS
+1.3 on a libcurl built without it, and a stream-handler proxy whose raw
+transport this PHP build's `stream_get_transports()` does not provide (for
+example `tls://` on a build without OpenSSL). The same input works on another
+build, so it is a request failure rather than a caller error; a scheme invalid
+on every build (such as `udp://` or `ftp://` for a proxy) still throws
+`InvalidArgumentException`. Only code catching the specific exception type for
+these build-misses needs to change.
+
 #### Body Summaries In HTTP Error Exceptions
 
 Guzzle's default `http_errors` middleware uses `BodySummarizer` to include a

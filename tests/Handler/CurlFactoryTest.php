@@ -1874,6 +1874,32 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
+    public function testCryptoMethodTls13ThrowsRequestExceptionOnUnsupportedCurl(): void
+    {
+        if (!\defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT')) {
+            self::markTestSkipped('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT is not available.');
+        }
+
+        // TLS 1.3 missing from the linked libcurl is build-specific (a newer
+        // build runs the same request), so it is a RequestException.
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.50.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+                'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
+            ]);
+            self::fail('Expected a RequestException for unsupported TLS 1.3.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('TLS 1.3 not supported by your version of cURL', $e->getMessage());
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
     public function testValidatesSslKey(): void
     {
         $f = new CurlFactory(3);

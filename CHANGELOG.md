@@ -37,6 +37,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Validate proxy URLs in the built-in handlers and reject malformed or unsupported ones up front
 - Default a port-less proxy to 1080 in the stream handler, matching libcurl
 - Downgrade HTTP/3 requests to HTTP/2 or HTTP/1.1 when the proxy is resolved from environment variables
+- Throw `RequestException`, not `InvalidArgumentException`, for an unavailable proxy or TLS feature
 - Pass the request as the second argument to `on_headers` callbacks
 - Declare strict types across remaining source files
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use

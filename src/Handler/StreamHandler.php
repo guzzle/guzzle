@@ -1143,17 +1143,21 @@ final class StreamHandler
             throw new InvalidArgumentException('SOCKS proxies are not supported by the stream handler.');
         }
 
-        // Only TCP-family transports can carry HTTP; udp/unix/udg cannot, so
-        // reject them rather than install an unusable proxy.
-        $rawTransports = \array_filter(
-            \stream_get_transports(),
-            static function (string $transport): bool {
-                return $transport === 'tcp' || $transport === 'ssl' || \strncmp($transport, 'tls', 3) === 0;
-            }
-        );
-
-        if ($scheme !== 'http' && !\in_array($scheme, $rawTransports, true)) {
+        // Only http or a TCP-family raw transport (tcp, ssl, tls, tlsv1.*) can
+        // carry HTTP through the stream wrapper; udp/unix/udg/ftp/ws and typos
+        // cannot on any build, so reject them as a caller error rather than
+        // install an unusable proxy.
+        if ($scheme !== 'http' && !self::isRawTransportName($scheme)) {
             throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the stream handler.', $scheme));
+        }
+
+        // A recognized SSL/TLS transport may still be absent from this build
+        // (tls:// without OpenSSL, tlsv1.3:// on OpenSSL < 1.1.1); that is
+        // build-specific, so it is a RequestException, distinct from the caller
+        // error above. http maps to tcp and tcp is always registered, so only
+        // the SSL/TLS family reaches the stream_get_transports() lookup.
+        if (!\in_array($scheme, ['http', 'tcp'], true) && !\in_array($scheme, \stream_get_transports(), true)) {
+            throw new RequestException(\sprintf('The "%s" proxy transport is not available in this PHP build.', $scheme), $request);
         }
 
         $parsed = $this->parseProxy($proxyUri, $scheme);
@@ -1165,6 +1169,15 @@ final class StreamHandler
             }
             $context['http']['header'] .= "\r\nProxy-Authorization: {$parsed['auth']}";
         }
+    }
+
+    /**
+     * Whether the scheme is a TCP-family transport name that can carry HTTP
+     * for a proxy (tcp, ssl, tls, tlsv1.*), regardless of build support.
+     */
+    private static function isRawTransportName(string $scheme): bool
+    {
+        return $scheme === 'tcp' || $scheme === 'ssl' || \strncmp($scheme, 'tls', 3) === 0;
     }
 
     /**
