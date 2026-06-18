@@ -443,6 +443,9 @@ class SetCookie
         // Remove the leading '.' as per spec in RFC 6265.
         // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.3
         $cookieDomain = self::normalizeDomain($cookieDomain);
+        if ($cookieDomain === '') {
+            return false;
+        }
 
         $domain = \strtolower($domain);
 
@@ -450,8 +453,7 @@ class SetCookie
             return $domain === $cookieDomain;
         }
 
-        // Domain not set or exact match.
-        if ('' === $cookieDomain || $domain === $cookieDomain) {
+        if ($domain === $cookieDomain) {
             return true;
         }
 
@@ -504,7 +506,7 @@ class SetCookie
         // Domains must not be empty, but may be omitted. "0" is not a valid
         // internet domain, but may be used as server name in a private network.
         $domain = $this->getDomain();
-        if ($domain === '') {
+        if ($domain === '' || ($domain !== null && \ltrim(\trim($domain), '.') === '')) {
             return 'The cookie domain must not be empty';
         }
 
@@ -519,7 +521,7 @@ class SetCookie
     {
         $domain = \strtolower($domain);
 
-        if ($domain !== '' && $domain[0] === '.') {
+        if ($domain !== '' && $domain !== '.' && $domain[0] === '.') {
             return \substr_replace($domain, '', 0, 1);
         }
 
