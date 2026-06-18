@@ -532,10 +532,9 @@ class CurlFactory implements CurlFactoryInterface
             $this->poolMayHoldTunnels = true;
         }
 
-        // Remove all callback functions as they can hold onto references
-        // and are not cleaned up by curl_reset. Using curl_setopt_array
-        // does not work for some reason, so removing each one
-        // individually.
+        // Remove all callback functions as they can hold onto references and
+        // are not cleaned up by curl_reset. Using curl_setopt_array does not
+        // work for some reason, so removing each one individually.
         \curl_setopt($resource, \CURLOPT_HEADERFUNCTION, null);
         \curl_setopt($resource, \CURLOPT_READFUNCTION, null);
         \curl_setopt($resource, \CURLOPT_WRITEFUNCTION, null);
@@ -803,11 +802,10 @@ class CurlFactory implements CurlFactoryInterface
             return true;
         }
 
-        // A proxy client certificate or TLS-SRP authenticates the client to an
-        // HTTPS proxy at the TLS layer; libcurl's connection matcher ignored
-        // TLS-SRP before 7.83.1 (CVE-2022-27782), so an old build can reuse a
-        // tunnel across those identities. Force a fresh one, as the non-share
-        // signature path always does.
+        // A proxy client certificate or TLS-SRP authenticates the client to the
+        // HTTPS proxy at the TLS layer; libcurl ignored TLS-SRP before 7.83.1
+        // (CVE-2022-27782), so an old build can reuse a tunnel across those
+        // identities. Force a fresh one, as the non-share signature path does.
         if (
             !CurlVersion::supportsProxyTlsCredentialAwareConnectionReuse()
             && self::hasCurlProxyTlsCredentials($conf)
