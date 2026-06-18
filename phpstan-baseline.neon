@@ -157,6 +157,12 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
+			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Handler/CurlMultiHandler.php
+
+		-
 			message: '#^Parameter \#1 \$mh of function curl_multi_add_handle expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 2
@@ -165,7 +171,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$mh of function curl_multi_close expects resource, CurlMultiHandle\|resource given\.$#'
 			identifier: argument.type
-			count: 1
+			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-
@@ -201,7 +207,7 @@ parameters:
 		-
 			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh \(CurlMultiHandle\|resource\) in isset\(\) is not nullable\.$#'
 			identifier: isset.property
-			count: 1
+			count: 2
 			path: src/Handler/CurlMultiHandler.php
 
 		-

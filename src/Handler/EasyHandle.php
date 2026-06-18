@@ -56,6 +56,14 @@ final class EasyHandle
     public $effectiveProxy;
 
     /**
+     * Proxy tunnel section signature for connection-reuse isolation, or
+     * null when the request does not require sectioning.
+     *
+     * @var string|null
+     */
+    public $proxyTunnelSignature;
+
+    /**
      * @var \Throwable|null Exception during on_headers (if any)
      */
     public $onHeadersException;
