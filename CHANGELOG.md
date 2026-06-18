@@ -114,10 +114,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Prevent authenticated proxy tunnel reuse on libcurl versions older than 8.20.0
+- Section proxy tunnel connection reuse by credential so distinct credentials never share a tunnel
 
 
 ## 7.12.1 - Upcoming
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.12.1`
 
 ### Fixed
 
