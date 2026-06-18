@@ -1288,6 +1288,19 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    public function testRejectsBuildUnavailableRawTransportProxyWithRequestException(): void
+    {
+        // A recognized TLS-family transport the build's stream_get_transports()
+        // does not provide is build-specific, so it throws RequestException
+        // rather than the InvalidArgumentException used for a scheme invalid
+        // everywhere.
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('proxy transport is not available in this PHP build');
+
+        $context = [];
+        $this->applyProxyOption('http://example.com', $context, 'tlsv1.9://proxy.example.com:443');
+    }
+
     public static function malformedProxyUrlProvider(): array
     {
         return [

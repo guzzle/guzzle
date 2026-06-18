@@ -246,7 +246,7 @@ final class CurlFactory implements CurlFactoryInterface
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         if ($this->shareHandle !== null) {
             if (!\defined('CURLOPT_SHARE')) {
-                throw new InvalidArgumentException('The configured cURL share handle requires CURLOPT_SHARE, but it is not available in the installed PHP cURL extension.');
+                throw new RequestException('The configured cURL share handle requires CURLOPT_SHARE, but it is not available in the installed PHP cURL extension.', $easy->request);
             }
 
             $conf[(int) \constant('CURLOPT_SHARE')] = $this->shareHandle;
@@ -2018,7 +2018,7 @@ final class CurlFactory implements CurlFactoryInterface
                     $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
                 } elseif (\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $cryptoMethod) {
                     if (!CurlVersion::supportsTls13()) {
-                        throw new InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
+                        throw new RequestException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL', $easy->request);
                     }
                     $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
                 } else {
@@ -2032,7 +2032,7 @@ final class CurlFactory implements CurlFactoryInterface
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
             } elseif (\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $cryptoMethod) {
                 if (!CurlVersion::supportsTls13()) {
-                    throw new InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
+                    throw new RequestException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL', $easy->request);
                 }
                 $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
             } else {
