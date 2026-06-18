@@ -23,6 +23,11 @@ final class CurlVersion
 
     private const SSL_SESSION_SHARING_VERSION = '8.6.0';
 
+    // curl 7.83.1 added proxy TLS-SRP to the connection-reuse match
+    // (CVE-2022-27782); the proxy client certificate was matched from 7.52.0,
+    // so proxy TLS credentials are trusted from 7.83.1 onwards.
+    private const PROXY_TLS_CREDENTIAL_REUSE_VERSION = '7.83.1';
+
     // curl 8.19.0 fixed proxy tunnel reuse after credential changes
     // (CVE-2026-3784), but related proxy credential leak flaws were only
     // fixed in 8.20.0, so connection reuse is trusted from 8.20.0 onwards.
@@ -121,6 +126,14 @@ final class CurlVersion
                 self::SSL_SESSION_SHARING_VERSION
             ));
         }
+    }
+
+    public static function supportsProxyTlsCredentialAwareConnectionReuse(): bool
+    {
+        $version = self::getVersion();
+
+        return $version !== null
+            && \version_compare($version, self::PROXY_TLS_CREDENTIAL_REUSE_VERSION, '>=');
     }
 
     public static function supportsProxyCredentialAwareConnectionReuse(): bool

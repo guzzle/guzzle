@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlVersion;
+use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -330,6 +331,121 @@ class CurlMultiHandlerTest extends TestCase
 
         $this->expectException(\BadMethodCallException::class);
         $h->foo;
+    }
+
+    public function testFirstProxyTunnelOwnerLatchesWithoutRecreatingMultiHandle(): void
+    {
+        $handler = new CurlMultiHandler();
+
+        // Initialize the multi handle so we can detect an unwanted recreation.
+        $mh = self::readMultiProperty($handler, '_mh');
+
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature('sig-a'));
+
+        self::assertSame('sig-a', self::readMultiProperty($handler, 'proxyTunnelOwner'));
+        self::assertSame($mh, self::readMultiProperty($handler, '_mh'), 'The first owner must not recreate the multi handle.');
+    }
+
+    public function testIdleProxyTunnelOwnerChangeRecreatesMultiHandle(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        $mh = self::readMultiProperty($handler, '_mh');
+
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature('sig-b'));
+
+        self::assertSame('sig-b', self::readMultiProperty($handler, 'proxyTunnelOwner'));
+        self::assertNotSame($mh, self::readMultiProperty($handler, '_mh'), 'An idle owner change must recreate the multi handle.');
+    }
+
+    public function testBusyProxyTunnelOwnerChangeIsolatesTheTransfer(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        $mh = self::readMultiProperty($handler, '_mh');
+        // A busy multi: another transfer is tracked.
+        self::setMultiProperty($handler, 'handles', [0 => ['busy']]);
+
+        $easy = self::easyWithSignature('sig-b');
+        self::applyProxyTunnelOwnership($handler, $easy);
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+        self::assertSame('sig-a', self::readMultiProperty($handler, 'proxyTunnelOwner'), 'A busy owner change must not move the owner.');
+        self::assertSame($mh, self::readMultiProperty($handler, '_mh'), 'A busy owner change must not recreate the multi handle.');
+    }
+
+    public function testProcessingMessagesGuardPreventsMultiRecreation(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        $mh = self::readMultiProperty($handler, '_mh');
+        // The multi is idle by every other measure, but a retried transfer is
+        // re-invoking the handler from inside processMessages.
+        self::setMultiProperty($handler, 'processingMessages', true);
+
+        $easy = self::easyWithSignature('sig-b');
+        self::applyProxyTunnelOwnership($handler, $easy);
+
+        self::assertSame($mh, self::readMultiProperty($handler, '_mh'), 'Recreating the multi handle mid-iteration would corrupt the read loop.');
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testNullSignatureNeverDisturbsProxyTunnelOwnership(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        $mh = self::readMultiProperty($handler, '_mh');
+
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature(null));
+
+        self::assertSame('sig-a', self::readMultiProperty($handler, 'proxyTunnelOwner'));
+        self::assertSame($mh, self::readMultiProperty($handler, '_mh'));
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl'] ?? []);
+    }
+
+    private static function easyWithSignature(?string $signature): EasyHandle
+    {
+        $easy = new EasyHandle();
+        $easy->request = new Request('GET', 'https://example.com');
+        $easy->handle = \curl_init();
+        $easy->proxyTunnelSignature = $signature;
+
+        return $easy;
+    }
+
+    private static function applyProxyTunnelOwnership(CurlMultiHandler $handler, EasyHandle $easy): void
+    {
+        $invoke = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->applyProxyTunnelOwnership($easy);
+        }, null, CurlMultiHandler::class);
+
+        $invoke($handler, $easy);
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function setMultiProperty(CurlMultiHandler $handler, string $name, $value): void
+    {
+        $set = \Closure::bind(static function (CurlMultiHandler $handler) use ($name, $value): void {
+            $handler->{$name} = $value;
+        }, null, CurlMultiHandler::class);
+
+        $set($handler);
+    }
+
+    /**
+     * @return mixed
+     */
+    private static function readMultiProperty(CurlMultiHandler $handler, string $name)
+    {
+        $get = \Closure::bind(static function (CurlMultiHandler $handler) use ($name) {
+            return $handler->{$name};
+        }, null, CurlMultiHandler::class);
+
+        return $get($handler);
     }
 
     private static function readSelectTimeout(CurlMultiHandler $handler)

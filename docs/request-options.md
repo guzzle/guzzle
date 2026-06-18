@@ -960,21 +960,32 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 
 > [!NOTE]
 > When sending HTTPS requests, or requests explicitly tunneled with
-> `CURLOPT_HTTPPROXYTUNNEL`, through an authenticated HTTP or HTTPS proxy,
-> libcurl versions before 8.19.0 could reuse an existing proxy tunnel even
-> after proxy credentials changed, and 8.19.0 still contains related proxy
-> credential leak flaws that were fixed in 8.20.0. Guzzle therefore avoids
-> tunnel reuse on libcurl versions older than 8.20.0 when the proxy URL is
-> configured through the `proxy` option or resolved from the environment,
-> including cURL proxy credential options supplied through the `curl` request
-> option. Raw `CURLOPT_PROXY` supplied through the `curl` request option is
-> deprecated but still honored, and receives the same protection. Custom proxy
-> authentication sent with `CURLOPT_PROXYHEADER` also avoids tunnel reuse
-> because libcurl does not include those header values in its connection
-> matching. Fixed libcurl versions keep normal connection reuse behavior for
-> proxy URL and cURL proxy credential options. Advanced users can still
-> control cURL connection reuse explicitly with the `curl` request option and
-> `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`.
+> `CURLOPT_HTTPPROXYTUNNEL`, through an HTTP or HTTPS proxy, libcurl versions
+> before 8.19.0 could reuse an existing proxy tunnel even after proxy
+> credentials changed, and 8.19.0 still contains related proxy credential leak
+> flaws that were fixed in 8.20.0. Guzzle therefore sections proxy tunnel
+> connection reuse by the proxy credentials in effect: requests with the same
+> credentials reuse a pooled tunnel, while a change of proxy credentials (from
+> the `proxy` option, the environment, or cURL proxy credential options
+> supplied through the `curl` request option) is isolated onto its own
+> connections. Anonymous tunnels are sectioned apart from authenticated ones,
+> so an unauthenticated request never rides an authenticated tunnel. Raw
+> `CURLOPT_PROXY` supplied through the `curl` request option is deprecated but
+> still honored and participates in the same sectioning. Custom proxy
+> authentication sent with `CURLOPT_PROXYHEADER` is always sectioned because
+> libcurl cannot key connection reuse on those header values. On libcurl 8.20.0
+> and newer, credential sectioning for option-supplied credentials is left to
+> libcurl's own credential-aware connection matching.
+>
+> Sectioning has a cost in mixed workloads: changing the proxy credentials in
+> use discards the idle pooled connections held for the previous credentials,
+> which also drops unrelated direct keep-alive connections pooled alongside
+> them, and alternating anonymous and authenticated traffic through the same
+> proxy repeats that cost on each switch. Advanced users can still control cURL
+> connection reuse explicitly with the `curl` request option and
+> `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`; raw `CURLOPT_PROXYTYPE` is
+> respected when deciding whether a scheme-less `proxy` option value is an
+> HTTP(S) proxy.
 
 ## query
 
