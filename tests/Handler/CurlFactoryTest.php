@@ -1245,22 +1245,23 @@ class CurlFactoryTest extends TestCase
         });
     }
 
-    public function testForcesFreshConnectionForEnvironmentCredentialedProxyOnAffectedCurlVersion(): void
+    public function testSectionsEnvironmentCredentialedProxyOnAffectedCurlVersion(): void
     {
         self::withProxyEnvironment(['https_proxy' => 'http://username:password@proxy.example.com:8080'], static function (): void {
-            self::createWithCurlVersion('8.19.0', 'https://example.com', []);
+            $factory = new CurlFactory(3);
+            $easy = self::createOnFactory($factory, '8.19.0', 'https://example.com', []);
 
-            self::assertAuthenticatedProxyConnectionReuseOptions();
+            self::assertNotNull($easy->proxyTunnelSignature);
         });
     }
 
-    public function testDoesNotForceFreshConnectionForEnvironmentCredentialedProxyOnFixedCurlVersion(): void
+    public function testDoesNotSectionEnvironmentCredentialedProxyOnFixedCurlVersion(): void
     {
         self::withProxyEnvironment(['https_proxy' => 'http://username:password@proxy.example.com:8080'], static function (): void {
-            self::createWithCurlVersion('8.20.0', 'https://example.com', []);
+            $factory = new CurlFactory(3);
+            $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', []);
 
-            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+            self::assertNull($easy->proxyTunnelSignature);
         });
     }
 
@@ -1368,48 +1369,50 @@ class CurlFactoryTest extends TestCase
         self::assertSame($error, self::redactProxyUserInfo($error, 'http://proxy.example.com:8125'));
     }
 
-    public function testForcesFreshConnectionForAuthenticatedHttpsProxyOnAffectedCurlVersion(): void
+    /**
+     * @dataProvider proxyTunnelSectionProvider
+     */
+    public function testComputesProxyTunnelSignatureByChannel(string $version, string $uri, array $options, bool $sectioned): void
     {
-        self::createWithCurlVersion('8.19.0', 'https://example.com', [
-            'proxy' => 'http://username:password@proxy.example.com:8080',
-        ]);
+        $factory = new CurlFactory(3);
+        $easy = self::createOnFactory($factory, $version, $uri, $options);
 
-        self::assertAuthenticatedProxyConnectionReuseOptions();
-    }
-
-    public function testDoesNotForceFreshConnectionForAuthenticatedHttpsProxyOnFixedCurlVersion(): void
-    {
-        self::createWithCurlVersion('8.20.0', 'https://example.com', [
-            'proxy' => 'http://username:password@proxy.example.com:8080',
-        ]);
-
+        self::assertSame($sectioned, $easy->proxyTunnelSignature !== null);
+        // The sectioned path never sets FRESH_CONNECT/FORBID_REUSE on a single
+        // create; isolation is achieved by pool ownership, not per-handle.
         self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
         self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
-    public function testDoesNotForceFreshConnectionForCurlProxyCredentialsOnFixedCurlVersion(): void
+    public static function proxyTunnelSectionProvider(): array
     {
-        self::createWithCurlVersion('8.20.0', 'https://example.com', [
-            'proxy' => 'http://proxy.example.com:8080',
-            'curl' => [
-                \CURLOPT_PROXYUSERPWD => 'username:password',
-            ],
-        ]);
+        $cases = [
+            'auth https proxy, affected curl' => ['8.19.0', 'https://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080'], true],
+            'auth https proxy, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080'], false],
+            'curl proxy credentials, affected curl' => ['8.19.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [\CURLOPT_PROXYUSERPWD => 'username:password']], true],
+            'curl proxy credentials, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [\CURLOPT_PROXYUSERPWD => 'username:password']], false],
+            'anonymous tunnel, affected curl' => ['8.19.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080'], true],
+            'anonymous tunnel, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080'], false],
+            'plain http proxy request' => ['8.19.0', 'http://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080'], false],
+            'socks proxy' => ['8.19.0', 'https://example.com', ['proxy' => 'socks5://username:password@proxy.example.com:1080'], false],
+            'no-proxy match' => ['8.19.0', 'https://example.com', ['proxy' => ['https' => 'http://username:password@proxy.example.com:8080', 'no' => ['example.com']]], false],
+        ];
 
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
-    }
+        // CONNECT_TO makes an HTTP proxy tunnel even an http:// target, so it
+        // must section like any other authenticated tunnel.
+        if (\defined('CURLOPT_CONNECT_TO')) {
+            $connectTo = (int) \constant('CURLOPT_CONNECT_TO');
+            $entry = ['example.com:80:backend.example.com:80'];
+            $cases += [
+                'connect-to http tunnel, auth proxy url, affected curl' => ['8.19.0', 'http://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080', 'curl' => [$connectTo => $entry]], true],
+                'connect-to http tunnel, curl credentials, affected curl' => ['8.19.0', 'http://example.com', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [$connectTo => $entry, \CURLOPT_PROXYUSERPWD => 'username:password']], true],
+                'connect-to http tunnel, anonymous, affected curl' => ['8.19.0', 'http://example.com', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [$connectTo => $entry]], true],
+                'connect-to http tunnel, fixed curl' => ['8.20.0', 'http://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080', 'curl' => [$connectTo => $entry]], false],
+                'connect-to socks proxy stays out' => ['8.19.0', 'http://example.com', ['proxy' => 'socks5://username:password@proxy.example.com:1080', 'curl' => [$connectTo => $entry]], false],
+            ];
+        }
 
-    public function testForcesFreshConnectionForAuthenticatedHttpsProxyWithCurlProxyCredentialsOnAffectedCurlVersion(): void
-    {
-        self::createWithCurlVersion('8.19.0', 'https://example.com', [
-            'proxy' => 'http://proxy.example.com:8080',
-            'curl' => [
-                \CURLOPT_PROXYUSERPWD => 'username:password',
-            ],
-        ]);
-
-        self::assertAuthenticatedProxyConnectionReuseOptions();
+        return $cases;
     }
 
     public function testRejectsRawCurlProxyUrl(): void
@@ -1437,62 +1440,91 @@ class CurlFactoryTest extends TestCase
         ]);
     }
 
-    public function testForcesFreshConnectionForAuthenticatedHttpProxyTunnelOnAffectedCurlVersion(): void
+    public function testSectionsAuthenticatedHttpProxyTunnelOnAffectedCurlVersion(): void
     {
-        self::createWithCurlVersion('8.19.0', 'http://example.com', [
+        if (!\defined('CURLOPT_HTTPPROXYTUNNEL')) {
+            self::markTestSkipped('CURLOPT_HTTPPROXYTUNNEL is not available.');
+        }
+
+        $factory = new CurlFactory(3);
+        $easy = self::createOnFactory($factory, '8.19.0', 'http://example.com', [
             'proxy' => 'http://username:password@proxy.example.com:8080',
             'curl' => [
                 \CURLOPT_HTTPPROXYTUNNEL => true,
             ],
         ]);
 
-        self::assertAuthenticatedProxyConnectionReuseOptions();
+        self::assertNotNull($easy->proxyTunnelSignature);
     }
 
-    public function testProxyAuthorizationProxyHeaderReuseOptionsCannotBeOverriddenOnFixedCurlVersion(): void
+    public function testSectionsProxyAuthorizationHeaderEvenOnFixedCurlVersion(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
 
-        self::createWithCurlVersion('8.20.0', 'https://example.com', [
+        $factory = new CurlFactory(3);
+        $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
                 $proxyHeaderOption => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
-                \CURLOPT_FRESH_CONNECT => false,
-                \CURLOPT_FORBID_REUSE => false,
             ],
         ]);
 
-        self::assertAuthenticatedProxyConnectionReuseOptions();
+        // libcurl cannot key connection reuse on a literal Proxy-Authorization
+        // header, so Guzzle sections it even on the fast-path version.
+        self::assertNotNull($easy->proxyTunnelSignature);
     }
 
-    public function testDoesNotForceFreshConnectionForUnrelatedProxyHeader(): void
+    public function testSectionsConnectToProxyAuthorizationHeaderEvenOnFixedCurlVersion(): void
+    {
+        if (!\defined('CURLOPT_CONNECT_TO')) {
+            self::markTestSkipped('CURLOPT_CONNECT_TO is not available.');
+        }
+
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $factory = new CurlFactory(3);
+        $easy = self::createOnFactory($factory, '8.20.0', 'http://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                (int) \constant('CURLOPT_CONNECT_TO') => ['example.com:80:backend.example.com:80'],
+                $proxyHeaderOption => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+            ],
+        ]);
+
+        // CONNECT_TO tunnels the http:// request, and libcurl cannot key reuse
+        // on a literal Proxy-Authorization header, so it sections even on fixed
+        // libcurl.
+        self::assertNotNull($easy->proxyTunnelSignature);
+    }
+
+    public function testUnrelatedProxyHeaderIsNotHeaderAuthOnFixedCurlVersion(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
 
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+        $factory = new CurlFactory(3);
+        $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
                 $proxyHeaderOption => ['X-Proxy-Header: value'],
             ],
         ]);
 
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        self::assertNull($easy->proxyTunnelSignature);
     }
 
-    public function testDoesNotForceFreshConnectionForEmptyProxyAuthorizationProxyHeader(): void
+    public function testEmptyProxyAuthorizationHeaderIsNotHeaderAuthOnFixedCurlVersion(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
 
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
+        $factory = new CurlFactory(3);
+        $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
                 $proxyHeaderOption => ['Proxy-Authorization:'],
             ],
         ]);
 
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        self::assertNull($easy->proxyTunnelSignature);
     }
 
     public function testRejectsRawCurlSocksProxyTypeWithProxyUrl(): void
@@ -1557,67 +1589,97 @@ class CurlFactoryTest extends TestCase
         ]);
     }
 
-    public function testDoesNotForceFreshConnectionForAuthenticatedHttpProxyRequest(): void
+    public function testReusesIdleHandleForSameProxyTunnelSignature(): void
     {
-        self::createWithCurlVersion('8.18.0', 'http://example.com', [
+        $factory = new CurlFactory(3);
+        $options = ['proxy' => 'http://username:password@proxy.example.com:8080'];
+
+        $first = self::createOnFactory($factory, '8.19.0', 'https://example.com', $options);
+        $pooled = $first->handle;
+        $factory->release($first);
+
+        $second = self::createOnFactory($factory, '8.19.0', 'https://example.com', $options);
+
+        self::assertSame($pooled, $second->handle);
+    }
+
+    public function testFirstProxyTunnelOwnerReusesPooledHandleWithoutPurging(): void
+    {
+        $factory = new CurlFactory(3);
+
+        $direct = self::createOnFactory($factory, '8.19.0', 'https://example.com', []);
+        $pooled = $direct->handle;
+        $factory->release($direct);
+
+        $tunnel = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
             'proxy' => 'http://username:password@proxy.example.com:8080',
         ]);
 
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        self::assertSame($pooled, $tunnel->handle);
     }
 
-    public function testDoesNotForceFreshConnectionForUnauthenticatedHttpsProxy(): void
+    public function testPurgesIdleHandlesWhenProxyTunnelOwnerChanges(): void
     {
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
-            'proxy' => 'http://proxy.example.com:8080',
-        ]);
+        $factory = new CurlFactory(3);
 
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        $first = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://user1:pass1@proxy.example.com:8080',
+        ]);
+        $factory->release($first);
+        self::assertCount(1, self::readIdleHandles($factory));
+
+        $second = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://user2:pass2@proxy.example.com:8080',
+        ]);
+        self::assertCount(0, self::readIdleHandles($factory));
+
+        $factory->release($second);
+        self::assertCount(1, self::readIdleHandles($factory));
     }
 
-    public function testDoesNotForceFreshConnectionForAuthenticatedSocksProxy(): void
+    public function testReleaseDropsHandleFromSupersededOwner(): void
     {
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
-            'proxy' => 'socks5://username:password@proxy.example.com:1080',
+        $factory = new CurlFactory(3);
+
+        $a = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://a:a@proxy.example.com:8080',
+        ]);
+        $b = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://b:b@proxy.example.com:8080',
         ]);
 
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        $factory->release($a);
+        self::assertCount(0, self::readIdleHandles($factory));
+
+        $factory->release($b);
+        self::assertCount(1, self::readIdleHandles($factory));
     }
 
-    public function testDoesNotForceFreshConnectionWhenNoProxyMatches(): void
+    public function testShareHandleUsesBlanketForceFreshForAuthenticatedProxy(): void
     {
-        self::createWithCurlVersion('8.18.0', 'https://example.com', [
-            'proxy' => [
-                'https' => 'http://username:password@proxy.example.com:8080',
-                'no' => ['example.com'],
-            ],
-        ]);
+        self::skipIfCurlShareIsUnavailable();
 
-        self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
-        self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
-    }
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
-    public function testAuthenticatedHttpsProxyReuseOptionsCannotBeOverriddenOnAffectedCurlVersion(): void
-    {
-        self::createWithCurlVersion('8.19.0', 'https://example.com', [
-            'proxy' => 'http://username:password@proxy.example.com:8080',
-            'curl' => [
-                \CURLOPT_FRESH_CONNECT => false,
-                \CURLOPT_FORBID_REUSE => false,
-            ],
-        ]);
+        try {
+            $easy = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+                'proxy' => 'http://username:password@proxy.example.com:8080',
+            ]);
 
-        self::assertAuthenticatedProxyConnectionReuseOptions();
+            self::assertNull($easy->proxyTunnelSignature);
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
     }
 
     public function testAuthenticatedHttpsProxyReuseOptionsCanBeSetOnFixedCurlVersion(): void
     {
-        self::createWithCurlVersion('8.20.0', 'https://example.com', [
+        $factory = new CurlFactory(3);
+        self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://username:password@proxy.example.com:8080',
             'curl' => [
                 \CURLOPT_FRESH_CONNECT => false,
@@ -1627,6 +1689,49 @@ class CurlFactoryTest extends TestCase
 
         self::assertFalse($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
         self::assertFalse($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testProxyTlsAuthCredentialChangesProxyTunnelSignature(): void
+    {
+        if (!\defined('CURLOPT_PROXY_TLSAUTH_PASSWORD')) {
+            self::markTestSkipped('CURLOPT_PROXY_TLSAUTH_PASSWORD is not available.');
+        }
+
+        // TLS-SRP is a proxy credential that libcurl did not key connection
+        // reuse on before 7.83.1 (CVE-2022-27782), so on an affected version it
+        // must change the signature for the proxy tunnel to be sectioned.
+        $tlsAuthPassword = (int) \constant('CURLOPT_PROXY_TLSAUTH_PASSWORD');
+
+        $first = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080',
+            $tlsAuthPassword => 'secret1',
+        ]);
+        $second = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080',
+            $tlsAuthPassword => 'secret2',
+        ]);
+
+        self::assertNotNull($first);
+        self::assertNotSame($first, $second);
+    }
+
+    public function testProxyTlsCredentialsRequireFreshConnectionOnAffectedCurlVersion(): void
+    {
+        if (!\defined('CURLOPT_PROXY_TLSAUTH_PASSWORD')) {
+            self::markTestSkipped('CURLOPT_PROXY_TLSAUTH_PASSWORD is not available.');
+        }
+
+        // Under a configured share handle the signature path is bypassed for
+        // the force-fresh path. libcurl did not key connection reuse on TLS-SRP
+        // before 7.83.1 (CVE-2022-27782), so that path must force a fresh
+        // tunnel on an affected version and need not from 7.83.1 onwards.
+        $conf = [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080',
+            (int) \constant('CURLOPT_PROXY_TLSAUTH_PASSWORD') => 'secret',
+        ];
+
+        self::assertTrue(self::computeRequiresFreshForAuthenticatedProxy('7.79.0', 'https://example.com', $conf));
+        self::assertFalse(self::computeRequiresFreshForAuthenticatedProxy('7.83.1', 'https://example.com', $conf));
     }
 
     /**
@@ -5594,12 +5699,6 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    private static function assertAuthenticatedProxyConnectionReuseOptions(): void
-    {
-        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
-        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
-    }
-
     /**
      * @param string[] $expectedProtocols
      */
@@ -5639,7 +5738,7 @@ class CurlFactoryTest extends TestCase
     /**
      * @param array<int|string, mixed> $options
      */
-    private static function createWithCurlVersion(string $version, string $uri, array $options): void
+    private static function createOnFactory(CurlFactory $factory, string $version, string $uri, array $options): EasyHandle
     {
         $previousVersionInfo = self::setCurlVersionInfo([
             'version' => $version,
@@ -5647,8 +5746,7 @@ class CurlFactoryTest extends TestCase
         ]);
 
         try {
-            $f = new CurlFactory(3);
-            $f->create(new Psr7\Request('GET', $uri), $options);
+            return $factory->create(new Psr7\Request('GET', $uri), $options);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
@@ -5691,6 +5789,47 @@ class CurlFactoryTest extends TestCase
         }
 
         return $method->invoke(null, $error, $proxy);
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function computeProxyTunnelSignature(string $version, string $uri, array $conf): ?string
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => $version,
+            'features' => 0,
+        ]);
+
+        try {
+            $method = new \ReflectionMethod(CurlFactory::class, 'proxyTunnelSignature');
+            if (\PHP_VERSION_ID < 80100) {
+                $method->setAccessible(true);
+            }
+
+            return $method->invoke(null, new Psr7\Request('GET', $uri), $conf);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    private static function computeRequiresFreshForAuthenticatedProxy(string $version, string $uri, array $conf): bool
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => $version,
+            'features' => 0,
+        ]);
+
+        try {
+            $method = new \ReflectionMethod(CurlFactory::class, 'requiresFreshConnectionForAuthenticatedProxy');
+            if (\PHP_VERSION_ID < 80100) {
+                $method->setAccessible(true);
+            }
+
+            return $method->invoke(null, new Psr7\Request('GET', $uri), $conf[\CURLOPT_PROXY], $conf);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     private static function requireHttp3TestConstants(): void

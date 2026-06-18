@@ -774,6 +774,139 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testFirstProxyTunnelOwnerLatchesWithoutRecreatingMultiHandle(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::initMultiHandle($handler);
+        $mh = self::readMultiHandle($handler);
+
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature('sig-a'));
+
+        self::assertSame('sig-a', self::readMultiProperty($handler, 'proxyTunnelOwner'));
+        self::assertSame($mh, self::readMultiHandle($handler), 'The first owner must not recreate the multi handle.');
+    }
+
+    public function testIdleProxyTunnelOwnerChangeRecreatesMultiHandle(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        self::initMultiHandle($handler);
+
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature('sig-b'));
+
+        self::assertSame('sig-b', self::readMultiProperty($handler, 'proxyTunnelOwner'));
+        self::assertNull(self::readMultiHandle($handler), 'An idle owner change must release the multi handle for lazy recreation.');
+    }
+
+    public function testBusyProxyTunnelOwnerChangeIsolatesTheTransfer(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        self::initMultiHandle($handler);
+        $mh = self::readMultiHandle($handler);
+        self::setMultiProperty($handler, 'handles', [0 => ['busy']]);
+
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature('sig-b'));
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+        self::assertSame('sig-a', self::readMultiProperty($handler, 'proxyTunnelOwner'), 'A busy owner change must not move the owner.');
+        self::assertSame($mh, self::readMultiHandle($handler), 'A busy owner change must not recreate the multi handle.');
+    }
+
+    public function testProcessingMessagesGuardPreventsMultiRecreation(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        self::initMultiHandle($handler);
+        $mh = self::readMultiHandle($handler);
+        self::setMultiProperty($handler, 'processingMessages', true);
+
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature('sig-b'));
+
+        self::assertSame($mh, self::readMultiHandle($handler), 'Recreating the multi handle mid-iteration would corrupt the read loop.');
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testNullSignatureNeverDisturbsProxyTunnelOwnership(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        self::initMultiHandle($handler);
+        $mh = self::readMultiHandle($handler);
+
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature(null));
+
+        self::assertSame('sig-a', self::readMultiProperty($handler, 'proxyTunnelOwner'));
+        self::assertSame($mh, self::readMultiHandle($handler));
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl'] ?? []);
+    }
+
+    private static function easyWithSignature(?string $signature): EasyHandle
+    {
+        $easy = new EasyHandle();
+        $easy->request = new Request('GET', 'https://example.com');
+        $easy->handle = \curl_init();
+        $easy->proxyTunnelSignature = $signature;
+
+        return $easy;
+    }
+
+    private static function applyProxyTunnelOwnership(CurlMultiHandler $handler, EasyHandle $easy): void
+    {
+        $invoke = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->applyProxyTunnelOwnership($easy);
+        }, null, CurlMultiHandler::class);
+
+        $invoke($handler, $easy);
+    }
+
+    private static function initMultiHandle(CurlMultiHandler $handler): void
+    {
+        $init = \Closure::bind(static function (CurlMultiHandler $handler): void {
+            $handler->getMultiHandle();
+        }, null, CurlMultiHandler::class);
+
+        $init($handler);
+    }
+
+    /**
+     * @return resource|\CurlMultiHandle|null
+     */
+    private static function readMultiHandle(CurlMultiHandler $handler)
+    {
+        $get = \Closure::bind(static function (CurlMultiHandler $handler) {
+            return $handler->multiHandle;
+        }, null, CurlMultiHandler::class);
+
+        return $get($handler);
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function setMultiProperty(CurlMultiHandler $handler, string $name, $value): void
+    {
+        $set = \Closure::bind(static function (CurlMultiHandler $handler) use ($name, $value): void {
+            $handler->{$name} = $value;
+        }, null, CurlMultiHandler::class);
+
+        $set($handler);
+    }
+
+    /**
+     * @return mixed
+     */
+    private static function readMultiProperty(CurlMultiHandler $handler, string $name)
+    {
+        $get = \Closure::bind(static function (CurlMultiHandler $handler) use ($name) {
+            return $handler->{$name};
+        }, null, CurlMultiHandler::class);
+
+        return $get($handler);
+    }
+
     private static function readSelectTimeout(CurlMultiHandler $handler): float
     {
         $readSelectTimeout = \Closure::bind(static function (CurlMultiHandler $handler): float {

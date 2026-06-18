@@ -97,6 +97,17 @@ final class CurlFactory implements CurlFactoryInterface
     private array $handles = [];
 
     /**
+     * @var string|null Owner signature of the proxy tunnels that pooled idle
+     *                  handles may still hold
+     */
+    private ?string $proxyTunnelOwner = null;
+
+    /**
+     * @var bool Whether an in-domain handle has been pooled since the last purge
+     */
+    private bool $poolMayHoldTunnels = false;
+
+    /**
      * @var int Total number of idle handles to keep in cache
      */
     private int $maxHandles;
@@ -210,7 +221,25 @@ final class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
-        $this->forceFreshConnectionForAuthenticatedProxy($request, $conf);
+        if ($this->shareHandle !== null) {
+            // Conservative blanket mode: a configured share handle hides the
+            // pooled connections' provenance, so sectioned reuse cannot reason
+            // about them.
+            $this->forceFreshConnectionForAuthenticatedProxy($request, $conf);
+        } else {
+            $signature = self::proxyTunnelSignature($request, $conf);
+            $easy->proxyTunnelSignature = $signature;
+            if ($signature !== null && $signature !== $this->proxyTunnelOwner) {
+                if ($this->poolMayHoldTunnels) {
+                    // Pooled idle handles may hold a different owner's tunnel.
+                    $this->discardIdleHandles();
+                    $this->poolMayHoldTunnels = false;
+                }
+                // The first in-domain owner latches without purging: the pool
+                // provably holds no in-domain tunnel yet.
+                $this->proxyTunnelOwner = $signature;
+            }
+        }
 
         $easy->effectiveProxy = self::getEffectiveProxy($conf);
 
@@ -580,17 +609,30 @@ final class CurlFactory implements CurlFactoryInterface
         $resource = $easy->handle;
         unset($easy->handle);
 
-        if (\count($this->handles) >= $this->maxHandles) {
+        if (
+            \count($this->handles) >= $this->maxHandles
+            || ($easy->proxyTunnelSignature !== null && $easy->proxyTunnelSignature !== $this->proxyTunnelOwner)
+        ) {
+            // Pool is full, or this handle belongs to a superseded tunnel
+            // owner (an async create/release overlap can hand a stale-owner
+            // handle back after a purge) - drop it instead of pooling it.
             $this->discardHandle($resource);
-        } else {
-            // Remove all callback functions as they can hold onto references
-            // and are not cleaned up by curl_reset. Using curl_setopt_array
-            // does not work for some reason, so removing each one
-            // individually.
-            $this->clearEasyHandleCallbacks($resource);
-            \curl_reset($resource);
-            $this->handles[] = $resource;
+
+            return;
         }
+
+        if ($easy->proxyTunnelSignature !== null) {
+            // A pooled handle now carries the current owner's tunnel.
+            $this->poolMayHoldTunnels = true;
+        }
+
+        // Remove all callback functions as they can hold onto references
+        // and are not cleaned up by curl_reset. Using curl_setopt_array
+        // does not work for some reason, so removing each one
+        // individually.
+        $this->clearEasyHandleCallbacks($resource);
+        \curl_reset($resource);
+        $this->handles[] = $resource;
     }
 
     /**
@@ -1191,12 +1233,26 @@ final class CurlFactory implements CurlFactoryInterface
             return true;
         }
 
-        return !CurlVersion::supportsProxyCredentialAwareConnectionReuse()
-            && (
-                \array_key_exists('user', $proxyParts)
-                || \array_key_exists('pass', $proxyParts)
-                || self::hasCurlProxyCredentials($conf)
-            );
+        // A proxy client certificate or TLS-SRP authenticates the client to an
+        // HTTPS proxy at the TLS layer; libcurl's connection matcher ignored
+        // TLS-SRP before 7.83.1 (CVE-2022-27782), so an old build can reuse a
+        // tunnel across those identities. Force a fresh one, as the non-share
+        // signature path always does.
+        // See docs/contributing/curl-connection-reuse.md.
+        if (
+            !CurlVersion::supportsProxyTlsCredentialAwareConnectionReuse()
+            && self::hasCurlProxyTlsCredentials($conf)
+        ) {
+            return true;
+        }
+
+        if (CurlVersion::supportsProxyCredentialAwareConnectionReuse()) {
+            return false;
+        }
+
+        return \array_key_exists('user', $proxyParts)
+            || \array_key_exists('pass', $proxyParts)
+            || self::hasCurlProxyCredentials($conf);
     }
 
     /**
@@ -1204,12 +1260,42 @@ final class CurlFactory implements CurlFactoryInterface
      */
     private static function usesProxyTunnel(RequestInterface $request, array $conf): bool
     {
-        return 'https' === $request->getUri()->getScheme()
-            || (
-                \defined('CURLOPT_HTTPPROXYTUNNEL')
-                && \array_key_exists((int) \constant('CURLOPT_HTTPPROXYTUNNEL'), $conf)
-                && (bool) $conf[(int) \constant('CURLOPT_HTTPPROXYTUNNEL')]
-            );
+        $scheme = $request->getUri()->getScheme();
+
+        if ('https' === $scheme) {
+            return true;
+        }
+
+        // An HTTP proxy auto-switches to a CONNECT tunnel when CONNECT_TO
+        // redirects the origin, so an http:// target with it set tunnels too.
+        if ('http' === $scheme && self::hasCurlConnectTo($conf)) {
+            return true;
+        }
+
+        return \defined('CURLOPT_HTTPPROXYTUNNEL')
+            && \array_key_exists((int) \constant('CURLOPT_HTTPPROXYTUNNEL'), $conf)
+            && (bool) $conf[(int) \constant('CURLOPT_HTTPPROXYTUNNEL')];
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function hasCurlConnectTo(array $conf): bool
+    {
+        if (!\defined('CURLOPT_CONNECT_TO')) {
+            return false;
+        }
+
+        $option = (int) \constant('CURLOPT_CONNECT_TO');
+        if (!\array_key_exists($option, $conf)) {
+            return false;
+        }
+
+        $value = $conf[$option];
+
+        return \is_array($value)
+            ? $value !== []
+            : $value !== null && $value !== false && $value !== '';
     }
 
     /**
@@ -1272,6 +1358,25 @@ final class CurlFactory implements CurlFactoryInterface
     /**
      * @param array<int|string, mixed> $conf
      */
+    private static function hasCurlProxyTlsCredentials(array $conf): bool
+    {
+        foreach ([
+            'CURLOPT_PROXY_SSLCERT',
+            'CURLOPT_PROXY_SSLCERT_BLOB',
+            'CURLOPT_PROXY_TLSAUTH_USERNAME',
+            'CURLOPT_PROXY_TLSAUTH_PASSWORD',
+        ] as $option) {
+            if (\defined($option) && \array_key_exists((int) \constant($option), $conf)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
     private static function hasCurlProxyAuthorizationHeader(array $conf): bool
     {
         if (!\defined('CURLOPT_PROXYHEADER')) {
@@ -1307,6 +1412,120 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         return false;
+    }
+
+    /**
+     * Computes the connection-reuse section signature for a proxy tunnel, or
+     * null when the request does not require sectioning.
+     *
+     * @param array<int|string, mixed> $conf
+     */
+    private static function proxyTunnelSignature(RequestInterface $request, array $conf): ?string
+    {
+        $proxy = self::getEffectiveProxy($conf);
+        if (
+            $proxy === null
+            || !self::usesProxyTunnel($request, $conf)
+            || !self::isHttpProxyForConnectionReuse($proxy, $conf)
+        ) {
+            return null;
+        }
+
+        $headerAuth = self::curlProxyAuthorizationHeaderValues($conf);
+        if ($headerAuth === [] && CurlVersion::supportsProxyCredentialAwareConnectionReuse()) {
+            // libcurl keys reuse on parsed proxy credentials only from 8.19.0,
+            // trusted from 8.20.0 (PROXY_CREDENTIAL_REUSE_VERSION); a literal
+            // Proxy-Authorization header is never keyed and always sections.
+            // See docs/contributing/curl-connection-reuse.md.
+            return null;
+        }
+
+        // Hash every proxy channel an old libcurl might not key reuse on. A
+        // changed signature only forces a fresh connection, never relaxes
+        // reuse, so over-covering is always safe; under-covering leaks. Proxy
+        // credentials are the channel CVE-2026-3784 missed; the proxy-TLS
+        // options are load-bearing on builds before the proxy-TLS reuse fixes
+        // (client cert from 7.50.1, CVE-2016-5420; TLS-SRP from 7.83.1,
+        // CVE-2022-27782) and harmless after. The private key and cert/key
+        // encoding are deliberately omitted: the hashed X.509 client cert is
+        // the proxy-visible identity and maps 1:1 to its key. See
+        // docs/contributing/curl-connection-reuse.md.
+        $credentialState = [];
+        foreach ([
+            'CURLOPT_PROXYUSERPWD', 'CURLOPT_PROXYUSERNAME', 'CURLOPT_PROXYPASSWORD',
+            'CURLOPT_PROXYTYPE',
+            'CURLOPT_PROXY_SSLCERT', 'CURLOPT_PROXY_SSLCERT_BLOB', 'CURLOPT_PROXY_SSLKEY',
+            'CURLOPT_PROXY_KEYPASSWD', 'CURLOPT_PROXY_TLSAUTH_USERNAME',
+            'CURLOPT_PROXY_TLSAUTH_PASSWORD', 'CURLOPT_PROXY_SSLVERSION',
+        ] as $name) {
+            $credentialState[$name] = \defined($name)
+                ? ($conf[(int) \constant($name)] ?? null)
+                : null;
+        }
+
+        return \hash('sha256', \serialize([$proxy, $credentialState, $headerAuth]));
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     *
+     * @return list<string>
+     */
+    private static function curlProxyAuthorizationHeaderValues(array $conf): array
+    {
+        if (!\defined('CURLOPT_PROXYHEADER')) {
+            return [];
+        }
+
+        $option = (int) \constant('CURLOPT_PROXYHEADER');
+        if (!\array_key_exists($option, $conf)) {
+            return [];
+        }
+
+        $headers = $conf[$option];
+        if (!\is_array($headers)) {
+            return [];
+        }
+
+        $values = [];
+        foreach ($headers as $header) {
+            if (!\is_string($header)) {
+                continue;
+            }
+
+            $parts = \explode(':', $header, 2);
+            if (\count($parts) !== 2) {
+                continue;
+            }
+
+            if (
+                0 === \strcasecmp(\trim($parts[0]), 'Proxy-Authorization')
+                && \trim($parts[1]) !== ''
+            ) {
+                $values[] = \trim($parts[1]);
+            }
+        }
+
+        // Sort so the signature depends on the set of header credentials, not
+        // their order, which avoids spurious re-sectioning across requests.
+        \sort($values);
+
+        return $values;
+    }
+
+    private function discardIdleHandles(): void
+    {
+        foreach ($this->handles as $id => $handle) {
+            try {
+                // Best effort: a cleanup hiccup on a superseded idle handle
+                // must not abort the unrelated request that triggered the purge.
+                $this->discardHandle($handle);
+            } catch (\Throwable $e) {
+                // Ignored.
+            } finally {
+                unset($this->handles[$id]);
+            }
+        }
     }
 
     /**
