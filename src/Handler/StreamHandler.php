@@ -750,6 +750,10 @@ final class StreamHandler
 
         $this->applyHandlerOptions($request, $context, $options, $params);
 
+        // Resolve the proxy unconditionally (option first, then environment),
+        // so an env-configured proxy applies even when no proxy option is set.
+        $this->applyProxy($request, $context, $options['proxy'] ?? null);
+
         if (isset($options['stream_context'])) {
             $streamContext = $options['stream_context'];
             if (!\is_array($streamContext)) {
@@ -804,9 +808,7 @@ final class StreamHandler
     private function applyHandlerOptions(RequestInterface $request, array &$context, array $options, array &$params): void
     {
         foreach ($options as $key => $value) {
-            if ($key === 'proxy') {
-                $this->applyProxyOption($request, $context, $value);
-            } elseif ($key === 'timeout') {
+            if ($key === 'timeout') {
                 $this->applyTimeoutOption($context, $value);
             } elseif ($key === 'crypto_method') {
                 $this->applyCryptoMethodOption($context, $value);
@@ -1166,9 +1168,9 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applyProxyOption(RequestInterface $request, array &$context, $value): void
+    private function applyProxy(RequestInterface $request, array &$context, $value): void
     {
-        $proxy = ProxyOptions::resolve($request->getUri(), $value);
+        $proxy = ProxyEnvironment::resolveProxySelection($request->getUri(), $value);
         $proxyUri = $proxy->getProxy();
         if ($proxyUri === null) {
             return;
@@ -1234,7 +1236,7 @@ final class StreamHandler
      */
     private function parseProxy(string $url, string $scheme): array
     {
-        // applyProxyOption() has already validated the scheme, so only an http
+        // applyProxy() has already validated the scheme, so only an http
         // proxy needs translating to the tcp:// form the wrapper expects; a
         // port-less proxy defaults to 1080 to match libcurl's HTTP default.
         if ($scheme !== 'http') {

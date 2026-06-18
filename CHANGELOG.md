@@ -39,6 +39,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Default a port-less proxy to 1080 in the stream handler, matching libcurl
 - Downgrade HTTP/3 requests to HTTP/2 or HTTP/1.1 when the proxy is resolved from environment variables
 - Throw `RequestException`, not `InvalidArgumentException`, for an unavailable proxy or TLS feature
+- Resolve proxy environment variables in the stream handler, consistent with the cURL handlers
+- Honor `no_proxy`/`NO_PROXY` from the environment in the stream handler, including `*` to disable proxying
+- Reject an environment-resolved `https://` or SOCKS proxy in the stream handler, matching its `proxy` option behavior
 - Pass the request as the second argument to `on_headers` callbacks
 - Declare strict types across remaining source files
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use

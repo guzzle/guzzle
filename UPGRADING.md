@@ -584,6 +584,30 @@ libcurl's default HTTP proxy port, so `proxy.example.com` resolves to
 unchanged, which PHP's stream wrapper could not use because it requires an
 explicit port.
 
+#### Proxy Environment Variable Resolution
+
+The stream handler now resolves proxies from the environment the same way the
+cURL handlers do. When the `proxy` request option makes no decision for a
+request, it reads `http_proxy` (lowercase only), `https_proxy`/`HTTPS_PROXY`,
+and `all_proxy`/`ALL_PROXY`, and consults `no_proxy`/`NO_PROXY` — including `*`
+to disable proxying entirely. The uppercase `HTTP_PROXY` is never read (an
+httpoxy defense), empty values are treated as unset, and on Windows proxy
+environment variables are resolved only under the CLI SAPI. Guzzle 7's stream
+handler never consulted the environment; it honored only the explicit `proxy`
+option.
+
+Because the stream handler cannot tunnel or speak TLS to a proxy, an
+`https_proxy` or `all_proxy` set to an `https://` or SOCKS URL now throws
+`InvalidArgumentException`, exactly as the same value passed through the `proxy`
+option already does, instead of connecting directly. An environment `http://`
+proxy used for an "https" request still fails at connect time, because the
+handler cannot open a CONNECT tunnel.
+
+There is no switch to turn this off. To send a request directly, do not set the
+proxy environment variables, add the host to the `proxy` option's `no` list, or
+list it in `no_proxy`/`NO_PROXY` (`*` bypasses every host). These work
+identically on both built-in handlers.
+
 #### Handler-Specific Option Overrides
 
 Handler-specific overrides remain available for finer transport control when
