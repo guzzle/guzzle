@@ -2158,10 +2158,18 @@ class ClientTest extends TestCase
 
     public function testUsesProxyEnvironmentVariables(): void
     {
-        unset($_SERVER['HTTP_PROXY'], $_SERVER['HTTPS_PROXY'], $_SERVER['NO_PROXY']);
-        \putenv('HTTP_PROXY=');
-        \putenv('HTTPS_PROXY=');
-        \putenv('NO_PROXY=');
+        // Snapshot the proxy environment so the assertions below run against a
+        // known-empty state and the original values are restored afterwards,
+        // rather than clobbering an inherited proxy env for later tests.
+        $names = ['HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY'];
+        $previousEnv = [];
+        $previousServer = [];
+        foreach ($names as $name) {
+            $previousEnv[$name] = \getenv($name, true);
+            $previousServer[$name] = $_SERVER[$name] ?? null;
+            unset($_SERVER[$name]);
+            \putenv($name);
+        }
 
         try {
             $client = new Client();
@@ -2211,9 +2219,19 @@ class ClientTest extends TestCase
             self::assertArrayHasKey('proxy', $config);
             self::assertSame(['no' => ['exa', 'mple.com', 'foo.com']], $config['proxy']);
         } finally {
-            \putenv('HTTP_PROXY=');
-            \putenv('HTTPS_PROXY=');
-            \putenv('NO_PROXY=');
+            foreach ($names as $name) {
+                if (false === $previousEnv[$name]) {
+                    \putenv($name);
+                } else {
+                    \putenv($name.'='.$previousEnv[$name]);
+                }
+
+                if (null === $previousServer[$name]) {
+                    unset($_SERVER[$name]);
+                } else {
+                    $_SERVER[$name] = $previousServer[$name];
+                }
+            }
         }
     }
 
