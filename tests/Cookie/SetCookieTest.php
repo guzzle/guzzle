@@ -139,6 +139,29 @@ class SetCookieTest extends TestCase
         self::assertFalse($cookie->matchesDomain('example.com'));
     }
 
+    public static function dotOnlyDomainProvider()
+    {
+        return [
+            ['.'],
+            ['..'],
+            ['...'],
+        ];
+    }
+
+    /**
+     * @dataProvider dotOnlyDomainProvider
+     */
+    public function testDoesNotMatchDotOnlyDomain($domain)
+    {
+        $cookie = new SetCookie([
+            'Name' => 'sid',
+            'Value' => 'attacker-controlled',
+            'Domain' => $domain,
+        ]);
+
+        self::assertFalse($cookie->matchesDomain('victim.com'));
+    }
+
     public static function pathMatchProvider()
     {
         return [
@@ -180,6 +203,9 @@ class SetCookieTest extends TestCase
             ['', 'baz', 'bar', 'The cookie name must not be empty'],
             ['foo', null, 'bar', 'The cookie value must not be empty'],
             ['foo', 'baz', '', 'The cookie domain must not be empty'],
+            ['foo', 'baz', '.', 'The cookie domain must not be empty'],
+            ['foo', 'baz', '..', 'The cookie domain must not be empty'],
+            ['foo', 'baz', '...', 'The cookie domain must not be empty'],
             ['foo', 'baz', null, true],
             ["foo\r", 'baz', '0', 'Cookie name must not contain invalid characters: ASCII Control characters (0-31;127), space, tab and the following characters: ()<>@,;:\"/?={}'],
         ];

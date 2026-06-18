@@ -14,6 +14,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject HTTPS proxies when the installed libcurl lacks HTTPS-proxy support
 - Reject proxy URLs with a malformed scheme in the cURL handlers instead of letting libcurl mishandle them
 
+### Security
+
+- Reject dot-only cookie `Domain` attributes as match-all
+
 
 ## 7.12.0 - 2026-06-16
 
