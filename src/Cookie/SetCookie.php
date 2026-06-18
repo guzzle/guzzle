@@ -439,8 +439,6 @@ class SetCookie
         }
 
         $domain = \strtolower($domain);
-
-        // Exact match.
         if ($domain === $cookieDomain) {
             return true;
         }
