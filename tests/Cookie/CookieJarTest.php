@@ -506,6 +506,32 @@ class CookieJarTest extends TestCase
         self::assertSame(\PHP_INT_MAX, $cookie->getExpires());
     }
 
+    public function testDoesNotStoreMaxAgeZeroCookieFromResponse(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age=0; Path=/'])
+        );
+
+        self::assertCount(0, $this->jar);
+    }
+
+    public function testMaxAgeZeroCookieFromResponseRemovesExistingCookie(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Path=/'])
+        );
+        self::assertCount(1, $this->jar);
+
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age=0; Path=/'])
+        );
+
+        self::assertCount(0, $this->jar);
+    }
+
     public function testDoesNotSendHostOnlyCookieToSubdomain(): void
     {
         $this->jar->extractCookies(

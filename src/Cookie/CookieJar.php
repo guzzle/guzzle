@@ -171,6 +171,14 @@ class CookieJar implements CookieJarInterface
             return false;
         }
 
+        if ($cookie->isExpired()) {
+            if ($cookie->getDomain() !== null) {
+                $this->clear($cookie->getDomain(), $cookie->getPath(), $cookie->getName());
+            }
+
+            return false;
+        }
+
         // Resolve conflicts with previously set cookies
         foreach ($this->cookies as $i => $c) {
             // Two cookies are identical, when their path, and domain are
