@@ -128,6 +128,56 @@ class CookieJarTest extends TestCase
         self::assertCount(0, $this->jar);
     }
 
+    public function testClearsCookieNamedZero()
+    {
+        $jar = new CookieJar();
+        $jar->setCookie(new SetCookie([
+            'Name' => '0',
+            'Value' => 'zero',
+            'Domain' => 'bar.com',
+            'Path' => '/boo',
+            'Expires' => \time() + 1000,
+        ]));
+        $jar->setCookie(new SetCookie([
+            'Name' => 'other',
+            'Value' => 'other',
+            'Domain' => 'bar.com',
+            'Path' => '/boo',
+            'Expires' => \time() + 1000,
+        ]));
+
+        $jar->clear('bar.com', '/boo', '0');
+
+        self::assertCount(1, $jar);
+        self::assertNull($jar->getCookieByName('0'));
+        self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('other'));
+    }
+
+    public function testClearsPathNamedZeroAsProvided()
+    {
+        $jar = new CookieJar();
+        $jar->setCookie(new SetCookie([
+            'Name' => 'zero-path',
+            'Value' => 'zero',
+            'Domain' => 'bar.com',
+            'Path' => '0',
+            'Expires' => \time() + 1000,
+        ]));
+        $jar->setCookie(new SetCookie([
+            'Name' => 'other-path',
+            'Value' => 'other',
+            'Domain' => 'bar.com',
+            'Path' => '/other',
+            'Expires' => \time() + 1000,
+        ]));
+
+        $jar->clear('bar.com', '0');
+
+        self::assertCount(1, $jar);
+        self::assertNull($jar->getCookieByName('zero-path'));
+        self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('other-path'));
+    }
+
     public static function domainClearProvider(): array
     {
         return [
@@ -399,6 +449,42 @@ class CookieJarTest extends TestCase
         self::assertCount(1, $this->jar);
     }
 
+    public function testDoesNotRewriteDomainZeroFromResponse()
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'http://example.com/path'),
+            new Response(200, ['Set-Cookie' => 'token=value; Domain=0; Path=/'])
+        );
+
+        self::assertCount(0, $this->jar);
+    }
+
+    public function testDoesNotStoreMaxAgeZeroCookieFromResponse()
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'http://example.com/path'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age=0; Path=/'])
+        );
+
+        self::assertCount(0, $this->jar);
+    }
+
+    public function testMaxAgeZeroCookieFromResponseRemovesExistingCookie()
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'http://example.com/path'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Path=/'])
+        );
+        self::assertCount(1, $this->jar);
+
+        $this->jar->extractCookies(
+            new Request('GET', 'http://example.com/path'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age=0; Path=/'])
+        );
+
+        self::assertCount(0, $this->jar);
+    }
+
     public static function dotOnlySetCookieDomainProvider()
     {
         return [
@@ -429,6 +515,16 @@ class CookieJarTest extends TestCase
         $request = $jar->withCookieHeader(new Request('GET', 'https://victim.com/'));
 
         self::assertFalse($request->hasHeader('Cookie'));
+    }
+
+    public function testDoesNotStoreRepeatedLeadingDotDomainCookiesFromResponse()
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Domain=..example.com; Path=/'])
+        );
+
+        self::assertCount(0, $this->jar);
     }
 
     public static function getMatchingCookiesDataProvider()

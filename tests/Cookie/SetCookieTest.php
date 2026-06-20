@@ -46,6 +46,14 @@ class SetCookieTest extends TestCase
         self::assertEquals($t + 100, $cookie->getExpires());
     }
 
+    public function testMaxAgeZeroExpiresCookie()
+    {
+        $cookie = SetCookie::fromString('sid=abc; Max-Age=0');
+
+        self::assertSame(0, $cookie->getMaxAge());
+        self::assertTrue($cookie->isExpired());
+    }
+
     public function testHoldsValues()
     {
         $t = \time();
@@ -137,6 +145,10 @@ class SetCookieTest extends TestCase
 
         $cookie->setDomain('example.com/'); // malformed domain
         self::assertFalse($cookie->matchesDomain('example.com'));
+
+        $cookie->setDomain('..example.com');
+        self::assertFalse($cookie->matchesDomain('example.com'));
+        self::assertFalse($cookie->matchesDomain('sub.example.com'));
     }
 
     public static function dotOnlyDomainProvider()
