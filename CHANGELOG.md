@@ -9,11 +9,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Section proxy tunnel connection reuse by credential so distinct credentials never share a tunnel
 
-### Fixed
-
-- Fixed HTTP proxy CONNECT tunnel reuse isolation on libcurl >= 8.20.0 so requests with proxy credentials delegated to libcurl no longer reuse pooled tunnels established with literal `Proxy-Authorization` proxy headers, and vice versa
-
-
 ## 7.12.2 - Upcoming
 
 ### Fixed
