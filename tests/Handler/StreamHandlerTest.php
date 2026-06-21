@@ -1082,6 +1082,34 @@ class StreamHandlerTest extends TestCase
         );
     }
 
+    public function testZeroStringDecodeContentReportsOriginalSizeAndContentEncodingAfterDecoding(): void
+    {
+        $decoded = 'test';
+        $gzip = \gzencode($decoded);
+        self::assertIsString($gzip);
+
+        $resource = \fopen('php://temp', 'r+');
+        self::assertIsResource($resource);
+        \fwrite($resource, $gzip);
+        \rewind($resource);
+
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: '.\strlen($gzip),
+        ]);
+
+        /** @var ResponseInterface $response */
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => '0'], $resource)->wait();
+
+        self::assertSame($decoded, (string) $response->getBody());
+        self::assertSame('gzip', $response->getHeaderLine('x-encoded-content-encoding'));
+        self::assertSame((string) \strlen($gzip), $response->getHeaderLine('x-encoded-content-length'));
+    }
+
     public function testDoesNotForceGzipDecode(): void
     {
         Server::flush();

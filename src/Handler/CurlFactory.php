@@ -1865,9 +1865,9 @@ final class CurlFactory implements CurlFactoryInterface
             }
         }
 
-        if (!isset($options['curl'][\CURLOPT_ENCODING]) && !empty($options['decode_content'])) {
+        if (!isset($options['curl'][\CURLOPT_ENCODING]) && isset($options['decode_content']) && $options['decode_content'] !== false) {
             $accept = $easy->request->getHeaderLine('Accept-Encoding');
-            if ($accept) {
+            if ($accept !== '') {
                 $conf[\CURLOPT_ENCODING] = $accept;
             } else {
                 // The empty string enables all available decoders and implicitly

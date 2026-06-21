@@ -432,7 +432,7 @@ final class StreamHandler
     private static function checkDecode(array $options, array $headers, StreamInterface $stream): array
     {
         // Automatically decode responses when instructed.
-        if (!empty($options['decode_content'])) {
+        if (isset($options['decode_content']) && $options['decode_content'] !== false) {
             $normalizedKeys = Utils::normalizeHeaderKeys($headers);
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
