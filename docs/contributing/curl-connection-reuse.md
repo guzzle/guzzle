@@ -248,7 +248,7 @@ TLS credential below 7.83.1 and not at or above it.
 - Always hash the proxy credentials and the literal `Proxy-Authorization`
   header; the header sections on **every** libcurl version.
 - Use a non-`null` delegated sentinel for real proxy tunnels whose parsed proxy
-  credentials are trusted to libcurl.
+  credentials, if any, are trusted to libcurl.
 - Never trust libcurl `< 8.20` to distinguish proxy credentials itself.
 - Do not key the signature on the private key or on cert/key encoding — the
   certificate is the proxy-visible identity.
