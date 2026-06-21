@@ -227,6 +227,11 @@ class SetCookieTest extends TestCase
         self::assertFalse($cookie->matchesDomain('baz.bar.com'));
         self::assertTrue($cookie->matchesDomain('baz.com'));
 
+        $cookie->setDomain('..example.com');
+        self::assertSame('.example.com', $cookie->getDomain());
+        self::assertFalse($cookie->matchesDomain('example.com'));
+        self::assertFalse($cookie->matchesDomain('sub.example.com'));
+
         $cookie->setDomain('.127.0.0.1');
         self::assertTrue($cookie->matchesDomain('127.0.0.1'));
 

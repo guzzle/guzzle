@@ -436,13 +436,6 @@ class SetCookie
             return false;
         }
 
-        // Remove the leading '.' as per spec in RFC 6265.
-        // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.3
-        $cookieDomain = self::normalizeDomain($cookieDomain);
-        if ($cookieDomain === '') {
-            return false;
-        }
-
         $domain = \strtolower($domain);
 
         if ($this->getHostOnly()) {

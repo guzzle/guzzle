@@ -614,6 +614,16 @@ class CookieJarTest extends TestCase
         self::assertFalse($request->hasHeader('Cookie'));
     }
 
+    public function testDoesNotStoreRepeatedLeadingDotDomainCookieFromResponse(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Domain=..example.com; Path=/'])
+        );
+
+        self::assertCount(0, $this->jar);
+    }
+
     public function testHostOnlyAndDomainCookiesWithSameNameCanCoexist(): void
     {
         $this->jar->extractCookies(
