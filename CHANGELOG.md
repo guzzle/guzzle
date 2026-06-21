@@ -60,6 +60,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Raised the built-in cURL handler floor to libcurl 7.34.0 with SSL support
 - Store response cookies without a `Domain` attribute as host-only cookies
 - Treat cookies with `Max-Age=0` or negative `Max-Age` as immediately expired
+- Prefer cookie `Max-Age` over `Expires` when both attributes are present
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
 - Reject malformed response protocol versions and reason phrases
 - Wrap malformed redirect `Location` values in `BadResponseException`

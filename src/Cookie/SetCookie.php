@@ -148,7 +148,7 @@ class SetCookie
 
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         $maxAge = $this->getMaxAge();
-        if (!$this->getExpires() && $maxAge !== null) {
+        if ($maxAge !== null) {
             $this->setExpires(self::maxAgeToExpires($maxAge, \time()));
         }
     }
