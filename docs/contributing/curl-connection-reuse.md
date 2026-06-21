@@ -121,7 +121,9 @@ establishes a proxy `CONNECT` tunnel through an HTTP(S), non-SOCKS proxy.
 `CURLOPT_HTTPPROXYTUNNEL`, or an `http://` target with a non-empty
 `CURLOPT_CONNECT_TO` (§6); `isHttpProxyForConnectionReuse()` excludes SOCKS.
 Direct, SOCKS, and non-tunnel requests get a `null` signature and never disturb
-the pool.
+the pool. Real delegated tunnels on fixed libcurl get a non-`null` sentinel, so
+they stay distinct from genuine non-tunnels and from literal proxy-header tunnel
+owners.
 
 **The channels hashed:** the effective proxy URL, the proxy credential and
 TLS-identity options, and any literal `Proxy-Authorization` header value.
@@ -221,9 +223,9 @@ is simply incoherent, with no legitimate use.)
 channels: libcurl < 8.19.0 ignored proxy credentials when matching connections,
 and 8.19.x still carried related proxy-credential leaks fixed in 8.20.0. At or
 above it, libcurl keys reuse on option- and URL-supplied proxy credentials
-itself, so `proxyTunnelSignature()` short-circuits to `null` — **except** when a
-literal `Proxy-Authorization` header is present, which always sections because
-libcurl can never key on an opaque request header (§5).
+itself, so `proxyTunnelSignature()` returns a shared delegated-owner sentinel —
+**except** when a literal `Proxy-Authorization` header is present, which always
+sections because libcurl can never key on an opaque request header (§5).
 
 ## 9. How the tests enforce this
 
@@ -248,6 +250,8 @@ TLS credential below 7.83.1 and not at or above it.
   Over-section freely; under-sectioning is the only way to leak.
 - Always hash the proxy credentials and the literal `Proxy-Authorization`
   header; the header sections on **every** libcurl version.
+- Use a non-`null` delegated sentinel for real proxy tunnels whose parsed proxy
+  credentials, if any, are trusted to libcurl.
 - Never trust libcurl `< 8.20` to distinguish proxy credentials itself.
 - Do not key the signature on the private key or on cert/key encoding — the
   certificate is the proxy-visible identity.
