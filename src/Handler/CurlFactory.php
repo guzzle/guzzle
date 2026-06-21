@@ -41,6 +41,8 @@ final class CurlFactory implements CurlFactoryInterface
 {
     use NonSerializableTrait;
 
+    private const DELEGATED_PROXY_TUNNEL_OWNER = 'proxy-tunnel:delegated-to-libcurl';
+
     private const CURL_CONNECTION_ERRORS = [
         5 => true,   // CURLE_COULDNT_RESOLVE_PROXY
         6 => true,   // CURLE_COULDNT_RESOLVE_HOST
@@ -1435,7 +1437,7 @@ final class CurlFactory implements CurlFactoryInterface
             // trusted from 8.20.0 (PROXY_CREDENTIAL_REUSE_VERSION); a literal
             // Proxy-Authorization header is never keyed and always sections.
             // See docs/contributing/curl-connection-reuse.md.
-            return null;
+            return self::DELEGATED_PROXY_TUNNEL_OWNER;
         }
 
         // Hash every proxy channel an old libcurl might not key reuse on. A

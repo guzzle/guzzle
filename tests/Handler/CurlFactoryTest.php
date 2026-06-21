@@ -1255,13 +1255,13 @@ class CurlFactoryTest extends TestCase
         });
     }
 
-    public function testDoesNotSectionEnvironmentCredentialedProxyOnFixedCurlVersion(): void
+    public function testDelegatesEnvironmentCredentialedProxyOnFixedCurlVersion(): void
     {
         self::withProxyEnvironment(['https_proxy' => 'http://username:password@proxy.example.com:8080'], static function (): void {
             $factory = new CurlFactory(3);
             $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', []);
 
-            self::assertNull($easy->proxyTunnelSignature);
+            self::assertNotNull($easy->proxyTunnelSignature);
         });
     }
 
@@ -1388,11 +1388,11 @@ class CurlFactoryTest extends TestCase
     {
         $cases = [
             'auth https proxy, affected curl' => ['8.19.0', 'https://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080'], true],
-            'auth https proxy, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080'], false],
+            'auth https proxy, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080'], true],
             'curl proxy credentials, affected curl' => ['8.19.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [\CURLOPT_PROXYUSERPWD => 'username:password']], true],
-            'curl proxy credentials, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [\CURLOPT_PROXYUSERPWD => 'username:password']], false],
+            'curl proxy credentials, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [\CURLOPT_PROXYUSERPWD => 'username:password']], true],
             'anonymous tunnel, affected curl' => ['8.19.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080'], true],
-            'anonymous tunnel, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080'], false],
+            'anonymous tunnel, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080'], true],
             'plain http proxy request' => ['8.19.0', 'http://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080'], false],
             'socks proxy' => ['8.19.0', 'https://example.com', ['proxy' => 'socks5://username:password@proxy.example.com:1080'], false],
             'no-proxy match' => ['8.19.0', 'https://example.com', ['proxy' => ['https' => 'http://username:password@proxy.example.com:8080', 'no' => ['example.com']]], false],
@@ -1407,7 +1407,7 @@ class CurlFactoryTest extends TestCase
                 'connect-to http tunnel, auth proxy url, affected curl' => ['8.19.0', 'http://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080', 'curl' => [$connectTo => $entry]], true],
                 'connect-to http tunnel, curl credentials, affected curl' => ['8.19.0', 'http://example.com', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [$connectTo => $entry, \CURLOPT_PROXYUSERPWD => 'username:password']], true],
                 'connect-to http tunnel, anonymous, affected curl' => ['8.19.0', 'http://example.com', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [$connectTo => $entry]], true],
-                'connect-to http tunnel, fixed curl' => ['8.20.0', 'http://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080', 'curl' => [$connectTo => $entry]], false],
+                'connect-to http tunnel, fixed curl' => ['8.20.0', 'http://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080', 'curl' => [$connectTo => $entry]], true],
                 'connect-to socks proxy stays out' => ['8.19.0', 'http://example.com', ['proxy' => 'socks5://username:password@proxy.example.com:1080', 'curl' => [$connectTo => $entry]], false],
             ];
         }
@@ -1497,7 +1497,7 @@ class CurlFactoryTest extends TestCase
         self::assertNotNull($easy->proxyTunnelSignature);
     }
 
-    public function testUnrelatedProxyHeaderIsNotHeaderAuthOnFixedCurlVersion(): void
+    public function testUnrelatedProxyHeaderUsesDelegatedOwnerOnFixedCurlVersion(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
 
@@ -1509,10 +1509,10 @@ class CurlFactoryTest extends TestCase
             ],
         ]);
 
-        self::assertNull($easy->proxyTunnelSignature);
+        self::assertNotNull($easy->proxyTunnelSignature);
     }
 
-    public function testEmptyProxyAuthorizationHeaderIsNotHeaderAuthOnFixedCurlVersion(): void
+    public function testEmptyProxyAuthorizationHeaderUsesDelegatedOwnerOnFixedCurlVersion(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
 
@@ -1524,7 +1524,30 @@ class CurlFactoryTest extends TestCase
             ],
         ]);
 
-        self::assertNull($easy->proxyTunnelSignature);
+        self::assertNotNull($easy->proxyTunnelSignature);
+    }
+
+    public function testDelegatedProxyTunnelOwnerIsDistinctFromLiteralProxyAuthorizationOwner(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $factory = new CurlFactory(3);
+        $delegated = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+        ])->proxyTunnelSignature;
+        $anonymousDelegated = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ])->proxyTunnelSignature;
+        $literalHeader = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                $proxyHeaderOption => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+            ],
+        ])->proxyTunnelSignature;
+
+        self::assertNotNull($delegated);
+        self::assertSame($delegated, $anonymousDelegated);
+        self::assertNotSame($delegated, $literalHeader);
     }
 
     public function testRejectsRawCurlSocksProxyTypeWithProxyUrl(): void
