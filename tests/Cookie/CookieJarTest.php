@@ -426,8 +426,9 @@ class CookieJarTest extends TestCase
         $this->jar->setCookie(new SetCookie($data));
         self::assertCount(1, $this->jar);
 
-        // Make sure the more future-ful expiration date supersede the other
+        // Ensure the later effective expiration date supersedes the other
         $data['Expires'] = \time() + 2000;
+        $data['Max-Age'] = 86401;
         self::assertTrue($this->jar->setCookie(new SetCookie($data)));
         self::assertCount(1, $this->jar);
         $c = $this->jar->getIterator()->getArrayCopy();
@@ -527,6 +528,16 @@ class CookieJarTest extends TestCase
         $this->jar->extractCookies(
             new Request('GET', 'https://example.com/'),
             new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age=0; Path=/'])
+        );
+
+        self::assertCount(0, $this->jar);
+    }
+
+    public function testMaxAgeZeroCookieFromResponseOverridesFutureExpires(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Max-Age=0; Path=/'])
         );
 
         self::assertCount(0, $this->jar);

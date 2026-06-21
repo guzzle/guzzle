@@ -62,6 +62,14 @@ class SetCookieTest extends TestCase
         self::assertTrue($cookie->isExpired());
     }
 
+    public function testMaxAgeOverridesFutureExpires(): void
+    {
+        $cookie = SetCookie::fromString('sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Max-Age=0');
+
+        self::assertSame(0, $cookie->getMaxAge());
+        self::assertTrue($cookie->isExpired());
+    }
+
     public function testHoldsValues(): void
     {
         $t = \time();
@@ -80,13 +88,15 @@ class SetCookieTest extends TestCase
         ];
 
         $cookie = new SetCookie($data);
-        self::assertEquals($data, $cookie->toArray());
+        $expected = $data;
+        $expected['Expires'] = $t + 100;
+        self::assertEquals($expected, $cookie->toArray());
 
         self::assertSame('foo', $cookie->getName());
         self::assertSame('baz', $cookie->getValue());
         self::assertSame('baz.com', $cookie->getDomain());
         self::assertSame('/bar', $cookie->getPath());
-        self::assertSame($t, $cookie->getExpires());
+        self::assertEquals($t + 100, $cookie->getExpires());
         self::assertSame(100, $cookie->getMaxAge());
         self::assertTrue($cookie->getSecure());
         self::assertTrue($cookie->getDiscard());
@@ -589,7 +599,7 @@ class SetCookieTest extends TestCase
                     'Value' => 'Ts-5YeSyvOCMS%2CzkEb9eDfW4C4ZNFOcRYdu-3JpEAXIm58aH',
                     'Domain' => 'example.com',
                     'Path' => '/',
-                    'Expires' => 'Wed, 07-Jun-2023 15:56:35 GMT',
+                    'Expires' => \time() + 2000000,
                     'Secure' => false,
                     'Discard' => false,
                     'Max-Age' => 2000000,

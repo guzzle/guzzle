@@ -697,6 +697,13 @@ new SetCookie([
 Cookies parsed from normal `Set-Cookie` headers continue to be normalized by
 `SetCookie::fromString()`.
 
+#### SetCookie Max-Age Precedence
+
+`SetCookie` now follows RFC cookie precedence when both `Max-Age` and `Expires`
+are present. A valid `Max-Age` value controls the effective expiration time,
+including `Max-Age=0` expiring the cookie immediately, even when `Expires` is a
+future date.
+
 #### CookieJar::clear Null Semantics
 
 `CookieJar::clear()` now treats only `null` as an omitted path or name.
