@@ -54,6 +54,14 @@ class SetCookieTest extends TestCase
         self::assertEquals($t + 100, $cookie->getExpires());
     }
 
+    public function testMaxAgeZeroExpiresCookie(): void
+    {
+        $cookie = SetCookie::fromString('sid=abc; Max-Age=0');
+
+        self::assertSame(0, $cookie->getMaxAge());
+        self::assertTrue($cookie->isExpired());
+    }
+
     public function testHoldsValues(): void
     {
         $t = \time();

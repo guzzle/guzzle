@@ -171,6 +171,15 @@ class CookieJar implements CookieJarInterface
             return false;
         }
 
+        $maxAge = $cookie->getMaxAge();
+        if ($maxAge !== null && $maxAge <= 0) {
+            if ($cookie->getDomain() !== null) {
+                $this->clear($cookie->getDomain(), $cookie->getPath(), $cookie->getName());
+            }
+
+            return false;
+        }
+
         // Resolve conflicts with previously set cookies
         foreach ($this->cookies as $i => $c) {
             // Two cookies are identical, when their path, and domain are

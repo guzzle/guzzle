@@ -665,6 +665,12 @@ behavior should use an explicit `Domain` attribute.
 `SetCookie::toArray()` may include `HostOnly => true` for host-only cookies.
 Existing persisted cookie files without this key load as non-host-only cookies.
 
+#### Cookie Max-Age Expiration
+
+Cookies with `Max-Age=0` or a negative `Max-Age` are now treated as immediately
+expired. When such a cookie is added to a `CookieJar`, it removes a matching
+stored cookie instead of being retained as a normal cookie.
+
 #### SetCookie Constructor Field Validation
 
 `SetCookie` constructor arrays no longer coerce invalid field values. Cookie

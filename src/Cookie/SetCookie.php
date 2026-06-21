@@ -148,12 +148,8 @@ class SetCookie
 
         // Extract the Expires value and turn it into a UNIX timestamp if needed
         $maxAge = $this->getMaxAge();
-        if (!$this->getExpires() && $maxAge) {
-            $now = \time();
-            // Clamp absurd Max-Age values so integer addition cannot promote to float.
-            $expires = $maxAge > \PHP_INT_MAX - $now ? \PHP_INT_MAX : $now + $maxAge;
-
-            $this->setExpires($expires);
+        if (!$this->getExpires() && $maxAge !== null) {
+            $this->setExpires(self::maxAgeToExpires($maxAge, \time()));
         }
     }
 
@@ -526,6 +522,20 @@ class SetCookie
         }
 
         return $domain;
+    }
+
+    private static function maxAgeToExpires(int $maxAge, int $now): int
+    {
+        if ($maxAge <= 0) {
+            return $now - 1;
+        }
+
+        // Clamp absurd Max-Age values so addition cannot promote to float
+        if ($maxAge > \PHP_INT_MAX - $now) {
+            return \PHP_INT_MAX;
+        }
+
+        return $now + $maxAge;
     }
 
     private static function parseNumericInteger(string $value): ?int
