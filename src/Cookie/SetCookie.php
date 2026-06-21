@@ -436,6 +436,7 @@ class SetCookie
         // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.3
         $cookieDomain = \strtolower($cookieDomain);
         if ($cookieDomain !== '' && $cookieDomain[0] === '.') {
+            /** @var string */
             $cookieDomain = \substr($cookieDomain, 1);
         }
         if ('' === $cookieDomain) {
