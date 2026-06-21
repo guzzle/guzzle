@@ -1359,6 +1359,19 @@ class CurlFactoryTest extends TestCase
         );
     }
 
+    public function testDecodesGzippedResponsesWithZeroHeader()
+    {
+        $this->addDecodeResponse();
+        $handler = new Handler\CurlMultiHandler();
+        $request = new Psr7\Request('GET', Server::$url, ['Accept-Encoding' => '0']);
+        $response = $handler($request, ['decode_content' => true]);
+        $response = $response->wait();
+        self::assertEquals('0', $_SERVER['_curl'][\CURLOPT_ENCODING]);
+        $sent = Server::received()[0];
+        self::assertEquals('0', $sent->getHeaderLine('Accept-Encoding'));
+        self::assertEquals('test', (string) $response->getBody());
+    }
+
     /**
      * https://github.com/guzzle/guzzle/issues/2799
      */
