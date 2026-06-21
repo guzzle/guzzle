@@ -109,14 +109,14 @@ class CookieJar implements CookieJarInterface
             $this->cookies = [];
 
             return;
-        } elseif (!$path) {
+        } elseif ($path === null) {
             $this->cookies = \array_filter(
                 $this->cookies,
                 static function (SetCookie $cookie) use ($domain): bool {
                     return $cookie->getDomain() === null || !$cookie->matchesDomain($domain);
                 }
             );
-        } elseif (!$name) {
+        } elseif ($name === null) {
             $this->cookies = \array_filter(
                 $this->cookies,
                 static function (SetCookie $cookie) use ($path, $domain): bool {
@@ -130,7 +130,7 @@ class CookieJar implements CookieJarInterface
                 $this->cookies,
                 static function (SetCookie $cookie) use ($path, $domain, $name) {
                     return !($cookie->getDomain() !== null
-                        && $cookie->getName() == $name
+                        && $cookie->getName() === $name
                         && $cookie->matchesPath($path)
                         && $cookie->matchesDomain($domain));
                 }
@@ -164,6 +164,15 @@ class CookieJar implements CookieJarInterface
                 throw new \RuntimeException('Invalid cookie: '.$result);
             }
             $this->removeCookieIfEmpty($cookie);
+
+            return false;
+        }
+
+        $maxAge = $cookie->getMaxAge();
+        if ($maxAge !== null && $maxAge <= 0) {
+            if ($cookie->getDomain() !== null) {
+                $this->clear($cookie->getDomain(), $cookie->getPath(), $cookie->getName());
+            }
 
             return false;
         }
@@ -226,7 +235,8 @@ class CookieJar implements CookieJarInterface
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
             foreach ($cookieHeader as $cookie) {
                 $sc = SetCookie::fromString($cookie);
-                if (!$sc->getDomain()) {
+                $domain = $sc->getDomain();
+                if ($domain === null || $domain === '') {
                     $sc->setDomain($request->getUri()->getHost());
                 }
                 if (0 !== \strpos($sc->getPath(), '/')) {

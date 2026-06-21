@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.12.2 - Upcoming
+
+### Fixed
+
+- Fixed cookie handling for falsey `Domain`, `Max-Age`, path, and name values
+
+
 ## 7.12.1 - 2026-06-18
 
 ### Changed

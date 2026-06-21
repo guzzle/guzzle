@@ -128,9 +128,10 @@ class SetCookie
         }
 
         // Extract the Expires value and turn it into a UNIX timestamp if needed
-        if (!$this->getExpires() && $this->getMaxAge()) {
+        $maxAge = $this->getMaxAge();
+        if (!$this->getExpires() && $maxAge !== null) {
             // Calculate the Expires date
-            $this->setExpires(\time() + $this->getMaxAge());
+            $this->setExpires($maxAge <= 0 ? \time() - 1 : \time() + $maxAge);
         } elseif (null !== ($expires = $this->getExpires()) && !\is_numeric($expires)) {
             $this->setExpires($expires);
         }
@@ -433,7 +434,11 @@ class SetCookie
 
         // Remove the leading '.' as per spec in RFC 6265.
         // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.3
-        $cookieDomain = \ltrim(\strtolower($cookieDomain), '.');
+        $cookieDomain = \strtolower($cookieDomain);
+        if ($cookieDomain !== '' && $cookieDomain[0] === '.') {
+            /** @var string */
+            $cookieDomain = \substr($cookieDomain, 1);
+        }
         if ('' === $cookieDomain) {
             return false;
         }
