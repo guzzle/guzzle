@@ -1177,7 +1177,8 @@ final class StreamHandler
      */
     private static function isRawTransportName(string $scheme): bool
     {
-        return $scheme === 'tcp' || $scheme === 'ssl' || \strncmp($scheme, 'tls', 3) === 0;
+        return \in_array($scheme, ['tcp', 'ssl', 'tls'], true)
+            || \preg_match('/^tlsv\d+(?:\.\d+)?$/D', $scheme) === 1;
     }
 
     /**
