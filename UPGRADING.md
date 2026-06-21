@@ -665,6 +665,12 @@ behavior should use an explicit `Domain` attribute.
 `SetCookie::toArray()` may include `HostOnly => true` for host-only cookies.
 Existing persisted cookie files without this key load as non-host-only cookies.
 
+#### Cookie Domain Normalization
+
+Cookie domains with multiple leading dots, such as `Domain=..example.com`, are
+no longer normalized twice during matching. Such malformed domains are rejected
+instead of matching `example.com` or its subdomains.
+
 #### Cookie Max-Age Expiration
 
 Cookies with `Max-Age=0` or a negative `Max-Age` are now treated as immediately
