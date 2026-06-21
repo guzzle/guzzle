@@ -530,7 +530,7 @@ class SetCookie
             return $now - 1;
         }
 
-        // Clamp absurd Max-Age values so integer addition cannot promote to float.
+        // Clamp absurd Max-Age values so addition cannot promote to float
         if ($maxAge > \PHP_INT_MAX - $now) {
             return \PHP_INT_MAX;
         }
