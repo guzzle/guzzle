@@ -506,6 +506,16 @@ class ClientTest extends TestCase
         self::assertSame('gzip', $mock->getLastOptions()['decode_content']);
     }
 
+    public function testCanSetContentDecodingToZeroString()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $client->get('http://foo.com', ['decode_content' => '0']);
+        $last = $mock->getLastRequest();
+        self::assertSame('0', $last->getHeaderLine('Accept-Encoding'));
+        self::assertSame('0', $mock->getLastOptions()['decode_content']);
+    }
+
     public function testAddsAcceptEncodingbyCurl()
     {
         $client = new Client(['curl' => [\CURLOPT_ENCODING => '']]);

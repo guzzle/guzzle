@@ -79,7 +79,7 @@ final class EasyHandle
 
         $normalizedKeys = Utils::normalizeHeaderKeys($headers);
 
-        if (!empty($this->options['decode_content']) && isset($normalizedKeys['content-encoding'])) {
+        if (isset($this->options['decode_content']) && $this->options['decode_content'] !== false && isset($normalizedKeys['content-encoding'])) {
             $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
             unset($headers[$normalizedKeys['content-encoding']]);
             if (isset($normalizedKeys['content-length'])) {
