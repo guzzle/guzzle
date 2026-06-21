@@ -121,6 +121,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Section proxy tunnel connection reuse by credential so distinct credentials never share a tunnel
 
 
+## 7.12.2 - Upcoming
+
+### Fixed
+
+- Fixed cookie handling for falsey `Domain`, `Max-Age`, path, and name values
+- Fixed `decode_content` handling for falsey string values
+
+
 ## 7.12.1 - 2026-06-18
 
 ### Changed
