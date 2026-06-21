@@ -426,7 +426,7 @@ class CookieJarTest extends TestCase
         $this->jar->setCookie(new SetCookie($data));
         self::assertCount(1, $this->jar);
 
-        // Make sure the more future-ful effective expiration date supersedes the other.
+        // Ensure the later effective expiration date supersedes the other
         $data['Expires'] = \time() + 2000;
         $data['Max-Age'] = 86401;
         self::assertTrue($this->jar->setCookie(new SetCookie($data)));
