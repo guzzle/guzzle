@@ -98,6 +98,25 @@ class EasyHandleTest extends TestCase
         self::assertSame('3', $easy->response->getHeaderLine('x-encoded-content-length'));
     }
 
+    public function testZeroStringDecodeContentPreservesEncodedHeaders(): void
+    {
+        $easy = new EasyHandle();
+        $easy->headers = [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: 4',
+        ];
+        $easy->sink = Psr7\Utils::streamFor('decoded');
+        $easy->options = ['decode_content' => '0'];
+
+        $easy->createResponse();
+
+        self::assertNotNull($easy->response);
+        self::assertSame('gzip', $easy->response->getHeaderLine('x-encoded-content-encoding'));
+        self::assertSame('4', $easy->response->getHeaderLine('x-encoded-content-length'));
+        self::assertFalse($easy->response->hasHeader('content-encoding'));
+    }
+
     public function testCreateResponseIsBuiltViaConfiguredResponseFactory(): void
     {
         $factory = new Psr17SpyFactory();
