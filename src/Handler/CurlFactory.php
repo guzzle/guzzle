@@ -25,6 +25,8 @@ class CurlFactory implements CurlFactoryInterface
 {
     public const CURL_VERSION_STR = 'curl_version';
 
+    private const DELEGATED_PROXY_TUNNEL_OWNER = 'proxy-tunnel:delegated-to-libcurl';
+
     /**
      * @deprecated
      */
@@ -1004,7 +1006,7 @@ class CurlFactory implements CurlFactoryInterface
             // libcurl keys reuse on parsed proxy credentials only from 8.19.0,
             // trusted from 8.20.0 (PROXY_CREDENTIAL_REUSE_VERSION); a literal
             // Proxy-Authorization header is never keyed and always sections.
-            return null;
+            return self::DELEGATED_PROXY_TUNNEL_OWNER;
         }
 
         // Hash every proxy channel an old libcurl might not key reuse on. A
