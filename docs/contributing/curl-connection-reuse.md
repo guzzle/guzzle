@@ -37,6 +37,9 @@ Low-level options passed through the `curl` request option are merged in too,
 but only those on an allow-list (`supportedCurlOptions()`); options that
 conflict with Guzzle-managed behavior are rejected. On 8.0 a non-allow-listed or
 conflicting raw option throws; on 7.x it is deprecated (and 8.0 will reject it).
+This gate is about option-key availability and known conflicts only. Unless
+Guzzle documents a specific mitigation, the meaning, safety, and runtime effects
+of raw cURL option values remain the caller's responsibility.
 
 **PHP detail — the `\defined()` guard.** A `CURLOPT_*` constant is only defined
 when the linked libcurl/PHP build supports that option, so code that touches an
