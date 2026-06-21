@@ -1287,6 +1287,8 @@ class StreamHandlerTest extends TestCase
             ['gopher://proxy.example.com:70', $generic('gopher')],
             ['socks6://proxy.example.com:1080', $generic('socks6')],
             ['htps://proxy.example.com:3128', $generic('htps')],
+            ['tlsx://proxy.example.com:8125', $generic('tlsx')],
+            ['tlsfoo://proxy.example.com:8125', $generic('tlsfoo')],
             ['udp://127.0.0.1:8125', $generic('udp')],
             [['http' => 'ftp://proxy.example.com:21'], $generic('ftp')],
         ];
