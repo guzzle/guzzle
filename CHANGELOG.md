@@ -14,6 +14,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Use strict cookie `Path` comparison so `CookieJar::clear()` with a numeric path keeps a distinct-path cookie
 - Fixed cookie handling for falsey `Domain`, `Max-Age`, path, and name values
 - Fixed `decode_content` handling for falsey string values
+- Fixed deprecated request option values reaching built-in handlers before normalization
 
 
 ## 7.12.1 - 2026-06-18
