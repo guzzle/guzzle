@@ -59,10 +59,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Require `Pool` request collections to be iterable
 - Raised the built-in cURL handler floor to libcurl 7.34.0 with SSL support
 - Store response cookies without a `Domain` attribute as host-only cookies
-- Avoid broadening cookies whose `Domain` starts with multiple leading dots
-- Treat cookies with `Max-Age=0` or negative `Max-Age` as immediately expired
 - Prefer cookie `Max-Age` over `Expires` when both attributes are present
 - Match cookie names case-sensitively in `CookieJar::getCookieByName()`
+- Ignore float-like or exponent `Max-Age` cookie values instead of truncating them
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
 - Reject malformed response protocol versions and reason phrases
 - Wrap malformed redirect `Location` values in `BadResponseException`

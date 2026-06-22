@@ -194,11 +194,54 @@ class SetCookieTest extends TestCase
         self::assertTrue($cookie->getHttpOnly());
     }
 
-    public function testPreservesFloatLikeMaxAgeTruncation(): void
+    /**
+     * @dataProvider floatLikeMaxAgeProvider
+     */
+    public function testIgnoresFloatLikeMaxAge(string $maxAge): void
     {
-        $cookie = SetCookie::fromString('foo=bar; Max-Age=1.5');
+        $cookie = SetCookie::fromString('foo=bar; Max-Age='.$maxAge.'; Expires=Wed, 21 Oct 2037 07:28:00 GMT');
 
-        self::assertSame(1, $cookie->getMaxAge());
+        self::assertNull($cookie->getMaxAge());
+        self::assertFalse($cookie->isExpired());
+    }
+
+    public static function floatLikeMaxAgeProvider(): array
+    {
+        return [
+            ['0.5'],
+            ['1.5'],
+            ['1e3'],
+            ['5.'],
+            ['.5'],
+        ];
+    }
+
+    /**
+     * @dataProvider integerMaxAgeProvider
+     */
+    public function testAcceptsIntegerMaxAgeSyntax(string $maxAge, ?int $expected): void
+    {
+        $cookie = SetCookie::fromString('foo=bar; Max-Age='.$maxAge);
+
+        self::assertSame($expected, $cookie->getMaxAge());
+    }
+
+    public static function integerMaxAgeProvider(): array
+    {
+        return [
+            ['10', 10],
+            ['+5', 5],
+            ['-3', -3],
+            ['999999999999999999999999', null],
+        ];
+    }
+
+    public function testSetExpiresStillParsesFloatLikeNumericString(): void
+    {
+        $cookie = new SetCookie();
+        $cookie->setExpires('1.5');
+
+        self::assertSame(1, $cookie->getExpires());
     }
 
     public function testIgnoresHugeMaxAge(): void

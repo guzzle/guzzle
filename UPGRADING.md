@@ -710,6 +710,12 @@ are present. A valid `Max-Age` value controls the effective expiration time,
 including `Max-Age=0` expiring the cookie immediately, even when `Expires` is a
 future date.
 
+#### Cookie Max-Age Parsing
+
+`SetCookie::fromString()` now ignores float-like or exponent `Max-Age` values
+such as `0.5`, `1.5`, or `1e3`. Guzzle 7 truncated these numeric forms toward
+zero. Use integer-second `Max-Age` values.
+
 #### CookieJar::clear Null Semantics
 
 `CookieJar::clear()` now treats only `null` as an omitted path or name.
