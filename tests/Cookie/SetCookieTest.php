@@ -54,6 +54,15 @@ class SetCookieTest extends TestCase
         self::assertTrue($cookie->isExpired());
     }
 
+    public function testClampsMaxAgeThatWouldOverflowExpiry(): void
+    {
+        $cookie = SetCookie::fromString('sid=v; Max-Age='.\PHP_INT_MAX);
+
+        self::assertSame(\PHP_INT_MAX, $cookie->getMaxAge());
+        self::assertSame(\PHP_INT_MAX, $cookie->getExpires());
+        self::assertFalse($cookie->isExpired());
+    }
+
     public function testHoldsValues()
     {
         $t = \time();
