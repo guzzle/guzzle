@@ -70,6 +70,26 @@ class SetCookieTest extends TestCase
         self::assertTrue($cookie->isExpired());
     }
 
+    public function testNegativeMaxAgeOverridesFutureExpires(): void
+    {
+        $cookie = SetCookie::fromString('sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Max-Age=-1');
+
+        self::assertSame(-1, $cookie->getMaxAge());
+        self::assertTrue($cookie->isExpired());
+    }
+
+    public function testParsesMinimumMaxAge(): void
+    {
+        $cookie = SetCookie::fromString('sid=abc; Max-Age='.\PHP_INT_MIN);
+
+        self::assertSame(\PHP_INT_MIN, $cookie->getMaxAge());
+        self::assertTrue($cookie->isExpired());
+
+        // Guard the <= 0 branch: this must use now - 1, not now + Max-Age.
+        self::assertGreaterThan(0, $cookie->getExpires());
+        self::assertLessThanOrEqual(\time(), $cookie->getExpires());
+    }
+
     public function testHoldsValues(): void
     {
         $t = \time();

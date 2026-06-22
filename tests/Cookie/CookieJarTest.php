@@ -614,17 +614,23 @@ class CookieJarTest extends TestCase
         self::assertSame(\PHP_INT_MAX, $cookie->getExpires());
     }
 
-    public function testDoesNotStoreMaxAgeZeroCookieFromResponse(): void
+    /**
+     * @dataProvider expiredMaxAgeProvider
+     */
+    public function testDoesNotStoreExpiredMaxAgeCookieFromResponse(int $maxAge): void
     {
         $this->jar->extractCookies(
             new Request('GET', 'https://example.com/'),
-            new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age=0; Path=/'])
+            new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age='.$maxAge.'; Path=/'])
         );
 
         self::assertCount(0, $this->jar);
     }
 
-    public function testMaxAgeZeroCookieFromResponseRemovesExistingCookie(): void
+    /**
+     * @dataProvider expiredMaxAgeProvider
+     */
+    public function testExpiredMaxAgeCookieFromResponseRemovesExistingCookie(int $maxAge): void
     {
         $this->jar->extractCookies(
             new Request('GET', 'https://example.com/'),
@@ -634,10 +640,18 @@ class CookieJarTest extends TestCase
 
         $this->jar->extractCookies(
             new Request('GET', 'https://example.com/'),
-            new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age=0; Path=/'])
+            new Response(200, ['Set-Cookie' => 'sid=abc; Max-Age='.$maxAge.'; Path=/'])
         );
 
         self::assertCount(0, $this->jar);
+    }
+
+    public static function expiredMaxAgeProvider(): array
+    {
+        return [
+            [0],
+            [-1],
+        ];
     }
 
     public function testMaxAgeZeroCookieFromResponseOverridesFutureExpires(): void
