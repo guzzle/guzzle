@@ -54,6 +54,31 @@ class SetCookieTest extends TestCase
         self::assertTrue($cookie->isExpired());
     }
 
+    public function testNegativeMaxAgeExpiresCookie(): void
+    {
+        $cookie = SetCookie::fromString('sid=abc; Max-Age=-1');
+
+        self::assertSame(-1, $cookie->getMaxAge());
+        self::assertTrue($cookie->isExpired());
+    }
+
+    public function testMaxAgeZeroDoesNotOverrideFutureExpires(): void
+    {
+        $expires = \gmdate('D, d M Y H:i:s \G\M\T', \time() + 3600);
+        $cookie = SetCookie::fromString('sid=abc; Max-Age=0; Expires='.$expires);
+
+        self::assertSame(0, $cookie->getMaxAge());
+        self::assertFalse($cookie->isExpired());
+    }
+
+    public function testFractionalMaxAgeIsParsedAsInteger(): void
+    {
+        $cookie = SetCookie::fromString('foo=bar; Max-Age=1.5');
+
+        self::assertSame(1, $cookie->getMaxAge());
+        self::assertFalse($cookie->isExpired());
+    }
+
     public function testClampsMaxAgeThatWouldOverflowExpiry(): void
     {
         $cookie = SetCookie::fromString('sid=v; Max-Age='.\PHP_INT_MAX);
