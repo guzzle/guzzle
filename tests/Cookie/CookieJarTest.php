@@ -648,6 +648,67 @@ class CookieJarTest extends TestCase
         self::assertTrue($cookie->getHostOnly());
     }
 
+    public function testTrailingDotDomainAttributeCreatesHostOnlyCookie(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Domain=example.com.; Path=/'])
+        );
+
+        $cookie = $this->jar->getCookieByName('sid');
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertSame('example.com', $cookie->getDomain());
+        self::assertTrue($cookie->getHostOnly());
+
+        $sameHost = $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'));
+        $subdomain = $this->jar->withCookieHeader(new Request('GET', 'https://www.example.com/'));
+
+        self::assertSame('sid=abc', $sameHost->getHeaderLine('Cookie'));
+        self::assertFalse($subdomain->hasHeader('Cookie'));
+    }
+
+    public static function setCookieDomainOutcomeProvider(): array
+    {
+        return [
+            ['.', 0],
+            ['..', 0],
+            ['...', 0],
+            [' . ', 0],
+            ['example.com.', 1],
+            ['.example.com.', 1],
+        ];
+    }
+
+    /**
+     * @dataProvider setCookieDomainOutcomeProvider
+     */
+    public function testTrailingDotDomainHandlingDoesNotOverReject(string $domain, int $expectedCount): void
+    {
+        $jar = new CookieJar();
+        $jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Domain='.$domain.'; Path=/'])
+        );
+
+        self::assertCount($expectedCount, $jar);
+    }
+
+    public function testMismatchedTrailingDotDomainAttributeCreatesHostOnlyCookie(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Domain=other.example.com.; Path=/'])
+        );
+
+        $cookie = $this->jar->getCookieByName('sid');
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertSame('example.com', $cookie->getDomain());
+        self::assertTrue($cookie->getHostOnly());
+
+        $subdomain = $this->jar->withCookieHeader(new Request('GET', 'https://www.example.com/'));
+        self::assertFalse($subdomain->hasHeader('Cookie'));
+    }
+
     public static function dotOnlySetCookieDomainProvider(): array
     {
         return [
