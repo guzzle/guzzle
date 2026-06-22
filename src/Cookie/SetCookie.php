@@ -131,10 +131,22 @@ class SetCookie
         $maxAge = $this->getMaxAge();
         if (!$this->getExpires() && $maxAge !== null) {
             // Calculate the Expires date
-            $this->setExpires($maxAge <= 0 ? \time() - 1 : \time() + $maxAge);
+            $this->setExpires(self::maxAgeToExpires($maxAge, \time()));
         } elseif (null !== ($expires = $this->getExpires()) && !\is_numeric($expires)) {
             $this->setExpires($expires);
         }
+    }
+
+    private static function maxAgeToExpires(int $maxAge, int $now): int
+    {
+        if ($maxAge <= 0) {
+            return $now - 1;
+        }
+        if ($maxAge > \PHP_INT_MAX - $now) {
+            return \PHP_INT_MAX;
+        }
+
+        return $now + $maxAge;
     }
 
     public function __toString()
@@ -402,7 +414,7 @@ class SetCookie
         $cookiePath = $this->getPath();
 
         // Match on exact matches or when path is the default empty "/"
-        if ($cookiePath === '/' || $cookiePath == $requestPath) {
+        if ($cookiePath === '/' || $cookiePath === $requestPath) {
             return true;
         }
 

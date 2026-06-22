@@ -181,9 +181,9 @@ class CookieJar implements CookieJarInterface
         foreach ($this->cookies as $i => $c) {
             // Two cookies are identical, when their path, and domain are
             // identical.
-            if ($c->getPath() != $cookie->getPath()
-                || $c->getDomain() != $cookie->getDomain()
-                || $c->getName() != $cookie->getName()
+            if ($c->getPath() !== $cookie->getPath()
+                || $c->getDomain() !== $cookie->getDomain()
+                || $c->getName() !== $cookie->getName()
             ) {
                 continue;
             }
@@ -237,6 +237,9 @@ class CookieJar implements CookieJarInterface
                 $sc = SetCookie::fromString($cookie);
                 $domain = $sc->getDomain();
                 if ($domain === null || $domain === '') {
+                    $sc->setDomain($request->getUri()->getHost());
+                } elseif (\substr($domain, -1) === '.' && '' !== \trim($domain, '.')) {
+                    // Keep pure-dot domains rejected by the dot-only fix.
                     $sc->setDomain($request->getUri()->getHost());
                 }
                 if (0 !== \strpos($sc->getPath(), '/')) {
