@@ -12,8 +12,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Store a cookie whose `Domain` has a trailing dot on the origin host instead of silently discarding it
 - Fix `StreamHandler` hard-failing on bracketed IPv6 literal hosts when `force_ip_resolve` is set
 - Use strict cookie `Path` comparison so `CookieJar::clear()` with a numeric path keeps a distinct-path cookie
-- Preserve falsey cookie `Domain`, `Max-Age`, path, and name values
-- Preserve falsey `decode_content` string values
+- Fixed cookie handling for falsey `Domain`, `Max-Age`, path, and name values
+- Fixed `decode_content` handling for falsey string values
 
 
 ## 7.12.1 - 2026-06-18
