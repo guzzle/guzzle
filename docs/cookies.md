@@ -1,6 +1,6 @@
 # Cookies
 
-Guzzle can maintain a cookie session for you if instructed using the `cookies` request option. When sending a request, the `cookies` option must be set to an instance of `GuzzleHttp\Cookie\CookieJarInterface`.
+Guzzle can maintain a cookie session for you if instructed using the `cookies` request option. When sending a request, the `cookies` option must be set to an instance of `GuzzleHttp\Cookie\CookieJarInterface`, or `false` to disable cookies for that request.
 
 ```php
 // Use a specific cookie jar
@@ -10,7 +10,7 @@ $r = $client->request('GET', 'http://httpbin.org/cookies', [
 ]);
 ```
 
-You can set `cookies` to `true` in a client constructor if you would like to use a shared cookie jar for all requests.
+You can set `cookies` to `true` in a client constructor if you would like Guzzle to create a shared cookie jar for all requests. This `true` shorthand is only valid in the client constructor; per-request `cookies` values must be `false` or a `CookieJarInterface`.
 
 ```php
 // Use a shared client cookie jar

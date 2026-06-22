@@ -56,7 +56,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - referer: (bool, default=false) Set to true to add a `Referer` header when redirecting. On a cross-origin redirect only the origin (scheme, host, and port) is sent, and the header is omitted entirely when the scheme changes, including an `https` to `http` downgrade. See [Cross-Origin Redirects](#cross-origin-redirects).
 
-- protocols: (non-empty array of strings, default=`['http', 'https']`) Specifies which protocols are allowed for redirect requests. Redirect matching is case-sensitive; use `http` and `https`.
+- protocols: (non-empty array containing `http` and/or `https`, default=`['http', 'https']`) Specifies which protocols are allowed for redirect requests. Values are case-sensitive; only `http` and `https` are accepted.
 
 - on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request, the redirect response that was received, and the effective URI. Any return value from the on_redirect function is ignored.
 
@@ -176,12 +176,9 @@ Types
 - string
 - `fopen()` resource
 - `Psr\Http\Message\StreamInterface`
-- callable
+- callable object or closure
 - `Iterator`
 - `Stringable`
-- int
-- float
-- bool
 - null
 
 Default
@@ -215,7 +212,9 @@ This setting can be set to any of the following types:
   $client->request('POST', '/post', ['body' => $stream]);
   ```
 
-Scalar, resource, and object values with `__toString()` are converted to PSR-7 streams using the configured `stream_factory`. Callable and iterator bodies use Guzzle's existing PSR-7 stream handling because PSR-17 does not define factories for those stream types. Callable bodies may be closures or invokable objects. Strings are always used as literal body contents, even when they name a callable. Callable arrays are arrays, and arrays are not valid `body` values. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+Resource and object values with `__toString()` are converted to PSR-7 streams using the configured `stream_factory`. Callable and iterator bodies use Guzzle's existing PSR-7 stream handling because PSR-17 does not define factories for those stream types. Callable bodies may be closures or invokable objects. Strings are always used as literal body contents, even when they name a callable. Callable arrays are arrays, and arrays are not valid `body` values. `int`, `float`, and `bool` are not valid `body` values in Guzzle 8. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+
+`int`, `float`, `bool`, arrays, and generic objects without `__toString()` are not valid `body` values in Guzzle 8.
 
 > [!NOTE]
 > This option cannot be used with `form_params`, `multipart`, or `json`
@@ -284,6 +283,8 @@ Constant
 `GuzzleHttp\RequestOptions::COOKIES`
 
 You must specify the cookies option as a `GuzzleHttp\Cookie\CookieJarInterface` or `false`.
+
+`true` is only a client-constructor shorthand. Guzzle converts `['cookies' => true]` in the constructor into a shared `GuzzleHttp\Cookie\CookieJar`. Per-request `cookies` values must be `false` or a `CookieJarInterface` instance.
 
 ```php
 $jar = new \GuzzleHttp\Cookie\CookieJar();
@@ -514,6 +515,8 @@ null
 Constant
 `GuzzleHttp\RequestOptions::DELAY`
 
+`delay` must be an `int` or `float`, must be finite, and must be greater than or equal to `0`. Negative values, `NAN`, and `INF` are rejected before the handler is invoked.
+
 ## expect
 
 Summary
@@ -542,7 +545,7 @@ Summary
 Set to "v4" if you want the HTTP handlers to use only ipv4 protocol or "v6" for ipv6 protocol.
 
 Types
-string
+"v4" or "v6"
 
 Default
 null
@@ -557,6 +560,8 @@ $client->request('GET', '/foo', ['force_ip_resolve' => 'v4']);
 // Force ipv6 protocol
 $client->request('GET', '/foo', ['force_ip_resolve' => 'v6']);
 ```
+
+Only the exact, case-sensitive values `v4` and `v6` are accepted.
 
 > [!NOTE]
 > This setting must be supported by the HTTP handler used to send a request. `force_ip_resolve` is currently only supported by the built-in cURL and stream handlers.
@@ -897,10 +902,9 @@ Default
 Constant
 `GuzzleHttp\RequestOptions::PROTOCOLS`
 
-This option accepts a non-empty array of strings. Built-in handlers accept only
-the case-sensitive values `http` and `https`. It applies to each request
-transfer Guzzle sends, including redirect requests that reuse the same request
-options.
+This option accepts a non-empty array containing only the case-sensitive values
+`http` and/or `https`. It applies to each request transfer Guzzle sends,
+including redirect requests that reuse the same request options.
 
 ```php
 $client->request('GET', 'https://example.com', [

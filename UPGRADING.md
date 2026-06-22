@@ -351,6 +351,15 @@ or statistics. `GuzzleHttp\Exception\InvalidArgumentException` remains outside
 the transfer exception hierarchy and is still used for invalid configuration or
 request option values that can be rejected before a transfer starts.
 
+#### Request Option Validation
+
+Guzzle 8 rejects additional malformed request option values at the client
+boundary. `force_ip_resolve` must be `v4` or `v6`; `protocols` and
+`allow_redirects.protocols` may contain only `http` and `https`; and `delay`
+must be finite and non-negative. Per-request `cookies` values must be `false`
+or a `CookieJarInterface`; the `true` shorthand is only valid in the client
+constructor.
+
 A few build- or version-specific rejections that previously threw
 `InvalidArgumentException` now throw `RequestException`, matching how the
 HTTP-version capability checks already behave: requesting `crypto_method` TLS
