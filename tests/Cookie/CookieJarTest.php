@@ -214,6 +214,29 @@ class CookieJarTest extends TestCase
         self::assertSame(['other-path', 'other-domain'], $names);
     }
 
+    public function testClearWithNumericStringPathKeepsDistinctPathCookie(): void
+    {
+        $jar = new CookieJar();
+        $jar->setCookie(new SetCookie([
+            'Name' => 'zero-exponent-path',
+            'Value' => 'zero',
+            'Domain' => 'bar.com',
+            'Path' => '0e0',
+        ]));
+        $jar->setCookie(new SetCookie([
+            'Name' => 'zero-path',
+            'Value' => 'zero',
+            'Domain' => 'bar.com',
+            'Path' => '0',
+        ]));
+
+        $jar->clear('bar.com', '0');
+
+        self::assertCount(1, $jar);
+        self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('zero-exponent-path'));
+        self::assertNull($jar->getCookieByName('zero-path'));
+    }
+
     public static function domainClearProvider(): array
     {
         return [
