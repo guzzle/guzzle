@@ -201,6 +201,8 @@ class SetCookieTest extends TestCase
             ['/foo/bar/', '/foo/bar', false],
             ['/foo/bar/', '/foo/bar/', true],
             ['/foo/bar/', '/foo/bar/baz', true],
+            ['0', '00', false],
+            ['0', '0', true],
         ];
     }
 
