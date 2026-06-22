@@ -510,6 +510,11 @@ class SetCookie
     {
         $domain = \strtolower($domain);
 
+        // Treat trailing-dot domains as host-only, but keep pure-dot domains invalid.
+        if ($domain !== '' && \substr($domain, -1) === '.' && \trim($domain, '.') !== '') {
+            return '';
+        }
+
         if ($domain !== '' && $domain !== '.' && $domain[0] === '.') {
             return \substr_replace($domain, '', 0, 1);
         }
