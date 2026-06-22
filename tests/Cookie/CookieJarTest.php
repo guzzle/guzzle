@@ -547,6 +547,49 @@ class CookieJarTest extends TestCase
         self::assertCount(0, $this->jar);
     }
 
+    public function testStoresTrailingDotDomainCookieOnOriginHostFromResponse(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://www.example.com/'),
+            new Response(200, ['Set-Cookie' => 'a=b; Domain=example.com.; Path=/'])
+        );
+
+        self::assertCount(1, $this->jar);
+        self::assertSame('www.example.com', $this->jar->toArray()[0]['Domain']);
+
+        $request = $this->jar->withCookieHeader(new Request('GET', 'https://www.example.com/'));
+        self::assertSame('a=b', $request->getHeaderLine('Cookie'));
+
+        $request = $this->jar->withCookieHeader(new Request('GET', 'https://evil.example.com/'));
+        self::assertFalse($request->hasHeader('Cookie'));
+
+        $request = $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'));
+        self::assertFalse($request->hasHeader('Cookie'));
+    }
+
+    /**
+     * @dataProvider trailingDotDomainProvider
+     */
+    public function testStoresNonDotOnlyTrailingDotDomainCookieFromResponse(string $domain): void
+    {
+        $jar = new CookieJar();
+        $jar->extractCookies(
+            new Request('GET', 'https://www.example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Domain='.$domain.'; Path=/'])
+        );
+
+        self::assertCount(1, $jar);
+        self::assertSame('www.example.com', $jar->toArray()[0]['Domain']);
+    }
+
+    public static function trailingDotDomainProvider(): array
+    {
+        return [
+            ['example.com.'],
+            ['.example.com.'],
+        ];
+    }
+
     public static function getMatchingCookiesDataProvider()
     {
         return [
