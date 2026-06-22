@@ -62,6 +62,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Avoid broadening cookies whose `Domain` starts with multiple leading dots
 - Treat cookies with `Max-Age=0` or negative `Max-Age` as immediately expired
 - Prefer cookie `Max-Age` over `Expires` when both attributes are present
+- Match cookie names case-sensitively in `CookieJar::getCookieByName()`
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
 - Reject malformed response protocol versions and reason phrases
 - Wrap malformed redirect `Location` values in `BadResponseException`

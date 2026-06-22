@@ -40,6 +40,11 @@ Domainless `SetCookie` instances can be stored in a cookie jar for representing 
 
 You can get a cookie by its name with the `getCookieByName($name)` method which returns a `GuzzleHttp\Cookie\SetCookie` instance.
 
+#### Cookie Name Case Sensitivity
+
+Cookie names are case-sensitive. `getCookieByName($name)` matches the exact cookie name, so a jar can
+hold distinct `SID` and `sid` cookies and each must be retrieved with its exact case.
+
 ```php
 $cookie = $jar->getCookieByName('some_cookie');
 

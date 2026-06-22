@@ -91,7 +91,7 @@ class CookieJar implements CookieJarInterface
     public function getCookieByName(string $name): ?SetCookie
     {
         foreach ($this->cookies as $cookie) {
-            if ($cookie->getName() !== null && \strcasecmp($cookie->getName(), $name) === 0) {
+            if ($cookie->getName() === $name) {
                 return $cookie;
             }
         }
