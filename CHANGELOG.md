@@ -10,6 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Clamp out-of-range `Max-Age` so a very large value no longer overflows to an already-expired timestamp
 - Use strict comparison in `CookieJar` conflict resolution so distinct numeric-string names don't overwrite
 - Store a cookie whose `Domain` has a trailing dot on the origin host instead of silently discarding it
+- Fix `StreamHandler` hard-failing on bracketed IPv6 literal hosts when `force_ip_resolve` is set
 - Fixed cookie handling for falsey `Domain`, `Max-Age`, path, and name values
 - Fixed `decode_content` handling for falsey string values
 
