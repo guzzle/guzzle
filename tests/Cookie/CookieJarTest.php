@@ -466,6 +466,72 @@ class CookieJarTest extends TestCase
         self::assertSame('zoo', $c[0]->getValue());
     }
 
+    public function testDistinctNumericStringCookieNamesCoexist(): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => '0',
+            'Value' => 'zero',
+            'Domain' => 'example.com',
+            'Path' => '/',
+        ]));
+        $this->jar->setCookie(new SetCookie([
+            'Name' => '00',
+            'Value' => 'double-zero',
+            'Domain' => 'example.com',
+            'Path' => '/',
+        ]));
+
+        self::assertCount(2, $this->jar);
+        self::assertSame('zero', $this->jar->getCookieByName('0')->getValue());
+        self::assertSame('double-zero', $this->jar->getCookieByName('00')->getValue());
+    }
+
+    public function testDeletingNumericCookieDoesNotRemoveDistinctNumericName(): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => '0',
+            'Value' => 'zero',
+            'Domain' => 'example.com',
+            'Path' => '/',
+        ]));
+        $this->jar->setCookie(new SetCookie([
+            'Name' => '00',
+            'Value' => 'double-zero',
+            'Domain' => 'example.com',
+            'Path' => '/',
+        ]));
+
+        self::assertFalse($this->jar->setCookie(new SetCookie([
+            'Name' => '00',
+            'Value' => null,
+            'Domain' => 'example.com',
+            'Path' => '/',
+        ])));
+
+        self::assertCount(1, $this->jar);
+        self::assertSame('zero', $this->jar->getCookieByName('0')->getValue());
+        self::assertNull($this->jar->getCookieByName('00'));
+    }
+
+    public function testNullValueCookieStillDeletesMatchingCookie(): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'sid',
+            'Value' => 'abc',
+            'Domain' => 'example.com',
+            'Path' => '/',
+        ]));
+
+        self::assertFalse($this->jar->setCookie(new SetCookie([
+            'Name' => 'sid',
+            'Value' => null,
+            'Domain' => 'example.com',
+            'Path' => '/',
+        ])));
+
+        self::assertCount(0, $this->jar);
+    }
+
     public function testAddsCookiesFromResponseWithRequest(): void
     {
         $response = new Response(200, [
