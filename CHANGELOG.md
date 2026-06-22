@@ -33,6 +33,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added a `string` return type to `SetCookie::__toString()`
 - Validate proxy and no-proxy option types strictly across handlers
 - Match leading-dot no-proxy entries against the bare domain and split string no-proxy lists on whitespace
+- Validate `force_ip_resolve`, protocols, and `delay` ranges at the client boundary
 - Treat a matching proxy `no` entry as final even without a scheme-specific proxy entry
 - Validate proxy URLs in the built-in handlers and reject malformed or unsupported ones up front
 - Default a port-less proxy to 1080 in the stream handler, matching libcurl

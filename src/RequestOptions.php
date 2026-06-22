@@ -35,9 +35,9 @@ final class RequestOptions
      *   browsers do which is redirect POST requests with GET requests
      * - referer: (bool, default=false) Set to true to enable the Referer
      *   header.
-     * - protocols: (non-empty-array<array-key, string>, default=['http', 'https'])
-     *   Allowed redirect protocols. Redirect matching is case-sensitive; use
-     *   "http" and "https".
+     * - protocols: (non-empty-array<array-key, 'http'|'https'>,
+     *   default=['http', 'https']) Allowed redirect protocols. Values are
+     *   case-sensitive; only "http" and "https" are accepted.
      * - on_redirect: (callable(RequestInterface, ResponseInterface, UriInterface): mixed)
      *   PHP callable that is invoked when a redirect is encountered. The
      *   callable is invoked with the request, the redirect response that was
@@ -61,11 +61,12 @@ final class RequestOptions
 
     /**
      * body: (resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable)
-     * Body to send in the request. Scalar, resource, and stringable object
-     * values are converted using the configured stream_factory. Callable and
-     * iterator bodies use Guzzle's existing stream handling. Strings are used
-     * as literal body contents, even when they name a callable. Callable bodies
-     * may be closures or invokable objects; arrays are not valid body values.
+     * Body to send in the request. Resource and stringable object values are
+     * converted using the configured stream_factory. Callable and iterator
+     * bodies use Guzzle's existing stream handling. Strings are used as literal
+     * body contents, even when they name a callable. Callable bodies may be
+     * closures or invokable objects; arrays, int, float, bool, and generic
+     * objects without __toString() are not valid body values.
      */
     public const BODY = 'body';
 
@@ -133,7 +134,8 @@ final class RequestOptions
     public const DECODE_CONTENT = 'decode_content';
 
     /**
-     * delay: (int|float) The amount of time to delay before sending in milliseconds.
+     * delay: (int|float) The finite, non-negative amount of time to delay
+     * before sending in milliseconds.
      */
     public const DELAY = 'delay';
 
@@ -242,9 +244,9 @@ final class RequestOptions
     public const PROGRESS = 'progress';
 
     /**
-     * protocols: (non-empty-array<array-key, string>, default=['http', 'https'])
-     * Allowed URI schemes. Built-in handlers accept only the case-sensitive
-     * values "http" and "https".
+     * protocols: (non-empty-array<array-key, 'http'|'https'>,
+     * default=['http', 'https']) Allowed URI schemes. Values are
+     * case-sensitive; only "http" and "https" are accepted.
      */
     public const PROTOCOLS = 'protocols';
 
@@ -386,8 +388,8 @@ final class RequestOptions
     public const VERSION = 'version';
 
     /**
-     * force_ip_resolve: (string) Set to "v4" to force IPv4 resolution or "v6"
-     * to force IPv6 resolution when supported by the handler.
+     * force_ip_resolve: ("v4"|"v6") Set to "v4" to force IPv4 resolution or
+     * "v6" to force IPv6 resolution when supported by the handler.
      */
     public const FORCE_IP_RESOLVE = 'force_ip_resolve';
 }

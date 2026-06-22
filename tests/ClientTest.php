@@ -1455,7 +1455,12 @@ class ClientTest extends TestCase
 
         yield 'allow_redirects.protocols' => [
             ['allow_redirects' => ['protocols' => []]],
-            'Passing array to request option "allow_redirects.protocols" is invalid; expected non-empty-array<array-key, string>.',
+            'Passing array to request option "allow_redirects.protocols" is invalid; expected non-empty-array<array-key, "http"|"https">.',
+        ];
+
+        yield 'allow_redirects.protocols unsupported value' => [
+            ['allow_redirects' => ['protocols' => ['ftp']]],
+            'Passing string to request option "allow_redirects.protocols.0" is invalid; expected "http"|"https".',
         ];
 
         yield 'allow_redirects.protocols value' => [
@@ -1510,7 +1515,22 @@ class ClientTest extends TestCase
 
         yield 'delay' => [
             ['delay' => '1'],
-            'Passing string to request option "delay" is invalid; expected int|float.',
+            'Passing string to request option "delay" is invalid; expected finite int|float greater than or equal to 0.',
+        ];
+
+        yield 'delay negative' => [
+            ['delay' => -1],
+            'Passing int to request option "delay" is invalid; expected finite int|float greater than or equal to 0.',
+        ];
+
+        yield 'delay infinity' => [
+            ['delay' => \INF],
+            'Passing float to request option "delay" is invalid; expected finite int|float greater than or equal to 0.',
+        ];
+
+        yield 'delay nan' => [
+            ['delay' => \NAN],
+            'Passing float to request option "delay" is invalid; expected finite int|float greater than or equal to 0.',
         ];
 
         yield 'expect' => [
@@ -1525,7 +1545,17 @@ class ClientTest extends TestCase
 
         yield 'force_ip_resolve' => [
             ['force_ip_resolve' => false],
-            'Passing bool to request option "force_ip_resolve" is invalid; expected string.',
+            'Passing bool to request option "force_ip_resolve" is invalid; expected "v4"|"v6".',
+        ];
+
+        yield 'force_ip_resolve unsupported value' => [
+            ['force_ip_resolve' => 'v5'],
+            'Passing string to request option "force_ip_resolve" is invalid; expected "v4"|"v6".',
+        ];
+
+        yield 'force_ip_resolve wrong case' => [
+            ['force_ip_resolve' => 'V4'],
+            'Passing string to request option "force_ip_resolve" is invalid; expected "v4"|"v6".',
         ];
 
         yield 'header value' => [
@@ -1565,7 +1595,17 @@ class ClientTest extends TestCase
 
         yield 'protocols' => [
             ['protocols' => []],
-            'Passing array to request option "protocols" is invalid; expected non-empty-array<array-key, string>.',
+            'Passing array to request option "protocols" is invalid; expected non-empty-array<array-key, "http"|"https">.',
+        ];
+
+        yield 'protocol unsupported value' => [
+            ['protocols' => ['ftp']],
+            'Passing string to request option "protocols.0" is invalid; expected "http"|"https".',
+        ];
+
+        yield 'protocol wrong case' => [
+            ['protocols' => ['HTTP']],
+            'Passing string to request option "protocols.0" is invalid; expected "http"|"https".',
         ];
 
         yield 'protocol value' => [

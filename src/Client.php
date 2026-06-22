@@ -869,16 +869,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertIfPresentAndNotInt($options, 'crypto_method');
         self::assertIfPresentAndNotBoolOrResource($options, 'debug');
         self::assertIfPresentAndNotBoolOrString($options, 'decode_content');
-        self::assertIfPresentAndNotNumber($options, 'delay');
+        self::assertIfPresentAndNotFiniteNonNegativeNumber($options, 'delay');
         self::assertIfPresentAndNotBoolOrInt($options, 'expect');
 
         if (isset($options['form_params'])) {
             self::assertFormParamTypes($options['form_params']);
         }
 
-        if (isset($options['force_ip_resolve']) && !\is_string($options['force_ip_resolve'])) {
-            self::invalidRequestOptionType('force_ip_resolve', 'string', $options['force_ip_resolve']);
-        }
+        self::assertIfPresentAndNotForceIpResolve($options);
 
         if (isset($options['headers'])) {
             self::assertHeaderOptionTypes($options['headers']);
@@ -893,7 +891,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertIfPresentAndNotCallable($options, 'on_headers');
         self::assertIfPresentAndNotCallable($options, 'on_stats');
         self::assertIfPresentAndNotCallable($options, 'progress');
-        self::assertIfPresentAndNotStringArray($options, 'protocols', true);
+        self::assertIfPresentAndNotProtocolArray($options, 'protocols');
         self::assertProxyOptionTypes($options);
         self::assertIfPresentAndNotNumber($options, 'read_timeout');
         self::assertIfPresentAndNotInt($options, 'retries');
@@ -922,7 +920,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertIfPresentAndNotInt($allowRedirects, 'max', 'allow_redirects.max');
         self::assertIfPresentAndNotBool($allowRedirects, 'strict', 'allow_redirects.strict');
         self::assertIfPresentAndNotBool($allowRedirects, 'referer', 'allow_redirects.referer');
-        self::assertIfPresentAndNotStringArray($allowRedirects, 'protocols', true, 'allow_redirects.protocols');
+        self::assertIfPresentAndNotProtocolArray($allowRedirects, 'protocols', 'allow_redirects.protocols');
         self::assertIfPresentAndNotCallable($allowRedirects, 'on_redirect', 'allow_redirects.on_redirect');
         self::assertIfPresentAndNotBool($allowRedirects, 'track_redirects', 'allow_redirects.track_redirects');
     }
@@ -1196,6 +1194,43 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
+    /**
+     * @param array<array-key, mixed> $options
+     */
+    private static function assertIfPresentAndNotFiniteNonNegativeNumber(array $options, string $option): void
+    {
+        if (!\array_key_exists($option, $options)) {
+            return;
+        }
+
+        if (!\is_int($options[$option]) && !\is_float($options[$option])) {
+            self::invalidRequestOptionType($option, 'finite int|float greater than or equal to 0', $options[$option]);
+
+            return;
+        }
+
+        if (!\is_finite((float) $options[$option]) || $options[$option] < 0) {
+            self::invalidRequestOptionType($option, 'finite int|float greater than or equal to 0', $options[$option]);
+        }
+    }
+
+    /**
+     * @param array<array-key, mixed> $options
+     */
+    private static function assertIfPresentAndNotForceIpResolve(array $options): void
+    {
+        if (!\array_key_exists('force_ip_resolve', $options)) {
+            return;
+        }
+
+        if (
+            !\is_string($options['force_ip_resolve'])
+            || ($options['force_ip_resolve'] !== 'v4' && $options['force_ip_resolve'] !== 'v6')
+        ) {
+            self::invalidRequestOptionType('force_ip_resolve', '"v4"|"v6"', $options['force_ip_resolve']);
+        }
+    }
+
     private static function assertIfPresentAndNotString(array $options, string $option): void
     {
         if (\array_key_exists($option, $options) && !\is_string($options[$option])) {
@@ -1203,7 +1238,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertIfPresentAndNotStringArray(array $options, string $option, bool $nonEmpty, ?string $path = null): void
+    /**
+     * @param array<array-key, mixed> $options
+     */
+    private static function assertIfPresentAndNotProtocolArray(array $options, string $option, ?string $path = null): void
     {
         if (!\array_key_exists($option, $options)) {
             return;
@@ -1211,15 +1249,21 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         $path = $path ?? $option;
 
-        if (!\is_array($options[$option]) || ($nonEmpty && $options[$option] === [])) {
-            self::invalidRequestOptionType($path, ($nonEmpty ? 'non-empty-' : '').'array<array-key, string>', $options[$option]);
+        if (!\is_array($options[$option]) || $options[$option] === []) {
+            self::invalidRequestOptionType($path, 'non-empty-array<array-key, "http"|"https">', $options[$option]);
 
             return;
         }
 
-        foreach ($options[$option] as $index => $item) {
-            if (!\is_string($item)) {
-                self::invalidRequestOptionType($path.'.'.(string) $index, 'string', $item);
+        foreach ($options[$option] as $index => $protocol) {
+            if (!\is_string($protocol)) {
+                self::invalidRequestOptionType($path.'.'.(string) $index, 'string', $protocol);
+
+                continue;
+            }
+
+            if ($protocol !== 'http' && $protocol !== 'https') {
+                self::invalidRequestOptionType($path.'.'.(string) $index, '"http"|"https"', $protocol);
             }
         }
     }
