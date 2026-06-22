@@ -66,7 +66,7 @@ class SetCookie
                 foreach (\array_keys(self::DEFAULTS) as $search) {
                     if (!\strcasecmp($search, $key)) {
                         if ($search === 'Max-Age') {
-                            if (\is_string($value)) {
+                            if (\is_string($value) && \preg_match('/^[+-]?[0-9]+$/D', $value) === 1) {
                                 $maxAge = self::parseNumericInteger($value);
                                 if ($maxAge !== null) {
                                     $data[$search] = $maxAge;
