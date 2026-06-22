@@ -9,6 +9,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Section proxy tunnel connection reuse by credential so distinct credentials never share a tunnel
 
+### Deprecated
+
+- Deprecate invalid protocols, force_ip_resolve, delay, cookies, and allow_redirects values
+
 
 ## 7.12.2 - Upcoming
 
