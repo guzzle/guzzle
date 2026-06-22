@@ -184,10 +184,10 @@ class CookieJar implements CookieJarInterface
         foreach ($this->cookies as $i => $c) {
             // Two cookies are identical, when their path, and domain are
             // identical.
-            if ($c->getPath() != $cookie->getPath()
-                || $c->getDomain() != $cookie->getDomain()
-                || $c->getHostOnly() != $cookie->getHostOnly()
-                || $c->getName() != $cookie->getName()
+            if ($c->getPath() !== $cookie->getPath()
+                || $c->getDomain() !== $cookie->getDomain()
+                || $c->getHostOnly() !== $cookie->getHostOnly()
+                || $c->getName() !== $cookie->getName()
             ) {
                 continue;
             }
@@ -328,10 +328,10 @@ class CookieJar implements CookieJarInterface
         $this->cookies = \array_filter(
             $this->cookies,
             static function (SetCookie $stored) use ($cookie): bool {
-                return !($stored->getName() == $cookie->getName()
-                    && $stored->getPath() == $cookie->getPath()
-                    && $stored->getDomain() == $cookie->getDomain()
-                    && $stored->getHostOnly() == $cookie->getHostOnly());
+                return !($stored->getName() === $cookie->getName()
+                    && $stored->getPath() === $cookie->getPath()
+                    && $stored->getDomain() === $cookie->getDomain()
+                    && $stored->getHostOnly() === $cookie->getHostOnly());
             }
         );
     }
