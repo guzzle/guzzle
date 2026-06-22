@@ -77,6 +77,32 @@ class StreamHandlerTest extends TestCase
         )->wait();
     }
 
+    /**
+     * @dataProvider forceIpResolveProvider
+     */
+    public function testResolveHostDoesNotResolveBracketedIpv6Literal(string $forceIpResolve): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://[::1]/');
+
+        $method = new \ReflectionMethod(StreamHandler::class, 'resolveHost');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $uri = $method->invoke($handler, $request, ['force_ip_resolve' => $forceIpResolve]);
+
+        self::assertSame('[::1]', $uri->getHost());
+    }
+
+    public static function forceIpResolveProvider(): array
+    {
+        return [
+            ['v4'],
+            ['v6'],
+        ];
+    }
+
     public function testStreamAttributeKeepsStreamOpen()
     {
         $this->queueRes();
