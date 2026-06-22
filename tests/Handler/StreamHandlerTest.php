@@ -119,6 +119,36 @@ class StreamHandlerTest extends TestCase
         $handler($request, []);
     }
 
+    /**
+     * @dataProvider forceIpResolveIpLiteralProvider
+     */
+    public function testResolveHostDoesNotResolveIpLiterals(string $host, string $forceIpResolve): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://'.$host.'/');
+
+        $method = new \ReflectionMethod(StreamHandler::class, 'resolveHost');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $uri = $method->invoke($handler, $request, ['force_ip_resolve' => $forceIpResolve]);
+
+        self::assertSame($host, $uri->getHost());
+    }
+
+    public static function forceIpResolveIpLiteralProvider(): array
+    {
+        return [
+            ['[::1]', 'v4'],
+            ['[::1]', 'v6'],
+            ['[2001:db8::1]', 'v4'],
+            ['[2001:db8::1]', 'v6'],
+            ['127.0.0.1', 'v4'],
+            ['127.0.0.1', 'v6'],
+        ];
+    }
+
     public static function invalidRequestContentLengthProvider(): iterable
     {
         return [

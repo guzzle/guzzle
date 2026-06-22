@@ -789,7 +789,11 @@ final class StreamHandler
     {
         $uri = $request->getUri();
 
-        if (isset($options['force_ip_resolve']) && !\filter_var($uri->getHost(), \FILTER_VALIDATE_IP)) {
+        $host = $uri->getHost();
+        $hostForIpCheck = \str_starts_with($host, '[') && \str_ends_with($host, ']')
+            ? \substr($host, 1, -1)
+            : $host;
+        if (isset($options['force_ip_resolve']) && !\filter_var($hostForIpCheck, \FILTER_VALIDATE_IP)) {
             if ('v4' === $options['force_ip_resolve']) {
                 $records = \dns_get_record($uri->getHost(), \DNS_A);
                 if (false === $records || !isset($records[0]['ip'])) {
