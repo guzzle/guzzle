@@ -724,6 +724,12 @@ $jar->clear();
 
 If you pass a path or name, that value is now treated as provided.
 
+#### Cookie Name Lookup
+
+`CookieJar::getCookieByName()` now matches cookie names case-sensitively. If a
+jar contains distinct cookies such as `SID` and `sid`, retrieve each one with the
+exact stored name.
+
 #### Cookie Jar Persistence
 
 `FileCookieJar` and `SessionCookieJar` instances restored with `unserialize()`
