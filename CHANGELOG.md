@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Clamp out-of-range `Max-Age` so a very large value no longer overflows to an already-expired timestamp
+- Use strict comparison in `CookieJar` conflict resolution so distinct numeric-string names don't overwrite
 - Fixed cookie handling for falsey `Domain`, `Max-Age`, path, and name values
 - Fixed `decode_content` handling for falsey string values
 
