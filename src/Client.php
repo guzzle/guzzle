@@ -366,7 +366,165 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         self::warnAboutInvalidRequestOptionTypes($result);
 
-        return $result;
+        return self::normalizeDeprecatedRequestOptionValues($result);
+    }
+
+    /**
+     * Normalize values that guzzlehttp/guzzle 8.0 rejects only after the
+     * corresponding 7.x deprecation has already been emitted.
+     *
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
+    private static function normalizeDeprecatedRequestOptionValues(array $options): array
+    {
+        self::normalizeDeprecatedAuthOptionValues($options);
+        self::normalizeDeprecatedTlsFileOptionValues($options, 'cert');
+        self::normalizeDeprecatedTlsFileOptionValues($options, 'ssl_key');
+        self::normalizeDeprecatedStringOptionValues($options);
+        self::normalizeDeprecatedNumericOptionValues($options);
+        self::normalizeDeprecatedIntegerOptionValues($options);
+
+        return $options;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function canStringifyDeprecatedValue($value): bool
+    {
+        return $value === null
+            || \is_scalar($value)
+            || (\is_object($value) && \method_exists($value, '__toString'));
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function stringifyDeprecatedValue($value): string
+    {
+        if (\is_float($value) && !\is_finite($value)) {
+            return \is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF');
+        }
+
+        if ($value === null) {
+            return '';
+        }
+
+        if (\is_scalar($value)) {
+            return (string) $value;
+        }
+
+        if (\is_object($value) && \method_exists($value, '__toString')) {
+            return $value->__toString();
+        }
+
+        throw new \LogicException('Value is not stringable.');
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function normalizeDeprecatedAuthOptionValues(array &$options): void
+    {
+        if (!isset($options['auth']) || !\is_array($options['auth']) || $options['auth'] === []) {
+            return;
+        }
+
+        foreach ([0, 1] as $index) {
+            if (
+                \array_key_exists($index, $options['auth'])
+                && !\is_string($options['auth'][$index])
+                && self::canStringifyDeprecatedValue($options['auth'][$index])
+            ) {
+                $options['auth'][$index] = self::stringifyDeprecatedValue($options['auth'][$index]);
+            }
+        }
+
+        if (
+            \array_key_exists(2, $options['auth'])
+            && $options['auth'][2] !== null
+            && !\is_string($options['auth'][2])
+            && self::canStringifyDeprecatedValue($options['auth'][2])
+        ) {
+            $options['auth'][2] = self::stringifyDeprecatedValue($options['auth'][2]);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function normalizeDeprecatedTlsFileOptionValues(array &$options, string $option): void
+    {
+        if (!isset($options[$option]) || !\is_array($options[$option])) {
+            return;
+        }
+
+        foreach ([0, 1] as $index) {
+            if (
+                \array_key_exists($index, $options[$option])
+                && $options[$option][$index] !== null
+                && !\is_string($options[$option][$index])
+                && self::canStringifyDeprecatedValue($options[$option][$index])
+            ) {
+                $options[$option][$index] = self::stringifyDeprecatedValue($options[$option][$index]);
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function normalizeDeprecatedStringOptionValues(array &$options): void
+    {
+        foreach (['cert_type', 'force_ip_resolve', 'ssl_key_type'] as $option) {
+            if (
+                \array_key_exists($option, $options)
+                && !\is_string($options[$option])
+                && self::canStringifyDeprecatedValue($options[$option])
+            ) {
+                $options[$option] = self::stringifyDeprecatedValue($options[$option]);
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function normalizeDeprecatedNumericOptionValues(array &$options): void
+    {
+        foreach (['connect_timeout', 'delay', 'read_timeout', 'timeout'] as $option) {
+            if (
+                \array_key_exists($option, $options)
+                && \is_string($options[$option])
+                && \is_numeric($options[$option])
+            ) {
+                $options[$option] = $options[$option] + 0;
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function normalizeDeprecatedIntegerOptionValues(array &$options): void
+    {
+        foreach (['crypto_method', 'retries'] as $option) {
+            if (!\array_key_exists($option, $options)) {
+                continue;
+            }
+
+            if (\is_string($options[$option]) && \preg_match('/^-?\d+$/D', $options[$option]) === 1) {
+                $options[$option] = (int) $options[$option];
+            } elseif (
+                \is_float($options[$option])
+                && \is_finite($options[$option])
+                && $options[$option] === (float) (int) $options[$option]
+            ) {
+                $options[$option] = (int) $options[$option];
+            }
+        }
     }
 
     private static function warnAboutRequestLevelHandler(array $options): void
