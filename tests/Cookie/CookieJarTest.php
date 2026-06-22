@@ -62,6 +62,25 @@ class CookieJarTest extends TestCase
         self::assertNull($this->jar->getCookieByName(''));
     }
 
+    public function testGetCookieByNameMatchesCaseInsensitively(): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'SID',
+            'Value' => 'upper',
+            'Domain' => 'example.com',
+        ]));
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'sid',
+            'Value' => 'lower',
+            'Domain' => 'example.com',
+        ]));
+
+        $cookie = $this->jar->getCookieByName('sId');
+
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertSame('upper', $cookie->getValue());
+    }
+
     /**
      * Provides test data for cookie cookieJar retrieval
      */
