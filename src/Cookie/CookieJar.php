@@ -238,6 +238,9 @@ class CookieJar implements CookieJarInterface
                 $domain = $sc->getDomain();
                 if ($domain === null || $domain === '') {
                     $sc->setDomain($request->getUri()->getHost());
+                } elseif (\substr($domain, -1) === '.' && '' !== \trim($domain, '.')) {
+                    // Keep pure-dot domains rejected by the dot-only fix.
+                    $sc->setDomain($request->getUri()->getHost());
                 }
                 if (0 !== \strpos($sc->getPath(), '/')) {
                     $sc->setPath($this->getCookiePathFromRequest($request));
