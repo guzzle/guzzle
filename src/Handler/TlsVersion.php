@@ -11,7 +11,10 @@ use GuzzleHttp\Exception\InvalidArgumentException;
  */
 final class TlsVersion
 {
-    public static function ordinal(string $option, int $value): int
+    /**
+     * @param mixed $value
+     */
+    public static function ordinal(string $option, $value): int
     {
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
             return 10;
@@ -29,7 +32,11 @@ final class TlsVersion
         throw new InvalidArgumentException(\sprintf('Invalid %s request option: unknown version provided', $option));
     }
 
-    public static function assertRange(?int $min, ?int $max): void
+    /**
+     * @param mixed $min
+     * @param mixed $max
+     */
+    public static function assertRange($min, $max): void
     {
         if ($min === null || $max === null) {
             return;
@@ -40,7 +47,10 @@ final class TlsVersion
         }
     }
 
-    public static function streamProtocolVersion(string $option, int $value): int
+    /**
+     * @param mixed $value
+     */
+    public static function streamProtocolVersion(string $option, $value): int
     {
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
             return \STREAM_CRYPTO_PROTO_TLSv1_0;

@@ -2222,7 +2222,8 @@ final class CurlFactory implements CurlFactoryInterface
     private static function requireCurlMaxSslVersion(EasyHandle $easy, string $constant): int
     {
         if (\defined($constant)) {
-            return (int) \constant($constant);
+            /** @var int */
+            return \constant($constant);
         }
 
         throw new RequestException(
