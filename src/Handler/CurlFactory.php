@@ -1572,6 +1572,9 @@ class CurlFactory implements CurlFactoryInterface
         $conf[\CURLOPT_SSLVERSION] = $sslVersion;
     }
 
+    /**
+     * @param mixed $value
+     */
     private static function curlMinSslVersion($value): int
     {
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
@@ -1601,6 +1604,9 @@ class CurlFactory implements CurlFactoryInterface
         throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
     }
 
+    /**
+     * @param mixed $value
+     */
     private static function curlMaxSslVersion($value): int
     {
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
@@ -1625,7 +1631,8 @@ class CurlFactory implements CurlFactoryInterface
     private static function requireCurlMaxSslVersion(string $constant): int
     {
         if (\defined($constant)) {
-            return (int) \constant($constant);
+            /** @var int */
+            return \constant($constant);
         }
 
         throw new \InvalidArgumentException(

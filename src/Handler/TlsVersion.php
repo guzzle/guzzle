@@ -7,6 +7,9 @@ namespace GuzzleHttp\Handler;
  */
 final class TlsVersion
 {
+    /**
+     * @param mixed $value
+     */
     public static function ordinal(string $option, $value): int
     {
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
@@ -25,6 +28,10 @@ final class TlsVersion
         throw new \InvalidArgumentException(\sprintf('Invalid %s request option: unknown version provided', $option));
     }
 
+    /**
+     * @param mixed $min
+     * @param mixed $max
+     */
     public static function assertRange($min, $max): void
     {
         if ($min === null || $max === null) {
@@ -36,6 +43,9 @@ final class TlsVersion
         }
     }
 
+    /**
+     * @param mixed $value
+     */
     public static function streamProtocolVersion(string $option, $value): int
     {
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
@@ -62,7 +72,8 @@ final class TlsVersion
     private static function requireStreamProto(string $constant, string $option): int
     {
         if (\defined($constant)) {
-            return (int) \constant($constant);
+            /** @var int */
+            return \constant($constant);
         }
 
         throw new \InvalidArgumentException(\sprintf(
