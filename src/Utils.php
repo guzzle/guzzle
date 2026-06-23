@@ -72,46 +72,82 @@ final class Utils
      */
     public static function chooseHandler(array $handlerOptions = []): callable
     {
-        $handler = null;
         $sharingMode = CurlShareHandleState::normalizeMode($handlerOptions['transport_sharing'] ?? null, 'transport_sharing');
-        $sharingRequested = $sharingMode !== TransportSharing::NONE;
-        $sharingRequired = \in_array($sharingMode, [TransportSharing::HANDLER_REQUIRE, TransportSharing::PERSISTENT_REQUIRE], true);
-        $curlHandlerOptions = [];
-        $curlSupported = CurlVersion::supportsCurlHandler()
-            && (\function_exists('curl_multi_exec') || \function_exists('curl_exec'));
+        $sharingRequired = self::isTransportSharingRequired($sharingMode);
+        $handler = self::createCurlHandler($sharingMode);
 
-        if ($sharingRequired && !$curlSupported) {
+        if ($sharingRequired && $handler === null) {
             throw new \RuntimeException('Required transport sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and a supported libcurl version with SSL support.');
         }
 
-        if ($curlSupported) {
-            if ($sharingRequested) {
-                $shareState = CurlShareHandleState::fromOption($sharingMode);
-                if ($shareState !== null) {
-                    $curlHandlerOptions['transport_sharing'] = $shareState;
-                }
-            }
-
-            if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
-                $handler = Proxy::wrapSync(new CurlMultiHandler($curlHandlerOptions), new CurlHandler($curlHandlerOptions));
-            } elseif (\function_exists('curl_exec')) {
-                $handler = new CurlHandler($curlHandlerOptions);
-            } elseif (\function_exists('curl_multi_exec')) {
-                $handler = new CurlMultiHandler($curlHandlerOptions);
-            }
-        }
-
         if (\ini_get('allow_url_fopen')) {
-            $streamHandler = new StreamHandler(['transport_sharing' => $sharingMode]);
-
-            $handler = $handler
-                ? Proxy::wrapStreaming($handler, $streamHandler)
-                : $streamHandler;
-        } elseif (!$handler) {
-            throw new \RuntimeException('GuzzleHttp requires a supported cURL version with SSL support, the allow_url_fopen ini setting, or a custom HTTP handler.');
+            return self::addStreamHandler($handler, $sharingMode);
         }
 
-        return $handler;
+        if ($handler !== null) {
+            return $handler;
+        }
+
+        throw new \RuntimeException('GuzzleHttp requires a supported cURL version with SSL support, the allow_url_fopen ini setting, or a custom HTTP handler.');
+    }
+
+    private static function isTransportSharingRequired(string $sharingMode): bool
+    {
+        return \in_array($sharingMode, [TransportSharing::HANDLER_REQUIRE, TransportSharing::PERSISTENT_REQUIRE], true);
+    }
+
+    /**
+     * @return (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)|null
+     */
+    private static function createCurlHandler(string $sharingMode): ?callable
+    {
+        if (!CurlVersion::supportsCurlHandler()) {
+            return null;
+        }
+
+        $curlHandlerOptions = self::createCurlHandlerOptions($sharingMode);
+
+        if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
+            return Proxy::wrapSync(new CurlMultiHandler($curlHandlerOptions), new CurlHandler($curlHandlerOptions));
+        }
+
+        if (\function_exists('curl_exec')) {
+            return new CurlHandler($curlHandlerOptions);
+        }
+
+        if (\function_exists('curl_multi_exec')) {
+            return new CurlMultiHandler($curlHandlerOptions);
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function createCurlHandlerOptions(string $sharingMode): array
+    {
+        if ($sharingMode === TransportSharing::NONE) {
+            return [];
+        }
+
+        $shareState = CurlShareHandleState::fromOption($sharingMode);
+
+        return $shareState === null ? [] : ['transport_sharing' => $shareState];
+    }
+
+    /**
+     * @param (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)|null $handler
+     *
+     * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
+     */
+    private static function addStreamHandler(?callable $handler, string $sharingMode): callable
+    {
+        $streamHandler = new StreamHandler(['transport_sharing' => $sharingMode]);
+
+        return $handler
+            ? Proxy::wrapStreaming($handler, $streamHandler)
+            : $streamHandler;
     }
 
     /**
