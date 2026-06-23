@@ -12,6 +12,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Section proxy tunnel connection reuse by credential so distinct credentials never share a tunnel
+- Route default-handler requests with `crypto_method` set to TLS 1.2 through the stream handler
+  when the available cURL handler cannot explicitly select TLS 1.2
 
 ### Deprecated
 
