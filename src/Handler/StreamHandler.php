@@ -705,6 +705,8 @@ final class StreamHandler
             ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout')
             : null;
 
+        self::assertTlsVersionRangeForOptions($request, $options);
+
         $this->applyHandlerOptions($request, $context, $options, $params);
 
         if (isset($options['stream_context'])) {
@@ -767,6 +769,8 @@ final class StreamHandler
                 $this->applyTimeoutOption($context, $value);
             } elseif ($key === 'crypto_method') {
                 $this->applyCryptoMethodOption($context, $value);
+            } elseif ($key === 'crypto_method_max') {
+                $this->applyCryptoMethodMaxOption($context, $value);
             } elseif ($key === 'verify') {
                 $this->applyVerifyOption($context, $value);
             } elseif ($key === 'cert') {
@@ -827,8 +831,7 @@ final class StreamHandler
         }
 
         return \array_key_exists('crypto_method', $sslContext)
-            || \array_key_exists('min_proto_version', $sslContext)
-            || \array_key_exists('max_proto_version', $sslContext);
+            || \array_key_exists('min_proto_version', $sslContext);
     }
 
     private function addDefaultTlsMinimum(RequestInterface $request, array &$context): void
@@ -840,7 +843,6 @@ final class StreamHandler
         if (
             \array_key_exists('crypto_method', $context['ssl'])
             || \array_key_exists('min_proto_version', $context['ssl'])
-            || \array_key_exists('max_proto_version', $context['ssl'])
         ) {
             return;
         }
@@ -1043,6 +1045,7 @@ final class StreamHandler
                 'crypto_method' => 'the "crypto_method" request option',
                 'local_cert' => 'the "cert" request option',
                 'local_pk' => 'the "ssl_key" request option',
+                'max_proto_version' => 'the "crypto_method_max" request option',
                 'min_proto_version' => 'the "crypto_method" request option',
                 'passphrase' => 'the "cert" or "ssl_key" request option',
                 'peer_name' => 'the request URI',
@@ -1236,31 +1239,29 @@ final class StreamHandler
      */
     private function applyCryptoMethodOption(array &$context, $value): void
     {
-        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
-            $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_0;
+        $context['ssl']['min_proto_version'] = TlsVersion::streamProtocolVersion('crypto_method', $value);
+    }
 
+    /**
+     * @param mixed $value as passed via Request transfer options.
+     */
+    private function applyCryptoMethodMaxOption(array &$context, $value): void
+    {
+        $context['ssl']['max_proto_version'] = TlsVersion::streamProtocolVersion('crypto_method_max', $value);
+    }
+
+    private static function assertTlsVersionRangeForOptions(RequestInterface $request, array $options): void
+    {
+        if (!isset($options['crypto_method_max'])) {
             return;
         }
 
-        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT) {
-            $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_1;
-
-            return;
+        $cryptoMethod = $options['crypto_method'] ?? null;
+        if ($cryptoMethod === null && 'https' === $request->getUri()->getScheme()) {
+            $cryptoMethod = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
         }
 
-        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT) {
-            $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_2;
-
-            return;
-        }
-
-        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT) {
-            $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_3;
-
-            return;
-        }
-
-        throw new InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
+        TlsVersion::assertRange($cryptoMethod, $options['crypto_method_max']);
     }
 
     /**

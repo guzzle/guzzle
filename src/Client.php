@@ -90,6 +90,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     connect_timeout?: int|float,
      *     cookies?: bool|CookieJarInterface,
      *     crypto_method?: int,
+     *     crypto_method_max?: int,
      *     debug?: bool|resource,
      *     decode_content?: bool|string,
      *     delay?: int|float,
@@ -214,6 +215,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     connect_timeout?: int|float,
      *     cookies?: false|CookieJarInterface,
      *     crypto_method?: int,
+     *     crypto_method_max?: int,
      *     debug?: bool|resource,
      *     decode_content?: bool|string,
      *     delay?: int|float,
@@ -302,6 +304,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     connect_timeout?: int|float,
      *     cookies?: false|CookieJarInterface,
      *     crypto_method?: int,
+     *     crypto_method_max?: int,
      *     debug?: bool|resource,
      *     decode_content?: bool|string,
      *     delay?: int|float,
@@ -406,6 +409,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     connect_timeout?: int|float,
      *     cookies?: false|CookieJarInterface,
      *     crypto_method?: int,
+     *     crypto_method_max?: int,
      *     debug?: bool|resource,
      *     decode_content?: bool|string,
      *     delay?: int|float,
@@ -522,6 +526,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     connect_timeout?: int|float,
      *     cookies?: false|CookieJarInterface,
      *     crypto_method?: int,
+     *     crypto_method_max?: int,
      *     debug?: bool|resource,
      *     decode_content?: bool|string,
      *     delay?: int|float,
@@ -867,6 +872,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::assertIfPresentAndNotString($options, 'cert_type');
         self::assertIfPresentAndNotNumber($options, 'connect_timeout');
         self::assertIfPresentAndNotInt($options, 'crypto_method');
+        self::assertIfPresentAndNotInt($options, 'crypto_method_max');
         self::assertIfPresentAndNotBoolOrResource($options, 'debug');
         self::assertIfPresentAndNotBoolOrString($options, 'decode_content');
         self::assertIfPresentAndNotFiniteNonNegativeNumber($options, 'delay');

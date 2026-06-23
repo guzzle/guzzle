@@ -19,6 +19,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add `ProxyOptions` for proxy option resolution
 - Add `ResponseException` for request failures with responses
 - Add auth middleware for built-in Basic and Digest authentication
+- Added the `crypto_method_max` request option to cap the maximum TLS protocol version across built-in handlers.
 
 ### Changed
 

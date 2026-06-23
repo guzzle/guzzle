@@ -216,6 +216,7 @@ A handler is responsible for applying the following request options. These reque
 - [`cert_type`](request-options.md#cert_type)
 - [`connect_timeout`](request-options.md#connect_timeout)
 - [`crypto_method`](request-options.md#crypto_method)
+- [`crypto_method_max`](request-options.md#crypto_method_max)
 - [`debug`](request-options.md#debug)
 - [`delay`](request-options.md#delay)
 - [`decode_content`](request-options.md#decode_content)
