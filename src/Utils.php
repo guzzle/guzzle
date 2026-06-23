@@ -101,13 +101,11 @@ final class Utils
     {
         $sharingMode = CurlShareHandleState::normalizeMode($handlerOptions['transport_sharing'] ?? null, 'transport_sharing');
         $sharingRequired = self::isTransportSharingRequired($sharingMode);
-        $curlSupported = self::supportsCurlHandler();
+        $handler = self::createCurlHandler($sharingMode);
 
-        if ($sharingRequired && !$curlSupported) {
+        if ($sharingRequired && $handler === null) {
             throw new \RuntimeException('Required transport sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and libcurl 7.21.2 or higher.');
         }
-
-        $handler = $curlSupported ? self::createCurlHandler($sharingMode) : null;
 
         if (\ini_get('allow_url_fopen')) {
             return self::addStreamHandler($handler, $sharingMode, $sharingRequired);
@@ -125,18 +123,15 @@ final class Utils
         return $sharingMode === TransportSharing::HANDLER_REQUIRE;
     }
 
-    private static function supportsCurlHandler(): bool
-    {
-        return \defined('CURLOPT_CUSTOMREQUEST')
-            && CurlVersion::supportsCurlHandler()
-            && (\function_exists('curl_multi_exec') || \function_exists('curl_exec'));
-    }
-
     /**
-     * @return callable(RequestInterface, array): Promise\PromiseInterface
+     * @return (callable(RequestInterface, array): Promise\PromiseInterface)|null
      */
-    private static function createCurlHandler(string $sharingMode): callable
+    private static function createCurlHandler(string $sharingMode): ?callable
     {
+        if (!\defined('CURLOPT_CUSTOMREQUEST') || !CurlVersion::supportsCurlHandler()) {
+            return null;
+        }
+
         $curlHandlerOptions = self::createCurlHandlerOptions($sharingMode);
 
         if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
@@ -147,7 +142,11 @@ final class Utils
             return new CurlHandler($curlHandlerOptions);
         }
 
-        return new CurlMultiHandler($curlHandlerOptions);
+        if (\function_exists('curl_multi_exec')) {
+            return new CurlMultiHandler($curlHandlerOptions);
+        }
+
+        return null;
     }
 
     /**
