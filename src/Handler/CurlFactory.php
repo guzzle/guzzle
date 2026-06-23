@@ -413,7 +413,7 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYHOST', 'the "verify" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_CAINFO', 'the "verify" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_CAPATH', 'the "verify" request option');
-        self::addConflictingCurlOption($options, 'CURLOPT_SSLVERSION', 'the "crypto_method" request option');
+        self::addConflictingCurlOption($options, 'CURLOPT_SSLVERSION', 'the "crypto_method" or "crypto_method_max" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLCERT', 'the "cert" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLCERTPASSWD', 'the "cert" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSLCERTTYPE', 'the "cert_type" request option');
@@ -1450,43 +1450,7 @@ class CurlFactory implements CurlFactoryInterface
             $conf[(int) \constant('CURLOPT_NOPROXY')] = $noProxyConf;
         }
 
-        if (isset($options['crypto_method'])) {
-            $protocolVersion = $easy->request->getProtocolVersion();
-
-            // If HTTP/2, upgrade TLS 1.0 and 1.1 to 1.2
-            if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
-                if (
-                    \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $options['crypto_method']
-                    || \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $options['crypto_method']
-                    || \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $options['crypto_method']
-                ) {
-                    $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
-                } elseif (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $options['crypto_method']) {
-                    if (!CurlVersion::supportsTls13()) {
-                        throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
-                    }
-                    $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
-                } else {
-                    throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
-                }
-            } elseif (\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT === $options['crypto_method']) {
-                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_0;
-            } elseif (\STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT === $options['crypto_method']) {
-                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_1;
-            } elseif (\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT === $options['crypto_method']) {
-                if (!CurlVersion::supportsTls12()) {
-                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.2 not supported by your version of cURL');
-                }
-                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_2;
-            } elseif (defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT === $options['crypto_method']) {
-                if (!CurlVersion::supportsTls13()) {
-                    throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
-                }
-                $conf[\CURLOPT_SSLVERSION] = \CURL_SSLVERSION_TLSv1_3;
-            } else {
-                throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
-            }
-        }
+        $this->applyTlsVersionRange($easy, $conf);
 
         $certType = null;
         if (isset($options['cert_type'])) {
@@ -1570,6 +1534,110 @@ class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_STDERR] = Utils::debugResource($options['debug']);
             $conf[\CURLOPT_VERBOSE] = true;
         }
+    }
+
+    private function applyTlsVersionRange(EasyHandle $easy, array &$conf): void
+    {
+        $options = $easy->options;
+        $cryptoMethod = $options['crypto_method'] ?? null;
+        $cryptoMethodMax = $options['crypto_method_max'] ?? null;
+
+        if ($cryptoMethod === null && $cryptoMethodMax === null) {
+            return;
+        }
+
+        $protocolVersion = $easy->request->getProtocolVersion();
+        $isHttp2 = '2' === $protocolVersion || '2.0' === $protocolVersion;
+
+        if ($isHttp2 && $cryptoMethodMax !== null && TlsVersion::ordinal('crypto_method_max', $cryptoMethodMax) < 12) {
+            throw new \InvalidArgumentException(
+                'Invalid crypto_method_max request option: HTTP/2 requires TLS 1.2 or higher'
+            );
+        }
+
+        if ($isHttp2 && $cryptoMethod !== null && TlsVersion::ordinal('crypto_method', $cryptoMethod) < 12) {
+            $cryptoMethod = \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+        }
+
+        TlsVersion::assertRange($cryptoMethod, $cryptoMethodMax);
+
+        $sslVersion = $cryptoMethod === null
+            ? \CURL_SSLVERSION_DEFAULT
+            : self::curlMinSslVersion($cryptoMethod);
+
+        if ($cryptoMethodMax !== null) {
+            $sslVersion |= self::curlMaxSslVersion($cryptoMethodMax);
+        }
+
+        $conf[\CURLOPT_SSLVERSION] = $sslVersion;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function curlMinSslVersion($value): int
+    {
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
+            return \CURL_SSLVERSION_TLSv1_0;
+        }
+
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT) {
+            return \CURL_SSLVERSION_TLSv1_1;
+        }
+
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT) {
+            if (!CurlVersion::supportsTls12()) {
+                throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.2 not supported by your version of cURL');
+            }
+
+            return \CURL_SSLVERSION_TLSv1_2;
+        }
+
+        if (\defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && $value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT) {
+            if (!CurlVersion::supportsTls13()) {
+                throw new \InvalidArgumentException('Invalid crypto_method request option: TLS 1.3 not supported by your version of cURL');
+            }
+
+            return \CURL_SSLVERSION_TLSv1_3;
+        }
+
+        throw new \InvalidArgumentException('Invalid crypto_method request option: unknown version provided');
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function curlMaxSslVersion($value): int
+    {
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
+            return self::requireCurlMaxSslVersion('CURL_SSLVERSION_MAX_TLSv1_0');
+        }
+
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT) {
+            return self::requireCurlMaxSslVersion('CURL_SSLVERSION_MAX_TLSv1_1');
+        }
+
+        if ($value === \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT) {
+            return self::requireCurlMaxSslVersion('CURL_SSLVERSION_MAX_TLSv1_2');
+        }
+
+        if (\defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && $value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT) {
+            return self::requireCurlMaxSslVersion('CURL_SSLVERSION_MAX_TLSv1_3');
+        }
+
+        throw new \InvalidArgumentException('Invalid crypto_method_max request option: unknown version provided');
+    }
+
+    private static function requireCurlMaxSslVersion(string $constant): int
+    {
+        if (\defined($constant)) {
+            /** @var int */
+            return \constant($constant);
+        }
+
+        throw new \InvalidArgumentException(
+            'Invalid crypto_method_max request option: maximum TLS version control is not supported by your version of cURL'
+        );
     }
 
     /**
