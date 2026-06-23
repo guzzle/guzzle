@@ -48,4 +48,34 @@ class Proxy
             return empty($options['stream']) ? $default($request, $options) : $streaming($request, $options);
         };
     }
+
+    /**
+     * Sends requests to a fallback handler when the default cURL handler cannot
+     * honor TLS 1.2 selection.
+     *
+     * @param callable(RequestInterface, array): PromiseInterface $default
+     * @param callable(RequestInterface, array): PromiseInterface $fallback
+     *
+     * @return callable(RequestInterface, array): PromiseInterface Returns the composed handler.
+     */
+    public static function wrapTlsFallback(callable $default, callable $fallback): callable
+    {
+        return static function (RequestInterface $request, array $options) use ($default, $fallback): PromiseInterface {
+            if (self::requiresTls12Fallback($options)) {
+                return $fallback($request, $options);
+            }
+
+            return $default($request, $options);
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function requiresTls12Fallback(array $options): bool
+    {
+        return isset($options[RequestOptions::CRYPTO_METHOD])
+            && $options[RequestOptions::CRYPTO_METHOD] === \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
+            && !CurlVersion::supportsTls12();
+    }
 }
