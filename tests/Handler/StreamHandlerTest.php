@@ -1191,6 +1191,38 @@ class StreamHandlerTest extends TestCase
         return $context;
     }
 
+    private function buildHttpsTlsContext(string $uri, array $options): array
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', $uri);
+        $context = ['ssl' => []];
+        $params = [];
+
+        $apply = new \ReflectionMethod(StreamHandler::class, 'applyHandlerOptions');
+        $addDefault = new \ReflectionMethod(StreamHandler::class, 'addDefaultTlsMinimum');
+        if (\PHP_VERSION_ID < 80100) {
+            $apply->setAccessible(true);
+            $addDefault->setAccessible(true);
+        }
+
+        $apply->invokeArgs($handler, [$request, &$context, $options, &$params]);
+        $addDefault->invokeArgs($handler, [$request, &$context]);
+
+        return $context;
+    }
+
+    private function assertTlsVersionRangeForOptions(string $uri, array $options): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', $uri);
+        $method = new \ReflectionMethod(StreamHandler::class, 'assertTlsVersionRangeForOptions');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invoke($handler, $request, $options);
+    }
+
     /**
      * @param mixed $value
      */
@@ -1526,6 +1558,82 @@ class StreamHandlerTest extends TestCase
         self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_3, $opts['ssl']['min_proto_version']);
     }
 
+    public function testSetsCryptoMethodMaxTls12(): void
+    {
+        $res = $this->getSendResult([
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+
+        $opts = \stream_context_get_options($res->getBody()->detach());
+
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $opts['ssl']['max_proto_version']);
+    }
+
+    public function testSetsCryptoMethodMaxTls13(): void
+    {
+        $res = $this->getSendResult([
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
+        ]);
+
+        $opts = \stream_context_get_options($res->getBody()->detach());
+
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_3, $opts['ssl']['max_proto_version']);
+    }
+
+    public function testSetsCryptoMethodRangeTls10ToTls11(): void
+    {
+        $res = $this->getSendResult([
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+
+        $opts = \stream_context_get_options($res->getBody()->detach());
+
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_0, $opts['ssl']['min_proto_version']);
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_1, $opts['ssl']['max_proto_version']);
+    }
+
+    public function testRejectsInvertedCryptoMethodRange(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('crypto_method_max');
+
+        $this->getSendResult([
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+    }
+
+    public function testCryptoMethodMaxTls12KeepsDefaultHttpsTls12Minimum(): void
+    {
+        $context = $this->applyDefaultTlsMinimum('https://example.com', [
+            'ssl' => ['max_proto_version' => \STREAM_CRYPTO_PROTO_TLSv1_2],
+        ]);
+
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $context['ssl']['min_proto_version']);
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $context['ssl']['max_proto_version']);
+    }
+
+    public function testHttpsCryptoMethodMaxTls12RequestOptionKeepsDefaultMinimum(): void
+    {
+        $context = $this->buildHttpsTlsContext('https://example.com', [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $context['ssl']['min_proto_version']);
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $context['ssl']['max_proto_version']);
+    }
+
+    public function testRejectsHttpsCryptoMethodMaxBelowDefaultMinimum(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('crypto_method_max');
+
+        $this->assertTlsVersionRangeForOptions('https://example.com', [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+    }
+
     /**
      * @dataProvider conflictingStreamContextProvider
      *
@@ -1563,6 +1671,7 @@ class StreamHandlerTest extends TestCase
         yield 'ssl crypto method' => ['ssl', 'crypto_method', \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT, 'crypto_method'];
         yield 'ssl local cert' => ['ssl', 'local_cert', __FILE__, 'cert'];
         yield 'ssl local pk' => ['ssl', 'local_pk', __FILE__, 'ssl_key'];
+        yield 'ssl max protocol version' => ['ssl', 'max_proto_version', \STREAM_CRYPTO_PROTO_TLSv1_2, 'crypto_method_max'];
         yield 'ssl min protocol version' => ['ssl', 'min_proto_version', \STREAM_CRYPTO_PROTO_TLSv1_0, 'crypto_method'];
         yield 'ssl passphrase' => ['ssl', 'passphrase', 'secret', 'cert'];
         yield 'ssl peer name' => ['ssl', 'peer_name', 'example.com', 'request URI'];
@@ -1850,7 +1959,6 @@ class StreamHandlerTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('stream_context.http.unknown_option');
         $this->expectExceptionMessage('stream_context.http.ignore_errors');
-        $this->expectExceptionMessage('stream_context.ssl.max_proto_version');
         $this->expectExceptionMessage('stream_context.ssl.SNI_server_name');
         $this->expectExceptionMessage('stream_context.custom.foo');
 
@@ -1861,7 +1969,6 @@ class StreamHandlerTest extends TestCase
                     'unknown_option' => true,
                 ],
                 'ssl' => [
-                    'max_proto_version' => \STREAM_CRYPTO_PROTO_TLSv1_2,
                     'SNI_server_name' => 'example.com',
                 ],
                 'custom' => [

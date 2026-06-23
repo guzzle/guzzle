@@ -1848,12 +1848,15 @@ class CurlFactoryTest extends TestCase
     {
         $f = new CurlFactory(3);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('CURLOPT_SSLVERSION');
-
-        $f->create(new Psr7\Request('GET', 'https://example.com'), [
-            'curl' => [\CURLOPT_SSLVERSION => \CURL_SSLVERSION_TLSv1_1],
-        ]);
+        try {
+            $f->create(new Psr7\Request('GET', 'https://example.com'), [
+                'curl' => [\CURLOPT_SSLVERSION => \CURL_SSLVERSION_TLSv1_1],
+            ]);
+            self::fail('Expected an InvalidArgumentException for raw CURLOPT_SSLVERSION.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('CURLOPT_SSLVERSION', $e->getMessage());
+            self::assertStringContainsString('crypto_method_max', $e->getMessage());
+        }
     }
 
     public function testValidatesCryptoMethodInvalidMethod(): void
@@ -1921,6 +1924,141 @@ class CurlFactoryTest extends TestCase
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
+    }
+
+    public function testAddsCryptoMethodMaxTls12WithDefaultHttpsMinimum(): void
+    {
+        if (!\defined('CURL_SSLVERSION_MAX_TLSv1_2')) {
+            self::markTestSkipped('CURL_SSLVERSION_MAX_TLSv1_2 is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+
+        self::assertSame(
+            \CURL_SSLVERSION_TLSv1_2 | \CURL_SSLVERSION_MAX_TLSv1_2,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
+    public function testAddsCryptoMethodMaxTls13WithDefaultHttpsMinimum(): void
+    {
+        if (!CurlVersion::supportsTls13() || !\defined('CURL_SSLVERSION_MAX_TLSv1_3')) {
+            self::markTestSkipped('TLS 1.3 maximum is not supported by this cURL installation.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
+        ]);
+
+        self::assertSame(
+            \CURL_SSLVERSION_TLSv1_2 | \CURL_SSLVERSION_MAX_TLSv1_3,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
+    public function testRejectsDefaultHttpsMinWhenCryptoMethodMaxIsBelowTls12(): void
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('crypto_method_max');
+
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+    }
+
+    public function testAllowsExplicitLowerMinWithLowerCryptoMethodMax(): void
+    {
+        if (!\defined('CURL_SSLVERSION_MAX_TLSv1_1')) {
+            self::markTestSkipped('CURL_SSLVERSION_MAX_TLSv1_1 is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+
+        self::assertSame(
+            \CURL_SSLVERSION_TLSv1_0 | \CURL_SSLVERSION_MAX_TLSv1_1,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
+    public function testAllowsCryptoMethodMaxBelowTls12OnHttp11(): void
+    {
+        if (!\defined('CURL_SSLVERSION_MAX_TLSv1_0')) {
+            self::markTestSkipped('CURL_SSLVERSION_MAX_TLSv1_0 is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'http://example.com'), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+        ]);
+
+        self::assertSame(
+            \CURL_SSLVERSION_DEFAULT | \CURL_SSLVERSION_MAX_TLSv1_0,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
+    public function testRejectsCryptoMethodMaxUnknownInteger(): void
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid crypto_method_max request option: unknown version provided');
+
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method_max' => 123,
+        ]);
+    }
+
+    public function testRejectsExplicitCryptoMethodMaxLowerThanMin(): void
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('crypto_method_max');
+
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+    }
+
+    public function testRejectsHttp2CryptoMethodMaxBelowTls12(): void
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('HTTP/2 and HTTP/3 require TLS 1.2 or higher');
+
+        $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+    }
+
+    public function testAllowsHttp2CryptoMethodMaxTls12(): void
+    {
+        if (!\defined('CURL_SSLVERSION_MAX_TLSv1_2')) {
+            self::markTestSkipped('CURL_SSLVERSION_MAX_TLSv1_2 is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+
+        self::assertSame(
+            \CURL_SSLVERSION_DEFAULT | \CURL_SSLVERSION_MAX_TLSv1_2,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
     }
 
     public function testValidatesSslKey(): void
@@ -2943,6 +3081,39 @@ class CurlFactoryTest extends TestCase
         self::assertSame(\CURL_SSLVERSION_TLSv1_2, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
     }
 
+    public function testHttp3RejectsCryptoMethodMaxBelowTls12(): void
+    {
+        if (!CurlVersion::supportsHttp3()) {
+            self::markTestSkipped('HTTP/3 is not supported by this cURL installation.');
+        }
+
+        $factory = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('HTTP/2 and HTTP/3 require TLS 1.2 or higher');
+
+        $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+    }
+
+    public function testHttp3AllowsCryptoMethodMaxTls12(): void
+    {
+        if (!CurlVersion::supportsHttp3() || !\defined('CURL_SSLVERSION_MAX_TLSv1_2')) {
+            self::markTestSkipped('HTTP/3 or TLS 1.2 maximum is not supported by this cURL installation.');
+        }
+
+        $factory = new CurlFactory(3);
+        $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+
+        self::assertSame(
+            \CURL_SSLVERSION_TLSv1_2 | \CURL_SSLVERSION_MAX_TLSv1_2,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
     public function testHttp3ValidatesCryptoMethodInvalidMethod(): void
     {
         if (!CurlVersion::supportsHttp3()) {
@@ -2967,12 +3138,15 @@ class CurlFactoryTest extends TestCase
 
         $factory = new CurlFactory(3);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('CURLOPT_SSLVERSION');
-
-        $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
-            'curl' => [\CURLOPT_SSLVERSION => \CURL_SSLVERSION_TLSv1_2],
-        ]);
+        try {
+            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'curl' => [\CURLOPT_SSLVERSION => \CURL_SSLVERSION_TLSv1_2],
+            ]);
+            self::fail('Expected an InvalidArgumentException for raw CURLOPT_SSLVERSION.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('CURLOPT_SSLVERSION', $e->getMessage());
+            self::assertStringContainsString('crypto_method_max', $e->getMessage());
+        }
     }
 
     public static function http3ProtocolVersionProvider(): array

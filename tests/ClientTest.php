@@ -1503,6 +1503,11 @@ class ClientTest extends TestCase
             'Passing string to request option "crypto_method" is invalid; expected int.',
         ];
 
+        yield 'crypto_method_max' => [
+            ['crypto_method_max' => '1'],
+            'Passing string to request option "crypto_method_max" is invalid; expected int.',
+        ];
+
         yield 'debug' => [
             ['debug' => 'debug'],
             'Passing string to request option "debug" is invalid; expected bool|resource.',

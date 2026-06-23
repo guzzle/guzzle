@@ -345,6 +345,35 @@ $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2
 > [!NOTE]
 > This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. It controls the minimum TLS protocol version. cURL 7.52.0 or higher is required to use TLS 1.3 with the cURL handler.
 
+## crypto_method_max
+
+Summary
+A value describing the maximum TLS protocol version to use.
+
+Types
+int
+
+Default
+None. HTTPS requests still default to TLS 1.2 or newer through `crypto_method`.
+
+Constant
+`GuzzleHttp\RequestOptions::CRYPTO_METHOD_MAX`
+
+```php
+$client->request('GET', '/foo', [
+    'crypto_method_max' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+]);
+```
+
+> [!NOTE]
+> This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT`
+> constants. It may be combined with `crypto_method` to set an allowed TLS
+> version range. The maximum version must be greater than or equal to the
+> effective minimum version. For HTTPS requests, the built-in handlers default
+> the minimum to TLS 1.2 or newer unless `crypto_method` is explicitly set.
+> cURL 7.54.0 or higher is required to use maximum TLS-version bounds with the
+> cURL handler.
+
 ## curl
 
 Summary
@@ -1428,8 +1457,10 @@ depending on the runtime. The allow-list is `http.request_fulluri`,
 instead when configuring the request method, URI, body, headers, timeouts,
 redirects, proxy, TLS certificate files, TLS private keys, protocol versions,
 verification, progress, debug output, sinks, cookies, and allowed protocols.
-TLS protocol versions are managed through the `crypto_method` request option,
-and TLS verification is managed through the `verify` request option.
+TLS minimum protocol versions are managed through the `crypto_method` request
+option, maximum protocol versions are managed through the `crypto_method_max`
+request option, and TLS verification is managed through the `verify` request
+option.
 
 ## synchronous
 
@@ -1558,4 +1589,4 @@ HTTP/3 support requires PHP to expose cURL's HTTP/3 constants, runtime libcurl 7
 
 A request configured with `version => 3.0` must pass HTTP/3 support checks even if it uses a proxy. If a proxy is actually selected — whether through the `proxy` option or resolved from the environment — Guzzle does not try HTTP/3 through the proxy; it sends the transfer as HTTP/2 when available, otherwise HTTP/1.1. A matching proxy `no` rule or environment `no_proxy` entry makes the request direct, so HTTP/3 can still be attempted.
 
-For HTTPS cURL requests, Guzzle sets a minimum of TLS 1.2 by default. That minimum also applies when HTTP/2 or HTTP/3 is requested, because cURL may fall back to a TLS-based HTTP/1.1 or HTTP/2 connection. If you set `crypto_method` to TLS 1.3, Guzzle keeps that stricter setting when the cURL stack exposes TLS 1.3 configuration. Raw `CURLOPT_SSLVERSION` values passed through the `curl` option are rejected because TLS version handling is managed by Guzzle.
+For HTTPS cURL requests, Guzzle sets a minimum of TLS 1.2 by default. That minimum also applies when HTTP/2 or HTTP/3 is requested, because cURL may fall back to a TLS-based HTTP/1.1 or HTTP/2 connection. If you set `crypto_method` to TLS 1.3, Guzzle keeps that stricter setting when the cURL stack exposes TLS 1.3 configuration. Raw `CURLOPT_SSLVERSION` values passed through the `curl` option are rejected because TLS version handling is managed by Guzzle. The `crypto_method_max` request option can cap the maximum TLS version, but the cap must not be lower than the effective minimum (TLS 1.2 by default for HTTPS unless `crypto_method` is set lower).

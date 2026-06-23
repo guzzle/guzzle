@@ -115,6 +115,19 @@ final class RequestOptions
     public const CRYPTO_METHOD = 'crypto_method';
 
     /**
+     * crypto_method_max: (int) A value describing the maximum TLS protocol
+     * version to use. The built-in cURL and stream handlers default HTTPS
+     * requests to TLS 1.2 or newer, so a lower maximum requires explicitly
+     * lowering crypto_method too.
+     *
+     * This setting must be set to one of the
+     * ``STREAM_CRYPTO_METHOD_TLS*_CLIENT`` constants. cURL 7.54.0 or higher
+     * is required in order to specify a maximum TLS version with the cURL
+     * handler.
+     */
+    public const CRYPTO_METHOD_MAX = 'crypto_method_max';
+
+    /**
      * curl: (array) Raw cURL options to apply when using a built-in cURL handler.
      */
     public const CURL = 'curl';
