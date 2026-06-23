@@ -7,7 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Added
 
-- Added the `crypto_method_max` request option to cap the maximum TLS protocol version across built-in handlers.
+- Added the `crypto_method_max` request option to cap the maximum TLS protocol version
 
 ### Changed
 
