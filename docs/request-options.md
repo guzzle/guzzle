@@ -342,6 +342,33 @@ $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2
 > [!NOTE]
 > This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. PHP 7.4 or higher is required in order to use TLS 1.3, and cURL 7.34.0 or higher is required in order to specify a crypto method, with cURL 7.52.0 or higher being required to use TLS 1.3.
 
+## crypto_method_max
+
+Summary
+A value describing the maximum TLS protocol version to use.
+
+Types
+int
+
+Default
+None
+
+Constant
+`GuzzleHttp\RequestOptions::CRYPTO_METHOD_MAX`
+
+```php
+$client->request('GET', '/foo', [
+    'crypto_method_max' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+]);
+```
+
+> [!NOTE]
+> This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT`
+> constants. It may be combined with `crypto_method` to set an allowed TLS
+> version range. The maximum version must be greater than or equal to the
+> minimum version. cURL 7.54.0 or higher is required to use maximum TLS-version
+> bounds with the cURL handler.
+
 ## curl
 
 Summary
@@ -1213,9 +1240,10 @@ may still reject or ignore an option depending on the runtime. The allow-list is
 Guzzle request options instead when configuring the request method, URI, body,
 headers, timeouts, redirects, proxy, TLS certificate files, TLS private keys,
 protocol versions, verification, progress, debug output, sinks, cookies, and
-allowed protocols. TLS protocol versions are managed through the
-`crypto_method` request option, and TLS verification is managed through the
-`verify` request option.
+allowed protocols. TLS minimum protocol versions are managed through the
+`crypto_method` request option, maximum protocol versions are managed through
+the `crypto_method_max` request option, and TLS verification is managed through
+the `verify` request option.
 
 ## synchronous
 

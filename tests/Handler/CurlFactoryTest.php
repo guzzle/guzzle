@@ -1316,6 +1316,198 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testAddsCryptoMethodMaxTls12()
+    {
+        if (!\defined('CURL_SSLVERSION_MAX_TLSv1_2')) {
+            self::markTestSkipped('CURL_SSLVERSION_MAX_TLSv1_2 is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+
+        self::assertEquals(
+            \CURL_SSLVERSION_DEFAULT | \CURL_SSLVERSION_MAX_TLSv1_2,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
+    public function testAddsExactCryptoMethodTls12Range()
+    {
+        if (!\defined('CURL_SSLVERSION_MAX_TLSv1_2')) {
+            self::markTestSkipped('CURL_SSLVERSION_MAX_TLSv1_2 is unavailable.');
+        }
+
+        $previous = self::setCurlVersionInfo(['version' => '7.34.0', 'features' => self::curlSslFeature()]);
+        $f = new CurlFactory(3);
+
+        try {
+            $f->create(new Psr7\Request('GET', Server::$url), [
+                'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+                'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            ]);
+
+            self::assertEquals(
+                \CURL_SSLVERSION_TLSv1_2 | \CURL_SSLVERSION_MAX_TLSv1_2,
+                $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+            );
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
+    public function testRejectsCryptoMethodMaxLowerThanMin()
+    {
+        if (!\defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT')) {
+            self::markTestSkipped('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('crypto_method_max');
+
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+    }
+
+    public function testRejectsHttp2CryptoMethodMaxBelowTls12()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('HTTP/2 requires TLS 1.2 or higher');
+
+        $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+    }
+
+    public function testRejectsHttp2WeakMinWhenCurlLacksTls12()
+    {
+        $previous = self::setCurlVersionInfo(['version' => '7.34.0', 'features' => 0]);
+        $f = new CurlFactory(3);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('TLS 1.2 not supported by your version of cURL');
+
+            $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
+    public function testRejectsCryptoMethodMaxUnknownInteger()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid crypto_method_max request option: unknown version provided');
+
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method_max' => 123,
+        ]);
+    }
+
+    public function testRejectsNonIntCryptoMethodWithInvalidArgumentException()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('unknown version provided');
+
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method' => 'foo',
+        ]);
+    }
+
+    public function testRejectsNonIntCryptoMethodMaxWithInvalidArgumentException()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('unknown version provided');
+
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method_max' => [],
+        ]);
+    }
+
+    public function testAddsCryptoMethodMaxTls10()
+    {
+        if (!\defined('CURL_SSLVERSION_MAX_TLSv1_0')) {
+            self::markTestSkipped('CURL_SSLVERSION_MAX_TLSv1_0 is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+        ]);
+
+        self::assertEquals(
+            \CURL_SSLVERSION_DEFAULT | \CURL_SSLVERSION_MAX_TLSv1_0,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
+    public function testAddsCryptoMethodMaxTls11()
+    {
+        if (!\defined('CURL_SSLVERSION_MAX_TLSv1_1')) {
+            self::markTestSkipped('CURL_SSLVERSION_MAX_TLSv1_1 is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+
+        self::assertEquals(
+            \CURL_SSLVERSION_DEFAULT | \CURL_SSLVERSION_MAX_TLSv1_1,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
+    public function testAddsCryptoMethodMaxTls13()
+    {
+        if (!\defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') || !\defined('CURL_SSLVERSION_MAX_TLSv1_3')) {
+            self::markTestSkipped('TLS 1.3 maximum is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
+        ]);
+
+        self::assertEquals(
+            \CURL_SSLVERSION_DEFAULT | \CURL_SSLVERSION_MAX_TLSv1_3,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
+    public function testAddsCryptoMethodMinTls10MaxTls12()
+    {
+        if (!\defined('CURL_SSLVERSION_MAX_TLSv1_2')) {
+            self::markTestSkipped('CURL_SSLVERSION_MAX_TLSv1_2 is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', Server::$url), [
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+
+        self::assertEquals(
+            \CURL_SSLVERSION_TLSv1_0 | \CURL_SSLVERSION_MAX_TLSv1_2,
+            $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+        );
+    }
+
     public function testValidatesSslKey()
     {
         $f = new CurlFactory(3);

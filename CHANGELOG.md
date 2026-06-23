@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 7.13.0 - Upcoming
 
+### Added
+
+- Added the `crypto_method_max` request option to cap the maximum TLS protocol version across built-in handlers.
+
 ### Changed
 
 - Section proxy tunnel connection reuse by credential so distinct credentials never share a tunnel

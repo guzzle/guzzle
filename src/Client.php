@@ -511,7 +511,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     private static function normalizeDeprecatedIntegerOptionValues(array &$options): void
     {
-        foreach (['crypto_method', 'retries'] as $option) {
+        foreach (['crypto_method', 'crypto_method_max', 'retries'] as $option) {
             if (!\array_key_exists($option, $options)) {
                 continue;
             }
@@ -565,6 +565,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::warnIfPresentAndNotString($options, 'cert_type');
         self::warnIfPresentAndNotNumber($options, 'connect_timeout');
         self::warnIfPresentAndNotInt($options, 'crypto_method');
+        self::warnIfPresentAndNotInt($options, 'crypto_method_max');
         self::warnIfPresentAndNotBoolOrResource($options, 'debug');
         self::warnIfPresentAndNotBoolOrString($options, 'decode_content');
         self::warnIfPresentAndNotNumber($options, 'delay');

@@ -613,6 +613,87 @@ class StreamHandlerTest extends TestCase
         self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT, $opts['http']['crypto_method']);
     }
 
+    public function testSetsCryptoMethodMaxTls12()
+    {
+        $res = $this->getSendResult([
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+
+        $opts = \stream_context_get_options($res->getBody()->detach());
+
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $opts['ssl']['max_proto_version']);
+    }
+
+    public function testRejectsStreamCryptoMethodMaxLowerThanMin()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('crypto_method_max');
+
+        $this->getSendResult([
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT,
+        ]);
+    }
+
+    public function testRejectsStreamCryptoMethodMaxUnknownInteger()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid crypto_method_max request option: unknown version provided');
+
+        $this->getSendResult([
+            'crypto_method_max' => 123,
+        ]);
+    }
+
+    public function testRejectsNonIntStreamCryptoMethodMaxWithInvalidArgumentException()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('unknown version provided');
+
+        $this->getSendResult([
+            'crypto_method_max' => 'foo',
+        ]);
+    }
+
+    public function testSetsCryptoMethodMinAndMaxAcrossNamespaces()
+    {
+        $res = $this->getSendResult([
+            'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
+
+        $opts = \stream_context_get_options($res->getBody()->detach());
+
+        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT, $opts['http']['crypto_method']);
+        self::assertSame(\STREAM_CRYPTO_PROTO_TLSv1_2, $opts['ssl']['max_proto_version']);
+    }
+
+    public function testDeprecatesRawStreamContextMaxProtoVersion()
+    {
+        $deprecation = null;
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
+            $deprecation = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $this->getSendResult([
+                'stream_context' => [
+                    'ssl' => [
+                        'max_proto_version' => \STREAM_CRYPTO_PROTO_TLSv1_2,
+                    ],
+                ],
+            ]);
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertNotNull($deprecation, 'Expected a deprecation for stream_context.ssl.max_proto_version.');
+        self::assertStringContainsString('max_proto_version', $deprecation);
+        self::assertStringContainsString('crypto_method_max', $deprecation);
+    }
+
     public function testCanSetPasswordWhenSettingCert()
     {
         $path = __FILE__;

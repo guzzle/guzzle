@@ -1406,6 +1406,33 @@ class ClientTest extends TestCase
         self::assertSame(2, $capturedOptions['retries']);
     }
 
+    public function testNormalizesDeprecatedCryptoMethodMaxBeforeHandler(): void
+    {
+        $capturedOptions = null;
+        $client = new Client([
+            'handler' => static function ($request, array $options) use (&$capturedOptions): FulfilledPromise {
+                $capturedOptions = $options;
+
+                return new FulfilledPromise(new Response());
+            },
+        ]);
+
+        self::suppressDeprecations(static function () use ($client): void {
+            $client->request('GET', 'http://example.com', [
+                'crypto_method_max' => (string) \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            ]);
+        });
+        self::assertIsArray($capturedOptions);
+        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT, $capturedOptions['crypto_method_max']);
+
+        self::suppressDeprecations(static function () use ($client): void {
+            $client->request('GET', 'http://example.com', [
+                'crypto_method_max' => (float) \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            ]);
+        });
+        self::assertSame(\STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT, $capturedOptions['crypto_method_max']);
+    }
+
     private static function suppressDeprecations(callable $callback): void
     {
         \set_error_handler(static function (int $severity): bool {
