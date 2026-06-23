@@ -1386,7 +1386,7 @@ class CurlFactoryTest extends TestCase
         ]);
     }
 
-    public function testRejectsHttp2WeakMinWhenCurlLacksTls12()
+    public function testRejectsTls12CryptoMethodWhenCurlLacksTls12()
     {
         $previous = self::setCurlVersionInfo(['version' => '7.34.0', 'features' => 0]);
         $f = new CurlFactory(3);
@@ -1395,9 +1395,36 @@ class CurlFactoryTest extends TestCase
             $this->expectException(\InvalidArgumentException::class);
             $this->expectExceptionMessage('TLS 1.2 not supported by your version of cURL');
 
+            $f->create(new Psr7\Request('GET', Server::$url, [], null, '1.1'), [
+                'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
+    public function testPromotesHttp2WeakMinToTls12()
+    {
+        if (!\defined('CURL_SSLVERSION_TLSv1_2')) {
+            self::markTestSkipped('CURL_SSLVERSION_TLSv1_2 is unavailable.');
+        }
+
+        $http2Feature = \defined('CURL_VERSION_HTTP2') ? \CURL_VERSION_HTTP2 : (1 << 16);
+        $previous = self::setCurlVersionInfo([
+            'version' => '7.52.0',
+            'features' => self::curlSslFeature() | $http2Feature,
+        ]);
+        $f = new CurlFactory(3);
+
+        try {
             $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
                 'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
             ]);
+
+            self::assertEquals(
+                \CURL_SSLVERSION_TLSv1_2,
+                $_SERVER['_curl'][\CURLOPT_SSLVERSION]
+            );
         } finally {
             self::setCurlVersionInfo($previous);
         }

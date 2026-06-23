@@ -615,6 +615,10 @@ class StreamHandlerTest extends TestCase
 
     public function testSetsCryptoMethodMaxTls12()
     {
+        if (!\defined('STREAM_CRYPTO_PROTO_TLSv1_2')) {
+            self::markTestSkipped('ssl.max_proto_version / STREAM_CRYPTO_PROTO_* require PHP 7.3+.');
+        }
+
         $res = $this->getSendResult([
             'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
         ]);
@@ -657,6 +661,10 @@ class StreamHandlerTest extends TestCase
 
     public function testSetsCryptoMethodMinAndMaxAcrossNamespaces()
     {
+        if (!\defined('STREAM_CRYPTO_PROTO_TLSv1_2')) {
+            self::markTestSkipped('ssl.max_proto_version / STREAM_CRYPTO_PROTO_* require PHP 7.3+.');
+        }
+
         $res = $this->getSendResult([
             'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT,
             'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
@@ -670,6 +678,10 @@ class StreamHandlerTest extends TestCase
 
     public function testDeprecatesRawStreamContextMaxProtoVersion()
     {
+        if (!\defined('STREAM_CRYPTO_PROTO_TLSv1_2')) {
+            self::markTestSkipped('ssl.max_proto_version / STREAM_CRYPTO_PROTO_* require PHP 7.3+.');
+        }
+
         $deprecation = null;
         \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
             $deprecation = $message;
@@ -692,6 +704,22 @@ class StreamHandlerTest extends TestCase
         self::assertNotNull($deprecation, 'Expected a deprecation for stream_context.ssl.max_proto_version.');
         self::assertStringContainsString('max_proto_version', $deprecation);
         self::assertStringContainsString('crypto_method_max', $deprecation);
+    }
+
+    public function testRejectsStreamCryptoMethodMaxWhenProtoConstantsUnavailable()
+    {
+        if (\defined('STREAM_CRYPTO_PROTO_TLSv1_2')) {
+            self::markTestSkipped('PHP supports ssl.max_proto_version; degradation path not applicable.');
+        }
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('maximum TLS version control is not supported by your version of PHP');
+
+        // STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT exists since PHP 5.6, so the input
+        // is valid; only the PROTO mapping target is missing on PHP < 7.3.
+        $this->getSendResult([
+            'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+        ]);
     }
 
     public function testCanSetPasswordWhenSettingCert()

@@ -39,18 +39,35 @@ final class TlsVersion
     public static function streamProtocolVersion(string $option, $value): int
     {
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT) {
-            return \STREAM_CRYPTO_PROTO_TLSv1_0;
+            return self::requireStreamProto('STREAM_CRYPTO_PROTO_TLSv1_0', $option);
         }
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT) {
-            return \STREAM_CRYPTO_PROTO_TLSv1_1;
+            return self::requireStreamProto('STREAM_CRYPTO_PROTO_TLSv1_1', $option);
         }
         if ($value === \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT) {
-            return \STREAM_CRYPTO_PROTO_TLSv1_2;
+            return self::requireStreamProto('STREAM_CRYPTO_PROTO_TLSv1_2', $option);
         }
         if (\defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT') && $value === \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT) {
-            return \STREAM_CRYPTO_PROTO_TLSv1_3;
+            return self::requireStreamProto('STREAM_CRYPTO_PROTO_TLSv1_3', $option);
         }
 
         throw new \InvalidArgumentException(\sprintf('Invalid %s request option: unknown version provided', $option));
+    }
+
+    /**
+     * Resolves a STREAM_CRYPTO_PROTO_* constant. The ssl.max_proto_version
+     * context option and these constants were added in PHP 7.3.0 (TLS 1.3 in
+     * 7.4.0); on older runtimes the option cannot be honored, so reject loudly.
+     */
+    private static function requireStreamProto(string $constant, string $option): int
+    {
+        if (\defined($constant)) {
+            return (int) \constant($constant);
+        }
+
+        throw new \InvalidArgumentException(\sprintf(
+            'Invalid %s request option: maximum TLS version control is not supported by your version of PHP',
+            $option
+        ));
     }
 }
