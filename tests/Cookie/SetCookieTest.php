@@ -311,6 +311,68 @@ class SetCookieTest extends TestCase
         self::assertFalse($cookie->matchesDomain('example.com'));
     }
 
+    public function testIpLiteralDomainIsExactMatchOnly(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '192.168.0.1', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('192.168.0.1'));
+        self::assertFalse($cookie->matchesDomain('evil.192.168.0.1'));
+        self::assertFalse($cookie->matchesDomain('10.192.168.0.1'));
+    }
+
+    public function testBareNumericDomainIsExactMatchOnly(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '1', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('1'));
+        self::assertFalse($cookie->matchesDomain('evil.1'));
+    }
+
+    public function testBareUnbracketedIpv6DomainIsExactMatchOnly(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '::1', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('::1'));
+        self::assertFalse($cookie->matchesDomain('evil.::1'));
+    }
+
+    public function testBracketedIpv6DomainIsExactMatchOnly(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '[::1]', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('[::1]'));
+        self::assertFalse($cookie->matchesDomain('x.[::1]'));
+    }
+
+    public function testLeadingDotIpDomainIsExactMatchOnly(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '.192.168.0.1', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('192.168.0.1'));
+        self::assertFalse($cookie->matchesDomain('evil.192.168.0.1'));
+    }
+
+    public function testRegistrableDomainStillMatchesSubdomains(): void
+    {
+        $cookie = new SetCookie(['Name' => 'a', 'Value' => 'b', 'Domain' => 'example.com', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('sub.example.com'));
+    }
+
+    public function testTrailingDotIpDomainDoesNotLeak(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '192.168.0.1.', 'Path' => '/']);
+
+        self::assertFalse($cookie->matchesDomain('evil.192.168.0.1.'));
+    }
+
+    public function testTrailingDotBareNumericDomainDoesNotLeak(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '1.', 'Path' => '/']);
+
+        self::assertFalse($cookie->matchesDomain('evil.1.'));
+    }
+
     public static function dotOnlyDomainProvider(): array
     {
         return [
