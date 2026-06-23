@@ -19,7 +19,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecate invalid protocols, force_ip_resolve, delay, cookies, and allow_redirects values
 
 
-## 7.12.2 - Upcoming
+## 7.12.2 - 2026-06-23
 
 ### Fixed
 
