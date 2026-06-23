@@ -690,6 +690,51 @@ class CookieJarTest extends TestCase
         self::assertSame('sid=abc', $request->getHeaderLine('Cookie'));
     }
 
+    public function testExtractedIpDomainCookieMatchesExactOnly(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'http://192.168.0.1/'),
+            new Response(200, ['Set-Cookie' => 'sid=secret; Domain=192.168.0.1; Path=/'])
+        );
+
+        $cookie = $this->jar->getCookieByName('sid');
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertFalse($cookie->getHostOnly());
+        self::assertTrue($cookie->matchesDomain('192.168.0.1'));
+        self::assertFalse($cookie->matchesDomain('evil.192.168.0.1'));
+    }
+
+    public function testIpDomainCookieSendPathDoesNotLeakToLookAlikeHost(): void
+    {
+        $jar = new CookieJar(false, [[
+            'Name' => 'sid',
+            'Value' => 'secret',
+            'Domain' => '192.168.0.1',
+            'HostOnly' => false,
+            'Path' => '/',
+        ]]);
+
+        self::assertFalse($jar->withCookieHeader(
+            new Request('GET', 'https://evil.192.168.0.1/')
+        )->hasHeader('Cookie'));
+        self::assertSame('sid=secret', $jar->withCookieHeader(
+            new Request('GET', 'https://192.168.0.1/')
+        )->getHeaderLine('Cookie'));
+    }
+
+    public function testBareNumericDomainCookieIsNotLeakedToLookAlikeHost(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'http://1/'),
+            new Response(200, ['Set-Cookie' => 'sid=x; Domain=1; Path=/'])
+        );
+
+        self::assertCount(1, $this->jar);
+        self::assertFalse($this->jar->withCookieHeader(
+            new Request('GET', 'http://evil.1/')
+        )->hasHeader('Cookie'));
+    }
+
     public function testEmptyDomainAttributeCreatesHostOnlyCookie(): void
     {
         $this->jar->extractCookies(
@@ -1016,6 +1061,9 @@ class CookieJarTest extends TestCase
             ['fra.de.example.com', 'EXAMPLE.com', true],
             ['www.EXAMPLE.com', 'www.example.com', true],
             ['www.EXAMPLE.com', 'www.example.COM', true],
+            ['evil.192.168.0.1', '192.168.0.1', false],
+            ['evil.1', '1', false],
+            ['192.168.0.1', '192.168.0.1', true],
         ];
     }
 
