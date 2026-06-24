@@ -524,6 +524,54 @@ class RedirectMiddlewareTest extends TestCase
         self::assertEquals(0, $modifiedRequest->getBody()->getSize());
     }
 
+    public function testPreservesQueryMethodAndBodyOnNonStrictRedirect()
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('QUERY', 'http://example.com', [], 'a=b');
+        $response = $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('QUERY', $mock->getLastRequest()->getMethod());
+        self::assertSame('a=b', (string) $mock->getLastRequest()->getBody());
+    }
+
+    public function testDowngradesQueryToBodilessGetOnSeeOther()
+    {
+        $mock = new MockHandler([
+            new Response(303, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('QUERY', 'http://example.com', [], 'a=b');
+        $response = $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('GET', $mock->getLastRequest()->getMethod());
+        self::assertSame('', (string) $mock->getLastRequest()->getBody());
+    }
+
+    public function testDowngradesPostToBodilessGetOnNonStrictRedirect()
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('POST', 'http://example.com', [], 'a=b');
+        $response = $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('GET', $mock->getLastRequest()->getMethod());
+        self::assertSame('', (string) $mock->getLastRequest()->getBody());
+    }
+
     /**
      * @return array
      */

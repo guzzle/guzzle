@@ -169,11 +169,19 @@ class RedirectMiddleware
         if ($statusCode == 303
             || ($statusCode <= 302 && !$options['allow_redirects']['strict'])
         ) {
-            $safeMethods = ['GET', 'HEAD', 'OPTIONS'];
             $requestMethod = $request->getMethod();
 
-            $modify['method'] = in_array($requestMethod, $safeMethods) ? $requestMethod : 'GET';
-            $modify['body'] = '';
+            // RFC 10008 defines QUERY as a safe, idempotent method that carries
+            // a request body, so a non-strict 301/302 redirect keeps both the
+            // method and the body instead of downgrading to GET like the other
+            // body-enclosing methods. A 303 still resolves to a body-less GET,
+            // per RFC 10008 section 2.4.
+            if ($requestMethod !== 'QUERY' || $statusCode == 303) {
+                $safeMethods = ['GET', 'HEAD', 'OPTIONS'];
+
+                $modify['method'] = in_array($requestMethod, $safeMethods) ? $requestMethod : 'GET';
+                $modify['body'] = '';
+            }
         }
 
         $uri = self::redirectUri($request, $response, $protocols);

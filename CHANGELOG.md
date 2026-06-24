@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.12.4 - Upcoming
+
+### Fixed
+
+- Preserve the `QUERY` method and request body when following a non-strict 301/302 redirect (RFC 10008)
+
+
 ## 7.12.3 - 2026-06-23
 
 ### Changed
