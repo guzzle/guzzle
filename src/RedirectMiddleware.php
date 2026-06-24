@@ -188,19 +188,21 @@ class RedirectMiddleware
         if ($statusCode == 303
             || ($statusCode <= 302 && !$options['allow_redirects']['strict'])
         ) {
-            $safeMethods = ['GET', 'HEAD', 'OPTIONS'];
             $requestMethod = $request->getMethod();
-            $streamFactory = $options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory();
-            if (!$streamFactory instanceof StreamFactoryInterface) {
-                throw new \InvalidArgumentException(\sprintf(
-                    '%s must be an instance of %s',
-                    RequestOptions::STREAM_FACTORY,
-                    StreamFactoryInterface::class
-                ));
-            }
 
-            $modify['method'] = \in_array($requestMethod, $safeMethods, true) ? $requestMethod : 'GET';
-            $modify['body'] = $streamFactory->createStream('');
+            if ($requestMethod !== 'QUERY' || !\in_array($statusCode, [301, 302], true)) {
+                $streamFactory = $options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory();
+                if (!$streamFactory instanceof StreamFactoryInterface) {
+                    throw new \InvalidArgumentException(\sprintf(
+                        '%s must be an instance of %s',
+                        RequestOptions::STREAM_FACTORY,
+                        StreamFactoryInterface::class
+                    ));
+                }
+
+                $modify['method'] = \in_array($requestMethod, ['GET', 'HEAD', 'OPTIONS'], true) ? $requestMethod : 'GET';
+                $modify['body'] = $streamFactory->createStream('');
+            }
         }
 
         $uriFactory = $options[RequestOptions::URI_FACTORY] ?? new HttpFactory();
