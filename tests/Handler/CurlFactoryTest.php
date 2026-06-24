@@ -398,6 +398,55 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider parsedProxyCredentialOptions
+     */
+    public function testPersistentRequireRejectsParsedProxyCredentialsBelowProxyCredentialFloor(string $version, array $options): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('fresh proxy tunnel connection');
+
+            self::createOnFactory($factory, $version, 'https://example.com', $options);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public function testPersistentRequireAllowsParsedProxyCredentialsAtProxyCredentialFloor(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+                'proxy' => 'http://username:password@proxy.example.com:8080',
+            ]);
+
+            self::assertInstanceOf(EasyHandle::class, $easy);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public static function parsedProxyCredentialOptions(): array
+    {
+        return [
+            'proxy url userinfo, connection-sharing floor' => ['8.12.0', ['proxy' => 'http://username:password@proxy.example.com:8080']],
+            'proxy url userinfo, affected curl' => ['8.19.0', ['proxy' => 'http://username:password@proxy.example.com:8080']],
+            'curl proxy credentials, affected curl' => ['8.19.0', ['proxy' => 'http://proxy.example.com:8080', 'curl' => [\CURLOPT_PROXYUSERPWD => 'username:password']]],
+        ];
+    }
+
     public function testCloseReleasesConfiguredCurlShareHandle(): void
     {
         self::skipIfCurlShareIsUnavailable();

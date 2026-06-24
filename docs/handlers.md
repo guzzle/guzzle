@@ -132,7 +132,8 @@ cache state without sharing SSL session cache state.
 `TransportSharing::HANDLER_REQUIRE` requires handler-lifetime transport
 sharing. Guzzle fails when it cannot select a cURL handler with cURL share
 support, when sharing cannot be configured, or when a request is routed to a
-handler that does not support sharing.
+handler that does not support sharing. Guzzle also fails when the installed
+libcurl version cannot safely share both DNS and SSL session cache state.
 
 `TransportSharing::PERSISTENT_PREFER` asks Guzzle to use the strongest sharing
 available in the current environment. Guzzle first tries persistent cURL share
@@ -158,26 +159,31 @@ sharing, Guzzle rejects request-level cURL options or proxy tunnel cases that
 require a fresh connection for safety.
 
 > [!IMPORTANT]
-> **Persistent connection sharing has two independent risks.**
+> **Persistent connection sharing carries two independent risks.**
 >
-> 1. *libcurl version.* Persistent connection sharing activates from libcurl
->    8.12.0. For a default `https://` request (default verification, no client
->    certificate, no proxy authentication) libcurl's connection-reuse matching is
->    correct at this floor. **mTLS client-certificate users should prefer libcurl
->    8.21.0 or newer**: below it, libcurl's reuse matching does not fully account
->    for client-certificate private-key options (CVE-2026-8932). Proxy
->    authentication is handled independently by Guzzle's proxy-tunnel sectioning.
-> 2. *Worker-global scope (independent of libcurl version).* The persistent pool
->    is keyed only by which cache types are shared and lives in process- or
->    thread-global state, so it is shared with any other code in the same worker
->    that enables persistent sharing — it **cannot be scoped to Guzzle alone**.
->    Enable it only where you control the whole worker (for example a dedicated
->    process or pool) or where worker-wide sharing is acceptable. Persistent
->    sharing requires PHP 8.5 or newer.
+> 1. *libcurl version: mTLS client certificates.* For a default `https://`
+>    request, meaning default verification with no client certificate and no
+>    proxy authentication, libcurl's connection-reuse matching is correct from
+>    the 8.12.0 floor. It is **not** complete for client-certificate private-key
+>    options until libcurl 8.21.0 (CVE-2026-8932), and Guzzle does not section
+>    direct `cert` / `ssl_key` requests the way it sections proxy tunnels. So on
+>    libcurl 8.12.0–8.20.x a worker that uses **different client-certificate
+>    identities for the same host** can reuse a connection authenticated with a
+>    different key. Enabling persistent sharing accepts that risk; to avoid it,
+>    run libcurl 8.21.0+ or do not mix client-certificate identities under one
+>    pool. `HANDLER_*` narrows the exposure to your own code but does not fix the
+>    libcurl bug. Proxy authentication is unaffected: Guzzle forces a fresh
+>    tunnel, or rejects the request under `PERSISTENT_REQUIRE`.
+> 2. *Worker-global scope, at every libcurl version.* The persistent pool is keyed
+>    only by which cache types it shares and lives in process- or thread-global
+>    state, so it **cannot be scoped to Guzzle alone**: any other code in the
+>    worker that enables persistent sharing draws from the same pool. Enable it
+>    only when you control the whole worker, or when worker-wide sharing is
+>    acceptable. It requires PHP 8.5 or newer.
 >
-> For connection reuse that stays private to your code, use
-> `TransportSharing::HANDLER_*` with a long-lived client, especially under
-> long-running runtimes (RoadRunner, Swoole, FrankenPHP worker mode).
+> For connection reuse that stays private to your code, prefer `HANDLER_*` with a
+> long-lived client, especially under long-running runtimes such as RoadRunner,
+> Swoole, or FrankenPHP worker mode.
 
 Transport sharing does not share cookies. Cookies are managed by Guzzle
 middleware.
