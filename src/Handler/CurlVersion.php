@@ -31,7 +31,7 @@ final class CurlVersion
 
     private const SSL_SESSION_SHARING_VERSION = '8.6.0';
 
-    private const CONNECTION_SHARING_VERSION = '8.20.0';
+    private const CONNECTION_SHARING_VERSION = '8.12.0';
 
     // curl 7.83.1 added proxy TLS-SRP to the connection-reuse match
     // (CVE-2022-27782); the proxy client certificate was matched from 7.52.0,

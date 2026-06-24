@@ -172,7 +172,7 @@ class CurlShareHandleStateTest extends TestCase
     {
         self::skipIfCurlShareIsUnavailable();
         self::setVersionInfo([
-            'version' => '8.19.0',
+            'version' => '8.11.0',
             'features' => self::curlSslFeature(),
         ]);
 
@@ -187,7 +187,7 @@ class CurlShareHandleStateTest extends TestCase
     public function testPersistentRequireRejectsBelowConnectionSharingFloor(): void
     {
         self::setVersionInfo([
-            'version' => '8.19.0',
+            'version' => '8.11.0',
             'features' => self::curlSslFeature(),
         ]);
 
@@ -235,7 +235,7 @@ class CurlShareHandleStateTest extends TestCase
     public function testPersistentPreferUsesPersistentSharingWhenAvailable(): void
     {
         self::setVersionInfo([
-            'version' => '8.20.0',
+            'version' => '8.12.0',
             'features' => self::curlSslFeature(),
         ]);
         self::skipIfPersistentCurlShareIsUnavailable();
@@ -284,7 +284,7 @@ class CurlShareHandleStateTest extends TestCase
     public function testPersistentRequireUsesPersistentSharingWhenAvailable(): void
     {
         self::setVersionInfo([
-            'version' => '8.20.0',
+            'version' => '8.12.0',
             'features' => self::curlSslFeature(),
         ]);
         self::skipIfPersistentCurlShareIsUnavailable();

@@ -198,6 +198,22 @@ class CurlVersionTest extends TestCase
         self::assertFalse(CurlVersion::supportsConnectionSharing());
 
         self::setVersionInfo([
+            'version' => '8.11.0',
+            'features' => self::curlSslFeature(),
+        ]);
+        self::assertTrue(CurlVersion::supportsHandlerSharing());
+        self::assertTrue(CurlVersion::supportsSslSessionSharing());
+        self::assertFalse(CurlVersion::supportsConnectionSharing());
+
+        self::setVersionInfo([
+            'version' => '8.12.0',
+            'features' => self::curlSslFeature(),
+        ]);
+        self::assertTrue(CurlVersion::supportsHandlerSharing());
+        self::assertTrue(CurlVersion::supportsSslSessionSharing());
+        self::assertTrue(CurlVersion::supportsConnectionSharing());
+
+        self::setVersionInfo([
             'version' => '8.20.0',
             'features' => self::curlSslFeature(),
         ]);
