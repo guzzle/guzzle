@@ -662,6 +662,15 @@ including an `https` to `http` downgrade. This matches the
 If you relied on the full URL crossing origins, collect it with the
 `on_redirect` setting, or disable automatic redirects and follow them manually.
 
+#### Automatic Redirect Status Codes
+
+Guzzle now follows only the redirect status codes 301, 302, 303, 307, and 308
+when `allow_redirects` is enabled. Other 3xx responses, including 300, 304, 305,
+and 306, are returned to the caller unchanged even when they carry a Location
+header, in line with RFC 9110 section 15.4. Code that relied on Guzzle following
+one of those responses should handle it directly or inspect it with an
+on_redirect callback.
+
 #### Host-Only Cookies
 
 Cookies extracted from responses without a `Domain` attribute are now stored as

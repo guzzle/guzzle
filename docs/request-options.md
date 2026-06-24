@@ -65,6 +65,9 @@ You can also pass an associative array containing the following key value pairs:
 > [!NOTE]
 > When tracking redirects the `X-Guzzle-Redirect-History` header will exclude the initial request's URI and the `X-Guzzle-Redirect-Status-History` header will exclude the final status code. Redirect history is stored in response headers, and those header names are not reserved by Guzzle. If the final response already contains headers with these names, including when no redirect occurs, those values may be server-provided. Do not use these headers as a security boundary. For security-sensitive redirect history, collect values with the `on_redirect` option instead.
 
+> [!NOTE]
+> Guzzle follows only the redirect status codes 301, 302, 303, 307, and 308. Other 3xx responses are returned as-is even when they include a Location header.
+
 ```php
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;

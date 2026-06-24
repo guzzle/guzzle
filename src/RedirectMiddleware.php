@@ -90,7 +90,7 @@ class RedirectMiddleware
      */
     public function checkRedirect(RequestInterface $request, array $options, ResponseInterface $response)
     {
-        if (\strpos((string) $response->getStatusCode(), '3') !== 0
+        if (!\in_array($response->getStatusCode(), [301, 302, 303, 307, 308], true)
             || !$response->hasHeader('Location')
         ) {
             return $response;
