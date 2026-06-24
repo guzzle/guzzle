@@ -142,7 +142,7 @@ Guzzle falls back to `TransportSharing::HANDLER_PREFER`. If handler-lifetime
 sharing is also unavailable, Guzzle continues without sharing.
 
 Persistent cURL sharing requires PHP persistent cURL share handle support and
-libcurl 8.20.0 or newer because persistent sharing includes libcurl connection
+libcurl 8.12.0 or newer because persistent sharing includes libcurl connection
 cache state. `TransportSharing::PERSISTENT_PREFER` falls back to
 handler-lifetime sharing when persistent connection sharing is unavailable.
 `TransportSharing::PERSISTENT_REQUIRE` fails when persistent connection sharing
@@ -156,6 +156,28 @@ handler.
 Because `TransportSharing::PERSISTENT_REQUIRE` requires connection cache
 sharing, Guzzle rejects request-level cURL options or proxy tunnel cases that
 require a fresh connection for safety.
+
+> [!IMPORTANT]
+> **Persistent connection sharing has two independent risks.**
+>
+> 1. *libcurl version.* Persistent connection sharing activates from libcurl
+>    8.12.0. For a default `https://` request (default verification, no client
+>    certificate, no proxy authentication) libcurl's connection-reuse matching is
+>    correct at this floor. **mTLS client-certificate users should prefer libcurl
+>    8.21.0 or newer**: below it, libcurl's reuse matching does not fully account
+>    for client-certificate private-key options (CVE-2026-8932). Proxy
+>    authentication is handled independently by Guzzle's proxy-tunnel sectioning.
+> 2. *Worker-global scope (independent of libcurl version).* The persistent pool
+>    is keyed only by which cache types are shared and lives in process- or
+>    thread-global state, so it is shared with any other code in the same worker
+>    that enables persistent sharing — it **cannot be scoped to Guzzle alone**.
+>    Enable it only where you control the whole worker (for example a dedicated
+>    process or pool) or where worker-wide sharing is acceptable. Persistent
+>    sharing requires PHP 8.5 or newer.
+>
+> For connection reuse that stays private to your code, use
+> `TransportSharing::HANDLER_*` with a long-lived client, especially under
+> long-running runtimes (RoadRunner, Swoole, FrankenPHP worker mode).
 
 Transport sharing does not share cookies. Cookies are managed by Guzzle
 middleware.

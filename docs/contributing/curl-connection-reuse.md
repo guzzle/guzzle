@@ -87,11 +87,24 @@ What a share handle can share, and the libcurl floor Guzzle requires for each
 | Share handles usable at all | — | 7.35.0 | `HANDLER_SHARING_VERSION` |
 | DNS cache | `DNS` | 7.35.0 | (with handler sharing) |
 | TLS session cache | `SSL_SESSION` | 8.6.0 | `SSL_SESSION_SHARING_VERSION` |
-| Connection cache | `CONNECT` | 8.20.0 | `CONNECTION_SHARING_VERSION` |
+| Connection cache | `CONNECT` | 8.12.0 | `CONNECTION_SHARING_VERSION` |
 
-The connection cache is shared only on 8.0 and only from 8.20.0; **7.x never
-shares the connection cache.** Each floor is the version at which that share
-class became safe (§7).
+The connection cache is shared only on 8.0 and only from 8.12.0; **7.x never
+shares the connection cache.** The DNS/handler and TLS-session floors are the
+version at which that share class became safe (§7). The connection-cache floor is
+set differently: **8.12.0** is the lowest libcurl at which (a) every
+connection-reuse / TLS-session-reuse defect reachable by a *default* `https://`
+request — default verification, no client certificate, no proxy authentication —
+is fixed (the binding one is CVE-2024-0853, fixed 8.6.0), and (b) libcurl's
+session-cache rewrite (curl PR #16245) makes the co-shared `SSL_SESSION` lock
+actually resume sessions across easy handles; below 8.12.0 the share is accepted
+but sessions stay largely handle-local. The proxy-credential reuse fixes that
+would otherwise argue for 8.20.0 are sectioned independently
+(`PROXY_CREDENTIAL_REUSE_VERSION`, §8), so they do not hold this floor up. Direct
+mTLS client-certificate reuse is incomplete below 8.21.0 (CVE-2026-8932) — a
+documented caveat for client-cert users, not a floor-mover for the majority.
+7.83.1 (CVE-2022-27782) is the absolute hard floor below which a shared
+connection cache must never be used.
 
 ## 4. The proxy-tunnel credential hazard (why `proxyTunnelSignature` exists)
 
@@ -227,6 +240,13 @@ itself, so `proxyTunnelSignature()` returns a shared delegated-owner sentinel �
 **except** when a literal `Proxy-Authorization` header is present, which always
 sections because libcurl can never key on an opaque request header (§5).
 
+This proxy-credential floor (8.20.0) is **distinct** from the connection-cache
+sharing floor (`CONNECTION_SHARING_VERSION = 8.12.0`, §3). The former gates how
+Guzzle sections proxy tunnels; the latter gates whether persistent sharing puts
+the connection cache on the share handle at all. They are deliberately decoupled:
+the proxy hazard 8.20.0 addresses is sectioned by Guzzle regardless of the
+connection floor, so it does not hold the connection floor up to 8.20.0.
+
 ## 9. How the tests enforce this
 
 `tests/Handler/CurlFactoryTest.php` covers the signature by channel and the
@@ -258,7 +278,7 @@ TLS credential below 7.83.1 and not at or above it.
 - `usesProxyTunnel()` must treat `http://` + a non-empty `CURLOPT_CONNECT_TO` as
   a tunnel.
 - Share the TLS session cache only from 8.6.0 and the connection cache only from
-  8.20.0.
+  8.12.0 (see §3 for why 8.12.0, not 8.20.0).
 - Under a configured share handle, force a fresh tunnel for a proxy TLS
   credential (client cert / TLS-SRP) below 7.83.1, mirroring the signature path;
   the 7.83.1 gate keeps it below the version where `PERSISTENT_REQUIRE` would
@@ -268,7 +288,11 @@ TLS credential below 7.83.1 and not at or above it.
 
 **curl** — CVE-2026-3784 (proxy `CONNECT` credential reuse), CVE-2016-5420
 (proxy client-cert reuse), CVE-2022-27782 (TLS / TLS-SRP config not compared on
-reuse), CVE-2024-0853 (client cert / OCSP on session reuse). Source of record:
+reuse), CVE-2024-0853 (client cert / OCSP on session reuse),
+CVE-2026-6253/6429/7168 (proxy-credential leaks on reuse, fixed 8.20.0),
+CVE-2026-8932 (incomplete mTLS private-key matching on reuse, fixed 8.21.0); the
+8.12.0 connection-cache floor also draws on curl's 8.12.0 session-cache rewrite
+([curl PR #16245](https://github.com/curl/curl/pull/16245)). Source of record:
 `lib/url.c` (`proxy_info_matches`, the connection matcher, `tunnel_proxy`) and
 `lib/vtls/` (`ssl_primary_config` vs `ssl_config_data`, the session cache and
 `ssl_peer_key`). Docs:

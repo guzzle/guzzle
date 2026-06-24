@@ -104,7 +104,7 @@ class UtilsTest extends TestCase
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '8.20.0',
+            'version' => '8.12.0',
             'features' => self::curlSslFeature(),
         ]);
 
