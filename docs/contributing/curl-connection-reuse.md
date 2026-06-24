@@ -94,18 +94,18 @@ shares the connection cache.** The DNS/handler and TLS-session floors are each
 the version at which that share class became safe (§7). The connection-cache
 floor is set differently. **8.12.0** is the lowest libcurl that meets two
 conditions. First, it fixes every connection-reuse and TLS-session-reuse defect
-reachable by a *default* `https://` request, meaning default verification with no
-client certificate and no proxy authentication; the binding fix is CVE-2024-0853,
-released in 8.6.0. Second, its session-cache rewrite in curl PR #16245 lets the co-shared
-`SSL_SESSION` lock resume sessions across easy handles, where before 8.12.0 the
-share is accepted but sessions stay largely handle-local. Proxy-credential reuse
-fixes that would otherwise argue for 8.20.0 do not hold this floor up, because
-Guzzle sections proxy credentials independently under
-`PROXY_CREDENTIAL_REUSE_VERSION` (§8). Direct mTLS client-certificate reuse stays
-incomplete below 8.21.0 under CVE-2026-8932, a documented caveat for client-cert
-users rather than a floor-mover for the majority. The absolute hard floor is
-7.83.1, from CVE-2022-27782, below which a shared connection cache must never be
-used.
+reachable by a *default* `https://` request, meaning default verification with
+no client certificate and no proxy authentication; the binding fix is
+CVE-2024-0853, released in 8.6.0. Second, its session-cache rewrite in curl PR
+#16245 lets the co-shared `SSL_SESSION` lock resume sessions across easy
+handles, where before 8.12.0 the share is accepted but sessions stay largely
+handle-local. Proxy-credential reuse fixes that would otherwise argue for 8.20.0
+do not hold this floor up, because Guzzle sections proxy credentials
+independently under `PROXY_CREDENTIAL_REUSE_VERSION` (§8). Direct mTLS
+client-certificate reuse stays incomplete below 8.21.0 under CVE-2026-8932, a
+documented caveat for client-cert users rather than a floor-mover for the
+majority. The absolute hard floor is 7.83.1, from CVE-2022-27782, below which a
+shared connection cache must never be used.
 
 ## 4. The proxy-tunnel credential hazard (why `proxyTunnelSignature` exists)
 
@@ -205,9 +205,9 @@ from 7.52.0 and TLS-SRP only from 7.83.1 (CVE-2022-27782), so both are keyed
 under the single 7.83.1 floor. The floor matters more here than for the
 signature, because `forceFreshConnectionForAuthenticatedProxy` *throws* under
 `PERSISTENT_REQUIRE` rather than degrading to a fresh connection, and persistent
-sharing, and therefore that throw, is reachable from `CONNECTION_SHARING_VERSION`
-at 8.12.0. So the relationship between each channel's gate and 8.12.0 decides
-whether the throw can fire:
+sharing, and therefore that throw, is reachable from
+`CONNECTION_SHARING_VERSION` at 8.12.0. So the relationship between each
+channel's gate and 8.12.0 decides whether the throw can fire:
 
 - The proxy TLS credential gate at 7.83.1 sits strictly *below* 8.12.0, so a
   proxy client cert or TLS-SRP only forces fresh on builds older than 7.83.1,
@@ -222,12 +222,12 @@ whether the throw can fire:
   `forceFreshConnectionForAuthenticatedProxy` and **throws**: persistent sharing
   is active there, but libcurl on those builds does not yet key reuse on the
   proxy credential, so the only safe options are a fresh connection or, under
-  `PERSISTENT_REQUIRE`, rejection. This is intended; it rejects unsafe persistent
-  reuse rather than silently sharing a tunnel across credentials, and it became
-  reachable when the connection-sharing floor moved from 8.20.0 down to 8.12.0.
-  From 8.20.0 the credential is keyed by libcurl, so the throw no longer applies
-  to parsed credentials; the literal-header case still does, since libcurl can
-  never key on an opaque request header.
+  `PERSISTENT_REQUIRE`, rejection. This is intended; it rejects unsafe
+  persistent reuse rather than silently sharing a tunnel across credentials, and
+  it became reachable when the connection-sharing floor moved from 8.20.0 down
+  to 8.12.0. From 8.20.0 the credential is keyed by libcurl, so the throw no
+  longer applies to parsed credentials; the literal-header case still does,
+  since libcurl can never key on an opaque request header.
 
 **SSL session sharing floor = 8.6.0 — why it is safe.** Sharing the TLS session
 cache could, in theory, let two handles resume each other's TLS session across
@@ -281,14 +281,14 @@ sections because libcurl can never key on an opaque request header (§5).
 This proxy-credential floor (8.20.0) is **distinct** from the connection-cache
 sharing floor (`CONNECTION_SHARING_VERSION = 8.12.0`, §3). The former gates how
 Guzzle sections proxy tunnels; the latter gates whether persistent sharing puts
-the connection cache on the share handle at all. They are deliberately decoupled:
-the proxy hazard 8.20.0 addresses is mitigated by Guzzle regardless of the
-connection floor, so it does not hold the connection floor up to 8.20.0. The
-mechanism depends on whether a share handle is configured (§7): with no share
-handle Guzzle sections the pool via `proxyTunnelSignature()`, while with a
+the connection cache on the share handle at all. They are deliberately
+decoupled: the proxy hazard 8.20.0 addresses is mitigated by Guzzle regardless
+of the connection floor, so it does not hold the connection floor up to 8.20.0.
+The mechanism depends on whether a share handle is configured (§7): with no
+share handle Guzzle sections the pool via `proxyTunnelSignature()`, while with a
 configured share handle, which persistent sharing always uses, it instead forces
-a fresh tunnel with `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE`, or rejects
-the request under `PERSISTENT_REQUIRE`.
+a fresh tunnel with `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE`, or
+rejects the request under `PERSISTENT_REQUIRE`.
 
 ## 9. How the tests enforce this
 

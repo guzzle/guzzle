@@ -171,19 +171,19 @@ require a fresh connection for safety.
 >    identities for the same host** can reuse a connection authenticated with a
 >    different key. Enabling persistent sharing accepts that risk; to avoid it,
 >    run libcurl 8.21.0+ or do not mix client-certificate identities under one
->    pool. `HANDLER_*` narrows the exposure to your own code but does not fix the
->    libcurl bug. Proxy authentication is unaffected: Guzzle forces a fresh
+>    pool. `HANDLER_*` narrows the exposure to your own code but does not fix
+>    the libcurl bug. Proxy authentication is unaffected: Guzzle forces a fresh
 >    tunnel, or rejects the request under `PERSISTENT_REQUIRE`.
-> 2. *Worker-global scope, at every libcurl version.* The persistent pool is keyed
->    only by which cache types it shares and lives in process- or thread-global
->    state, so it **cannot be scoped to Guzzle alone**: any other code in the
->    worker that enables persistent sharing draws from the same pool. Enable it
->    only when you control the whole worker, or when worker-wide sharing is
->    acceptable. It requires PHP 8.5 or newer.
+> 2. *Worker-global scope, at every libcurl version.* The persistent pool is
+>    keyed only by which cache types it shares and lives in process- or
+>    thread-global state, so it **cannot be scoped to Guzzle alone**: any other
+>    code in the worker that enables persistent sharing draws from the same
+>    pool. Enable it only when you control the whole worker, or when worker-wide
+>    sharing is acceptable. It requires PHP 8.5 or newer.
 >
-> For connection reuse that stays private to your code, prefer `HANDLER_*` with a
-> long-lived client, especially under long-running runtimes such as RoadRunner,
-> Swoole, or FrankenPHP worker mode.
+> For connection reuse that stays private to your code, prefer `HANDLER_*` with
+> a long-lived client, especially under long-running runtimes such as
+> RoadRunner, Swoole, or FrankenPHP worker mode.
 
 Transport sharing does not share cookies. Cookies are managed by Guzzle
 middleware.
