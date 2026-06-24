@@ -178,7 +178,7 @@ class RedirectMiddleware
 
     public function modifyRequest(RequestInterface $request, array $options, ResponseInterface $response): RequestInterface
     {
-        $modify = self::resolveRedirectMethodBody($request, $options, $response);
+        $modify = self::getRedirectRequestModifiers($request, $options, $response);
         $protocols = $options['allow_redirects']['protocols'];
 
         $uriFactory = $options[RequestOptions::URI_FACTORY] ?? new HttpFactory();
@@ -242,7 +242,7 @@ class RedirectMiddleware
     /**
      * @return array{method?: string, body?: StreamInterface}
      */
-    private static function resolveRedirectMethodBody(
+    private static function getRedirectRequestModifiers(
         RequestInterface $request,
         array $options,
         ResponseInterface $response
