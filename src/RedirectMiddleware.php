@@ -12,6 +12,7 @@ use GuzzleHttp\Psr7\HttpFactory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -90,7 +91,7 @@ class RedirectMiddleware
      */
     public function checkRedirect(RequestInterface $request, array $options, ResponseInterface $response)
     {
-        if (!\in_array($response->getStatusCode(), [301, 302, 303, 307, 308], true)
+        if (!self::isRedirectStatusCode($response->getStatusCode())
             || !$response->hasHeader('Location')
         ) {
             return $response;
@@ -177,33 +178,8 @@ class RedirectMiddleware
 
     public function modifyRequest(RequestInterface $request, array $options, ResponseInterface $response): RequestInterface
     {
-        // Request modifications to apply.
-        $modify = [];
+        $modify = self::resolveRedirectMethodBody($request, $options, $response);
         $protocols = $options['allow_redirects']['protocols'];
-
-        // Use a GET request if this is an entity enclosing request and we are
-        // not forcing RFC compliance, but rather emulating what all browsers
-        // would do.
-        $statusCode = $response->getStatusCode();
-        if ($statusCode == 303
-            || ($statusCode <= 302 && !$options['allow_redirects']['strict'])
-        ) {
-            $requestMethod = $request->getMethod();
-
-            if ($requestMethod !== 'QUERY' || !\in_array($statusCode, [301, 302], true)) {
-                $streamFactory = $options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory();
-                if (!$streamFactory instanceof StreamFactoryInterface) {
-                    throw new \InvalidArgumentException(\sprintf(
-                        '%s must be an instance of %s',
-                        RequestOptions::STREAM_FACTORY,
-                        StreamFactoryInterface::class
-                    ));
-                }
-
-                $modify['method'] = \in_array($requestMethod, ['GET', 'HEAD', 'OPTIONS'], true) ? $requestMethod : 'GET';
-                $modify['body'] = $streamFactory->createStream('');
-            }
-        }
 
         $uriFactory = $options[RequestOptions::URI_FACTORY] ?? new HttpFactory();
         if (!$uriFactory instanceof UriFactoryInterface) {
@@ -256,6 +232,47 @@ class RedirectMiddleware
         }
 
         return Psr7\Utils::modifyRequest($request, $modify);
+    }
+
+    private static function isRedirectStatusCode(int $statusCode): bool
+    {
+        return \in_array($statusCode, [301, 302, 303, 307, 308], true);
+    }
+
+    /**
+     * @return array{method?: string, body?: StreamInterface}
+     */
+    private static function resolveRedirectMethodBody(
+        RequestInterface $request,
+        array $options,
+        ResponseInterface $response
+    ): array {
+        $statusCode = $response->getStatusCode();
+        if ($statusCode !== 303
+            && ($statusCode > 302 || $options['allow_redirects']['strict'])
+        ) {
+            return [];
+        }
+
+        $requestMethod = $request->getMethod();
+
+        if ($requestMethod === 'QUERY' && \in_array($statusCode, [301, 302], true)) {
+            return [];
+        }
+
+        $streamFactory = $options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory();
+        if (!$streamFactory instanceof StreamFactoryInterface) {
+            throw new \InvalidArgumentException(\sprintf(
+                '%s must be an instance of %s',
+                RequestOptions::STREAM_FACTORY,
+                StreamFactoryInterface::class
+            ));
+        }
+
+        return [
+            'method' => \in_array($requestMethod, ['GET', 'HEAD', 'OPTIONS'], true) ? $requestMethod : 'GET',
+            'body' => $streamFactory->createStream(''),
+        ];
     }
 
     /**
