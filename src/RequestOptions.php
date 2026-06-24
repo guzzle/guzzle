@@ -27,7 +27,8 @@ final class RequestOptions
      * redirects by default when the default redirect middleware is present.
      * This option only works if your handler has the RedirectMiddleware. When
      * passing an associative array, you can provide the following key value
-     * pairs:
+     * pairs. Only 301, 302, 303, 307, and 308 responses with a Location header
+     * are followed.
      *
      * - max: (int, default=5) maximum number of allowed redirects.
      * - strict: (bool, default=false) Set to true to use strict redirects

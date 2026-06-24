@@ -44,14 +44,13 @@ class RedirectMiddlewareTest extends TestCase
 
     public function testIgnoresWhenNoLocation(): void
     {
-        $response = new Response(304);
+        $response = new Response(301);
         $stack = new HandlerStack(new MockHandler([$response]));
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
-        $promise = $handler($request, []);
-        $response = $promise->wait();
-        self::assertSame(304, $response->getStatusCode());
+        $response = $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
+        self::assertSame(301, $response->getStatusCode());
     }
 
     public function testRedirectsWithAbsoluteUri(): void
@@ -382,7 +381,7 @@ class RedirectMiddlewareTest extends TestCase
             new Response(301, ['Location' => 'http://test.com']),
             new Response(302, ['Location' => 'http://test.com']),
             new Response(303, ['Location' => 'http://test.com']),
-            new Response(304, ['Location' => 'http://test.com']),
+            new Response(307, ['Location' => 'http://test.com']),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
@@ -393,6 +392,76 @@ class RedirectMiddlewareTest extends TestCase
         $this->expectException(TooManyRedirectsException::class);
         $this->expectExceptionMessage('Will not follow more than 3 redirects');
         $promise->wait();
+    }
+
+    /**
+     * @dataProvider nonRedirectStatusWithLocationProvider
+     */
+    public function testDoesNotFollowNonRedirectStatusWithLocation(int $statusCode): void
+    {
+        $mock = new MockHandler([
+            new Response($statusCode, ['Location' => 'http://example.com/next']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $called = false;
+
+        $response = $handler(new Request('GET', 'http://example.com'), [
+            'allow_redirects' => [
+                'max' => 2,
+                'track_redirects' => true,
+                'on_redirect' => static function () use (&$called): void {
+                    $called = true;
+                },
+            ],
+        ])->wait();
+
+        self::assertSame($statusCode, $response->getStatusCode());
+        self::assertFalse($called);
+        self::assertSame([], $response->getHeader(RedirectMiddleware::HISTORY_HEADER));
+    }
+
+    public static function nonRedirectStatusWithLocationProvider(): array
+    {
+        return [
+            '300' => [300],
+            '304' => [304],
+            '305' => [305],
+            '306' => [306],
+        ];
+    }
+
+    /**
+     * @dataProvider redirectStatusWithLocationProvider
+     */
+    public function testFollowsRedirectStatusWithLocation(int $statusCode): void
+    {
+        $mock = new MockHandler([
+            new Response($statusCode, ['Location' => 'http://example.com/next']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+
+        $response = $handler(new Request('GET', 'http://example.com'), [
+            'allow_redirects' => ['max' => 2],
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('http://example.com/next', (string) $mock->getLastRequest()->getUri());
+    }
+
+    public static function redirectStatusWithLocationProvider(): array
+    {
+        return [
+            '301' => [301],
+            '302' => [302],
+            '303' => [303],
+            '307' => [307],
+            '308' => [308],
+        ];
     }
 
     public function testTooManyRedirectsExceptionHasResponse(): void
