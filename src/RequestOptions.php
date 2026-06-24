@@ -33,7 +33,9 @@ final class RequestOptions
      * - max: (int, default=5) maximum number of allowed redirects.
      * - strict: (bool, default=false) Set to true to use strict redirects
      *   meaning redirect POST requests with POST requests vs. doing what most
-     *   browsers do which is redirect POST requests with GET requests
+     *   browsers do which is redirect POST requests with GET requests. The
+     *   QUERY method keeps its method and body across non-strict 301 and 302
+     *   redirects, and a 303 redirect is followed with a body-less GET.
      * - referer: (bool, default=false) Set to true to enable the Referer
      *   header.
      * - protocols: (non-empty-array<array-key, 'http'|'https'>,

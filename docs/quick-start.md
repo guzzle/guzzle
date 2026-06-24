@@ -343,7 +343,7 @@ Guzzle will automatically follow redirects unless you tell it not to. You can cu
 
 - Set to `true` to enable normal redirects with a maximum number of 5 redirects. This is the default setting.
 - Set to `false` to disable redirects.
-- Pass an associative array containing the 'max' key to specify the maximum number of redirects and optionally provide a 'strict' key value to specify whether or not to use strict RFC compliant redirects (meaning redirect POST requests with POST requests vs. doing what most browsers do which is redirect POST requests with GET requests).
+- Pass an associative array containing the 'max' key to specify the maximum number of redirects and optionally provide a 'strict' key value to specify whether or not to use strict RFC compliant redirects (meaning redirect POST requests with POST requests vs. doing what most browsers do which is redirect POST requests with GET requests). The QUERY method keeps its method and body across non-strict 301 and 302 redirects, and a 303 redirect is followed with GET.
 
 See the [`allow_redirects` option](request-options.md#allow_redirects) for cross-origin redirect credential behavior.
 

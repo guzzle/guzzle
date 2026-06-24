@@ -978,6 +978,247 @@ class RedirectMiddlewareTest extends TestCase
     }
 
     /**
+     * @dataProvider queryRedirectStatusProvider
+     */
+    public function testPreservesQueryMethodAndBodyOnRedirect(int $statusCode): void
+    {
+        $mock = new MockHandler([
+            new Response($statusCode, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('QUERY', 'http://example.com', [
+            'Content-Type' => 'application/json',
+        ], '{"q":"foo"}');
+
+        $response = $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+        $lastRequest = $mock->getLastRequest();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('QUERY', $lastRequest->getMethod());
+        self::assertSame('http://example.com/foo', (string) $lastRequest->getUri());
+        self::assertSame('{"q":"foo"}', (string) $lastRequest->getBody());
+        self::assertSame('application/json', $lastRequest->getHeaderLine('Content-Type'));
+    }
+
+    public static function queryRedirectStatusProvider(): array
+    {
+        return [
+            '301' => [301],
+            '302' => [302],
+            '307' => [307],
+            '308' => [308],
+        ];
+    }
+
+    /**
+     * @dataProvider queryMovedRedirectStatusProvider
+     */
+    public function testPreservesQueryMethodAndBodyOnStrictRedirect(int $statusCode): void
+    {
+        $mock = new MockHandler([
+            new Response($statusCode, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('QUERY', 'http://example.com', [], 'a=b');
+
+        $response = $handler($request, [
+            'allow_redirects' => ['max' => 2, 'strict' => true],
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('QUERY', $mock->getLastRequest()->getMethod());
+        self::assertSame('a=b', (string) $mock->getLastRequest()->getBody());
+    }
+
+    public static function queryMovedRedirectStatusProvider(): array
+    {
+        return [
+            '301' => [301],
+            '302' => [302],
+        ];
+    }
+
+    public function testDowngradesQueryToBodilessGetOnSeeOther(): void
+    {
+        $mock = new MockHandler([
+            new Response(303, ['Location' => 'http://example.com/stored-query/42']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('QUERY', 'http://example.com', [
+            'Content-Type' => 'application/json',
+        ], '{"q":"foo"}');
+
+        $response = $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+        $lastRequest = $mock->getLastRequest();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('GET', $lastRequest->getMethod());
+        self::assertSame('http://example.com/stored-query/42', (string) $lastRequest->getUri());
+        self::assertSame('', (string) $lastRequest->getBody());
+    }
+
+    public function testDowngradesQueryToBodilessGetOnSeeOtherWithStrictRedirects(): void
+    {
+        $mock = new MockHandler([
+            new Response(303, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('QUERY', 'http://example.com', [], 'a=b');
+
+        $response = $handler($request, [
+            'allow_redirects' => ['max' => 2, 'strict' => true],
+        ])->wait();
+        $lastRequest = $mock->getLastRequest();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('GET', $lastRequest->getMethod());
+        self::assertSame('', (string) $lastRequest->getBody());
+    }
+
+    /**
+     * @dataProvider nonCanonicalQueryMethodProvider
+     */
+    public function testDoesNotPreserveNonCanonicalQueryMethodOnNonStrictRedirect(string $method): void
+    {
+        $redirectMiddleware = new RedirectMiddleware(static function (): void {
+        });
+        $request = (new RedirectTestMethodRequest($method, 'http://example.com'))
+            ->withBody(Psr7\Utils::streamFor('a=b'));
+
+        $modifiedRequest = $redirectMiddleware->modifyRequest($request, [
+            'allow_redirects' => [
+                'protocols' => ['http', 'https'],
+                'strict' => false,
+                'referer' => false,
+            ],
+        ], new Response(302, ['Location' => 'http://example.com/foo']));
+
+        self::assertSame('GET', $modifiedRequest->getMethod());
+        self::assertSame('', (string) $modifiedRequest->getBody());
+    }
+
+    public static function nonCanonicalQueryMethodProvider(): array
+    {
+        return [
+            'query' => ['query'],
+            'Query' => ['Query'],
+            'QuErY' => ['QuErY'],
+        ];
+    }
+
+    public function testPreservedQueryRedirectDoesNotUseStreamFactory(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+
+        $response = $stack->resolve()(new Request('QUERY', 'http://example.com', [], 'a=b'), [
+            'allow_redirects' => ['max' => 2],
+            RequestOptions::STREAM_FACTORY => new \stdClass(),
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('QUERY', $mock->getLastRequest()->getMethod());
+        self::assertSame('a=b', (string) $mock->getLastRequest()->getBody());
+    }
+
+    public function testPreservedQueryRedirectBodyRewindFailureThrowsResponseException(): void
+    {
+        $previous = new \RuntimeException('cannot rewind');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            'tell' => static function (): int {
+                return 4;
+            },
+            'rewind' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://example.com/redirected']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('QUERY', 'http://example.com', [], $body);
+
+        try {
+            $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertNotInstanceOf(BadResponseException::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(302, $e->getResponse()->getStatusCode());
+            self::assertSame(
+                'Redirect failed because the request body could not be rewound',
+                $e->getMessage()
+            );
+            self::assertSame($previous, $e->getPrevious());
+        }
+    }
+
+    public function testQueryRedirectIsNotFollowedOnNotModified(): void
+    {
+        $mock = new MockHandler([
+            new Response(304, ['Location' => 'http://example.com/foo']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $called = false;
+        $request = new Request('QUERY', 'http://example.com', [], 'a=b');
+
+        $response = $handler($request, [
+            'allow_redirects' => [
+                'max' => 2,
+                'on_redirect' => static function () use (&$called): void {
+                    $called = true;
+                },
+            ],
+        ])->wait();
+
+        self::assertSame(304, $response->getStatusCode());
+        self::assertFalse($called);
+    }
+
+    public function testCrossOriginQueryRedirectStripsCredentialsButPreservesBody(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'https://other.example/search']),
+            static function (RequestInterface $request, array $options): ResponseInterface {
+                self::assertSame('QUERY', $request->getMethod());
+                self::assertSame('secret=query', (string) $request->getBody());
+                self::assertFalse($request->hasHeader('Authorization'));
+                self::assertFalse($request->hasHeader('Cookie'));
+                self::assertArrayNotHasKey('auth', $options);
+
+                return new Response(200);
+            },
+        ]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+
+        $client->send(new Request('QUERY', 'https://example.com/search', [
+            'Authorization' => 'Bearer token',
+            'Cookie' => 'session=abc',
+        ], 'secret=query'), ['auth' => 'custom']);
+    }
+
+    /**
      * Verifies how RedirectMiddleware::modifyRequest() modifies the method and body of a request issued when
      * encountering a redirect response.
      *

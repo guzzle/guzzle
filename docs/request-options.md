@@ -52,7 +52,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - max: (int, default=5) maximum number of allowed redirects.
 
-- strict: (bool, default=false) Set to true to use strict redirects. Strict RFC compliant redirects mean that POST redirect requests are sent as POST requests vs. doing what most browsers do which is redirect POST requests with GET requests.
+- strict: (bool, default=false) Set to true to use strict redirects. Strict RFC compliant redirects mean that POST redirect requests are sent as POST requests vs. doing what most browsers do which is redirect POST requests with GET requests. The RFC 10008 QUERY method keeps its method and body across non-strict 301 and 302 redirects, matching the 307 and 308 behavior that already applies to every method, and a 303 redirect is followed with a body-less GET.
 
 - referer: (bool, default=false) Set to true to add a `Referer` header when redirecting. On a cross-origin redirect only the origin (scheme, host, and port) is sent, and the header is omitted entirely when the scheme changes, including an `https` to `http` downgrade. See [Cross-Origin Redirects](#cross-origin-redirects).
 
@@ -119,6 +119,8 @@ Same-origin redirects preserve those values. Guzzle does not automatically remov
 When the optional `referer` setting is enabled, Guzzle also limits what it discloses to the new origin. On a cross-origin redirect it sends only the request's origin (scheme, host, and port) in the `Referer` header instead of the full URL, and it omits the header entirely when the scheme changes, including an `https` to `http` downgrade. Same-origin redirects send the full URL. This matches the `strict-origin-when-cross-origin` policy that modern browsers use by default.
 
 If TLS client credentials are only trusted for the original origin, disable automatic redirects and handle redirect responses manually, or use separate clients and request options for trusted origins.
+
+The RFC 10008 QUERY method has method-specific redirect behavior. Guzzle keeps the QUERY method and request body across 301, 302, 307, and 308 redirects, and follows a 303 with a body-less GET. QUERY request bodies can carry sensitive query content. On cross-origin redirects Guzzle removes origin credentials such as the Authorization and Cookie headers and the auth request option, but it does not remove the request body. Disable automatic redirects or use on_redirect if a QUERY body must not be sent to another origin.
 
 ## auth
 
