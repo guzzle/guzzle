@@ -122,6 +122,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Added
 
 - Added the `crypto_method_max` request option to cap the maximum TLS protocol version
+- Added HTTP QUERY redirect support, preserving method and body on 301 and 302
 
 ### Changed
 
