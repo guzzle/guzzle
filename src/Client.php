@@ -565,7 +565,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::warnIfPresentAndNotString($options, 'cert_type');
         self::warnIfPresentAndNotNumber($options, 'connect_timeout');
         self::warnIfPresentAndNotInt($options, 'crypto_method');
-        self::warnIfPresentAndNotInt($options, 'crypto_method_max');
+        self::warnIfPresentAndNotInt($options, 'crypto_method_max', null, '7.13');
         self::warnIfPresentAndNotBoolOrResource($options, 'debug');
         self::warnIfPresentAndNotBoolOrString($options, 'decode_content');
         self::warnIfPresentAndNotNumber($options, 'delay');
@@ -912,10 +912,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function warnIfPresentAndNotInt(array $options, string $option, ?string $path = null): void
-    {
+    private static function warnIfPresentAndNotInt(
+        array $options,
+        string $option,
+        ?string $path = null,
+        string $since = '7.11'
+    ): void {
         if (\array_key_exists($option, $options) && !\is_int($options[$option])) {
-            self::warnInvalidRequestOptionType($path ?? $option, 'int', $options[$option]);
+            self::warnInvalidRequestOptionType($path ?? $option, 'int', $options[$option], $since);
         }
     }
 
