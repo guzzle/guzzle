@@ -569,12 +569,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         self::warnIfPresentAndNotBoolOrResource($options, 'debug');
         self::warnIfPresentAndNotBoolOrString($options, 'decode_content');
         self::warnIfPresentAndNotNumber($options, 'delay');
-        if (
-            isset($options['delay'])
-            && (\is_int($options['delay']) || \is_float($options['delay']))
-            && (!\is_finite((float) $options['delay']) || $options['delay'] < 0)
-        ) {
-            self::warnInvalidRequestOptionType('delay', 'finite int|float greater than or equal to 0', $options['delay'], '7.13');
+        if (isset($options['delay']) && \is_numeric($options['delay'])) {
+            $delay = (float) $options['delay'];
+            if (!\is_finite($delay) || $delay < 0.0) {
+                self::warnInvalidRequestOptionType('delay', 'finite int|float greater than or equal to 0', $options['delay'], '7.13');
+            }
         }
         self::warnIfPresentAndNotBoolOrInt($options, 'expect');
 
