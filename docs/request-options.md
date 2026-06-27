@@ -369,8 +369,10 @@ $client->request('GET', '/foo', [
 > This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT`
 > constants. It may be combined with `crypto_method` to set an allowed TLS
 > version range. The maximum version must be greater than or equal to the
-> minimum version. cURL 7.54.0 or higher is required to use maximum TLS-version
-> bounds with the cURL handler.
+> minimum version. On the stream handler, PHP 7.3 or higher is required to set
+> a maximum TLS version, and PHP 7.4 or higher is required to use TLS 1.3.
+> cURL 7.54.0 or higher is required to use maximum TLS-version bounds with the
+> cURL handler.
 
 ## curl
 
