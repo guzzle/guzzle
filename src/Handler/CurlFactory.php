@@ -144,6 +144,7 @@ class CurlFactory implements CurlFactoryInterface
 
         self::normalizeCurlHeaderOptions($conf);
         self::applyProxyAuthorizationHeaderHandling($request, $conf);
+        self::rejectRequestLevelShareWithProxyAuth($request, $options, $conf);
 
         if ($this->shareHandle !== null) {
             // Conservative blanket mode: a configured share handle hides the
@@ -249,6 +250,67 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with configured transport sharing.');
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function rejectRequestLevelShareWithProxyAuth(RequestInterface $request, array $options, array $conf): void
+    {
+        if (!self::hasRequestLevelCurlShare($options)) {
+            return;
+        }
+
+        $proxy = self::getEffectiveProxy($conf);
+        if (
+            $proxy === null
+            || !self::usesProxyTunnel($request, $conf)
+            || !self::isHttpProxyForConnectionReuse($proxy, $conf)
+            || !self::hasAuthenticatedHttpProxyState($proxy, $conf)
+        ) {
+            return;
+        }
+
+        throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with authenticated HTTP/HTTPS proxy tunnel configuration; use Guzzle-managed "transport_sharing" or a custom handler/factory instead.');
+    }
+
+    private static function hasRequestLevelCurlShare(array $options): bool
+    {
+        return \defined('CURLOPT_SHARE')
+            && isset($options['curl'])
+            && \is_array($options['curl'])
+            && \array_key_exists((int) \constant('CURLOPT_SHARE'), $options['curl']);
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function hasAuthenticatedHttpProxyState(string $proxy, array $conf): bool
+    {
+        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
+        $proxyParts = \parse_url($proxyForParsing);
+
+        if (
+            \is_array($proxyParts)
+            && (\array_key_exists('user', $proxyParts) || \array_key_exists('pass', $proxyParts))
+        ) {
+            return true;
+        }
+
+        if (self::hasCurlProxyCredentials($conf)) {
+            return true;
+        }
+
+        if (self::hasCurlProxyAuthorizationHeader($conf)) {
+            return true;
+        }
+
+        $httpHeaders = $conf[\CURLOPT_HTTPHEADER] ?? [];
+        if (\is_array($httpHeaders) && self::proxyAuthorizationHeaderValuesFromList($httpHeaders) !== []) {
+            return true;
+        }
+
+        return self::hasCurlProxyTlsCredentials($conf);
     }
 
     /**
