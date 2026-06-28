@@ -405,6 +405,200 @@ class CurlMultiHandlerTest extends TestCase
         self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl'] ?? []);
     }
 
+    public function testActiveForeignProxyTunnelForcesOwnerTransferIsolation(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        self::setMultiProperty($handler, 'activeProxyTunnelSignatures', ['sig-a' => 1, 'sig-b' => 1]);
+
+        $easy = self::easyWithSignature('sig-a');
+        $isolate = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->isolateFromForeignActiveProxyTunnel($easy);
+        }, null, CurlMultiHandler::class);
+        $isolate($handler, $easy);
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+        self::assertSame('sig-a', self::readMultiProperty($handler, 'proxyTunnelOwner'), 'Isolation must not move the scalar owner.');
+    }
+
+    public function testOwnerMatchingTransferIsNotIsolatedWhenNoForeignSignatureIsActive(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'activeProxyTunnelSignatures', ['sig-a' => 1]);
+        unset($_SERVER['_curl']);
+
+        $easy = self::easyWithSignature('sig-a');
+        $isolate = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->isolateFromForeignActiveProxyTunnel($easy);
+        }, null, CurlMultiHandler::class);
+        $isolate($handler, $easy);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl'] ?? []);
+    }
+
+    public function testForeignTransferIsIsolatedWhenOwnerIsActive(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'activeProxyTunnelSignatures', ['sig-a' => 1]);
+
+        $easy = self::easyWithSignature('sig-b');
+        $isolate = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->isolateFromForeignActiveProxyTunnel($easy);
+        }, null, CurlMultiHandler::class);
+        $isolate($handler, $easy);
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testActiveProxyTunnelSignatureCountsAreReferenceCounted(): void
+    {
+        $handler = new CurlMultiHandler();
+        $first = self::easyWithSignature('sig-b');
+        $second = self::easyWithSignature('sig-b');
+        $idFirst = (int) $first->handle;
+        $idSecond = (int) $second->handle;
+
+        $mark = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->markProxyTunnelActive($easy);
+        }, null, CurlMultiHandler::class);
+        $unmarkById = \Closure::bind(static function (CurlMultiHandler $handler, int $id): void {
+            $handler->unmarkProxyTunnelActiveById($id);
+        }, null, CurlMultiHandler::class);
+
+        $mark($handler, $first);
+        $mark($handler, $second);
+        self::assertSame(['sig-b' => 2], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'));
+
+        $unmarkById($handler, $idFirst);
+        self::assertSame(['sig-b' => 1], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'));
+
+        $unmarkById($handler, $idSecond);
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'));
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+    }
+
+    public function testDelayedTransferIsNotActiveUntilAddedToMultiHandle(): void
+    {
+        $handler = new CurlMultiHandler();
+        $easy = self::easyWithSignature('sig-a');
+        $easy->options = ['delay' => 10000];
+
+        $addRequest = \Closure::bind(static function (CurlMultiHandler $handler, array $entry): void {
+            $handler->addRequest($entry);
+        }, null, CurlMultiHandler::class);
+        $addCurlHandle = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->addCurlHandle($easy);
+        }, null, CurlMultiHandler::class);
+
+        $addRequest($handler, ['easy' => $easy, 'deferred' => new P\Promise()]);
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'), 'A delayed transfer must not be counted before it attaches.');
+
+        $addCurlHandle($handler, $easy);
+        self::assertSame(['sig-a' => 1], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'), 'The transfer must be counted only once attached.');
+    }
+
+    public function testDeferredCancelCleanupDoesNotDoubleDecrementActiveSignature(): void
+    {
+        $handler = new CurlMultiHandler();
+        $easy = self::easyWithSignature('sig-a');
+        $id = (int) $easy->handle;
+
+        $mark = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->markProxyTunnelActive($easy);
+        }, null, CurlMultiHandler::class);
+        $unmarkById = \Closure::bind(static function (CurlMultiHandler $handler, int $id): void {
+            $handler->unmarkProxyTunnelActiveById($id);
+        }, null, CurlMultiHandler::class);
+        $unmark = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->unmarkProxyTunnelActive($easy);
+        }, null, CurlMultiHandler::class);
+
+        $mark($handler, $easy);
+        self::assertSame(['sig-a' => 1], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'));
+
+        $unmarkById($handler, $id);
+        $unmark($handler, $easy);
+
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'));
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+    }
+
+    public function testCompletionUnmarksBeforeFinishCanReenter(): void
+    {
+        $handler = new CurlMultiHandler();
+        $easy = self::easyWithSignature('sig-a');
+        $id = (int) $easy->handle;
+
+        $mark = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->markProxyTunnelActive($easy);
+        }, null, CurlMultiHandler::class);
+        $removeCompleted = \Closure::bind(static function (CurlMultiHandler $handler, int $id, $handle): void {
+            $handler->removeCompletedHandleFromMulti($id, $handle);
+        }, null, CurlMultiHandler::class);
+
+        $mark($handler, $easy);
+        self::assertSame(['sig-a' => 1], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'));
+        self::assertSame([$id => 'sig-a'], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+
+        $removeCompleted($handler, $id, $easy->handle);
+
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'));
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+    }
+
+    public function testNoDelayAddRequestIsolatesAndMarksThroughTheWrapper(): void
+    {
+        $handler = new CurlMultiHandler();
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        self::setMultiProperty($handler, 'activeProxyTunnelSignatures', ['sig-b' => 1]);
+        self::setMultiProperty($handler, 'activeProxyTunnelHandles', [-1 => 'sig-b']);
+
+        $addRequest = \Closure::bind(static function (CurlMultiHandler $handler, array $entry): void {
+            $handler->addRequest($entry);
+        }, null, CurlMultiHandler::class);
+
+        $easy = self::easyWithSignature('sig-a');
+        $easy->options = [];
+        $addRequest($handler, ['easy' => $easy, 'deferred' => new P\Promise()]);
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+        self::assertSame(1, self::readMultiProperty($handler, 'activeProxyTunnelSignatures')['sig-a'] ?? 0, 'The no-delay transfer must be marked active.');
+
+        unset($_SERVER['_curl']);
+        $nullEasy = self::easyWithSignature(null);
+        $nullEasy->options = [];
+        $addRequest($handler, ['easy' => $nullEasy, 'deferred' => new P\Promise()]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl'] ?? []);
+        self::assertArrayNotHasKey((int) $nullEasy->handle, self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+    }
+
+    public function testNullSignatureNeverEntersActiveMaps(): void
+    {
+        $handler = new CurlMultiHandler();
+        $nullEasy = self::easyWithSignature(null);
+
+        $isolate = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->isolateFromForeignActiveProxyTunnel($easy);
+        }, null, CurlMultiHandler::class);
+        $mark = \Closure::bind(static function (CurlMultiHandler $handler, EasyHandle $easy): void {
+            $handler->markProxyTunnelActive($easy);
+        }, null, CurlMultiHandler::class);
+
+        self::setMultiProperty($handler, 'activeProxyTunnelSignatures', ['sig-b' => 1]);
+        unset($_SERVER['_curl']);
+        $isolate($handler, $nullEasy);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl'] ?? []);
+
+        self::setMultiProperty($handler, 'activeProxyTunnelSignatures', []);
+        $mark($handler, $nullEasy);
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'));
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+    }
+
     private static function easyWithSignature(?string $signature): EasyHandle
     {
         $easy = new EasyHandle();

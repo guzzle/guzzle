@@ -79,6 +79,12 @@ class CurlMultiHandler
      */
     private $proxyTunnelOwner;
 
+    /** @var array<string, int> Count of attached transfers per proxy tunnel signature. */
+    private $activeProxyTunnelSignatures = [];
+
+    /** @var array<int, string> Maps an attached handle id to its proxy tunnel signature. */
+    private $activeProxyTunnelHandles = [];
+
     /**
      * @var bool Guards against multi-handle recreation re-entrancy from
      *           processMessages (a retried transfer re-invokes the handler)
@@ -229,9 +235,90 @@ class CurlMultiHandler
         }
 
         // Busy: isolate this transfer from the owner's pooled tunnels.
+        $this->isolateProxyTunnelTransfer($easy);
+    }
+
+    private function addCurlHandle(EasyHandle $easy): void
+    {
+        $this->isolateFromForeignActiveProxyTunnel($easy);
+        \curl_multi_add_handle($this->_mh, $easy->handle);
+        $this->markProxyTunnelActive($easy);
+    }
+
+    /**
+     * @param resource|\CurlHandle $handle
+     */
+    private function removeCompletedHandleFromMulti(int $id, $handle): void
+    {
+        \curl_multi_remove_handle($this->_mh, $handle);
+        $this->unmarkProxyTunnelActiveById($id);
+    }
+
+    private function isolateFromForeignActiveProxyTunnel(EasyHandle $easy): void
+    {
+        $signature = $easy->proxyTunnelSignature;
+
+        if ($signature === null || $this->activeProxyTunnelSignatures === []) {
+            return;
+        }
+
+        if (\count($this->activeProxyTunnelSignatures) === 1 && isset($this->activeProxyTunnelSignatures[$signature])) {
+            return;
+        }
+
+        $this->isolateProxyTunnelTransfer($easy);
+    }
+
+    private function isolateProxyTunnelTransfer(EasyHandle $easy): void
+    {
         // Unqualified curl_setopt so the test bootstrap shadow records it.
         curl_setopt($easy->handle, \CURLOPT_FRESH_CONNECT, true);
         curl_setopt($easy->handle, \CURLOPT_FORBID_REUSE, true);
+    }
+
+    private function markProxyTunnelActive(EasyHandle $easy): void
+    {
+        $signature = $easy->proxyTunnelSignature;
+        if ($signature === null) {
+            return;
+        }
+
+        $id = (int) $easy->handle;
+        if (isset($this->activeProxyTunnelHandles[$id])) {
+            if ($this->activeProxyTunnelHandles[$id] === $signature) {
+                return;
+            }
+
+            $this->unmarkProxyTunnelActiveById($id);
+        }
+
+        $this->activeProxyTunnelHandles[$id] = $signature;
+        $this->activeProxyTunnelSignatures[$signature] = ($this->activeProxyTunnelSignatures[$signature] ?? 0) + 1;
+    }
+
+    private function unmarkProxyTunnelActive(EasyHandle $easy): void
+    {
+        $this->unmarkProxyTunnelActiveById((int) $easy->handle);
+    }
+
+    private function unmarkProxyTunnelActiveById(int $id): void
+    {
+        if (!isset($this->activeProxyTunnelHandles[$id])) {
+            return;
+        }
+
+        $signature = $this->activeProxyTunnelHandles[$id];
+        unset($this->activeProxyTunnelHandles[$id]);
+
+        if (!isset($this->activeProxyTunnelSignatures[$signature])) {
+            return;
+        }
+
+        --$this->activeProxyTunnelSignatures[$signature];
+
+        if ($this->activeProxyTunnelSignatures[$signature] <= 0) {
+            unset($this->activeProxyTunnelSignatures[$signature]);
+        }
     }
 
     /**
@@ -245,10 +332,7 @@ class CurlMultiHandler
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
                     unset($this->delays[$id]);
-                    \curl_multi_add_handle(
-                        $this->_mh,
-                        $this->handles[$id]['easy']->handle
-                    );
+                    $this->addCurlHandle($this->handles[$id]['easy']);
                 }
             }
         }
@@ -326,7 +410,7 @@ class CurlMultiHandler
         $id = (int) $easy->handle;
         $this->handles[$id] = $entry;
         if (empty($easy->options['delay'])) {
-            \curl_multi_add_handle($this->_mh, $easy->handle);
+            $this->addCurlHandle($easy);
         } else {
             $this->delays[$id] = Utils::currentTime() + ($easy->options['delay'] / 1000);
         }
@@ -382,6 +466,7 @@ class CurlMultiHandler
     {
         $handle = $easy->handle;
         \curl_multi_remove_handle($this->_mh, $handle);
+        $this->unmarkProxyTunnelActive($easy);
 
         if (PHP_VERSION_ID < 80000) {
             \curl_close($handle);
@@ -408,7 +493,7 @@ class CurlMultiHandler
                     continue;
                 }
                 $id = (int) $done['handle'];
-                \curl_multi_remove_handle($this->_mh, $done['handle']);
+                $this->removeCompletedHandleFromMulti($id, $done['handle']);
 
                 if (!isset($this->handles[$id])) {
                     // Probably was cancelled.
