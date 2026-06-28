@@ -127,6 +127,17 @@ Guzzle forces a fresh connection — purging pooled idle handles that might hold
 foreign tunnel — so libcurl cannot hand one request a tunnel established under a
 different identity.
 
+**`CurlMultiHandler` active-attachment isolation.** A single `CurlMultiHandler`
+reuses one libcurl multi handle — and therefore one connection cache — across
+transfers. It tracks the proxy tunnel section that owns that idle cache in a
+scalar `$proxyTunnelOwner`, handed over only when the handle is fully idle.
+Concurrency is governed separately by a reference-counted map of the proxy
+tunnel signatures *currently attached* to the multi handle. While a foreign
+signature is attached, even an owner-compatible transfer is isolated with
+`CURLOPT_FRESH_CONNECT` + `CURLOPT_FORBID_REUSE` — the `A / B / A` case — because
+the latched owner records who inherited the idle cache, not which sections are in
+flight right now.
+
 ## 5. The signature: what it covers and why
 
 **Domain (when a signature is computed at all).** Only for a request that
