@@ -150,8 +150,27 @@ the pool. Real delegated tunnels on fixed libcurl get a non-`null` sentinel, so
 they stay distinct from genuine non-tunnels and from literal proxy-header tunnel
 owners.
 
+> Non-tunnel proxy requests get a `null` signature and are deliberately left unsectioned. For per-request (HTTP Basic) proxy auth this is safe: `proxy` URL userinfo and the allow-listed `CURLOPT_PROXYUSERPWD` re-authenticate on every request, so a reused non-tunnel proxy connection cannot inherit a foreign identity. Connection-oriented schemes (NTLM, Negotiate) bind identity to the TCP connection, and a caller can still express one through a literal `Proxy-Authorization` header — sent as a PSR header or via the allow-listed raw `CURLOPT_PROXYHEADER` — even though raw `CURLOPT_PROXYAUTH` is rejected. A non-tunnel request carrying such a header is therefore an accepted residual: it is left unsectioned, because sectioning non-tunnel proxy connections would extend the signature domain beyond CONNECT tunnels, which is intentionally out of scope. (A single static header value cannot complete NTLM's multi-leg handshake, but a single-leg Negotiate token can, so the residual is real.)
+
 **The channels hashed:** the effective proxy URL, the proxy credential and
 TLS-identity options, and any literal `Proxy-Authorization` header value.
+
+PSR `Proxy-Authorization` headers are normalized into the proxy-header channel
+(`CURLOPT_PROXYHEADER` with `CURLOPT_HEADEROPT => CURLHEADER_SEPARATE`) for
+effective HTTP and HTTPS proxies wherever libcurl supports header separation
+(7.37.0+). A non-empty literal `Proxy-Authorization: <value>` header is never something
+libcurl can key connection reuse on, even on versions that key parsed proxy
+credentials (8.20.0+), so a tunnel carrying one always sections — its signature
+is hashed, never the delegated owner. (The empty `Proxy-Authorization;` form is
+migrated for wire correctness but carries no credential, so it does not section.) On libcurl older than 7.37.0 the header cannot be
+separated; the handlers keep a non-empty credential header on the wire but force a fresh,
+non-reused connection, which under `PERSISTENT_REQUIRE` is reported as a conflict rather
+than silently degrading reuse.
+
+Proxy TLS credential coverage stays tunnel-only and private: it is
+reflection-tested hardening for CONNECT tunnels, not public non-tunneled
+HTTPS-proxy behavior, because raw proxy TLS cURL options are rejected as public
+inputs in 8.0.
 
 **Necessary vs defense-in-depth.**
 
@@ -163,17 +182,19 @@ TLS-identity options, and any literal `Proxy-Authorization` header value.
   libcurl.
 - *Mostly defense-in-depth:* the proxy-TLS options (client cert, cert blob, TLS
   version, TLS-SRP). libcurl keys reuse on these via `ssl_primary_config` for an
-  HTTPS proxy — but only from 7.50.1 for the client cert (CVE-2016-5420) and
-  7.83.1 for TLS-SRP (CVE-2022-27782). Below those they are load-bearing; above,
+  HTTPS proxy — but only from 7.52.0 for the proxy client cert (CVE-2016-5420 in
+  7.50.1 is the origin-cert precedent, predating HTTPS-proxy support) and 7.83.1
+  for TLS-SRP (CVE-2022-27782). Below those they are load-bearing; above,
   redundant-but-free. They are hashed unconditionally rather than version-gated.
 
 **Deliberate omissions.** `PROXY_SSLKEY_BLOB`, `PROXY_SSLKEYTYPE`, and
-`PROXY_SSLCERTTYPE` are **not** hashed. libcurl's reuse matcher never keys on
-the private key or on cert/key encoding (they live in `ssl_config_data`, outside
-`ssl_primary_config`). They are safe to omit because the proxy-visible identity
-is the **X.509 client certificate** — which *is* hashed — and a certificate has
-exactly one matching key, so a key- or encoding-only change cannot present a
-different identity to the proxy.
+`PROXY_SSLCERTTYPE` are **not** hashed. The private-key *file* and passphrase
+(`PROXY_SSLKEY`, `PROXY_KEYPASSWD`) *are* hashed on the non-delegated signature
+path as fallback hardening — libcurl's mTLS private-key matching on reuse was
+incomplete before 8.21.0 (CVE-2026-8932), see §10. This is not a complete
+pre-8.21.0 mitigation: it does not cover the delegated path (>= 8.20.0 with no
+literal proxy-auth header) or configured share handles. The blob and the two
+encoding types are an **accepted residual**, not proven-safe.
 
 **The golden rule — over-sectioning is safe.** A non-`null`, changed signature
 only ever forces a *fresh* connection; it never relaxes reuse. So an over-broad
@@ -327,8 +348,11 @@ TLS credential below 7.83.1 and not at or above it.
 - Use a non-`null` delegated sentinel for real proxy tunnels whose parsed proxy
   credentials, if any, are trusted to libcurl.
 - Never trust libcurl `< 8.20` to distinguish proxy credentials itself.
-- Do not key the signature on the private key or on cert/key encoding — the
-  certificate is the proxy-visible identity.
+- On the non-delegated signature path, key on the proxy private-key file and
+  passphrase as fallback hardening (libcurl's mTLS private-key matching on reuse
+  was incomplete below 8.21.0, CVE-2026-8932; the delegated path and configured
+  share handles are not covered). The key blob and cert/key encoding are an
+  accepted residual, not proven-safe.
 - `usesProxyTunnel()` must treat `http://` + a non-empty `CURLOPT_CONNECT_TO` as
   a tunnel.
 - Share the TLS session cache only from 8.6.0 and the connection cache only from
@@ -341,7 +365,7 @@ TLS credential below 7.83.1 and not at or above it.
 ## References
 
 **curl** — CVE-2026-3784 (proxy `CONNECT` credential reuse), CVE-2016-5420
-(proxy client-cert reuse), CVE-2022-27782 (TLS / TLS-SRP config not compared on
+(origin client-cert reuse), CVE-2022-27782 (TLS / TLS-SRP config not compared on
 reuse), CVE-2024-0853 (client cert / OCSP on session reuse),
 CVE-2026-6253/6429/7168 (proxy-credential leaks on reuse, fixed 8.20.0),
 CVE-2026-8932 (incomplete mTLS private-key matching on reuse, fixed 8.21.0); the

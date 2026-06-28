@@ -449,6 +449,36 @@ $client->request('GET', '/', [
 ]);
 ```
 
+`CURLOPT_HEADEROPT` is intentionally absent from the allow-list above. Guzzle
+sets it internally to `CURLHEADER_SEPARATE` whenever it configures
+`CURLOPT_PROXYHEADER`, and also for an HTTP(S) proxy CONNECT tunnel even when no
+proxy header is configured, so proxy headers stay separate from origin request
+headers; passing `CURLOPT_HEADEROPT` yourself is rejected.
+
+When an effective HTTP or HTTPS proxy is used, the built-in cURL handlers move a
+PSR `Proxy-Authorization` request header out of the origin request headers and
+onto cURL's proxy-header channel (`CURLOPT_PROXYHEADER`), so the credential
+authenticates the proxy rather than leaking to the origin. This covers both the
+`Proxy-Authorization: <value>` form and cURL's empty-header
+`Proxy-Authorization;` form. Direct (no-proxy) and SOCKS-proxy requests are left
+untouched.
+
+Because libcurl cannot key connection reuse on an opaque `Proxy-Authorization`
+value, a proxy CONNECT tunnel carrying a non-empty `Proxy-Authorization: <value>`
+credential requires a fresh connection. Under `TransportSharing::PERSISTENT_REQUIRE`,
+which requires reuse, such a request is rejected with an `InvalidArgumentException`
+instead of silently degrading reuse. On libcurl older than 7.37.0 (or a build
+missing the proxy-header constants), the handlers cannot separate proxy headers, so
+they leave a literal `Proxy-Authorization` header in place and, when it carries a
+non-empty credential, force a fresh, non-reused connection.
+
+Raw proxy TLS credential options (such as `CURLOPT_PROXY_SSLCERT` or
+`CURLOPT_PROXY_TLSAUTH_PASSWORD`) are not on the allow-list and are not supported
+public raw `curl` inputs in 8.0: the `proxy` request option configures proxy URL
+selection and userinfo only — it does not expose proxy mTLS or TLS-SRP credential
+configuration. Raw `CURLOPT_PROXYTYPE` is likewise rejected; use the `proxy`
+request option to select the proxy instead.
+
 ## debug
 
 Summary
