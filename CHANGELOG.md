@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.13.1 - Upcoming
+
+### Fixed
+
+- Allow middleware to rewrite partial URIs before transports validate them
+
+
 ## 7.13.0 - 2026-06-29
 
 ### Added

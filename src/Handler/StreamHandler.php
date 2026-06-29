@@ -344,7 +344,12 @@ class StreamHandler
             $methods = \array_flip(\get_class_methods(__CLASS__));
         }
 
-        $scheme = $request->getUri()->getScheme();
+        $uri = $request->getUri();
+        $scheme = $uri->getScheme();
+        if ($scheme === '' || $uri->getHost() === '') {
+            throw new RequestException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.', $request);
+        }
+
         if (!\in_array($scheme, ['http', 'https'], true)) {
             throw new RequestException(\sprintf("The scheme '%s' is not supported.", $scheme), $request);
         }

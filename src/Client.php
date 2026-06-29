@@ -264,10 +264,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $uri = $uri->withScheme('http');
         }
 
-        if ($uri->getScheme() === '' || $uri->getHost() === '') {
-            throw new InvalidArgumentException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.');
-        }
-
         return $uri;
     }
 
