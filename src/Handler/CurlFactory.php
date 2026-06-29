@@ -143,6 +143,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         self::normalizeCurlHeaderOptions($conf);
+        self::applyProxyAuthorizationHeaderHandling($request, $conf);
 
         if ($this->shareHandle !== null) {
             // Conservative blanket mode: a configured share handle hides the
@@ -798,8 +799,20 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $proxy = $conf[\CURLOPT_PROXY];
+        if (!\is_string($proxy) || $proxy === '') {
+            return null;
+        }
 
-        return \is_string($proxy) && $proxy !== '' ? $proxy : null;
+        // Only the exact raw wildcard is modeled here: libcurl treats '*' as
+        // bypass-all by whole-string comparison, without trimming or host matching.
+        if (\defined('CURLOPT_NOPROXY')) {
+            $noProxy = $conf[(int) \constant('CURLOPT_NOPROXY')] ?? null;
+            if (\is_string($noProxy) && $noProxy === '*') {
+                return null;
+            }
+        }
+
+        return $proxy;
     }
 
     /**
@@ -1012,39 +1025,131 @@ class CurlFactory implements CurlFactoryInterface
      */
     private static function hasCurlProxyAuthorizationHeader(array $conf): bool
     {
-        if (!\defined('CURLOPT_PROXYHEADER')) {
-            return false;
+        return self::curlProxyAuthorizationHeaderValues($conf) !== [];
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function applyProxyAuthorizationHeaderHandling(RequestInterface $request, array &$conf): void
+    {
+        $proxy = self::getEffectiveProxy($conf);
+        if ($proxy === null || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {
+            return;
         }
 
+        $httpHeaders = $conf[\CURLOPT_HTTPHEADER] ?? null;
+        $movedHeaders = [];
+        $originHeaders = [];
+
+        if (\is_array($httpHeaders)) {
+            foreach ($httpHeaders as $header) {
+                if (\is_string($header) && self::isProxyAuthorizationHeaderLine($header)) {
+                    $movedHeaders[] = $header;
+
+                    continue;
+                }
+
+                $originHeaders[] = $header;
+            }
+        }
+
+        if (CurlVersion::supportsProxyHeaderSeparation()) {
+            if ($movedHeaders !== []) {
+                $conf[\CURLOPT_HTTPHEADER] = $originHeaders;
+                self::appendCurlProxyHeaders($conf, $movedHeaders);
+            }
+
+            // On libcurl 7.37.0-7.42.0 the default is CURLHEADER_UNIFIED.
+            if ($movedHeaders !== [] || self::hasCurlProxyHeaderOption($conf) || self::usesProxyTunnel($request, $conf)) {
+                $conf[(int) \constant('CURLOPT_HEADEROPT')] = (int) \constant('CURLHEADER_SEPARATE');
+            }
+
+            return;
+        }
+
+        if (\is_array($httpHeaders) && self::proxyAuthorizationHeaderValuesFromList($httpHeaders) !== []) {
+            $conf[\CURLOPT_FRESH_CONNECT] = true;
+            $conf[\CURLOPT_FORBID_REUSE] = true;
+        }
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     * @param list<string>             $headers
+     */
+    private static function appendCurlProxyHeaders(array &$conf, array $headers): void
+    {
         $option = (int) \constant('CURLOPT_PROXYHEADER');
-        if (!\array_key_exists($option, $conf)) {
+
+        if (\array_key_exists($option, $conf)) {
+            if (!\is_array($conf[$option])) {
+                throw new \InvalidArgumentException('CURLOPT_PROXYHEADER must be an array when Proxy-Authorization is migrated from CURLOPT_HTTPHEADER.');
+            }
+
+            $headers = \array_merge($conf[$option], $headers);
+        }
+
+        $conf[$option] = $headers;
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function hasCurlProxyHeaderOption(array $conf): bool
+    {
+        return \defined('CURLOPT_PROXYHEADER')
+            && \array_key_exists((int) \constant('CURLOPT_PROXYHEADER'), $conf);
+    }
+
+    private static function isProxyAuthorizationHeaderLine(string $header): bool
+    {
+        $length = \strcspn($header, ':;');
+
+        if ($length === \strlen($header)) {
             return false;
         }
 
-        $headers = $conf[$option];
-        if (!\is_array($headers)) {
-            return false;
+        return 0 === \strcasecmp(\trim(\substr($header, 0, $length)), 'Proxy-Authorization');
+    }
+
+    private static function proxyAuthorizationHeaderValue(string $header): ?string
+    {
+        $position = \strpos($header, ':');
+        if ($position === false) {
+            return null;
         }
+
+        if (0 !== \strcasecmp(\trim(\substr($header, 0, $position)), 'Proxy-Authorization')) {
+            return null;
+        }
+
+        $value = \trim(\substr($header, $position + 1));
+
+        return $value === '' ? null : $value;
+    }
+
+    /**
+     * @param mixed[] $headers
+     *
+     * @return list<string>
+     */
+    private static function proxyAuthorizationHeaderValuesFromList(array $headers): array
+    {
+        $values = [];
 
         foreach ($headers as $header) {
             if (!\is_string($header)) {
                 continue;
             }
 
-            $parts = \explode(':', $header, 2);
-            if (\count($parts) !== 2) {
-                continue;
-            }
-
-            if (
-                0 === \strcasecmp(\trim($parts[0]), 'Proxy-Authorization')
-                && \trim($parts[1]) !== ''
-            ) {
-                return true;
+            $value = self::proxyAuthorizationHeaderValue($header);
+            if ($value !== null) {
+                $values[] = $value;
             }
         }
 
-        return false;
+        return $values;
     }
 
     /**
@@ -1077,10 +1182,16 @@ class CurlFactory implements CurlFactoryInterface
         // reuse, so over-covering is always safe; under-covering leaks. Proxy
         // credentials are the channel CVE-2026-3784 missed; the proxy-TLS
         // options are load-bearing on builds before the proxy-TLS reuse fixes
-        // (client cert from 7.50.1, CVE-2016-5420; TLS-SRP from 7.83.1,
-        // CVE-2022-27782) and harmless after. The private key and cert/key
-        // encoding are deliberately omitted: the hashed X.509 client cert is
-        // the proxy-visible identity and maps 1:1 to its key.
+        // (the proxy client cert is keyed from 7.52.0, libcurl's first
+        // HTTPS-proxy release; CVE-2016-5420 (7.50.1) is only the origin-cert
+        // precedent; TLS-SRP from 7.83.1, CVE-2022-27782) and harmless after.
+        // The private-key file and passphrase are hashed on this non-delegated
+        // path too, as fallback hardening: libcurl's mTLS private-key matching
+        // on reuse was incomplete before 8.21.0 (CVE-2026-8932). This does not
+        // cover the delegated path (the early return above) or configured share
+        // handles, so it is not a complete pre-8.21.0 mitigation. The key blob
+        // and cert/key type encodings (PROXY_SSLKEY_BLOB, PROXY_SSLKEYTYPE,
+        // PROXY_SSLCERTTYPE) are not hashed and are an accepted residual.
         $credentialState = [];
         foreach ([
             'CURLOPT_PROXYUSERPWD', 'CURLOPT_PROXYUSERNAME', 'CURLOPT_PROXYPASSWORD',
@@ -1118,30 +1229,7 @@ class CurlFactory implements CurlFactoryInterface
             return [];
         }
 
-        $values = [];
-        foreach ($headers as $header) {
-            if (!\is_string($header)) {
-                continue;
-            }
-
-            $parts = \explode(':', $header, 2);
-            if (\count($parts) !== 2) {
-                continue;
-            }
-
-            if (
-                0 === \strcasecmp(\trim($parts[0]), 'Proxy-Authorization')
-                && \trim($parts[1]) !== ''
-            ) {
-                $values[] = \trim($parts[1]);
-            }
-        }
-
-        // Sort so the signature depends on the set of header credentials, not
-        // their order, which avoids spurious re-sectioning across requests.
-        \sort($values);
-
-        return $values;
+        return self::proxyAuthorizationHeaderValuesFromList($headers);
     }
 
     private function discardIdleHandles(): void

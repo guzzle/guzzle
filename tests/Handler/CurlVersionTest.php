@@ -162,6 +162,33 @@ class CurlVersionTest extends TestCase
         }
     }
 
+    public function testSupportsProxyHeaderSeparationUsesMinimumVersion(): void
+    {
+        if (!\defined('CURLOPT_PROXYHEADER') || !\defined('CURLOPT_HEADEROPT') || !\defined('CURLHEADER_SEPARATE')) {
+            self::markTestSkipped('Proxy header separation cURL constants are unavailable.');
+        }
+
+        $previous = self::setCurlVersionInfo(['version' => '7.36.0', 'features' => 0]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsProxyHeaderSeparation());
+
+            self::setCurlVersionInfo(['version' => '7.37.0', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsProxyHeaderSeparation());
+
+            self::setCurlVersionInfo(['version' => '7.42.0', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsProxyHeaderSeparation());
+
+            self::setCurlVersionInfo(['version' => '7.42.1', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsProxyHeaderSeparation());
+
+            self::setCurlVersionInfo(false);
+            self::assertFalse(CurlVersion::supportsProxyHeaderSeparation());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
     public function testGetVersionReturnsNullWhenVersionIsUnavailable(): void
     {
         $previous = self::setCurlVersionInfo(false);

@@ -1003,11 +1003,11 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > connections. Anonymous tunnels are sectioned apart from authenticated ones,
 > so an unauthenticated request never rides an authenticated tunnel. Raw
 > `CURLOPT_PROXY` supplied through the `curl` request option is deprecated but
-> still honored and participates in the same sectioning. Custom proxy
-> authentication sent with `CURLOPT_PROXYHEADER` is always sectioned because
-> libcurl cannot key connection reuse on those header values. On libcurl 8.20.0
-> and newer, credential sectioning for option-supplied credentials is left to
-> libcurl's own credential-aware connection matching.
+> still honored and participates in the same sectioning. A non-empty custom
+> proxy authentication value sent with `CURLOPT_PROXYHEADER` is always sectioned
+> because libcurl cannot key connection reuse on those header values. On libcurl
+> 8.20.0 and newer, credential sectioning for option-supplied credentials is
+> left to libcurl's own credential-aware connection matching.
 >
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,
@@ -1018,6 +1018,20 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > `CURLOPT_FRESH_CONNECT` or `CURLOPT_FORBID_REUSE`; raw `CURLOPT_PROXYTYPE` is
 > respected when deciding whether a scheme-less `proxy` option value is an
 > HTTP(S) proxy.
+
+When a `Proxy-Authorization` request header is sent through an effective HTTP or
+HTTPS proxy, the cURL handlers treat it as proxy-scoped rather than
+origin-scoped. On libcurl 7.37.0 and newer (with the proxy-header cURL constants
+available), the header is moved to libcurl's proxy header channel
+(`CURLOPT_PROXYHEADER`) and separate proxy and origin header handling is enabled,
+so it authenticates the proxy and participates in the proxy tunnel sectioning
+described above. Guzzle also enables separate proxy/origin header handling for
+CONNECT tunnels through an effective HTTP/HTTPS proxy. On older libcurl (or a
+build missing those constants), where the proxy and origin header lists cannot be
+separated, the header is left in place for compatibility but connection reuse is
+disabled for proxied requests that carry a non-empty `Proxy-Authorization`
+credential. Proxy credential sectioning remains tunnel-focused: non-tunneled
+HTTPS-proxy TLS credential behavior is not expanded by this change.
 
 ## query
 
