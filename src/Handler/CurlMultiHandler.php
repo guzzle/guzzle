@@ -621,6 +621,10 @@ final class CurlMultiHandler
         curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
         curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
 
+        if (\defined('CURLOPT_PREREQFUNCTION')) {
+            curl_setopt($handle, (int) \constant('CURLOPT_PREREQFUNCTION'), null);
+        }
+
         if (\defined('CURLOPT_XFERINFOFUNCTION')) {
             curl_setopt($handle, (int) \constant('CURLOPT_XFERINFOFUNCTION'), null);
         }

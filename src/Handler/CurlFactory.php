@@ -561,6 +561,7 @@ final class CurlFactory implements CurlFactoryInterface
         self::addSupportedCurlOption($options, 'CURLOPT_MAXCONNECTS');
         self::addSupportedCurlOption($options, 'CURLOPT_MAXLIFETIME_CONN');
         self::addSupportedCurlOption($options, 'CURLOPT_HTTPPROXYTUNNEL');
+        self::addSupportedCurlOption($options, 'CURLOPT_PREREQFUNCTION');
         self::addSupportedCurlOption($options, 'CURLOPT_PROXYHEADER');
         self::addSupportedCurlOption($options, 'CURLOPT_PROXYUSERPWD');
         self::addSupportedCurlOption($options, 'CURLOPT_RESOLVE');
@@ -728,6 +729,10 @@ final class CurlFactory implements CurlFactoryInterface
         curl_setopt($handle, \CURLOPT_READFUNCTION, null);
         curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
         curl_setopt($handle, \CURLOPT_PROGRESSFUNCTION, null);
+
+        if (\defined('CURLOPT_PREREQFUNCTION')) {
+            curl_setopt($handle, (int) \constant('CURLOPT_PREREQFUNCTION'), null);
+        }
 
         if (\defined('CURLOPT_XFERINFOFUNCTION')) {
             curl_setopt($handle, (int) \constant('CURLOPT_XFERINFOFUNCTION'), null);
