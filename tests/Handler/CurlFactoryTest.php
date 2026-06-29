@@ -704,6 +704,36 @@ class CurlFactoryTest extends TestCase
         $f->create(new Psr7\Request('GET', 'http://example.com'), ['protocols' => ['https']]);
     }
 
+    public function testRejectsUnsupportedScheme()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage("The scheme 'ftp' is not supported.");
+
+        $f->create(new Psr7\Request('GET', 'ftp://example.com'), []);
+    }
+
+    public function testRejectsUnsupportedSchemeBeforeMissingHost()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage("The scheme 'file' is not supported.");
+
+        $f->create(new Psr7\Request('GET', 'file:///etc/passwd'), []);
+    }
+
+    public function testProtocolsOptionRejectsBeforeMissingHost()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('not allowed by the protocols request option');
+
+        $f->create(new Psr7\Request('GET', 'http:/generate_204'), ['protocols' => ['https']]);
+    }
+
     /**
      * @dataProvider uriMissingSchemeOrHostProvider
      */
