@@ -142,6 +142,8 @@ class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
+        self::normalizeCurlHeaderOptions($conf);
+
         if ($this->shareHandle !== null) {
             // Conservative blanket mode: a configured share handle hides the
             // pooled connections' provenance, so sectioned reuse cannot reason
@@ -798,6 +800,41 @@ class CurlFactory implements CurlFactoryInterface
         $proxy = $conf[\CURLOPT_PROXY];
 
         return \is_string($proxy) && $proxy !== '' ? $proxy : null;
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function normalizeCurlHeaderOptions(array &$conf): void
+    {
+        $options = [\CURLOPT_HTTPHEADER => 'CURLOPT_HTTPHEADER'];
+        if (\defined('CURLOPT_PROXYHEADER')) {
+            $options[(int) \constant('CURLOPT_PROXYHEADER')] = 'CURLOPT_PROXYHEADER';
+        }
+
+        foreach ($options as $option => $label) {
+            if (!\array_key_exists($option, $conf) || !\is_array($conf[$option])) {
+                continue;
+            }
+
+            $normalized = [];
+            foreach ($conf[$option] as $key => $entry) {
+                if (\is_object($entry) && \method_exists($entry, '__toString')) {
+                    $entry = (string) $entry;
+                }
+
+                if (\is_string($entry) && \strpbrk($entry, "\r\n") !== false) {
+                    throw new \InvalidArgumentException(\sprintf(
+                        '%s entries must not contain a carriage return or line feed.',
+                        $label
+                    ));
+                }
+
+                $normalized[$key] = $entry;
+            }
+
+            $conf[$option] = $normalized;
+        }
     }
 
     private static function proxyScheme(string $proxy): ?string

@@ -17,6 +17,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Route TLS 1.2 `crypto_method` requests to the stream handler when cURL cannot select TLS 1.2
 - Reject final request URIs missing a scheme or host before transfer
 
+### Fixed
+
+- Normalize `Stringable` entries and reject carriage-return/line-feed characters in the cURL `CURLOPT_HTTPHEADER` and `CURLOPT_PROXYHEADER` options, so a smuggled header line, including a `Stringable` `Proxy-Authorization` in a raw `CURLOPT_PROXYHEADER`, can no longer slip past connection-reuse sectioning, and now correctly engages the proxy-tunnel share / fresh-connection safety checks
+
 ### Deprecated
 
 - Deprecate invalid protocols, force_ip_resolve, delay, cookies, and allow_redirects values
