@@ -117,6 +117,160 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(10, $_SERVER['_curl'][\CURLOPT_LOW_SPEED_LIMIT]);
     }
 
+    public function testRejectsCurlProxyHeaderEntriesContainingNewlines(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $factory = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXYHEADER');
+
+        $factory->create(new Psr7\Request('GET', 'http://example.com'), [
+            'curl' => [
+                $proxyHeaderOption => ["X-Decoy: v\r\nProxy-Authorization: Basic abc"],
+            ],
+        ]);
+    }
+
+    public function testRejectsCurlHttpHeaderEntriesContainingNewlines(): void
+    {
+        $conf = [\CURLOPT_HTTPHEADER => ["X-Decoy: v\r\nProxy-Authorization: Basic abc"]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_HTTPHEADER');
+
+        self::normalizeCurlHeaderOptions($conf);
+    }
+
+    public function testNormalizesStringableCurlHeaderEntriesBeforeProxyTunnelSignature(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $conf = [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            $proxyHeaderOption => [new class {
+                public function __toString(): string
+                {
+                    return 'Proxy-Authorization: Basic abc';
+                }
+            }],
+        ];
+
+        self::normalizeCurlHeaderOptions($conf);
+
+        self::assertSame(['Proxy-Authorization: Basic abc'], $conf[$proxyHeaderOption]);
+        $delegated = self::computeProxyTunnelSignature('8.20.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+        ]);
+        $literalHeader = self::computeProxyTunnelSignature('8.20.0', 'https://example.com', $conf);
+        self::assertNotNull($literalHeader);
+        self::assertNotSame($delegated, $literalHeader);
+    }
+
+    public function testNormalizesScalarCurlHeaderEntries(): void
+    {
+        $conf = [
+            \CURLOPT_HTTPHEADER => [
+                'string' => 'X-String: value',
+                'int' => 123,
+                'float' => 1.5,
+                'true' => true,
+                'false' => false,
+                'nan' => \NAN,
+                'inf' => \INF,
+                '-inf' => -\INF,
+            ],
+        ];
+
+        self::normalizeCurlHeaderOptions($conf);
+
+        self::assertSame([
+            'string' => 'X-String: value',
+            'int' => '123',
+            'float' => '1.5',
+            'true' => '1',
+            'false' => '',
+            'nan' => 'NAN',
+            'inf' => 'INF',
+            '-inf' => '-INF',
+        ], $conf[\CURLOPT_HTTPHEADER]);
+    }
+
+    /**
+     * @dataProvider invalidCurlHeaderEntryProvider
+     *
+     * @param mixed $entry
+     */
+    public function testRejectsInvalidCurlHeaderEntries($entry): void
+    {
+        $conf = [\CURLOPT_HTTPHEADER => [$entry]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_HTTPHEADER entries must be strings, stringable objects, or scalar values.');
+
+        self::normalizeCurlHeaderOptions($conf);
+    }
+
+    public static function invalidCurlHeaderEntryProvider(): iterable
+    {
+        yield 'null' => [null];
+        yield 'array' => [[]];
+        yield 'non-stringable object' => [new \stdClass()];
+    }
+
+    public function testRejectsResourceCurlHeaderEntries(): void
+    {
+        $resource = \fopen(__FILE__, 'r');
+        self::assertIsResource($resource);
+
+        try {
+            $conf = [\CURLOPT_HTTPHEADER => [$resource]];
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_HTTPHEADER entries must be strings, stringable objects, or scalar values.');
+
+            self::normalizeCurlHeaderOptions($conf);
+        } finally {
+            \fclose($resource);
+        }
+    }
+
+    public function testRejectsStringableCurlHeaderEntriesContainingNewlines(): void
+    {
+        $conf = [
+            \CURLOPT_HTTPHEADER => [new class {
+                public function __toString(): string
+                {
+                    return "X-Test: value\r\nInjected: yes";
+                }
+            }],
+        ];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_HTTPHEADER entries must not contain a carriage return or line feed.');
+
+        self::normalizeCurlHeaderOptions($conf);
+    }
+
+    public function testRejectsInvalidCurlProxyHeaderEntries(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $conf = [$proxyHeaderOption => [[]]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXYHEADER entries must be strings, stringable objects, or scalar values.');
+
+        self::normalizeCurlHeaderOptions($conf);
+    }
+
+    public function testLeavesNormalCurlHeaderEntriesUnchanged(): void
+    {
+        $conf = [\CURLOPT_HTTPHEADER => ['Accept: application/json']];
+
+        self::normalizeCurlHeaderOptions($conf);
+
+        self::assertSame(['Accept: application/json'], $conf[\CURLOPT_HTTPHEADER]);
+    }
+
     public function testAppliesConfiguredCurlShareHandle(): void
     {
         self::skipIfCurlShareIsUnavailable();
@@ -2570,6 +2724,19 @@ class CurlFactoryTest extends TestCase
         }
 
         return (int) \constant('CURLOPT_PROXYHEADER');
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function normalizeCurlHeaderOptions(array &$conf): void
+    {
+        $method = new \ReflectionMethod(CurlFactory::class, 'normalizeCurlHeaderOptions');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs(null, [&$conf]);
     }
 
     private static function redactProxyUserInfo(string $error, ?string $proxy): string
