@@ -444,8 +444,6 @@ $client->request('GET', '/', [
 ]);
 ```
 
-The raw `CURLOPT_SHARE` cURL option remains deprecated as a request-level option in 7.x. It is rejected immediately when Guzzle's `transport_sharing` client option is configured, and it is also rejected when it is combined with authenticated HTTP/HTTPS proxy tunnel configuration, because an external share handle can share connection-cache state outside Guzzle's proxy connection-reuse isolation. Use the `transport_sharing` option for Guzzle-managed connection sharing, or a custom handler/factory for unsupported cURL share-handle behavior.
-
 ## debug
 
 Summary
