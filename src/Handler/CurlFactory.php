@@ -821,13 +821,16 @@ class CurlFactory implements CurlFactoryInterface
             foreach ($conf[$option] as $key => $entry) {
                 if (\is_object($entry) && \method_exists($entry, '__toString')) {
                     $entry = (string) $entry;
+                } elseif (\is_float($entry) && !\is_finite($entry)) {
+                    $entry = \is_nan($entry) ? 'NAN' : ($entry > 0 ? 'INF' : '-INF');
+                } elseif (\is_scalar($entry)) {
+                    $entry = (string) $entry;
+                } else {
+                    throw new \InvalidArgumentException(\sprintf('%s entries must be strings, stringable objects, or scalar values.', $label));
                 }
 
-                if (\is_string($entry) && \strpbrk($entry, "\r\n") !== false) {
-                    throw new \InvalidArgumentException(\sprintf(
-                        '%s entries must not contain a carriage return or line feed.',
-                        $label
-                    ));
+                if (\strpbrk($entry, "\r\n") !== false) {
+                    throw new \InvalidArgumentException(\sprintf('%s entries must not contain a carriage return or line feed.', $label));
                 }
 
                 $normalized[$key] = $entry;
