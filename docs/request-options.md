@@ -421,6 +421,7 @@ an option depending on the runtime. The allow-list is limited to the following
 - `CURLOPT_MAXAGE_CONN`
 - `CURLOPT_MAXCONNECTS`
 - `CURLOPT_MAXLIFETIME_CONN`
+- `CURLOPT_PREREQFUNCTION`
 - `CURLOPT_PROXYHEADER`
 - `CURLOPT_PROXYUSERPWD`
 - `CURLOPT_RESOLVE`

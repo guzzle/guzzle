@@ -118,6 +118,141 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(10, $_SERVER['_curl'][\CURLOPT_LOW_SPEED_LIMIT]);
     }
 
+    public function testCanAddPrereqFunctionCurlOption(): void
+    {
+        if (!\defined('CURLOPT_PREREQFUNCTION')) {
+            self::markTestSkipped('CURLOPT_PREREQFUNCTION is not available.');
+        }
+        if (!\defined('CURL_PREREQFUNC_OK')) {
+            self::markTestSkipped('CURL_PREREQFUNC_OK is not available.');
+        }
+
+        $option = (int) \constant('CURLOPT_PREREQFUNCTION');
+        $ok = (int) \constant('CURL_PREREQFUNC_OK');
+        $callback = static function () use ($ok): int {
+            return $ok;
+        };
+
+        $factory = new CurlFactory(1);
+        $easy = null;
+
+        try {
+            $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+                'curl' => [
+                    $option => $callback,
+                ],
+            ]);
+
+            self::assertSame($callback, $_SERVER['_curl'][$option]);
+        } finally {
+            if ($easy !== null) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testPrereqFunctionIsInSupportedCurlOptionsAllowList(): void
+    {
+        if (!\defined('CURLOPT_PREREQFUNCTION')) {
+            self::markTestSkipped('CURLOPT_PREREQFUNCTION is not available.');
+        }
+
+        $option = (int) \constant('CURLOPT_PREREQFUNCTION');
+        $method = new \ReflectionMethod(CurlFactory::class, 'supportedCurlOptions');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        /** @var array<int, true> $supported */
+        $supported = $method->invoke(null);
+
+        self::assertArrayHasKey(
+            $option,
+            $supported,
+            'CURLOPT_PREREQFUNCTION must be in the built-in cURL handlers\' allow-list so it no longer triggers the raw cURL option deprecation.'
+        );
+    }
+
+    public function testPrereqFunctionIsClearedBeforeReusingCurlHandle(): void
+    {
+        if (!\defined('CURLOPT_PREREQFUNCTION')) {
+            self::markTestSkipped('CURLOPT_PREREQFUNCTION is not available.');
+        }
+        if (!\defined('CURL_PREREQFUNC_OK')) {
+            self::markTestSkipped('CURL_PREREQFUNC_OK is not available.');
+        }
+
+        $option = (int) \constant('CURLOPT_PREREQFUNCTION');
+        $ok = (int) \constant('CURL_PREREQFUNC_OK');
+
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200),
+            new Psr7\Response(200),
+        ]);
+
+        $factory = new CurlFactory(1);
+        $handler = new Handler\CurlHandler(['handle_factory' => $factory]);
+        $called = 0;
+        $request = new Psr7\Request('GET', Server::$url);
+
+        $handler($request, [
+            'curl' => [
+                $option => static function () use (&$called, $ok): int {
+                    ++$called;
+
+                    return $ok;
+                },
+            ],
+        ])->wait();
+
+        $afterFirst = $called;
+        self::assertSame(1, $afterFirst);
+
+        $handler($request, [
+            'curl' => [
+                \CURLOPT_FRESH_CONNECT => true,
+            ],
+        ])->wait();
+
+        self::assertSame($afterFirst, $called);
+    }
+
+    public function testPrereqFunctionAbortUsesExistingCurlErrorPath(): void
+    {
+        if (!\defined('CURLOPT_PREREQFUNCTION')) {
+            self::markTestSkipped('CURLOPT_PREREQFUNCTION is not available.');
+        }
+        if (!\defined('CURL_PREREQFUNC_ABORT')) {
+            self::markTestSkipped('CURL_PREREQFUNC_ABORT is not available.');
+        }
+
+        $option = (int) \constant('CURLOPT_PREREQFUNCTION');
+        $abort = (int) \constant('CURL_PREREQFUNC_ABORT');
+        $called = 0;
+
+        Server::flush();
+
+        $handler = new Handler\CurlHandler(['handle_factory' => new CurlFactory(1)]);
+        $promise = $handler(new Psr7\Request('GET', Server::$url), [
+            'curl' => [
+                $option => static function () use (&$called, $abort): int {
+                    ++$called;
+
+                    return $abort;
+                },
+            ],
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected a RequestException from the aborted prereq callback.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('cURL error', $e->getMessage());
+            self::assertSame(1, $called);
+        }
+    }
+
     public function testRejectsCurlProxyHeaderEntriesContainingNewlines(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();

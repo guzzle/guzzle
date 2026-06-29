@@ -74,6 +74,11 @@ Custom cURL request options remain active during redirects unless Guzzle
 documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects)
 for cross-origin redirect credential behavior.
 
+Callbacks supplied through the raw `curl` request option are passed directly to
+PHP's cURL extension. Guzzle does not normalize exception or abort behavior for
+raw cURL callbacks. Prefer Guzzle's `progress`, `on_headers`, and `on_stats`
+request options when you need Guzzle's documented callback semantics.
+
 ## How can I add custom stream context options?
 
 You can pass allow-listed custom
