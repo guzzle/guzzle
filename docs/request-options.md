@@ -1025,17 +1025,13 @@ origin-scoped. On libcurl 7.37.0 and newer (with the proxy-header cURL constants
 available), the header is moved to libcurl's proxy header channel
 (`CURLOPT_PROXYHEADER`) and separate proxy and origin header handling is enabled,
 so it authenticates the proxy and participates in the proxy tunnel sectioning
-described above. Separate proxy/origin header handling is also enabled for any
-CONNECT tunnel through an effective HTTP/HTTPS proxy, so origin request headers
-are not sent to the proxy on libcurl 7.37.0 through 7.42.0, whose default is
-unified. On older libcurl (or a build missing those constants), where the proxy
-and origin header lists cannot be separated, the header is left in place for
-compatibility but connection reuse is disabled for proxied requests that carry a
-non-empty `Proxy-Authorization` credential. Strict proxy/origin header
-separation therefore requires libcurl 7.37.0 or newer; libcurl 7.42.1 and newer
-separate the lists securely by default. Proxy credential sectioning remains
-tunnel-focused: non-tunneled HTTPS-proxy TLS credential behavior is not expanded
-by this change.
+described above. Guzzle also enables separate proxy/origin header handling for
+CONNECT tunnels through an effective HTTP/HTTPS proxy. On older libcurl (or a
+build missing those constants), where the proxy and origin header lists cannot be
+separated, the header is left in place for compatibility but connection reuse is
+disabled for proxied requests that carry a non-empty `Proxy-Authorization`
+credential. Proxy credential sectioning remains tunnel-focused: non-tunneled
+HTTPS-proxy TLS credential behavior is not expanded by this change.
 
 ## query
 
