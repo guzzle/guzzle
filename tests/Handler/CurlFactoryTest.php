@@ -385,7 +385,7 @@ class CurlFactoryTest extends TestCase
 
         $conf = [
             \CURLOPT_PROXY => 'http://proxy.example.com:8080',
-            $proxyHeaderOption => [new class() {
+            $proxyHeaderOption => [new class {
                 public function __toString(): string
                 {
                     return 'Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=';
