@@ -15,7 +15,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Section proxy tunnel connection reuse by credential so distinct credentials never share a tunnel
 - Isolate concurrent foreign cURL proxy tunnels added while another owner's tunnel is active
 - Route TLS 1.2 `crypto_method` requests to the stream handler when cURL cannot select TLS 1.2
-- Reject final request URIs missing a scheme or host
+- Reject final request URIs missing a scheme or host before transfer
 
 ### Deprecated
 
