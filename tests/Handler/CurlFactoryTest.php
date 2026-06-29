@@ -320,6 +320,155 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testRejectsRequestLevelShareWithProxyUrlCredentials(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $conf = [\CURLOPT_PROXY => 'http://username:password@proxy.example.com:8080'];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated HTTP/HTTPS proxy tunnel configuration#');
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+    }
+
+    public function testRejectsRequestLevelShareWithProxyUserPwd(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $conf = [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            \CURLOPT_PROXYUSERPWD => 'username:password',
+        ];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated HTTP/HTTPS proxy tunnel configuration#');
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+    }
+
+    public function testRejectsRequestLevelShareWithProxyAuthorizationHeader(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $conf = [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            $proxyHeaderOption => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+        ];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated HTTP/HTTPS proxy tunnel configuration#');
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+    }
+
+    public function testRejectsRequestLevelShareWithStringableProxyAuthorizationHeader(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $conf = [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            $proxyHeaderOption => [new class {
+                public function __toString(): string
+                {
+                    return 'Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=';
+                }
+            }],
+        ];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+        self::normalizeCurlHeaderOptions($conf);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated HTTP/HTTPS proxy tunnel configuration#');
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+    }
+
+    public function testAllowsRequestLevelShareWithProxyAuthorizationHeaderWhenRawNoProxyDisablesProxy(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::skipIfCurlNoProxyIsUnavailable();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $conf = [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            (int) \constant('CURLOPT_NOPROXY') => '*',
+            $proxyHeaderOption => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+        ];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        self::assertNull($method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf));
+    }
+
+    public function testRejectsRequestLevelShareWithLegacyProxyAuthorizationHeader(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $conf = [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            \CURLOPT_HTTPHEADER => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+        ];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated HTTP/HTTPS proxy tunnel configuration#');
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+    }
+
+    public function testRejectsRequestLevelShareWithProxyTlsCredential(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        if (!\defined('CURLOPT_PROXY_SSLCERT')) {
+            self::markTestSkipped('CURLOPT_PROXY_SSLCERT is not available.');
+        }
+
+        $conf = [
+            \CURLOPT_PROXY => 'https://proxy.example.com:3128',
+            (int) \constant('CURLOPT_PROXY_SSLCERT') => '/path/to/proxy-client.pem',
+        ];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated HTTP/HTTPS proxy tunnel configuration#');
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+    }
+
     /**
      * @dataProvider requestTransportSharingOptionProvider
      *
