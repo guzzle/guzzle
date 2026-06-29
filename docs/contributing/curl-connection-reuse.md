@@ -175,11 +175,11 @@ inputs in 8.0.
 **Necessary vs defense-in-depth.**
 
 - *Necessary:* the proxy credentials (`PROXYUSERPWD`/`PROXYUSERNAME`/
-  `PROXYPASSWORD`) — the exact channel the CVE missed — and the literal
-  `Proxy-Authorization` header (`CURLOPT_PROXYHEADER`), which libcurl **never**
-  keys reuse on at any version (it matches *parsed* credentials, not opaque
-  request headers). The header must therefore be sectioned even on fixed
-  libcurl.
+  `PROXYPASSWORD`) — the exact channel the CVE missed — and the non-empty
+  literal `Proxy-Authorization` header (`CURLOPT_PROXYHEADER`), which libcurl
+  **never** keys reuse on at any version (it matches *parsed* credentials, not
+  opaque request headers). The non-empty header must therefore be sectioned even
+  on fixed libcurl.
 - *Mostly defense-in-depth:* the proxy-TLS options (client cert, cert blob, TLS
   version, TLS-SRP). libcurl keys reuse on these via `ssl_primary_config` for an
   HTTPS proxy — but only from 7.52.0 for the proxy client cert (CVE-2016-5420 in
@@ -193,14 +193,21 @@ inputs in 8.0.
 path as fallback hardening — libcurl's mTLS private-key matching on reuse was
 incomplete before 8.21.0 (CVE-2026-8932), see §10. This is not a complete
 pre-8.21.0 mitigation: it does not cover the delegated path (>= 8.20.0 with no
-literal proxy-auth header) or configured share handles. The blob and the two
-encoding types are an **accepted residual**, not proven-safe.
+non-empty literal proxy-auth header) or configured share handles. The blob and
+the two encoding types are an **accepted residual**, not proven-safe.
 
 **The golden rule — over-sectioning is safe.** A non-`null`, changed signature
 only ever forces a *fresh* connection; it never relaxes reuse. So an over-broad
 signature merely costs an extra connection — it can never cause a leak.
 *Under*-covering (omitting a channel libcurl ignores) is the only way to leak.
 **When in doubt, include the channel.**
+
+Raw `CURLOPT_PROXY`/`CURLOPT_NOPROXY` are rejected before this logic in 8.0. On
+branches that still accept raw `CURLOPT_NOPROXY`, effective-proxy detection must
+model only the exact, untrimmed `CURLOPT_NOPROXY === '*'` bypass-all case. Host,
+domain, CIDR, and port values must be treated as still proxied; that can
+over-section a request libcurl would route direct, but it cannot under-section a
+real proxy tunnel.
 
 ## 6. CONNECT_TO implicit tunnels
 
@@ -228,7 +235,7 @@ provenance. For an authenticated proxy tunnel Guzzle then sets
 the conflict into an error rather than silently degrading).
 
 "Authenticated" here mirrors the signature's channels, each gated to the libcurl
-version below which libcurl does not itself key reuse on it: a literal
+version below which libcurl does not itself key reuse on it: a non-empty literal
 `Proxy-Authorization` header (every version), Basic/Digest proxy credentials
 (below 8.20.0, `PROXY_CREDENTIAL_REUSE_VERSION`), and a proxy TLS credential — a
 client certificate or TLS-SRP (below 7.83.1,
@@ -247,19 +254,20 @@ channel's gate and 8.12.0 decides whether the throw can fire:
   persistent-capable build is never turned into a force-fresh or a
   `PERSISTENT_REQUIRE` error by this path; forcing fresh at every version would
   have done exactly that, which is why the 7.83.1 gate is correct.
-- The proxy Basic/Digest gate at 8.20.0 sits *above* 8.12.0, and a literal
-  `Proxy-Authorization` header forces fresh at every version. So on libcurl
-  8.12.0–8.19.x a `PERSISTENT_REQUIRE` request that carries proxy Basic/Digest
-  credentials, or a literal `Proxy-Authorization` header, reaches
-  `forceFreshConnectionForAuthenticatedProxy` and **throws**: persistent sharing
-  is active there, but libcurl on those builds does not yet key reuse on the
-  proxy credential, so the only safe options are a fresh connection or, under
-  `PERSISTENT_REQUIRE`, rejection. This is intended; it rejects unsafe
-  persistent reuse rather than silently sharing a tunnel across credentials, and
-  it became reachable when the connection-sharing floor moved from 8.20.0 down
-  to 8.12.0. From 8.20.0 the credential is keyed by libcurl, so the throw no
-  longer applies to parsed credentials; the literal-header case still does,
-  since libcurl can never key on an opaque request header.
+- The proxy Basic/Digest gate at 8.20.0 sits *above* 8.12.0, and a non-empty
+  literal `Proxy-Authorization` header forces fresh at every version. So on
+  libcurl 8.12.0–8.19.x a `PERSISTENT_REQUIRE` request that carries proxy
+  Basic/Digest credentials, or a non-empty literal `Proxy-Authorization`
+  header, reaches `forceFreshConnectionForAuthenticatedProxy` and **throws**:
+  persistent sharing is active there, but libcurl on those builds does not yet
+  key reuse on the proxy credential, so the only safe options are a fresh
+  connection or, under `PERSISTENT_REQUIRE`, rejection. This is intended; it
+  rejects unsafe persistent reuse rather than silently sharing a tunnel across
+  credentials, and it became reachable when the connection-sharing floor moved
+  from 8.20.0 down to 8.12.0. From 8.20.0 the credential is keyed by libcurl,
+  so the throw no longer applies to parsed credentials; the non-empty
+  literal-header case still does, since libcurl can never key on an opaque
+  request header.
 
 **SSL session sharing floor = 8.6.0 — why it is safe.** Sharing the TLS session
 cache could, in theory, let two handles resume each other's TLS session across
@@ -307,8 +315,9 @@ channels: libcurl < 8.19.0 ignored proxy credentials when matching connections,
 and 8.19.x still carried related proxy-credential leaks fixed in 8.20.0. At or
 above it, libcurl keys reuse on option- and URL-supplied proxy credentials
 itself, so `proxyTunnelSignature()` returns a shared delegated-owner sentinel —
-**except** when a literal `Proxy-Authorization` header is present, which always
-sections because libcurl can never key on an opaque request header (§5).
+**except** when a non-empty literal `Proxy-Authorization` header is present,
+which always sections because libcurl can never key on an opaque request header
+(§5).
 
 This proxy-credential floor (8.20.0) is **distinct** from the connection-cache
 sharing floor (`CONNECTION_SHARING_VERSION = 8.12.0`, §3). The former gates how
@@ -343,8 +352,9 @@ TLS credential below 7.83.1 and not at or above it.
 
 - Never compute a `null` signature for a credential-bearing proxy tunnel.
   Over-section freely; under-sectioning is the only way to leak.
-- Always hash the proxy credentials and the literal `Proxy-Authorization`
-  header; the header sections on **every** libcurl version.
+- Always hash the proxy credentials and the non-empty literal
+  `Proxy-Authorization` header; the non-empty header sections on **every**
+  libcurl version.
 - Use a non-`null` delegated sentinel for real proxy tunnels whose parsed proxy
   credentials, if any, are trusted to libcurl.
 - Never trust libcurl `< 8.20` to distinguish proxy credentials itself.

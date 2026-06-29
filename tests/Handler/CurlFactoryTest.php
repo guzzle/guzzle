@@ -553,6 +553,35 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testPersistentRequireRejectsStringableProxyAuthorizationHeaderThatRequiresFreshProxyTunnelConnection(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('fresh proxy tunnel connection');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => 'http://proxy.example.com:8080',
+                'curl' => [
+                    $proxyHeaderOption => [new class() {
+                        public function __toString(): string
+                        {
+                            return 'Proxy-Authorization: Basic abc';
+                        }
+                    }],
+                ],
+            ]);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
     /**
      * @dataProvider parsedProxyCredentialOptions
      */
@@ -1706,6 +1735,9 @@ class CurlFactoryTest extends TestCase
         $proxyHeaderOption = self::proxyHeaderOption();
 
         $factory = new CurlFactory(3);
+        $delegatedBaseline = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ])->proxyTunnelSignature;
         $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
@@ -1714,6 +1746,7 @@ class CurlFactoryTest extends TestCase
         ]);
 
         self::assertNotNull($easy->proxyTunnelSignature);
+        self::assertSame($delegatedBaseline, $easy->proxyTunnelSignature);
     }
 
     public function testEmptyProxyAuthorizationHeaderUsesDelegatedOwnerOnFixedCurlVersion(): void
@@ -1721,6 +1754,9 @@ class CurlFactoryTest extends TestCase
         $proxyHeaderOption = self::proxyHeaderOption();
 
         $factory = new CurlFactory(3);
+        $delegatedBaseline = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ])->proxyTunnelSignature;
         $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
@@ -1729,6 +1765,7 @@ class CurlFactoryTest extends TestCase
         ]);
 
         self::assertNotNull($easy->proxyTunnelSignature);
+        self::assertSame($delegatedBaseline, $easy->proxyTunnelSignature);
     }
 
     public function testDelegatedProxyTunnelOwnerIsDistinctFromLiteralProxyAuthorizationOwner(): void
