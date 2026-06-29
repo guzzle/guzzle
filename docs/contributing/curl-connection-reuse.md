@@ -27,9 +27,9 @@ on the same handle — or across handles, if you share them (§3).
 `CurlFactory` pools easy handles: on `release()` it calls `curl_reset()` (which
 clears per-request options) and returns the handle to a small pool; `create()`
 pops a pooled handle and re-applies the next request's options. The key fact:
-**`curl_reset()` does not close the underlying connection** — reuse is the whole
-point — so a pooled handle can carry a live connection from one request into the
-next.
+**`curl_reset()` does not close the underlying connection** — reuse is the
+whole point — so a pooled handle can carry a live connection from one request
+into the next.
 
 The option pipeline is: Guzzle request options (`proxy`, `cert`, …) → an
 internal `$conf` array of `CURLOPT_* => value` → `curl_setopt_array()`.
@@ -41,13 +41,13 @@ This gate is about option-key availability and known conflicts only. Unless
 Guzzle documents a specific mitigation, the meaning, safety, and runtime effects
 of raw cURL option values remain the caller's responsibility.
 
-**PHP detail — the `\defined()` guard.** A `CURLOPT_*` constant is only defined
-when the linked libcurl/PHP build supports that option, so code that touches an
-optional option guards with `\defined()`/`\constant()`. This is safe by
-construction: PHP's `curl_setopt()` never forwards an *unknown* option integer
-to libcurl (PHP 8 throws `ValueError`; PHP 7 silently no-ops), and a constant is
-registered under the same `#if LIBCURL_VERSION_NUM` guard as its setopt handler,
-so an undefined constant can never become a live channel.
+**PHP detail — the `\defined()` guard.** A `CURLOPT_*` constant is only
+defined when the linked libcurl/PHP build supports that option, so code that
+touches an optional option guards with `\defined()`/`\constant()`. This is safe
+by construction: PHP's `curl_setopt()` never forwards an *unknown* option
+integer to libcurl (PHP 8 throws `ValueError`; PHP 7 silently no-ops), and a
+constant is registered under the same `#if LIBCURL_VERSION_NUM` guard as its
+setopt handler, so an undefined constant can never become a live channel.
 
 ## 2. Why reuse is both good and dangerous
 
@@ -60,9 +60,9 @@ that expects a different one, that is a leak. libcurl decides whether to reuse a
 connection by **matching connection attributes**, and bugs in that matching have
 produced CVEs (§4, §7).
 
-libcurl matches on host, port, scheme, proxy type/host/port, and — for TLS — its
-"primary" SSL config. There is an important split in libcurl's data model that
-several decisions below depend on:
+libcurl matches on host, port, scheme, proxy type/host/port, and — for TLS —
+its "primary" SSL config. There is an important split in libcurl's data model
+that several decisions below depend on:
 
 - **`ssl_primary_config` (compared for reuse):** client certificate and cert
   blob, CA info, TLS version, cipher lists, pinned key, TLS-SRP credentials,
@@ -123,20 +123,21 @@ change).
 
 **Guzzle's mitigation.** `CurlFactory::proxyTunnelSignature()` computes a
 per-request signature over the proxy identity. When it changes between requests,
-Guzzle forces a fresh connection — purging pooled idle handles that might hold a
-foreign tunnel — so libcurl cannot hand one request a tunnel established under a
-different identity.
+Guzzle forces a fresh connection — purging pooled idle handles that might hold
+a foreign tunnel — so libcurl cannot hand one request a tunnel established
+under a different identity.
 
-**`CurlMultiHandler` active-attachment isolation.** A single `CurlMultiHandler`
-reuses one libcurl multi handle — and therefore one connection cache — across
-transfers. It tracks the proxy tunnel section that owns that idle cache in a
-scalar `$proxyTunnelOwner`, handed over only when the handle is fully idle.
+**`CurlMultiHandler` active-attachment isolation.** A single
+`CurlMultiHandler` reuses one libcurl multi handle — and therefore one
+connection cache — across transfers. It tracks the proxy tunnel section that
+owns that idle cache in a scalar `$proxyTunnelOwner`, handed over only when the
+handle is fully idle.
 Concurrency is governed separately by a reference-counted map of the proxy
 tunnel signatures *currently attached* to the multi handle. While a foreign
 signature is attached, even an owner-compatible transfer is isolated with
-`CURLOPT_FRESH_CONNECT` + `CURLOPT_FORBID_REUSE` — the `A / B / A` case — because
-the latched owner records who inherited the idle cache, not which sections are in
-flight right now.
+`CURLOPT_FRESH_CONNECT` + `CURLOPT_FORBID_REUSE` — the `A / B / A` case —
+because the latched owner records who inherited the idle cache, not which
+sections are in flight right now.
 
 ## 5. The signature: what it covers and why
 
@@ -150,7 +151,19 @@ the pool. Real delegated tunnels on fixed libcurl get a non-`null` sentinel, so
 they stay distinct from genuine non-tunnels and from literal proxy-header tunnel
 owners.
 
-> Non-tunnel proxy requests get a `null` signature and are deliberately left unsectioned. For per-request (HTTP Basic) proxy auth this is safe: `proxy` URL userinfo and the allow-listed `CURLOPT_PROXYUSERPWD` re-authenticate on every request, so a reused non-tunnel proxy connection cannot inherit a foreign identity. Connection-oriented schemes (NTLM, Negotiate) bind identity to the TCP connection, and a caller can still express one through a literal `Proxy-Authorization` header — sent as a PSR header or via the allow-listed raw `CURLOPT_PROXYHEADER` — even though raw `CURLOPT_PROXYAUTH` is rejected. A non-tunnel request carrying such a header is therefore an accepted residual: it is left unsectioned, because sectioning non-tunnel proxy connections would extend the signature domain beyond CONNECT tunnels, which is intentionally out of scope. (A single static header value cannot complete NTLM's multi-leg handshake, but a single-leg Negotiate token can, so the residual is real.)
+> Non-tunnel proxy requests get a `null` signature and are deliberately left
+> unsectioned. For per-request (HTTP Basic) proxy auth this is safe: `proxy` URL
+> userinfo and the allow-listed `CURLOPT_PROXYUSERPWD` re-authenticate on every
+> request, so a reused non-tunnel proxy connection cannot inherit a foreign
+> identity. Connection-oriented schemes (NTLM, Negotiate) bind identity to the
+> TCP connection, and a caller can still express one through a literal
+> `Proxy-Authorization` header — sent as a PSR header or via the allow-listed
+> raw `CURLOPT_PROXYHEADER` — even though raw `CURLOPT_PROXYAUTH` is rejected.
+> A non-tunnel request carrying such a header is therefore an accepted residual:
+> it is left unsectioned, because sectioning non-tunnel proxy connections would
+> extend the signature domain beyond CONNECT tunnels, which is intentionally out
+> of scope. (A single static header value cannot complete NTLM's multi-leg
+> handshake, but a single-leg Negotiate token can, so the residual is real.)
 
 **The channels hashed:** the effective proxy URL, the proxy credential and
 TLS-identity options, and any literal `Proxy-Authorization` header value.
@@ -158,14 +171,15 @@ TLS-identity options, and any literal `Proxy-Authorization` header value.
 PSR `Proxy-Authorization` headers are normalized into the proxy-header channel
 (`CURLOPT_PROXYHEADER` with `CURLOPT_HEADEROPT => CURLHEADER_SEPARATE`) for
 effective HTTP and HTTPS proxies wherever libcurl supports header separation
-(7.37.0+). A non-empty literal `Proxy-Authorization: <value>` header is never something
-libcurl can key connection reuse on, even on versions that key parsed proxy
-credentials (8.20.0+), so a tunnel carrying one always sections — its signature
-is hashed, never the delegated owner. (The empty `Proxy-Authorization;` form is
-migrated for wire correctness but carries no credential, so it does not section.) On libcurl older than 7.37.0 the header cannot be
-separated; the handlers keep a non-empty credential header on the wire but force a fresh,
-non-reused connection, which under `PERSISTENT_REQUIRE` is reported as a conflict rather
-than silently degrading reuse.
+(7.37.0+). A non-empty literal `Proxy-Authorization: <value>` header is never
+something libcurl can key connection reuse on, even on versions that key parsed
+proxy credentials (8.20.0+), so a tunnel carrying one always sections — its
+signature is hashed, never the delegated owner. (The empty
+`Proxy-Authorization;` form is migrated for wire correctness but carries no
+credential, so it does not section.) On libcurl older than 7.37.0 the header
+cannot be separated; the handlers keep a non-empty credential header on the wire
+but force a fresh, non-reused connection, which under `PERSISTENT_REQUIRE` is
+reported as a conflict rather than silently degrading reuse.
 
 Proxy TLS credential coverage stays tunnel-only and private: it is
 reflection-tested hardening for CONNECT tunnels, not public non-tunneled
@@ -182,10 +196,11 @@ inputs in 8.0.
   on fixed libcurl.
 - *Mostly defense-in-depth:* the proxy-TLS options (client cert, cert blob, TLS
   version, TLS-SRP). libcurl keys reuse on these via `ssl_primary_config` for an
-  HTTPS proxy — but only from 7.52.0 for the proxy client cert (CVE-2016-5420 in
-  7.50.1 is the origin-cert precedent, predating HTTPS-proxy support) and 7.83.1
-  for TLS-SRP (CVE-2022-27782). Below those they are load-bearing; above,
-  redundant-but-free. They are hashed unconditionally rather than version-gated.
+  HTTPS proxy — but only from 7.52.0 for the proxy client cert (CVE-2016-5420
+  in 7.50.1 is the origin-cert precedent, predating HTTPS-proxy support) and
+  7.83.1 for TLS-SRP (CVE-2022-27782). Below those they are load-bearing;
+  above, redundant-but-free. They are hashed unconditionally rather than
+  version-gated.
 
 **Deliberate omissions.** `PROXY_SSLKEY_BLOB`, `PROXY_SSLKEYTYPE`, and
 `PROXY_SSLCERTTYPE` are **not** hashed. The private-key *file* and passphrase
@@ -213,9 +228,10 @@ real proxy tunnel.
 
 `CURLOPT_CONNECT_TO` redirects the origin connection to a different host:port
 (without changing the `Host` header, SNI, or cert verification). With an HTTP
-proxy, when the connect-to host or port differs, libcurl automatically switches
-to tunnel mode (sets `tunnel_proxy`) — so even a plain `http://` request becomes
-a credential-bearing `CONNECT` tunnel, the same hazard class as §4.
+proxy, when the connect-to host or port differs, libcurl automatically
+switches to tunnel mode (sets `tunnel_proxy`) — so even a plain `http://`
+request becomes a credential-bearing `CONNECT` tunnel, the same hazard class as
+§4.
 
 `usesProxyTunnel()` therefore treats an `http://` target with a non-empty
 `CURLOPT_CONNECT_TO` as a possible tunnel. The check is deliberately
@@ -227,8 +243,8 @@ liability, not a feature.
 
 ## 7. Connection-sharing safety decisions
 
-**Authenticated proxy + a configured share handle → blanket force-fresh.** When
-`transport_sharing` is configured, the shared connection cache hides which
+**Authenticated proxy + a configured share handle → blanket force-fresh.**
+When `transport_sharing` is configured, the shared connection cache hides which
 tunnel a pooled connection holds, so the signature cannot reason about
 provenance. For an authenticated proxy tunnel Guzzle then sets
 `CURLOPT_FRESH_CONNECT` / `CURLOPT_FORBID_REUSE` (and `PERSISTENT_REQUIRE` turns
@@ -237,8 +253,8 @@ the conflict into an error rather than silently degrading).
 "Authenticated" here mirrors the signature's channels, each gated to the libcurl
 version below which libcurl does not itself key reuse on it: a non-empty literal
 `Proxy-Authorization` header (every version), Basic/Digest proxy credentials
-(below 8.20.0, `PROXY_CREDENTIAL_REUSE_VERSION`), and a proxy TLS credential — a
-client certificate or TLS-SRP (below 7.83.1,
+(below 8.20.0, `PROXY_CREDENTIAL_REUSE_VERSION`), and a proxy TLS credential —
+a client certificate or TLS-SRP (below 7.83.1,
 `PROXY_TLS_CREDENTIAL_REUSE_VERSION`). libcurl matches the proxy client cert
 from 7.52.0 and TLS-SRP only from 7.83.1 (CVE-2022-27782), so both are keyed
 under the single 7.83.1 floor. The floor matters more here than for the
@@ -269,9 +285,9 @@ channel's gate and 8.12.0 decides whether the throw can fire:
   literal-header case still does, since libcurl can never key on an opaque
   request header.
 
-**SSL session sharing floor = 8.6.0 — why it is safe.** Sharing the TLS session
-cache could, in theory, let two handles resume each other's TLS session across
-*different* client certificates. It cannot: libcurl matches the client
+**SSL session sharing floor = 8.6.0 — why it is safe.** Sharing the TLS
+session cache could, in theory, let two handles resume each other's TLS session
+across *different* client certificates. It cannot: libcurl matches the client
 certificate before reusing a cached session on every version Guzzle shares the
 cache on (≥ 8.6.0) — via `match_ssl_primary_config` before 8.12.0 and
 `cf_ssl_scache_match_auth` from 8.12.0 — and this runs for shared caches too.
@@ -314,7 +330,8 @@ is simply incoherent, with no legitimate use.)
 channels: libcurl < 8.19.0 ignored proxy credentials when matching connections,
 and 8.19.x still carried related proxy-credential leaks fixed in 8.20.0. At or
 above it, libcurl keys reuse on option- and URL-supplied proxy credentials
-itself, so `proxyTunnelSignature()` returns a shared delegated-owner sentinel —
+itself, so `proxyTunnelSignature()` returns a shared delegated-owner
+sentinel —
 **except** when a non-empty literal `Proxy-Authorization` header is present,
 which always sections because libcurl can never key on an opaque request header
 (§5).

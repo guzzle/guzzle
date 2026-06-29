@@ -471,13 +471,6 @@ constants), where proxy headers cannot be separated, the header is left in place
 for compatibility and a non-empty credential forces a fresh, non-reused
 connection.
 
-Raw proxy TLS credential options (such as `CURLOPT_PROXY_SSLCERT` or
-`CURLOPT_PROXY_TLSAUTH_PASSWORD`) are not on the allow-list and are not supported
-public raw `curl` inputs in 8.0: the `proxy` request option configures proxy
-URL selection and userinfo only — it does not expose proxy mTLS or TLS-SRP
-credential configuration. Raw `CURLOPT_PROXYTYPE` is likewise rejected; use the
-`proxy` request option to select the proxy instead.
-
 ## debug
 
 Summary

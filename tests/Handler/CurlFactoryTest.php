@@ -569,7 +569,7 @@ class CurlFactoryTest extends TestCase
             $factory->create(new Psr7\Request('GET', 'https://example.com'), [
                 'proxy' => 'http://proxy.example.com:8080',
                 'curl' => [
-                    $proxyHeaderOption => [new class() {
+                    $proxyHeaderOption => [new class {
                         public function __toString(): string
                         {
                             return 'Proxy-Authorization: Basic abc';
