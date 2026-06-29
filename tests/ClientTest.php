@@ -2425,20 +2425,19 @@ class ClientTest extends TestCase
     }
 
     /**
-     * @dataProvider invalidFinalUriProvider
+     * @dataProvider partialUriProvider
      */
-    public function testRejectsFinalUriWithoutSchemeOrHost(string $uri): void
+    public function testMockHandlerReceivesPartialUri(string $uri): void
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('URI must include a scheme and host');
-
         $client->request('GET', $uri);
+
+        self::assertSame($uri, (string) $mockHandler->getLastRequest()->getUri());
     }
 
-    public static function invalidFinalUriProvider(): iterable
+    public static function partialUriProvider(): iterable
     {
         yield 'relative path' => ['baz'];
         yield 'host-like relative path' => ['gstatic.com/generate_204'];
@@ -2446,15 +2445,32 @@ class ClientTest extends TestCase
         yield 'absolute path' => ['/generate_204'];
     }
 
-    public function testRejectsSendRequestWhenFinalUriHasNoSchemeOrHost(): void
+    public function testMockHandlerReceivesPartialRequestUri(): void
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('URI must include a scheme and host');
-
         $client->send(new Request('GET', '/baz'));
+
+        self::assertSame('/baz', (string) $mockHandler->getLastRequest()->getUri());
+    }
+
+    public function testMiddlewareCanRewritePartialUriBeforeHandler(): void
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $stack = HandlerStack::create($mockHandler);
+        $stack->push(static function (callable $handler): callable {
+            return static function (RequestInterface $request, array $options) use ($handler): PromiseInterface {
+                $uri = Psr7\UriResolver::resolve(new Uri('https://example.com/base/'), $request->getUri());
+
+                return $handler($request->withUri($uri), $options);
+            };
+        });
+        $client = new Client(['handler' => $stack]);
+
+        $client->request('GET', 'some/path');
+
+        self::assertSame('https://example.com/base/some/path', (string) $mockHandler->getLastRequest()->getUri());
     }
 
     /**

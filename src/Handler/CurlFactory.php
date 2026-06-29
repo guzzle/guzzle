@@ -169,6 +169,7 @@ final class CurlFactory implements CurlFactoryInterface
     public function create(RequestInterface $request, array $options): EasyHandle
     {
         $this->assertOpen();
+        self::validateRequestUri($request);
 
         $protocolVersion = $request->getProtocolVersion();
 
@@ -607,6 +608,14 @@ final class CurlFactory implements CurlFactoryInterface
         $value = \constant($constant);
         if (\is_int($value)) {
             $options[$value] = $replacement;
+        }
+    }
+
+    private static function validateRequestUri(RequestInterface $request): void
+    {
+        $uri = $request->getUri();
+        if ($uri->getScheme() === '' || $uri->getHost() === '') {
+            throw new RequestException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.', $request);
         }
     }
 
