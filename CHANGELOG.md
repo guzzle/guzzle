@@ -48,6 +48,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject invalid `SetCookie` constructor field types instead of coercing them
 - Reject malformed, conflicting, or unrepresentable request `Content-Length` values in built-in handlers
 - Reject raw cURL request options outside the built-in cURL handlers' allow-list
+- Reject non-string raw cURL header-list entries before applying them
 - Reject PHP stream context options outside the built-in stream handler allow-list
 - Reject selected request options ignored by incompatible built-in handlers
 - Support retry delay callbacks with retry count only or full retry context
