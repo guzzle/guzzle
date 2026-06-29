@@ -239,6 +239,59 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsProxyCredentialAwareConnectionReuse());
     }
 
+    public function testSupportsProxyHeaderSeparationIsFalseBelowMinimumVersion(): void
+    {
+        self::setVersionInfo([
+            'version' => '7.36.0',
+            'features' => 0,
+        ]);
+
+        self::assertFalse(CurlVersion::supportsProxyHeaderSeparation());
+    }
+
+    public function testSupportsProxyHeaderSeparationIsTrueAtMinimumVersion(): void
+    {
+        self::requiresProxyHeaderSeparationConstants();
+
+        self::setVersionInfo([
+            'version' => '7.37.0',
+            'features' => 0,
+        ]);
+
+        self::assertTrue(CurlVersion::supportsProxyHeaderSeparation());
+    }
+
+    public function testSupportsProxyHeaderSeparationIsTrueAboveMinimumVersion(): void
+    {
+        self::requiresProxyHeaderSeparationConstants();
+
+        self::setVersionInfo([
+            'version' => '7.42.0',
+            'features' => 0,
+        ]);
+
+        self::assertTrue(CurlVersion::supportsProxyHeaderSeparation());
+    }
+
+    public function testSupportsProxyHeaderSeparationIsTrueAtPatchVersion(): void
+    {
+        self::requiresProxyHeaderSeparationConstants();
+
+        self::setVersionInfo([
+            'version' => '7.42.1',
+            'features' => 0,
+        ]);
+
+        self::assertTrue(CurlVersion::supportsProxyHeaderSeparation());
+    }
+
+    public function testSupportsProxyHeaderSeparationIsFalseWhenVersionInfoIsUnavailable(): void
+    {
+        self::setVersionInfo(false);
+
+        self::assertFalse(CurlVersion::supportsProxyHeaderSeparation());
+    }
+
     public function testEnsureSupportedRejectsCurlWithoutSslSupport(): void
     {
         if (!\defined('CURL_SSLVERSION_TLSv1_2')) {
@@ -314,6 +367,15 @@ class CurlVersionTest extends TestCase
     {
         if (!\defined('CURLOPT_PROTOCOLS_STR')) {
             self::markTestSkipped('CURLOPT_PROTOCOLS_STR is not available.');
+        }
+    }
+
+    private static function requiresProxyHeaderSeparationConstants(): void
+    {
+        foreach (['CURLOPT_PROXYHEADER', 'CURLOPT_HEADEROPT', 'CURLHEADER_SEPARATE'] as $constant) {
+            if (!\defined($constant)) {
+                self::markTestSkipped($constant.' is not available.');
+            }
         }
     }
 

@@ -19,7 +19,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add `ProxyOptions` for proxy option resolution
 - Add `ResponseException` for request failures with responses
 - Add auth middleware for built-in Basic and Digest authentication
-- Added the `crypto_method_max` request option to cap the maximum TLS protocol version across built-in handlers.
 
 ### Changed
 
@@ -49,6 +48,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject malformed, conflicting, or unrepresentable request `Content-Length` values in built-in handlers
 - Reject raw cURL request options outside the built-in cURL handlers' allow-list
 - Reject non-string raw cURL header-list entries before applying them
+- Reject proxy-auth header fresh connections when persistent transport sharing requires reuse
 - Reject PHP stream context options outside the built-in stream handler allow-list
 - Reject selected request options ignored by incompatible built-in handlers
 - Support retry delay callbacks with retry count only or full retry context

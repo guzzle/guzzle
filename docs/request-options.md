@@ -449,6 +449,28 @@ $client->request('GET', '/', [
 ]);
 ```
 
+`CURLOPT_HEADEROPT` is intentionally absent from the allow-list above. Guzzle
+sets it internally to `CURLHEADER_SEPARATE` whenever it configures
+`CURLOPT_PROXYHEADER`, and also for an HTTP(S) proxy CONNECT tunnel even when no
+proxy header is configured, so proxy headers stay separate from origin request
+headers; passing `CURLOPT_HEADEROPT` yourself is rejected.
+
+When an effective HTTP or HTTPS proxy is used, the built-in cURL handlers treat
+PSR `Proxy-Authorization` as proxy-scoped rather than origin-scoped. On libcurl
+7.37.0 and newer (with the proxy-header cURL constants available), the header is
+moved to cURL's proxy-header channel (`CURLOPT_PROXYHEADER`), so it authenticates
+the proxy rather than leaking to the origin. Direct (no-proxy) and SOCKS-proxy
+requests are left untouched.
+
+A proxy CONNECT tunnel carrying a non-empty `Proxy-Authorization` credential
+requires a fresh connection, because libcurl cannot key connection reuse on that
+opaque header value. Under `TransportSharing::PERSISTENT_REQUIRE`, which requires
+reuse, such a request is rejected with an `InvalidArgumentException` instead of
+silently degrading reuse. On older libcurl (or a build missing the proxy-header
+constants), where proxy headers cannot be separated, the header is left in place
+for compatibility and a non-empty credential forces a fresh, non-reused
+connection.
+
 ## debug
 
 Summary
@@ -1080,10 +1102,11 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > connections. Anonymous tunnels are sectioned apart from authenticated ones,
 > so an unauthenticated request never rides an authenticated tunnel. Raw
 > `CURLOPT_PROXY` is rejected; use the `proxy` request option for the proxy
-> URL. Custom proxy authentication sent with `CURLOPT_PROXYHEADER` is always
-> sectioned because libcurl cannot key connection reuse on those header values.
-> On libcurl 8.20.0 and newer, credential sectioning for option-supplied
-> credentials is left to libcurl's own credential-aware connection matching.
+> URL. A non-empty custom proxy authentication value sent with
+> `CURLOPT_PROXYHEADER` is always sectioned because libcurl cannot key
+> connection reuse on those header values. On libcurl 8.20.0 and newer,
+> credential sectioning for option-supplied credentials is left to libcurl's own
+> credential-aware connection matching.
 >
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,

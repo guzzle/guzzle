@@ -553,6 +553,35 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testPersistentRequireRejectsStringableProxyAuthorizationHeaderThatRequiresFreshProxyTunnelConnection(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('fresh proxy tunnel connection');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => 'http://proxy.example.com:8080',
+                'curl' => [
+                    $proxyHeaderOption => [new class {
+                        public function __toString(): string
+                        {
+                            return 'Proxy-Authorization: Basic abc';
+                        }
+                    }],
+                ],
+            ]);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
     /**
      * @dataProvider parsedProxyCredentialOptions
      */
@@ -1706,6 +1735,9 @@ class CurlFactoryTest extends TestCase
         $proxyHeaderOption = self::proxyHeaderOption();
 
         $factory = new CurlFactory(3);
+        $delegatedBaseline = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ])->proxyTunnelSignature;
         $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
@@ -1714,6 +1746,7 @@ class CurlFactoryTest extends TestCase
         ]);
 
         self::assertNotNull($easy->proxyTunnelSignature);
+        self::assertSame($delegatedBaseline, $easy->proxyTunnelSignature);
     }
 
     public function testEmptyProxyAuthorizationHeaderUsesDelegatedOwnerOnFixedCurlVersion(): void
@@ -1721,6 +1754,9 @@ class CurlFactoryTest extends TestCase
         $proxyHeaderOption = self::proxyHeaderOption();
 
         $factory = new CurlFactory(3);
+        $delegatedBaseline = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ])->proxyTunnelSignature;
         $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
@@ -1729,6 +1765,7 @@ class CurlFactoryTest extends TestCase
         ]);
 
         self::assertNotNull($easy->proxyTunnelSignature);
+        self::assertSame($delegatedBaseline, $easy->proxyTunnelSignature);
     }
 
     public function testDelegatedProxyTunnelOwnerIsDistinctFromLiteralProxyAuthorizationOwner(): void
@@ -1752,6 +1789,374 @@ class CurlFactoryTest extends TestCase
         self::assertNotNull($delegated);
         self::assertSame($delegated, $anonymousDelegated);
         self::assertNotSame($delegated, $literalHeader);
+    }
+
+    public function testMigratesPsrProxyAuthorizationHeaderToProxyHeaderWhenSupported(): void
+    {
+        self::requireProxyHeaderSeparationConstants();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $factory = new CurlFactory(3);
+        self::createRequestOnFactory(
+            $factory,
+            '7.37.0',
+            new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+            ['proxy' => 'http://proxy.example.com:8080']
+        );
+
+        self::assertNotContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][$proxyHeaderOption]);
+        self::assertSame((int) \constant('CURLHEADER_SEPARATE'), $_SERVER['_curl'][(int) \constant('CURLOPT_HEADEROPT')]);
+    }
+
+    public function testMigratedPsrProxyAuthorizationHeaderSectionsTunnelEvenOnFixedCurl(): void
+    {
+        self::requireProxyHeaderSeparationConstants();
+
+        $factory = new CurlFactory(3);
+        $first = self::createRequestOnFactory(
+            $factory,
+            '8.20.0',
+            new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => 'Basic dXNlcjpvbmU=']),
+            ['proxy' => 'http://proxy.example.com:8080']
+        )->proxyTunnelSignature;
+        $second = self::createRequestOnFactory(
+            $factory,
+            '8.20.0',
+            new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => 'Basic dXNlcjp0d28=']),
+            ['proxy' => 'http://proxy.example.com:8080']
+        )->proxyTunnelSignature;
+
+        // libcurl cannot key connection reuse on a literal Proxy-Authorization
+        // header, so the migrated credential sections the tunnel even on the
+        // fast-path version, and distinct credentials section distinctly.
+        self::assertNotNull($first);
+        self::assertNotNull($second);
+        self::assertNotSame($first, $second);
+    }
+
+    public function testProxyHeaderSeparationIsSetForExistingProxyHeader(): void
+    {
+        self::requireProxyHeaderSeparationConstants();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $factory = new CurlFactory(3);
+        self::createOnFactory($factory, '7.37.0', 'http://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                $proxyHeaderOption => ['X-Proxy-Header: value'],
+            ],
+        ]);
+
+        // The raw CURLOPT_PROXYHEADER option remains allowed, and Guzzle sets
+        // CURLOPT_HEADEROPT internally so the proxy headers stay separate.
+        self::assertSame(['X-Proxy-Header: value'], $_SERVER['_curl'][$proxyHeaderOption]);
+        self::assertSame((int) \constant('CURLHEADER_SEPARATE'), $_SERVER['_curl'][(int) \constant('CURLOPT_HEADEROPT')]);
+    }
+
+    public function testProxyHeaderSeparationIsSetForConnectTunnelWithoutProxyHeader(): void
+    {
+        self::requireProxyHeaderSeparationConstants();
+
+        $factory = new CurlFactory(3);
+        self::createRequestOnFactory(
+            $factory,
+            '7.37.0',
+            new Psr7\Request('GET', 'https://example.com'),
+            ['proxy' => 'http://proxy.example.com:8080']
+        );
+
+        // The HTTPS target tunnels via CONNECT; even with no proxy header,
+        // usesProxyTunnel() is true, so Guzzle sets CURLHEADER_SEPARATE.
+        self::assertSame((int) \constant('CURLHEADER_SEPARATE'), $_SERVER['_curl'][(int) \constant('CURLOPT_HEADEROPT')]);
+    }
+
+    public function testMigratedProxyAuthorizationAppendsToExistingProxyHeaders(): void
+    {
+        self::requireProxyHeaderSeparationConstants();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $factory = new CurlFactory(3);
+        self::createRequestOnFactory(
+            $factory,
+            '7.37.0',
+            new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+            [
+                'proxy' => 'http://proxy.example.com:8080',
+                'curl' => [
+                    $proxyHeaderOption => ['X-Proxy-Header: value'],
+                ],
+            ]
+        );
+
+        // The migrated PSR credential is appended after the pre-existing proxy
+        // header, preserving order.
+        self::assertSame([
+            'X-Proxy-Header: value',
+            'Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+        ], $_SERVER['_curl'][$proxyHeaderOption]);
+    }
+
+    public function testSupportedProxyAuthorizationConflictsWithPersistentRequireAfterMigration(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::requireProxyHeaderSeparationConstants();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('fresh proxy tunnel connection');
+
+            // The HTTPS target tunnels through the http:// proxy; the PSR header
+            // migrates into CURLOPT_PROXYHEADER before the configured-share
+            // fresh-connection logic observes it and rejects the reuse.
+            self::createRequestOnFactory(
+                $factory,
+                '7.37.0',
+                new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+                ['proxy' => 'http://proxy.example.com:8080']
+            );
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public function testSupportedProxyAuthorizationWithoutTunnelIsAcceptedUnderPersistentRequire(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::requireProxyHeaderSeparationConstants();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            // Supported separation + a NON-tunnel (plain http) target: the header
+            // migrates to CURLOPT_PROXYHEADER and the tunnel-gated fresh-connection
+            // logic never runs, so PERSISTENT_REQUIRE must ACCEPT the request.
+            $easy = self::createRequestOnFactory(
+                $factory,
+                '7.37.0',
+                new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+                ['proxy' => 'http://proxy.example.com:8080']
+            );
+
+            self::assertNull($easy->proxyTunnelSignature);
+            self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][$proxyHeaderOption]);
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public function testDirectRequestDoesNotMoveProxyAuthorizationHeader(): void
+    {
+        self::withProxyEnvironment([], static function (): void {
+            $factory = new CurlFactory(3);
+            $factory->create(
+                new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+                ['proxy' => '']
+            );
+
+            // With no effective proxy the header is left in CURLOPT_HTTPHEADER
+            // and none of the proxy-header machinery is engaged.
+            self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+            if (\defined('CURLOPT_PROXYHEADER')) {
+                self::assertArrayNotHasKey((int) \constant('CURLOPT_PROXYHEADER'), $_SERVER['_curl']);
+            }
+            if (\defined('CURLOPT_HEADEROPT')) {
+                self::assertArrayNotHasKey((int) \constant('CURLOPT_HEADEROPT'), $_SERVER['_curl']);
+            }
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        });
+    }
+
+    public function testSocksProxyDoesNotMoveProxyAuthorizationHeader(): void
+    {
+        $factory = new CurlFactory(3);
+        self::createRequestOnFactory(
+            $factory,
+            '7.37.0',
+            new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+            ['proxy' => 'socks5://proxy.example.com:1080']
+        );
+
+        // SOCKS proxy auth is not carried in CURLOPT_PROXYHEADER, so the header
+        // is left untouched in CURLOPT_HTTPHEADER.
+        self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        if (\defined('CURLOPT_PROXYHEADER')) {
+            self::assertArrayNotHasKey((int) \constant('CURLOPT_PROXYHEADER'), $_SERVER['_curl']);
+        }
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testLegacyCurlPreservesProxyAuthorizationAndForcesFreshConnection(): void
+    {
+        $factory = new CurlFactory(3);
+        self::createRequestOnFactory(
+            $factory,
+            '7.36.0',
+            new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+            ['proxy' => 'http://proxy.example.com:8080']
+        );
+
+        // Legacy libcurl cannot separate proxy headers, so the credential stays
+        // on the wire via CURLOPT_HTTPHEADER and Guzzle forces a fresh,
+        // non-reused connection instead.
+        self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testLegacyProxyAuthorizationConflictsWithPersistentRequire(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('fresh proxy tunnel connection');
+
+            // Plain http:// target through an http:// proxy is NOT a tunnel; the
+            // legacy fallback throws from applyProxyAuthorizationHeaderHandling()
+            // itself, which is deliberately not gated by usesProxyTunnel().
+            self::createRequestOnFactory(
+                $factory,
+                '7.36.0',
+                new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+                ['proxy' => 'http://proxy.example.com:8080']
+            );
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public function testRawHeaderOptIsRejected(): void
+    {
+        if (!\defined('CURLOPT_HEADEROPT')) {
+            self::markTestSkipped('CURLOPT_HEADEROPT is not available.');
+        }
+
+        $headerOpt = (int) \constant('CURLOPT_HEADEROPT');
+        $separate = \defined('CURLHEADER_SEPARATE') ? (int) \constant('CURLHEADER_SEPARATE') : 1;
+
+        try {
+            (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+                'curl' => [
+                    $headerOpt => $separate,
+                ],
+            ]);
+
+            self::fail('Expected InvalidArgumentException.');
+        } catch (\InvalidArgumentException $e) {
+            // CURLOPT_HEADEROPT is owned internally by Guzzle and is not on the
+            // public allow-list, so passing it raw is rejected.
+            self::assertStringContainsString('CURLOPT_HEADEROPT', $e->getMessage());
+            self::assertStringContainsString("outside the built-in cURL handlers' allow-list", $e->getMessage());
+        }
+    }
+
+    public function testProxyAuthorizationHeaderOrderAffectsSignature(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $first = self::computeProxyTunnelSignature('8.20.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            $proxyHeaderOption => [
+                'Proxy-Authorization: Basic dXNlcjpvbmU=',
+                'Proxy-Authorization: Basic dXNlcjp0d28=',
+            ],
+        ]);
+        $second = self::computeProxyTunnelSignature('8.20.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            $proxyHeaderOption => [
+                'Proxy-Authorization: Basic dXNlcjp0d28=',
+                'Proxy-Authorization: Basic dXNlcjpvbmU=',
+            ],
+        ]);
+
+        // With the sort() removed, the signature reflects wire order: the same
+        // credentials in a different order section separately.
+        self::assertNotNull($first);
+        self::assertNotSame($first, $second);
+    }
+
+    public function testMigratesEmptyPsrProxyAuthorizationHeaderWithoutTreatingItAsCredential(): void
+    {
+        self::requireProxyHeaderSeparationConstants();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $factory = new CurlFactory(3);
+        $easy = self::createRequestOnFactory(
+            $factory,
+            '8.20.0',
+            new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => '']),
+            ['proxy' => 'http://proxy.example.com:8080']
+        );
+
+        // cURL serializes an empty PSR header as "Proxy-Authorization;"; it is
+        // migrated to the proxy-header channel but is not credential material.
+        self::assertNotContains('Proxy-Authorization;', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        self::assertContains('Proxy-Authorization;', $_SERVER['_curl'][$proxyHeaderOption]);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+
+        // The empty value carries no credential, so the tunnel is delegated to
+        // libcurl, the same owner as an unauthenticated proxy.
+        $unauthenticated = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ])->proxyTunnelSignature;
+        self::assertSame($unauthenticated, $easy->proxyTunnelSignature);
+    }
+
+    public function testLegacyCurlEmptyProxyAuthorizationHeaderDoesNotForceFreshConnection(): void
+    {
+        $factory = new CurlFactory(3);
+        self::createRequestOnFactory(
+            $factory,
+            '7.36.0',
+            new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => '']),
+            ['proxy' => 'http://proxy.example.com:8080']
+        );
+
+        // On legacy libcurl the empty header is left in place, and because it
+        // carries no credential value no fresh/no-reuse is forced.
+        self::assertContains('Proxy-Authorization;', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testNonArrayProxyHeaderThrowsWhenMigrationWouldAppend(): void
+    {
+        self::requireProxyHeaderSeparationConstants();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXYHEADER');
+
+        // CURLOPT_PROXYHEADER is allow-listed but must be an array; a non-array
+        // value plus a PSR Proxy-Authorization header to migrate is rejected.
+        self::createRequestOnFactory(
+            new CurlFactory(3),
+            '7.37.0',
+            new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+            [
+                'proxy' => 'http://proxy.example.com:8080',
+                'curl' => [
+                    $proxyHeaderOption => 'not-an-array',
+                ],
+            ]
+        );
     }
 
     public function testRejectsRawCurlSocksProxyTypeWithProxyUrl(): void
@@ -1936,6 +2341,45 @@ class CurlFactoryTest extends TestCase
         $second = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
             \CURLOPT_PROXY => 'https://proxy.example.com:8080',
             $tlsAuthPassword => 'secret2',
+        ]);
+
+        self::assertNotNull($first);
+        self::assertNotSame($first, $second);
+    }
+
+    public function testProxySslKeyChangesProxyTunnelSignature(): void
+    {
+        if (!\defined('CURLOPT_PROXY_SSLKEY')) {
+            self::markTestSkipped('CURLOPT_PROXY_SSLKEY is not available.');
+        }
+
+        // On this non-delegated (pre-8.20.0) path the proxy private-key file is
+        // keyed as fallback hardening: libcurl's mTLS private-key matching on reuse
+        // was incomplete before 8.21.0 (CVE-2026-8932).
+        $sslKey = (int) \constant('CURLOPT_PROXY_SSLKEY');
+        $first = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080', $sslKey => '/path/to/key-a.pem',
+        ]);
+        $second = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080', $sslKey => '/path/to/key-b.pem',
+        ]);
+
+        self::assertNotNull($first);
+        self::assertNotSame($first, $second);
+    }
+
+    public function testProxyKeyPasswdChangesProxyTunnelSignature(): void
+    {
+        if (!\defined('CURLOPT_PROXY_KEYPASSWD')) {
+            self::markTestSkipped('CURLOPT_PROXY_KEYPASSWD is not available.');
+        }
+
+        $keyPasswd = (int) \constant('CURLOPT_PROXY_KEYPASSWD');
+        $first = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080', $keyPasswd => 'secret-a',
+        ]);
+        $second = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080', $keyPasswd => 'secret-b',
         ]);
 
         self::assertNotNull($first);
@@ -6189,6 +6633,35 @@ class CurlFactoryTest extends TestCase
             return $factory->create(new Psr7\Request('GET', $uri), $options);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * Mirrors createOnFactory() but drives a caller-supplied request so a PSR
+     * Proxy-Authorization header can be exercised.
+     *
+     * @param array<int|string, mixed> $options
+     */
+    private static function createRequestOnFactory(CurlFactory $factory, string $version, RequestInterface $request, array $options): EasyHandle
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => $version,
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            return $factory->create($request, $options);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    private static function requireProxyHeaderSeparationConstants(): void
+    {
+        foreach (['CURLOPT_PROXYHEADER', 'CURLOPT_HEADEROPT', 'CURLHEADER_SEPARATE'] as $constant) {
+            if (!\defined($constant)) {
+                self::markTestSkipped($constant.' is not available.');
+            }
         }
     }
 
