@@ -248,6 +248,102 @@ class CurlFactoryTest extends TestCase
         self::assertNotSame($delegated, $literalHeader);
     }
 
+    public function testNormalizesStringableCurlHeaderEntries(): void
+    {
+        $conf = [
+            \CURLOPT_HTTPHEADER => [
+                'literal' => 'Accept: application/json',
+                'stringable' => new class() {
+                    public function __toString(): string
+                    {
+                        return 'X-Test: value';
+                    }
+                },
+            ],
+        ];
+
+        self::normalizeCurlHeaderOptions($conf);
+
+        self::assertSame([
+            'literal' => 'Accept: application/json',
+            'stringable' => 'X-Test: value',
+        ], $conf[\CURLOPT_HTTPHEADER]);
+    }
+
+    /**
+     * @dataProvider invalidCurlHeaderEntryProvider
+     *
+     * @param mixed $entry
+     */
+    public function testRejectsInvalidCurlHeaderEntries($entry): void
+    {
+        $conf = [\CURLOPT_HTTPHEADER => [$entry]];
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_HTTPHEADER entries must be strings or stringable objects.');
+
+        self::normalizeCurlHeaderOptions($conf);
+    }
+
+    public static function invalidCurlHeaderEntryProvider(): iterable
+    {
+        yield 'int' => [123];
+        yield 'float' => [1.5];
+        yield 'true' => [true];
+        yield 'false' => [false];
+        yield 'null' => [null];
+        yield 'array' => [[]];
+        yield 'non-stringable object' => [new \stdClass()];
+        yield 'nan' => [\NAN];
+        yield 'inf' => [\INF];
+        yield '-inf' => [-\INF];
+    }
+
+    public function testRejectsResourceCurlHeaderEntries(): void
+    {
+        $resource = \fopen(__FILE__, 'r');
+        self::assertIsResource($resource);
+
+        try {
+            $conf = [\CURLOPT_HTTPHEADER => [$resource]];
+
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_HTTPHEADER entries must be strings or stringable objects.');
+
+            self::normalizeCurlHeaderOptions($conf);
+        } finally {
+            \fclose($resource);
+        }
+    }
+
+    public function testRejectsStringableCurlHeaderEntriesContainingNewlines(): void
+    {
+        $conf = [
+            \CURLOPT_HTTPHEADER => [new class() {
+                public function __toString(): string
+                {
+                    return "X-Test: value\r\nInjected: yes";
+                }
+            }],
+        ];
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_HTTPHEADER entries must not contain a carriage return or line feed.');
+
+        self::normalizeCurlHeaderOptions($conf);
+    }
+
+    public function testRejectsInvalidCurlProxyHeaderEntries(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $conf = [$proxyHeaderOption => [123]];
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXYHEADER entries must be strings or stringable objects.');
+
+        self::normalizeCurlHeaderOptions($conf);
+    }
+
     public function testLeavesNormalCurlHeaderEntriesUnchanged(): void
     {
         $conf = [\CURLOPT_HTTPHEADER => ['Accept: application/json']];

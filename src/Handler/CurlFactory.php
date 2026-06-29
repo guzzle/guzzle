@@ -1236,13 +1236,12 @@ final class CurlFactory implements CurlFactoryInterface
             foreach ($conf[$option] as $key => $entry) {
                 if (\is_object($entry) && \method_exists($entry, '__toString')) {
                     $entry = (string) $entry;
+                } elseif (!\is_string($entry)) {
+                    throw new InvalidArgumentException(\sprintf('%s entries must be strings or stringable objects.', $label));
                 }
 
-                if (\is_string($entry) && \strpbrk($entry, "\r\n") !== false) {
-                    throw new InvalidArgumentException(\sprintf(
-                        '%s entries must not contain a carriage return or line feed.',
-                        $label
-                    ));
+                if (\strpbrk($entry, "\r\n") !== false) {
+                    throw new InvalidArgumentException(\sprintf('%s entries must not contain a carriage return or line feed.', $label));
                 }
 
                 $normalized[$key] = $entry;
