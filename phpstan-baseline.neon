@@ -39,7 +39,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
-			count: 6
+			count: 7
 			path: src/Handler/CurlFactory.php
 
 		-
@@ -87,7 +87,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
-			count: 7
+			count: 8
 			path: src/Handler/CurlMultiHandler.php
 
 		-
