@@ -101,6 +101,8 @@ class CurlFactory implements CurlFactoryInterface
 
     public function create(RequestInterface $request, array $options): EasyHandle
     {
+        self::validateRequestUri($request);
+
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {
@@ -1834,6 +1836,14 @@ class CurlFactory implements CurlFactoryInterface
         throw new \InvalidArgumentException(
             'Invalid crypto_method_max request option: maximum TLS version control is not supported by your version of cURL'
         );
+    }
+
+    private static function validateRequestUri(RequestInterface $request): void
+    {
+        $uri = $request->getUri();
+        if ($uri->getScheme() === '' || $uri->getHost() === '') {
+            throw new RequestException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.', $request);
+        }
     }
 
     /**

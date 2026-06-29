@@ -18,6 +18,7 @@ use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class ClientTest extends TestCase
@@ -1065,20 +1066,19 @@ class ClientTest extends TestCase
     }
 
     /**
-     * @dataProvider invalidFinalUriProvider
+     * @dataProvider partialUriProvider
      */
-    public function testRejectsFinalUriWithoutSchemeOrHost($uri)
+    public function testMockHandlerReceivesPartialUri($uri)
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
-        $this->expectExceptionMessage('URI must include a scheme and host');
-
         $client->request('GET', $uri);
+
+        self::assertSame($uri, (string) $mockHandler->getLastRequest()->getUri());
     }
 
-    public static function invalidFinalUriProvider()
+    public static function partialUriProvider()
     {
         return [
             'relative path' => ['baz'],
@@ -1088,15 +1088,32 @@ class ClientTest extends TestCase
         ];
     }
 
-    public function testRejectsSendRequestWhenFinalUriHasNoSchemeOrHost()
+    public function testMockHandlerReceivesPartialRequestUri()
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
-        $this->expectExceptionMessage('URI must include a scheme and host');
-
         $client->send(new Request('GET', '/baz'));
+
+        self::assertSame('/baz', (string) $mockHandler->getLastRequest()->getUri());
+    }
+
+    public function testMiddlewareCanRewritePartialUriBeforeHandler()
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $stack = HandlerStack::create($mockHandler);
+        $stack->push(static function (callable $handler): callable {
+            return static function (RequestInterface $request, array $options) use ($handler) {
+                $uri = Psr7\UriResolver::resolve(new Uri('https://example.com/base/'), $request->getUri());
+
+                return $handler($request->withUri($uri), $options);
+            };
+        });
+        $client = new Client(['handler' => $stack]);
+
+        $client->request('GET', 'some/path');
+
+        self::assertSame('https://example.com/base/some/path', (string) $mockHandler->getLastRequest()->getUri());
     }
 
     /**
