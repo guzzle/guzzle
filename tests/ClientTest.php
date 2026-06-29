@@ -2424,16 +2424,37 @@ class ClientTest extends TestCase
         self::assertSame('http://example.org/test', (string) $mockHandler->getLastRequest()->getUri());
     }
 
-    public function testOnlyAddSchemeWhenHostIsPresent(): void
+    /**
+     * @dataProvider invalidFinalUriProvider
+     */
+    public function testRejectsFinalUriWithoutSchemeOrHost(string $uri): void
     {
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $client->request('GET', 'baz');
-        self::assertSame(
-            'baz',
-            (string) $mockHandler->getLastRequest()->getUri()
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('URI must include a scheme and host');
+
+        $client->request('GET', $uri);
+    }
+
+    public static function invalidFinalUriProvider(): iterable
+    {
+        yield 'relative path' => ['baz'];
+        yield 'host-like relative path' => ['gstatic.com/generate_204'];
+        yield 'path starting with colon-slash-slash' => ['://gstatic.com/generate_204'];
+        yield 'absolute path' => ['/generate_204'];
+    }
+
+    public function testRejectsSendRequestWhenFinalUriHasNoSchemeOrHost(): void
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('URI must include a scheme and host');
+
+        $client->send(new Request('GET', '/baz'));
     }
 
     /**
