@@ -378,6 +378,54 @@ class CurlFactoryTest extends TestCase
         $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
     }
 
+    public function testRejectsRequestLevelShareWithStringableProxyAuthorizationHeader(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $conf = [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            $proxyHeaderOption => [new class() {
+                public function __toString(): string
+                {
+                    return 'Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=';
+                }
+            }],
+        ];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+        self::normalizeCurlHeaderOptions($conf);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated HTTP/HTTPS proxy tunnel configuration#');
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+    }
+
+    public function testAllowsRequestLevelShareWithProxyAuthorizationHeaderWhenRawNoProxyDisablesProxy(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::skipIfCurlNoProxyIsUnavailable();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
+        $conf = [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            (int) \constant('CURLOPT_NOPROXY') => '*',
+            $proxyHeaderOption => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+        ];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        self::assertNull($method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf));
+    }
+
     public function testRejectsRequestLevelShareWithLegacyProxyAuthorizationHeader(): void
     {
         self::skipIfCurlShareIsUnavailable();
