@@ -118,6 +118,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
 
+## 7.13.1 - 2026-06-29
+
+### Fixed
+
+- Allow middleware to rewrite partial URIs before transports validate them
+
+
 ## 7.13.0 - 2026-06-29
 
 ### Added
