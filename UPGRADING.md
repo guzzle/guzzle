@@ -561,6 +561,8 @@ now reject raw cURL options that override request method, URI, body, headers,
 timeouts, redirects, proxy URLs and types, TLS verification or client
 credentials, progress/debug callbacks, sink handling, cookies, protocols, or
 cURL share handles. Use first-class Guzzle request options for those settings.
+Allowed raw cURL header-list options, such as `CURLOPT_PROXYHEADER`, now accept
+only strings or stringable objects as entries.
 
 The cURL handlers also reject stream-only `stream_context` options, but accept
 `read_timeout` without effect. The stream handler rejects cURL-only options it
