@@ -7,6 +7,7 @@ namespace GuzzleHttp\Tests\Handler;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ConnectTimeoutException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
@@ -196,6 +197,64 @@ class CurlFactoryTest extends TestCase
         $req = new Psr7\Request('GET', Server::$url);
         $a($req, ['curl' => [\CURLOPT_LOW_SPEED_LIMIT => 10]]);
         self::assertEquals(10, $_SERVER['_curl'][\CURLOPT_LOW_SPEED_LIMIT]);
+    }
+
+    public function testRejectsCurlProxyHeaderEntriesContainingNewlines(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $factory = new CurlFactory(3);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXYHEADER');
+
+        $factory->create(new Psr7\Request('GET', 'http://example.com'), [
+            'curl' => [
+                $proxyHeaderOption => ["X-Decoy: v\r\nProxy-Authorization: Basic abc"],
+            ],
+        ]);
+    }
+
+    public function testRejectsCurlHttpHeaderEntriesContainingNewlines(): void
+    {
+        $conf = [\CURLOPT_HTTPHEADER => ["X-Decoy: v\r\nProxy-Authorization: Basic abc"]];
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_HTTPHEADER');
+
+        self::normalizeCurlHeaderOptions($conf);
+    }
+
+    public function testNormalizesStringableCurlHeaderEntriesBeforeProxyTunnelSignature(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $conf = [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            $proxyHeaderOption => [new class() {
+                public function __toString(): string
+                {
+                    return 'Proxy-Authorization: Basic abc';
+                }
+            }],
+        ];
+
+        self::normalizeCurlHeaderOptions($conf);
+
+        self::assertSame(['Proxy-Authorization: Basic abc'], $conf[$proxyHeaderOption]);
+        $delegated = self::computeProxyTunnelSignature('8.20.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+        ]);
+        $literalHeader = self::computeProxyTunnelSignature('8.20.0', 'https://example.com', $conf);
+        self::assertNotNull($literalHeader);
+        self::assertNotSame($delegated, $literalHeader);
+    }
+
+    public function testLeavesNormalCurlHeaderEntriesUnchanged(): void
+    {
+        $conf = [\CURLOPT_HTTPHEADER => ['Accept: application/json']];
+
+        self::normalizeCurlHeaderOptions($conf);
+
+        self::assertSame(['Accept: application/json'], $conf[\CURLOPT_HTTPHEADER]);
     }
 
     public function testAppliesConfiguredCurlShareHandle(): void
@@ -6044,6 +6103,19 @@ class CurlFactoryTest extends TestCase
         }
 
         return (int) \constant('CURLOPT_PROXYHEADER');
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function normalizeCurlHeaderOptions(array &$conf): void
+    {
+        $method = new \ReflectionMethod(CurlFactory::class, 'normalizeCurlHeaderOptions');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs(null, [&$conf]);
     }
 
     /**
