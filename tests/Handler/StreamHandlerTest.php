@@ -3093,6 +3093,33 @@ class StreamHandlerTest extends TestCase
         )->wait();
     }
 
+    /**
+     * @dataProvider uriMissingSchemeOrHostProvider
+     */
+    public function testRejectsRequestUriMissingSchemeOrHost(string $uri): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('URI must include a scheme and host');
+
+        $handler(
+            new Request('GET', $uri),
+            [
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+    }
+
+    public static function uriMissingSchemeOrHostProvider(): iterable
+    {
+        yield 'relative path' => ['baz'];
+        yield 'host-like relative path' => ['gstatic.com/generate_204'];
+        yield 'path starting with colon-slash-slash' => ['://gstatic.com/generate_204'];
+        yield 'absolute path' => ['/generate_204'];
+        yield 'scheme without host' => ['https:/generate_204'];
+    }
+
     public function testResponseMessageIsBuiltViaResponseFactory(): void
     {
         $handler = new StreamHandler();
