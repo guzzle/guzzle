@@ -147,7 +147,7 @@ class CurlFactoryTest extends TestCase
         $proxyHeaderOption = self::proxyHeaderOption();
         $conf = [
             \CURLOPT_PROXY => 'http://proxy.example.com:8080',
-            $proxyHeaderOption => [new class() {
+            $proxyHeaderOption => [new class {
                 public function __toString(): string
                 {
                     return 'Proxy-Authorization: Basic abc';
@@ -237,7 +237,7 @@ class CurlFactoryTest extends TestCase
     public function testRejectsStringableCurlHeaderEntriesContainingNewlines(): void
     {
         $conf = [
-            \CURLOPT_HTTPHEADER => [new class() {
+            \CURLOPT_HTTPHEADER => [new class {
                 public function __toString(): string
                 {
                     return "X-Test: value\r\nInjected: yes";
