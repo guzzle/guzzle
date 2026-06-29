@@ -1133,6 +1133,46 @@ class CurlFactoryTest extends TestCase
         return $cases;
     }
 
+    public function testRawCurlNoProxyWildcardDisablesEffectiveProxy(): void
+    {
+        self::skipIfCurlNoProxyIsUnavailable();
+
+        self::assertNull(self::getEffectiveProxy([
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            (int) \constant('CURLOPT_NOPROXY') => '*',
+        ]));
+    }
+
+    /**
+     * @dataProvider nonWildcardRawCurlNoProxyProvider
+     */
+    public function testRawCurlNoProxyWildcardMustMatchExactly(string $noProxy): void
+    {
+        self::skipIfCurlNoProxyIsUnavailable();
+
+        self::assertSame('http://proxy.example.com:8080', self::getEffectiveProxy([
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+            (int) \constant('CURLOPT_NOPROXY') => $noProxy,
+        ]));
+    }
+
+    public static function nonWildcardRawCurlNoProxyProvider(): array
+    {
+        return [
+            'space padded wildcard' => [' * '],
+            'tab padded wildcard' => ["\t*\t"],
+            'nul-prefixed wildcard' => ["\0*"],
+            'host pattern' => ['example.com'],
+        ];
+    }
+
+    public function testEffectiveProxyWithoutRawCurlNoProxyIsUnchanged(): void
+    {
+        self::assertSame('http://proxy.example.com:8080', self::getEffectiveProxy([
+            \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+        ]));
+    }
+
     public function testSectionsProxyAuthorizationHeaderEvenOnFixedCurlVersion(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
@@ -1178,6 +1218,9 @@ class CurlFactoryTest extends TestCase
         $proxyHeaderOption = self::proxyHeaderOption();
 
         $factory = new CurlFactory(3);
+        $delegatedBaseline = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ])->proxyTunnelSignature;
         $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
@@ -1186,6 +1229,7 @@ class CurlFactoryTest extends TestCase
         ]);
 
         self::assertNotNull($easy->proxyTunnelSignature);
+        self::assertSame($delegatedBaseline, $easy->proxyTunnelSignature);
     }
 
     public function testUnrelatedProxyHeaderUsesDelegatedOwnerOnFixedCurlVersion(): void
@@ -1193,6 +1237,9 @@ class CurlFactoryTest extends TestCase
         $proxyHeaderOption = self::proxyHeaderOption();
 
         $factory = new CurlFactory(3);
+        $delegatedBaseline = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ])->proxyTunnelSignature;
         $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
@@ -1201,6 +1248,7 @@ class CurlFactoryTest extends TestCase
         ]);
 
         self::assertNotNull($easy->proxyTunnelSignature);
+        self::assertSame($delegatedBaseline, $easy->proxyTunnelSignature);
     }
 
     public function testDelegatedProxyTunnelOwnerIsDistinctFromLiteralProxyAuthorizationOwner(): void
@@ -1570,6 +1618,45 @@ class CurlFactoryTest extends TestCase
         $second = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
             \CURLOPT_PROXY => 'https://proxy.example.com:8080',
             $tlsAuthPassword => 'secret2',
+        ]);
+
+        self::assertNotNull($first);
+        self::assertNotSame($first, $second);
+    }
+
+    public function testProxySslKeyChangesProxyTunnelSignature(): void
+    {
+        if (!\defined('CURLOPT_PROXY_SSLKEY')) {
+            self::markTestSkipped('CURLOPT_PROXY_SSLKEY is not available.');
+        }
+
+        // On this non-delegated (pre-8.20.0) path the proxy private-key file is
+        // keyed as fallback hardening: libcurl's mTLS private-key matching on reuse
+        // was incomplete before 8.21.0 (CVE-2026-8932).
+        $sslKey = (int) \constant('CURLOPT_PROXY_SSLKEY');
+        $first = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080', $sslKey => '/path/to/key-a.pem',
+        ]);
+        $second = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080', $sslKey => '/path/to/key-b.pem',
+        ]);
+
+        self::assertNotNull($first);
+        self::assertNotSame($first, $second);
+    }
+
+    public function testProxyKeyPasswdChangesProxyTunnelSignature(): void
+    {
+        if (!\defined('CURLOPT_PROXY_KEYPASSWD')) {
+            self::markTestSkipped('CURLOPT_PROXY_KEYPASSWD is not available.');
+        }
+
+        $keyPasswd = (int) \constant('CURLOPT_PROXY_KEYPASSWD');
+        $first = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080', $keyPasswd => 'secret-a',
+        ]);
+        $second = self::computeProxyTunnelSignature('8.19.0', 'https://example.com', [
+            \CURLOPT_PROXY => 'https://proxy.example.com:8080', $keyPasswd => 'secret-b',
         ]);
 
         self::assertNotNull($first);
@@ -3020,6 +3107,26 @@ class CurlFactoryTest extends TestCase
         }
 
         return (int) \constant('CURLOPT_PROXYHEADER');
+    }
+
+    private static function skipIfCurlNoProxyIsUnavailable(): void
+    {
+        if (!\defined('CURLOPT_NOPROXY')) {
+            self::markTestSkipped('CURLOPT_NOPROXY is not available.');
+        }
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function getEffectiveProxy(array $conf): ?string
+    {
+        $method = new \ReflectionMethod(CurlFactory::class, 'getEffectiveProxy');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        return $method->invoke(null, $conf);
     }
 
     /**

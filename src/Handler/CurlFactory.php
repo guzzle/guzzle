@@ -799,8 +799,20 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $proxy = $conf[\CURLOPT_PROXY];
+        if (!\is_string($proxy) || $proxy === '') {
+            return null;
+        }
 
-        return \is_string($proxy) && $proxy !== '' ? $proxy : null;
+        // Only the exact raw wildcard is modeled here: libcurl treats '*' as
+        // bypass-all by whole-string comparison, without trimming or host matching.
+        if (\defined('CURLOPT_NOPROXY')) {
+            $noProxy = $conf[(int) \constant('CURLOPT_NOPROXY')] ?? null;
+            if (\is_string($noProxy) && $noProxy === '*') {
+                return null;
+            }
+        }
+
+        return $proxy;
     }
 
     /**

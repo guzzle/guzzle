@@ -1003,8 +1003,8 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > connections. Anonymous tunnels are sectioned apart from authenticated ones,
 > so an unauthenticated request never rides an authenticated tunnel. Raw
 > `CURLOPT_PROXY` supplied through the `curl` request option is deprecated but
-> still honored and participates in the same sectioning. Custom proxy
-> authentication sent with `CURLOPT_PROXYHEADER` is always sectioned because
+> still honored and participates in the same sectioning. A non-empty custom proxy
+> authentication value sent with `CURLOPT_PROXYHEADER` is always sectioned because
 > libcurl cannot key connection reuse on those header values. On libcurl 8.20.0
 > and newer, credential sectioning for option-supplied credentials is left to
 > libcurl's own credential-aware connection matching.
