@@ -101,7 +101,7 @@ class CurlFactory implements CurlFactoryInterface
 
     public function create(RequestInterface $request, array $options): EasyHandle
     {
-        self::validateRequestUri($request);
+        self::validateRequestUriScheme($request);
 
         $protocolVersion = $request->getProtocolVersion();
 
@@ -1318,20 +1318,25 @@ class CurlFactory implements CurlFactoryInterface
      */
     private function getDefaultConf(EasyHandle $easy): array
     {
+        $uri = $easy->request->getUri();
+        $protocols = Utils::normalizeProtocols($easy->options['protocols'] ?? ['http', 'https']);
+        $scheme = $uri->getScheme();
+        if (!\in_array($scheme, $protocols, true)) {
+            throw new RequestException(\sprintf('The scheme "%s" is not allowed by the protocols request option.', $scheme), $easy->request);
+        }
+
+        if ($uri->getHost() === '') {
+            throw new RequestException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.', $easy->request);
+        }
+
         $conf = [
             '_headers' => $easy->request->getHeaders(),
             \CURLOPT_CUSTOMREQUEST => $easy->request->getMethod(),
-            \CURLOPT_URL => (string) $easy->request->getUri()->withFragment(''),
+            \CURLOPT_URL => (string) $uri->withFragment(''),
             \CURLOPT_RETURNTRANSFER => false,
             \CURLOPT_HEADER => false,
             \CURLOPT_CONNECTTIMEOUT => 300,
         ];
-
-        $protocols = Utils::normalizeProtocols($easy->options['protocols'] ?? ['http', 'https']);
-        $scheme = $easy->request->getUri()->getScheme();
-        if (!\in_array($scheme, $protocols, true)) {
-            throw new RequestException(\sprintf('The scheme "%s" is not allowed by the protocols request option.', $scheme), $easy->request);
-        }
 
         if (\defined('CURLOPT_PROTOCOLS')) {
             $conf[\CURLOPT_PROTOCOLS] = self::curlProtocolMask($protocols);
@@ -1838,11 +1843,15 @@ class CurlFactory implements CurlFactoryInterface
         );
     }
 
-    private static function validateRequestUri(RequestInterface $request): void
+    private static function validateRequestUriScheme(RequestInterface $request): void
     {
-        $uri = $request->getUri();
-        if ($uri->getScheme() === '' || $uri->getHost() === '') {
+        $scheme = $request->getUri()->getScheme();
+        if ($scheme === '') {
             throw new RequestException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.', $request);
+        }
+
+        if (!\in_array($scheme, ['http', 'https'], true)) {
+            throw new RequestException(\sprintf("The scheme '%s' is not supported.", $scheme), $request);
         }
     }
 
