@@ -8,7 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Stop cURL HEAD requests with request bodies hanging on responses that declare a content length
-- Prevent the cURL handler from transmitting request bodies and body framing headers on HEAD requests
+- The cURL handler no longer transmits request bodies on HEAD requests
 
 
 ## 7.13.1 - 2026-06-29

@@ -62,7 +62,7 @@
     "require-dev": {
         "ext-curl": "*",
         "bamarni/composer-bin-plugin": "^1.8.2",
-        "guzzle/client-integration-tests": "3.0.2",
+        "guzzle/client-integration-tests": "3.0.3",
         "guzzlehttp/test-server": "^0.6",
         "php-http/message-factory": "^1.1",
         "phpunit/phpunit": "^8.5.52 || ^9.6.34",
@@ -81,7 +81,7 @@
             "type": "package",
             "package": {
                 "name": "guzzle/client-integration-tests",
-                "version": "v3.0.2",
+                "version": "v3.0.3",
                 "require": {
                     "guzzlehttp/psr7": "^1.7 || ^2.0",
                     "php": "^7.2.5 || ^8.0",
@@ -99,7 +99,7 @@
                 ],
                 "dist": {
                     "type": "zip",
-                    "url": "https://codeload.github.com/guzzle/client-integration-tests/zip/2c025848417c1135031fdf9c728ee53d0a7ceaee"
+                    "url": "https://codeload.github.com/guzzle/client-integration-tests/zip/30edbabe49dedd95e3f21d8a25438f767b653d75"
                 }
             }
         }
