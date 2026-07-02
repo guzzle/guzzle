@@ -235,6 +235,21 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testHeadRequestsPreserveZeroContentLength(): void
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response()]);
+        $a = new Handler\CurlMultiHandler();
+        $response = $a(new Psr7\Request('HEAD', Server::$url, ['Content-Length' => '0']), []);
+        $response->wait();
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_NOBODY]);
+        $received = Server::received()[0];
+        self::assertEquals('HEAD', $received->getMethod());
+        self::assertSame('0', $received->getHeaderLine('Content-Length'));
+        self::assertSame('', (string) $received->getBody());
+    }
+
     public function testHeadRequestsNeverProbeTheBodySize(): void
     {
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('hello'), [
