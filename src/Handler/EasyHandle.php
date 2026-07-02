@@ -31,6 +31,11 @@ final class EasyHandle
     public $headers = [];
 
     /**
+     * @var array Received HTTP trailer lines so far
+     */
+    public $trailers = [];
+
+    /**
      * @var ResponseInterface|null Received response (if any)
      */
     public $response;

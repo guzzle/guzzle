@@ -3458,6 +3458,90 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider trailerStatusLineProvider
+     */
+    public function testCollectsTrailersAfterResponseBody(string $statusLine)
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                $statusLine,
+                "Content-Type: text/plain\r\n",
+                "\r\n",
+            ]);
+
+            self::assertSame([], $easy->trailers);
+
+            self::receiveCurlHeaders($easy, [
+                "Foo: bar\r\n",
+                "X-Dup: 1\r\n",
+                "X-Dup: 2\r\n",
+                "X-Empty:\r\n",
+                "\r\n",
+            ]);
+
+            self::assertSame(
+                ['Foo: bar', 'X-Dup: 1', 'X-Dup: 2', 'X-Empty:'],
+                $easy->trailers
+            );
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testDiscardsTrailerLinesWithoutColon()
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "Transfer-Encoding: chunked\r\n",
+                "\r\n",
+                "X-Checksum: abc\r\n",
+                " folded-continuation\r\n",
+                "junk-no-colon\r\n",
+                "\r\n",
+            ]);
+
+            self::assertNotNull($easy->response);
+            self::assertSame(['X-Checksum: abc'], $easy->trailers);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testDiscardsIntermediateTrailersWhenNewHeaderBlockStarts()
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 401 Unauthorized\r\n",
+                "WWW-Authenticate: Negotiate\r\n",
+                "\r\n",
+                "X-Challenge-Trailer: 1\r\n",
+            ]);
+
+            self::assertSame(['X-Challenge-Trailer: 1'], $easy->trailers);
+
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "\r\n",
+                "Foo: bar\r\n",
+            ]);
+
+            self::assertSame(['Foo: bar'], $easy->trailers);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     public function testInvokesOnStatsOnSuccess()
     {
         Server::flush();
