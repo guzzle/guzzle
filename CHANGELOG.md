@@ -78,6 +78,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify stream transport failures without a response as `NetworkException`, with timeouts as `NetworkTimeoutException`
 - Classify generic response-aware request failures as `ResponseException`
 - Classify response-aware transfer failures as `ResponseTransferException`
+- The stream handler returns an empty body and releases the connection at the end of the headers for HEAD and CONNECT-2xx exchanges and 1xx, 204, and 304 responses
+- The stream handler no longer writes to the `sink` option or reads trailing bytes for responses that cannot carry a body
 - Reject short non-streamed stream-handler response bodies with valid `Content-Length` as `ResponseTransferException`
 - Reject unrepresentable built-in handler response sizes and byte counts as `ResponseException`
 - Ignore cURL informational responses other than `101 Switching Protocols` before the final response

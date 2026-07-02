@@ -153,15 +153,23 @@ final class HeaderProcessor
 
     private static function responseCanHaveContentLengthBody(RequestInterface $request, ResponseInterface $response): bool
     {
-        $status = $response->getStatusCode();
-        $method = $request->getMethod();
+        return self::responseCanHaveBody($request->getMethod(), $response->getStatusCode())
+            && !$response->hasHeader('Transfer-Encoding');
+    }
 
+    /**
+     * Whether a response to the given request method with the given status
+     * code can carry content at all, per RFC 9110: a response to HEAD, a
+     * response with a 1xx, 204, or 304 status code, or a 2xx response to
+     * CONNECT never has a body, whatever its framing headers claim.
+     */
+    public static function responseCanHaveBody(string $method, int $status): bool
+    {
         return $method !== 'HEAD'
             && !($method === 'CONNECT' && $status >= 200 && $status < 300)
             && $status >= 200
             && $status !== 204
-            && $status !== 304
-            && !$response->hasHeader('Transfer-Encoding');
+            && $status !== 304;
     }
 
     /**

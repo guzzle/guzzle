@@ -290,11 +290,10 @@ final class StreamHandler
         $stream = $streamFactory->createStreamFromResource($stream);
         [$stream, $headers] = self::checkDecode($options, $headers, $stream);
 
-        $sink = $stream;
-
-        if ($request->getMethod() !== 'HEAD') {
-            $sink = $this->createSink($stream, $options);
-        }
+        $canHaveBody = HeaderProcessor::responseCanHaveBody($request->getMethod(), $status);
+        $sink = $canHaveBody
+            ? $this->createSink($stream, $options)
+            : $streamFactory->createStream('');
 
         try {
             $response = $responseFactory->createResponse($status, $reason ?? '')->withProtocolVersion($ver);
@@ -318,9 +317,18 @@ final class StreamHandler
             }
         }
 
-        // Do not drain when the request is a HEAD request because they have
-        // no body.
-        if ($sink !== $stream) {
+        if (!$canHaveBody) {
+            // RFC 9110 / RFC 9112 section 6.3: octets after the header section
+            // of a HEAD, 1xx, 204, 304, or CONNECT-2xx response are not part
+            // of this response's body. Never read them, and release the
+            // transport as soon as the headers are complete.
+            try {
+                $stream->close();
+            } catch (\Exception $e) {
+                // Best-effort release; a failing transport close must not fail
+                // a fully received no-content response.
+            }
+        } elseif ($sink !== $stream) {
             try {
                 $this->drain($request, $response, $stream, $sink);
             } catch (ResponseException $e) {
