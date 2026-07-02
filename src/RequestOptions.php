@@ -5,7 +5,7 @@ namespace GuzzleHttp;
 /**
  * This class contains a list of built-in Guzzle request options.
  *
- * @see https://github.com/guzzle/guzzle/blob/7.13/docs/request-options.md
+ * @see https://github.com/guzzle/guzzle/blob/7.14/docs/request-options.md
  */
 final class RequestOptions
 {
