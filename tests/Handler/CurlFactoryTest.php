@@ -5423,6 +5423,115 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testCollectsTrailerFieldsInWireOrder(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/2 200 \r\n",
+                "content-type: text/plain\r\n",
+                "\r\n",
+            ]);
+
+            self::assertSame([], $easy->trailers);
+
+            self::receiveCurlHeaders($easy, [
+                "X-Mixed-Case: Foo\r\n",
+                "x-empty:\r\n",
+                "x-dup: 1\r\n",
+                "x-dup: 2\r\n",
+                "\r\n",
+            ]);
+
+            self::assertSame(
+                ['X-Mixed-Case: Foo', 'x-empty:', 'x-dup: 1', 'x-dup: 2'],
+                $easy->trailers
+            );
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testDiscardsTrailerLinesWithoutColon(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "Transfer-Encoding: chunked\r\n",
+                "\r\n",
+                "X-Checksum: abc\r\n",
+                " folded-continuation\r\n",
+                "junk-no-colon\r\n",
+                "\r\n",
+            ]);
+
+            self::assertNotNull($easy->response);
+            self::assertSame(['X-Checksum: abc'], $easy->trailers);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testDiscardsIntermediateTrailerFieldsWhenANewHeaderBlockStarts(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 401 Unauthorized\r\n",
+                "WWW-Authenticate: Negotiate\r\n",
+                "\r\n",
+                "x-early: 1\r\n",
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Length: 0\r\n",
+                "\r\n",
+                "x-checksum: abc\r\n",
+            ]);
+
+            self::assertSame(
+                ['x-checksum: abc'],
+                $easy->trailers,
+                'trailer fields of the intermediate response are discarded'
+            );
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testTrailersStayEmptyForResponsesWithoutTrailerFields(): void
+    {
+        // A response whose fields all arrive in the initial header block has
+        // no trailer fields; every field is an ordinary response header.
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/2 200 \r\n",
+                "x-status: 12\r\n",
+                "\r\n",
+            ]);
+
+            self::assertNotNull($easy->response);
+            self::assertSame('12', $easy->response->getHeaderLine('x-status'));
+            self::assertSame([], $easy->trailers);
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
     public function testRejectsPromiseWhenOnHeadersFails(): void
     {
         Server::flush();
