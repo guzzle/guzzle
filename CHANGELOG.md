@@ -118,6 +118,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
 
+## 7.13.2 - Upcoming
+
+### Fixed
+
+- Stop cURL HEAD requests with request bodies hanging on responses that declare a content length
+- The cURL handler no longer transmits request bodies on HEAD requests
+
+
 ## 7.13.1 - 2026-06-29
 
 ### Fixed
