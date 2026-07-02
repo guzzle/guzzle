@@ -9,6 +9,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Stop cURL HEAD requests with request bodies hanging on responses that declare a content length
 - The cURL handler no longer transmits request bodies on HEAD requests
+- Preserve response headers when a response includes HTTP trailers
 
 
 ## 7.13.1 - 2026-06-29
