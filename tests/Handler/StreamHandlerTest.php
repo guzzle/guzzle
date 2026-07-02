@@ -1066,7 +1066,7 @@ class StreamHandlerTest extends TestCase
 
             self::assertSame($status, $response->getStatusCode());
             self::assertSame('', (string) $response->getBody());
-            self::assertFalse(\file_exists($tmpfname));
+            self::assertFileNotExists($tmpfname);
         } finally {
             if (\file_exists($tmpfname)) {
                 \unlink($tmpfname);
