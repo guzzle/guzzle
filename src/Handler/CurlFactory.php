@@ -1930,13 +1930,22 @@ class CurlFactory implements CurlFactoryInterface
             $onHeaders = null;
         }
 
+        $startingResponse = false;
+        $collectingTrailers = false;
+
         return static function ($ch, $h) use (
             $onHeaders,
             $easy,
-            &$startingResponse
+            &$startingResponse,
+            &$collectingTrailers
         ) {
             $value = \trim($h);
             if ($value === '') {
+                if ($collectingTrailers) {
+                    // A blank line ends the trailer section; the response has
+                    // already been created.
+                    return \strlen($h);
+                }
                 $startingResponse = true;
                 try {
                     $easy->createResponse();
@@ -1957,9 +1966,17 @@ class CurlFactory implements CurlFactoryInterface
                         return -1;
                     }
                 }
-            } elseif ($startingResponse) {
+            } elseif ($startingResponse || $collectingTrailers) {
+                if ($easy->response !== null && 0 !== \strncasecmp($value, 'HTTP/', 5)) {
+                    // Trailer fields arrive through the header callback after
+                    // the body; a new header block always begins with a status
+                    // line.
+                    $collectingTrailers = true;
+                } else {
+                    $collectingTrailers = false;
+                    $easy->headers = [$value];
+                }
                 $startingResponse = false;
-                $easy->headers = [$value];
             } else {
                 $easy->headers[] = $value;
             }

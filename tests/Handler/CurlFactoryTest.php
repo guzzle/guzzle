@@ -3295,6 +3295,169 @@ class CurlFactoryTest extends TestCase
         self::assertSame('abc 123', (string) $response->getBody());
     }
 
+    public static function trailerStatusLineProvider(): iterable
+    {
+        yield 'http/2' => ["HTTP/2 200 \r\n"];
+        yield 'http/1.1 chunked' => ["HTTP/1.1 200 OK\r\n"];
+    }
+
+    /**
+     * @dataProvider trailerStatusLineProvider
+     */
+    public function testPreservesHeadersWhenTrailersArrive(string $statusLine)
+    {
+        $factory = new CurlFactory(1);
+        $statuses = [];
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function (ResponseInterface $response) use (&$statuses) {
+                $statuses[] = $response->getStatusCode();
+            },
+        ]);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                $statusLine,
+                "Content-Type: text/plain\r\n",
+                "\r\n",
+            ]);
+
+            self::assertNotNull($easy->response);
+
+            self::receiveCurlHeaders($easy, [
+                "Foo: bar\r\n",
+                "X-Dup: 1\r\n",
+                "X-Dup: 2\r\n",
+                "X-Empty:\r\n",
+            ]);
+
+            self::assertSame(
+                [\trim($statusLine), 'Content-Type: text/plain'],
+                $easy->headers
+            );
+            self::assertSame(200, $easy->response->getStatusCode());
+            self::assertSame([200], $statuses);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testIgnoresBlankLineAfterTrailers()
+    {
+        $factory = new CurlFactory(1);
+        $onHeadersCalls = 0;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function () use (&$onHeadersCalls) {
+                ++$onHeadersCalls;
+            },
+        ]);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Type: text/plain\r\n",
+                "\r\n",
+                "Foo: bar\r\n",
+                "\r\n",
+            ]);
+
+            self::assertNull($easy->createResponseException);
+            self::assertSame(1, $onHeadersCalls);
+            self::assertSame(
+                ['HTTP/1.1 200 OK', 'Content-Type: text/plain'],
+                $easy->headers
+            );
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public static function interimResponseProvider(): iterable
+    {
+        yield '100 continue' => [
+            ["HTTP/1.1 100 Continue\r\n", "\r\n"],
+            [100, 200],
+        ];
+        yield '103 early hints' => [
+            ["HTTP/1.1 103 Early Hints\r\n", "Link: </style.css>; rel=preload\r\n", "\r\n"],
+            [103, 200],
+        ];
+        yield 'connect established' => [
+            ["HTTP/1.1 200 Connection established\r\n", "\r\n"],
+            [200, 200],
+        ];
+    }
+
+    /**
+     * @dataProvider interimResponseProvider
+     *
+     * @param list<string> $interimLines
+     * @param list<int>    $expectedStatuses
+     */
+    public function testReplacesInterimResponseBlocksWithFinalResponse(array $interimLines, array $expectedStatuses)
+    {
+        $factory = new CurlFactory(1);
+        $statuses = [];
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function (ResponseInterface $response) use (&$statuses) {
+                $statuses[] = $response->getStatusCode();
+            },
+        ]);
+
+        try {
+            self::receiveCurlHeaders($easy, $interimLines);
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Length: 0\r\n",
+                "\r\n",
+            ]);
+
+            self::assertSame(
+                ['HTTP/1.1 200 OK', 'Content-Length: 0'],
+                $easy->headers
+            );
+            self::assertNotNull($easy->response);
+            self::assertSame(200, $easy->response->getStatusCode());
+            self::assertSame($expectedStatuses, $statuses);
+
+            self::receiveCurlHeaders($easy, [
+                "Foo: bar\r\n",
+            ]);
+
+            self::assertSame(
+                ['HTTP/1.1 200 OK', 'Content-Length: 0'],
+                $easy->headers
+            );
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testStartsFreshHeaderBlockAfterIntermediateTrailerFields()
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 401 Unauthorized\r\n",
+                "WWW-Authenticate: Negotiate\r\n",
+                "\r\n",
+                "X-Challenge-Trailer: 1\r\n",
+            ]);
+
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "\r\n",
+                "Foo: bar\r\n",
+            ]);
+
+            self::assertSame(['HTTP/1.1 200 OK'], $easy->headers);
+            self::assertSame(200, $easy->response->getStatusCode());
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     public function testInvokesOnStatsOnSuccess()
     {
         Server::flush();
@@ -3663,6 +3826,20 @@ class CurlFactoryTest extends TestCase
         }
 
         return \CURL_VERSION_SSL;
+    }
+
+    /**
+     * @param list<string> $headers
+     */
+    private static function receiveCurlHeaders(EasyHandle $easy, array $headers): callable
+    {
+        $header = $_SERVER['_curl'][\CURLOPT_HEADERFUNCTION];
+
+        foreach ($headers as $line) {
+            self::assertSame(\strlen($line), $header($easy->handle, $line));
+        }
+
+        return $header;
     }
 
     /**
