@@ -1972,8 +1972,14 @@ class CurlFactory implements CurlFactoryInterface
                     // the body; a new header block always begins with a status
                     // line.
                     $collectingTrailers = true;
+                    // Older libcurl delivers trailer lines unvalidated;
+                    // discard any without a colon separator.
+                    if (\strpos($value, ':') !== false) {
+                        $easy->trailers[] = $value;
+                    }
                 } else {
                     $collectingTrailers = false;
+                    $easy->trailers = [];
                     $easy->headers = [$value];
                 }
                 $startingResponse = false;
