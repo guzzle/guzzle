@@ -438,6 +438,20 @@ as `100 Continue` or `103 Early Hints`. Guzzle does not expose a separate Early
 Hints API; a dedicated interim-response hook may be added in a future minor
 release.
 
+#### No-Content Response Bodies
+
+The stream handler never reads the response body of a HEAD request, of a 1xx,
+204, or 304 response, or of a 2xx response to a CONNECT request. Such responses
+now always carry an empty body created by the configured `stream_factory`; the
+transport connection is closed as soon as the headers (and the `on_headers`
+callback) complete successfully; the `sink` option is not opened or written
+(string path sinks create no file); and `stream => true` yields the empty stream
+rather than the live transport stream. In particular, `stream => true` no longer
+exposes the live transport for a 2xx CONNECT response. Per RFC 9110 these
+responses cannot carry content, so any bytes a misbehaving server sends after
+the header section are never read. The cURL handler already behaved this way via
+libcurl.
+
 #### Sink Resource Ownership
 
 PHP resources passed as the `sink` request option are no longer closed when the

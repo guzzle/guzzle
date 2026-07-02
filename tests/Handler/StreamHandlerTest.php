@@ -1017,10 +1017,202 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('HEAD', Server::$url);
         $response = $handler($request, [])->wait();
+        self::assertSame('8', $response->getHeaderLine('Content-Length'));
         $body = $response->getBody();
         $stream = $body->detach();
+        self::assertIsResource($stream);
+        self::assertNotSame('http', \stream_get_meta_data($stream)['wrapper_type']);
         self::assertSame('', \stream_get_contents($stream));
         \fclose($stream);
+    }
+
+    /**
+     * @dataProvider noContentStatusProvider
+     */
+    public function testNoContentStatusWithContentLengthHasEmptyBody(int $status): void
+    {
+        Server::flush();
+        Server::enqueue([new Response($status, ['Content-Length' => '8'], '')]);
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), [])->wait();
+
+        self::assertSame($status, $response->getStatusCode());
+        self::assertSame('8', $response->getHeaderLine('Content-Length'));
+        self::assertSame('', (string) $response->getBody());
+    }
+
+    public static function noContentStatusProvider(): array
+    {
+        return [
+            '204 No Content' => [204],
+            '304 Not Modified' => [304],
+        ];
+    }
+
+    /**
+     * @dataProvider noContentSinkProvider
+     */
+    public function testNoContentResponseDoesNotCreateStringSinkFile(string $method, int $status): void
+    {
+        Server::flush();
+        Server::enqueue([new Response($status, ['Content-Length' => '8'], '')]);
+        $tmpfname = \tempnam(\sys_get_temp_dir(), 'nocontent');
+        self::assertIsString($tmpfname);
+        \unlink($tmpfname);
+
+        try {
+            $handler = new StreamHandler();
+            $response = $handler(new Request($method, Server::$url), ['sink' => $tmpfname])->wait();
+
+            self::assertSame($status, $response->getStatusCode());
+            self::assertSame('', (string) $response->getBody());
+            self::assertFileDoesNotExist($tmpfname);
+        } finally {
+            if (\file_exists($tmpfname)) {
+                \unlink($tmpfname);
+            }
+        }
+    }
+
+    public static function noContentSinkProvider(): array
+    {
+        return [
+            'HEAD 200' => ['HEAD', 200],
+            'GET 204' => ['GET', 204],
+            'GET 304' => ['GET', 304],
+        ];
+    }
+
+    /**
+     * @dataProvider noContentStreamOptionProvider
+     */
+    public function testStreamOptionYieldsEmptyFactoryStreamForNoContentResponse(string $method, int $status): void
+    {
+        Server::flush();
+        Server::enqueue([new Response($status, ['Content-Length' => '8'], '')]);
+        $factory = new Psr17SpyFactory();
+        $handler = new StreamHandler();
+        $response = $handler(new Request($method, Server::$url), [
+            RequestOptions::STREAM => true,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ])->wait();
+
+        self::assertSame($status, $response->getStatusCode());
+        self::assertInstanceOf(SpyStream::class, $response->getBody());
+        self::assertSame(1, $factory->createStreamCalls);
+        self::assertSame('', (string) $response->getBody());
+        $stream = $response->getBody()->detach();
+        self::assertIsResource($stream);
+        self::assertNotSame('http', \stream_get_meta_data($stream)['wrapper_type']);
+        \fclose($stream);
+    }
+
+    public static function noContentStreamOptionProvider(): array
+    {
+        return [
+            'HEAD 200' => ['HEAD', 200],
+            'GET 204' => ['GET', 204],
+            'GET 304' => ['GET', 304],
+        ];
+    }
+
+    /**
+     * @dataProvider noContentReadProvider
+     *
+     * @param string[] $headers
+     */
+    public function testNoContentResponseSkipsDrainAndClosesSourceUnread(string $method, array $headers, string $sourceBytes, int $status, string $contentLength): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request($method, Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, $headers);
+
+        $read = false;
+        $closed = false;
+        $source = FnStream::decorate(Psr7\Utils::streamFor($sourceBytes), [
+            'read' => static function (int $length) use (&$read): string {
+                $read = true;
+
+                return '';
+            },
+            'close' => static function () use (&$closed): void {
+                $closed = true;
+            },
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+
+        self::assertSame($status, $response->getStatusCode());
+        self::assertSame($contentLength, $response->getHeaderLine('Content-Length'));
+        self::assertSame('', (string) $response->getBody());
+        self::assertFalse($read);
+        self::assertTrue($closed);
+    }
+
+    public static function noContentReadProvider(): array
+    {
+        return [
+            'HEAD 200, rogue body' => ['HEAD', ['HTTP/1.1 200 OK', 'Content-Length: 9'], 'roguebody', 200, '9'],
+            'GET 100' => ['GET', ['HTTP/1.1 100 Continue'], 'roguebody', 100, ''],
+            'GET 101' => ['GET', ['HTTP/1.1 101 Switching Protocols'], 'roguebody', 101, ''],
+            'GET 204' => ['GET', ['HTTP/1.1 204 No Content', 'Content-Length: 8'], 'roguebody', 204, '8'],
+            'GET 304' => ['GET', ['HTTP/1.1 304 Not Modified', 'Content-Length: 8'], 'roguebody', 304, '8'],
+            'CONNECT 200' => ['CONNECT', ['HTTP/1.1 200 OK', 'Content-Length: 3'], 'roguebody', 200, '3'],
+            'GET 204, chunked, rogue bytes' => ['GET', ['HTTP/1.1 204 No Content', 'Transfer-Encoding: chunked'], "0\r\n\r\nrogue", 204, ''],
+        ];
+    }
+
+    public function testIgnoresSourceCloseFailureForNoContentResponse(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 204 No Content',
+            'Content-Length: 8',
+        ]);
+
+        $closeCalled = false;
+        $source = FnStream::decorate(Psr7\Utils::streamFor(''), [
+            'close' => static function () use (&$closeCalled): void {
+                if (!$closeCalled) {
+                    $closeCalled = true;
+
+                    throw new \RuntimeException('close failed');
+                }
+            },
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+
+        self::assertSame(204, $response->getStatusCode());
+        self::assertSame('', (string) $response->getBody());
+        self::assertTrue($closeCalled);
+    }
+
+    public function testRogueHeadResponseBodyBytesOverTheWireAreIgnored(): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello");
+        $handler = new StreamHandler();
+        $response = $handler(new Request('HEAD', Server::$url), [])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('5', $response->getHeaderLine('Content-Length'));
+        self::assertSame('', (string) $response->getBody());
+        self::assertSame('HEAD', Server::received()[0]->getMethod());
+    }
+
+    public function testRogue204TrailingBytesAreNotReadIntoTheBody(): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 204 No Content\r\nContent-Length: 5\r\n\r\nhello");
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), [])->wait();
+
+        self::assertSame(204, $response->getStatusCode());
+        self::assertSame('', (string) $response->getBody());
     }
 
     public function testAutomaticallyDecompressGzip(): void
