@@ -101,11 +101,94 @@ class CurlFactoryTest extends TestCase
         $response = $a(new Psr7\Request('HEAD', Server::$url), []);
         $response->wait();
         self::assertTrue($_SERVER['_curl'][\CURLOPT_NOBODY]);
+        self::assertArrayNotHasKey(\CURLOPT_CUSTOMREQUEST, $_SERVER['_curl']);
         $checks = [\CURLOPT_READFUNCTION, \CURLOPT_FILE, \CURLOPT_INFILE];
         foreach ($checks as $check) {
             self::assertArrayNotHasKey($check, $_SERVER['_curl']);
         }
         self::assertEquals('HEAD', Server::received()[0]->getMethod());
+    }
+
+    public function testHeadRequestsWithABodyDoNotWaitForAResponseBody()
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200, ['Content-Length' => '16'], 'Body of response')]);
+        $a = new Handler\CurlMultiHandler();
+        $request = new Psr7\Request('HEAD', Server::$url, ['Content-Length' => '5'], 'hello');
+        $response = $a($request, ['timeout' => 5])->wait();
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_NOBODY]);
+        self::assertArrayNotHasKey(\CURLOPT_CUSTOMREQUEST, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_UPLOAD, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_POSTFIELDS, $_SERVER['_curl']);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('16', $response->getHeaderLine('Content-Length'));
+        self::assertSame('', (string) $response->getBody());
+        $received = Server::received()[0];
+        self::assertEquals('HEAD', $received->getMethod());
+        self::assertFalse($received->hasHeader('Content-Length'));
+        self::assertFalse($received->hasHeader('Transfer-Encoding'));
+        self::assertSame('', (string) $received->getBody());
+    }
+
+    public function testHeadRequestsWithAnUnknownBodySizeUseNobody()
+    {
+        $body = new Psr7\PumpStream(static function () {
+            return false;
+        });
+        $factory = new CurlFactory(1);
+        $easy = null;
+
+        try {
+            $easy = $factory->create(new Psr7\Request('HEAD', Server::$url, ['Transfer-Encoding' => 'chunked', 'Expect' => '100-continue'], $body), []);
+
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_NOBODY]);
+            self::assertArrayNotHasKey(\CURLOPT_CUSTOMREQUEST, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_UPLOAD, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_READFUNCTION, $_SERVER['_curl']);
+            self::assertNotContains('Transfer-Encoding: chunked', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+            self::assertNotContains('Expect: 100-continue', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        } finally {
+            if ($easy !== null) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testHeadRequestsPreserveZeroContentLength()
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response()]);
+        $a = new Handler\CurlMultiHandler();
+        $response = $a(new Psr7\Request('HEAD', Server::$url, ['Content-Length' => '0']), []);
+        $response->wait();
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_NOBODY]);
+        $received = Server::received()[0];
+        self::assertEquals('HEAD', $received->getMethod());
+        self::assertSame('0', $received->getHeaderLine('Content-Length'));
+        self::assertSame('', (string) $received->getBody());
+    }
+
+    public function testHeadRequestsNeverProbeTheBodySize()
+    {
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('hello'), [
+            'getSize' => static function () {
+                throw new \RuntimeException('The body must not be probed for HEAD requests.');
+            },
+        ]);
+        $factory = new CurlFactory(1);
+        $easy = null;
+
+        try {
+            $easy = $factory->create(new Psr7\Request('HEAD', Server::$url, [], $body), []);
+
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_NOBODY]);
+            self::assertArrayNotHasKey(\CURLOPT_CUSTOMREQUEST, $_SERVER['_curl']);
+        } finally {
+            if ($easy !== null) {
+                $factory->release($easy);
+            }
+        }
     }
 
     public function testCanAddCustomCurlOptions()

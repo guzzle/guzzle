@@ -1392,6 +1392,30 @@ class CurlFactory implements CurlFactoryInterface
 
     private function applyMethod(EasyHandle $easy, array &$conf): void
     {
+        if ($easy->request->getMethod() === 'HEAD') {
+            // libcurl stops at HEAD response headers only when CURLOPT_NOBODY
+            // is set; CURLOPT_CUSTOMREQUEST changes only the method string.
+            // NOBODY also suppresses request upload, so strip non-zero body
+            // length, transfer coding, and a 100-continue expectation.
+            $conf[\CURLOPT_CUSTOMREQUEST] = null;
+            $conf[\CURLOPT_NOBODY] = true;
+            unset(
+                $conf[\CURLOPT_WRITEFUNCTION],
+                $conf[\CURLOPT_READFUNCTION],
+                $conf[\CURLOPT_FILE],
+                $conf[\CURLOPT_INFILE]
+            );
+            if (\trim($easy->request->getHeaderLine('Content-Length')) !== '0') {
+                $this->removeHeader('Content-Length', $conf);
+            }
+            $this->removeHeader('Transfer-Encoding', $conf);
+            if (\strcasecmp(\trim($easy->request->getHeaderLine('Expect')), '100-continue') === 0) {
+                $this->removeHeader('Expect', $conf);
+            }
+
+            return;
+        }
+
         $body = $easy->request->getBody();
         $size = $body->getSize();
 
@@ -1407,14 +1431,6 @@ class CurlFactory implements CurlFactoryInterface
             if (!$easy->request->hasHeader('Content-Length')) {
                 $conf[\CURLOPT_HTTPHEADER][] = 'Content-Length: 0';
             }
-        } elseif ($method === 'HEAD') {
-            $conf[\CURLOPT_NOBODY] = true;
-            unset(
-                $conf[\CURLOPT_WRITEFUNCTION],
-                $conf[\CURLOPT_READFUNCTION],
-                $conf[\CURLOPT_FILE],
-                $conf[\CURLOPT_INFILE]
-            );
         }
     }
 

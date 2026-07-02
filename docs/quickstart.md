@@ -109,7 +109,7 @@ use GuzzleHttp\Psr7\Request;
 // Create a PSR-7 request object to send
 $headers = ['X-Foo' => 'Bar'];
 $body = 'Hello!';
-$request = new Request('HEAD', 'http://httpbin.org/head', $headers, $body);
+$request = new Request('PUT', 'http://httpbin.org/put', $headers, $body);
 $promise = $client->sendAsync($request);
 
 // Or, if you don't need to pass in a request instance:
