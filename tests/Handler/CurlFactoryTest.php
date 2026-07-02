@@ -5271,6 +5271,158 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider trailerResponseHeaderLinesProvider
+     *
+     * @param list<string> $lines
+     * @param list<string> $expectedHeaders
+     */
+    public function testPreservesHeadersWhenTrailerFieldsArrive(array $lines, array $expectedHeaders): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, $lines);
+
+            self::assertNotNull($easy->response);
+            self::assertSame(200, $easy->response->getStatusCode());
+            self::assertSame($expectedHeaders, $easy->headers, 'received headers are not replaced by trailer fields');
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public static function trailerResponseHeaderLinesProvider(): iterable
+    {
+        $trailers = [
+            "X-Mixed-Case: Foo\r\n",
+            "x-empty:\r\n",
+            "x-dup: 1\r\n",
+            "x-dup: 2\r\n",
+        ];
+
+        yield 'HTTP/2 trailer fields' => [
+            \array_merge([
+                "HTTP/2 200 \r\n",
+                "content-type: text/plain\r\n",
+                "\r\n",
+            ], $trailers),
+            ['HTTP/2 200', 'content-type: text/plain'],
+        ];
+
+        yield 'HTTP/1.1 chunked trailer fields' => [
+            \array_merge([
+                "HTTP/1.1 200 OK\r\n",
+                "Transfer-Encoding: chunked\r\n",
+                "\r\n",
+            ], $trailers),
+            ['HTTP/1.1 200 OK', 'Transfer-Encoding: chunked'],
+        ];
+    }
+
+    public function testBlankLineAfterTrailerFieldsIsANoOp(): void
+    {
+        $factory = new CurlFactory(1);
+        $invocations = 0;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function () use (&$invocations): void {
+                ++$invocations;
+            },
+        ]);
+
+        try {
+            $headerFn = self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Length: 0\r\n",
+                "\r\n",
+                "x-checksum: abc\r\n",
+            ]);
+            $created = $easy->response;
+            self::assertNotNull($created);
+
+            self::assertSame(2, $headerFn($easy->handle, "\r\n"));
+
+            self::assertSame($created, $easy->response, 'a blank line ending a trailer section does not recreate the response');
+            self::assertNull($easy->createResponseException);
+            self::assertSame(1, $invocations, 'on_headers fires exactly once');
+
+            $response = CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $factory
+            )->wait();
+            self::assertSame(200, $response->getStatusCode());
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testClassifiesTrailerFieldsAfterInterim1xxResponse(): void
+    {
+        $factory = new CurlFactory(1);
+        $statuses = [];
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function (ResponseInterface $response) use (&$statuses): void {
+                $statuses[] = $response->getStatusCode();
+            },
+        ]);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 103 Early Hints\r\n",
+                "Link: </style.css>; rel=preload\r\n",
+                "\r\n",
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Length: 0\r\n",
+                "\r\n",
+                "x-checksum: abc\r\n",
+            ]);
+
+            self::assertSame([200], $statuses, 'on_headers fires once, for the final response');
+            self::assertSame(['HTTP/1.1 200 OK', 'Content-Length: 0'], $easy->headers);
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testDiscardsIntermediateResponseStateWhenANewHeaderBlockStarts(): void
+    {
+        // Mirrors a connection-cached authentication round or a CONNECT
+        // response: an intermediate response block, possibly followed by its
+        // own trailer fields, is superseded by the next status line.
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 401 Unauthorized\r\n",
+                "WWW-Authenticate: Negotiate\r\n",
+                "\r\n",
+                "x-early: 1\r\n",
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Length: 0\r\n",
+                "\r\n",
+                "x-checksum: abc\r\n",
+            ]);
+
+            self::assertNotNull($easy->response);
+            self::assertSame(200, $easy->response->getStatusCode());
+            self::assertSame(['HTTP/1.1 200 OK', 'Content-Length: 0'], $easy->headers);
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
     public function testRejectsPromiseWhenOnHeadersFails(): void
     {
         Server::flush();
