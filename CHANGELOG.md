@@ -121,6 +121,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 
 
+## 7.14.0 - Upcoming
+
+### Added
+
+- Added the `on_trailers` request option to expose parsed HTTP response trailers
+
+
 ## 7.13.2 - Upcoming
 
 ### Fixed
