@@ -531,6 +531,7 @@ class CurlFactory implements CurlFactoryInterface
         $options = [];
 
         self::addSupportedCurlOption($options, 'CURLOPT_ADDRESS_SCOPE');
+        self::addSupportedCurlOption($options, 'CURLOPT_CERTINFO');
         self::addSupportedCurlOption($options, 'CURLOPT_CONNECT_TO');
         self::addSupportedCurlOption($options, 'CURLOPT_DNS_CACHE_TIMEOUT');
         self::addSupportedCurlOption($options, 'CURLOPT_DNS_INTERFACE');
