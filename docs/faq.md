@@ -67,13 +67,6 @@ $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler([
 ]))]);
 ```
 
-Note that a `CURLMOPT_PIPELINING` value without the `CURLPIPE_MULTIPLEX` bit
-(such as `CURLPIPE_NOTHING`, or the legacy `CURLPIPE_HTTP1`, which has had no
-other effect since libcurl 7.62.0) disables HTTP/2 multiplexing for every
-transfer on the handler, and requests that explicitly set the
-[`multiplex`](request-options.md#multiplex) request option to `true` on such a
-handler are rejected with an `InvalidArgumentException`.
-
 Custom cURL request options remain active during redirects unless Guzzle
 documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects)
 for cross-origin redirect credential behavior.
