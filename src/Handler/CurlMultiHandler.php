@@ -212,9 +212,9 @@ class CurlMultiHandler
      * ignores entirely when the multi handle's CURLMOPT_PIPELINING option
      * disables multiplexing, so an explicit request for multiplexing on a
      * handler configured against it is a configuration error. The required
-     * family conflicts marker-independently: a required guarantee on a
-     * handler that disables multiplexing is contradictory even when the
-     * transfer would not wait.
+     * family conflicts marker-independently: a required guarantee on a handler
+     * that disables multiplexing is contradictory even when the transfer would
+     * not wait.
      */
     private function rejectMultiplexPipeliningConflict(EasyHandle $easy, array $options): void
     {

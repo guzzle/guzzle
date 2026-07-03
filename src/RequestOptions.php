@@ -204,12 +204,12 @@ final class RequestOptions
 
     /**
      * multiplex: (string) Controls how an HTTP/2 request sent through a
-     * built-in cURL handler pursues a shared, multiplexed connection. When
-     * the option is not set, multiplexing is left to libcurl: nothing waits,
-     * and established multiplex-capable connections are still shared.
-     * Use Multiplexing::EAGER to explicitly never wait for pending
-     * connections, Multiplexing::WAIT to wait on libcurl-eligible pending
-     * connections with CURLOPT_PIPEWAIT, normally to the same origin,
+     * built-in cURL handler pursues a shared, multiplexed connection. When the
+     * option is not set, multiplexing is left to libcurl: nothing waits, and
+     * established multiplex-capable connections are still shared. Use
+     * Multiplexing::EAGER to explicitly never wait for pending connections,
+     * Multiplexing::WAIT to wait on libcurl-eligible pending connections with
+     * CURLOPT_PIPEWAIT, normally to the same origin,
      * Multiplexing::REQUIRE_EAGER to fail unless a multiplexed protocol is
      * guaranteed while dialing eagerly, or Multiplexing::REQUIRE_WAIT for the
      * same guarantee while also waiting on pending connections. The stream

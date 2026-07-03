@@ -1499,9 +1499,9 @@ class CurlFactory implements CurlFactoryInterface
             }
 
             if (\in_array($multiplex, [Multiplexing::WAIT, Multiplexing::REQUIRE_WAIT], true) && CurlVersion::supportsMultiplex()) {
-                // Wait for a connection that is still being established to
-                // the same origin to reveal whether it can be multiplexed
-                // instead of immediately opening another connection.
+                // Wait for a connection that is still being established to the
+                // same origin to reveal whether it can be multiplexed instead
+                // of immediately opening another connection.
                 $conf[(int) \constant('CURLOPT_PIPEWAIT')] = true;
             }
         } elseif ('1.1' === $version) {
@@ -2068,7 +2068,8 @@ class CurlFactory implements CurlFactoryInterface
                 if (\in_array($easy->options['multiplex'] ?? null, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true) && $easy->response !== null) {
                     $protocolVersion = $easy->response->getProtocolVersion();
                     if (!\in_array($protocolVersion, ['2', '2.0', '3', '3.0'], true)) {
-                        // Reused connections can override the requested HTTP version.
+                        // Reused connections can override the requested HTTP
+                        // version.
                         $easy->multiplexException = new \RuntimeException(\sprintf('Required multiplexing was violated: the server responded over HTTP/%s.', $protocolVersion));
 
                         return -1;

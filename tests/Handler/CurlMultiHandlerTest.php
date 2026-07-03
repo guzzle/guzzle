@@ -111,8 +111,8 @@ class CurlMultiHandlerTest extends TestCase
             self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
         }
 
-        // The default (key absent) leaves multiplexing to libcurl: no
-        // PIPEWAIT is written and the guard never fires — an explicit
+        // The default (key absent) leaves multiplexing to libcurl: no PIPEWAIT
+        // is written and the guard never fires — an explicit
         // wait/require-family option is required for the conflict.
         Server::flush();
         Server::enqueue([new Response()]);
