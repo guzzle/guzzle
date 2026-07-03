@@ -860,6 +860,34 @@ $client->request('GET', 'http://httpbin.org/stream/1024', [
 ]);
 ```
 
+## on_trailers
+
+Summary
+A callable that is invoked when the HTTP trailers of the response have been received, after the body has been fully transferred.
+
+Types
+- callable
+
+Constant
+`GuzzleHttp\RequestOptions::ON_TRAILERS`
+
+The callable accepts an associative array that maps each trailer field name to an array of values, in the order and with the casing they were received in, followed by the `Psr\Http\Message\ResponseInterface` object. The callable is invoked exactly once per successful transfer, after the response body has been written to the sink and after the ``on_stats`` callable has run when one is provided, and receives an empty array when the response has no trailers. It is never invoked when a transfer fails. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\RequestException` that wraps the exception that was thrown.
+
+```php
+// Verify a content checksum delivered after the body.
+$client->request('GET', 'https://example.com/stream', [
+    'version' => '2.0',
+    'on_trailers' => function (array $trailers, ResponseInterface $response) {
+        if (isset($trailers['x-checksum']) && !hash_equals($trailers['x-checksum'][0], \GuzzleHttp\Psr7\Utils::hash($response->getBody(), 'sha256'))) {
+            throw new \Exception('Response body checksum mismatch!');
+        }
+    }
+]);
+```
+
+> [!NOTE]
+> Only the built-in cURL handlers can observe trailers; other handlers, such as the stream handler, ignore this option. Trailer lookups on the array are case-sensitive, and HTTP/2 field names are always lowercase on the wire.
+
 ## progress
 
 Summary

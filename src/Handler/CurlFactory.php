@@ -667,6 +667,21 @@ class CurlFactory implements CurlFactoryInterface
             $body->rewind();
         }
 
+        if (isset($easy->options['on_trailers'])) {
+            try {
+                ($easy->options['on_trailers'])(Utils::headersFromLines($easy->trailers), $easy->response);
+            } catch (\Throwable $e) {
+                return P\Create::rejectionFor(
+                    new RequestException(
+                        'An error was encountered during the on_trailers event',
+                        $easy->request,
+                        $easy->response,
+                        $e
+                    )
+                );
+            }
+        }
+
         return new FulfilledPromise($easy->response);
     }
 

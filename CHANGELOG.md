@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.14.0 - Upcoming
+
+### Added
+
+- Added the `on_trailers` request option to expose parsed HTTP response trailers
+
+
 ## 7.13.2 - Upcoming
 
 ### Fixed
