@@ -19,6 +19,11 @@ final class CurlVersion
     // which PIPEWAIT is reliably effective.
     private const MULTIPLEX_VERSION = '7.65.2';
 
+    // CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE restricts the ALPN offer to h2 only
+    // since libcurl 8.10.0; before that, TLS connections could still negotiate
+    // HTTP/1.1, which would silently violate the "require" guarantee.
+    private const REQUIRED_MULTIPLEX_VERSION = '8.10.0';
+
     // curl 7.52.0 introduced HTTPS proxy support, advertised by a feature bit
     // (a build can meet the version yet lack the feature). Earlier libcurl
     // mishandles an https:// proxy: before 7.50.2 it silently downgrades to a
@@ -94,6 +99,16 @@ final class CurlVersion
         return \defined('CURLOPT_PIPEWAIT')
             && $version !== null
             && \version_compare($version, self::MULTIPLEX_VERSION, '>=');
+    }
+
+    public static function supportsRequiredMultiplex(): bool
+    {
+        $version = self::getVersion();
+
+        return \defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE')
+            && $version !== null
+            && self::supportsHttp2()
+            && \version_compare($version, self::REQUIRED_MULTIPLEX_VERSION, '>=');
     }
 
     public static function supportsHttpsProxy(): bool

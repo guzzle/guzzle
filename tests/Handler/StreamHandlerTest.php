@@ -5,6 +5,7 @@ namespace GuzzleHttp\Tests\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
@@ -64,6 +65,18 @@ class StreamHandlerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('1.1', Server::received()[0]->getProtocolVersion());
+    }
+
+    public function testRejectsRequiredMultiplex()
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('The stream handler cannot guarantee a multiplexed protocol; required multiplexing needs a cURL handler.');
+
+        $handler(new Request('GET', Server::$url, [], null, '2.0'), [
+            'multiplex' => Multiplexing::REQUIRE,
+        ])->wait();
     }
 
     public function testAddsErrorToResponse()

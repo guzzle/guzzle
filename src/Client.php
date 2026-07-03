@@ -608,7 +608,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             self::warnAboutInvalidMultipartOptionTypes($options['multipart']);
         }
 
-        self::warnIfPresentAndNotBool($options, 'multiplex', null, '7.14');
         self::warnIfPresentAndNotCallable($options, 'on_headers');
         self::warnIfPresentAndNotCallable($options, 'on_stats');
         self::warnIfPresentAndNotCallable($options, 'on_trailers', null, '7.14');

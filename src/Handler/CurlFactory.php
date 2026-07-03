@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -112,8 +113,14 @@ class CurlFactory implements CurlFactoryInterface
             $request = Psr7\Utils::modifyRequest($request, ['version' => $protocolVersion]);
         }
 
+        $multiplex = self::normalizeMultiplex($options);
+
         if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp2()) {
+                if (Multiplexing::REQUIRE === $multiplex) {
+                    throw new ConnectException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $request);
+                }
+
                 throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
             }
         } elseif ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
@@ -177,6 +184,10 @@ class CurlFactory implements CurlFactoryInterface
             }
 
             $conf[(int) \constant('CURLOPT_SHARE')] = $this->shareHandle;
+        }
+
+        if (\defined('CURLOPT_PIPEWAIT')) {
+            $easy->usesPipewait = !empty($conf[(int) \constant('CURLOPT_PIPEWAIT')]);
         }
 
         $handle = $this->handles ? \array_pop($this->handles) : \curl_init();
@@ -252,6 +263,105 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with configured transport sharing.');
+    }
+
+    private static function normalizeMultiplex(array $options): string
+    {
+        $multiplex = $options['multiplex'] ?? null;
+
+        if ($multiplex === null) {
+            return Multiplexing::ALLOW;
+        }
+
+        if (!\in_array($multiplex, [Multiplexing::ALLOW, Multiplexing::PREFER, Multiplexing::REQUIRE], true)) {
+            throw new \InvalidArgumentException(\sprintf(
+                'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received %s.',
+                \get_debug_type($multiplex)
+            ));
+        }
+
+        return $multiplex;
+    }
+
+    private static function assertRequiredMultiplexSupported(EasyHandle $easy): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !CurlVersion::supportsRequiredMultiplex()) {
+            throw new ConnectException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $easy->request);
+        }
+
+        if ('https' !== $easy->request->getUri()->getScheme() && self::proxyAppliesTo($easy)) {
+            throw new ConnectException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
+        }
+    }
+
+    private static function proxyAppliesTo(EasyHandle $easy): bool
+    {
+        [$proxyConf] = self::resolveProxy($easy->request, $easy->options);
+        self::assertResolvedProxySupported($easy->request, $proxyConf);
+
+        return \is_string($proxyConf) && $proxyConf !== '';
+    }
+
+    /**
+     * @param mixed $proxyConf
+     */
+    private static function assertResolvedProxySupported(RequestInterface $request, $proxyConf): void
+    {
+        if (!\is_string($proxyConf) || $proxyConf === '') {
+            return;
+        }
+
+        $scheme = self::proxyScheme($proxyConf);
+        if ($scheme !== null && \preg_match('/^[a-z][a-z0-9.+-]*$/D', $scheme) !== 1) {
+            throw new RequestException('The proxy URL is malformed.', $request);
+        }
+
+        if ($scheme === 'https' && !CurlVersion::supportsHttpsProxy()) {
+            throw new RequestException('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.', $request);
+        }
+    }
+
+    /**
+     * @return array{0: mixed, 1: string}
+     */
+    private static function resolveProxy(RequestInterface $request, array $options): array
+    {
+        $proxyConf = null;
+        $noProxyConf = '';
+
+        if (isset($options['proxy'])) {
+            if (!\is_array($options['proxy'])) {
+                $proxyConf = $options['proxy'];
+            } else {
+                $scheme = $request->getUri()->getScheme();
+                if (isset($options['proxy'][$scheme])) {
+                    if (
+                        isset($options['proxy']['no'])
+                        && Utils::isUriInNoProxy($request->getUri(), $options['proxy']['no'])
+                    ) {
+                        $proxyConf = '';
+                        $noProxyConf = '*';
+                    } else {
+                        $proxyConf = $options['proxy'][$scheme];
+                    }
+                }
+            }
+        }
+
+        if ($proxyConf === null) {
+            $proxyConf = ProxyEnvironment::getProxyForScheme($request->getUri()->getScheme());
+            if ($proxyConf === null) {
+                $proxyConf = '';
+            } elseif (
+                ($noProxy = ProxyEnvironment::getNoProxy()) !== null
+                && Utils::isUriInNoProxy($request->getUri(), ProxyEnvironment::splitNoProxy($noProxy))
+            ) {
+                $proxyConf = '';
+                $noProxyConf = '*';
+            }
+        }
+
+        return [$proxyConf, $noProxyConf];
     }
 
     /**
@@ -757,6 +867,17 @@ class CurlFactory implements CurlFactoryInterface
                     $easy->request,
                     $easy->response,
                     $easy->onHeadersException,
+                    $ctx
+                )
+            );
+        }
+
+        if ($easy->multiplexException) {
+            return P\Create::rejectionFor(
+                new ConnectException(
+                    $easy->multiplexException->getMessage(),
+                    $easy->request,
+                    null,
                     $ctx
                 )
             );
@@ -1363,19 +1484,33 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $version = $easy->request->getProtocolVersion();
+        $multiplex = self::normalizeMultiplex($easy->options);
 
         if ('2' === $version || '2.0' === $version) {
-            $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
+            if (Multiplexing::REQUIRE === $multiplex) {
+                self::assertRequiredMultiplexSupported($easy);
+                // New HTTP/2 connections cannot negotiate HTTP/1.x here;
+                // reused-connection anomalies are caught by the backstop.
+                $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE');
+            } else {
+                $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
+            }
 
-            if (!empty($easy->options['multiplex']) && CurlVersion::supportsMultiplex()) {
+            if (Multiplexing::ALLOW !== $multiplex && CurlVersion::supportsMultiplex()) {
                 // Wait for a connection that is still being established to
                 // the same origin to reveal whether it can be multiplexed
                 // instead of immediately opening another connection.
                 $conf[(int) \constant('CURLOPT_PIPEWAIT')] = true;
             }
         } elseif ('1.1' === $version) {
+            if (Multiplexing::REQUIRE === $multiplex) {
+                throw new ConnectException(\sprintf('The "multiplex" request option cannot be required for HTTP/%s requests; use protocol version 2.', $version), $easy->request);
+            }
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_1;
         } else {
+            if (Multiplexing::REQUIRE === $multiplex) {
+                throw new ConnectException(\sprintf('The "multiplex" request option cannot be required for HTTP/%s requests; use protocol version 2.', $version), $easy->request);
+            }
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_0;
         }
 
@@ -1634,62 +1769,8 @@ class CurlFactory implements CurlFactoryInterface
         // that libcurl never falls back to reading proxy environment
         // variables itself. When the proxy request option makes no decision,
         // the environment is resolved here with libcurl's own semantics.
-        $proxyConf = null;
-        $noProxyConf = '';
-        if (isset($options['proxy'])) {
-            if (!\is_array($options['proxy'])) {
-                $proxyConf = $options['proxy'];
-            } else {
-                $scheme = $easy->request->getUri()->getScheme();
-                if (isset($options['proxy'][$scheme])) {
-                    if (
-                        isset($options['proxy']['no'])
-                        && Utils::isUriInNoProxy($easy->request->getUri(), $options['proxy']['no'])
-                    ) {
-                        $proxyConf = '';
-                        $noProxyConf = '*';
-                    } else {
-                        $proxyConf = $options['proxy'][$scheme];
-                    }
-                }
-            }
-        }
-
-        if ($proxyConf === null) {
-            $proxyConf = ProxyEnvironment::getProxyForScheme($easy->request->getUri()->getScheme());
-            if ($proxyConf === null) {
-                $proxyConf = '';
-            } elseif (
-                ($noProxy = ProxyEnvironment::getNoProxy()) !== null
-                && Utils::isUriInNoProxy($easy->request->getUri(), ProxyEnvironment::splitNoProxy($noProxy))
-            ) {
-                // The environment no_proxy list is tokenized the way libcurl
-                // tokenizes it and matched here with the same rules as the
-                // proxy option's "no" list, so behavior does not depend on
-                // the installed libcurl's matcher.
-                $proxyConf = '';
-                $noProxyConf = '*';
-            }
-        }
-
-        if (\is_string($proxyConf) && $proxyConf !== '') {
-            $scheme = self::proxyScheme($proxyConf);
-            if ($scheme !== null && \preg_match('/^[a-z][a-z0-9.+-]*$/D', $scheme) !== 1) {
-                // A "://" with a prefix that is not a valid scheme (leading
-                // junk such as a space or non-breaking space) is treated by
-                // libcurl as an unknown scheme and silently downgraded to a
-                // plaintext HTTP proxy. Fail closed before any bytes reach the
-                // wire.
-                throw new RequestException('The proxy URL is malformed.', $easy->request);
-            }
-            if ($scheme === 'https' && !CurlVersion::supportsHttpsProxy()) {
-                // libcurl before 7.50.2 silently downgrades an https:// proxy
-                // to a plaintext HTTP proxy; 7.50.2 through 7.51, and builds
-                // without HTTPS-proxy support, fail at connect time. Fail
-                // closed before any bytes reach the wire.
-                throw new RequestException('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.', $easy->request);
-            }
-        }
+        [$proxyConf, $noProxyConf] = self::resolveProxy($easy->request, $options);
+        self::assertResolvedProxySupported($easy->request, $proxyConf);
 
         $conf[\CURLOPT_PROXY] = $proxyConf;
         if (\defined('CURLOPT_NOPROXY')) {
@@ -1981,6 +2062,15 @@ class CurlFactory implements CurlFactoryInterface
                     $easy->createResponseException = $e;
 
                     return -1;
+                }
+                if (Multiplexing::REQUIRE === ($easy->options['multiplex'] ?? null)) {
+                    $protocolVersion = $easy->response->getProtocolVersion();
+                    if (!\in_array($protocolVersion, ['2', '2.0', '3', '3.0'], true)) {
+                        // Reused connections can override the requested HTTP version.
+                        $easy->multiplexException = new \RuntimeException(\sprintf('Required multiplexing was violated: the server responded over HTTP/%s.', $protocolVersion));
+
+                        return -1;
+                    }
                 }
                 if ($onHeaders !== null) {
                     try {

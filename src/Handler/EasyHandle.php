@@ -36,6 +36,11 @@ final class EasyHandle
     public $trailers = [];
 
     /**
+     * @var bool Whether this handle was configured with CURLOPT_PIPEWAIT
+     */
+    public $usesPipewait = false;
+
+    /**
      * @var ResponseInterface|null Received response (if any)
      */
     public $response;
@@ -77,6 +82,11 @@ final class EasyHandle
      * @var \Throwable|null Exception during createResponse (if any)
      */
     public $createResponseException;
+
+    /**
+     * @var \RuntimeException|null Exception recording a "require" violation
+     */
+    public $multiplexException;
 
     /**
      * Attach a response to the easy handle based on the received headers.

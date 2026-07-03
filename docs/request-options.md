@@ -796,33 +796,38 @@ $client->request('POST', '/post', [
 ## multiplex
 
 Summary
-When sending an HTTP/2 request through a built-in cURL handler, wait for a connection that is still being established to the same origin to reveal whether it can be multiplexed instead of immediately opening an additional connection.
+Controls how an HTTP/2 request sent through a built-in cURL handler pursues a shared, multiplexed connection: opportunistically, by preference, or as a hard requirement.
 
 Types
-- bool
+- string (one of the `GuzzleHttp\Multiplexing` constants)
 
 Default
-`false`
+`GuzzleHttp\Multiplexing::ALLOW`
 
 Constant
 `GuzzleHttp\RequestOptions::MULTIPLEX`
 
-Concurrent requests issued through a shared `GuzzleHttp\Handler\CurlMultiHandler` already share an established HTTP/2 connection. Without this option, however, requests started while the first connection to an origin is still being established each open their own connection. Set `multiplex` to `true` to make such requests wait for the pending connection and coalesce onto it when the server turns out to support multiplexing; when it does not, the waiting requests fall back to opening their own connections. The option maps to cURL's `CURLOPT_PIPEWAIT`, applies only to HTTP/2 requests (protocol version 2 or 2.0), and requires libcurl 7.65.2 or newer; it is silently ignored otherwise, including by the stream handler.
+libcurl multiplexes concurrent HTTP/2 transfers over a single connection whenever a multiplexable connection to the origin already exists, whatever this option is set to. The modes grade how much further the request goes:
 
-The one exception to the silent behavior is a direct conflict: a `GuzzleHttp\Handler\CurlMultiHandler` constructed with a `CURLMOPT_PIPELINING` value that lacks the `CURLPIPE_MULTIPLEX` bit disables HTTP/2 multiplexing for every transfer it runs, and libcurl then ignores `CURLOPT_PIPEWAIT` entirely, so setting `multiplex` to `true` on such a handler throws an `InvalidArgumentException` instead of silently doing nothing.
+- `Multiplexing::ALLOW` (default) — never wait for a connection that is still being established; a burst of requests against a cold origin opens parallel connections.
+- `Multiplexing::PREFER` — wait for a pending connection that libcurl considers eligible for multiplexing — normally a connection to the same origin — and share it (maps to cURL's `CURLOPT_PIPEWAIT`; requires libcurl 7.65.2+ and the `CurlMultiHandler`; silently ignored otherwise, including by the stream handler and the blocking `CurlHandler`, which has no multi handle to multiplex over). When the server turns out not to support multiplexing, waiting requests fall back to their own connections. For HTTP/2, libcurl may also reuse a connection for another origin when its TLS certificate and DNS/proxy checks permit origin coalescing; Guzzle delegates all reuse eligibility to libcurl.
+- `Multiplexing::REQUIRE` — guarantee a multiplexed protocol or fail loudly. The request is sent with HTTP/2 prior knowledge, so TLS connections offer only `h2` via ALPN (libcurl 8.10.0+) and cleartext connections speak HTTP/2 directly; a server limited to HTTP/1.x fails the connection instead of silently downgrading the request. Requires protocol version `2`/`2.0`, a cURL handler, and runtime libcurl 8.10.0+; anything else throws instead of degrading. The protocol guarantee holds on both cURL handlers; only the connection-waiting is `CurlMultiHandler`-specific.
 
 ```php
 $promises = [];
 foreach ($uris as $uri) {
     $promises[] = $client->getAsync($uri, [
         'version' => '2.0',
-        'multiplex' => true,
+        'multiplex' => \GuzzleHttp\Multiplexing::PREFER,
     ]);
 }
 ```
 
-> [!NOTE]
-> Setting `multiplex` to `false` does not disable HTTP/2 multiplexing; it only keeps the default behavior of opening a new connection instead of waiting for a pending one.
+None of the modes is a connection **cap**. Once an established HTTP/2 connection has no free streams — servers commonly allow about 100 concurrent streams per connection — additional concurrent requests open additional connections regardless of this option. To bound connections, use the `max_host_connections` / `max_total_connections` client or handler options: excess requests then queue inside libcurl, keep consuming their `timeout` and `connect_timeout` while queued, and are not guaranteed to start in the order they were issued.
+
+Passing raw `CURLOPT_PIPEWAIT` through the `curl` request option is deprecated in 7.14; use `multiplex` instead.
+
+One configuration is rejected loudly instead of silently ignored: a `GuzzleHttp\Handler\CurlMultiHandler` constructed with a `CURLMOPT_PIPELINING` value that lacks the `CURLPIPE_MULTIPLEX` bit disables libcurl multiplexing for every transfer that would wait, so explicitly setting `multiplex` to `Multiplexing::PREFER` or `Multiplexing::REQUIRE` on such a handler throws an `InvalidArgumentException` when the request would actually wait (HTTP/2-capable protocol versions).
 
 ## on_headers
 
