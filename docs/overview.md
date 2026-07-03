@@ -4,14 +4,14 @@
 
 1.  PHP 7.4
 2.  To use the PHP stream handler, `allow_url_fopen` must be enabled in your system's php.ini.
-3.  To use the cURL handler, you must have cURL >= 7.34.0 compiled with OpenSSL and zlib. HTTP/2 requests additionally require cURL >= 7.65.2 compiled with nghttp2.
+3.  To use the cURL handler, you must have cURL >= 7.34.0 compiled with OpenSSL and zlib.
 
-Support for HTTP/2 and HTTP/3 depends on the PHP cURL extension and the
-linked runtime libcurl. HTTP/2 requires libcurl built with HTTP/2 support.
-HTTP/3 requires PHP to expose cURL's HTTP/3 constants, libcurl 7.66.0 or
-higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3` feature. Many
-libcurl builds do not enable HTTP/3 unless an HTTP/3 backend is selected at
-build time.
+Support for HTTP/2 and HTTP/3 depends on the PHP cURL extension and the linked
+runtime libcurl. HTTP/2 requires libcurl 7.65.2 or higher built with HTTP/2
+support (nghttp2). HTTP/3 requires PHP to expose cURL's HTTP/3 constants,
+libcurl 7.66.0 or higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3`
+feature. Many libcurl builds do not enable HTTP/3 unless an HTTP/3 backend is
+selected at build time.
 
 ## Installation
 
