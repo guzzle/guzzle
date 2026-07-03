@@ -234,6 +234,23 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testCertinfoIsInSupportedCurlOptionsAllowList(): void
+    {
+        $method = new \ReflectionMethod(CurlFactory::class, 'supportedCurlOptions');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        /** @var array<int, true> $supported */
+        $supported = $method->invoke(null);
+
+        self::assertArrayHasKey(
+            \CURLOPT_CERTINFO,
+            $supported,
+            'CURLOPT_CERTINFO must be in the built-in cURL handlers\' allow-list so it no longer triggers the raw cURL option deprecation.'
+        );
+    }
+
     public function testPrereqFunctionIsInSupportedCurlOptionsAllowList(): void
     {
         if (!\defined('CURLOPT_PREREQFUNCTION')) {
