@@ -24,6 +24,11 @@ final class CurlVersion
     // HTTP/1.1, which would silently violate the "require" guarantee.
     private const REQUIRED_MULTIPLEX_VERSION = '8.10.0';
 
+    // CURLOPT_SUPPRESS_CONNECT_HEADERS keeps a proxy CONNECT response's
+    // HTTP/1.1 header block out of the header callback since libcurl 7.54.0;
+    // the required-multiplex backstop depends on never seeing that block.
+    private const SUPPRESS_CONNECT_HEADERS_VERSION = '7.54.0';
+
     // curl 7.52.0 introduced HTTPS proxy support, advertised by a feature bit
     // (a build can meet the version yet lack the feature). Earlier libcurl
     // mishandles an https:// proxy: before 7.50.2 it silently downgrades to a
@@ -109,6 +114,15 @@ final class CurlVersion
             && $version !== null
             && self::supportsHttp2()
             && \version_compare($version, self::REQUIRED_MULTIPLEX_VERSION, '>=');
+    }
+
+    public static function supportsSuppressConnectHeaders(): bool
+    {
+        $version = self::getVersion();
+
+        return \defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')
+            && $version !== null
+            && \version_compare($version, self::SUPPRESS_CONNECT_HEADERS_VERSION, '>=');
     }
 
     public static function supportsHttpsProxy(): bool

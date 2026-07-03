@@ -807,12 +807,12 @@ None (multiplexing is left to libcurl)
 Constant
 `GuzzleHttp\RequestOptions::MULTIPLEX`
 
-libcurl multiplexes concurrent HTTP/2 transfers over a single connection whenever a multiplexable connection to the origin already exists, whatever this option is set to. When the option is not set, Guzzle leaves the rest to libcurl as well: nothing waits. The explicit modes grade how much further the request goes:
+libcurl multiplexes concurrent HTTP/2 transfers over a single connection whenever a multiplexable connection to the origin already exists, whatever this option is set to. When the option is not set, Guzzle leaves the rest to libcurl too: nothing waits. The modes grade how much further the request goes:
 
 - `Multiplexing::EAGER` — never wait for a connection that is still being established: a burst of requests against a cold origin opens parallel connections.
 - `Multiplexing::WAIT` — wait for a pending connection that libcurl considers eligible for multiplexing, normally one to the same origin, and share it. Maps to cURL's `CURLOPT_PIPEWAIT`; needs libcurl 7.65.2+ and the `CurlMultiHandler`, and is silently ignored elsewhere. If the connection turns out not to multiplex, waiting requests open their own.
 - `Multiplexing::REQUIRE_EAGER` — guarantee a multiplexed protocol or fail loudly, while dialing eagerly. The request is sent with HTTP/2 prior knowledge, so TLS connections offer only `h2` via ALPN and cleartext connections speak HTTP/2 directly; a server limited to HTTP/1.x fails the connection instead of downgrading. Requires protocol version `2`/`2.0`, a cURL handler, and libcurl 8.10.0+; anything else throws. A cold burst dials connections in parallel, but libcurl still packs later streams onto the first established connection rather than balancing.
-- `Multiplexing::REQUIRE_WAIT` — the same guarantees as `Multiplexing::REQUIRE_EAGER`, plus `WAIT`'s waiting on pending connections. The protocol guarantee holds on both cURL handlers; only the waiting is `CurlMultiHandler`-specific.
+- `Multiplexing::REQUIRE_WAIT` — the same guarantees as `Multiplexing::REQUIRE_EAGER`, plus `WAIT`'s waiting; the protocol guarantee holds on both cURL handlers, the waiting only on the `CurlMultiHandler`.
 
 ```php
 $promises = [];
@@ -831,7 +831,7 @@ libcurl never reuses or coalesces a connection across differing TLS settings (`v
 
 Passing raw `CURLOPT_PIPEWAIT` through the `curl` request option is deprecated in 7.14; use `multiplex` instead.
 
-A `GuzzleHttp\Handler\CurlMultiHandler` whose `CURLMOPT_PIPELINING` option disables multiplexing rejects an explicit `Multiplexing::WAIT` that would actually wait, and rejects the required modes regardless of waiting, with an `InvalidArgumentException`. The default never throws.
+A `GuzzleHttp\Handler\CurlMultiHandler` whose `CURLMOPT_PIPELINING` option disables multiplexing throws an `InvalidArgumentException` for an explicit `Multiplexing::WAIT` that would actually wait, and for the required modes regardless of waiting. The default never throws.
 
 ## on_headers
 

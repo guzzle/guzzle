@@ -287,7 +287,7 @@ class CurlFactory implements CurlFactoryInterface
 
     private static function assertRequiredMultiplexSupported(EasyHandle $easy): void
     {
-        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !CurlVersion::supportsRequiredMultiplex()) {
+        if (!CurlVersion::supportsRequiredMultiplex()) {
             throw new ConnectException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $easy->request);
         }
 
@@ -296,7 +296,7 @@ class CurlFactory implements CurlFactoryInterface
                 throw new ConnectException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
             }
 
-            if (!\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+            if (!CurlVersion::supportsSuppressConnectHeaders()) {
                 throw new ConnectException('Required multiplexing cannot be guaranteed for requests sent through a proxy without CURLOPT_SUPPRESS_CONNECT_HEADERS support.', $easy->request);
             }
         }
@@ -1501,7 +1501,7 @@ class CurlFactory implements CurlFactoryInterface
                 // reused-connection anomalies are caught by the backstop.
                 $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE');
 
-                if (\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+                if (CurlVersion::supportsSuppressConnectHeaders()) {
                     // A proxy CONNECT response is an HTTP/1.1 header block
                     // that would otherwise reach the header callback and
                     // falsely trip the required-multiplex backstop.
