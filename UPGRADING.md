@@ -488,8 +488,8 @@ is charged against the `timeout` of, the requests waiting on it. Only requests
 whose protocol version resolves to HTTP/2 or HTTP/3 are affected. Pass
 `'multiplex' => \GuzzleHttp\Multiplexing::ALLOW` to stop requests from waiting
 on in-progress connections when you rely on independent connection timing; it
-does not guarantee separate connections; libcurl still multiplexes new
-transfers onto an established multiplex-capable connection to the origin.
+does not guarantee separate connections; libcurl still multiplexes new transfers
+onto an established multiplex-capable connection to the origin.
 
 #### Sink Resource Ownership
 
@@ -614,9 +614,8 @@ now reject raw cURL options that override request method, URI, body, headers,
 timeouts, redirects, proxy URLs and types, TLS verification or client
 credentials, progress/debug callbacks, sink handling, cookies, protocols,
 connection coalescing, or cURL share handles. Use first-class Guzzle request
-options for those settings.
-Allowed raw cURL header-list options, such as `CURLOPT_PROXYHEADER`, now accept
-only strings or stringable objects as entries.
+options for those settings. Allowed raw cURL header-list options, such as
+`CURLOPT_PROXYHEADER`, now accept only strings or stringable objects as entries.
 
 The cURL handlers also reject stream-only `stream_context` options, but accept
 `read_timeout` without effect. The stream handler rejects cURL-only options it
