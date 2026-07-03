@@ -422,15 +422,23 @@ The stream handler still ignores `progress` return values.
 Exceptions thrown by `on_stats` remain unwrapped, so existing catch logic for
 `on_stats` exceptions does not need to change. The built-in cURL handlers now
 release native easy handles before invoking `on_stats`. Built-in handlers now
-reject non-callable `on_stats` values before starting the transfer. Raw callbacks
-passed through the `curl` request option remain low-level cURL callbacks and are
-not normalized by Guzzle.
+reject non-callable `on_stats` values before starting the transfer, and the
+built-in cURL handlers reject non-callable `on_trailers` values the same way.
+Raw callbacks passed through the `curl` request option remain low-level cURL
+callbacks and are not normalized by Guzzle.
 
 The `on_headers` request option callback now receives the request as its second
 argument. Existing userland callbacks that accept only the response continue to
 work, but callbacks that inspect all arguments, for example with
 `func_get_args()` or a variadic parameter, will observe the additional
 `Psr\Http\Message\RequestInterface` argument.
+
+The `on_trailers` request option callback now receives the request as its third
+argument, after the trailer array and the response; callbacks that accept only
+the first two arguments continue to work. Exceptions thrown by `on_trailers`
+now reject the request with `ResponseException` instead of `RequestException`,
+and the callback now runs before `on_stats` instead of after it, so `on_stats`
+observes an `on_trailers` failure as the transfer's outcome.
 
 The built-in handlers invoke `on_headers` for the final response headers and for
 `101 Switching Protocols`, but not for other informational `1xx` responses such
