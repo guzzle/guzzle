@@ -95,11 +95,6 @@ final class EasyHandle
     public ?\Throwable $createResponseException = null;
 
     /**
-     * @var \RuntimeException|null Exception recording a "require" violation
-     */
-    public ?\RuntimeException $multiplexException = null;
-
-    /**
      * @var TimeoutException|null Exception during request body read timeout.
      */
     public ?TimeoutException $bodyReadTimeoutException = null;

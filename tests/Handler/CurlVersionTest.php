@@ -90,23 +90,23 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsMultiplex());
     }
 
-    public function testSupportsRequiredMultiplexUsesRuntimeVersion(): void
+    public function testSupportsRequiredHttp2MultiplexUsesRuntimeVersion(): void
     {
         if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURL_VERSION_HTTP2')) {
             self::markTestSkipped('Required HTTP/2 cURL constants are not available.');
         }
 
         self::setVersionInfo([
-            'version' => '8.9.1',
+            'version' => '8.13.0',
             'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
         ]);
-        self::assertFalse(CurlVersion::supportsRequiredMultiplex());
+        self::assertFalse(CurlVersion::supportsRequiredHttp2Multiplex());
 
         self::setVersionInfo([
-            'version' => '8.10.0',
+            'version' => '8.14.0',
             'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
         ]);
-        self::assertTrue(CurlVersion::supportsRequiredMultiplex());
+        self::assertTrue(CurlVersion::supportsRequiredHttp2Multiplex());
     }
 
     public function testSupportsHttp2UsesRuntimeVersionAndFeature(): void
@@ -134,25 +134,6 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsHttp2());
     }
 
-    public function testSupportsSuppressConnectHeadersUsesRuntimeVersion(): void
-    {
-        if (!\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
-            self::markTestSkipped('CURLOPT_SUPPRESS_CONNECT_HEADERS is not available.');
-        }
-
-        self::setVersionInfo([
-            'version' => '7.53.0',
-            'features' => 0,
-        ]);
-        self::assertFalse(CurlVersion::supportsSuppressConnectHeaders());
-
-        self::setVersionInfo([
-            'version' => '7.54.0',
-            'features' => 0,
-        ]);
-        self::assertTrue(CurlVersion::supportsSuppressConnectHeaders());
-    }
-
     public function testSupportsHttp3ReturnsFalseWhenVersionInfoIsUnavailable(): void
     {
         self::setVersionInfo(false);
@@ -165,7 +146,7 @@ class CurlVersionTest extends TestCase
         self::requiresHttp3Constants();
 
         self::setVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => 0,
         ]);
 
@@ -177,7 +158,7 @@ class CurlVersionTest extends TestCase
         self::requiresHttp3Constants();
 
         self::setVersionInfo([
-            'version' => '7.65.0',
+            'version' => '7.87.0',
             'features' => self::http3Feature(),
         ]);
 
@@ -189,31 +170,28 @@ class CurlVersionTest extends TestCase
         self::requiresHttp3Constants();
 
         self::setVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::http3Feature(),
         ]);
 
         self::assertTrue(CurlVersion::supportsHttp3());
     }
 
-    public function testSupportsHttp3OnlyUsesRuntimeVersion(): void
+    public function testSupportsRequiredHttp3MultiplexUsesRuntimeVersion(): void
     {
         self::requiresHttp3Constants();
-        if (!\defined('CURL_HTTP_VERSION_3ONLY')) {
-            self::markTestSkipped('CURL_HTTP_VERSION_3ONLY is not available.');
-        }
 
         self::setVersionInfo([
-            'version' => '7.87.0',
+            'version' => '8.12.0',
             'features' => self::http3Feature(),
         ]);
-        self::assertFalse(CurlVersion::supportsHttp3Only());
+        self::assertFalse(CurlVersion::supportsRequiredHttp3Multiplex());
 
         self::setVersionInfo([
-            'version' => '7.88.0',
+            'version' => '8.13.0',
             'features' => self::http3Feature(),
         ]);
-        self::assertTrue(CurlVersion::supportsHttp3Only());
+        self::assertTrue(CurlVersion::supportsRequiredHttp3Multiplex());
     }
 
     public function testSupportsHttpsProxyUsesMinimumVersionAndFeature(): void
@@ -425,7 +403,7 @@ class CurlVersionTest extends TestCase
 
     private static function requiresHttp3Constants(): void
     {
-        if (!\defined('CURL_VERSION_HTTP3') || !\defined('CURL_HTTP_VERSION_3')) {
+        if (!\defined('CURL_VERSION_HTTP3') || !\defined('CURL_HTTP_VERSION_3') || !\defined('CURL_HTTP_VERSION_3ONLY')) {
             self::markTestSkipped('HTTP/3 cURL constants are not available.');
         }
     }

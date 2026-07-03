@@ -9,7 +9,7 @@
 Support for HTTP/2 and HTTP/3 depends on the PHP cURL extension and the linked
 runtime libcurl. HTTP/2 requires libcurl 7.65.2 or higher built with HTTP/2
 support (nghttp2). HTTP/3 requires PHP to expose cURL's HTTP/3 constants,
-libcurl 7.66.0 or higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3`
+libcurl 7.88.0 or higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3`
 feature. Many libcurl builds do not enable HTTP/3 unless an HTTP/3 backend is
 selected at build time.
 

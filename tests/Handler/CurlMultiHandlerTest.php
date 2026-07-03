@@ -110,7 +110,7 @@ class CurlMultiHandlerTest extends TestCase
 
     public function testRejectsRequireWaitWhenPipeliningIsDisabled(): void
     {
-        if (!CurlVersion::supportsRequiredMultiplex()) {
+        if (!CurlVersion::supportsRequiredHttp2Multiplex()) {
             self::markTestSkipped('Required multiplexing is unavailable.');
         }
 
@@ -125,7 +125,7 @@ class CurlMultiHandlerTest extends TestCase
 
     public function testRejectsRequireEagerWhenPipeliningIsDisabled(): void
     {
-        if (!CurlVersion::supportsRequiredMultiplex()) {
+        if (!CurlVersion::supportsRequiredHttp2Multiplex()) {
             self::markTestSkipped('Required multiplexing is unavailable.');
         }
 
