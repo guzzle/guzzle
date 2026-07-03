@@ -127,6 +127,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Added the `on_trailers` request option to expose parsed HTTP response trailers
 
+### Changed
+
+- Remove deprecation for the raw cURL `CURLOPT_CERTINFO` option
+
 
 ## 7.13.2 - Upcoming
 
