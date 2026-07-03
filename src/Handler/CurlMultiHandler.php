@@ -166,6 +166,7 @@ final class CurlMultiHandler
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $this->assertOpen();
+        $this->rejectMultiplexPipeliningConflict($options);
 
         $easy = $this->factory->create($request, $options);
         $this->applyProxyTunnelOwnership($easy);
@@ -183,6 +184,35 @@ final class CurlMultiHandler
         $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
 
         return $promise;
+    }
+
+    /**
+     * The "multiplex" request option sets CURLOPT_PIPEWAIT, which libcurl
+     * ignores entirely when the multi handle's CURLMOPT_PIPELINING option
+     * disables multiplexing, so an explicit request for multiplexing on a
+     * handler configured against it is a configuration error.
+     */
+    private function rejectMultiplexPipeliningConflict(array $options): void
+    {
+        if (($options['multiplex'] ?? null) !== true || !CurlVersion::supportsMultiplex()) {
+            return;
+        }
+
+        if (!\array_key_exists(\CURLMOPT_PIPELINING, $this->options)) {
+            return;
+        }
+
+        $pipelining = $this->options[\CURLMOPT_PIPELINING];
+        if (!\is_scalar($pipelining)) {
+            return;
+        }
+
+        $multiplexBit = \defined('CURLPIPE_MULTIPLEX') ? \CURLPIPE_MULTIPLEX : 2;
+        if (((int) $pipelining & $multiplexBit) !== 0) {
+            return;
+        }
+
+        throw new InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to false.');
     }
 
     /**

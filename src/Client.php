@@ -107,6 +107,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
+     *     multiplex?: bool,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -233,6 +234,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
+     *     multiplex?: bool,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -323,6 +325,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
+     *     multiplex?: bool,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -429,6 +432,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
+     *     multiplex?: bool,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -547,6 +551,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
+     *     multiplex?: bool,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -903,6 +908,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             self::assertMultipartOptionTypes($options['multipart']);
         }
 
+        self::assertIfPresentAndNotBool($options, 'multiplex');
         self::assertIfPresentAndNotCallable($options, 'on_headers');
         self::assertIfPresentAndNotCallable($options, 'on_stats');
         self::assertIfPresentAndNotCallable($options, 'on_trailers');

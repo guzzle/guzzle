@@ -824,6 +824,38 @@ $client->request('POST', '/post', [
 >
 > This option cannot be used with `body`, `form_params`, or `json`
 
+## multiplex
+
+Summary
+Controls whether a request that may use HTTP/2 or HTTP/3 waits for an in-progress connection to the same origin that could be multiplexed, instead of opening another connection.
+
+Types
+- bool
+
+Default
+`true`
+
+Constant
+`GuzzleHttp\RequestOptions::MULTIPLEX`
+
+libcurl multiplexes concurrent HTTP/2 transfers over a single connection whenever a multiplexable connection to the origin already exists. Without this option, a request that starts while the first connection to an origin is still being established does not wait for it and opens its own connection instead, so a concurrent burst of requests against a cold origin creates one connection per request. With `multiplex` enabled, such requests wait until the pending connection reveals whether it can be multiplexed and then share it. This maps to libcurl's `CURLOPT_PIPEWAIT`. When the pending connection turns out not to support multiplexing, at the latest once its first transfer completes, waiting requests open their own connections, so HTTP/1.1 fallback still uses parallel connections.
+
+The option applies to the built-in cURL handlers, and only when the request protocol version resolves to HTTP/2 or HTTP/3 and the runtime libcurl is 7.65.2 or newer; in all other cases it is silently ignored, including by the stream handler, so shared request configuration can be reused across transports. Set it to `false` when concurrent requests should not wait for pending connections, for example to spread large parallel downloads across separate connections. Non-boolean values are rejected. Raw `CURLOPT_PIPEWAIT` values in the `curl` request option are rejected in favor of this option.
+
+One more configuration is rejected loudly instead of silently ignored: a `GuzzleHttp\Handler\CurlMultiHandler` constructed with a `CURLMOPT_PIPELINING` value that lacks the `CURLPIPE_MULTIPLEX` bit disables HTTP/2 multiplexing for every transfer it runs, and libcurl then ignores `CURLOPT_PIPEWAIT` entirely, so explicitly setting `multiplex` to `true` on such a handler throws an `InvalidArgumentException`. Requests that leave the option at its default never throw; the wait is simply skipped.
+
+```php
+// Let this large download open its own connection instead
+// of waiting to share a pending one.
+$client->requestAsync('GET', 'https://example.com/big-file', [
+    'version' => '2.0',
+    'multiplex' => false,
+]);
+```
+
+> [!NOTE]
+> `'multiplex' => false` does not disable HTTP/2 multiplexing itself. It only stops the request from waiting on connections that are still being established; already-established multiplexable connections are still reused.
+
 ## on_headers
 
 Summary
@@ -1645,6 +1677,8 @@ Empty or malformed `version` values are rejected before the request is sent. If 
 For cURL requests, `version` is converted to Guzzle-managed cURL options. Use this request option instead of passing raw `CURLOPT_HTTP_VERSION`; built-in cURL handlers reject raw cURL options that conflict with Guzzle-managed protocol handling.
 
 HTTP/2 uses libcurl's `CURL_HTTP_VERSION_2_0`. HTTP/3 uses libcurl's `CURL_HTTP_VERSION_3`, not `CURL_HTTP_VERSION_3ONLY`. These modes ask libcurl to attempt the requested protocol, but they are not strict modes: libcurl may use a lower HTTP version when negotiation or connection setup falls back. The response protocol version can therefore be lower than the `version` value you requested. Guzzle does not currently expose libcurl's strict HTTP/3-only mode.
+
+When multiple HTTP/2-capable requests start concurrently against the same origin, the `multiplex` request option controls whether they wait to share one connection instead of each opening their own.
 
 HTTP/3 support requires PHP to expose cURL's HTTP/3 constants, runtime libcurl 7.66.0 or higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3` feature. A libcurl version number is not enough by itself: libcurl must also be built with HTTP/3 and QUIC support, commonly through an HTTP/3 backend such as ngtcp2 with nghttp3 or quiche.
 

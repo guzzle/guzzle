@@ -1583,6 +1583,11 @@ class ClientTest extends TestCase
             'Passing string to request option "http_errors" is invalid; expected bool.',
         ];
 
+        yield 'multiplex' => [
+            ['multiplex' => 'true'],
+            'Passing string to request option "multiplex" is invalid; expected bool.',
+        ];
+
         yield 'on_headers' => [
             ['on_headers' => 'not a callable'],
             'Passing string to request option "on_headers" is invalid; expected callable.',

@@ -460,6 +460,20 @@ responses cannot carry content, so any bytes a misbehaving server sends after
 the header section are never read. The cURL handler already behaved this way via
 libcurl.
 
+#### HTTP/2 Connection Coalescing
+
+The built-in cURL handlers now set libcurl's `CURLOPT_PIPEWAIT` for requests
+whose protocol version resolves to HTTP/2 or HTTP/3, on runtime libcurl 7.65.2
+or newer. Concurrent requests to the same origin wait for an in-progress
+connection to reveal whether it can be multiplexed instead of each opening its
+own connection; when the connection proves unable to multiplex, at the latest
+once its first transfer completes, waiting requests fall back to opening their
+own connections, so HTTP/1.1 traffic still fans out in parallel.
+
+Pass `'multiplex' => false` to stop requests from waiting on pending
+connections, for example to spread large parallel downloads across separate
+connections.
+
 #### Sink Resource Ownership
 
 PHP resources passed as the `sink` request option are no longer closed when the
@@ -581,8 +595,9 @@ Handler-specific overrides remain available for finer transport control when
 they do not conflict with Guzzle-managed behavior. The built-in cURL handlers
 now reject raw cURL options that override request method, URI, body, headers,
 timeouts, redirects, proxy URLs and types, TLS verification or client
-credentials, progress/debug callbacks, sink handling, cookies, protocols, or
-cURL share handles. Use first-class Guzzle request options for those settings.
+credentials, progress/debug callbacks, sink handling, cookies, protocols,
+connection coalescing, or cURL share handles. Use first-class Guzzle request
+options for those settings.
 Allowed raw cURL header-list options, such as `CURLOPT_PROXYHEADER`, now accept
 only strings or stringable objects as entries.
 

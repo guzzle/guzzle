@@ -87,6 +87,7 @@ class Pool implements PromisorInterface
      *             headers?: array<array-key, string>,
      *             filename?: string
      *         }>,
+     *         multiplex?: bool,
      *         on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *         on_stats?: callable(TransferStats): mixed,
      *         on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -214,6 +215,7 @@ class Pool implements PromisorInterface
      *             headers?: array<array-key, string>,
      *             filename?: string
      *         }>,
+     *         multiplex?: bool,
      *         on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *         on_stats?: callable(TransferStats): mixed,
      *         on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,

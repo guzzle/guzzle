@@ -223,6 +223,17 @@ final class RequestOptions
     public const MULTIPART = 'multipart';
 
     /**
+     * multiplex: (bool, default=true) Whether a request that may use HTTP/2
+     * or HTTP/3 waits for an in-progress connection to the same origin that
+     * could be multiplexed, instead of opening another connection. Applies to
+     * the built-in cURL handlers on runtime libcurl 7.65.2 or newer, and only
+     * when the request protocol version resolves to HTTP/2 or HTTP/3; in all
+     * other cases the option has no effect. Set to false to stop concurrent
+     * requests from waiting on pending connections.
+     */
+    public const MULTIPLEX = 'multiplex';
+
+    /**
      * on_headers: (callable(ResponseInterface, RequestInterface): mixed) A callable that is invoked when the HTTP headers
      * of the final response, or a 101 Switching Protocols response, have been
      * received but the body has not yet begun to download. The callable is

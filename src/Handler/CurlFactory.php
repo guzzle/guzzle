@@ -513,6 +513,7 @@ final class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS', 'the "protocols" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS_STR', 'the "protocols" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_HTTP_VERSION', 'the request protocol version');
+        self::addConflictingCurlOption($options, 'CURLOPT_PIPEWAIT', 'the "multiplex" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_IPRESOLVE', 'the "force_ip_resolve" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYPEER', 'the "verify" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYHOST', 'the "verify" request option');
@@ -1746,6 +1747,22 @@ final class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_1;
         } else {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_0;
+        }
+
+        $multiplex = $easy->options['multiplex'] ?? null;
+        if ($multiplex !== null && !\is_bool($multiplex)) {
+            throw new InvalidArgumentException('multiplex must be a boolean');
+        }
+
+        if (
+            $multiplex !== false
+            && CurlVersion::supportsMultiplex()
+            && ($conf[\CURLOPT_HTTP_VERSION] === \CURL_HTTP_VERSION_2_0
+                || (\defined('CURL_HTTP_VERSION_3') && $conf[\CURLOPT_HTTP_VERSION] === (int) \constant('CURL_HTTP_VERSION_3')))
+        ) {
+            // Wait for an in-progress connection to the same origin to reveal
+            // whether it can be multiplexed instead of opening another one.
+            $conf[(int) \constant('CURLOPT_PIPEWAIT')] = true;
         }
 
         return $conf;

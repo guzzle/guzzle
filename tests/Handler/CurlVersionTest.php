@@ -71,6 +71,25 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsTls13());
     }
 
+    public function testSupportsMultiplexUsesRuntimeVersion(): void
+    {
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is not available.');
+        }
+
+        self::setVersionInfo([
+            'version' => '7.65.1',
+            'features' => 0,
+        ]);
+        self::assertFalse(CurlVersion::supportsMultiplex());
+
+        self::setVersionInfo([
+            'version' => '7.65.2',
+            'features' => 0,
+        ]);
+        self::assertTrue(CurlVersion::supportsMultiplex());
+    }
+
     public function testSupportsHttp2UsesHttp2Feature(): void
     {
         if (!\defined('CURL_VERSION_HTTP2')) {
