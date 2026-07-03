@@ -20,14 +20,11 @@ final class CurlVersion
     private const MULTIPLEX_VERSION = '7.65.2';
 
     // CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE restricts the ALPN offer to h2 only
-    // since libcurl 8.10.0; before that, TLS connections could still negotiate
-    // HTTP/1.1, which would silently violate the "require" guarantee.
-    private const REQUIRED_MULTIPLEX_VERSION = '8.10.0';
-
-    // CURLOPT_SUPPRESS_CONNECT_HEADERS keeps a proxy CONNECT response's
-    // HTTP/1.1 header block out of the header callback since libcurl 7.54.0;
-    // the required-multiplex backstop depends on never seeing that block.
-    private const SUPPRESS_CONNECT_HEADERS_VERSION = '7.54.0';
+    // since libcurl 8.10.0, and connection reuse matching stopped handing
+    // lower-version connections to prior-knowledge transfers in 8.14.0; below
+    // that, a required request could still be sent over a reused HTTP/1.1
+    // connection before the response backstop could fail it.
+    private const REQUIRED_MULTIPLEX_VERSION = '8.14.0';
 
     // curl 7.52.0 introduced HTTPS proxy support, advertised by a feature bit
     // (a build can meet the version yet lack the feature). Earlier libcurl
@@ -114,15 +111,6 @@ final class CurlVersion
             && $version !== null
             && self::supportsHttp2()
             && \version_compare($version, self::REQUIRED_MULTIPLEX_VERSION, '>=');
-    }
-
-    public static function supportsSuppressConnectHeaders(): bool
-    {
-        $version = self::getVersion();
-
-        return \defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')
-            && $version !== null
-            && \version_compare($version, self::SUPPRESS_CONNECT_HEADERS_VERSION, '>=');
     }
 
     public static function supportsHttpsProxy(): bool

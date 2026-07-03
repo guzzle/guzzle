@@ -118,7 +118,7 @@ class CurlFactory implements CurlFactoryInterface
         if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp2()) {
                 if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
-                    throw new ConnectException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $request);
+                    throw new ConnectException('Required multiplexing needs libcurl 8.14.0 or newer built with HTTP/2 support.', $request);
                 }
 
                 throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
@@ -288,17 +288,11 @@ class CurlFactory implements CurlFactoryInterface
     private static function assertRequiredMultiplexSupported(EasyHandle $easy): void
     {
         if (!CurlVersion::supportsRequiredMultiplex()) {
-            throw new ConnectException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $easy->request);
+            throw new ConnectException('Required multiplexing needs libcurl 8.14.0 or newer built with HTTP/2 support.', $easy->request);
         }
 
-        if (self::proxyAppliesTo($easy)) {
-            if ('https' !== $easy->request->getUri()->getScheme()) {
-                throw new ConnectException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
-            }
-
-            if (!CurlVersion::supportsSuppressConnectHeaders()) {
-                throw new ConnectException('Required multiplexing cannot be guaranteed for requests sent through a proxy without CURLOPT_SUPPRESS_CONNECT_HEADERS support.', $easy->request);
-            }
+        if ('https' !== $easy->request->getUri()->getScheme() && self::proxyAppliesTo($easy)) {
+            throw new ConnectException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
         }
     }
 
@@ -875,17 +869,6 @@ class CurlFactory implements CurlFactoryInterface
                     $easy->request,
                     $easy->response,
                     $easy->onHeadersException,
-                    $ctx
-                )
-            );
-        }
-
-        if ($easy->multiplexException) {
-            return P\Create::rejectionFor(
-                new ConnectException(
-                    $easy->multiplexException->getMessage(),
-                    $easy->request,
-                    $easy->multiplexException,
                     $ctx
                 )
             );
@@ -1497,16 +1480,10 @@ class CurlFactory implements CurlFactoryInterface
         if ('2' === $version || '2.0' === $version) {
             if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
                 self::assertRequiredMultiplexSupported($easy);
-                // New HTTP/2 connections cannot negotiate HTTP/1.x here;
-                // reused-connection anomalies are caught by the backstop.
+                // New HTTP/2 connections cannot negotiate HTTP/1.x here, and
+                // the 8.14.0 floor's version-aware reuse matching keeps
+                // reused connections on HTTP/2 as well.
                 $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE');
-
-                if (CurlVersion::supportsSuppressConnectHeaders()) {
-                    // A proxy CONNECT response is an HTTP/1.1 header block
-                    // that would otherwise reach the header callback and
-                    // falsely trip the required-multiplex backstop.
-                    $conf[(int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS')] = true;
-                }
             } else {
                 $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
             }
@@ -2077,16 +2054,6 @@ class CurlFactory implements CurlFactoryInterface
                     $easy->createResponseException = $e;
 
                     return -1;
-                }
-                if (\in_array($easy->options['multiplex'] ?? null, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true) && $easy->response !== null) {
-                    $protocolVersion = $easy->response->getProtocolVersion();
-                    if (!\in_array($protocolVersion, ['2', '2.0', '3', '3.0'], true)) {
-                        // Reused connections can override the requested HTTP
-                        // version.
-                        $easy->multiplexException = new \RuntimeException(\sprintf('Required multiplexing was violated: the server responded over HTTP/%s.', $protocolVersion));
-
-                        return -1;
-                    }
                 }
                 if ($onHeaders !== null) {
                     try {

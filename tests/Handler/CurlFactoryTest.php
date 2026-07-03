@@ -3036,9 +3036,6 @@ class CurlFactoryTest extends TestCase
             try {
                 self::assertSame((int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
                 self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_PIPEWAIT')]);
-                if (CurlVersion::supportsSuppressConnectHeaders()) {
-                    self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS')]);
-                }
             } finally {
                 $f->release($easy);
             }
@@ -3060,9 +3057,6 @@ class CurlFactoryTest extends TestCase
             try {
                 self::assertSame((int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
                 self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $_SERVER['_curl']);
-                if (CurlVersion::supportsSuppressConnectHeaders()) {
-                    self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS')]);
-                }
             } finally {
                 $f->release($easy);
             }
@@ -3094,7 +3088,7 @@ class CurlFactoryTest extends TestCase
         }
 
         $previous = self::setCurlVersionInfo([
-            'version' => '8.9.1',
+            'version' => '8.13.0',
             'features' => \CURL_VERSION_HTTP2 | \CURL_VERSION_SSL,
         ]);
 
@@ -3102,7 +3096,7 @@ class CurlFactoryTest extends TestCase
             $f = new CurlFactory(3);
 
             $this->expectException(ConnectException::class);
-            $this->expectExceptionMessage('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.');
+            $this->expectExceptionMessage('Required multiplexing needs libcurl 8.14.0 or newer built with HTTP/2 support.');
 
             $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
                 'multiplex' => $multiplex,
@@ -3122,7 +3116,7 @@ class CurlFactoryTest extends TestCase
         }
 
         $previous = self::setCurlVersionInfo([
-            'version' => '8.10.0',
+            'version' => '8.14.0',
             'features' => \CURL_VERSION_SSL,
         ]);
 
@@ -3130,7 +3124,7 @@ class CurlFactoryTest extends TestCase
             $f = new CurlFactory(3);
 
             $this->expectException(ConnectException::class);
-            $this->expectExceptionMessage('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.');
+            $this->expectExceptionMessage('Required multiplexing needs libcurl 8.14.0 or newer built with HTTP/2 support.');
 
             $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
                 'multiplex' => $multiplex,
@@ -3158,35 +3152,6 @@ class CurlFactoryTest extends TestCase
             $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
                 'multiplex' => $multiplex,
             ]);
-        });
-    }
-
-    /**
-     * @dataProvider requiredMultiplexProvider
-     */
-    public function testRequireRejectsHttp11NegotiatedResponses(string $multiplex)
-    {
-        if (!CurlVersion::supportsRequiredMultiplex()) {
-            self::markTestSkipped('Required multiplexing is unavailable.');
-        }
-
-        self::withProxyEnvironment([], static function () use ($multiplex): void {
-            $f = new CurlFactory(3);
-            $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
-                'multiplex' => $multiplex,
-            ]);
-
-            try {
-                $header = self::receiveCurlHeaders($easy, [
-                    "HTTP/1.1 200 OK\r\n",
-                ]);
-
-                self::assertSame(-1, $header($easy->handle, "\r\n"));
-                self::assertNotNull($easy->multiplexException);
-                self::assertStringContainsString('Required multiplexing was violated', $easy->multiplexException->getMessage());
-            } finally {
-                $f->release($easy);
-            }
         });
     }
 

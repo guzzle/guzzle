@@ -117,24 +117,6 @@ class CurlVersionTest extends TestCase
         }
     }
 
-    public function testSupportsSuppressConnectHeadersUsesMinimumVersion(): void
-    {
-        if (!\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
-            self::markTestSkipped('CURLOPT_SUPPRESS_CONNECT_HEADERS is unavailable.');
-        }
-
-        $previous = self::setCurlVersionInfo(['version' => '7.53.0', 'features' => 0]);
-
-        try {
-            self::assertFalse(CurlVersion::supportsSuppressConnectHeaders());
-
-            self::setCurlVersionInfo(['version' => '7.54.0', 'features' => 0]);
-            self::assertTrue(CurlVersion::supportsSuppressConnectHeaders());
-        } finally {
-            self::setCurlVersionInfo($previous);
-        }
-    }
-
     public function testSupportsRequiredMultiplexUsesMinimumVersionAndHttp2Feature(): void
     {
         if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURL_SSLVERSION_TLSv1_2') || !\defined('CURL_VERSION_HTTP2') || !\defined('CURL_VERSION_SSL')) {
@@ -142,18 +124,18 @@ class CurlVersionTest extends TestCase
         }
 
         $previous = self::setCurlVersionInfo([
-            'version' => '8.9.1',
+            'version' => '8.13.0',
             'features' => \CURL_VERSION_HTTP2 | \CURL_VERSION_SSL,
         ]);
 
         try {
             self::assertFalse(CurlVersion::supportsRequiredMultiplex());
 
-            self::setCurlVersionInfo(['version' => '8.10.0', 'features' => 0]);
+            self::setCurlVersionInfo(['version' => '8.14.0', 'features' => 0]);
             self::assertFalse(CurlVersion::supportsRequiredMultiplex());
 
             self::setCurlVersionInfo([
-                'version' => '8.10.0',
+                'version' => '8.14.0',
                 'features' => \CURL_VERSION_HTTP2 | \CURL_VERSION_SSL,
             ]);
             self::assertTrue(CurlVersion::supportsRequiredMultiplex());
