@@ -26,9 +26,9 @@ final class CurlVersion
     // CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE restricts the ALPN offer to h2 only
     // since libcurl 8.10.0; before that, TLS connections could still negotiate
     // HTTP/1.1, which would silently violate the "require" guarantee.
-    // HTTP/2 requests require the release that made CURLOPT_PIPEWAIT
-    // dependable (7.62.0's multiplex-by-default regressed in 7.65.0-7.65.1),
-    // so waiting is never silently unavailable where HTTP/2 works.
+    // HTTP/2 requests require the release that made CURLOPT_PIPEWAIT dependable
+    // (7.62.0's multiplex-by-default regressed in 7.65.0-7.65.1), so waiting is
+    // never silently unavailable where HTTP/2 works.
     private const HTTP_2_VERSION = '7.65.2';
 
     private const REQUIRED_MULTIPLEX_VERSION = '8.10.0';
@@ -41,7 +41,8 @@ final class CurlVersion
 
     private const HTTP_3_VERSION = '7.66.0';
 
-    // CURL_HTTP_VERSION_3ONLY pins HTTP/3 with no downgrade since libcurl 7.88.0.
+    // CURL_HTTP_VERSION_3ONLY pins HTTP/3 with no downgrade since libcurl
+    // 7.88.0.
     private const HTTP3_ONLY_VERSION = '7.88.0';
 
     private const PROTOCOLS_STR_VERSION = '7.85.0';

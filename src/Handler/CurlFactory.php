@@ -1825,7 +1825,8 @@ final class CurlFactory implements CurlFactoryInterface
                 if (!\defined('CURL_HTTP_VERSION_3ONLY') || !CurlVersion::supportsHttp3Only()) {
                     throw new RequestException('Required multiplexing for HTTP/3 needs libcurl 7.88.0 or newer built with HTTP/3 support.', $easy->request);
                 }
-                // HTTP/3 or fail: required multiplexing never downgrades, not even to HTTP/2.
+                // HTTP/3 or fail: required multiplexing never downgrades, not
+                // even to HTTP/2.
                 $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_3ONLY');
             } else {
                 $conf[\CURLOPT_HTTP_VERSION] = $proxy->hasProxy()
@@ -2616,7 +2617,8 @@ final class CurlFactory implements CurlFactoryInterface
                 if (\in_array($easy->options['multiplex'] ?? null, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true) && $easy->response !== null) {
                     $protocolVersion = $easy->response->getProtocolVersion();
                     if (!\in_array($protocolVersion, ['2', '2.0', '3', '3.0'], true)) {
-                        // Reused connections can override the requested HTTP version.
+                        // Reused connections can override the requested HTTP
+                        // version.
                         $easy->multiplexException = new \RuntimeException(\sprintf('Required multiplexing was violated: the server responded over HTTP/%s.', $protocolVersion));
 
                         return -1;

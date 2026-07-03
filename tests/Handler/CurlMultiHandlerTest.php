@@ -194,8 +194,8 @@ class CurlMultiHandlerTest extends TestCase
             self::markTestSkipped('HTTP/2 support is unavailable.');
         }
 
-        // The default (key absent) never conflicts with disabled pipelining:
-        // an explicit wait/require-family option is required for the guard.
+        // The default (key absent) never conflicts with disabled pipelining: an
+        // explicit wait/require-family option is required for the guard.
         Server::flush();
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler(['options' => [
