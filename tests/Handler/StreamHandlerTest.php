@@ -12,6 +12,7 @@ use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Handler\TransferByteCounter;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
@@ -474,6 +475,20 @@ class StreamHandlerTest extends TestCase
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame('HTTP/3.0 is not supported by the stream handler.', $e->getMessage());
+        }
+    }
+
+    public function testRejectsRequiredMultiplex(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'https://example.com', [], null, '2.0');
+
+        try {
+            $handler($request, ['multiplex' => Multiplexing::REQUIRE]);
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('The stream handler cannot guarantee a multiplexed protocol; required multiplexing needs a cURL handler.', $e->getMessage());
         }
     }
 

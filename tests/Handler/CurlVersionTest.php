@@ -90,6 +90,25 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsMultiplex());
     }
 
+    public function testSupportsRequiredMultiplexUsesRuntimeVersion(): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('Required HTTP/2 cURL constants are not available.');
+        }
+
+        self::setVersionInfo([
+            'version' => '8.9.1',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+        self::assertFalse(CurlVersion::supportsRequiredMultiplex());
+
+        self::setVersionInfo([
+            'version' => '8.10.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+        self::assertTrue(CurlVersion::supportsRequiredMultiplex());
+    }
+
     public function testSupportsHttp2UsesHttp2Feature(): void
     {
         if (!\defined('CURL_VERSION_HTTP2')) {
@@ -150,6 +169,26 @@ class CurlVersionTest extends TestCase
         ]);
 
         self::assertTrue(CurlVersion::supportsHttp3());
+    }
+
+    public function testSupportsHttp3OnlyUsesRuntimeVersion(): void
+    {
+        self::requiresHttp3Constants();
+        if (!\defined('CURL_HTTP_VERSION_3ONLY')) {
+            self::markTestSkipped('CURL_HTTP_VERSION_3ONLY is not available.');
+        }
+
+        self::setVersionInfo([
+            'version' => '7.87.0',
+            'features' => self::http3Feature(),
+        ]);
+        self::assertFalse(CurlVersion::supportsHttp3Only());
+
+        self::setVersionInfo([
+            'version' => '7.88.0',
+            'features' => self::http3Feature(),
+        ]);
+        self::assertTrue(CurlVersion::supportsHttp3Only());
     }
 
     public function testSupportsHttpsProxyUsesMinimumVersionAndFeature(): void

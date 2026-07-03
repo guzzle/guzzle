@@ -14,6 +14,7 @@ use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Exception\TransferException;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -104,6 +105,10 @@ final class StreamHandler
         // Sleep if there is a delay specified.
         if (isset($options['delay'])) {
             \usleep((int) ($options['delay'] * 1000));
+        }
+
+        if (Multiplexing::REQUIRE === ($options['multiplex'] ?? null)) {
+            throw new RequestException('The stream handler cannot guarantee a multiplexed protocol; required multiplexing needs a cURL handler.', $request);
         }
 
         $protocolVersion = $request->getProtocolVersion();

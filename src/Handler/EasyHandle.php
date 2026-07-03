@@ -44,6 +44,11 @@ final class EasyHandle
     public array $trailers = [];
 
     /**
+     * @var bool Whether this handle was configured with CURLOPT_PIPEWAIT
+     */
+    public bool $usesPipewait = false;
+
+    /**
      * @var ResponseInterface|null Received response (if any)
      */
     public ?ResponseInterface $response = null;
@@ -88,6 +93,11 @@ final class EasyHandle
      * @var \Throwable|null Exception during createResponse (if any)
      */
     public ?\Throwable $createResponseException = null;
+
+    /**
+     * @var \RuntimeException|null Exception recording a "require" violation
+     */
+    public ?\RuntimeException $multiplexException = null;
 
     /**
      * @var TimeoutException|null Exception during request body read timeout.

@@ -7,6 +7,7 @@ namespace GuzzleHttp\Handler;
 use Closure;
 use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
@@ -166,9 +167,16 @@ final class CurlMultiHandler
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $this->assertOpen();
-        $this->rejectMultiplexPipeliningConflict($options);
-
         $easy = $this->factory->create($request, $options);
+
+        try {
+            $this->rejectMultiplexPipeliningConflict($easy, $options);
+        } catch (\Throwable $e) {
+            $this->factory->release($easy);
+
+            throw $e;
+        }
+
         $this->applyProxyTunnelOwnership($easy);
 
         $id = (int) $easy->handle;
@@ -192,9 +200,9 @@ final class CurlMultiHandler
      * disables multiplexing, so an explicit request for multiplexing on a
      * handler configured against it is a configuration error.
      */
-    private function rejectMultiplexPipeliningConflict(array $options): void
+    private function rejectMultiplexPipeliningConflict(EasyHandle $easy, array $options): void
     {
-        if (($options['multiplex'] ?? null) !== true || !CurlVersion::supportsMultiplex()) {
+        if (!\in_array($options['multiplex'] ?? null, [Multiplexing::PREFER, Multiplexing::REQUIRE], true) || !$easy->usesPipewait) {
             return;
         }
 
@@ -212,7 +220,7 @@ final class CurlMultiHandler
             return;
         }
 
-        throw new InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to false.');
+        throw new InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "allow".');
     }
 
     /**

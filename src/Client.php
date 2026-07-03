@@ -107,7 +107,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
-     *     multiplex?: bool,
+     *     multiplex?: string,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -234,7 +234,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
-     *     multiplex?: bool,
+     *     multiplex?: string,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -325,7 +325,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
-     *     multiplex?: bool,
+     *     multiplex?: string,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -432,7 +432,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
-     *     multiplex?: bool,
+     *     multiplex?: string,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -551,7 +551,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
-     *     multiplex?: bool,
+     *     multiplex?: string,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -908,7 +908,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             self::assertMultipartOptionTypes($options['multipart']);
         }
 
-        self::assertIfPresentAndNotBool($options, 'multiplex');
+        self::assertValidMultiplex($options);
         self::assertIfPresentAndNotCallable($options, 'on_headers');
         self::assertIfPresentAndNotCallable($options, 'on_stats');
         self::assertIfPresentAndNotCallable($options, 'on_trailers');
@@ -1171,6 +1171,17 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         if (\array_key_exists($option, $options) && !\is_bool($options[$option])) {
             self::invalidRequestOptionType($path ?? $option, 'bool', $options[$option]);
+        }
+    }
+
+    private static function assertValidMultiplex(array $options): void
+    {
+        if (!\array_key_exists('multiplex', $options) || $options['multiplex'] === null) {
+            return;
+        }
+
+        if (!\in_array($options['multiplex'], [Multiplexing::ALLOW, Multiplexing::PREFER, Multiplexing::REQUIRE], true)) {
+            self::invalidRequestOptionType('multiplex', '"allow"|"prefer"|"require"', $options['multiplex']);
         }
     }
 

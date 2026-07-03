@@ -105,7 +105,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Made `GuzzleHttp\Handler\CurlFactory`, `GuzzleHttp\Handler\CurlHandler`, `GuzzleHttp\Handler\CurlMultiHandler`, `GuzzleHttp\Handler\MockHandler`, and `GuzzleHttp\Handler\StreamHandler` final
 - Made static utility classes non-instantiable and declared `GuzzleHttp\Handler\Proxy` final
 - Pass the request to `on_trailers` callbacks, reject non-callable `on_trailers` values, and wrap `on_trailers` callback exceptions in `ResponseException`
-- Wait for in-progress HTTP/2-capable connections by default so concurrent cURL requests can share one connection
+- Wait for in-progress multiplex-capable (HTTP/2 or HTTP/3) connections by default (`multiplex` defaults to `prefer`) so concurrent cURL requests can share one connection
 - Point rejections of the raw `CURLOPT_PIPEWAIT` cURL option at the `multiplex` request option
 
 ### Removed

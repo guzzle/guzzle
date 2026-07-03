@@ -13,6 +13,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -183,12 +184,22 @@ final class CurlFactory implements CurlFactoryInterface
 
         CurlVersion::ensureSupported($request);
 
+        $multiplex = self::normalizeMultiplex($options);
+
         if ('3' === $protocolVersion || '3.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp3()) {
+                if (Multiplexing::REQUIRE === $multiplex) {
+                    throw new RequestException('Required multiplexing for HTTP/3 needs libcurl 7.88.0 or newer built with HTTP/3 support.', $request);
+                }
+
                 throw new RequestException('HTTP/3 is supported by the cURL handler, however the installed PHP cURL extension or libcurl does not support HTTP/3.', $request);
             }
         } elseif ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp2()) {
+                if (Multiplexing::REQUIRE === $multiplex) {
+                    throw new RequestException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $request);
+                }
+
                 throw new RequestException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
             }
         } elseif ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
@@ -259,6 +270,10 @@ final class CurlFactory implements CurlFactoryInterface
             }
 
             $conf[(int) \constant('CURLOPT_SHARE')] = $this->shareHandle;
+        }
+
+        if (\defined('CURLOPT_PIPEWAIT')) {
+            $easy->usesPipewait = !empty($conf[(int) \constant('CURLOPT_PIPEWAIT')]);
         }
 
         $handle = $this->handles ? \array_pop($this->handles) : \curl_init();
@@ -352,6 +367,55 @@ final class CurlFactory implements CurlFactoryInterface
 
         if (!empty($options['curl'][\CURLOPT_FORBID_REUSE])) {
             throw new InvalidArgumentException('The CURLOPT_FORBID_REUSE cURL option cannot be used when persistent cURL sharing is required because it disables connection reuse.');
+        }
+    }
+
+    private static function normalizeMultiplex(array $options): string
+    {
+        $multiplex = $options['multiplex'] ?? null;
+
+        if ($multiplex === null) {
+            return Multiplexing::PREFER;
+        }
+
+        if (!\in_array($multiplex, [Multiplexing::ALLOW, Multiplexing::PREFER, Multiplexing::REQUIRE], true)) {
+            throw new InvalidArgumentException(\sprintf(
+                'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received %s.',
+                \get_debug_type($multiplex)
+            ));
+        }
+
+        return $multiplex;
+    }
+
+    private static function assertRequiredMultiplexSupported(EasyHandle $easy): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !CurlVersion::supportsRequiredMultiplex()) {
+            throw new RequestException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $easy->request);
+        }
+
+        $proxy = self::resolveProxySelection($easy->request->getUri(), $easy->options['proxy'] ?? null);
+        self::assertSelectedProxySupported($proxy->getProxy(), $easy->request);
+
+        if ('https' !== $easy->request->getUri()->getScheme() && $proxy->hasProxy()) {
+            throw new RequestException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
+        }
+    }
+
+    private static function assertSelectedProxySupported(?string $selectedProxy, RequestInterface $request): void
+    {
+        if ($selectedProxy === null || $selectedProxy === '') {
+            return;
+        }
+
+        $scheme = ProxyOptions::proxyScheme($selectedProxy);
+
+        if (!\in_array($scheme, ['http', 'https', 'socks4', 'socks4a', 'socks5', 'socks5h'], true)) {
+            throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the cURL handler.', $scheme));
+        }
+
+        if ($scheme === 'https' && !CurlVersion::supportsHttpsProxy()) {
+            throw new RequestException('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.', $request);
         }
     }
 
@@ -974,6 +1038,18 @@ final class CurlFactory implements CurlFactoryInterface
                 $easy,
                 'An error was encountered during the on_headers event',
                 $easy->onHeadersException
+            );
+        }
+
+        if ($easy->multiplexException) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(
+                new RequestException(
+                    $easy->multiplexException->getMessage(),
+                    $easy->request,
+                    0,
+                    $easy->multiplexException
+                )
             );
         }
 
@@ -1731,6 +1807,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         $version = $easy->request->getProtocolVersion();
+        $multiplex = self::normalizeMultiplex($easy->options);
 
         if ('3' === $version || '3.0' === $version) {
             if (!\defined('CURL_HTTP_VERSION_3')) {
@@ -1738,27 +1815,51 @@ final class CurlFactory implements CurlFactoryInterface
             }
 
             $proxy = self::resolveProxySelection($easy->request->getUri(), $easy->options['proxy'] ?? null);
-            $conf[\CURLOPT_HTTP_VERSION] = $proxy->hasProxy()
-                ? (CurlVersion::supportsHttp2() ? \CURL_HTTP_VERSION_2_0 : \CURL_HTTP_VERSION_1_1)
-                : (int) \constant('CURL_HTTP_VERSION_3');
+
+            if (Multiplexing::REQUIRE === $multiplex) {
+                self::assertSelectedProxySupported($proxy->getProxy(), $easy->request);
+
+                if ($proxy->hasProxy()) {
+                    throw new RequestException('Required multiplexing cannot be guaranteed for HTTP/3 requests sent through a proxy.', $easy->request);
+                }
+                if (!\defined('CURL_HTTP_VERSION_3ONLY') || !CurlVersion::supportsHttp3Only()) {
+                    throw new RequestException('Required multiplexing for HTTP/3 needs libcurl 7.88.0 or newer built with HTTP/3 support.', $easy->request);
+                }
+                // HTTP/3 or fail: required multiplexing never downgrades, not even to HTTP/2.
+                $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_3ONLY');
+            } else {
+                $conf[\CURLOPT_HTTP_VERSION] = $proxy->hasProxy()
+                    ? (CurlVersion::supportsHttp2() ? \CURL_HTTP_VERSION_2_0 : \CURL_HTTP_VERSION_1_1)
+                    : (int) \constant('CURL_HTTP_VERSION_3');
+            }
         } elseif ('2' === $version || '2.0' === $version) {
-            $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
+            if (Multiplexing::REQUIRE === $multiplex) {
+                self::assertRequiredMultiplexSupported($easy);
+                // New HTTP/2 connections cannot negotiate HTTP/1.x here;
+                // reused-connection anomalies are caught by the backstop.
+                $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE');
+            } else {
+                $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
+            }
         } elseif ('1.1' === $version) {
+            if (Multiplexing::REQUIRE === $multiplex) {
+                throw new RequestException(\sprintf('The "multiplex" request option cannot be required for HTTP/%s requests; use protocol version 2 or 3.', $version), $easy->request);
+            }
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_1;
         } else {
+            if (Multiplexing::REQUIRE === $multiplex) {
+                throw new RequestException(\sprintf('The "multiplex" request option cannot be required for HTTP/%s requests; use protocol version 2 or 3.', $version), $easy->request);
+            }
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_0;
         }
 
-        $multiplex = $easy->options['multiplex'] ?? null;
-        if ($multiplex !== null && !\is_bool($multiplex)) {
-            throw new InvalidArgumentException('multiplex must be a boolean');
-        }
-
-        if (
-            $multiplex !== false
+        $resolvedVersion = $conf[\CURLOPT_HTTP_VERSION];
+        if (Multiplexing::ALLOW !== $multiplex
             && CurlVersion::supportsMultiplex()
-            && ($conf[\CURLOPT_HTTP_VERSION] === \CURL_HTTP_VERSION_2_0
-                || (\defined('CURL_HTTP_VERSION_3') && $conf[\CURLOPT_HTTP_VERSION] === (int) \constant('CURL_HTTP_VERSION_3')))
+            && ($resolvedVersion === \CURL_HTTP_VERSION_2_0
+                || (\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') && $resolvedVersion === (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE'))
+                || (\defined('CURL_HTTP_VERSION_3') && $resolvedVersion === (int) \constant('CURL_HTTP_VERSION_3'))
+                || (\defined('CURL_HTTP_VERSION_3ONLY') && $resolvedVersion === (int) \constant('CURL_HTTP_VERSION_3ONLY')))
         ) {
             // Wait for an in-progress connection to the same origin to reveal
             // whether it can be multiplexed instead of opening another one.
@@ -2180,24 +2281,10 @@ final class CurlFactory implements CurlFactoryInterface
         $proxy = self::resolveProxySelection($easy->request->getUri(), $options['proxy'] ?? null);
         $selectedProxy = $proxy->getProxy();
         if ($selectedProxy !== null) {
-            if ($selectedProxy !== '') {
-                // Validate the whole proxy URL up front (ProxyOptions leans on
-                // Psr7\Uri), so a malformed proxy fails the same way on every
-                // handler, then check the scheme against what libcurl can use.
-                $scheme = ProxyOptions::proxyScheme($selectedProxy);
-
-                if (!\in_array($scheme, ['http', 'https', 'socks4', 'socks4a', 'socks5', 'socks5h'], true)) {
-                    throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the cURL handler.', $scheme));
-                }
-
-                if ($scheme === 'https' && !CurlVersion::supportsHttpsProxy()) {
-                    // libcurl before 7.50.2 silently downgrades an https://
-                    // proxy to a plaintext HTTP proxy; 7.50.2 through 7.51, and
-                    // builds without HTTPS-proxy support, fail at connect time.
-                    // Fail closed before any bytes reach the wire.
-                    throw new RequestException('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.', $easy->request);
-                }
-            }
+            // Validate the whole proxy URL up front (ProxyOptions leans on
+            // Psr7\Uri), so a malformed proxy fails the same way on every
+            // handler, then check the scheme against what libcurl can use.
+            self::assertSelectedProxySupported($selectedProxy, $easy->request);
 
             $conf[\CURLOPT_PROXY] = $selectedProxy;
             $conf[\CURLOPT_NOPROXY] = '';
@@ -2525,6 +2612,15 @@ final class CurlFactory implements CurlFactoryInterface
                     $easy->createResponseException = $e;
 
                     return -1;
+                }
+                if (Multiplexing::REQUIRE === ($easy->options['multiplex'] ?? null) && $easy->response !== null) {
+                    $protocolVersion = $easy->response->getProtocolVersion();
+                    if (!\in_array($protocolVersion, ['2', '2.0', '3', '3.0'], true)) {
+                        // Reused connections can override the requested HTTP version.
+                        $easy->multiplexException = new \RuntimeException(\sprintf('Required multiplexing was violated: the server responded over HTTP/%s.', $protocolVersion));
+
+                        return -1;
+                    }
                 }
                 if ($onHeaders !== null && $easy->response !== null) {
                     try {

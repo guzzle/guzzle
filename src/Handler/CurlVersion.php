@@ -23,6 +23,11 @@ final class CurlVersion
     // which PIPEWAIT is reliably effective.
     private const MULTIPLEX_VERSION = '7.65.2';
 
+    // CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE restricts the ALPN offer to h2 only
+    // since libcurl 8.10.0; before that, TLS connections could still negotiate
+    // HTTP/1.1, which would silently violate the "require" guarantee.
+    private const REQUIRED_MULTIPLEX_VERSION = '8.10.0';
+
     // curl 7.52.0 introduced HTTPS proxy support, advertised by a feature bit
     // (a build can meet the version yet lack the feature). Earlier libcurl
     // mishandles an https:// proxy: before 7.50.2 it silently downgrades to a
@@ -30,6 +35,9 @@ final class CurlVersion
     private const HTTPS_PROXY_VERSION = '7.52.0';
 
     private const HTTP_3_VERSION = '7.66.0';
+
+    // CURL_HTTP_VERSION_3ONLY pins HTTP/3 with no downgrade since libcurl 7.88.0.
+    private const HTTP3_ONLY_VERSION = '7.88.0';
 
     private const PROTOCOLS_STR_VERSION = '7.85.0';
 
@@ -89,6 +97,16 @@ final class CurlVersion
             && version_compare($version, self::MULTIPLEX_VERSION, '>=');
     }
 
+    public static function supportsRequiredMultiplex(): bool
+    {
+        $version = self::get();
+
+        return \defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE')
+            && null !== $version
+            && self::supportsHttp2()
+            && version_compare($version, self::REQUIRED_MULTIPLEX_VERSION, '>=');
+    }
+
     public static function supportsHttp2(): bool
     {
         $versionInfo = self::getVersionInfo();
@@ -110,6 +128,16 @@ final class CurlVersion
         }
 
         return 0 !== ((int) \constant('CURL_VERSION_HTTP3') & $versionInfo['features']);
+    }
+
+    public static function supportsHttp3Only(): bool
+    {
+        $version = self::get();
+
+        return \defined('CURL_HTTP_VERSION_3ONLY')
+            && null !== $version
+            && self::supportsHttp3()
+            && version_compare($version, self::HTTP3_ONLY_VERSION, '>=');
     }
 
     public static function supportsHttpsProxy(): bool

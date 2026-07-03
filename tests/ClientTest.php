@@ -13,6 +13,7 @@ use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise\Is;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
@@ -1446,6 +1447,16 @@ class ClientTest extends TestCase
         $client->request('POST', 'http://foo.com', $options);
     }
 
+    public function testAcceptsValidMultiplexOption(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $client->request('GET', 'http://foo.com', ['multiplex' => Multiplexing::REQUIRE]);
+
+        self::assertSame(Multiplexing::REQUIRE, $mock->getLastOptions()['multiplex']);
+    }
+
     public static function invalidRequestOptionTypeProvider(): iterable
     {
         yield 'allow_redirects' => [
@@ -1584,8 +1595,8 @@ class ClientTest extends TestCase
         ];
 
         yield 'multiplex' => [
-            ['multiplex' => 'true'],
-            'Passing string to request option "multiplex" is invalid; expected bool.',
+            ['multiplex' => true],
+            'Passing bool to request option "multiplex" is invalid; expected "allow"|"prefer"|"require".',
         ];
 
         yield 'on_headers' => [

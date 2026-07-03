@@ -223,13 +223,14 @@ final class RequestOptions
     public const MULTIPART = 'multipart';
 
     /**
-     * multiplex: (bool, default=true) Whether a request that may use HTTP/2
-     * or HTTP/3 waits for an in-progress connection to the same origin that
-     * could be multiplexed, instead of opening another connection. Applies to
-     * the built-in cURL handlers on runtime libcurl 7.65.2 or newer, and only
-     * when the request protocol version resolves to HTTP/2 or HTTP/3; in all
-     * other cases the option has no effect. Set to false to stop concurrent
-     * requests from waiting on pending connections.
+     * multiplex: (string, default=GuzzleHttp\Multiplexing::PREFER) Controls how
+     * an HTTP/2 or HTTP/3 request sent through a built-in cURL handler pursues a
+     * shared, multiplexed connection. Use Multiplexing::ALLOW to avoid waiting
+     * for pending connections, Multiplexing::PREFER to wait on libcurl-eligible
+     * pending connections with CURLOPT_PIPEWAIT, normally to the same origin,
+     * or Multiplexing::REQUIRE to fail unless a multiplexed protocol is
+     * guaranteed. The stream handler ignores ALLOW and PREFER, and rejects
+     * REQUIRE; CurlHandler has no multi handle to multiplex over.
      */
     public const MULTIPLEX = 'multiplex';
 
