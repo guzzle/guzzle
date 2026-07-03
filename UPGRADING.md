@@ -471,9 +471,8 @@ which never waits by default. Pass
 behaviour, or `Multiplexing::REQUIRE_EAGER`/`Multiplexing::REQUIRE_WAIT` to
 fail loudly unless a multiplexed protocol is guaranteed.
 
-HTTP/2 requests also now require libcurl 7.65.2 or newer (previously any
-libcurl built with HTTP/2 support), so waiting is never silently unavailable
-where HTTP/2 works.
+HTTP/2 requests also now require libcurl 7.65.2 or newer, so waiting is never
+silently unavailable where HTTP/2 works.
 
 #### Sink Resource Ownership
 

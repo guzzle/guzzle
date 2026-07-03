@@ -3926,6 +3926,9 @@ class CurlFactoryTest extends TestCase
             try {
                 self::assertSame((int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
                 self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_PIPEWAIT')]);
+                if (\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+                    self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS')]);
+                }
             } finally {
                 $factory->release($easy);
             }
@@ -3947,6 +3950,9 @@ class CurlFactoryTest extends TestCase
             try {
                 self::assertSame((int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
                 self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $_SERVER['_curl']);
+                if (\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+                    self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS')]);
+                }
             } finally {
                 $factory->release($easy);
             }

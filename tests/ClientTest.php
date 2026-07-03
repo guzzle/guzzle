@@ -1462,6 +1462,8 @@ class ClientTest extends TestCase
 
     public static function validMultiplexProvider(): iterable
     {
+        yield 'eager' => [Multiplexing::EAGER];
+        yield 'wait' => [Multiplexing::WAIT];
         yield 'require_eager' => [Multiplexing::REQUIRE_EAGER];
         yield 'require_wait' => [Multiplexing::REQUIRE_WAIT];
     }
