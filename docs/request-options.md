@@ -405,6 +405,7 @@ allow-list is limited to the following `CURLOPT_*` constants when they are
 defined by the installed PHP cURL extension:
 
 - `CURLOPT_ADDRESS_SCOPE`
+- `CURLOPT_CERTINFO`
 - `CURLOPT_CONNECT_TO`
 - `CURLOPT_DNS_CACHE_TIMEOUT`
 - `CURLOPT_DNS_INTERFACE`

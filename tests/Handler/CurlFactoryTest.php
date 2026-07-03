@@ -282,6 +282,22 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(10, $_SERVER['_curl'][\CURLOPT_LOW_SPEED_LIMIT]);
     }
 
+    public function testAllowsCertinfoCurlOption(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [
+                \CURLOPT_CERTINFO => true,
+            ],
+        ]);
+
+        try {
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_CERTINFO]);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     public function testAllowsPrereqFunctionCurlOption(): void
     {
         if (!\defined('CURLOPT_PREREQFUNCTION')) {
