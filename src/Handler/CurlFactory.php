@@ -202,6 +202,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         self::rejectUnsupportedRequestOptions($options);
         self::assertOnStatsCallable($options);
+        self::assertOnTrailersCallable($options);
         $this->rejectRequestLevelShareConflict($options);
         $this->rejectPersistentRequireConnectionReuseConflicts($options);
         self::rejectUnsupportedCurlOptions($options);
@@ -447,6 +448,13 @@ final class CurlFactory implements CurlFactoryInterface
     {
         if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
             throw new InvalidArgumentException('on_stats must be callable');
+        }
+    }
+
+    private static function assertOnTrailersCallable(array $options): void
+    {
+        if (isset($options['on_trailers']) && !\is_callable($options['on_trailers'])) {
+            throw new InvalidArgumentException('on_trailers must be callable');
         }
     }
 
@@ -806,6 +814,37 @@ final class CurlFactory implements CurlFactoryInterface
 
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor($reason);
+        }
+
+        if (isset($easy->options['on_trailers'])) {
+            /** @var callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed $onTrailers */
+            $onTrailers = $easy->options['on_trailers'];
+
+            try {
+                $onTrailers(Utils::headersFromLines($easy->trailers), $response, $easy->request);
+            } catch (\Throwable $e) {
+                $reason = new ResponseException(
+                    'An error was encountered during the on_trailers event',
+                    $easy->request,
+                    $response,
+                    $e
+                );
+
+                if ($onStats !== null && $stats !== null) {
+                    // Report the ResponseException rather than errno 0 to match
+                    // the response finalization stats above.
+                    $onStats(new TransferStats(
+                        $easy->request,
+                        $response,
+                        $stats->getTransferTime(),
+                        $reason,
+                        $stats->getHandlerStats()
+                    ));
+                }
+
+                /** @var PromiseInterface<ResponseInterface, mixed> */
+                return P\Create::rejectionFor($reason);
+            }
         }
 
         if ($onStats !== null && $stats !== null) {

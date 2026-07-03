@@ -109,6 +109,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
@@ -234,6 +235,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
@@ -323,6 +325,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
@@ -428,6 +431,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
@@ -545,6 +549,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
@@ -900,6 +905,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         self::assertIfPresentAndNotCallable($options, 'on_headers');
         self::assertIfPresentAndNotCallable($options, 'on_stats');
+        self::assertIfPresentAndNotCallable($options, 'on_trailers');
         self::assertIfPresentAndNotCallable($options, 'progress');
         self::assertIfPresentAndNotProtocolArray($options, 'protocols');
         self::assertProxyOptionTypes($options);

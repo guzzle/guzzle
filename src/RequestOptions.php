@@ -248,6 +248,22 @@ final class RequestOptions
     public const ON_STATS = 'on_stats';
 
     /**
+     * on_trailers: (callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed)
+     * A callable that is invoked exactly once when a transfer completes
+     * successfully, with the HTTP trailer fields of the response. The callable
+     * is passed an associative array of trailer field names mapped to lists of
+     * field values, the response, and the request. The array is empty when the
+     * response carried no trailer fields, and trailer names preserve the
+     * casing received on the wire. The callable is never invoked for failed
+     * transfers. If it throws, the request promise is rejected with a
+     * GuzzleHttp\Exception\ResponseException (a RequestException subtype)
+     * wrapping the thrown exception. Only the built-in cURL handlers invoke
+     * on_trailers; the built-in stream and mock handlers cannot observe
+     * trailer fields and ignore the option.
+     */
+    public const ON_TRAILERS = 'on_trailers';
+
+    /**
      * progress: (callable(int, int, int, int): mixed)
      * Defines a function to invoke when transfer progress is made. The function accepts the following positional
      * arguments: the total number of bytes expected to be downloaded, the

@@ -5649,6 +5649,236 @@ class CurlFactoryTest extends TestCase
         self::assertSame('abc 123', (string) $response->getBody());
     }
 
+    public function testRejectsNonCallableOnTrailers(): void
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('on_trailers must be callable');
+
+        $f->create(new Psr7\Request('GET', 'http://example.com'), ['on_trailers' => false]);
+    }
+
+    public function testEnsuresOnTrailersIsCallable(): void
+    {
+        $req = new Psr7\Request('GET', Server::$url);
+        $handler = new Handler\CurlHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $handler($req, ['on_trailers' => 'error!']);
+    }
+
+    public function testInvokesOnTrailersWithParsedTrailerFields(): void
+    {
+        $factory = new CurlFactory(1);
+        $received = null;
+        $receivedResponse = null;
+        $receivedRequest = null;
+        $request = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, [
+            'on_trailers' => static function (array $trailers, ResponseInterface $response, RequestInterface $request) use (&$received, &$receivedResponse, &$receivedRequest): void {
+                $received = $trailers;
+                $receivedResponse = $response;
+                $receivedRequest = $request;
+            },
+        ]);
+
+        self::receiveCurlHeaders($easy, [
+            "HTTP/1.1 200 OK\r\n",
+            "Content-Length: 0\r\n",
+            "\r\n",
+            "x-dup: 1\r\n",
+            "X-Mixed-Case: Foo\r\n",
+            "x-dup: 2\r\n",
+            "x-empty:\r\n",
+        ]);
+
+        $response = CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        )->wait();
+
+        self::assertSame([
+            'x-dup' => ['1', '2'],
+            'X-Mixed-Case' => ['Foo'],
+            'x-empty' => [''],
+        ], $received);
+        self::assertSame($response, $receivedResponse);
+        self::assertSame($request, $receivedRequest);
+    }
+
+    public function testOnTrailersReceivesRewoundResponseBody(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $bodyPosition = null;
+        $bodyContents = null;
+        $handler = new Handler\CurlHandler();
+        $response = $handler(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function (array $trailers, ResponseInterface $response, RequestInterface $request) use (&$bodyPosition, &$bodyContents): void {
+                $bodyPosition = $response->getBody()->tell();
+                $bodyContents = (string) $response->getBody();
+            },
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(0, $bodyPosition);
+        self::assertSame('abc 123', $bodyContents);
+    }
+
+    public function testInvokesOnTrailersOnceWithEmptyArrayWhenNoTrailerFields(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $calls = [];
+        $handler = new Handler\CurlHandler();
+        $response = $handler(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function (array $trailers) use (&$calls): void {
+                $calls[] = $trailers;
+            },
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame([[]], $calls);
+    }
+
+    public function testInvokesOnTrailersAfterOnHeadersAndBeforeOnStats(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [], 'abc 123'),
+        ]);
+        $order = [];
+        $handler = new Handler\CurlHandler();
+        $handler(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function () use (&$order): void {
+                $order[] = 'on_headers';
+            },
+            'on_trailers' => static function () use (&$order): void {
+                $order[] = 'on_trailers';
+            },
+            'on_stats' => static function () use (&$order): void {
+                $order[] = 'on_stats';
+            },
+        ])->wait();
+
+        self::assertSame(['on_headers', 'on_trailers', 'on_stats'], $order);
+    }
+
+    public function testRejectsPromiseWhenOnTrailersThrowsThrowable(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $handler = new Handler\CurlHandler();
+        $promise = $handler(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function (): void {
+                throw new \Error('test');
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertStringContainsString(
+                'An error was encountered during the on_trailers event',
+                $e->getMessage()
+            );
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertInstanceOf(\Error::class, $e->getPrevious());
+        }
+    }
+
+    public function testInvokesOnStatsWithReasonWhenOnTrailersFails(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $req = new Psr7\Request('GET', Server::$url);
+        $gotStats = null;
+        $handler = new Handler\CurlHandler();
+        $promise = $handler($req, [
+            'on_trailers' => static function (): void {
+                throw new \RuntimeException('test');
+            },
+            'on_stats' => static function (TransferStats $stats) use (&$gotStats): void {
+                $gotStats = $stats;
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertInstanceOf(TransferStats::class, $gotStats);
+            self::assertTrue($gotStats->hasResponse());
+            self::assertSame($req, $gotStats->getRequest());
+            self::assertInstanceOf(ResponseException::class, $gotStats->getHandlerErrorData());
+        }
+    }
+
+    public function testDoesNotInvokeOnTrailersOnTransferError(): void
+    {
+        $factory = new CurlFactory(1);
+        $called = false;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function () use (&$called): void {
+                $called = true;
+            },
+        ]);
+        self::receiveCurlHeaders($easy, [
+            "HTTP/1.1 200 OK\r\n",
+            "Content-Length: 3\r\n",
+            "\r\n",
+        ]);
+        $easy->errno = 18; // CURLE_PARTIAL_FILE
+
+        try {
+            self::finishEasy($easy, $factory);
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertFalse($called, 'on_trailers must not fire for failed transfers');
+        }
+    }
+
+    public function testDoesNotInvokeOnTrailersWhenOnHeadersFails(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $called = false;
+        $handler = new Handler\CurlHandler();
+        $promise = $handler(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function (): void {
+                throw new \Exception('test');
+            },
+            'on_trailers' => static function () use (&$called): void {
+                $called = true;
+            },
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertStringContainsString(
+                'An error was encountered during the on_headers event',
+                $e->getMessage()
+            );
+            self::assertFalse($called, 'on_trailers must not fire when on_headers fails');
+        }
+    }
+
     public function testStreamingRequestBodyReadPsr7TimeoutAbortsReadCallback(): void
     {
         $factory = new CurlFactory(3);

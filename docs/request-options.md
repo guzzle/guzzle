@@ -896,6 +896,38 @@ $client->request('GET', 'http://httpbin.org/stream/1024', [
 ]);
 ```
 
+## on_trailers
+
+Summary
+A callable that is invoked exactly once when a transfer completes successfully, with the HTTP trailer fields of the response.
+
+Types
+- callable
+
+Constant
+`GuzzleHttp\RequestOptions::ON_TRAILERS`
+
+The callable accepts an associative array of trailer field names mapped to lists of field values, the `Psr\Http\Message\ResponseInterface` object, and the corresponding `Psr\Http\Message\RequestInterface` object. The built-in cURL handlers invoke it after the entire response body has been written to the sink, after `on_headers`, and before `on_stats`. The array is empty when the response carried no trailer fields, for example because the server sent none or sent them as ordinary headers. Trailer names preserve the casing received on the wire, so array lookups are case-sensitive; HTTP/2 field names are always lowercase on the wire. The callable is never invoked for failed transfers. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the exception that was thrown.
+
+```php
+use GuzzleHttp\Psr7;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+// Verify a content checksum delivered after the body.
+$client->request('GET', 'https://example.com/stream', [
+    'version' => '2.0',
+    'on_trailers' => function (array $trailers, ResponseInterface $response, RequestInterface $request) {
+        if (isset($trailers['x-checksum']) && !hash_equals($trailers['x-checksum'][0], Psr7\Utils::hash($response->getBody(), 'sha256'))) {
+            throw new \Exception('Response body checksum mismatch!');
+        }
+    }
+]);
+```
+
+> [!NOTE]
+> Only the built-in cURL handlers invoke `on_trailers`; the built-in stream and mock handlers cannot observe trailer fields and ignore the option. When writing HTTP handlers that support trailer fields, invoke the `on_trailers` callable exactly once per successful transfer, after the response body has completed, and never for failed transfers.
+
 ## progress
 
 Summary

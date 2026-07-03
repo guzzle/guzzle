@@ -1593,6 +1593,11 @@ class ClientTest extends TestCase
             'Passing string to request option "on_stats" is invalid; expected callable.',
         ];
 
+        yield 'on_trailers' => [
+            ['on_trailers' => 'not a callable'],
+            'Passing string to request option "on_trailers" is invalid; expected callable.',
+        ];
+
         yield 'progress' => [
             ['progress' => 'not a callable'],
             'Passing string to request option "progress" is invalid; expected callable.',

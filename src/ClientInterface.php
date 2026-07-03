@@ -73,6 +73,7 @@ interface ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
@@ -154,6 +155,7 @@ interface ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
@@ -240,6 +242,7 @@ interface ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
@@ -326,6 +329,7 @@ interface ClientInterface
      *     }>,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
      *     progress?: callable(int, int, int, int): mixed,
      *     protocols?: non-empty-array<array-key, string>,
      *     proxy?: string|array{
