@@ -877,7 +877,7 @@ class CurlFactory implements CurlFactoryInterface
                 new ConnectException(
                     $easy->multiplexException->getMessage(),
                     $easy->request,
-                    null,
+                    $easy->multiplexException,
                     $ctx
                 )
             );
