@@ -2063,7 +2063,7 @@ class CurlFactory implements CurlFactoryInterface
 
                     return -1;
                 }
-                if (Multiplexing::REQUIRE === ($easy->options['multiplex'] ?? null)) {
+                if (Multiplexing::REQUIRE === ($easy->options['multiplex'] ?? null) && $easy->response !== null) {
                     $protocolVersion = $easy->response->getProtocolVersion();
                     if (!\in_array($protocolVersion, ['2', '2.0', '3', '3.0'], true)) {
                         // Reused connections can override the requested HTTP version.
