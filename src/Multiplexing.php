@@ -7,9 +7,10 @@ namespace GuzzleHttp;
  */
 final class Multiplexing
 {
-    public const ALLOW = 'allow';
-    public const PREFER = 'prefer';
-    public const REQUIRE = 'require';
+    public const EAGER = 'eager';
+    public const WAIT = 'wait';
+    public const REQUIRE_EAGER = 'require_eager';
+    public const REQUIRE_WAIT = 'require_wait';
 
     private function __construct()
     {

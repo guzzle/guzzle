@@ -2907,14 +2907,14 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
     }
 
-    public function testMultiplexPreferSetsPipewaitForHttp2Requests()
+    public function testMultiplexWaitSetsPipewaitForHttp2Requests()
     {
         if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
             self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
         }
 
         $f = new CurlFactory(3);
-        $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::PREFER]);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT]);
 
         try {
             self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
@@ -2927,7 +2927,7 @@ class CurlFactoryTest extends TestCase
     public static function multiplexDisabledProvider(): iterable
     {
         yield 'option absent' => [[]];
-        yield 'option allow' => [['multiplex' => Multiplexing::ALLOW]];
+        yield 'option eager' => [['multiplex' => Multiplexing::EAGER]];
     }
 
     /**
@@ -2957,7 +2957,7 @@ class CurlFactoryTest extends TestCase
         }
 
         $f = new CurlFactory(3);
-        $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => Multiplexing::PREFER]);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => Multiplexing::WAIT]);
 
         try {
             self::assertSame(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
@@ -2980,7 +2980,7 @@ class CurlFactoryTest extends TestCase
 
         try {
             $f = new CurlFactory(3);
-            $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::PREFER]);
+            $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT]);
 
             try {
                 self::assertArrayNotHasKey(\CURLOPT_PIPEWAIT, $_SERVER['_curl']);
@@ -3015,7 +3015,13 @@ class CurlFactoryTest extends TestCase
         yield 'unknown string' => ['always'];
     }
 
-    public function testRequireSetsPriorKnowledgeHttpVersion()
+    public static function requiredMultiplexProvider(): iterable
+    {
+        yield 'require_eager' => [Multiplexing::REQUIRE_EAGER];
+        yield 'require_wait' => [Multiplexing::REQUIRE_WAIT];
+    }
+
+    public function testRequireWaitSetsPriorKnowledgeHttpVersion()
     {
         if (!CurlVersion::supportsRequiredMultiplex()) {
             self::markTestSkipped('Required multiplexing is unavailable.');
@@ -3024,7 +3030,7 @@ class CurlFactoryTest extends TestCase
         self::withProxyEnvironment([], static function (): void {
             $f = new CurlFactory(3);
             $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
-                'multiplex' => Multiplexing::REQUIRE,
+                'multiplex' => Multiplexing::REQUIRE_WAIT,
             ]);
 
             try {
@@ -3036,7 +3042,31 @@ class CurlFactoryTest extends TestCase
         });
     }
 
-    public function testRequireRejectsHttp11Requests()
+    public function testRequireEagerSetsPriorKnowledgeWithoutPipewait()
+    {
+        if (!CurlVersion::supportsRequiredMultiplex()) {
+            self::markTestSkipped('Required multiplexing is unavailable.');
+        }
+
+        self::withProxyEnvironment([], static function (): void {
+            $f = new CurlFactory(3);
+            $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                'multiplex' => Multiplexing::REQUIRE_EAGER,
+            ]);
+
+            try {
+                self::assertSame((int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+                self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $_SERVER['_curl']);
+            } finally {
+                $f->release($easy);
+            }
+        });
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsHttp11Requests(string $multiplex)
     {
         $f = new CurlFactory(3);
 
@@ -3044,11 +3074,14 @@ class CurlFactoryTest extends TestCase
         $this->expectExceptionMessage('The "multiplex" request option cannot be required for HTTP/1.1 requests; use protocol version 2.');
 
         $f->create(new Psr7\Request('GET', Server::$url, [], null, '1.1'), [
-            'multiplex' => Multiplexing::REQUIRE,
+            'multiplex' => $multiplex,
         ]);
     }
 
-    public function testRequireRejectsUnsupportedLibcurl()
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsUnsupportedLibcurl(string $multiplex)
     {
         if (!\defined('CURL_SSLVERSION_TLSv1_2') || !\defined('CURL_VERSION_HTTP2') || !\defined('CURL_VERSION_SSL')) {
             self::markTestSkipped('HTTP/2 cURL constants are unavailable.');
@@ -3066,14 +3099,17 @@ class CurlFactoryTest extends TestCase
             $this->expectExceptionMessage('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.');
 
             $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
-                'multiplex' => Multiplexing::REQUIRE,
+                'multiplex' => $multiplex,
             ]);
         } finally {
             self::setCurlVersionInfo($previous);
         }
     }
 
-    public function testRequireRejectsLibcurlWithoutHttp2()
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsLibcurlWithoutHttp2(string $multiplex)
     {
         if (!\defined('CURL_SSLVERSION_TLSv1_2') || !\defined('CURL_VERSION_SSL')) {
             self::markTestSkipped('HTTP/2 cURL constants are unavailable.');
@@ -3091,41 +3127,47 @@ class CurlFactoryTest extends TestCase
             $this->expectExceptionMessage('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.');
 
             $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
-                'multiplex' => Multiplexing::REQUIRE,
+                'multiplex' => $multiplex,
             ]);
         } finally {
             self::setCurlVersionInfo($previous);
         }
     }
 
-    public function testRequireRejectsCleartextProxiedRequests()
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsCleartextProxiedRequests(string $multiplex)
     {
         if (!CurlVersion::supportsRequiredMultiplex()) {
             self::markTestSkipped('Required multiplexing is unavailable.');
         }
 
-        self::withProxyEnvironment(['http_proxy' => 'http://proxy.example.com:8125'], function (): void {
+        self::withProxyEnvironment(['http_proxy' => 'http://proxy.example.com:8125'], function () use ($multiplex): void {
             $f = new CurlFactory(3);
 
             $this->expectException(ConnectException::class);
             $this->expectExceptionMessage('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.');
 
             $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
-                'multiplex' => Multiplexing::REQUIRE,
+                'multiplex' => $multiplex,
             ]);
         });
     }
 
-    public function testRequireRejectsHttp11NegotiatedResponses()
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsHttp11NegotiatedResponses(string $multiplex)
     {
         if (!CurlVersion::supportsRequiredMultiplex()) {
             self::markTestSkipped('Required multiplexing is unavailable.');
         }
 
-        self::withProxyEnvironment([], static function (): void {
+        self::withProxyEnvironment([], static function () use ($multiplex): void {
             $f = new CurlFactory(3);
             $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
-                'multiplex' => Multiplexing::REQUIRE,
+                'multiplex' => $multiplex,
             ]);
 
             try {

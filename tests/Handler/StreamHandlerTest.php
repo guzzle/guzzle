@@ -67,7 +67,10 @@ class StreamHandlerTest extends TestCase
         self::assertSame('1.1', Server::received()[0]->getProtocolVersion());
     }
 
-    public function testRejectsRequiredMultiplex()
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRejectsRequiredMultiplex(string $multiplex)
     {
         $handler = new StreamHandler();
 
@@ -75,8 +78,14 @@ class StreamHandlerTest extends TestCase
         $this->expectExceptionMessage('The stream handler cannot guarantee a multiplexed protocol; required multiplexing needs a cURL handler.');
 
         $handler(new Request('GET', Server::$url, [], null, '2.0'), [
-            'multiplex' => Multiplexing::REQUIRE,
+            'multiplex' => $multiplex,
         ])->wait();
+    }
+
+    public static function requiredMultiplexProvider(): iterable
+    {
+        yield 'require_eager' => [Multiplexing::REQUIRE_EAGER];
+        yield 'require_wait' => [Multiplexing::REQUIRE_WAIT];
     }
 
     public function testAddsErrorToResponse()
