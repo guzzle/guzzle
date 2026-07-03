@@ -8,8 +8,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Added
 
 - Added the `on_trailers` request option to expose parsed HTTP response trailers
-- Added the `multiplex` request option with `Multiplexing::*` modes to control HTTP/2 connection multiplexing and to require multiplexed protocols
-- Added a conflict rejection for explicit `multiplex` requests on a `CurlMultiHandler` whose `CURLMOPT_PIPELINING` option disables multiplexing
+- Added the `multiplex` request option with `Multiplexing::*` modes to control or require HTTP/2 multiplexing
+- Added rejection of explicit `multiplex` requests when `CURLMOPT_PIPELINING` disables multiplexing
 
 ### Deprecated
 

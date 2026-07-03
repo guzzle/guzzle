@@ -291,8 +291,14 @@ class CurlFactory implements CurlFactoryInterface
             throw new ConnectException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $easy->request);
         }
 
-        if ('https' !== $easy->request->getUri()->getScheme() && self::proxyAppliesTo($easy)) {
-            throw new ConnectException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
+        if (self::proxyAppliesTo($easy)) {
+            if ('https' !== $easy->request->getUri()->getScheme()) {
+                throw new ConnectException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
+            }
+
+            if (!\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+                throw new ConnectException('Required multiplexing cannot be guaranteed for requests sent through a proxy without CURLOPT_SUPPRESS_CONNECT_HEADERS support.', $easy->request);
+            }
         }
     }
 
@@ -1494,6 +1500,13 @@ class CurlFactory implements CurlFactoryInterface
                 // New HTTP/2 connections cannot negotiate HTTP/1.x here;
                 // reused-connection anomalies are caught by the backstop.
                 $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE');
+
+                if (\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+                    // A proxy CONNECT response is an HTTP/1.1 header block
+                    // that would otherwise reach the header callback and
+                    // falsely trip the required-multiplex backstop.
+                    $conf[(int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS')] = true;
+                }
             } else {
                 $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
             }

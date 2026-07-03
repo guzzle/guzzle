@@ -222,7 +222,7 @@ class CurlMultiHandler
 
         if (Multiplexing::WAIT === $multiplex && !$easy->usesPipewait) {
             // Explicit wait only conflicts when the transfer would actually
-            // wait; an HTTP/1.1 prefer request never sets the marker.
+            // wait; an HTTP/1.1 wait request never sets the marker.
             return;
         }
 
