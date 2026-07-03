@@ -390,7 +390,7 @@ final class CurlFactory implements CurlFactoryInterface
 
     private static function assertRequiredMultiplexSupported(EasyHandle $easy): void
     {
-        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !CurlVersion::supportsRequiredMultiplex()) {
+        if (!CurlVersion::supportsRequiredMultiplex()) {
             throw new RequestException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $easy->request);
         }
 
@@ -401,7 +401,7 @@ final class CurlFactory implements CurlFactoryInterface
             throw new RequestException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
         }
 
-        if ($proxy->hasProxy() && !\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+        if ($proxy->hasProxy() && !CurlVersion::supportsSuppressConnectHeaders()) {
             throw new RequestException('Required multiplexing cannot be guaranteed for requests sent through a proxy without CURLOPT_SUPPRESS_CONNECT_HEADERS support.', $easy->request);
         }
     }
@@ -1826,7 +1826,7 @@ final class CurlFactory implements CurlFactoryInterface
                 if ($proxy->hasProxy()) {
                     throw new RequestException('Required multiplexing cannot be guaranteed for HTTP/3 requests sent through a proxy.', $easy->request);
                 }
-                if (!\defined('CURL_HTTP_VERSION_3ONLY') || !CurlVersion::supportsHttp3Only()) {
+                if (!CurlVersion::supportsHttp3Only()) {
                     throw new RequestException('Required multiplexing for HTTP/3 needs libcurl 7.88.0 or newer built with HTTP/3 support.', $easy->request);
                 }
                 // HTTP/3 or fail: required multiplexing never downgrades, not
@@ -1844,7 +1844,7 @@ final class CurlFactory implements CurlFactoryInterface
                 // reused-connection anomalies are caught by the backstop.
                 $conf[\CURLOPT_HTTP_VERSION] = (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE');
 
-                if (\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+                if (CurlVersion::supportsSuppressConnectHeaders()) {
                     // A proxy CONNECT response is an HTTP/1.1 header block
                     // that would otherwise reach the header callback and
                     // falsely trip the required-multiplex backstop.

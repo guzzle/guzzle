@@ -134,6 +134,25 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsHttp2());
     }
 
+    public function testSupportsSuppressConnectHeadersUsesRuntimeVersion(): void
+    {
+        if (!\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+            self::markTestSkipped('CURLOPT_SUPPRESS_CONNECT_HEADERS is not available.');
+        }
+
+        self::setVersionInfo([
+            'version' => '7.53.0',
+            'features' => 0,
+        ]);
+        self::assertFalse(CurlVersion::supportsSuppressConnectHeaders());
+
+        self::setVersionInfo([
+            'version' => '7.54.0',
+            'features' => 0,
+        ]);
+        self::assertTrue(CurlVersion::supportsSuppressConnectHeaders());
+    }
+
     public function testSupportsHttp3ReturnsFalseWhenVersionInfoIsUnavailable(): void
     {
         self::setVersionInfo(false);
