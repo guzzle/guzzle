@@ -610,6 +610,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         self::warnIfPresentAndNotCallable($options, 'on_headers');
         self::warnIfPresentAndNotCallable($options, 'on_stats');
+        self::warnIfPresentAndNotCallable($options, 'on_trailers', null, '7.14');
         self::warnIfPresentAndNotCallable($options, 'progress');
         self::warnIfPresentAndNotStringArray($options, 'protocols', true);
         self::warnAboutInvalidProtocolValues($options, 'protocols');
@@ -908,10 +909,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function warnIfPresentAndNotCallable(array $options, string $option, ?string $path = null): void
-    {
+    private static function warnIfPresentAndNotCallable(
+        array $options,
+        string $option,
+        ?string $path = null,
+        string $since = '7.11'
+    ): void {
         if (\array_key_exists($option, $options) && !\is_callable($options[$option])) {
-            self::warnInvalidRequestOptionType($path ?? $option, 'callable', $options[$option]);
+            self::warnInvalidRequestOptionType($path ?? $option, 'callable', $options[$option], $since);
         }
     }
 

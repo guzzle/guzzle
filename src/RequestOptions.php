@@ -221,6 +221,13 @@ final class RequestOptions
     public const ON_STATS = 'on_stats';
 
     /**
+     * on_trailers: (callable) A callable that is invoked once per successful
+     * transfer, after the response body has been received, with an
+     * associative array of the parsed HTTP trailers followed by the response.
+     */
+    public const ON_TRAILERS = 'on_trailers';
+
+    /**
      * progress: (callable) Defines a function to invoke when transfer
      * progress is made. The function accepts the following positional
      * arguments: the total number of bytes expected to be downloaded, the
