@@ -827,35 +827,38 @@ $client->request('POST', '/post', [
 ## multiplex
 
 Summary
-Controls how an HTTP/2 or HTTP/3 request sent through a built-in cURL handler pursues a shared, multiplexed connection: opportunistically, by preference, or as a hard requirement.
+Controls how an HTTP/2 or HTTP/3 request sent through a built-in cURL handler pursues a shared, multiplexed connection: opportunistically, by preference, or as a hard requirement - with or without waiting on in-progress connections.
 
 Types
 - string (one of the `GuzzleHttp\Multiplexing` constants)
 
 Default
-`GuzzleHttp\Multiplexing::PREFER`
+`Multiplexing::WAIT`
 
 Constant
 `GuzzleHttp\RequestOptions::MULTIPLEX`
 
 libcurl multiplexes concurrent HTTP/2 and HTTP/3 transfers over a single connection whenever a multiplexable connection to the origin already exists, whatever this option is set to. The modes grade how much further the request goes:
 
-- `Multiplexing::ALLOW` - never wait for a connection that is still being established; a burst of requests against a cold origin opens parallel connections.
-- `Multiplexing::PREFER` (default) - wait for a pending connection that libcurl considers eligible for multiplexing, normally a connection to the same origin, and share it (maps to cURL's `CURLOPT_PIPEWAIT`; requires libcurl 7.65.2+ and the `CurlMultiHandler`; silently ignored otherwise, including by the stream handler and the blocking `CurlHandler`, which has no multi handle to multiplex over). When the server turns out not to support multiplexing, waiting requests fall back to their own connections. For HTTP/2, libcurl may also reuse a connection for another origin when its TLS certificate and DNS/proxy checks permit origin coalescing; Guzzle delegates all reuse eligibility to libcurl.
-- `Multiplexing::REQUIRE` - guarantee a multiplexed protocol or fail loudly. HTTP/2 requests are sent with prior knowledge, so TLS connections offer only `h2` via ALPN (libcurl 8.10.0+) and cleartext connections speak HTTP/2 directly. HTTP/3 requests are pinned to HTTP/3 with no downgrade at all (libcurl 7.88.0+, PHP 8.4+); a proxy cannot carry them and is rejected. A server limited to lower protocol versions fails the connection instead of silently downgrading the request. Requires protocol version `2`/`2.0` or `3`/`3.0` and a cURL handler; anything else throws instead of degrading.
+- `Multiplexing::EAGER` - never wait for a connection that is still being established: a burst of requests against a cold origin opens parallel connections.
+- `Multiplexing::WAIT` (default) - wait for a pending connection that libcurl considers eligible for multiplexing, normally one to the same origin, and share it. Maps to cURL's `CURLOPT_PIPEWAIT`, and is silently ignored by the stream handler and the blocking `CurlHandler`, which has no multi handle to multiplex over. If the connection turns out not to multiplex, waiting requests open their own. For HTTP/2, libcurl may also reuse a connection for another origin when its TLS certificate and DNS/proxy checks permit; Guzzle delegates reuse eligibility to libcurl.
+- `Multiplexing::REQUIRE_EAGER` - guarantee a multiplexed protocol or fail loudly, while dialing eagerly. HTTP/2 requests are sent with prior knowledge, so TLS connections offer only `h2` via ALPN (libcurl 8.10.0+) and cleartext connections speak HTTP/2 directly. HTTP/3 requests are pinned to HTTP/3 with no downgrade at all (libcurl 7.88.0+, PHP 8.4+); a proxy cannot carry them and is rejected. A server limited to lower protocol versions fails the connection instead of downgrading. Requires protocol version `2`/`2.0` or `3`/`3.0` and a cURL handler; anything else throws. A cold burst dials connections in parallel up to the `max_host_connections` / `max_total_connections` caps - but this spreads only the ramp: libcurl fills the first established connection with a free stream rather than balancing, so keeping a steady load spread also needs a client-side `CURLMOPT_MAX_CONCURRENT_STREAMS` in the handler's `options`.
+- `Multiplexing::REQUIRE_WAIT` - the same guarantees as `Multiplexing::REQUIRE_EAGER`, plus `WAIT`'s waiting on pending connections.
 
 ```php
 $client->requestAsync('GET', 'https://example.com/big-file', [
     'version' => '2.0',
-    'multiplex' => \GuzzleHttp\Multiplexing::ALLOW,
+    'multiplex' => Multiplexing::EAGER,
 ]);
 ```
 
-None of the modes is a connection **cap**. Once an established HTTP/2 connection has no free streams, servers commonly allow about 100 concurrent streams per connection, and additional concurrent requests open additional connections regardless of this option. To bound connections, use the `max_host_connections` / `max_total_connections` client or handler options: excess requests then queue inside libcurl, keep consuming their `timeout` and `connect_timeout` while queued, and are not guaranteed to start in the order they were issued.
+None of the modes is a connection **cap**. Once an established HTTP/2 connection has no free streams - servers commonly allow about 100 per connection - additional requests open additional connections regardless of this option. To bound connections, use the `max_host_connections` / `max_total_connections` client or handler options: excess requests queue inside libcurl, keep consuming their `timeout` and `connect_timeout`, and may start out of order.
+
+libcurl never reuses or coalesces a connection across differing TLS settings (`verify`, custom CA, client certificate/key, pinned public key) or proxy settings, so a verified request can never ride an unverified connection. Because libcurl coalesces HTTP/2 connections, requests to different hostnames that resolve to the same address and are covered by the server certificate may share one connection; a server not authoritative for the second name can reject it with HTTP/2 `421 Misdirected Request`. Waiting requests share one in-progress connection, so a slow lead connection adds latency to, and is charged against the `timeout` of, the requests waiting on it. Only requests whose protocol version resolves to HTTP/2 or HTTP/3 wait. Use `Multiplexing::EAGER` when you rely on independent connection timing; it stops the waiting but does not guarantee separate connections; established multiplex-capable connections are still shared.
 
 Passing raw `CURLOPT_PIPEWAIT` through the `curl` request option is rejected in favor of this option.
 
-One configuration is rejected loudly instead of silently ignored: a `GuzzleHttp\Handler\CurlMultiHandler` constructed with a `CURLMOPT_PIPELINING` value that lacks the `CURLPIPE_MULTIPLEX` bit disables libcurl multiplexing for every transfer that would wait, so explicitly setting `multiplex` to `Multiplexing::PREFER` or `Multiplexing::REQUIRE` on such a handler throws an `InvalidArgumentException` when the request would actually wait (HTTP/2- or HTTP/3-capable protocol versions).
+One configuration is rejected loudly instead of silently ignored: a `GuzzleHttp\Handler\CurlMultiHandler` whose `CURLMOPT_PIPELINING` option lacks the `CURLPIPE_MULTIPLEX` bit disables multiplexing for every transfer. On such a handler an explicit `Multiplexing::WAIT` throws an `InvalidArgumentException` when the request would actually wait, and an explicit required mode throws regardless of waiting. The default never throws.
 
 ## on_headers
 
@@ -1677,7 +1680,7 @@ Empty or malformed `version` values are rejected before the request is sent. If 
 
 For cURL requests, `version` is converted to Guzzle-managed cURL options. Use this request option instead of passing raw `CURLOPT_HTTP_VERSION`; built-in cURL handlers reject raw cURL options that conflict with Guzzle-managed protocol handling.
 
-HTTP/2 uses libcurl's `CURL_HTTP_VERSION_2_0`. HTTP/3 uses libcurl's `CURL_HTTP_VERSION_3` unless `multiplex` is set to `GuzzleHttp\Multiplexing::REQUIRE`, which uses libcurl's strict HTTP/3-only mode. The non-required modes ask libcurl to attempt the requested protocol, but they are not strict modes: libcurl may use a lower HTTP version when negotiation or connection setup falls back. The response protocol version can therefore be lower than the `version` value you requested.
+HTTP/2 uses libcurl's `CURL_HTTP_VERSION_2_0`. HTTP/3 uses libcurl's `CURL_HTTP_VERSION_3` unless `multiplex` is set to `Multiplexing::REQUIRE_EAGER` or `Multiplexing::REQUIRE_WAIT`, which use libcurl's strict HTTP/3-only mode. The non-required modes ask libcurl to attempt the requested protocol, but they are not strict modes: libcurl may use a lower HTTP version when negotiation or connection setup falls back. The response protocol version can therefore be lower than the `version` value you requested.
 
 When multiple HTTP/2- or HTTP/3-capable requests start concurrently against the same origin, the `multiplex` request option controls whether they wait to share one connection instead of each opening their own.
 

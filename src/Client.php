@@ -1180,8 +1180,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             return;
         }
 
-        if (!\in_array($options['multiplex'], [Multiplexing::ALLOW, Multiplexing::PREFER, Multiplexing::REQUIRE], true)) {
-            self::invalidRequestOptionType('multiplex', '"allow"|"prefer"|"require"', $options['multiplex']);
+        if (!\in_array($options['multiplex'], [Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+            throw new InvalidArgumentException(\sprintf(
+                'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received %s.',
+                \get_debug_type($options['multiplex'])
+            ));
         }
     }
 

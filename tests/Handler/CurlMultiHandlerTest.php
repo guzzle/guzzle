@@ -87,8 +87,8 @@ class CurlMultiHandlerTest extends TestCase
         ]]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "allow".');
-        $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::PREFER]);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "eager".');
+        $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT]);
     }
 
     public function testRejectsExplicitMultiplexWhenPipeliningIsHttp1Only(): void
@@ -104,11 +104,11 @@ class CurlMultiHandlerTest extends TestCase
         ]]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "allow".');
-        $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::PREFER]);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "eager".');
+        $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT]);
     }
 
-    public function testRejectsRequiredMultiplexWhenPipeliningIsDisabled(): void
+    public function testRejectsRequireWaitWhenPipeliningIsDisabled(): void
     {
         if (!CurlVersion::supportsRequiredMultiplex()) {
             self::markTestSkipped('Required multiplexing is unavailable.');
@@ -119,8 +119,25 @@ class CurlMultiHandlerTest extends TestCase
         ]]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "allow".');
-        $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::REQUIRE]);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "eager".');
+        $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::REQUIRE_WAIT]);
+    }
+
+    public function testRejectsRequireEagerWhenPipeliningIsDisabled(): void
+    {
+        if (!CurlVersion::supportsRequiredMultiplex()) {
+            self::markTestSkipped('Required multiplexing is unavailable.');
+        }
+
+        // REQUIRE_EAGER never sets CURLOPT_PIPEWAIT, so this pins the
+        // marker-independent required-family arm of the guard.
+        $a = new CurlMultiHandler(['options' => [
+            \CURLMOPT_PIPELINING => \CURLPIPE_NOTHING,
+        ]]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "eager".');
+        $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::REQUIRE_EAGER]);
     }
 
     public function testAllowsExplicitMultiplexWhenPipeliningIncludesMultiplexBit(): void
@@ -134,11 +151,11 @@ class CurlMultiHandlerTest extends TestCase
         $a = new CurlMultiHandler(['options' => [
             \CURLMOPT_PIPELINING => \CURLPIPE_MULTIPLEX,
         ]]);
-        $response = $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::PREFER])->wait();
+        $response = $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT])->wait();
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testAllowsDisabledPipeliningWhenMultiplexIsAllow(): void
+    public function testAllowsDisabledPipeliningWhenMultiplexIsEager(): void
     {
         if (!CurlVersion::supportsMultiplex()) {
             self::markTestSkipped('Multiplex support is unavailable.');
@@ -149,7 +166,7 @@ class CurlMultiHandlerTest extends TestCase
         $a = new CurlMultiHandler(['options' => [
             \CURLMOPT_PIPELINING => \CURLPIPE_NOTHING,
         ]]);
-        $response = $a(new Request('GET', Server::$url), ['multiplex' => Multiplexing::ALLOW])->wait();
+        $response = $a(new Request('GET', Server::$url), ['multiplex' => Multiplexing::EAGER])->wait();
         self::assertSame(200, $response->getStatusCode());
     }
 
@@ -164,7 +181,7 @@ class CurlMultiHandlerTest extends TestCase
         $a = new CurlMultiHandler(['options' => [
             \CURLMOPT_PIPELINING => \CURLPIPE_NOTHING,
         ]]);
-        $response = $a(new Request('GET', Server::$url), ['multiplex' => Multiplexing::PREFER])->wait();
+        $response = $a(new Request('GET', Server::$url), ['multiplex' => Multiplexing::WAIT])->wait();
         self::assertSame(200, $response->getStatusCode());
     }
 
@@ -177,8 +194,8 @@ class CurlMultiHandlerTest extends TestCase
             self::markTestSkipped('HTTP/2 support is unavailable.');
         }
 
-        // The 8.0 default (key absent) never conflicts with disabled
-        // pipelining: an explicit prefer/require option is required for the guard.
+        // The default (key absent) never conflicts with disabled pipelining:
+        // an explicit wait/require-family option is required for the guard.
         Server::flush();
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler(['options' => [

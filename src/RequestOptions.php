@@ -223,14 +223,17 @@ final class RequestOptions
     public const MULTIPART = 'multipart';
 
     /**
-     * multiplex: (string, default=GuzzleHttp\Multiplexing::PREFER) Controls how
+     * multiplex: (string, default=GuzzleHttp\Multiplexing::WAIT) Controls how
      * an HTTP/2 or HTTP/3 request sent through a built-in cURL handler pursues a
-     * shared, multiplexed connection. Use Multiplexing::ALLOW to avoid waiting
-     * for pending connections, Multiplexing::PREFER to wait on libcurl-eligible
-     * pending connections with CURLOPT_PIPEWAIT, normally to the same origin,
-     * or Multiplexing::REQUIRE to fail unless a multiplexed protocol is
-     * guaranteed. The stream handler ignores ALLOW and PREFER, and rejects
-     * REQUIRE; CurlHandler has no multi handle to multiplex over.
+     * shared, multiplexed connection. Use Multiplexing::EAGER to avoid
+     * waiting for pending connections, Multiplexing::WAIT to wait on
+     * libcurl-eligible pending connections with CURLOPT_PIPEWAIT, normally to
+     * the same origin, Multiplexing::REQUIRE_EAGER to fail unless a
+     * multiplexed protocol is guaranteed while dialing eagerly, or
+     * Multiplexing::REQUIRE_WAIT for the same guarantee while also waiting
+     * on pending connections. The stream handler ignores EAGER and WAIT,
+     * and rejects the required family; CurlHandler has no multi handle to
+     * multiplex over.
      */
     public const MULTIPLEX = 'multiplex';
 

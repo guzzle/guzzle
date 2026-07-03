@@ -460,36 +460,19 @@ responses cannot carry content, so any bytes a misbehaving server sends after
 the header section are never read. The cURL handler already behaved this way via
 libcurl.
 
-#### HTTP/2 and HTTP/3 Multiplexing
+#### HTTP/2 Multiplexing
 
-The built-in cURL handlers now default the `multiplex` request option to
-`GuzzleHttp\Multiplexing::PREFER`. Requests whose protocol version resolves to
-HTTP/2 or HTTP/3, on runtime libcurl 7.65.2 or newer, set libcurl's
-`CURLOPT_PIPEWAIT` so concurrent requests can wait for an in-progress connection
-to reveal whether it can be multiplexed instead of each opening its own
-connection. When the connection proves unable to multiplex, waiting requests
-fall back to opening their own connections.
+The `multiplex` request option defaults to `Multiplexing::WAIT`:
+HTTP/2 requests on the cURL handlers set libcurl's `CURLOPT_PIPEWAIT`, so a
+concurrent burst waits for an in-progress connection it may be able to share
+instead of dialing one connection per request. Guzzle 7 leaves this to libcurl,
+which never waits by default. Pass
+`'multiplex' => Multiplexing::EAGER` to restore the old dialing
+behaviour, or `Multiplexing::REQUIRE_EAGER`/`Multiplexing::REQUIRE_WAIT` to
+fail loudly unless a multiplexed protocol is guaranteed.
 
-Pass `'multiplex' => \GuzzleHttp\Multiplexing::ALLOW` to stop requests from
-waiting on pending connections, for example to spread large parallel downloads
-across separate connections. Pass
-`'multiplex' => \GuzzleHttp\Multiplexing::REQUIRE` to fail unless the request
-can be guaranteed to use HTTP/2 or HTTP/3 without downgrading to HTTP/1.x.
-
-libcurl never reuses or coalesces a connection across differing TLS settings
-(`verify`, custom CA, client certificate/key, pinned public key) or proxy
-settings, so a verified request can never ride an unverified connection. Because
-libcurl coalesces HTTP/2 connections, concurrent requests to different hostnames
-that resolve to the same address and are both covered by the server certificate
-may share one connection; a server that is not authoritative for the second name
-can reject the request with HTTP/2 `421 Misdirected Request`. Waiting requests
-share one in-progress connection, so a slow lead connection adds latency to, and
-is charged against the `timeout` of, the requests waiting on it. Only requests
-whose protocol version resolves to HTTP/2 or HTTP/3 are affected. Pass
-`'multiplex' => \GuzzleHttp\Multiplexing::ALLOW` to stop requests from waiting
-on in-progress connections when you rely on independent connection timing; it
-does not guarantee separate connections; libcurl still multiplexes new transfers
-onto an established multiplex-capable connection to the origin.
+HTTP/2 requests also now require libcurl 7.65.2 or newer (previously 7.34.0),
+so waiting is never silently unavailable where HTTP/2 works.
 
 #### Sink Resource Ownership
 

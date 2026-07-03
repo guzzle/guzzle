@@ -107,7 +107,7 @@ final class StreamHandler
             \usleep((int) ($options['delay'] * 1000));
         }
 
-        if (Multiplexing::REQUIRE === ($options['multiplex'] ?? null)) {
+        if (\in_array($options['multiplex'] ?? null, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
             throw new RequestException('The stream handler cannot guarantee a multiplexed protocol; required multiplexing needs a cURL handler.', $request);
         }
 

@@ -188,7 +188,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ('3' === $protocolVersion || '3.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp3()) {
-                if (Multiplexing::REQUIRE === $multiplex) {
+                if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
                     throw new RequestException('Required multiplexing for HTTP/3 needs libcurl 7.88.0 or newer built with HTTP/3 support.', $request);
                 }
 
@@ -196,11 +196,11 @@ final class CurlFactory implements CurlFactoryInterface
             }
         } elseif ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp2()) {
-                if (Multiplexing::REQUIRE === $multiplex) {
+                if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
                     throw new RequestException('Required multiplexing needs libcurl 8.10.0 or newer built with HTTP/2 support.', $request);
                 }
 
-                throw new RequestException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
+                throw new RequestException('HTTP/2 is supported by the cURL handler, however libcurl 7.65.2 or newer built with HTTP/2 support is required.', $request);
             }
         } elseif ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
             throw new RequestException(sprintf('HTTP/%s is not supported by the cURL handler.', $protocolVersion), $request);
@@ -375,10 +375,10 @@ final class CurlFactory implements CurlFactoryInterface
         $multiplex = $options['multiplex'] ?? null;
 
         if ($multiplex === null) {
-            return Multiplexing::PREFER;
+            return Multiplexing::WAIT;
         }
 
-        if (!\in_array($multiplex, [Multiplexing::ALLOW, Multiplexing::PREFER, Multiplexing::REQUIRE], true)) {
+        if (!\in_array($multiplex, [Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
             throw new InvalidArgumentException(\sprintf(
                 'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received %s.',
                 \get_debug_type($multiplex)
@@ -1816,7 +1816,7 @@ final class CurlFactory implements CurlFactoryInterface
 
             $proxy = self::resolveProxySelection($easy->request->getUri(), $easy->options['proxy'] ?? null);
 
-            if (Multiplexing::REQUIRE === $multiplex) {
+            if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
                 self::assertSelectedProxySupported($proxy->getProxy(), $easy->request);
 
                 if ($proxy->hasProxy()) {
@@ -1833,7 +1833,7 @@ final class CurlFactory implements CurlFactoryInterface
                     : (int) \constant('CURL_HTTP_VERSION_3');
             }
         } elseif ('2' === $version || '2.0' === $version) {
-            if (Multiplexing::REQUIRE === $multiplex) {
+            if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
                 self::assertRequiredMultiplexSupported($easy);
                 // New HTTP/2 connections cannot negotiate HTTP/1.x here;
                 // reused-connection anomalies are caught by the backstop.
@@ -1842,19 +1842,19 @@ final class CurlFactory implements CurlFactoryInterface
                 $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
             }
         } elseif ('1.1' === $version) {
-            if (Multiplexing::REQUIRE === $multiplex) {
+            if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
                 throw new RequestException(\sprintf('The "multiplex" request option cannot be required for HTTP/%s requests; use protocol version 2 or 3.', $version), $easy->request);
             }
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_1;
         } else {
-            if (Multiplexing::REQUIRE === $multiplex) {
+            if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
                 throw new RequestException(\sprintf('The "multiplex" request option cannot be required for HTTP/%s requests; use protocol version 2 or 3.', $version), $easy->request);
             }
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_0;
         }
 
         $resolvedVersion = $conf[\CURLOPT_HTTP_VERSION];
-        if (Multiplexing::ALLOW !== $multiplex
+        if (\in_array($multiplex, [Multiplexing::WAIT, Multiplexing::REQUIRE_WAIT], true)
             && CurlVersion::supportsMultiplex()
             && ($resolvedVersion === \CURL_HTTP_VERSION_2_0
                 || (\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') && $resolvedVersion === (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE'))
@@ -2613,7 +2613,7 @@ final class CurlFactory implements CurlFactoryInterface
 
                     return -1;
                 }
-                if (Multiplexing::REQUIRE === ($easy->options['multiplex'] ?? null) && $easy->response !== null) {
+                if (\in_array($easy->options['multiplex'] ?? null, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true) && $easy->response !== null) {
                     $protocolVersion = $easy->response->getProtocolVersion();
                     if (!\in_array($protocolVersion, ['2', '2.0', '3', '3.0'], true)) {
                         // Reused connections can override the requested HTTP version.

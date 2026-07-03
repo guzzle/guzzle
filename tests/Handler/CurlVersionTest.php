@@ -109,20 +109,26 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsRequiredMultiplex());
     }
 
-    public function testSupportsHttp2UsesHttp2Feature(): void
+    public function testSupportsHttp2UsesRuntimeVersionAndFeature(): void
     {
         if (!\defined('CURL_VERSION_HTTP2')) {
             self::markTestSkipped('CURL_VERSION_HTTP2 is not available.');
         }
 
         self::setVersionInfo([
-            'version' => '7.34.0',
+            'version' => '7.65.1',
+            'features' => \CURL_VERSION_HTTP2,
+        ]);
+        self::assertFalse(CurlVersion::supportsHttp2());
+
+        self::setVersionInfo([
+            'version' => '7.65.2',
             'features' => 0,
         ]);
         self::assertFalse(CurlVersion::supportsHttp2());
 
         self::setVersionInfo([
-            'version' => '7.34.0',
+            'version' => '7.65.2',
             'features' => \CURL_VERSION_HTTP2,
         ]);
         self::assertTrue(CurlVersion::supportsHttp2());

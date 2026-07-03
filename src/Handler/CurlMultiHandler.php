@@ -198,11 +198,22 @@ final class CurlMultiHandler
      * The "multiplex" request option sets CURLOPT_PIPEWAIT, which libcurl
      * ignores entirely when the multi handle's CURLMOPT_PIPELINING option
      * disables multiplexing, so an explicit request for multiplexing on a
-     * handler configured against it is a configuration error.
+     * handler configured against it is a configuration error. The required
+     * family conflicts marker-independently: a required guarantee on a
+     * handler that disables multiplexing is contradictory even when the
+     * transfer would not wait.
      */
     private function rejectMultiplexPipeliningConflict(EasyHandle $easy, array $options): void
     {
-        if (!\in_array($options['multiplex'] ?? null, [Multiplexing::PREFER, Multiplexing::REQUIRE], true) || !$easy->usesPipewait) {
+        $multiplex = $options['multiplex'] ?? null;
+
+        if (Multiplexing::WAIT === $multiplex && !$easy->usesPipewait) {
+            // Explicit wait only conflicts when the transfer would actually
+            // wait; an HTTP/1.1 prefer request never sets the marker.
+            return;
+        }
+
+        if (!\in_array($multiplex, [Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
             return;
         }
 
@@ -220,7 +231,7 @@ final class CurlMultiHandler
             return;
         }
 
-        throw new InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "allow".');
+        throw new InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "eager".');
     }
 
     /**

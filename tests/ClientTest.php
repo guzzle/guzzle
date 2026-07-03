@@ -1447,14 +1447,23 @@ class ClientTest extends TestCase
         $client->request('POST', 'http://foo.com', $options);
     }
 
-    public function testAcceptsValidMultiplexOption(): void
+    /**
+     * @dataProvider validMultiplexProvider
+     */
+    public function testAcceptsValidMultiplexOption(string $multiplex): void
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mock]);
 
-        $client->request('GET', 'http://foo.com', ['multiplex' => Multiplexing::REQUIRE]);
+        $client->request('GET', 'http://foo.com', ['multiplex' => $multiplex]);
 
-        self::assertSame(Multiplexing::REQUIRE, $mock->getLastOptions()['multiplex']);
+        self::assertSame($multiplex, $mock->getLastOptions()['multiplex']);
+    }
+
+    public static function validMultiplexProvider(): iterable
+    {
+        yield 'require_eager' => [Multiplexing::REQUIRE_EAGER];
+        yield 'require_wait' => [Multiplexing::REQUIRE_WAIT];
     }
 
     public static function invalidRequestOptionTypeProvider(): iterable
@@ -1596,7 +1605,7 @@ class ClientTest extends TestCase
 
         yield 'multiplex' => [
             ['multiplex' => true],
-            'Passing bool to request option "multiplex" is invalid; expected "allow"|"prefer"|"require".',
+            'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received bool.',
         ];
 
         yield 'on_headers' => [
