@@ -203,6 +203,16 @@ final class RequestOptions
     public const MULTIPART = 'multipart';
 
     /**
+     * multiplex: (bool, default=false) When sending an HTTP/2 request through
+     * a built-in cURL handler, wait for a connection that is still being
+     * established to the same origin to reveal whether it can be multiplexed
+     * instead of immediately opening an additional connection. Ignored when
+     * libcurl is older than 7.65.2 or the request is not HTTP/2 (protocol
+     * version 2 or 2.0).
+     */
+    public const MULTIPLEX = 'multiplex';
+
+    /**
      * on_headers: (callable) A callable that is invoked when the HTTP headers
      * of the response have been received but the body has not yet begun to
      * download.

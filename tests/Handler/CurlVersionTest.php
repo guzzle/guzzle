@@ -99,6 +99,24 @@ class CurlVersionTest extends TestCase
         }
     }
 
+    public function testSupportsMultiplexUsesMinimumVersion(): void
+    {
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is unavailable.');
+        }
+
+        $previous = self::setCurlVersionInfo(['version' => '7.65.1', 'features' => 0]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsMultiplex());
+
+            self::setCurlVersionInfo(['version' => '7.65.2', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsMultiplex());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
     public function testSupportsHttpsProxyUsesMinimumVersionAndFeature(): void
     {
         $httpsProxyFeature = \defined('CURL_VERSION_HTTPS_PROXY') ? \CURL_VERSION_HTTPS_PROXY : (1 << 21);

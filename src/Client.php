@@ -608,6 +608,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             self::warnAboutInvalidMultipartOptionTypes($options['multipart']);
         }
 
+        self::warnIfPresentAndNotBool($options, 'multiplex', null, '7.14');
         self::warnIfPresentAndNotCallable($options, 'on_headers');
         self::warnIfPresentAndNotCallable($options, 'on_stats');
         self::warnIfPresentAndNotCallable($options, 'on_trailers', null, '7.14');
@@ -881,10 +882,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function warnIfPresentAndNotBool(array $options, string $option, ?string $path = null): void
-    {
+    private static function warnIfPresentAndNotBool(
+        array $options,
+        string $option,
+        ?string $path = null,
+        string $since = '7.11'
+    ): void {
         if (\array_key_exists($option, $options) && !\is_bool($options[$option])) {
-            self::warnInvalidRequestOptionType($path ?? $option, 'bool', $options[$option]);
+            self::warnInvalidRequestOptionType($path ?? $option, 'bool', $options[$option], $since);
         }
     }
 

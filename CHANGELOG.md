@@ -8,6 +8,12 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Added
 
 - Added the `on_trailers` request option to expose parsed HTTP response trailers
+- Added the `multiplex` request option to coalesce concurrent HTTP/2 requests onto a shared connection
+- Added a conflict rejection for explicit `multiplex` requests on a `CurlMultiHandler` whose `CURLMOPT_PIPELINING` option disables multiplexing
+
+### Deprecated
+
+- Deprecate the raw `CURLOPT_PIPEWAIT` cURL option in favour of the `multiplex` request option
 
 
 ## 7.13.2 - Upcoming

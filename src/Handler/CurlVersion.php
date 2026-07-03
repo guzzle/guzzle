@@ -13,6 +13,12 @@ final class CurlVersion
 
     private const TLS_13_VERSION = '7.52.0';
 
+    // CURLOPT_PIPEWAIT exists since libcurl 7.43.0, and multi handles have
+    // multiplexed by default since 7.62.0 - but a 7.65.0-7.65.1 regression
+    // dropped that default, which 7.65.2 restored, so 7.65.2 is the floor at
+    // which PIPEWAIT is reliably effective.
+    private const MULTIPLEX_VERSION = '7.65.2';
+
     // curl 7.52.0 introduced HTTPS proxy support, advertised by a feature bit
     // (a build can meet the version yet lack the feature). Earlier libcurl
     // mishandles an https:// proxy: before 7.50.2 it silently downgrades to a
@@ -79,6 +85,15 @@ final class CurlVersion
             && \defined('CURL_VERSION_HTTP2')
             && $versionInfo !== null
             && 0 !== (\CURL_VERSION_HTTP2 & $versionInfo['features']);
+    }
+
+    public static function supportsMultiplex(): bool
+    {
+        $version = self::getVersion();
+
+        return \defined('CURLOPT_PIPEWAIT')
+            && $version !== null
+            && \version_compare($version, self::MULTIPLEX_VERSION, '>=');
     }
 
     public static function supportsHttpsProxy(): bool

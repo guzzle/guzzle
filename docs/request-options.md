@@ -793,6 +793,37 @@ $client->request('POST', '/post', [
 >
 > This option cannot be used with `body`, `form_params`, or `json`
 
+## multiplex
+
+Summary
+When sending an HTTP/2 request through a built-in cURL handler, wait for a connection that is still being established to the same origin to reveal whether it can be multiplexed instead of immediately opening an additional connection.
+
+Types
+- bool
+
+Default
+`false`
+
+Constant
+`GuzzleHttp\RequestOptions::MULTIPLEX`
+
+Concurrent requests issued through a shared `GuzzleHttp\Handler\CurlMultiHandler` already share an established HTTP/2 connection. Without this option, however, requests started while the first connection to an origin is still being established each open their own connection. Set `multiplex` to `true` to make such requests wait for the pending connection and coalesce onto it when the server turns out to support multiplexing; when it does not, the waiting requests fall back to opening their own connections. The option maps to cURL's `CURLOPT_PIPEWAIT`, applies only to HTTP/2 requests (protocol version 2 or 2.0), and requires libcurl 7.65.2 or newer; it is silently ignored otherwise, including by the stream handler.
+
+The one exception to the silent behavior is a direct conflict: a `GuzzleHttp\Handler\CurlMultiHandler` constructed with a `CURLMOPT_PIPELINING` value that lacks the `CURLPIPE_MULTIPLEX` bit disables HTTP/2 multiplexing for every transfer it runs, and libcurl then ignores `CURLOPT_PIPEWAIT` entirely, so setting `multiplex` to `true` on such a handler throws an `InvalidArgumentException` instead of silently doing nothing.
+
+```php
+$promises = [];
+foreach ($uris as $uri) {
+    $promises[] = $client->getAsync($uri, [
+        'version' => '2.0',
+        'multiplex' => true,
+    ]);
+}
+```
+
+> [!NOTE]
+> Setting `multiplex` to `false` does not disable HTTP/2 multiplexing; it only keeps the default behavior of opening a new connection instead of waiting for a pending one.
+
 ## on_headers
 
 Summary

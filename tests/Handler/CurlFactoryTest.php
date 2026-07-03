@@ -2906,6 +2906,119 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
     }
 
+    public function testMultiplexSetsPipewaitForHttp2Requests()
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => true]);
+
+        try {
+            self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_PIPEWAIT]);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
+    public static function multiplexDisabledProvider(): iterable
+    {
+        yield 'option absent' => [[]];
+        yield 'option false' => [['multiplex' => false]];
+    }
+
+    /**
+     * @dataProvider multiplexDisabledProvider
+     */
+    public function testMultiplexIsOffByDefaultForHttp2Requests(array $options)
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), $options);
+
+        try {
+            self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+            self::assertArrayNotHasKey(\CURLOPT_PIPEWAIT, $_SERVER['_curl']);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
+    public function testMultiplexIsIgnoredForHttp1Requests()
+    {
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => true]);
+
+        try {
+            self::assertSame(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+            self::assertArrayNotHasKey(\CURLOPT_PIPEWAIT, $_SERVER['_curl']);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
+    public function testMultiplexIsIgnoredWhenLibcurlDoesNotMultiplexByDefault()
+    {
+        if (!\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previous = self::setCurlVersionInfo([
+            'version' => '7.61.1',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $f = new CurlFactory(3);
+            $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => true]);
+
+            try {
+                self::assertArrayNotHasKey(\CURLOPT_PIPEWAIT, $_SERVER['_curl']);
+            } finally {
+                $f->release($easy);
+            }
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
+    public function testDeprecatesRawPipewaitCurlOption()
+    {
+        if (!CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('Multiplex support is unavailable.');
+        }
+
+        $deprecation = null;
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
+            $deprecation = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $f = new CurlFactory(3);
+            $easy = $f->create(new Psr7\Request('GET', Server::$url), [
+                'curl' => [\CURLOPT_PIPEWAIT => 1],
+            ]);
+            $f->release($easy);
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertNotNull($deprecation, 'Expected a deprecation for the raw CURLOPT_PIPEWAIT option.');
+        self::assertStringContainsString('CURLOPT_PIPEWAIT', $deprecation);
+        self::assertStringContainsString('multiplex', $deprecation);
+    }
+
     public function testSavesToStream()
     {
         $stream = \fopen('php://memory', 'r+');

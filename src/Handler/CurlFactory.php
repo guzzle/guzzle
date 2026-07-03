@@ -475,6 +475,7 @@ class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS', 'the "protocols" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_PROTOCOLS_STR', 'the "protocols" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_HTTP_VERSION', 'the request protocol version');
+        self::addConflictingCurlOption($options, 'CURLOPT_PIPEWAIT', 'the "multiplex" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_IPRESOLVE', 'the "force_ip_resolve" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYPEER', 'the "verify" request option');
         self::addConflictingCurlOption($options, 'CURLOPT_SSL_VERIFYHOST', 'the "verify" request option');
@@ -512,6 +513,10 @@ class CurlFactory implements CurlFactoryInterface
 
         if (\defined('CURLOPT_PROXYTYPE')) {
             $options[\CURLOPT_PROXYTYPE] = '7.12';
+        }
+
+        if (\defined('CURLOPT_PIPEWAIT')) {
+            $options[\CURLOPT_PIPEWAIT] = '7.14';
         }
 
         return $options;
@@ -1361,6 +1366,13 @@ class CurlFactory implements CurlFactoryInterface
 
         if ('2' === $version || '2.0' === $version) {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_2_0;
+
+            if (!empty($easy->options['multiplex']) && CurlVersion::supportsMultiplex()) {
+                // Wait for a connection that is still being established to
+                // the same origin to reveal whether it can be multiplexed
+                // instead of immediately opening another connection.
+                $conf[(int) \constant('CURLOPT_PIPEWAIT')] = true;
+            }
         } elseif ('1.1' === $version) {
             $conf[\CURLOPT_HTTP_VERSION] = \CURL_HTTP_VERSION_1_1;
         } else {
