@@ -1940,7 +1940,7 @@ class CurlFactory implements CurlFactoryInterface
             &$collectingTrailers
         ) {
             $value = \trim($h);
-            if ($value === '') {
+            if ($h === "\r\n" || $h === "\n" || $h === "\r" || $h === '') {
                 if ($collectingTrailers) {
                     // A blank line ends the trailer section; the response has
                     // already been created.
@@ -1967,7 +1967,7 @@ class CurlFactory implements CurlFactoryInterface
                     }
                 }
             } elseif ($startingResponse || $collectingTrailers) {
-                if ($easy->response !== null && 0 !== \strncasecmp($value, 'HTTP/', 5)) {
+                if ($easy->response !== null && !HeaderProcessor::isStatusLineCandidate($h)) {
                     // Trailer fields arrive through the header callback after
                     // the body; a new header block always begins with a status
                     // line.

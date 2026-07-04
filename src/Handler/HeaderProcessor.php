@@ -57,6 +57,11 @@ final class HeaderProcessor
         return [$version, (int) $status, $parts[2] ?? null, Utils::headersFromLines($headers)];
     }
 
+    public static function isStatusLineCandidate(string $line): bool
+    {
+        return \preg_match('/^HTTP\/[0-9]+(?:\.[0-9]+)? [0-9]{3}(?: [^\r\n]*)?(?:\r\n|\r|\n)?$/iD', $line) === 1;
+    }
+
     /**
      * @param non-empty-list<string> $headers
      *
@@ -67,7 +72,7 @@ final class HeaderProcessor
         $lastStatusLine = 0;
 
         foreach ($headers as $index => $line) {
-            if (\preg_match('/^HTTP\/\S+\s+/i', $line)) {
+            if (self::isStatusLineCandidate($line)) {
                 $lastStatusLine = $index;
             }
         }

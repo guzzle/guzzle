@@ -3458,6 +3458,43 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testDoesNotStartFreshHeaderBlockForMalformedHttpTrailerLine()
+    {
+        $factory = new CurlFactory(1);
+        $onHeadersCalls = 0;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function () use (&$onHeadersCalls) {
+                ++$onHeadersCalls;
+            },
+        ]);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Type: text/plain\r\n",
+                "\r\n",
+                " HTTP/1.1 204 No Content\r\n",
+                "HTTP/1.1\t204 No Content\r\n",
+                "HTTP/1.1  204 No Content\r\n",
+                "HTTP/foo: not a status line\r\n",
+                "HTTP/1.1 200abc Weird: not a status line\r\n",
+                "Foo: bar\r\n",
+                "\r\n",
+            ]);
+
+            self::assertNull($easy->createResponseException);
+            self::assertSame(1, $onHeadersCalls);
+            self::assertSame(
+                ['HTTP/1.1 200 OK', 'Content-Type: text/plain'],
+                $easy->headers
+            );
+            self::assertNotNull($easy->response);
+            self::assertSame(200, $easy->response->getStatusCode());
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     public function testInvokesOnStatsOnSuccess()
     {
         Server::flush();
