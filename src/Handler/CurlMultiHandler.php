@@ -163,17 +163,16 @@ class CurlMultiHandler
         }
 
         $multiOptions = $options['options'] ?? [];
-        if (!\is_array($multiOptions)) {
-            if (self::hasConnectionCapOption($options)) {
-                throw new \InvalidArgumentException('options must be an array of cURL multi options when using connection cap options.');
-            }
-
-            $this->options = $multiOptions;
-        } else {
+        if (\is_array($multiOptions)) {
             self::rejectConnectionCapOptionConflicts($options, $multiOptions);
             self::triggerConflictingCurlMultiOptionDeprecations($multiOptions);
+        } elseif (self::hasConnectionCapOption($options)) {
+            throw new \InvalidArgumentException('options must be an array of cURL multi options when using connection cap options.');
+        }
 
-            $this->options = $multiOptions;
+        $this->options = $multiOptions;
+
+        if (\is_array($multiOptions)) {
             $this->addConnectionCapOptions($options);
         }
 
@@ -336,7 +335,7 @@ class CurlMultiHandler
             }
 
             $option = \constant($constant);
-            if (\is_int($option) && \array_key_exists($option, $multiOptions)) {
+            if (\array_key_exists($option, $multiOptions)) {
                 throw new \InvalidArgumentException(\sprintf('%s conflicts with a %s entry in the "options" array.', $name, $constant));
             }
         }
@@ -360,10 +359,6 @@ class CurlMultiHandler
             CurlVersion::ensureConnectionCapsSupported($name);
 
             $option = \constant($constant);
-            if (!\is_int($option)) {
-                throw new \InvalidArgumentException(\sprintf('The cURL constant %s must resolve to an integer.', $constant));
-            }
-
             if (\array_key_exists($option, $this->options)) {
                 throw new \InvalidArgumentException(\sprintf('%s conflicts with a %s entry in the "options" array.', $name, $constant));
             }
