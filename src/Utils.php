@@ -156,7 +156,15 @@ final class Utils
         $curlMultiHandlerOptions = $curlHandlerOptions + $connectionCapOptions;
 
         if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
-            return Proxy::wrapSync(new CurlMultiHandler($curlMultiHandlerOptions), new CurlHandler($curlHandlerOptions));
+            $multiHandler = new CurlMultiHandler($curlMultiHandlerOptions);
+
+            if ($connectionCapOptions !== []) {
+                // Connection caps only govern transfers on the multi handle, so
+                // the synchronous CurlHandler fast path would escape them.
+                return $multiHandler;
+            }
+
+            return Proxy::wrapSync($multiHandler, new CurlHandler($curlHandlerOptions));
         }
 
         if ($connectionCapOptions === [] && \function_exists('curl_exec')) {
@@ -187,15 +195,22 @@ final class Utils
     /**
      * @param array{max_host_connections?: mixed, max_total_connections?: mixed} $handlerOptions
      *
-     * @return array<string, mixed>
+     * @return array<string, int>
      */
     private static function connectionCapOptions(array $handlerOptions): array
     {
         $options = [];
         foreach (['max_host_connections', 'max_total_connections'] as $capOption) {
-            if (($handlerOptions[$capOption] ?? null) !== null) {
-                $options[$capOption] = $handlerOptions[$capOption];
+            $value = $handlerOptions[$capOption] ?? null;
+            if ($value === null) {
+                continue;
             }
+
+            if (!\is_int($value) || $value < 1) {
+                throw new InvalidArgumentException(\sprintf('%s must be a positive integer.', $capOption));
+            }
+
+            $options[$capOption] = $value;
         }
 
         return $options;
