@@ -130,6 +130,16 @@ class StreamHandlerTest extends TestCase
         yield 'wait' => [Multiplexing::WAIT];
     }
 
+    public function testDeprecatesUnknownConstructorOption(): void
+    {
+        $deprecation = self::captureDeprecation(static function (): void {
+            new StreamHandler(['unknown' => true]);
+        });
+
+        self::assertNotNull($deprecation, 'Expected a deprecation for the unknown constructor option.');
+        self::assertStringContainsString('The "unknown" StreamHandler constructor option is unknown', $deprecation);
+    }
+
     public function testAddsErrorToResponse()
     {
         $handler = new StreamHandler();
@@ -1595,5 +1605,27 @@ class StreamHandlerTest extends TestCase
             'Proxy-Authorization: Basic '.\base64_encode('user:pass'),
             $context['http']['header']
         );
+    }
+
+    private static function captureDeprecation(callable $callback): ?string
+    {
+        $deprecation = null;
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
+            if ($severity !== \E_USER_DEPRECATED) {
+                return false;
+            }
+
+            $deprecation = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $callback();
+        } finally {
+            \restore_error_handler();
+        }
+
+        return $deprecation;
     }
 }

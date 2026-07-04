@@ -14,10 +14,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Deprecated
 
 - Deprecate the raw `CURLOPT_PIPEWAIT` cURL option in favour of the `multiplex` request option
+- Deprecate unknown handler constructor options
+- Deprecate invalid `select_timeout` cURL multi handler option values
 
 ### Changed
 
 - Remove deprecation for the raw cURL `CURLOPT_CERTINFO` option
+- Warn when a cURL multi option cannot be applied
 
 
 ## 7.13.2 - Upcoming

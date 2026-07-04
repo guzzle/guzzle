@@ -21,12 +21,12 @@ class CurlMultiHandlerTest extends TestCase
     public function setUp(): void
     {
         $_SERVER['curl_test'] = true;
-        unset($_SERVER['_curl'], $_SERVER['_curl_multi'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_multi'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count'], $_SERVER['curl_multi_setopt_fail']);
     }
 
     public function tearDown(): void
     {
-        unset($_SERVER['_curl'], $_SERVER['_curl_multi'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count'], $_SERVER['curl_test']);
+        unset($_SERVER['_curl'], $_SERVER['_curl_multi'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count'], $_SERVER['curl_multi_setopt_fail'], $_SERVER['curl_test']);
     }
 
     public function testCanAddCustomCurlOptions()
@@ -39,6 +39,45 @@ class CurlMultiHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $a($request, []);
         self::assertEquals(5, $_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]);
+    }
+
+    public function testWarnsWhenCurlMultiOptionCannotBeApplied()
+    {
+        $handler = new CurlMultiHandler(['options' => [
+            \CURLMOPT_MAXCONNECTS => 5,
+        ]]);
+        $_SERVER['curl_multi_setopt_fail'] = \CURLMOPT_MAXCONNECTS;
+
+        $warning = null;
+        \set_error_handler(static function (int $severity, string $message) use (&$warning): bool {
+            if ($severity !== \E_USER_WARNING) {
+                return false;
+            }
+
+            $warning = $message;
+
+            return true;
+        }, \E_USER_WARNING);
+
+        try {
+            self::readMultiProperty($handler, '_mh');
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertNotNull($warning, 'Expected a warning for the rejected cURL multi option.');
+        self::assertStringContainsString('Unable to apply the cURL multi option CURLMOPT_MAXCONNECTS', $warning);
+        self::assertStringContainsString('ignored by the runtime libcurl', $warning);
+    }
+
+    public function testDeprecatesUnknownConstructorOption()
+    {
+        $deprecation = self::captureDeprecation(static function (): void {
+            new CurlMultiHandler(['unknown' => true]);
+        });
+
+        self::assertNotNull($deprecation, 'Expected a deprecation for the unknown constructor option.');
+        self::assertStringContainsString('The "unknown" CurlMultiHandler constructor option is unknown', $deprecation);
     }
 
     public function testRejectsExplicitMultiplexWhenPipeliningIsDisabled()
@@ -224,6 +263,16 @@ class CurlMultiHandlerTest extends TestCase
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
         self::assertEquals(2, self::readSelectTimeout($a));
+    }
+
+    public function testDeprecatesInvalidSelectTimeout()
+    {
+        $deprecation = self::captureDeprecation(static function (): void {
+            new CurlMultiHandler(['select_timeout' => []]);
+        });
+
+        self::assertNotNull($deprecation, 'Expected a deprecation for the invalid select_timeout option.');
+        self::assertStringContainsString('Passing a non-numeric "select_timeout" CurlMultiHandler option is deprecated', $deprecation);
     }
 
     public function testTransportSharingOptionAppliesCurlShare(): void
@@ -811,6 +860,28 @@ class CurlMultiHandlerTest extends TestCase
         }, null, CurlMultiHandler::class);
 
         return $readSelectTimeout($handler);
+    }
+
+    private static function captureDeprecation(callable $callback): ?string
+    {
+        $deprecation = null;
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
+            if ($severity !== \E_USER_DEPRECATED) {
+                return false;
+            }
+
+            $deprecation = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $callback();
+        } finally {
+            \restore_error_handler();
+        }
+
+        return $deprecation;
     }
 
     private static function skipIfCurlShareIsUnavailable(): void

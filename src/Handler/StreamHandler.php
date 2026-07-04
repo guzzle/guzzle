@@ -24,6 +24,10 @@ use Psr\Http\Message\UriInterface;
  */
 class StreamHandler
 {
+    private const KNOWN_CONSTRUCTOR_OPTIONS = [
+        'transport_sharing' => true,
+    ];
+
     private const CONNECTION_ERRORS = [
         'php_network_getaddresses:',
         'getaddrinfo',
@@ -61,6 +65,12 @@ class StreamHandler
      */
     public function __construct(array $options = [])
     {
+        foreach ($options as $name => $_) {
+            if (!isset(self::KNOWN_CONSTRUCTOR_OPTIONS[$name])) {
+                \trigger_deprecation('guzzlehttp/guzzle', '7.14', \sprintf('The "%s" StreamHandler constructor option is unknown; guzzlehttp/guzzle 8.0 will reject unknown constructor options.', (string) $name));
+            }
+        }
+
         $this->transportSharingMode = CurlShareHandleState::normalizeMode(
             $options['transport_sharing'] ?? null,
             'transport_sharing'
