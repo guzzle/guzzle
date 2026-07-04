@@ -67,6 +67,12 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
+			message: '#^Offset ''handle_factory''\|''transport_sharing'' on array\{handle_factory\: true, transport_sharing\: true\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Handler/CurlHandler.php
+
+		-
 			message: '#^Parameter \#1 \$ch of function curl_errno expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
@@ -163,6 +169,12 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
+			message: '#^Static method GuzzleHttp\\Handler\\CurlMultiHandler\:\:addConflictingCurlMultiOption\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Handler/CurlMultiHandler.php
+
+		-
 			message: '#^Strict comparison using \=\=\= between false and resource will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
@@ -173,6 +185,12 @@ parameters:
 			identifier: class.notFound
 			count: 1
 			path: src/Handler/EasyHandle.php
+
+		-
+			message: '#^Offset ''transport_sharing'' on array\{transport_sharing\: true\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/Handler/StreamHandler.php
 
 		-
 			message: '#^Call to function array_key_exists\(\) with 0 and array\{callable\(callable&THandler\)\: \(callable&THandler\), string\|null\} will always evaluate to true\.$#'
