@@ -324,6 +324,33 @@ class ClientTest extends TestCase
         }
     }
 
+    public function testConnectionCapsApplyToSyncRequests(): void
+    {
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_multi']);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+
+            $client = new Client([
+                'max_host_connections' => 1,
+                'max_total_connections' => 3,
+            ]);
+
+            $response = $client->get(Server::$url);
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(1, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+            self::assertSame(3, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_TOTAL_CONNECTIONS')]);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_multi']);
+        }
+    }
+
     public function testConnectionCapsDoNotApplyToStreamRequests(): void
     {
         self::skipIfStreamHandlerIsUnavailable();
@@ -371,9 +398,29 @@ class ClientTest extends TestCase
         self::assertNull($client->getConfig('max_total_connections'));
     }
 
+    /**
+     * @dataProvider invalidConnectionCapClientOptionProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidConnectionCapClientOptionsWhenCurlCannotApplyThem(string $option, $value): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.29.0', 'features' => 0]);
+
+        try {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage($option.' must be a positive integer.');
+
+            new Client([$option => $value]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
     public function testConnectionCapsComposeWithTransportSharing(): void
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
         self::skipIfConnectionCapCurlMultiOptionsUnavailable();
         $previousVersionInfo = self::setCurlVersionInfo([
             'version' => '8.6.0',
@@ -405,10 +452,83 @@ class ClientTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider connectionCapClientOptionProvider
+     */
+    public function testConnectionCapClientOptionsCannotBeUsedWithRequiredPersistentTransportSharing(string $option): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('persistent transport sharing');
+
+        new Client([
+            'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
+            $option => 1,
+        ]);
+    }
+
+    public function testConnectionCapsDegradePersistentPreferTransportSharingToHandlerSharing(): void
+    {
+        self::skipIfDefaultCurlHandlerIsUnavailable();
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.21.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        $_SERVER['curl_test'] = true;
+        unset(
+            $_SERVER['_curl_multi'],
+            $_SERVER['_curl_share'],
+            $_SERVER['_curl_share_init_count'],
+            $_SERVER['_curl_share_init_persistent_count'],
+            $_SERVER['_curl_share_persistent_options']
+        );
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+
+            $client = new Client([
+                'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
+                'max_host_connections' => 1,
+            ]);
+
+            $response = $client->getAsync(Server::$url, [
+                'multiplex' => Multiplexing::WAIT,
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(1, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+            self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
+            self::assertHandlerShareWasCreated();
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+            unset(
+                $_SERVER['curl_test'],
+                $_SERVER['_curl_multi'],
+                $_SERVER['_curl_share'],
+                $_SERVER['_curl_share_init_count'],
+                $_SERVER['_curl_share_init_persistent_count'],
+                $_SERVER['_curl_share_persistent_options']
+            );
+        }
+    }
+
     public static function connectionCapClientOptionProvider(): iterable
     {
         yield 'max host connections' => ['max_host_connections'];
         yield 'max total connections' => ['max_total_connections'];
+    }
+
+    public static function invalidConnectionCapClientOptionProvider(): iterable
+    {
+        foreach (['max_host_connections', 'max_total_connections'] as $option) {
+            yield $option.' zero' => [$option, 0];
+            yield $option.' negative' => [$option, -1];
+            yield $option.' float' => [$option, 1.0];
+            yield $option.' string' => [$option, '1'];
+        }
     }
 
     public static function strictTransportSharingModeProvider(): iterable

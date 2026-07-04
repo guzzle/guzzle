@@ -75,6 +75,18 @@ final class Utils
         $sharingMode = CurlShareHandleState::normalizeMode($handlerOptions['transport_sharing'] ?? null, 'transport_sharing');
         $sharingRequired = self::isTransportSharingRequired($sharingMode);
         $connectionCapsRequired = self::hasConnectionCapOptions($handlerOptions);
+
+        if ($connectionCapsRequired && $sharingMode === TransportSharing::PERSISTENT_REQUIRE) {
+            throw new InvalidArgumentException('The "max_host_connections" and "max_total_connections" options cannot be combined with required persistent transport sharing because libcurl does not apply connection caps to shared connection pools.');
+        }
+
+        if ($connectionCapsRequired && $sharingMode === TransportSharing::PERSISTENT_PREFER) {
+            // libcurl does not apply cURL multi connection caps to transfers
+            // using a shared connection pool, so the best honorable offer for
+            // preferred persistent sharing is a handler-lifetime share.
+            $sharingMode = TransportSharing::HANDLER_PREFER;
+        }
+
         $handler = self::createCurlHandler($sharingMode, $handlerOptions);
 
         if ($sharingRequired && $handler === null) {
@@ -129,7 +141,15 @@ final class Utils
         $curlMultiHandlerOptions = $curlHandlerOptions + $connectionCapOptions;
 
         if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
-            return Proxy::wrapSync(new CurlMultiHandler($curlMultiHandlerOptions), new CurlHandler($curlHandlerOptions));
+            $multiHandler = new CurlMultiHandler($curlMultiHandlerOptions);
+
+            if ($connectionCapOptions !== []) {
+                // Connection caps only govern transfers on the multi handle, so
+                // the synchronous CurlHandler fast path would escape them.
+                return $multiHandler;
+            }
+
+            return Proxy::wrapSync($multiHandler, new CurlHandler($curlHandlerOptions));
         }
 
         if ($connectionCapOptions === [] && \function_exists('curl_exec')) {
@@ -160,15 +180,22 @@ final class Utils
     /**
      * @param array{max_host_connections?: mixed, max_total_connections?: mixed} $handlerOptions
      *
-     * @return array<string, mixed>
+     * @return array<string, int>
      */
     private static function connectionCapOptions(array $handlerOptions): array
     {
         $options = [];
         foreach (['max_host_connections', 'max_total_connections'] as $capOption) {
-            if (($handlerOptions[$capOption] ?? null) !== null) {
-                $options[$capOption] = $handlerOptions[$capOption];
+            $value = $handlerOptions[$capOption] ?? null;
+            if ($value === null) {
+                continue;
             }
+
+            if (!\is_int($value) || $value < 1) {
+                throw new InvalidArgumentException(\sprintf('%s must be a positive integer.', $capOption));
+            }
+
+            $options[$capOption] = $value;
         }
 
         return $options;

@@ -486,6 +486,46 @@ class CurlMultiHandlerTest extends TestCase
     }
 
     /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testRejectsConnectionCapOptionsWithRequiredPersistentTransportSharing(string $option, string $_constant): void
+    {
+        try {
+            new CurlMultiHandler([
+                'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
+                $option => 1,
+            ]);
+            self::fail('Expected the connection cap option to conflict with persistent transport sharing.');
+        } catch (InvalidArgumentException $e) {
+            self::assertStringContainsString($option.' cannot be combined with persistent transport sharing', $e->getMessage());
+        }
+
+        self::assertArrayNotHasKey('_curl_share_init_count', $_SERVER);
+        self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
+    }
+
+    public function testDegradesPersistentPreferTransportSharingWithConnectionCaps(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler([
+            'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
+            'max_host_connections' => 2,
+        ]);
+
+        $handler(new Request('GET', Server::$url), [])->wait();
+
+        self::assertArrayHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
+        self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
+        self::assertHandlerShareWasCreated();
+        self::assertSame(2, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+    }
+
+    /**
      * @dataProvider preferredTransportSharingModeProvider
      */
     public function testPreferredTransportSharingCanBeUsedWithCustomFactory(string $transportSharing): void

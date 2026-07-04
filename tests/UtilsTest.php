@@ -121,6 +121,57 @@ class UtilsTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testChooseHandlerRejectsConnectionCapsWithRequiredPersistentTransportSharing(string $option): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('persistent transport sharing');
+
+        Utils::chooseHandler([
+            'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
+            $option => 1,
+        ]);
+    }
+
+    public function testChooseHandlerDegradesPersistentPreferTransportSharingWithConnectionCaps(): void
+    {
+        self::skipIfDefaultCurlHandlerIsUnavailable();
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.12.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_share'], $_SERVER['_curl_share_init_count'], $_SERVER['_curl_share_init_persistent_count']);
+
+        try {
+            $handler = Utils::chooseHandler([
+                'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
+                'max_host_connections' => 1,
+            ]);
+
+            self::assertIsCallable($handler);
+            self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
+            self::assertSame(1, $_SERVER['_curl_share_init_count']);
+            self::assertSame([
+                \CURL_LOCK_DATA_DNS,
+                \CURL_LOCK_DATA_SSL_SESSION,
+            ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+            unset($_SERVER['curl_test'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count'], $_SERVER['_curl_share_init_persistent_count']);
+        }
+    }
+
+    public static function connectionCapOptionProvider(): iterable
+    {
+        yield 'max host connections' => ['max_host_connections'];
+        yield 'max total connections' => ['max_total_connections'];
+    }
+
     public function testChooseHandlerAcceptsDisabledTransportSharing(): void
     {
         $_SERVER['curl_test'] = true;
@@ -237,6 +288,13 @@ class UtilsTest extends TestCase
             || !CurlVersion::supportsHandlerSharing()
         ) {
             self::markTestSkipped('Default cURL handler with share handles is unavailable.');
+        }
+    }
+
+    private static function skipIfDefaultCurlMultiHandlerIsUnavailable(): void
+    {
+        if (!\function_exists('curl_multi_exec') || !\function_exists('curl_exec') || !CurlVersion::supportsCurlHandler()) {
+            self::markTestSkipped('Default cURL multi handler is unavailable.');
         }
     }
 

@@ -136,6 +136,25 @@ final class CurlMultiHandler
         $transportSharing = $options['transport_sharing'] ?? null;
         $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
 
+        $connectionCapOption = self::firstConnectionCapOption($options);
+        if ($connectionCapOption !== null) {
+            $persistentShareState = $transportSharing instanceof CurlShareHandleState
+                && \in_array($sharingMode, [TransportSharing::PERSISTENT_PREFER, TransportSharing::PERSISTENT_REQUIRE], true);
+
+            if ($persistentShareState || $sharingMode === TransportSharing::PERSISTENT_REQUIRE) {
+                throw new InvalidArgumentException(\sprintf('%s cannot be combined with persistent transport sharing because libcurl does not apply connection caps to shared connection pools.', $connectionCapOption));
+            }
+
+            if ($sharingMode === TransportSharing::PERSISTENT_PREFER) {
+                // libcurl does not apply cURL multi connection caps to
+                // transfers using a shared connection pool, so the best
+                // honorable offer for preferred persistent sharing is a
+                // handler-lifetime share.
+                $transportSharing = TransportSharing::HANDLER_PREFER;
+                $sharingMode = TransportSharing::HANDLER_PREFER;
+            }
+        }
+
         if (\array_key_exists('handle_factory', $options) && $options['handle_factory'] !== null) {
             $this->shareHandleState = null;
             $this->factory = $options['handle_factory'];
@@ -275,6 +294,20 @@ final class CurlMultiHandler
                 throw new InvalidArgumentException(\sprintf('Passing %s in the cURL multi handler "options" is not supported. Use %s instead.', self::formatCurlMultiOption($option), $conflictingOptions[$option]));
             }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function firstConnectionCapOption(array $options): ?string
+    {
+        foreach (self::CONNECTION_CAP_OPTIONS as $name => $_) {
+            if (($options[$name] ?? null) !== null) {
+                return $name;
+            }
+        }
+
+        return null;
     }
 
     /**
