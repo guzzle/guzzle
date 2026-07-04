@@ -243,11 +243,12 @@ class CurlMultiHandler
         $id = (int) $easy->handle;
 
         $sync = !empty($options[RequestOptions::SYNCHRONOUS]);
+        $waitToken = new \stdClass();
 
         $promise = new Promise(
-            function () use ($id, $sync): void {
+            function () use ($id, $sync, $waitToken): void {
                 if ($sync) {
-                    $this->executeUntil($id);
+                    $this->executeUntil($id, $waitToken);
                 } else {
                     $this->execute();
                 }
@@ -257,7 +258,7 @@ class CurlMultiHandler
             }
         );
 
-        $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
+        $this->addRequest(['easy' => $easy, 'deferred' => $promise, 'wait_token' => $waitToken]);
 
         return $promise;
     }
@@ -649,12 +650,16 @@ class CurlMultiHandler
      * Runs the event loop until the given transfer has finished, so a
      * synchronous transfer does not wait for every other transfer on the
      * handler like execute() does.
+     *
+     * The native cURL handle ID can be reused by a request created from a
+     * completion callback, so the wait token guards against waiting on an
+     * unrelated transfer that inherited the ID.
      */
-    private function executeUntil(int $id): void
+    private function executeUntil(int $id, object $waitToken): void
     {
         $queue = P\Utils::queue();
 
-        while (isset($this->handles[$id]) || isset($this->delays[$id])) {
+        while (isset($this->handles[$id]) && ($this->handles[$id]['wait_token'] ?? null) === $waitToken) {
             // If the transfer is delayed, then sleep until it is due
             if (!$this->active && isset($this->delays[$id])) {
                 \usleep($this->timeToNext());

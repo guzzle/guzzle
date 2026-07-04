@@ -66,7 +66,7 @@ class CurlMultiHandlerTest extends TestCase
 
         $handler = new CurlMultiHandler(['max_host_connections' => 2]);
 
-        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 500]);
+        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 2000]);
         $immediate = $handler(new Request('GET', Server::$url), [RequestOptions::SYNCHRONOUS => true]);
 
         $response = $immediate->wait();
@@ -75,6 +75,30 @@ class CurlMultiHandlerTest extends TestCase
         self::assertTrue(P\Is::pending($delayed));
 
         $delayed->cancel();
+    }
+
+    public function testSynchronousWaitDoesNotFollowReusedHandleFromCompletionCallback(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        Server::flush();
+        Server::enqueue([new Response(200), new Response(200)]);
+
+        $handler = new CurlMultiHandler(['max_host_connections' => 2]);
+        $spawned = null;
+
+        $response = $handler(new Request('GET', Server::$url), [
+            RequestOptions::SYNCHRONOUS => true,
+            'on_trailers' => static function () use ($handler, &$spawned): void {
+                $spawned = $handler(new Request('GET', Server::$url), ['delay' => 2000]);
+            },
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertInstanceOf(P\PromiseInterface::class, $spawned);
+        self::assertTrue(P\Is::pending($spawned));
+
+        $spawned->cancel();
     }
 
     /**
