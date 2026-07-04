@@ -110,6 +110,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Point rejections of the raw `CURLOPT_PIPEWAIT` cURL option at the `multiplex` request option
 - Reject cURL multi options that the runtime libcurl cannot apply
 - Reject unknown handler constructor options
+- Reject invalid `select_timeout` cURL multi handler option values
 
 ### Removed
 

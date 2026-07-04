@@ -35,7 +35,8 @@ class CurlMultiHandlerTest extends TestCase
             $_SERVER['_curl_share_init_count'],
             $_SERVER['_curl_share_init_persistent_count'],
             $_SERVER['_curl_share_persistent_options'],
-            $_SERVER['curl_multi_setopt_fail']
+            $_SERVER['curl_multi_setopt_fail'],
+            $_SERVER['curl_multi_setopt_throw']
         );
     }
 
@@ -49,6 +50,7 @@ class CurlMultiHandlerTest extends TestCase
             $_SERVER['_curl_share_init_persistent_count'],
             $_SERVER['_curl_share_persistent_options'],
             $_SERVER['curl_multi_setopt_fail'],
+            $_SERVER['curl_multi_setopt_throw'],
             $_SERVER['curl_test']
         );
     }
@@ -76,7 +78,7 @@ class CurlMultiHandlerTest extends TestCase
             self::initMultiHandle($handler);
             self::fail('Expected InvalidArgumentException.');
         } catch (InvalidArgumentException $e) {
-            self::assertSame('Unable to apply the cURL multi option '.\CURLMOPT_MAXCONNECTS.'; it was rejected by the runtime libcurl.', $e->getMessage());
+            self::assertStringContainsString('Unable to apply the cURL multi option CURLMOPT_MAXCONNECTS', $e->getMessage());
         }
 
         self::assertFalse(self::hasMultiHandle($handler));
@@ -84,6 +86,74 @@ class CurlMultiHandlerTest extends TestCase
         unset($_SERVER['curl_multi_setopt_fail']);
         self::initMultiHandle($handler);
         self::assertTrue(self::hasMultiHandle($handler));
+    }
+
+    public function testWrapsCurlMultiOptionThrowable(): void
+    {
+        $handler = new CurlMultiHandler(['options' => [
+            \CURLMOPT_MAXCONNECTS => 5,
+        ]]);
+        $_SERVER['curl_multi_setopt_throw'] = \CURLMOPT_MAXCONNECTS;
+
+        try {
+            self::initMultiHandle($handler);
+            self::fail('Expected InvalidArgumentException.');
+        } catch (InvalidArgumentException $e) {
+            self::assertStringContainsString('Unable to apply the cURL multi option CURLMOPT_MAXCONNECTS', $e->getMessage());
+            self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
+        }
+
+        self::assertFalse(self::hasMultiHandle($handler));
+    }
+
+    public function testPublicRequestCleansUpWhenCurlMultiOptionCannotBeApplied(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+
+        $handler = new CurlMultiHandler(['options' => [
+            \CURLMOPT_MAXCONNECTS => 5,
+        ]]);
+        $_SERVER['curl_multi_setopt_fail'] = \CURLMOPT_MAXCONNECTS;
+
+        try {
+            $handler(new Request('GET', Server::$url), []);
+            self::fail('Expected InvalidArgumentException.');
+        } catch (InvalidArgumentException $e) {
+            self::assertStringContainsString('Unable to apply the cURL multi option CURLMOPT_MAXCONNECTS', $e->getMessage());
+        }
+
+        self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        self::assertSame([], self::readMultiProperty($handler, 'delays'));
+        self::assertFalse(self::hasMultiHandle($handler));
+
+        unset($_SERVER['curl_multi_setopt_fail']);
+        Server::flush();
+        Server::enqueue([new Response()]);
+
+        $response = $handler(new Request('GET', Server::$url), [])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testDelayedRequestCleansUpWhenCurlMultiOptionCannotBeApplied(): void
+    {
+        $handler = new CurlMultiHandler(['options' => [
+            \CURLMOPT_MAXCONNECTS => 5,
+        ]]);
+        $_SERVER['curl_multi_setopt_fail'] = \CURLMOPT_MAXCONNECTS;
+
+        $promise = $handler(new Request('GET', Server::$url), ['delay' => 1]);
+        $handles = self::readMultiProperty($handler, 'handles');
+        $id = \array_key_first($handles);
+        self::assertIsInt($id);
+
+        self::setMultiProperty($handler, 'delays', [$id => Utils::currentTime() - 1]);
+        $handler->tick();
+
+        self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        self::assertSame([], self::readMultiProperty($handler, 'delays'));
+        self::assertFalse(self::hasMultiHandle($handler));
+        self::assertTrue(P\Is::rejected($promise));
     }
 
     public function testThrowsWhenCurlMultiOptionNameIsInvalid(): void
@@ -285,6 +355,42 @@ class CurlMultiHandlerTest extends TestCase
     {
         $a = new CurlMultiHandler(['select_timeout' => '0.5']);
         self::assertSame(0.5, self::readSelectTimeout($a));
+    }
+
+    public function testAllowsZeroSelectTimeout(): void
+    {
+        $a = new CurlMultiHandler(['select_timeout' => 0]);
+        self::assertSame(0.0, self::readSelectTimeout($a));
+    }
+
+    public function testRejectsNonNumericSelectTimeout(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('select_timeout must be a number of seconds');
+
+        new CurlMultiHandler(['select_timeout' => []]);
+    }
+
+    /**
+     * @dataProvider invalidSelectTimeoutRangeProvider
+     *
+     * @param mixed $selectTimeout
+     */
+    public function testRejectsInvalidSelectTimeoutRange($selectTimeout): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('select_timeout must be 0 or greater than or equal to 0.001 seconds');
+
+        new CurlMultiHandler(['select_timeout' => $selectTimeout]);
+    }
+
+    public static function invalidSelectTimeoutRangeProvider(): iterable
+    {
+        yield 'negative' => [-1];
+        yield 'positive infinity' => [\INF];
+        yield 'negative infinity' => [-\INF];
+        yield 'not a number' => [\NAN];
+        yield 'positive sub-millisecond' => [0.0005];
     }
 
     public function testTransportSharingOptionAppliesCurlShare(): void

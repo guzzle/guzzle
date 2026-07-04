@@ -144,10 +144,7 @@ final class CurlMultiHandler
         }
 
         $selectTimeout = $options['select_timeout'] ?? 1.0;
-        if (!\is_int($selectTimeout) && !\is_float($selectTimeout) && (!\is_string($selectTimeout) || !\is_numeric($selectTimeout))) {
-            throw new InvalidArgumentException('select_timeout must be a number of seconds');
-        }
-
+        Utils::timeoutToMilliseconds($selectTimeout, 'select_timeout');
         $this->selectTimeout = (float) $selectTimeout;
 
         $multiOptions = $options['options'] ?? [];
@@ -203,7 +200,12 @@ final class CurlMultiHandler
             }
         );
 
-        $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
+        $entry = ['easy' => $easy, 'deferred' => $promise];
+        try {
+            $this->addRequest($entry);
+        } catch (\Throwable $e) {
+            throw $this->discardPendingRequest($id, $entry, $e);
+        }
 
         return $promise;
     }
@@ -447,8 +449,14 @@ final class CurlMultiHandler
             $currentTime = Utils::currentTime();
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
+                    $entry = $this->handles[$id];
                     unset($this->delays[$id]);
-                    $this->addHandleToMulti($id, $this->handles[$id]['easy']);
+
+                    try {
+                        $this->addHandleToMulti($id, $entry['easy']);
+                    } catch (\Throwable $e) {
+                        $entry['deferred']->reject($this->discardPendingRequest($id, $entry, $e));
+                    }
                 }
             }
         }
@@ -625,6 +633,22 @@ final class CurlMultiHandler
                 $failure = $e;
             }
         }
+    }
+
+    /**
+     * @param array{easy: EasyHandle, deferred: Promise<ResponseInterface, mixed>} $entry
+     */
+    private function discardPendingRequest(int $id, array $entry, \Throwable $failure): \Throwable
+    {
+        unset($this->handles[$id], $this->delays[$id]);
+
+        try {
+            $this->disposeEasyHandle($entry['easy']);
+        } catch (\Throwable $e) {
+            // Preserve the original attach failure.
+        }
+
+        return $failure;
     }
 
     private function cleanupPendingTransfers(bool $reject, ?\Throwable &$failure): void
@@ -943,8 +967,18 @@ final class CurlMultiHandler
                     throw new InvalidArgumentException(\sprintf('Invalid cURL multi option "%s".', $option));
                 }
 
-                if (false === @curl_multi_setopt($multiHandle, $option, $value)) {
-                    throw new InvalidArgumentException(\sprintf('Unable to apply the cURL multi option %d; it was rejected by the runtime libcurl.', $option));
+                try {
+                    $applied = @curl_multi_setopt($multiHandle, $option, $value);
+                } catch (\Throwable $e) {
+                    throw new InvalidArgumentException(
+                        \sprintf('Unable to apply the cURL multi option %s; it was rejected by the runtime libcurl.', self::formatCurlMultiOption($option)),
+                        0,
+                        $e
+                    );
+                }
+
+                if (true !== $applied) {
+                    throw new InvalidArgumentException(\sprintf('Unable to apply the cURL multi option %s; it was rejected by the runtime libcurl.', self::formatCurlMultiOption($option)));
                 }
             }
         } catch (\Throwable $e) {

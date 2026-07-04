@@ -514,6 +514,17 @@ Destructor cleanup remains best-effort and does not reject pending promises.
 A custom `handle_factory` passed to a built-in cURL handler remains caller-owned.
 Closing the handler does not close an injected factory.
 
+#### Built-In Handler Constructor Options
+
+`CurlHandler`, `CurlMultiHandler`, and `StreamHandler` now reject unknown
+constructor option keys with `GuzzleHttp\Exception\InvalidArgumentException`.
+Remove misspelled or application-specific keys before constructing built-in
+handlers.
+
+`CurlMultiHandler` now rejects cURL multi options that cannot be applied by the
+installed runtime libcurl. Values passed through the constructor `options` key
+must be an array keyed by integer `CURLMOPT_*` constants.
+
 Direct magic access to `CurlMultiHandler::$_mh` has been removed. This was an
 undocumented internal lazy cURL multi handle. Applications that used it to set
 `CURLMOPT_*` options should pass those values through the `options` key of the
@@ -908,6 +919,9 @@ parameter declarations.
 
 The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
 the `select_timeout` option to `CurlMultiHandler` instead.
+
+The `select_timeout` option must be numeric, finite, and non-negative. It must
+be `0` or greater than or equal to `0.001` seconds.
 
 #### Removed Middleware Helper APIs
 
