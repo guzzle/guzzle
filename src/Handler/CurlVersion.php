@@ -22,8 +22,8 @@ final class CurlVersion
     // CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE restricts the ALPN offer to h2 only
     // since libcurl 8.10.0, and connection reuse matching stopped handing
     // lower-version connections to prior-knowledge transfers in 8.14.0; below
-    // that, a required request could still be sent over a reused HTTP/1.1
-    // connection before the response backstop could fail it.
+    // that, a required request could silently be sent over a reused HTTP/1.1
+    // connection.
     private const REQUIRED_MULTIPLEX_VERSION = '8.14.0';
 
     // curl 7.52.0 introduced HTTPS proxy support, advertised by a feature bit

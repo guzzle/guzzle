@@ -75,34 +75,52 @@ class CurlMultiHandlerTest extends TestCase
 
     public function testRejectsRequireWaitWhenPipeliningIsDisabled()
     {
-        if (!CurlVersion::supportsRequiredMultiplex() || !CurlVersion::supportsMultiplex()) {
-            self::markTestSkipped('Required multiplexing is unavailable.');
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
         }
 
-        $a = new CurlMultiHandler(['options' => [
-            \CURLMOPT_PIPELINING => \CURLPIPE_NOTHING,
-        ]]);
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('set the "multiplex" option to "eager"');
-        $a(new Request('GET', 'https://example.com', [], null, '2.0'), ['multiplex' => Multiplexing::REQUIRE_WAIT]);
+        try {
+            $a = new CurlMultiHandler(['options' => [
+                \CURLMOPT_PIPELINING => \CURLPIPE_NOTHING,
+            ]]);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('set the "multiplex" option to "eager"');
+            $a(new Request('GET', 'https://example.com', [], null, '2.0'), ['multiplex' => Multiplexing::REQUIRE_WAIT]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     public function testRejectsRequireEagerWhenPipeliningIsDisabled()
     {
-        if (!CurlVersion::supportsRequiredMultiplex() || !CurlVersion::supportsMultiplex()) {
-            self::markTestSkipped('Required multiplexing is unavailable.');
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
         }
 
-        // REQUIRE_EAGER never sets CURLOPT_PIPEWAIT, so this pins the
-        // marker-independent required-family arm of the guard.
-        $a = new CurlMultiHandler(['options' => [
-            \CURLMOPT_PIPELINING => \CURLPIPE_NOTHING,
-        ]]);
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('set the "multiplex" option to "eager"');
-        $a(new Request('GET', 'https://example.com', [], null, '2.0'), ['multiplex' => Multiplexing::REQUIRE_EAGER]);
+        try {
+            // REQUIRE_EAGER never sets CURLOPT_PIPEWAIT, so this pins the
+            // marker-independent required-family arm of the guard.
+            $a = new CurlMultiHandler(['options' => [
+                \CURLMOPT_PIPELINING => \CURLPIPE_NOTHING,
+            ]]);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('set the "multiplex" option to "eager"');
+            $a(new Request('GET', 'https://example.com', [], null, '2.0'), ['multiplex' => Multiplexing::REQUIRE_EAGER]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     public function testDefaultMultiplexDoesNotThrowWhenPipeliningIsDisabled()
