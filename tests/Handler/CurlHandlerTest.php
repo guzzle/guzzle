@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests\Handler;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
@@ -133,6 +134,14 @@ class CurlHandlerTest extends TestCase
         $this->expectExceptionMessage('Cannot use the cURL handler after it has been closed.');
 
         $handler(new Request('GET', Server::$url), []);
+    }
+
+    public function testRejectsUnknownConstructorOption(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid CurlHandler constructor option "unknown".');
+
+        new CurlHandler(['unknown' => true]);
     }
 
     public function testCloseClosesInternallyCreatedFactory(): void

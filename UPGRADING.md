@@ -511,23 +511,18 @@ If `CurlMultiHandler::close()` is called while transfers are pending, those
 promises are rejected with `GuzzleHttp\Exception\HandlerClosedException`.
 Destructor cleanup remains best-effort and does not reject pending promises.
 
-A custom `handle_factory` passed to a built-in cURL handler remains caller-owned.
-Closing the handler does not close an injected factory.
-
-Direct magic access to `CurlMultiHandler::$_mh` has been removed. This was an
-undocumented internal lazy cURL multi handle. Applications that used it to set
-`CURLMOPT_*` options should pass those values through the `options` key of the
-`CurlMultiHandler` constructor.
+A custom `handle_factory` passed to a built-in cURL handler remains
+caller-owned. Closing the handler does not close an injected factory.
 
 #### Timeout Option Validation
 
 Built-in handlers validate timeout option values when they apply those options.
-`timeout` is applied by both built-in transports. `connect_timeout` is applied by
-cURL handlers and accepted without effect by the stream handler. `read_timeout`
-is applied by the stream handler and accepted without effect by cURL handlers.
-When a built-in handler applies a timeout option, positive values below `0.001`
-seconds now throw `InvalidArgumentException` instead of being converted to no
-timeout.
+`timeout` is applied by both built-in transports. `connect_timeout` is applied
+by cURL handlers and accepted without effect by the stream handler.
+`read_timeout` is applied by the stream handler and accepted without effect by
+cURL handlers. When a built-in handler applies a timeout option, positive
+values below `0.001` seconds now throw `InvalidArgumentException` instead of
+being converted to no timeout.
 
 #### Proxy Option Validation
 
@@ -893,21 +888,39 @@ Reading them before assignment raises PHP's uninitialized typed-property `Error`
 
 The native cURL handle properties intentionally remain untyped because PHP 7.4
 represents cURL handles as resources while PHP 8 represents them as cURL handle
-objects. Custom factories must still unset `$easy->handle` when releasing an easy
-handle, as required by `CurlFactoryInterface::release()`.
+objects. Custom factories must still unset `$easy->handle` when releasing an
+easy handle, as required by `CurlFactoryInterface::release()`.
+
+#### Built-In Handler Constructor Options
+
+`CurlHandler`, `CurlMultiHandler`, and `StreamHandler` now reject unknown
+constructor option keys with `GuzzleHttp\Exception\InvalidArgumentException`.
+Remove misspelled or application-specific keys before constructing built-in
+handlers.
+
+`CurlMultiHandler` now rejects cURL multi options that cannot be applied by the
+installed runtime libcurl. Values passed through the constructor `options` key
+must be an array keyed by integer `CURLMOPT_*` constants.
+
+Direct magic access to `CurlMultiHandler::$_mh` has been removed. This was an
+undocumented internal lazy cURL multi handle. Applications that used it to set
+`CURLMOPT_*` options should pass those values through the `options` key of the
+`CurlMultiHandler` constructor.
 
 #### Progress Callback Parameter Types
 
 The built-in handlers now pass integer byte counts to `progress` callbacks.
-Callbacks with `int` parameter types continue to work, and callbacks with `float`
-parameter types can still receive integer byte counts in PHP. If a callback used
-other scalar parameter types, update it to accept integers or remove the scalar
-parameter declarations.
+Callbacks with `int` parameter types continue to work, and callbacks with
+`float` parameter types can still receive integer byte counts in PHP. If a
+callback used other scalar parameter types, update it to accept integers or
+remove the scalar parameter declarations.
 
 #### CurlMultiHandler Select Timeout
 
 The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
-the `select_timeout` option to `CurlMultiHandler` instead.
+the `select_timeout` option to `CurlMultiHandler` instead. The
+`select_timeout` option must be numeric, finite, and non-negative. It must be
+`0` or greater than or equal to `0.001` seconds.
 
 #### Removed Middleware Helper APIs
 

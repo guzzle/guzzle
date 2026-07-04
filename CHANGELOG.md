@@ -108,6 +108,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Wait for in-progress HTTP/2-capable connections by default (`multiplex` defaults to `Multiplexing::WAIT`)
 - Require libcurl 7.65.2 or newer for HTTP/2 requests so multiplex waiting is never silently unavailable
 - Point rejections of the raw `CURLOPT_PIPEWAIT` cURL option at the `multiplex` request option
+- Reject cURL multi options that the runtime libcurl cannot apply
+- Reject unknown handler constructor options
+- Reject invalid `select_timeout` cURL multi handler option values
 
 ### Removed
 

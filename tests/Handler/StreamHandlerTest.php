@@ -72,6 +72,14 @@ class StreamHandlerTest extends TestCase
         self::assertSame('Bar', $sent->getHeaderLine('foo'));
     }
 
+    public function testRejectsUnknownConstructorOption(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid StreamHandler constructor option "unknown".');
+
+        new StreamHandler(['unknown' => true]);
+    }
+
     public function testRejectsEmptyProtocolVersion(): void
     {
         $handler = new StreamHandler();
