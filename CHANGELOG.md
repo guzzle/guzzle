@@ -132,10 +132,19 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Added
 
 - Added the `on_trailers` request option to expose parsed HTTP response trailers
+- Added the `multiplex` request option with `Multiplexing::*` modes to control or require HTTP/2 multiplexing
+- Added rejection of explicit `multiplex` requests when `CURLMOPT_PIPELINING` disables multiplexing
+
+### Deprecated
+
+- Deprecate the raw `CURLOPT_PIPEWAIT` cURL option in favour of the `multiplex` request option
+- Deprecate unknown handler constructor options
+- Deprecate invalid `select_timeout` cURL multi handler option values
 
 ### Changed
 
 - Remove deprecation for the raw cURL `CURLOPT_CERTINFO` option
+- Warn when a cURL multi option cannot be applied
 
 
 ## 7.13.2 - Upcoming
