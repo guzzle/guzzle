@@ -53,22 +53,51 @@ $client->request('GET', '/', [
 ]);
 ```
 
-If you use asynchronous requests with cURL multi handler and want to tweak it,
-additional options can be specified as an array keyed by integer `CURLMOPT_*`
-constants in the **options** key of the `CurlMultiHandler` constructor.
+If you use asynchronous requests with the cURL multi handler, the client can
+bound concurrent connections with named constructor options:
 
 ```php
 use GuzzleHttp\Client;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Handler\CurlMultiHandler;
 
-$client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler([
-    'options' => [
-        CURLMOPT_MAX_TOTAL_CONNECTIONS => 50,
-        CURLMOPT_MAX_HOST_CONNECTIONS => 5,
-    ]
-]))]);
+$client = new Client([
+    'max_total_connections' => 50,
+    'max_host_connections' => 5,
+]);
 ```
+
+When constructing a cURL multi handler yourself, pass the same named options to
+the handler:
+
+```php
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\HandlerStack;
+
+$handler = new CurlMultiHandler([
+    'max_total_connections' => 50,
+    'max_host_connections' => 5,
+]);
+
+$client = new Client(['handler' => HandlerStack::create($handler)]);
+```
+
+Additional cURL multi options that do not have named Guzzle options can still be
+specified as an array keyed by integer `CURLMOPT_*` constants in the **options**
+key of the `CurlMultiHandler` constructor. For example,
+`CURLMOPT_MAX_CONCURRENT_STREAMS` can be used on PHP versions that expose it.
+
+Connection cap options apply to transfers managed by `CurlMultiHandler`. When
+the caps are configured, the default handler routes synchronous requests through
+the capped `CurlMultiHandler` as well. Requests routed to the `StreamHandler`
+with `stream => true` or stream fallback, and manually constructed `CurlHandler`
+or custom handlers, are outside these cURL multi caps.
+
+The caps bound open connections, including idle pooled connections, rather than
+in-flight requests. Transfers queued behind a cap keep consuming the request
+`timeout`, so low caps combined with aggressive timeouts and large request
+bursts can time out before a connection becomes available. To bound in-flight
+requests and memory, combine the caps with request-level concurrency controls
+such as `GuzzleHttp\Pool` or `GuzzleHttp\Promise\Each::ofLimit()`.
 
 Custom cURL request options remain active during redirects unless Guzzle
 documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects)

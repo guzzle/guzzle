@@ -8,6 +8,7 @@ use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
@@ -228,6 +229,203 @@ class ClientTest extends TestCase
         ]);
     }
 
+    public function testConnectionCapsApplyToDefaultCurlMultiHandler(): void
+    {
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_multi']);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+
+            $client = new Client([
+                'max_host_connections' => 1,
+                'max_total_connections' => 3,
+            ]);
+
+            $response = $client->getAsync(Server::$url, [
+                'multiplex' => Multiplexing::WAIT,
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(1, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+            self::assertSame(3, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_TOTAL_CONNECTIONS')]);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_multi']);
+        }
+    }
+
+    public function testConnectionCapsApplyToSyncRequests(): void
+    {
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_multi']);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+
+            $client = new Client([
+                'max_host_connections' => 1,
+                'max_total_connections' => 3,
+            ]);
+
+            $response = $client->get(Server::$url);
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(1, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+            self::assertSame(3, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_TOTAL_CONNECTIONS')]);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_multi']);
+        }
+    }
+
+    public function testConnectionCapsDoNotApplyToStreamRequests(): void
+    {
+        self::skipIfStreamHandlerIsUnavailable();
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_multi']);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+
+            $client = new Client(['max_host_connections' => 1]);
+            $response = $client->get(Server::$url, ['stream' => true]);
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertArrayNotHasKey('_curl_multi', $_SERVER);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_multi']);
+        }
+    }
+
+    public function testConnectionCapsFallBackToStreamHandlerWhenCurlCannotApplyThem(): void
+    {
+        self::skipIfStreamHandlerIsUnavailable();
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.29.0', 'features' => 0]);
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_multi']);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+
+            $client = new Client(['max_host_connections' => 1]);
+            $response = $client->get(Server::$url);
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertArrayNotHasKey('_curl_multi', $_SERVER);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+            unset($_SERVER['curl_test'], $_SERVER['_curl_multi']);
+        }
+    }
+
+    /**
+     * @dataProvider connectionCapClientOptionProvider
+     */
+    public function testConnectionCapClientOptionsCannotBeUsedWithCustomHandler(string $option): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('max_host_connections');
+
+        new Client([
+            'handler' => new MockHandler(),
+            $option => 1,
+        ]);
+    }
+
+    public function testNullConnectionCapClientOptionsCanBeUsedWithCustomHandler(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler(),
+            'max_host_connections' => null,
+            'max_total_connections' => null,
+        ]);
+
+        self::assertNull($client->getConfig('max_host_connections'));
+        self::assertNull($client->getConfig('max_total_connections'));
+    }
+
+    /**
+     * @dataProvider invalidConnectionCapClientOptionProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidConnectionCapClientOptionsWhenCurlCannotApplyThem(string $option, $value): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.29.0', 'features' => 0]);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage($option.' must be a positive integer.');
+
+            new Client([$option => $value]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testConnectionCapsComposeWithTransportSharing(): void
+    {
+        self::skipIfDefaultCurlHandlerIsUnavailable();
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+        $previous = self::setCurlVersionInfo(['version' => '8.6.0', 'features' => self::curlSslFeature()]);
+
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_multi'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+
+            $client = new Client([
+                'transport_sharing' => TransportSharing::HANDLER_PREFER,
+                'max_host_connections' => 1,
+            ]);
+
+            $response = $client->getAsync(Server::$url, [
+                'multiplex' => Multiplexing::WAIT,
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(1, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+            self::assertSame(1, $_SERVER['_curl_share_init_count']);
+            self::assertSame([
+                \CURL_LOCK_DATA_DNS,
+                \CURL_LOCK_DATA_SSL_SESSION,
+            ], $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+        } finally {
+            self::setCurlVersionInfo($previous);
+            unset($_SERVER['curl_test'], $_SERVER['_curl_multi'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+        }
+    }
+
+    public static function connectionCapClientOptionProvider(): iterable
+    {
+        yield 'max host connections' => ['max_host_connections'];
+        yield 'max total connections' => ['max_total_connections'];
+    }
+
+    public static function invalidConnectionCapClientOptionProvider(): iterable
+    {
+        foreach (['max_host_connections', 'max_total_connections'] as $option) {
+            yield $option.' zero' => [$option, 0];
+            yield $option.' negative' => [$option, -1];
+            yield $option.' float' => [$option, 1.0];
+            yield $option.' string' => [$option, '1'];
+        }
+    }
+
     public function testTransportSharingNullCanBeUsedWithCustomHandler(): void
     {
         $client = new Client([
@@ -354,6 +552,27 @@ class ClientTest extends TestCase
             || !CurlVersion::supportsCurlHandler()
         ) {
             self::markTestSkipped('Default cURL handler with share handles is unavailable.');
+        }
+    }
+
+    private static function skipIfDefaultCurlMultiHandlerIsUnavailable(): void
+    {
+        if (!\function_exists('curl_multi_exec') || !\function_exists('curl_exec') || !CurlVersion::supportsCurlHandler()) {
+            self::markTestSkipped('Default cURL multi handler is unavailable.');
+        }
+    }
+
+    private static function skipIfConnectionCapCurlMultiOptionsUnavailable(): void
+    {
+        if (!CurlVersion::supportsConnectionCaps()) {
+            self::markTestSkipped('cURL multi connection cap options are unavailable.');
+        }
+    }
+
+    private static function skipIfStreamHandlerIsUnavailable(): void
+    {
+        if (!\ini_get('allow_url_fopen')) {
+            self::markTestSkipped('Stream handler is unavailable.');
         }
     }
 

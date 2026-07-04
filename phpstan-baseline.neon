@@ -241,12 +241,6 @@ parameters:
 			path: src/Handler/CurlMultiHandler.php
 
 		-
-			message: '#^Static method GuzzleHttp\\Handler\\CurlMultiHandler\:\:addConflictingCurlMultiOption\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
 			message: '#^Strict comparison using \=\=\= between false and resource will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1

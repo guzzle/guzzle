@@ -13,6 +13,8 @@ final class CurlVersion
 
     private const TLS_13_VERSION = '7.52.0';
 
+    private const CONNECTION_CAP_VERSION = '7.30.0';
+
     // CURLOPT_PIPEWAIT exists since libcurl 7.43.0, and multi handles have
     // multiplexed by default since 7.62.0 - but a 7.65.0-7.65.1 regression
     // dropped that default, which 7.65.2 restored, so 7.65.2 is the floor at
@@ -101,6 +103,29 @@ final class CurlVersion
         return \defined('CURLOPT_PIPEWAIT')
             && $version !== null
             && \version_compare($version, self::MULTIPLEX_VERSION, '>=');
+    }
+
+    public static function supportsConnectionCaps(): bool
+    {
+        $version = self::getVersion();
+
+        return \defined('CURLMOPT_MAX_HOST_CONNECTIONS')
+            && \defined('CURLMOPT_MAX_TOTAL_CONNECTIONS')
+            && $version !== null
+            && \version_compare($version, self::CONNECTION_CAP_VERSION, '>=');
+    }
+
+    public static function ensureConnectionCapsSupported(string $option): void
+    {
+        if (self::supportsConnectionCaps()) {
+            return;
+        }
+
+        throw new \InvalidArgumentException(\sprintf(
+            'The "%s" option requires PHP cURL support for CURLMOPT_MAX_HOST_CONNECTIONS and CURLMOPT_MAX_TOTAL_CONNECTIONS with libcurl %s or newer.',
+            $option,
+            self::CONNECTION_CAP_VERSION
+        ));
     }
 
     public static function supportsRequiredMultiplex(): bool

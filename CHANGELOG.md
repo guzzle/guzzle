@@ -10,12 +10,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added the `on_trailers` request option to expose parsed HTTP response trailers
 - Added the `multiplex` request option with `Multiplexing::*` modes to control or require HTTP/2 multiplexing
 - Added rejection of explicit `multiplex` requests when `CURLMOPT_PIPELINING` disables multiplexing
+- Added the `max_host_connections` and `max_total_connections` client and cURL multi handler options
 
 ### Deprecated
 
 - Deprecate the raw `CURLOPT_PIPEWAIT` cURL option in favour of the `multiplex` request option
 - Deprecate unknown handler constructor options
 - Deprecate invalid `select_timeout` cURL multi handler option values
+- Deprecate raw cURL multi connection cap options in favour of the named options
 
 ### Changed
 
