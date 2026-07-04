@@ -147,8 +147,12 @@ class CurlMultiHandler
             $this->selectTimeout = 1;
         }
 
-        $this->options = $options['options'] ?? [];
-        $this->triggerConflictingCurlMultiOptionDeprecations();
+        $multiOptions = $options['options'] ?? [];
+        if (\is_array($multiOptions)) {
+            self::triggerConflictingCurlMultiOptionDeprecations($multiOptions);
+        }
+
+        $this->options = $multiOptions;
 
         // unsetting the property forces the first access to go through
         // __get().
@@ -266,14 +270,17 @@ class CurlMultiHandler
         throw new \InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "eager".');
     }
 
-    private function triggerConflictingCurlMultiOptionDeprecations(): void
+    /**
+     * @param array<mixed> $options
+     */
+    private static function triggerConflictingCurlMultiOptionDeprecations(array $options): void
     {
-        if (!\is_array($this->options) || $this->options === []) {
+        if ($options === []) {
             return;
         }
 
         $conflictingOptions = self::conflictingCurlMultiOptions();
-        foreach ($this->options as $option => $_) {
+        foreach ($options as $option => $_) {
             if (\array_key_exists($option, $conflictingOptions)) {
                 \trigger_deprecation('guzzlehttp/guzzle', '7.14', \sprintf('Passing %s in the cURL multi handler "options" is deprecated; guzzlehttp/guzzle 8.0 will reject this option. Use %s instead.', self::formatCurlMultiOption($option), $conflictingOptions[$option]));
             }
