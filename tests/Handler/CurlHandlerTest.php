@@ -130,6 +130,16 @@ class CurlHandlerTest extends TestCase
         self::assertInstanceOf(CurlHandler::class, $handler);
     }
 
+    public function testDeprecatesUnknownConstructorOption(): void
+    {
+        $deprecation = self::captureDeprecation(static function (): void {
+            new CurlHandler(['unknown' => true]);
+        });
+
+        self::assertNotNull($deprecation, 'Expected a deprecation for the unknown constructor option.');
+        self::assertStringContainsString('The "unknown" CurlHandler constructor option is unknown', $deprecation);
+    }
+
     public function testUsesContentLengthWhenOverInMemorySize()
     {
         Server::flush();
@@ -153,6 +163,28 @@ class CurlHandlerTest extends TestCase
         if (!\function_exists('curl_share_init') || !\function_exists('curl_share_setopt') || !\defined('CURLOPT_SHARE')) {
             self::markTestSkipped('cURL share handles are unavailable.');
         }
+    }
+
+    private static function captureDeprecation(callable $callback): ?string
+    {
+        $deprecation = null;
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
+            if ($severity !== \E_USER_DEPRECATED) {
+                return false;
+            }
+
+            $deprecation = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $callback();
+        } finally {
+            \restore_error_handler();
+        }
+
+        return $deprecation;
     }
 
     private static function curlSslFeature(): int

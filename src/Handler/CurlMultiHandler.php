@@ -22,6 +22,13 @@ use Psr\Http\Message\RequestInterface;
  */
 class CurlMultiHandler
 {
+    private const KNOWN_CONSTRUCTOR_OPTIONS = [
+        'handle_factory' => true,
+        'options' => true,
+        'select_timeout' => true,
+        'transport_sharing' => true,
+    ];
+
     /**
      * @var CurlFactoryInterface
      */
@@ -104,6 +111,12 @@ class CurlMultiHandler
      */
     public function __construct(array $options = [])
     {
+        foreach ($options as $name => $_) {
+            if (!isset(self::KNOWN_CONSTRUCTOR_OPTIONS[$name])) {
+                \trigger_deprecation('guzzlehttp/guzzle', '7.14', \sprintf('The "%s" CurlMultiHandler constructor option is unknown; guzzlehttp/guzzle 8.0 will reject unknown constructor options.', (string) $name));
+            }
+        }
+
         CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict($options, 'CurlMultiHandler');
         $transportSharing = $options['transport_sharing'] ?? null;
         $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
@@ -122,6 +135,10 @@ class CurlMultiHandler
         }
 
         if (isset($options['select_timeout'])) {
+            if (!\is_int($options['select_timeout']) && !\is_float($options['select_timeout']) && (!\is_string($options['select_timeout']) || !\is_numeric($options['select_timeout']))) {
+                \trigger_deprecation('guzzlehttp/guzzle', '7.14', 'Passing a non-numeric "select_timeout" CurlMultiHandler option is deprecated; guzzlehttp/guzzle 8.0 will reject it.');
+            }
+
             $this->selectTimeout = $options['select_timeout'];
         } elseif ($selectTimeout = Utils::getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
             \trigger_deprecation('guzzlehttp/guzzle', '7.2', 'The GUZZLE_CURL_SELECT_TIMEOUT environment variable is deprecated; use the "select_timeout" option instead.');
@@ -131,6 +148,7 @@ class CurlMultiHandler
         }
 
         $this->options = $options['options'] ?? [];
+        $this->triggerConflictingCurlMultiOptionDeprecations();
 
         // unsetting the property forces the first access to go through
         // __get().
@@ -160,8 +178,9 @@ class CurlMultiHandler
         $this->_mh = $multiHandle;
 
         foreach ($this->options as $option => $value) {
-            // A warning is raised in case of a wrong option.
-            curl_multi_setopt($this->_mh, $option, $value);
+            if (false === @curl_multi_setopt($this->_mh, $option, $value)) {
+                \trigger_error(\sprintf('Unable to apply the cURL multi option %d; it was ignored by the runtime libcurl.', $option), \E_USER_WARNING);
+            }
         }
 
         return $this->_mh;
@@ -245,6 +264,80 @@ class CurlMultiHandler
         }
 
         throw new \InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "eager".');
+    }
+
+    private function triggerConflictingCurlMultiOptionDeprecations(): void
+    {
+        if (!\is_array($this->options) || $this->options === []) {
+            return;
+        }
+
+        $conflictingOptions = self::conflictingCurlMultiOptions();
+        foreach ($this->options as $option => $_) {
+            if (\array_key_exists($option, $conflictingOptions)) {
+                \trigger_deprecation('guzzlehttp/guzzle', '7.14', \sprintf('Passing %s in the cURL multi handler "options" is deprecated; guzzlehttp/guzzle 8.0 will reject this option. Use %s instead.', self::formatCurlMultiOption($option), $conflictingOptions[$option]));
+            }
+        }
+    }
+
+    /**
+     * @param int|string $option
+     */
+    private static function formatCurlMultiOption($option): string
+    {
+        if (!\is_int($option)) {
+            return \sprintf('"%s"', $option);
+        }
+
+        static $names = null;
+
+        if (null === $names) {
+            $names = [];
+            foreach (\get_defined_constants(true)['curl'] ?? [] as $name => $value) {
+                if (\is_int($value) && \strpos($name, 'CURLMOPT_') === 0 && !isset($names[$value])) {
+                    $names[$value] = $name;
+                }
+            }
+        }
+
+        if (isset($names[$option])) {
+            return \sprintf('%s (%d)', $names[$option], $option);
+        }
+
+        return (string) $option;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function conflictingCurlMultiOptions(): array
+    {
+        static $options = null;
+
+        if ($options !== null) {
+            return $options;
+        }
+
+        $options = [];
+
+        // Entries land with the connection-cap PR; the mechanism ships empty.
+
+        return $options;
+    }
+
+    /**
+     * @param array<int, string> $options
+     */
+    private static function addConflictingCurlMultiOption(array &$options, string $constant, string $replacement): void
+    {
+        if (!\defined($constant)) {
+            return;
+        }
+
+        $value = \constant($constant);
+        if (\is_int($value)) {
+            $options[$value] = $replacement;
+        }
     }
 
     /**
