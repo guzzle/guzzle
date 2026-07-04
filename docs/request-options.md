@@ -794,6 +794,44 @@ $client->request('POST', '/post', [
 >
 > This option cannot be used with `body`, `form_params`, or `json`
 
+## multiplex
+
+Summary
+Controls how an HTTP/2 request sent through a built-in cURL handler pursues a shared, multiplexed connection.
+
+Types
+- string (one of the `GuzzleHttp\Multiplexing` constants)
+
+Default
+None (multiplexing is left to libcurl)
+
+Constant
+`GuzzleHttp\RequestOptions::MULTIPLEX`
+
+libcurl multiplexes concurrent HTTP/2 transfers over a single connection whenever a multiplexable connection to the origin already exists, whatever this option is set to. When the option is not set, Guzzle leaves the rest to libcurl too: nothing waits. The modes grade how much further the request goes:
+
+- `Multiplexing::EAGER` - never wait for a connection that is still being established: a burst of requests against a cold origin opens parallel connections.
+- `Multiplexing::WAIT` - wait for a pending connection that libcurl considers eligible for multiplexing, normally one to the same origin, and share it. Needs libcurl 7.65.2+ and the `CurlMultiHandler`, and is silently ignored elsewhere. If the connection turns out not to multiplex, waiting requests open their own.
+- `Multiplexing::REQUIRE_EAGER` - guarantee a multiplexed protocol or fail loudly, while dialing eagerly. The request is sent with HTTP/2 prior knowledge, so TLS connections offer only `h2` via ALPN and cleartext connections speak HTTP/2 directly; a server limited to HTTP/1.x fails the connection instead of downgrading, and cleartext requests sent through a proxy are rejected. Requires protocol version `2`/`2.0`, a cURL handler, and libcurl 8.14.0+; anything else throws. A cold burst dials connections in parallel, but libcurl still packs later streams onto the first established connection rather than balancing.
+- `Multiplexing::REQUIRE_WAIT` - the same guarantees as `Multiplexing::REQUIRE_EAGER`, plus `WAIT`'s waiting; the protocol guarantee holds on both cURL handlers, the waiting only on the `CurlMultiHandler`.
+
+```php
+$promises = [];
+
+foreach ($uris as $uri) {
+    $promises[] = $client->getAsync($uri, [
+        'version' => '2.0',
+        'multiplex' => Multiplexing::REQUIRE_EAGER,
+    ]);
+}
+```
+
+> [!NOTE]
+> None of the modes is a connection **cap**: once an established HTTP/2 connection has no free streams - servers commonly allow about 100 - additional requests open additional connections regardless of this option.
+
+> [!NOTE]
+> libcurl never reuses or coalesces a connection across differing TLS settings (`verify`, custom CA, client certificate/key, pinned public key) or proxy settings, so a verified request can never ride an unverified connection. Because libcurl coalesces HTTP/2 connections, hostnames that resolve to the same address and are covered by the server certificate may share one connection; a server not authoritative for a name can reject it with HTTP/2 `421 Misdirected Request`. Waiting requests share one in-progress connection, so a slow lead connection delays them and is charged against their `timeout`. Only HTTP/2 requests wait; `Multiplexing::EAGER` stops the waiting but does not guarantee separate connections - established multiplex-capable connections are still shared.
+
 ## on_headers
 
 Summary

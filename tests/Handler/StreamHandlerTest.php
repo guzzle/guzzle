@@ -5,6 +5,7 @@ namespace GuzzleHttp\Tests\Handler;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
@@ -64,6 +65,69 @@ class StreamHandlerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('1.1', Server::received()[0]->getProtocolVersion());
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRejectsRequiredMultiplex(string $multiplex)
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('The stream handler cannot guarantee a multiplexed protocol; required multiplexing needs a cURL handler.');
+
+        $handler(new Request('GET', Server::$url, [], null, '2.0'), [
+            'multiplex' => $multiplex,
+        ])->wait();
+    }
+
+    public static function requiredMultiplexProvider(): iterable
+    {
+        yield 'require_eager' => [Multiplexing::REQUIRE_EAGER];
+        yield 'require_wait' => [Multiplexing::REQUIRE_WAIT];
+    }
+
+    /**
+     * @dataProvider invalidMultiplexProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidMultiplexValues($value)
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant');
+
+        $handler(new Request('GET', Server::$url), ['multiplex' => $value])->wait();
+    }
+
+    public static function invalidMultiplexProvider(): iterable
+    {
+        yield 'bool true' => [true];
+        yield 'bool false' => [false];
+        yield 'int' => [1];
+        yield 'unknown string' => ['always'];
+    }
+
+    /**
+     * @dataProvider hintMultiplexProvider
+     */
+    public function testIgnoresHintMultiplex(string $multiplex)
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+
+        $response = $handler(new Request('GET', Server::$url), ['multiplex' => $multiplex])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public static function hintMultiplexProvider(): iterable
+    {
+        yield 'eager' => [Multiplexing::EAGER];
+        yield 'wait' => [Multiplexing::WAIT];
     }
 
     public function testAddsErrorToResponse()

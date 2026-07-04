@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Handler;
 
 use Closure;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -182,6 +183,15 @@ class CurlMultiHandler
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $easy = $this->factory->create($request, $options);
+
+        try {
+            $this->rejectMultiplexPipeliningConflict($easy, $options);
+        } catch (\Throwable $e) {
+            $this->factory->release($easy);
+
+            throw $e;
+        }
+
         $this->applyProxyTunnelOwnership($easy);
         $id = (int) $easy->handle;
 
@@ -195,6 +205,46 @@ class CurlMultiHandler
         $this->addRequest(['easy' => $easy, 'deferred' => $promise]);
 
         return $promise;
+    }
+
+    /**
+     * The "multiplex" request option sets CURLOPT_PIPEWAIT, which libcurl
+     * ignores entirely when the multi handle's CURLMOPT_PIPELINING option
+     * disables multiplexing, so an explicit request for multiplexing on a
+     * handler configured against it is a configuration error. The required
+     * family conflicts marker-independently: a required guarantee on a handler
+     * that disables multiplexing is contradictory even when the transfer would
+     * not wait.
+     */
+    private function rejectMultiplexPipeliningConflict(EasyHandle $easy, array $options): void
+    {
+        $multiplex = $options['multiplex'] ?? null;
+
+        if (Multiplexing::WAIT === $multiplex && !$easy->usesPipewait) {
+            // Explicit wait only conflicts when the transfer would actually
+            // wait; an HTTP/1.1 wait request never sets the marker.
+            return;
+        }
+
+        if (!\in_array($multiplex, [Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+            return;
+        }
+
+        if (!\array_key_exists(\CURLMOPT_PIPELINING, $this->options)) {
+            return;
+        }
+
+        $pipelining = $this->options[\CURLMOPT_PIPELINING];
+        if (!\is_scalar($pipelining)) {
+            return;
+        }
+
+        $multiplexBit = \defined('CURLPIPE_MULTIPLEX') ? \CURLPIPE_MULTIPLEX : 2;
+        if (((int) $pipelining & $multiplexBit) !== 0) {
+            return;
+        }
+
+        throw new \InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "eager".');
     }
 
     /**

@@ -99,6 +99,51 @@ class CurlVersionTest extends TestCase
         }
     }
 
+    public function testSupportsMultiplexUsesMinimumVersion(): void
+    {
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is unavailable.');
+        }
+
+        $previous = self::setCurlVersionInfo(['version' => '7.65.1', 'features' => 0]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsMultiplex());
+
+            self::setCurlVersionInfo(['version' => '7.65.2', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsMultiplex());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
+    public function testSupportsRequiredMultiplexUsesMinimumVersionAndHttp2Feature(): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURL_SSLVERSION_TLSv1_2') || !\defined('CURL_VERSION_HTTP2') || !\defined('CURL_VERSION_SSL')) {
+            self::markTestSkipped('Required multiplexing cURL constants are unavailable.');
+        }
+
+        $previous = self::setCurlVersionInfo([
+            'version' => '8.13.0',
+            'features' => \CURL_VERSION_HTTP2 | \CURL_VERSION_SSL,
+        ]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsRequiredMultiplex());
+
+            self::setCurlVersionInfo(['version' => '8.14.0', 'features' => 0]);
+            self::assertFalse(CurlVersion::supportsRequiredMultiplex());
+
+            self::setCurlVersionInfo([
+                'version' => '8.14.0',
+                'features' => \CURL_VERSION_HTTP2 | \CURL_VERSION_SSL,
+            ]);
+            self::assertTrue(CurlVersion::supportsRequiredMultiplex());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
     public function testSupportsHttpsProxyUsesMinimumVersionAndFeature(): void
     {
         $httpsProxyFeature = \defined('CURL_VERSION_HTTPS_PROXY') ? \CURL_VERSION_HTTPS_PROXY : (1 << 21);

@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -77,6 +78,19 @@ class StreamHandler
         // Sleep if there is a delay specified.
         if (isset($options['delay'])) {
             \usleep($options['delay'] * 1000);
+        }
+
+        $multiplex = $options['multiplex'] ?? null;
+
+        if (null !== $multiplex && !\in_array($multiplex, [Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+            throw new \InvalidArgumentException(\sprintf(
+                'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received %s.',
+                \get_debug_type($multiplex)
+            ));
+        }
+
+        if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+            throw new ConnectException('The stream handler cannot guarantee a multiplexed protocol; required multiplexing needs a cURL handler.', $request);
         }
 
         $protocolVersion = $request->getProtocolVersion();
