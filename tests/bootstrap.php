@@ -61,6 +61,10 @@ namespace GuzzleHttp\Handler {
             unset($_SERVER['_curl_multi']);
         }
 
+        if (isset($_SERVER['curl_multi_setopt_fail']) && (int) $_SERVER['curl_multi_setopt_fail'] === $option) {
+            return false;
+        }
+
         return \curl_multi_setopt($handle, $option, $value);
     }
 

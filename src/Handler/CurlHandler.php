@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\TransportSharing;
@@ -20,6 +21,11 @@ use Psr\Http\Message\ResponseInterface;
 final class CurlHandler
 {
     use NonSerializableTrait;
+
+    private const KNOWN_CONSTRUCTOR_OPTIONS = [
+        'handle_factory' => true,
+        'transport_sharing' => true,
+    ];
 
     private CurlFactoryInterface $factory;
 
@@ -39,6 +45,12 @@ final class CurlHandler
      */
     public function __construct(array $options = [])
     {
+        foreach ($options as $name => $_) {
+            if (!isset(self::KNOWN_CONSTRUCTOR_OPTIONS[$name])) {
+                throw new InvalidArgumentException(\sprintf('Invalid CurlHandler constructor option "%s".', (string) $name));
+            }
+        }
+
         CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict($options, 'CurlHandler');
         $transportSharing = $options['transport_sharing'] ?? null;
         $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');

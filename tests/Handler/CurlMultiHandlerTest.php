@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\HandlerClosedException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlMultiHandler;
@@ -33,7 +34,8 @@ class CurlMultiHandlerTest extends TestCase
             $_SERVER['_curl_share'],
             $_SERVER['_curl_share_init_count'],
             $_SERVER['_curl_share_init_persistent_count'],
-            $_SERVER['_curl_share_persistent_options']
+            $_SERVER['_curl_share_persistent_options'],
+            $_SERVER['curl_multi_setopt_fail']
         );
     }
 
@@ -46,6 +48,7 @@ class CurlMultiHandlerTest extends TestCase
             $_SERVER['_curl_share_init_count'],
             $_SERVER['_curl_share_init_persistent_count'],
             $_SERVER['_curl_share_persistent_options'],
+            $_SERVER['curl_multi_setopt_fail'],
             $_SERVER['curl_test']
         );
     }
@@ -62,6 +65,27 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals(5, $_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]);
     }
 
+    public function testThrowsWhenCurlMultiOptionCannotBeApplied(): void
+    {
+        $handler = new CurlMultiHandler(['options' => [
+            \CURLMOPT_MAXCONNECTS => 5,
+        ]]);
+        $_SERVER['curl_multi_setopt_fail'] = \CURLMOPT_MAXCONNECTS;
+
+        try {
+            self::initMultiHandle($handler);
+            self::fail('Expected InvalidArgumentException.');
+        } catch (InvalidArgumentException $e) {
+            self::assertSame('Unable to apply the cURL multi option '.\CURLMOPT_MAXCONNECTS.'; it was rejected by the runtime libcurl.', $e->getMessage());
+        }
+
+        self::assertFalse(self::hasMultiHandle($handler));
+
+        unset($_SERVER['curl_multi_setopt_fail']);
+        self::initMultiHandle($handler);
+        self::assertTrue(self::hasMultiHandle($handler));
+    }
+
     public function testThrowsWhenCurlMultiOptionNameIsInvalid(): void
     {
         Server::flush();
@@ -74,6 +98,14 @@ class CurlMultiHandlerTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid cURL multi option "not-a-curlmopt-option".');
         $a($request, []);
+    }
+
+    public function testRejectsUnknownConstructorOption(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid CurlMultiHandler constructor option "unknown".');
+
+        new CurlMultiHandler(['unknown' => true]);
     }
 
     public function testRejectsExplicitMultiplexWhenPipeliningIsDisabled(): void

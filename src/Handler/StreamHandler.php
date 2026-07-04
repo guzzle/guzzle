@@ -39,6 +39,10 @@ final class StreamHandler
 {
     use NonSerializableTrait;
 
+    private const KNOWN_CONSTRUCTOR_OPTIONS = [
+        'transport_sharing' => true,
+    ];
+
     private const CONNECTION_ERRORS = [
         'php_network_getaddresses:',
         'getaddrinfo',
@@ -84,6 +88,12 @@ final class StreamHandler
      */
     public function __construct(array $options = [])
     {
+        foreach ($options as $name => $_) {
+            if (!isset(self::KNOWN_CONSTRUCTOR_OPTIONS[$name])) {
+                throw new InvalidArgumentException(\sprintf('Invalid StreamHandler constructor option "%s".', (string) $name));
+            }
+        }
+
         $this->transportSharingMode = CurlShareHandleState::normalizeMode(
             $options['transport_sharing'] ?? null,
             'transport_sharing'

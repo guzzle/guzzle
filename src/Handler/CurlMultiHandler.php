@@ -28,6 +28,13 @@ final class CurlMultiHandler
 {
     use NonSerializableTrait;
 
+    private const KNOWN_CONSTRUCTOR_OPTIONS = [
+        'handle_factory' => true,
+        'options' => true,
+        'select_timeout' => true,
+        'transport_sharing' => true,
+    ];
+
     private CurlFactoryInterface $factory;
 
     private bool $ownsFactory;
@@ -110,6 +117,12 @@ final class CurlMultiHandler
      */
     public function __construct(array $options = [])
     {
+        foreach ($options as $name => $_) {
+            if (!isset(self::KNOWN_CONSTRUCTOR_OPTIONS[$name])) {
+                throw new InvalidArgumentException(\sprintf('Invalid CurlMultiHandler constructor option "%s".', (string) $name));
+            }
+        }
+
         CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict($options, 'CurlMultiHandler');
         $transportSharing = $options['transport_sharing'] ?? null;
         $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
@@ -143,6 +156,7 @@ final class CurlMultiHandler
         }
 
         $this->options = $multiOptions;
+        self::rejectConflictingCurlMultiOptions($this->options);
     }
 
     public function __destruct()
@@ -232,6 +246,83 @@ final class CurlMultiHandler
         }
 
         throw new InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler CURLMOPT_PIPELINING option that disables multiplexing; set CURLMOPT_PIPELINING to CURLPIPE_MULTIPLEX, remove the option, or set the "multiplex" option to "eager".');
+    }
+
+    /**
+     * @param array<mixed> $options
+     */
+    private static function rejectConflictingCurlMultiOptions(array $options): void
+    {
+        if ($options === []) {
+            return;
+        }
+
+        $conflictingOptions = self::conflictingCurlMultiOptions();
+        foreach ($options as $option => $_) {
+            if (\array_key_exists($option, $conflictingOptions)) {
+                throw new InvalidArgumentException(\sprintf('Passing %s in the cURL multi handler "options" is not supported. Use %s instead.', self::formatCurlMultiOption($option), $conflictingOptions[$option]));
+            }
+        }
+    }
+
+    /**
+     * @param int|string $option
+     */
+    private static function formatCurlMultiOption($option): string
+    {
+        if (!\is_int($option)) {
+            return \sprintf('"%s"', $option);
+        }
+
+        static $names = null;
+
+        if (null === $names) {
+            $names = [];
+            foreach (\get_defined_constants(true)['curl'] ?? [] as $name => $value) {
+                if (\is_int($value) && \strpos($name, 'CURLMOPT_') === 0 && !isset($names[$value])) {
+                    $names[$value] = $name;
+                }
+            }
+        }
+
+        if (isset($names[$option])) {
+            return \sprintf('%s (%d)', $names[$option], $option);
+        }
+
+        return (string) $option;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function conflictingCurlMultiOptions(): array
+    {
+        static $options = null;
+
+        if ($options !== null) {
+            return $options;
+        }
+
+        $options = [];
+
+        // Entries land with the connection-cap PR; the mechanism ships empty.
+
+        return $options;
+    }
+
+    /**
+     * @param array<int, string> $options
+     */
+    private static function addConflictingCurlMultiOption(array &$options, string $constant, string $replacement): void
+    {
+        if (!\defined($constant)) {
+            return;
+        }
+
+        $value = \constant($constant);
+        if (\is_int($value)) {
+            $options[$value] = $replacement;
+        }
     }
 
     /**
@@ -846,17 +937,24 @@ final class CurlMultiHandler
             throw new \RuntimeException('Can not initialize curl multi handle.');
         }
 
-        $this->multiHandle = $multiHandle;
+        try {
+            foreach ($this->options as $option => $value) {
+                if (!\is_int($option)) {
+                    throw new InvalidArgumentException(\sprintf('Invalid cURL multi option "%s".', $option));
+                }
 
-        foreach ($this->options as $option => $value) {
-            if (!\is_int($option)) {
-                throw new InvalidArgumentException(\sprintf('Invalid cURL multi option "%s".', $option));
+                if (false === @curl_multi_setopt($multiHandle, $option, $value)) {
+                    throw new InvalidArgumentException(\sprintf('Unable to apply the cURL multi option %d; it was rejected by the runtime libcurl.', $option));
+                }
             }
+        } catch (\Throwable $e) {
+            \curl_multi_close($multiHandle);
 
-            // A warning is raised in case of a wrong option.
-            curl_multi_setopt($multiHandle, $option, $value);
+            throw $e;
         }
 
-        return $multiHandle;
+        $this->multiHandle = $multiHandle;
+
+        return $this->multiHandle;
     }
 }
