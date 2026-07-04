@@ -12,6 +12,7 @@ use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
@@ -155,6 +156,19 @@ final class CurlMultiHandler
             }
         }
 
+        $selectTimeout = $options['select_timeout'] ?? 1.0;
+        Utils::timeoutToMilliseconds($selectTimeout, 'select_timeout');
+        $this->selectTimeout = (float) $selectTimeout;
+
+        $multiOptions = $options['options'] ?? [];
+        if (!\is_array($multiOptions)) {
+            throw new InvalidArgumentException('options must be an array of cURL multi options');
+        }
+
+        $this->options = $multiOptions;
+        self::rejectConflictingCurlMultiOptions($this->options);
+        $this->addConnectionCapOptions($options);
+
         if (\array_key_exists('handle_factory', $options) && $options['handle_factory'] !== null) {
             $this->shareHandleState = null;
             $this->factory = $options['handle_factory'];
@@ -170,19 +184,6 @@ final class CurlMultiHandler
 
             $this->ownsFactory = true;
         }
-
-        $selectTimeout = $options['select_timeout'] ?? 1.0;
-        Utils::timeoutToMilliseconds($selectTimeout, 'select_timeout');
-        $this->selectTimeout = (float) $selectTimeout;
-
-        $multiOptions = $options['options'] ?? [];
-        if (!\is_array($multiOptions)) {
-            throw new InvalidArgumentException('options must be an array of cURL multi options');
-        }
-
-        $this->options = $multiOptions;
-        self::rejectConflictingCurlMultiOptions($this->options);
-        $this->addConnectionCapOptions($options);
     }
 
     public function __destruct()
@@ -221,9 +222,17 @@ final class CurlMultiHandler
 
         $id = (int) $easy->handle;
 
+        $sync = !empty($options[RequestOptions::SYNCHRONOUS]);
+
         /** @var Promise<ResponseInterface, mixed> $promise */
         $promise = new Promise(
-            [$this, 'execute'],
+            function () use ($id, $sync): void {
+                if ($sync) {
+                    $this->executeUntil($id);
+                } else {
+                    $this->execute();
+                }
+            },
             function () use ($id): void {
                 $this->cancel($id);
             }
@@ -601,6 +610,34 @@ final class CurlMultiHandler
                 \usleep($this->timeToNext());
             }
             $this->tick();
+        }
+    }
+
+    /**
+     * Runs the event loop until the given transfer has finished, so a
+     * synchronous transfer does not wait for every other transfer on the
+     * handler like execute() does.
+     */
+    private function executeUntil(int $id): void
+    {
+        $this->assertOpen();
+
+        $queue = P\Utils::queue();
+
+        while (
+            !$this->closed
+            && !$this->closing
+            && (isset($this->handles[$id]) || isset($this->delays[$id]))
+        ) {
+            // If the transfer is delayed, then sleep until it is due
+            if (!$this->active && isset($this->delays[$id])) {
+                \usleep($this->timeToNext());
+            }
+            $this->tick();
+        }
+
+        if (!$this->closed && !$this->closing && !$queue->isEmpty()) {
+            $queue->run();
         }
     }
 

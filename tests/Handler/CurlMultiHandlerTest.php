@@ -17,6 +17,7 @@ use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
@@ -82,6 +83,26 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame(5, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_TOTAL_CONNECTIONS')]);
     }
 
+    public function testSynchronousRequestsDoNotWaitForOtherTransfers(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['max_host_connections' => 2]);
+
+        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 500]);
+        $immediate = $handler(new Request('GET', Server::$url), [RequestOptions::SYNCHRONOUS => true]);
+
+        $response = $immediate->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertTrue(P\Is::pending($delayed));
+
+        $delayed->cancel();
+    }
+
     /**
      * @dataProvider invalidConnectionCapOptionProvider
      *
@@ -102,11 +123,31 @@ class CurlMultiHandlerTest extends TestCase
     {
         self::skipIfConnectionCapCurlMultiOptionsUnavailable();
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Passing '.$constant);
-        $this->expectExceptionMessage('Use the "'.$option.'" client option or cURL multi handler option instead.');
+        try {
+            new CurlMultiHandler(['options' => [\constant($constant) => 2]]);
+            self::fail('Expected the raw cURL multi connection cap option to be rejected.');
+        } catch (InvalidArgumentException $e) {
+            self::assertStringContainsString('Passing '.$constant, $e->getMessage());
+            self::assertStringContainsString('Use the "'.$option.'" client option or cURL multi handler option instead.', $e->getMessage());
+        }
+    }
 
-        new CurlMultiHandler(['options' => [\constant($constant) => 2]]);
+    public function testRejectsRawConnectionCapCurlMultiOptionsBeforeCreatingShareState(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        try {
+            new CurlMultiHandler([
+                'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
+                'options' => [\constant('CURLMOPT_MAX_HOST_CONNECTIONS') => 5],
+            ]);
+            self::fail('Expected the raw cURL multi connection cap option to be rejected.');
+        } catch (InvalidArgumentException $e) {
+            self::assertStringContainsString('Passing CURLMOPT_MAX_HOST_CONNECTIONS', $e->getMessage());
+        }
+
+        self::assertArrayNotHasKey('_curl_share_init_count', $_SERVER);
+        self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
     }
 
     public function testThrowsWhenCurlMultiOptionCannotBeApplied(): void
