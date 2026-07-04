@@ -97,7 +97,7 @@ in-flight requests. Transfers queued behind a cap keep consuming the request
 `timeout`, so low caps combined with aggressive timeouts and large request
 bursts can time out before a connection becomes available. To bound in-flight
 requests and memory, combine the caps with request-level concurrency controls
-such as `GuzzleHttp\Pool` or `each_limit`.
+such as `GuzzleHttp\Pool` or `GuzzleHttp\Promise\Each::ofLimit()`.
 
 Custom cURL request options remain active during redirects unless Guzzle
 documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects)

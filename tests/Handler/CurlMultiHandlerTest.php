@@ -11,6 +11,7 @@ use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
@@ -54,6 +55,26 @@ class CurlMultiHandlerTest extends TestCase
 
         self::assertSame(2, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
         self::assertSame(5, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_TOTAL_CONNECTIONS')]);
+    }
+
+    public function testSynchronousRequestsDoNotWaitForOtherTransfers(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['max_host_connections' => 2]);
+
+        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 500]);
+        $immediate = $handler(new Request('GET', Server::$url), [RequestOptions::SYNCHRONOUS => true]);
+
+        $response = $immediate->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertTrue(P\Is::pending($delayed));
+
+        $delayed->cancel();
     }
 
     /**

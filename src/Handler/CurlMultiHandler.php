@@ -7,6 +7,7 @@ use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
@@ -238,10 +239,19 @@ class CurlMultiHandler
         }
 
         $this->applyProxyTunnelOwnership($easy);
+
         $id = (int) $easy->handle;
 
+        $sync = !empty($options[RequestOptions::SYNCHRONOUS]);
+
         $promise = new Promise(
-            [$this, 'execute'],
+            function () use ($id, $sync): void {
+                if ($sync) {
+                    $this->executeUntil($id);
+                } else {
+                    $this->execute();
+                }
+            },
             function () use ($id) {
                 return $this->cancel($id);
             }
@@ -632,6 +642,28 @@ class CurlMultiHandler
                 \usleep($this->timeToNext());
             }
             $this->tick();
+        }
+    }
+
+    /**
+     * Runs the event loop until the given transfer has finished, so a
+     * synchronous transfer does not wait for every other transfer on the
+     * handler like execute() does.
+     */
+    private function executeUntil(int $id): void
+    {
+        $queue = P\Utils::queue();
+
+        while (isset($this->handles[$id]) || isset($this->delays[$id])) {
+            // If the transfer is delayed, then sleep until it is due
+            if (!$this->active && isset($this->delays[$id])) {
+                \usleep($this->timeToNext());
+            }
+            $this->tick();
+        }
+
+        if (!$queue->isEmpty()) {
+            $queue->run();
         }
     }
 
