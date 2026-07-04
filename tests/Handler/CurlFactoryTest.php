@@ -3835,17 +3835,13 @@ class CurlFactoryTest extends TestCase
         ]);
 
         try {
-            $factory = new CurlFactory(3);
-            $easy = $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
-                'multiplex' => Multiplexing::REQUIRE_WAIT,
-            ]);
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                ['multiplex' => Multiplexing::REQUIRE_WAIT]
+            );
 
-            try {
-                self::assertSame((int) \constant('CURL_HTTP_VERSION_3ONLY'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
-                self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_PIPEWAIT')]);
-            } finally {
-                $factory->release($easy);
-            }
+            self::assertSame((int) \constant('CURL_HTTP_VERSION_3ONLY'), $conf[\CURLOPT_HTTP_VERSION]);
+            self::assertTrue($conf[(int) \constant('CURLOPT_PIPEWAIT')]);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
@@ -3864,17 +3860,13 @@ class CurlFactoryTest extends TestCase
         ]);
 
         try {
-            $factory = new CurlFactory(3);
-            $easy = $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
-                'multiplex' => Multiplexing::REQUIRE_EAGER,
-            ]);
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                ['multiplex' => Multiplexing::REQUIRE_EAGER]
+            );
 
-            try {
-                self::assertSame((int) \constant('CURL_HTTP_VERSION_3ONLY'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
-                self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $_SERVER['_curl']);
-            } finally {
-                $factory->release($easy);
-            }
+            self::assertSame((int) \constant('CURL_HTTP_VERSION_3ONLY'), $conf[\CURLOPT_HTTP_VERSION]);
+            self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $conf);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
