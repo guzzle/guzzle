@@ -460,6 +460,20 @@ responses cannot carry content, so any bytes a misbehaving server sends after
 the header section are never read. The cURL handler already behaved this way via
 libcurl.
 
+#### HTTP/2 Multiplexing
+
+The `multiplex` request option defaults to `Multiplexing::WAIT`:
+HTTP/2 requests on the cURL handlers set libcurl's `CURLOPT_PIPEWAIT`, so a
+concurrent burst waits for an in-progress connection it may be able to share
+instead of dialing one connection per request. Guzzle 7 leaves this to libcurl,
+which never waits by default. Pass
+`'multiplex' => Multiplexing::EAGER` to restore the old dialing
+behaviour, or `Multiplexing::REQUIRE_EAGER`/`Multiplexing::REQUIRE_WAIT` to
+fail loudly unless a multiplexed protocol is guaranteed.
+
+HTTP/2 requests also now require libcurl 7.65.2 or newer, so waiting is never
+silently unavailable where HTTP/2 works.
+
 #### Sink Resource Ownership
 
 PHP resources passed as the `sink` request option are no longer closed when the
@@ -581,10 +595,10 @@ Handler-specific overrides remain available for finer transport control when
 they do not conflict with Guzzle-managed behavior. The built-in cURL handlers
 now reject raw cURL options that override request method, URI, body, headers,
 timeouts, redirects, proxy URLs and types, TLS verification or client
-credentials, progress/debug callbacks, sink handling, cookies, protocols, or
-cURL share handles. Use first-class Guzzle request options for those settings.
-Allowed raw cURL header-list options, such as `CURLOPT_PROXYHEADER`, now accept
-only strings or stringable objects as entries.
+credentials, progress/debug callbacks, sink handling, cookies, protocols,
+connection coalescing, or cURL share handles. Use first-class Guzzle request
+options for those settings. Allowed raw cURL header-list options, such as
+`CURLOPT_PROXYHEADER`, now accept only strings or stringable objects as entries.
 
 The cURL handlers also reject stream-only `stream_context` options, but accept
 `read_timeout` without effect. The stream handler rejects cURL-only options it

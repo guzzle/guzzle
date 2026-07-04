@@ -825,6 +825,40 @@ $client->request('POST', '/post', [
 >
 > This option cannot be used with `body`, `form_params`, or `json`
 
+## multiplex
+
+Summary
+Controls how an HTTP/2 or HTTP/3 request sent through a built-in cURL handler pursues a shared, multiplexed connection.
+
+Types
+- string (one of the `GuzzleHttp\Multiplexing` constants)
+
+Default
+`Multiplexing::WAIT`
+
+Constant
+`GuzzleHttp\RequestOptions::MULTIPLEX`
+
+libcurl multiplexes concurrent HTTP/2 and HTTP/3 transfers over a single connection whenever a multiplexable connection to the origin already exists, whatever this option is set to. The modes grade how much further the request goes:
+
+- `Multiplexing::EAGER` - never wait for a connection that is still being established: a burst of requests against a cold origin opens parallel connections.
+- `Multiplexing::WAIT` (default) - wait for a pending connection that libcurl considers eligible for multiplexing, normally one to the same origin, and share it. Silently ignored by the stream handler and the blocking `CurlHandler`, which has no multi handle to multiplex over. If the connection turns out not to multiplex, waiting requests open their own.
+- `Multiplexing::REQUIRE_EAGER` - guarantee a multiplexed protocol or fail loudly, while dialing eagerly. HTTP/2 requests are sent with prior knowledge, so TLS connections offer only `h2` via ALPN (libcurl 8.14.0+) and cleartext connections speak HTTP/2 directly; cleartext requests sent through a proxy are rejected. HTTP/3 requests are pinned to HTTP/3 with no downgrade at all (libcurl 8.13.0+, PHP 8.4+); a proxy cannot carry them and is rejected. A server limited to lower protocol versions fails the connection instead of downgrading. Requires protocol version `2`/`2.0` or `3`/`3.0` and a cURL handler; anything else throws. A cold burst dials connections in parallel, but libcurl still packs later streams onto the first established connection rather than balancing.
+- `Multiplexing::REQUIRE_WAIT` - the same guarantees as `Multiplexing::REQUIRE_EAGER`, plus `WAIT`'s waiting on pending connections.
+
+```php
+$client->requestAsync('GET', 'https://example.com/big-file', [
+    'version' => '2.0',
+    'multiplex' => Multiplexing::EAGER,
+]);
+```
+
+> [!NOTE]
+> None of the modes is a connection **cap**: once an established HTTP/2 connection has no free streams - servers commonly allow about 100 - additional requests open additional connections regardless of this option.
+
+> [!NOTE]
+> libcurl never reuses or coalesces a connection across differing TLS settings (`verify`, custom CA, client certificate/key, pinned public key) or proxy settings, so a verified request can never ride an unverified connection. Because libcurl coalesces HTTP/2 connections, requests to different hostnames that resolve to the same address and are covered by the server certificate may share one connection; a server not authoritative for the second name can reject it with HTTP/2 `421 Misdirected Request`. Waiting requests share one in-progress connection, so a slow lead connection adds latency to, and is charged against the `timeout` of, the requests waiting on it. Only requests whose protocol version resolves to HTTP/2 or HTTP/3 wait. Use `Multiplexing::EAGER` when you rely on independent connection timing; it stops the waiting but does not guarantee separate connections; established multiplex-capable connections are still shared.
+
 ## on_headers
 
 Summary
@@ -1645,10 +1679,12 @@ Empty or malformed `version` values are rejected before the request is sent. If 
 
 For cURL requests, `version` is converted to Guzzle-managed cURL options. Use this request option instead of passing raw `CURLOPT_HTTP_VERSION`; built-in cURL handlers reject raw cURL options that conflict with Guzzle-managed protocol handling.
 
-HTTP/2 uses libcurl's `CURL_HTTP_VERSION_2_0`. HTTP/3 uses libcurl's `CURL_HTTP_VERSION_3`, not `CURL_HTTP_VERSION_3ONLY`. These modes ask libcurl to attempt the requested protocol, but they are not strict modes: libcurl may use a lower HTTP version when negotiation or connection setup falls back. The response protocol version can therefore be lower than the `version` value you requested. Guzzle does not currently expose libcurl's strict HTTP/3-only mode.
+HTTP/2 uses libcurl's `CURL_HTTP_VERSION_2_0`. HTTP/3 uses libcurl's `CURL_HTTP_VERSION_3` unless `multiplex` is set to `Multiplexing::REQUIRE_EAGER` or `Multiplexing::REQUIRE_WAIT`, which use libcurl's strict HTTP/3-only mode. The non-required modes ask libcurl to attempt the requested protocol, but they are not strict modes: libcurl may use a lower HTTP version when negotiation or connection setup falls back. The response protocol version can therefore be lower than the `version` value you requested.
 
-HTTP/3 support requires PHP to expose cURL's HTTP/3 constants, runtime libcurl 7.66.0 or higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3` feature. A libcurl version number is not enough by itself: libcurl must also be built with HTTP/3 and QUIC support, commonly through an HTTP/3 backend such as ngtcp2 with nghttp3 or quiche.
+When multiple HTTP/2- or HTTP/3-capable requests start concurrently against the same origin, the `multiplex` request option controls whether they wait to share one connection instead of each opening their own.
 
-A request configured with `version => 3.0` must pass HTTP/3 support checks even if it uses a proxy. If a proxy is actually selected — whether through the `proxy` option or resolved from the environment — Guzzle does not try HTTP/3 through the proxy; it sends the transfer as HTTP/2 when available, otherwise HTTP/1.1. A matching proxy `no` rule or environment `no_proxy` entry makes the request direct, so HTTP/3 can still be attempted.
+HTTP/3 support requires PHP to expose cURL's HTTP/3 constants, runtime libcurl 7.88.0 or higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3` feature. A libcurl version number is not enough by itself: libcurl must also be built with HTTP/3 and QUIC support, commonly through an HTTP/3 backend such as ngtcp2 with nghttp3 or quiche.
+
+A request configured with `version => 3.0` must pass HTTP/3 support checks even if it uses a proxy. If a proxy is actually selected, whether through the `proxy` option or resolved from the environment, Guzzle does not try HTTP/3 through the proxy in non-required modes; it sends the transfer as HTTP/2 when available, otherwise HTTP/1.1. Required multiplexing rejects proxied HTTP/3 because it cannot guarantee HTTP/3 through the proxy. A matching proxy `no` rule or environment `no_proxy` entry makes the request direct, so HTTP/3 can still be attempted.
 
 For HTTPS cURL requests, Guzzle sets a minimum of TLS 1.2 by default. That minimum also applies when HTTP/2 or HTTP/3 is requested, because cURL may fall back to a TLS-based HTTP/1.1 or HTTP/2 connection. If you set `crypto_method` to TLS 1.3, Guzzle keeps that stricter setting when the cURL stack exposes TLS 1.3 configuration. Raw `CURLOPT_SSLVERSION` values passed through the `curl` option are rejected because TLS version handling is managed by Guzzle. The `crypto_method_max` request option can cap the maximum TLS version, but the cap must not be lower than the effective minimum (TLS 1.2 by default for HTTPS unless `crypto_method` is set lower).

@@ -13,6 +13,7 @@ use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise\Is;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
@@ -1446,6 +1447,27 @@ class ClientTest extends TestCase
         $client->request('POST', 'http://foo.com', $options);
     }
 
+    /**
+     * @dataProvider validMultiplexProvider
+     */
+    public function testAcceptsValidMultiplexOption(string $multiplex): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+
+        $client->request('GET', 'http://foo.com', ['multiplex' => $multiplex]);
+
+        self::assertSame($multiplex, $mock->getLastOptions()['multiplex']);
+    }
+
+    public static function validMultiplexProvider(): iterable
+    {
+        yield 'eager' => [Multiplexing::EAGER];
+        yield 'wait' => [Multiplexing::WAIT];
+        yield 'require_eager' => [Multiplexing::REQUIRE_EAGER];
+        yield 'require_wait' => [Multiplexing::REQUIRE_WAIT];
+    }
+
     public static function invalidRequestOptionTypeProvider(): iterable
     {
         yield 'allow_redirects' => [
@@ -1581,6 +1603,11 @@ class ClientTest extends TestCase
         yield 'http_errors' => [
             ['http_errors' => 'false'],
             'Passing string to request option "http_errors" is invalid; expected bool.',
+        ];
+
+        yield 'multiplex' => [
+            ['multiplex' => true],
+            'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received bool.',
         ];
 
         yield 'on_headers' => [

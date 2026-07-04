@@ -44,6 +44,11 @@ final class EasyHandle
     public array $trailers = [];
 
     /**
+     * @var bool Whether this handle was configured with CURLOPT_PIPEWAIT
+     */
+    public bool $usesPipewait = false;
+
+    /**
      * @var ResponseInterface|null Received response (if any)
      */
     public ?ResponseInterface $response = null;

@@ -71,6 +71,7 @@ interface ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
+     *     multiplex?: string,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -153,6 +154,7 @@ interface ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
+     *     multiplex?: string,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -240,6 +242,7 @@ interface ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
+     *     multiplex?: string,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
@@ -327,6 +330,7 @@ interface ClientInterface
      *         headers?: array<array-key, string>,
      *         filename?: string
      *     }>,
+     *     multiplex?: string,
      *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
      *     on_stats?: callable(TransferStats): mixed,
      *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,

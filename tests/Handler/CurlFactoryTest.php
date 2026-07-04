@@ -18,6 +18,7 @@ use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Server\Server;
@@ -864,6 +865,7 @@ class CurlFactoryTest extends TestCase
     {
         $cases = [
             'cookie header' => ['CURLOPT_COOKIE', 'name=value', 'the "Cookie" request header or Guzzle cookie middleware'],
+            'pipewait' => ['CURLOPT_PIPEWAIT', true, 'the "multiplex" request option'],
         ];
 
         $available = [];
@@ -3638,6 +3640,488 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
     }
 
+    public function testSetsPipewaitForHttp2RequestsByDefault(): void
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), []);
+
+        try {
+            self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+            self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_PIPEWAIT')]);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testMultiplexEagerDisablesPipewait(): void
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
+            'multiplex' => Multiplexing::EAGER,
+        ]);
+
+        try {
+            self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+            self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $_SERVER['_curl']);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testMultiplexIsInertForHttp11Requests(): void
+    {
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), ['multiplex' => Multiplexing::WAIT]);
+
+        try {
+            if (\defined('CURLOPT_PIPEWAIT')) {
+                self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $_SERVER['_curl']);
+            }
+            self::assertSame(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testHttp2RequiresMultiplexCapableLibcurl(): void
+    {
+        if (!\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.65.1',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+
+            try {
+                $factory->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), []);
+                self::fail('Expected a RequestException for unsupported HTTP/2.');
+            } catch (RequestException $e) {
+                self::assertSame('HTTP/2 is supported by the cURL handler, however libcurl 7.65.2 or newer built with HTTP/2 support is required.', $e->getMessage());
+            }
+
+            self::setCurlVersionInfo([
+                'version' => '7.65.2',
+                'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+            ]);
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '2.0'),
+                []
+            );
+            self::assertTrue($conf[(int) \constant('CURLOPT_PIPEWAIT')]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testSetsPipewaitForHttp3Requests(): void
+    {
+        self::requireHttp3TestConstants();
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is not available.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.88.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                []
+            );
+
+            self::assertSame((int) \constant('CURL_HTTP_VERSION_3'), $conf[\CURLOPT_HTTP_VERSION]);
+            self::assertTrue($conf[(int) \constant('CURLOPT_PIPEWAIT')]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testDoesNotSetPipewaitWhenHttp3FallsBackToHttp11(): void
+    {
+        self::requireHttp3TestConstants();
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is not available.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.88.0',
+            'features' => self::http3FeatureMask(false),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+            $easy = $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'proxy' => 'http://proxy.example.com:8080',
+            ]);
+
+            try {
+                self::assertSame(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+                self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $_SERVER['_curl']);
+            } finally {
+                $factory->release($easy);
+            }
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testSetsPipewaitWhenProxiedHttp3ResolvesToHttp2(): void
+    {
+        self::requireHttp3TestConstants();
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is not available.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.88.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+            $easy = $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'proxy' => ['https' => 'http://proxy.example.com:8080'],
+            ]);
+
+            try {
+                self::assertSame(\CURL_HTTP_VERSION_2_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+                self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_PIPEWAIT')]);
+            } finally {
+                $factory->release($easy);
+            }
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider invalidMultiplexProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidMultiplexValues($value): void
+    {
+        $factory = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant');
+
+        $factory->create(new Psr7\Request('GET', Server::$url), ['multiplex' => $value]);
+    }
+
+    public static function invalidMultiplexProvider(): iterable
+    {
+        yield 'bool true' => [true];
+        yield 'bool false' => [false];
+        yield 'int' => [1];
+        yield 'unknown string' => ['always'];
+    }
+
+    public static function requiredMultiplexProvider(): iterable
+    {
+        yield 'require_eager' => [Multiplexing::REQUIRE_EAGER];
+        yield 'require_wait' => [Multiplexing::REQUIRE_WAIT];
+    }
+
+    public function testRequireWaitSetsHttp3OnlyForHttp3Requests(): void
+    {
+        self::requireHttp3TestConstants();
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is not available.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.13.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                ['multiplex' => Multiplexing::REQUIRE_WAIT]
+            );
+
+            self::assertSame((int) \constant('CURL_HTTP_VERSION_3ONLY'), $conf[\CURLOPT_HTTP_VERSION]);
+            self::assertTrue($conf[(int) \constant('CURLOPT_PIPEWAIT')]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRequireEagerSetsHttp3OnlyWithoutPipewait(): void
+    {
+        self::requireHttp3TestConstants();
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is not available.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.13.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $conf = self::getDefaultCurlConf(
+                new Psr7\Request('GET', 'https://example.com', [], null, '3.0'),
+                ['multiplex' => Multiplexing::REQUIRE_EAGER]
+            );
+
+            self::assertSame((int) \constant('CURL_HTTP_VERSION_3ONLY'), $conf[\CURLOPT_HTTP_VERSION]);
+            self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $conf);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsProxiedHttp3Requests(string $multiplex): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('Required multiplexing cannot be guaranteed for HTTP/3 requests sent through a proxy.');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'multiplex' => $multiplex,
+                'proxy' => 'http://proxy.example.com:8080',
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsUnsupportedHttp3Libcurl(string $multiplex): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.88.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('Required multiplexing for HTTP/3 needs libcurl 8.13.0 or newer built with HTTP/3 support.');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'multiplex' => $multiplex,
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsHttp3LibcurlBelowRequiredMultiplexFloor(string $multiplex): void
+    {
+        self::requireHttp3TestConstants();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.12.0',
+            'features' => self::http3FeatureMask(true),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('Required multiplexing for HTTP/3 needs libcurl 8.13.0 or newer built with HTTP/3 support.');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'multiplex' => $multiplex,
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRequireWaitSetsPriorKnowledgeHttpVersion(): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], static function (): void {
+                $factory = new CurlFactory(3);
+                $easy = $factory->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => Multiplexing::REQUIRE_WAIT,
+                ]);
+
+                try {
+                    self::assertSame((int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+                    self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_PIPEWAIT')]);
+                } finally {
+                    $factory->release($easy);
+                }
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRequireEagerSetsPriorKnowledgeWithoutPipewait(): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], static function (): void {
+                $factory = new CurlFactory(3);
+                $easy = $factory->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => Multiplexing::REQUIRE_EAGER,
+                ]);
+
+                try {
+                    self::assertSame((int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE'), $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+                    self::assertArrayNotHasKey((int) \constant('CURLOPT_PIPEWAIT'), $_SERVER['_curl']);
+                } finally {
+                    $factory->release($easy);
+                }
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsHttp11Requests(string $multiplex): void
+    {
+        $factory = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be required for HTTP/1.1 requests; use protocol version 2 or 3.');
+
+        $factory->create(new Psr7\Request('GET', Server::$url, [], null, '1.1'), [
+            'multiplex' => $multiplex,
+        ]);
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsUnsupportedLibcurl(string $multiplex): void
+    {
+        if (!\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.13.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('Required multiplexing needs libcurl 8.14.0 or newer built with HTTP/2 support.');
+
+            $factory->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                'multiplex' => $multiplex,
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsLibcurlWithoutHttp2(string $multiplex): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('Required multiplexing needs libcurl 8.14.0 or newer built with HTTP/2 support.');
+
+            $factory->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                'multiplex' => $multiplex,
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsCleartextProxiedRequests(string $multiplex): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment(['http_proxy' => 'http://proxy.example.com:8125'], function () use ($multiplex): void {
+                $factory = new CurlFactory(3);
+
+                $this->expectException(RequestException::class);
+                $this->expectExceptionMessage('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.');
+
+                $factory->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => $multiplex,
+                ]);
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
     public function testRejectsEmptyProtocolVersion(): void
     {
         $factory = new CurlFactory(3);
@@ -3671,7 +4155,7 @@ class CurlFactoryTest extends TestCase
     public function testThrowsWhenHttp2IsUnsupported(): void
     {
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::curlSslFeature(),
         ]);
 
@@ -3694,7 +4178,7 @@ class CurlFactoryTest extends TestCase
     public function testThrowsWhenHttp3IsUnsupported(): void
     {
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::curlSslFeature(),
         ]);
 
@@ -3736,13 +4220,14 @@ class CurlFactoryTest extends TestCase
         self::requireHttp3TestConstants();
 
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::http3FeatureMask(true),
         ]);
 
         try {
             $factory = new CurlFactory(3);
             $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'multiplex' => Multiplexing::EAGER,
                 'proxy' => ['https' => 'http://proxy.example.com:8080'],
             ]);
 
@@ -3760,13 +4245,14 @@ class CurlFactoryTest extends TestCase
         self::requireHttp3TestConstants();
 
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::http3FeatureMask(true),
         ]);
 
         try {
             $factory = new CurlFactory(3);
             $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), [
+                'multiplex' => Multiplexing::EAGER,
                 'proxy' => 'http://proxy.example.com:8080',
             ]);
 
@@ -3783,14 +4269,14 @@ class CurlFactoryTest extends TestCase
         self::requireHttp3TestConstants();
 
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::http3FeatureMask(true),
         ]);
 
         try {
             self::withProxyEnvironment(['https_proxy' => 'http://proxy.example.com:8080'], static function (): void {
                 $factory = new CurlFactory(3);
-                $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), []);
+                $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '3.0'), ['multiplex' => Multiplexing::EAGER]);
 
                 self::assertSame('http://proxy.example.com:8080', $_SERVER['_curl'][\CURLOPT_PROXY]);
                 self::assertSame('', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
@@ -3806,7 +4292,7 @@ class CurlFactoryTest extends TestCase
         self::requireHttp3TestConstants();
 
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::http3FeatureMask(true),
         ]);
 
@@ -3835,7 +4321,7 @@ class CurlFactoryTest extends TestCase
         self::requireHttp3TestConstants();
 
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::http3FeatureMask(false),
         ]);
 
@@ -3857,7 +4343,7 @@ class CurlFactoryTest extends TestCase
         self::requireHttp3TestConstants();
 
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::http3FeatureMask(true),
         ]);
 
@@ -3883,7 +4369,7 @@ class CurlFactoryTest extends TestCase
         self::requireHttp3TestConstants();
 
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::http3FeatureMask(true),
         ]);
 
@@ -3908,7 +4394,7 @@ class CurlFactoryTest extends TestCase
         self::requireHttp3TestConstants();
 
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::http3FeatureMask(true),
         ]);
 
@@ -3927,7 +4413,7 @@ class CurlFactoryTest extends TestCase
     public function testHttp3WithProxyStillRequiresHttp3SupportBeforeDowngrade(): void
     {
         $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.66.0',
+            'version' => '7.88.0',
             'features' => self::curlSslFeature(),
         ]);
 
@@ -7514,7 +8000,7 @@ class CurlFactoryTest extends TestCase
 
     private static function requireHttp3TestConstants(): void
     {
-        foreach (['CURL_VERSION_HTTP3', 'CURL_HTTP_VERSION_3'] as $constant) {
+        foreach (['CURL_VERSION_HTTP3', 'CURL_HTTP_VERSION_3', 'CURL_HTTP_VERSION_3ONLY'] as $constant) {
             if (!\defined($constant)) {
                 self::markTestSkipped($constant.' is not available.');
             }
