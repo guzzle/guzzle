@@ -30,9 +30,16 @@ final class CurlMultiHandler
 
     private const KNOWN_CONSTRUCTOR_OPTIONS = [
         'handle_factory' => true,
+        'max_host_connections' => true,
+        'max_total_connections' => true,
         'options' => true,
         'select_timeout' => true,
         'transport_sharing' => true,
+    ];
+
+    private const CONNECTION_CAP_OPTIONS = [
+        'max_host_connections' => 'CURLMOPT_MAX_HOST_CONNECTIONS',
+        'max_total_connections' => 'CURLMOPT_MAX_TOTAL_CONNECTIONS',
     ];
 
     private CurlFactoryInterface $factory;
@@ -112,6 +119,8 @@ final class CurlMultiHandler
      * - transport_sharing: Optional transport sharing mode.
      * - select_timeout: Optional timeout (in seconds) to block before timing
      *   out while selecting curl handles. Defaults to 1 second.
+     * - max_host_connections: Optional maximum concurrent connections per host.
+     * - max_total_connections: Optional maximum concurrent connections overall.
      * - options: An associative array of CURLMOPT_* options and
      *   corresponding values for curl_multi_setopt()
      */
@@ -154,6 +163,7 @@ final class CurlMultiHandler
 
         $this->options = $multiOptions;
         self::rejectConflictingCurlMultiOptions($this->options);
+        $this->addConnectionCapOptions($options);
     }
 
     public function __destruct()
@@ -268,6 +278,38 @@ final class CurlMultiHandler
     }
 
     /**
+     * @param array<string, mixed> $options
+     */
+    private function addConnectionCapOptions(array $options): void
+    {
+        foreach (self::CONNECTION_CAP_OPTIONS as $name => $constant) {
+            $value = $options[$name] ?? null;
+            if ($value === null) {
+                continue;
+            }
+
+            if (!\is_int($value) || $value < 1) {
+                throw new InvalidArgumentException(\sprintf('%s must be a positive integer.', $name));
+            }
+
+            if (!\defined($constant)) {
+                throw new InvalidArgumentException(\sprintf('%s requires %s, but it is not available in the installed PHP cURL extension.', $name, $constant));
+            }
+
+            $option = \constant($constant);
+            if (!\is_int($option)) {
+                throw new InvalidArgumentException(\sprintf('The cURL constant %s must resolve to an integer.', $constant));
+            }
+
+            if (\array_key_exists($option, $this->options)) {
+                throw new InvalidArgumentException(\sprintf('%s conflicts with a %s entry in the "options" array.', $name, $constant));
+            }
+
+            $this->options[$option] = $value;
+        }
+    }
+
+    /**
      * @param int|string $option
      */
     private static function formatCurlMultiOption($option): string
@@ -307,7 +349,8 @@ final class CurlMultiHandler
 
         $options = [];
 
-        // Entries land with the connection-cap PR; the mechanism ships empty.
+        self::addConflictingCurlMultiOption($options, 'CURLMOPT_MAX_HOST_CONNECTIONS', 'the "max_host_connections" client option or cURL multi handler option');
+        self::addConflictingCurlMultiOption($options, 'CURLMOPT_MAX_TOTAL_CONNECTIONS', 'the "max_total_connections" client option or cURL multi handler option');
 
         return $options;
     }

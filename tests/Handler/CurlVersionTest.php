@@ -32,6 +32,7 @@ class CurlVersionTest extends TestCase
     public function testSupportsCurlHandlerRequiresTls12Contract(): void
     {
         self::requiresCurlSslConstants();
+        self::requiresConnectionCapConstants();
 
         self::setVersionInfo([
             'version' => '7.33.0',
@@ -415,6 +416,15 @@ class CurlVersionTest extends TestCase
         }
 
         self::requiresCurlSslFeature();
+    }
+
+    private static function requiresConnectionCapConstants(): void
+    {
+        foreach (['CURLMOPT_MAX_HOST_CONNECTIONS', 'CURLMOPT_MAX_TOTAL_CONNECTIONS'] as $constant) {
+            if (!\defined($constant)) {
+                self::markTestSkipped($constant.' is not available.');
+            }
+        }
     }
 
     private static function requiresCurlSslFeature(): void

@@ -82,6 +82,8 @@ final class CurlVersion
 
         return \defined('CURL_VERSION_SSL')
             && \defined('CURL_SSLVERSION_TLSv1_2')
+            && \defined('CURLMOPT_MAX_HOST_CONNECTIONS')
+            && \defined('CURLMOPT_MAX_TOTAL_CONNECTIONS')
             && null !== $versionInfo
             && version_compare($versionInfo['version'], self::MIN_VERSION, '>=')
             && 0 !== (\CURL_VERSION_SSL & $versionInfo['features']);
@@ -273,6 +275,10 @@ final class CurlVersion
                 'The PHP cURL extension must be built against cURL %s or higher to use the cURL handler.',
                 self::MIN_VERSION
             ), $request);
+        }
+
+        if (!\defined('CURLMOPT_MAX_HOST_CONNECTIONS') || !\defined('CURLMOPT_MAX_TOTAL_CONNECTIONS')) {
+            throw new ConnectException('The PHP cURL extension must expose CURLMOPT_MAX_HOST_CONNECTIONS and CURLMOPT_MAX_TOTAL_CONNECTIONS to use the cURL handler.', $request);
         }
 
         throw new ConnectException('The cURL handler requires libcurl SSL support.', $request);

@@ -67,6 +67,48 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals(5, $_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]);
     }
 
+    public function testCanAddConnectionCapOptions(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $handler = new CurlMultiHandler([
+            'max_host_connections' => 2,
+            'max_total_connections' => 5,
+        ]);
+
+        self::initMultiHandle($handler);
+
+        self::assertSame(2, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+        self::assertSame(5, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_TOTAL_CONNECTIONS')]);
+    }
+
+    /**
+     * @dataProvider invalidConnectionCapOptionProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidConnectionCapOptions(string $option, $value): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($option.' must be a positive integer.');
+
+        new CurlMultiHandler([$option => $value]);
+    }
+
+    /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testRejectsRawConnectionCapCurlMultiOptions(string $option, string $constant): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing '.$constant);
+        $this->expectExceptionMessage('Use the "'.$option.'" client option or cURL multi handler option instead.');
+
+        new CurlMultiHandler(['options' => [\constant($constant) => 2]]);
+    }
+
     public function testThrowsWhenCurlMultiOptionCannotBeApplied(): void
     {
         $handler = new CurlMultiHandler(['options' => [
@@ -176,6 +218,22 @@ class CurlMultiHandlerTest extends TestCase
         $this->expectExceptionMessage('Invalid CurlMultiHandler constructor option "unknown".');
 
         new CurlMultiHandler(['unknown' => true]);
+    }
+
+    public static function connectionCapOptionProvider(): iterable
+    {
+        yield 'max host connections' => ['max_host_connections', 'CURLMOPT_MAX_HOST_CONNECTIONS'];
+        yield 'max total connections' => ['max_total_connections', 'CURLMOPT_MAX_TOTAL_CONNECTIONS'];
+    }
+
+    public static function invalidConnectionCapOptionProvider(): iterable
+    {
+        foreach (['max_host_connections', 'max_total_connections'] as $option) {
+            yield $option.' zero' => [$option, 0];
+            yield $option.' negative' => [$option, -1];
+            yield $option.' float' => [$option, 1.0];
+            yield $option.' string' => [$option, '1'];
+        }
     }
 
     public function testRejectsExplicitMultiplexWhenPipeliningIsDisabled(): void
@@ -1397,6 +1455,13 @@ class CurlMultiHandlerTest extends TestCase
         }, null, CurlMultiHandler::class);
 
         $init($handler);
+    }
+
+    private static function skipIfConnectionCapCurlMultiOptionsUnavailable(): void
+    {
+        if (!CurlVersion::supportsCurlHandler()) {
+            self::markTestSkipped('cURL multi connection cap options are unavailable.');
+        }
     }
 
     /**
