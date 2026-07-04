@@ -330,10 +330,6 @@ final class CurlMultiHandler
             }
 
             $option = \constant($constant);
-            if (!\is_int($option)) {
-                throw new InvalidArgumentException(\sprintf('The cURL constant %s must resolve to an integer.', $constant));
-            }
-
             if (\array_key_exists($option, $this->options)) {
                 throw new InvalidArgumentException(\sprintf('%s conflicts with a %s entry in the "options" array.', $name, $constant));
             }
