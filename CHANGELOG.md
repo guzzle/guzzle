@@ -111,6 +111,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject cURL multi options that the runtime libcurl cannot apply
 - Reject unknown handler constructor options
 - Reject invalid `select_timeout` cURL multi handler option values
+- Reject raw cURL multi connection cap options in favour of the named options
 
 ### Removed
 

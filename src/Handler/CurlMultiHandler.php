@@ -12,6 +12,7 @@ use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
@@ -30,9 +31,16 @@ final class CurlMultiHandler
 
     private const KNOWN_CONSTRUCTOR_OPTIONS = [
         'handle_factory' => true,
+        'max_host_connections' => true,
+        'max_total_connections' => true,
         'options' => true,
         'select_timeout' => true,
         'transport_sharing' => true,
+    ];
+
+    private const CONNECTION_CAP_OPTIONS = [
+        'max_host_connections' => 'CURLMOPT_MAX_HOST_CONNECTIONS',
+        'max_total_connections' => 'CURLMOPT_MAX_TOTAL_CONNECTIONS',
     ];
 
     private CurlFactoryInterface $factory;
@@ -112,6 +120,8 @@ final class CurlMultiHandler
      * - transport_sharing: Optional transport sharing mode.
      * - select_timeout: Optional timeout (in seconds) to block before timing
      *   out while selecting curl handles. Defaults to 1 second.
+     * - max_host_connections: Optional maximum concurrent connections per host.
+     * - max_total_connections: Optional maximum concurrent connections overall.
      * - options: An associative array of CURLMOPT_* options and
      *   corresponding values for curl_multi_setopt()
      */
@@ -126,6 +136,38 @@ final class CurlMultiHandler
         CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict($options, 'CurlMultiHandler');
         $transportSharing = $options['transport_sharing'] ?? null;
         $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
+
+        $selectTimeout = $options['select_timeout'] ?? 1.0;
+        Utils::timeoutToMilliseconds($selectTimeout, 'select_timeout');
+        $this->selectTimeout = (float) $selectTimeout;
+
+        $multiOptions = $options['options'] ?? [];
+        if (!\is_array($multiOptions)) {
+            throw new InvalidArgumentException('options must be an array of cURL multi options');
+        }
+
+        $this->options = $multiOptions;
+        self::rejectConflictingCurlMultiOptions($this->options);
+        $this->addConnectionCapOptions($options);
+
+        $connectionCapOption = self::firstConnectionCapOption($options);
+        if ($connectionCapOption !== null) {
+            $persistentShareState = $transportSharing instanceof CurlShareHandleState
+                && \in_array($sharingMode, [TransportSharing::PERSISTENT_PREFER, TransportSharing::PERSISTENT_REQUIRE], true);
+
+            if ($persistentShareState || $sharingMode === TransportSharing::PERSISTENT_REQUIRE) {
+                throw new InvalidArgumentException(\sprintf('%s cannot be combined with persistent transport sharing because libcurl does not apply connection caps to shared connection pools.', $connectionCapOption));
+            }
+
+            if ($sharingMode === TransportSharing::PERSISTENT_PREFER) {
+                // libcurl does not apply cURL multi connection caps to
+                // transfers using a shared connection pool, so the best
+                // honorable offer for preferred persistent sharing is a
+                // handler-lifetime share.
+                $transportSharing = TransportSharing::HANDLER_PREFER;
+                $sharingMode = TransportSharing::HANDLER_PREFER;
+            }
+        }
 
         if (\array_key_exists('handle_factory', $options) && $options['handle_factory'] !== null) {
             $this->shareHandleState = null;
@@ -142,18 +184,6 @@ final class CurlMultiHandler
 
             $this->ownsFactory = true;
         }
-
-        $selectTimeout = $options['select_timeout'] ?? 1.0;
-        Utils::timeoutToMilliseconds($selectTimeout, 'select_timeout');
-        $this->selectTimeout = (float) $selectTimeout;
-
-        $multiOptions = $options['options'] ?? [];
-        if (!\is_array($multiOptions)) {
-            throw new InvalidArgumentException('options must be an array of cURL multi options');
-        }
-
-        $this->options = $multiOptions;
-        self::rejectConflictingCurlMultiOptions($this->options);
     }
 
     public function __destruct()
@@ -192,15 +222,24 @@ final class CurlMultiHandler
 
         $id = (int) $easy->handle;
 
+        $sync = !empty($options[RequestOptions::SYNCHRONOUS]);
+        $waitToken = new \stdClass();
+
         /** @var Promise<ResponseInterface, mixed> $promise */
         $promise = new Promise(
-            [$this, 'execute'],
+            function () use ($id, $sync, $waitToken): void {
+                if ($sync) {
+                    $this->executeUntil($id, $waitToken);
+                } else {
+                    $this->execute();
+                }
+            },
             function () use ($id): void {
                 $this->cancel($id);
             }
         );
 
-        $entry = ['easy' => $easy, 'deferred' => $promise];
+        $entry = ['easy' => $easy, 'deferred' => $promise, 'wait_token' => $waitToken];
         try {
             $this->addRequest($entry);
         } catch (\Throwable $e) {
@@ -268,6 +307,48 @@ final class CurlMultiHandler
     }
 
     /**
+     * @param array<string, mixed> $options
+     */
+    private static function firstConnectionCapOption(array $options): ?string
+    {
+        foreach (self::CONNECTION_CAP_OPTIONS as $name => $_) {
+            if (($options[$name] ?? null) !== null) {
+                return $name;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function addConnectionCapOptions(array $options): void
+    {
+        foreach (self::CONNECTION_CAP_OPTIONS as $name => $constant) {
+            $value = $options[$name] ?? null;
+            if ($value === null) {
+                continue;
+            }
+
+            if (!\is_int($value) || $value < 1) {
+                throw new InvalidArgumentException(\sprintf('%s must be a positive integer.', $name));
+            }
+
+            if (!\defined($constant)) {
+                throw new InvalidArgumentException(\sprintf('%s requires %s, but it is not available in the installed PHP cURL extension.', $name, $constant));
+            }
+
+            $option = \constant($constant);
+            if (\array_key_exists($option, $this->options)) {
+                throw new InvalidArgumentException(\sprintf('%s conflicts with a %s entry in the "options" array.', $name, $constant));
+            }
+
+            $this->options[$option] = $value;
+        }
+    }
+
+    /**
      * @param int|string $option
      */
     private static function formatCurlMultiOption($option): string
@@ -307,7 +388,8 @@ final class CurlMultiHandler
 
         $options = [];
 
-        // Entries land with the connection-cap PR; the mechanism ships empty.
+        self::addConflictingCurlMultiOption($options, 'CURLMOPT_MAX_HOST_CONNECTIONS', 'the "max_host_connections" client option or cURL multi handler option');
+        self::addConflictingCurlMultiOption($options, 'CURLMOPT_MAX_TOTAL_CONNECTIONS', 'the "max_total_connections" client option or cURL multi handler option');
 
         return $options;
     }
@@ -533,6 +615,39 @@ final class CurlMultiHandler
     }
 
     /**
+     * Runs the event loop until the given transfer has finished, so a
+     * synchronous transfer does not wait for every other transfer on the
+     * handler like execute() does.
+     *
+     * The native cURL handle ID can be reused by a request created from a
+     * completion callback, so the wait token guards against waiting on an
+     * unrelated transfer that inherited the ID.
+     */
+    private function executeUntil(int $id, object $waitToken): void
+    {
+        $this->assertOpen();
+
+        $queue = P\Utils::queue();
+
+        while (
+            !$this->closed
+            && !$this->closing
+            && isset($this->handles[$id])
+            && ($this->handles[$id]['wait_token'] ?? null) === $waitToken
+        ) {
+            // If the transfer is delayed, then sleep until it is due
+            if (!$this->active && isset($this->delays[$id])) {
+                \usleep($this->timeToNext());
+            }
+            $this->tick();
+        }
+
+        if (!$this->closed && !$this->closing && !$queue->isEmpty()) {
+            $queue->run();
+        }
+    }
+
+    /**
      * Closes native cURL resources owned by this handler.
      *
      * Pending transfers are rejected with HandlerClosedException. After closing,
@@ -636,7 +751,7 @@ final class CurlMultiHandler
     }
 
     /**
-     * @param array{easy: EasyHandle, deferred: Promise<ResponseInterface, mixed>} $entry
+     * @param array{easy: EasyHandle, deferred: Promise<ResponseInterface, mixed>, wait_token: object} $entry
      */
     private function discardPendingRequest(int $id, array $entry, \Throwable $failure): \Throwable
     {

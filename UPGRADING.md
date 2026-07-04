@@ -902,6 +902,12 @@ handlers.
 installed runtime libcurl. Values passed through the constructor `options` key
 must be an array keyed by integer `CURLMOPT_*` constants.
 
+`CurlMultiHandler` now rejects `CURLMOPT_MAX_HOST_CONNECTIONS` and
+`CURLMOPT_MAX_TOTAL_CONNECTIONS` entries in the constructor `options` array. Use
+the `max_host_connections` and `max_total_connections` client options when
+Guzzle creates the default handler, or the same named `CurlMultiHandler`
+constructor options when constructing the handler directly.
+
 Direct magic access to `CurlMultiHandler::$_mh` has been removed. This was an
 undocumented internal lazy cURL multi handle. Applications that used it to set
 `CURLMOPT_*` options should pass those values through the `options` key of the
