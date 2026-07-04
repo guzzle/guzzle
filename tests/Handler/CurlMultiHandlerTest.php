@@ -68,6 +68,24 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals(5, $_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]);
     }
 
+    public function testTimeToNextDoesNotTruncateSubSecondDelay(): void
+    {
+        $handler = new CurlMultiHandler();
+
+        $delays = new \ReflectionProperty(CurlMultiHandler::class, 'delays');
+        if (\PHP_VERSION_ID < 80100) {
+            $delays->setAccessible(true);
+        }
+        $delays->setValue($handler, [1 => Utils::currentTime() + 0.5]);
+
+        $timeToNext = new \ReflectionMethod(CurlMultiHandler::class, 'timeToNext');
+        if (\PHP_VERSION_ID < 80100) {
+            $timeToNext->setAccessible(true);
+        }
+
+        self::assertGreaterThan(100000, $timeToNext->invoke($handler));
+    }
+
     public function testCanAddConnectionCapOptions(): void
     {
         self::skipIfConnectionCapCurlMultiOptionsUnavailable();
