@@ -92,7 +92,7 @@ class CurlMultiHandlerTest extends TestCase
 
         $handler = new CurlMultiHandler(['max_host_connections' => 2]);
 
-        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 500]);
+        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 2000]);
         $immediate = $handler(new Request('GET', Server::$url), [RequestOptions::SYNCHRONOUS => true]);
 
         $response = $immediate->wait();
@@ -101,6 +101,30 @@ class CurlMultiHandlerTest extends TestCase
         self::assertTrue(P\Is::pending($delayed));
 
         $delayed->cancel();
+    }
+
+    public function testSynchronousWaitDoesNotFollowReusedHandleFromCompletionCallback(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        Server::flush();
+        Server::enqueue([new Response(200), new Response(200)]);
+
+        $handler = new CurlMultiHandler(['max_host_connections' => 2]);
+        $spawned = null;
+
+        $response = $handler(new Request('GET', Server::$url), [
+            RequestOptions::SYNCHRONOUS => true,
+            'on_trailers' => static function () use ($handler, &$spawned): void {
+                $spawned = $handler(new Request('GET', Server::$url), ['delay' => 2000]);
+            },
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertInstanceOf(P\PromiseInterface::class, $spawned);
+        self::assertTrue(P\Is::pending($spawned));
+
+        $spawned->cancel();
     }
 
     /**
@@ -543,6 +567,17 @@ class CurlMultiHandlerTest extends TestCase
 
         self::assertArrayNotHasKey('_curl_share_init_count', $_SERVER);
         self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
+    }
+
+    public function testRejectsInvalidConnectionCapValuesBeforePersistentSharingConflicts(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('max_host_connections must be a positive integer.');
+
+        new CurlMultiHandler([
+            'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
+            'max_host_connections' => 0,
+        ]);
     }
 
     public function testDegradesPersistentPreferTransportSharingWithConnectionCaps(): void

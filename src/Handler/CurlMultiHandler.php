@@ -137,6 +137,19 @@ final class CurlMultiHandler
         $transportSharing = $options['transport_sharing'] ?? null;
         $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
 
+        $selectTimeout = $options['select_timeout'] ?? 1.0;
+        Utils::timeoutToMilliseconds($selectTimeout, 'select_timeout');
+        $this->selectTimeout = (float) $selectTimeout;
+
+        $multiOptions = $options['options'] ?? [];
+        if (!\is_array($multiOptions)) {
+            throw new InvalidArgumentException('options must be an array of cURL multi options');
+        }
+
+        $this->options = $multiOptions;
+        self::rejectConflictingCurlMultiOptions($this->options);
+        $this->addConnectionCapOptions($options);
+
         $connectionCapOption = self::firstConnectionCapOption($options);
         if ($connectionCapOption !== null) {
             $persistentShareState = $transportSharing instanceof CurlShareHandleState
@@ -155,19 +168,6 @@ final class CurlMultiHandler
                 $sharingMode = TransportSharing::HANDLER_PREFER;
             }
         }
-
-        $selectTimeout = $options['select_timeout'] ?? 1.0;
-        Utils::timeoutToMilliseconds($selectTimeout, 'select_timeout');
-        $this->selectTimeout = (float) $selectTimeout;
-
-        $multiOptions = $options['options'] ?? [];
-        if (!\is_array($multiOptions)) {
-            throw new InvalidArgumentException('options must be an array of cURL multi options');
-        }
-
-        $this->options = $multiOptions;
-        self::rejectConflictingCurlMultiOptions($this->options);
-        $this->addConnectionCapOptions($options);
 
         if (\array_key_exists('handle_factory', $options) && $options['handle_factory'] !== null) {
             $this->shareHandleState = null;
@@ -223,12 +223,13 @@ final class CurlMultiHandler
         $id = (int) $easy->handle;
 
         $sync = !empty($options[RequestOptions::SYNCHRONOUS]);
+        $waitToken = new \stdClass();
 
         /** @var Promise<ResponseInterface, mixed> $promise */
         $promise = new Promise(
-            function () use ($id, $sync): void {
+            function () use ($id, $sync, $waitToken): void {
                 if ($sync) {
-                    $this->executeUntil($id);
+                    $this->executeUntil($id, $waitToken);
                 } else {
                     $this->execute();
                 }
@@ -238,7 +239,7 @@ final class CurlMultiHandler
             }
         );
 
-        $entry = ['easy' => $easy, 'deferred' => $promise];
+        $entry = ['easy' => $easy, 'deferred' => $promise, 'wait_token' => $waitToken];
         try {
             $this->addRequest($entry);
         } catch (\Throwable $e) {
@@ -617,8 +618,12 @@ final class CurlMultiHandler
      * Runs the event loop until the given transfer has finished, so a
      * synchronous transfer does not wait for every other transfer on the
      * handler like execute() does.
+     *
+     * The native cURL handle ID can be reused by a request created from a
+     * completion callback, so the wait token guards against waiting on an
+     * unrelated transfer that inherited the ID.
      */
-    private function executeUntil(int $id): void
+    private function executeUntil(int $id, object $waitToken): void
     {
         $this->assertOpen();
 
@@ -627,7 +632,8 @@ final class CurlMultiHandler
         while (
             !$this->closed
             && !$this->closing
-            && (isset($this->handles[$id]) || isset($this->delays[$id]))
+            && isset($this->handles[$id])
+            && ($this->handles[$id]['wait_token'] ?? null) === $waitToken
         ) {
             // If the transfer is delayed, then sleep until it is due
             if (!$this->active && isset($this->delays[$id])) {
@@ -745,7 +751,7 @@ final class CurlMultiHandler
     }
 
     /**
-     * @param array{easy: EasyHandle, deferred: Promise<ResponseInterface, mixed>} $entry
+     * @param array{easy: EasyHandle, deferred: Promise<ResponseInterface, mixed>, wait_token: object} $entry
      */
     private function discardPendingRequest(int $id, array $entry, \Throwable $failure): \Throwable
     {
