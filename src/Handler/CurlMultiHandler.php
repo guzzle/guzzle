@@ -135,11 +135,17 @@ class CurlMultiHandler
         }
 
         if (isset($options['select_timeout'])) {
-            if (!\is_int($options['select_timeout']) && !\is_float($options['select_timeout']) && (!\is_string($options['select_timeout']) || !\is_numeric($options['select_timeout']))) {
+            $selectTimeout = $options['select_timeout'];
+            if (!\is_int($selectTimeout) && !\is_float($selectTimeout) && (!\is_string($selectTimeout) || !\is_numeric($selectTimeout))) {
                 \trigger_deprecation('guzzlehttp/guzzle', '7.14', 'Passing a non-numeric "select_timeout" CurlMultiHandler option is deprecated; guzzlehttp/guzzle 8.0 will reject it.');
+            } else {
+                $seconds = (float) $selectTimeout;
+                if (!\is_finite($seconds) || $seconds < 0 || ($seconds > 0 && (int) ($seconds * 1000) === 0)) {
+                    \trigger_deprecation('guzzlehttp/guzzle', '7.14', 'Passing a "select_timeout" CurlMultiHandler option that is not 0 or greater than or equal to 0.001 seconds is deprecated; guzzlehttp/guzzle 8.0 will reject it.');
+                }
             }
 
-            $this->selectTimeout = $options['select_timeout'];
+            $this->selectTimeout = $selectTimeout;
         } elseif ($selectTimeout = Utils::getenv('GUZZLE_CURL_SELECT_TIMEOUT')) {
             \trigger_deprecation('guzzlehttp/guzzle', '7.2', 'The GUZZLE_CURL_SELECT_TIMEOUT environment variable is deprecated; use the "select_timeout" option instead.');
             $this->selectTimeout = (int) $selectTimeout;
@@ -182,8 +188,8 @@ class CurlMultiHandler
         $this->_mh = $multiHandle;
 
         foreach ($this->options as $option => $value) {
-            if (false === @curl_multi_setopt($this->_mh, $option, $value)) {
-                \trigger_error(\sprintf('Unable to apply the cURL multi option %d; it was ignored by the runtime libcurl.', $option), \E_USER_WARNING);
+            if (true !== @curl_multi_setopt($this->_mh, $option, $value)) {
+                \trigger_error(\sprintf('Unable to apply the cURL multi option %s; it was ignored by the runtime libcurl.', self::formatCurlMultiOption($option)), \E_USER_WARNING);
             }
         }
 

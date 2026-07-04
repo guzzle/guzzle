@@ -66,7 +66,7 @@ class CurlMultiHandlerTest extends TestCase
         }
 
         self::assertNotNull($warning, 'Expected a warning for the rejected cURL multi option.');
-        self::assertStringContainsString('Unable to apply the cURL multi option '.\CURLMOPT_MAXCONNECTS, $warning);
+        self::assertStringContainsString('Unable to apply the cURL multi option CURLMOPT_MAXCONNECTS', $warning);
         self::assertStringContainsString('ignored by the runtime libcurl', $warning);
     }
 
