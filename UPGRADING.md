@@ -918,10 +918,9 @@ parameter declarations.
 #### CurlMultiHandler Select Timeout
 
 The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
-the `select_timeout` option to `CurlMultiHandler` instead.
-
-The `select_timeout` option must be numeric, finite, and non-negative. It must
-be `0` or greater than or equal to `0.001` seconds.
+the `select_timeout` option to `CurlMultiHandler` instead. The
+`select_timeout` option must be numeric, finite, and non-negative. It must be
+`0` or greater than or equal to `0.001` seconds.
 
 #### Removed Middleware Helper APIs
 
