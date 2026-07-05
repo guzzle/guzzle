@@ -22,7 +22,10 @@ use Psr\Http\Message\UriInterface;
  *
  * The pool will read from an iterator until it is cancelled or until the
  * iterator is consumed. When a request is yielded, the request is sent after
- * applying the "options" request options (if provided in the ctor).
+ * applying the "options" request options (if provided in the ctor). Any
+ * observer callbacks in "options" (on_headers, on_trailers, on_stats,
+ * progress, and allow_redirects.on_redirect) also receive the request's
+ * iterable key as a trailing argument.
  *
  * When a function is yielded by the iterator, the function is provided the
  * "options" array that should be merged on top of any existing options, and
@@ -53,7 +56,7 @@ class Pool implements PromisorInterface
      *             strict?: bool,
      *             referer?: bool,
      *             protocols?: non-empty-array<array-key, string>,
-     *             on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
+     *             on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface, int|string): mixed,
      *             track_redirects?: bool
      *         },
      *         auth?: array{
@@ -88,10 +91,10 @@ class Pool implements PromisorInterface
      *             filename?: string
      *         }>,
      *         multiplex?: string,
-     *         on_headers?: callable(ResponseInterface, RequestInterface): mixed,
-     *         on_stats?: callable(TransferStats): mixed,
-     *         on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
-     *         progress?: callable(int, int, int, int): mixed,
+     *         on_headers?: callable(ResponseInterface, RequestInterface, int|string): mixed,
+     *         on_stats?: callable(TransferStats, int|string): mixed,
+     *         on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface, int|string): mixed,
+     *         progress?: callable(int, int, int, int, int|string): mixed,
      *         protocols?: non-empty-array<array-key, string>,
      *         proxy?: string|array{
      *             http?: string|null,
@@ -120,8 +123,8 @@ class Pool implements PromisorInterface
      *         curl?: array<int|string, mixed>,
      *         ...
      *     },
-     *     fulfilled?: callable(ResponseInterface, array-key, PromiseInterface<mixed, mixed>): mixed,
-     *     rejected?: callable(mixed, array-key, PromiseInterface<mixed, mixed>): mixed
+     *     fulfilled?: callable(ResponseInterface, int|string, PromiseInterface<mixed, mixed>): mixed,
+     *     rejected?: callable(mixed, int|string, PromiseInterface<mixed, mixed>): mixed
      * } $config Pool configuration.
      */
     public function __construct(ClientInterface $client, iterable $requests, array $config = [])
@@ -139,10 +142,12 @@ class Pool implements PromisorInterface
 
         $requestGenerator = static function () use ($requests, $client, $opts): \Generator {
             foreach ($requests as $key => $rfn) {
+                $keyedOpts = self::keyedRequestOptions($opts, $key);
+
                 if ($rfn instanceof RequestInterface) {
-                    yield $key => $client->sendAsync($rfn, $opts);
+                    yield $key => $client->sendAsync($rfn, $keyedOpts);
                 } elseif (\is_callable($rfn)) {
-                    yield $key => $rfn($opts);
+                    yield $key => $rfn($keyedOpts);
                 } else {
                     throw new \InvalidArgumentException('Each value yielded by the iterator must be a Psr\Http\Message\RequestInterface or a callable that returns a promise that fulfills with a Psr\Http\Message\ResponseInterface object.');
                 }
@@ -181,7 +186,7 @@ class Pool implements PromisorInterface
      *             strict?: bool,
      *             referer?: bool,
      *             protocols?: non-empty-array<array-key, string>,
-     *             on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
+     *             on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface, int|string): mixed,
      *             track_redirects?: bool
      *         },
      *         auth?: array{
@@ -216,10 +221,10 @@ class Pool implements PromisorInterface
      *             filename?: string
      *         }>,
      *         multiplex?: string,
-     *         on_headers?: callable(ResponseInterface, RequestInterface): mixed,
-     *         on_stats?: callable(TransferStats): mixed,
-     *         on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
-     *         progress?: callable(int, int, int, int): mixed,
+     *         on_headers?: callable(ResponseInterface, RequestInterface, int|string): mixed,
+     *         on_stats?: callable(TransferStats, int|string): mixed,
+     *         on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface, int|string): mixed,
+     *         progress?: callable(int, int, int, int, int|string): mixed,
      *         protocols?: non-empty-array<array-key, string>,
      *         proxy?: string|array{
      *             http?: string|null,
@@ -248,8 +253,8 @@ class Pool implements PromisorInterface
      *         curl?: array<int|string, mixed>,
      *         ...
      *     },
-     *     fulfilled?: callable(ResponseInterface, array-key): mixed,
-     *     rejected?: callable(mixed, array-key): mixed
+     *     fulfilled?: callable(ResponseInterface, int|string): mixed,
+     *     rejected?: callable(mixed, int|string): mixed
      * } $options Passes through the options available in {@see Pool::__construct}.
      *
      * @return array<array-key, mixed> Returns an array containing the response or rejection reason in the same order that the requests were sent.
@@ -284,5 +289,202 @@ class Pool implements PromisorInterface
                 $results[$k] = $v;
             };
         }
+    }
+
+    /**
+     * Returns the request options with any observer callbacks wrapped so that
+     * they also receive the request's iterable key as a trailing argument.
+     *
+     * @param array{
+     *     base_uri?: string|UriInterface,
+     *     allow_redirects?: bool|array{
+     *         max?: int,
+     *         strict?: bool,
+     *         referer?: bool,
+     *         protocols?: non-empty-array<array-key, string>,
+     *         on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface, int|string): mixed,
+     *         track_redirects?: bool
+     *     },
+     *     auth?: array{
+     *         0: string,
+     *         1: string,
+     *         2?: string|null
+     *     }|string|false|null,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     cert?: string|array{
+     *         0: string,
+     *         1?: string|null
+     *     },
+     *     cert_type?: string,
+     *     connect_timeout?: int|float,
+     *     cookies?: false|CookieJarInterface,
+     *     crypto_method?: int,
+     *     crypto_method_max?: int,
+     *     debug?: bool|resource,
+     *     decode_content?: bool|string,
+     *     delay?: int|float,
+     *     expect?: bool|int,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
+     *     force_ip_resolve?: string,
+     *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
+     *     http_errors?: bool,
+     *     idn_conversion?: bool|int|null,
+     *     json?: mixed,
+     *     multipart?: array<array-key, array{
+     *         name: string|int,
+     *         contents: mixed,
+     *         headers?: array<array-key, string>,
+     *         filename?: string
+     *     }>,
+     *     multiplex?: string,
+     *     on_headers?: callable(ResponseInterface, RequestInterface, int|string): mixed,
+     *     on_stats?: callable(TransferStats, int|string): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface, int|string): mixed,
+     *     progress?: callable(int, int, int, int, int|string): mixed,
+     *     protocols?: non-empty-array<array-key, string>,
+     *     proxy?: string|array{
+     *         http?: string|null,
+     *         https?: string|null,
+     *         no?: string|array<array-key, string>|null
+     *     },
+     *     query?: array<array-key, mixed>|string,
+     *     read_timeout?: int|float,
+     *     retries?: int,
+     *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
+     *     sink?: resource|string|StreamInterface,
+     *     ssl_key?: string|array{
+     *         0: string,
+     *         1?: string|null
+     *     },
+     *     ssl_key_type?: string,
+     *     stream?: bool,
+     *     stream_factory?: StreamFactoryInterface,
+     *     stream_context?: array<array-key, mixed>,
+     *     synchronous?: bool,
+     *     timeout?: int|float,
+     *     uri_factory?: UriFactoryInterface,
+     *     verify?: bool|string,
+     *     version?: string|int|float,
+     *     curl?: array<int|string, mixed>,
+     *     ...
+     * } $options
+     * @param int|string $key
+     *
+     * @return array{
+     *     base_uri?: string|UriInterface,
+     *     allow_redirects?: bool|array{
+     *         max?: int,
+     *         strict?: bool,
+     *         referer?: bool,
+     *         protocols?: non-empty-array<array-key, string>,
+     *         on_redirect?: callable(RequestInterface, ResponseInterface, UriInterface): mixed,
+     *         track_redirects?: bool
+     *     },
+     *     auth?: array{
+     *         0: string,
+     *         1: string,
+     *         2?: string|null
+     *     }|string|false|null,
+     *     body?: resource|string|null|StreamInterface|(callable&object)|\Iterator|\Stringable,
+     *     cert?: string|array{
+     *         0: string,
+     *         1?: string|null
+     *     },
+     *     cert_type?: string,
+     *     connect_timeout?: int|float,
+     *     cookies?: false|CookieJarInterface,
+     *     crypto_method?: int,
+     *     crypto_method_max?: int,
+     *     debug?: bool|resource,
+     *     decode_content?: bool|string,
+     *     delay?: int|float,
+     *     expect?: bool|int,
+     *     form_params?: array<array-key, string|int|float|bool|null|array>,
+     *     force_ip_resolve?: string,
+     *     headers?: array<array-key, string|non-empty-array<array-key, string>>|null,
+     *     http_errors?: bool,
+     *     idn_conversion?: bool|int|null,
+     *     json?: mixed,
+     *     multipart?: array<array-key, array{
+     *         name: string|int,
+     *         contents: mixed,
+     *         headers?: array<array-key, string>,
+     *         filename?: string
+     *     }>,
+     *     multiplex?: string,
+     *     on_headers?: callable(ResponseInterface, RequestInterface): mixed,
+     *     on_stats?: callable(TransferStats): mixed,
+     *     on_trailers?: callable(array<string, list<string>>, ResponseInterface, RequestInterface): mixed,
+     *     progress?: callable(int, int, int, int): mixed,
+     *     protocols?: non-empty-array<array-key, string>,
+     *     proxy?: string|array{
+     *         http?: string|null,
+     *         https?: string|null,
+     *         no?: string|array<array-key, string>|null
+     *     },
+     *     query?: array<array-key, mixed>|string,
+     *     read_timeout?: int|float,
+     *     retries?: int,
+     *     request_factory?: RequestFactoryInterface,
+     *     response_factory?: ResponseFactoryInterface,
+     *     sink?: resource|string|StreamInterface,
+     *     ssl_key?: string|array{
+     *         0: string,
+     *         1?: string|null
+     *     },
+     *     ssl_key_type?: string,
+     *     stream?: bool,
+     *     stream_factory?: StreamFactoryInterface,
+     *     stream_context?: array<array-key, mixed>,
+     *     synchronous?: bool,
+     *     timeout?: int|float,
+     *     uri_factory?: UriFactoryInterface,
+     *     verify?: bool|string,
+     *     version?: string|int|float,
+     *     curl?: array<int|string, mixed>,
+     *     ...
+     * }
+     */
+    private static function keyedRequestOptions(array $options, $key): array
+    {
+        if (\is_array($options['allow_redirects'] ?? null)
+            && \is_callable($options['allow_redirects']['on_redirect'] ?? null)
+        ) {
+            $onRedirect = $options['allow_redirects']['on_redirect'];
+            $options['allow_redirects']['on_redirect'] = static function (RequestInterface $request, ResponseInterface $response, UriInterface $uri) use ($onRedirect, $key): void {
+                $onRedirect($request, $response, $uri, $key);
+            };
+        }
+
+        if (\is_callable($options['on_headers'] ?? null)) {
+            $onHeaders = $options['on_headers'];
+            $options['on_headers'] = static function (ResponseInterface $response, RequestInterface $request) use ($onHeaders, $key): void {
+                $onHeaders($response, $request, $key);
+            };
+        }
+
+        if (\is_callable($options['on_stats'] ?? null)) {
+            $onStats = $options['on_stats'];
+            $options['on_stats'] = static function (TransferStats $stats) use ($onStats, $key): void {
+                $onStats($stats, $key);
+            };
+        }
+
+        if (\is_callable($options['on_trailers'] ?? null)) {
+            $onTrailers = $options['on_trailers'];
+            $options['on_trailers'] = static function (array $trailers, ResponseInterface $response, RequestInterface $request) use ($onTrailers, $key): void {
+                $onTrailers($trailers, $response, $request, $key);
+            };
+        }
+
+        if (\is_callable($options['progress'] ?? null)) {
+            $progress = $options['progress'];
+            $options['progress'] = static function (int $downloadTotal, int $downloadedBytes, int $uploadTotal, int $uploadedBytes) use ($progress, $key) {
+                return $progress($downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes, $key);
+            };
+        }
+
+        return $options;
     }
 }

@@ -440,6 +440,19 @@ now reject the request with `ResponseException` instead of `RequestException`,
 and the callback now runs before `on_stats` instead of after it, so `on_stats`
 observes an `on_trailers` failure as the transfer's outcome.
 
+When requests are sent through `GuzzleHttp\Pool`, the pool now appends the
+request's iterable key as one extra trailing argument to any `on_headers`,
+`on_trailers`, `on_stats`, `progress`, and `allow_redirects.on_redirect`
+callbacks provided via its "options" configuration; callable requests yielded
+to the pool likewise receive the wrapped callbacks in their options argument.
+Existing userland callbacks that do not declare the extra parameter continue
+to work unchanged, but callbacks that inspect all arguments, for example with
+`func_get_args()` or a variadic parameter, will observe the additional
+argument, and arity-strict PHP internal callables used directly may reject the
+extra argument and should be wrapped in a userland callback. `progress` return
+values are still honoured, and requests sent directly through a client are
+unaffected.
+
 The built-in handlers invoke `on_headers` for the final response headers and for
 `101 Switching Protocols`, but not for other informational `1xx` responses such
 as `100 Continue` or `103 Early Hints`. Guzzle does not expose a separate Early

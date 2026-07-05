@@ -58,7 +58,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - protocols: (non-empty array containing `http` and/or `https`, default=`['http', 'https']`) Specifies which protocols are allowed for redirect requests. Values are case-sensitive; only `http` and `https` are accepted.
 
-- on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request, the redirect response that was received, and the effective URI. Any return value from the on_redirect function is ignored.
+- on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request, the redirect response that was received, and the effective URI. Any return value from the on_redirect function is ignored. When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a fourth argument.
 
 - track_redirects: (bool) When set to `true`, each redirected URI and status code encountered will be tracked in the `X-Guzzle-Redirect-History` and `X-Guzzle-Redirect-Status-History` headers respectively. All URIs and status codes will be stored in the order which the redirects were encountered.
 
@@ -888,6 +888,30 @@ $client->request('GET', 'http://httpbin.org/stream/1024', [
 ]);
 ```
 
+When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a third argument:
+
+```php
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+$requests = [
+    'image' => new Request('GET', 'http://httpbin.org/image/jpeg'),
+    'avatar' => new Request('GET', 'http://httpbin.org/image/png'),
+];
+
+$pool = new Pool($client, $requests, [
+    'options' => [
+        'on_headers' => function (ResponseInterface $response, RequestInterface $request, $key) {
+            // $key is 'image' or 'avatar'
+        },
+    ],
+]);
+
+$pool->promise()->wait();
+```
+
 > [!NOTE]
 > When writing HTTP handlers, the `on_headers` function must be invoked for the final response, or for a `101 Switching Protocols` response, before writing data to the body of the response.
 
@@ -931,6 +955,8 @@ $client->request('GET', 'http://httpbin.org/stream/1024', [
 ]);
 ```
 
+When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a second argument.
+
 ## on_trailers
 
 Summary
@@ -959,6 +985,8 @@ $client->request('GET', 'https://example.com/stream', [
     }
 ]);
 ```
+
+When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a fourth argument.
 
 > [!NOTE]
 > Only the built-in cURL handlers invoke `on_trailers`; the built-in stream and
@@ -1017,6 +1045,8 @@ $result = $client->request(
     ]
 );
 ```
+
+When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a fifth argument.
 
 ## protocols
 
