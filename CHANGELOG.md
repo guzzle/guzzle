@@ -154,9 +154,11 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
+- Stop the cURL multi handler busy-waiting on request delays shorter than one second
 - Stop cURL HEAD requests with request bodies hanging on responses that declare a content length
 - The cURL handler no longer transmits request bodies on HEAD requests
 - Preserve response headers when a response includes HTTP trailers
+- Harden cURL response header block detection when HTTP trailers are received
 
 
 ## 7.13.1 - 2026-06-29
