@@ -26,6 +26,24 @@ final class AuthMiddleware
     private const DIGEST_MAX_RETRIES = 2;
 
     /**
+     * Headers that describe the request payload. A probe with an empty body
+     * must not carry them.
+     *
+     * @var list<string>
+     */
+    private const DIGEST_PROBE_PAYLOAD_HEADERS = [
+        'Transfer-Encoding',
+        'Expect',
+        'Trailer',
+        'Content-Range',
+        'Content-Encoding',
+        'Content-MD5',
+        'Digest',
+        'Content-Digest',
+        'Repr-Digest',
+    ];
+
+    /**
      * @var callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
      */
     private $nextHandler;
@@ -123,14 +141,55 @@ final class AuthMiddleware
         $probeOptions = self::withTemporarySink($options);
         unset($probeOptions['auth']);
 
-        return ($this->nextHandler)($request->withoutHeader('Authorization'), $probeOptions)->then(
-            function (ResponseInterface $response) use ($request, $options, $probeOptions, $username, $password) {
-                return $this->handleDigestResponse($request, $options, $probeOptions, $response, $username, $password);
+        [$probeRequest, $bodyWithheld] = self::probeRequest($request, $options);
+
+        if ($bodyWithheld) {
+            // The probe has no payload, so prepare_body must not add Expect
+            // if a custom empty stream has unknown size.
+            $probeOptions[RequestOptions::EXPECT] = false;
+        }
+
+        return ($this->nextHandler)($probeRequest, $probeOptions)->then(
+            function (ResponseInterface $response) use ($request, $options, $probeOptions, $username, $password, $bodyWithheld) {
+                return $this->handleDigestResponse($request, $options, $probeOptions, $response, $username, $password, $bodyWithheld);
             },
             static function ($reason) use ($probeOptions) {
                 return self::restoreOriginalSinkOnRejection($probeOptions, $reason);
             }
         );
+    }
+
+    /**
+     * Builds the unauthenticated probe request for a Digest handshake.
+     *
+     * @return array{0: RequestInterface, 1: bool}
+     */
+    private static function probeRequest(RequestInterface $request, array $options): array
+    {
+        $probe = $request->withoutHeader('Authorization');
+
+        try {
+            $size = $probe->getBody()->getSize();
+        } catch (\Exception $e) {
+            $size = null;
+        }
+
+        if ($size === 0) {
+            return [$probe, false];
+        }
+
+        $streamFactory = self::requireStreamFactory(
+            $options[RequestOptions::STREAM_FACTORY] ?? new HttpFactory()
+        );
+
+        $probe = $probe->withBody($streamFactory->createStream(''))
+            ->withHeader('Content-Length', '0');
+
+        foreach (self::DIGEST_PROBE_PAYLOAD_HEADERS as $header) {
+            $probe = $probe->withoutHeader($header);
+        }
+
+        return [$probe, true];
     }
 
     /**
@@ -142,10 +201,23 @@ final class AuthMiddleware
         array $probeOptions,
         ResponseInterface $response,
         string $username,
-        string $password
+        string $password,
+        bool $bodyWithheld
     ) {
-        if ($response->getStatusCode() !== 401) {
-            return self::restoreOriginalSink($request, $response, $probeOptions);
+        $status = $response->getStatusCode();
+
+        if ($status !== 401) {
+            $response = self::restoreOriginalSink($request, $response, $probeOptions);
+
+            if ($bodyWithheld && $status !== 407 && !self::isRedirectLikeResponse($response)) {
+                throw new ResponseException(
+                    'Digest authentication failed because the server did not issue a challenge; the request was probed without its body',
+                    $request,
+                    $response
+                );
+            }
+
+            return $response;
         }
 
         $challenge = DigestAuth::selectChallenge($response);
@@ -163,7 +235,7 @@ final class AuthMiddleware
         }
 
         try {
-            Psr7\Message::rewindBody($request);
+            self::rewindBodyForRetry($request, $bodyWithheld);
         } catch (\Exception $e) {
             $response = self::restoreOriginalSink($request, $response, $probeOptions);
 
@@ -199,12 +271,41 @@ final class AuthMiddleware
 
         return ($this->nextHandler)($retryRequest, $downstreamOptions)->then(
             function (ResponseInterface $retryResponse) use ($retryRequest, $retryOptions, $downstreamOptions, $username, $password) {
-                return $this->handleDigestResponse($retryRequest, $retryOptions, $downstreamOptions, $retryResponse, $username, $password);
+                return $this->handleDigestResponse($retryRequest, $retryOptions, $downstreamOptions, $retryResponse, $username, $password, false);
             },
             static function ($reason) use ($downstreamOptions) {
                 return self::restoreOriginalSinkOnRejection($downstreamOptions, $reason);
             }
         );
+    }
+
+    private static function isRedirectLikeResponse(ResponseInterface $response): bool
+    {
+        return $response->hasHeader('Location')
+            && \in_array($response->getStatusCode(), [301, 302, 303, 307, 308], true);
+    }
+
+    private static function rewindBodyForRetry(RequestInterface $request, bool $bodyWithheld): void
+    {
+        $body = $request->getBody();
+
+        if (!$bodyWithheld) {
+            try {
+                if ($body->getSize() === 0) {
+                    return;
+                }
+            } catch (\Exception $e) {
+                // Fall through to the standard rewind path.
+            }
+
+            Psr7\Message::rewindBody($request);
+
+            return;
+        }
+
+        if ($body->isSeekable()) {
+            $body->rewind();
+        }
     }
 
     private static function withTemporarySink(array $options): array

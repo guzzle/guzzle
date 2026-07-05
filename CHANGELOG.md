@@ -59,6 +59,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays
 - Move built-in Basic and Digest authentication handling to the default auth middleware
+- Probe Digest authentication without the request body and reject unchallenged probes for body-bearing requests
 - Remove first-class NTLM authentication from the `auth` request option
 - Stop forwarding the generic `auth` request option when following cross-origin redirects
 - Limit the `Referer` header to the origin on cross-origin redirects
