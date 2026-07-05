@@ -151,6 +151,19 @@ final class CurlVersion
             && 0 !== ($httpsProxyFeature & $versionInfo['features']);
     }
 
+    public static function supportsNtlm(): bool
+    {
+        $versionInfo = self::getVersionInfo();
+
+        // CURL_VERSION_NTLM is not defined on every supported PHP version; fall
+        // back to the curl.h bit value.
+        $ntlmFeature = \defined('CURL_VERSION_NTLM') ? \CURL_VERSION_NTLM : (1 << 4);
+
+        return \defined('CURLAUTH_NTLM')
+            && $versionInfo !== null
+            && 0 !== ($ntlmFeature & $versionInfo['features']);
+    }
+
     public static function supportsHandlerSharing(): bool
     {
         $version = self::getVersion();

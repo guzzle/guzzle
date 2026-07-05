@@ -165,8 +165,8 @@ $client->request('GET', '/get', [
 ]);
 ```
 
-> [!NOTE]
-> This is currently only supported when using the cURL handler. The `ntlm` auth type is deprecated. Configure NTLM with cURL HTTP authentication options instead.
+> [!WARNING]
+> This is currently only supported when using the cURL handler. The `ntlm` auth type is deprecated in Guzzle and removed from Guzzle 8. NTLM is also deprecated by curl/libcurl: curl describes NTLM as weak, notes that Microsoft deprecated it and that it does not work over HTTP/2 or HTTP/3, and plans to remove NTLM support in September 2026. In curl 8.20.0 NTLM became opt-in, so some libcurl builds may already lack it. Avoid new NTLM usage. If an existing integration still requires NTLM temporarily, configure cURL HTTP authentication options directly and ensure the selected cURL handler uses a libcurl build with NTLM support.
 
 ## body
 
