@@ -164,9 +164,25 @@ ways:
   Digest challenge remains. libcurl is lenient: later duplicate values overwrite
   earlier ones, `stale` and `userhash` flags are sticky once set, and malformed
   tails are tolerated after enough valid material has been parsed.
+- **Challenge reuse.** Cached challenges authorize later body-less requests
+  preemptively with incremented nonce counts; body-bearing requests always
+  re-probe, and only challenges that produced an authenticated success are
+  cached. libcurl kept Digest state per easy handle, which Guzzle 7 reset between
+  requests, so 7.x re-handshook every request. Guzzle honors the RFC 7616
+  `domain` parameter when scoping reuse, and curl's Digest state has no `domain`
+  handling. Guzzle generates a fresh cnonce per Authorization header, where
+  curl's non-SSPI implementation reuses one cnonce per nonce while incrementing
+  `nc`. When `domain` is absent the cached challenge covers the whole origin, so
+  on origins that host multiple realms or trust boundaries a preemptive request
+  can disclose the username or userhash and password-derived response material
+  for one realm to another same-origin endpoint before it challenges; use
+  separate origins, a server-side `domain`, or disable reuse by replacing the
+  default auth middleware with `GuzzleHttp\Middleware::auth(false)` as shown in
+  the `auth` request option documentation.
 - **Per-leg observability.** Each handshake leg is a separate transfer:
   `on_stats`, `on_headers`, and `progress` fire per leg, and `delay` applies
-  once, before the probe. libcurl performed the whole handshake inside one
+  once, before the first Digest leg: the probe, or a preemptive request when
+  challenge reuse applies. libcurl performed the whole handshake inside one
   transfer with one stats callback.
 - **Streaming sinks.** With `stream => true` plus a configured `sink`, a Digest
   request drains the final body into the sink, protecting sinks from challenge

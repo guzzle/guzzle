@@ -1290,6 +1290,660 @@ class AuthMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+    public function testDigestReusesCachedChallengePreemptively(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $mock = new MockHandler([
+            $record(new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'])),
+            $record(new Response(200)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com/one', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/two', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(3, $requests);
+        self::assertFalse($requests[0]->hasHeader('Authorization'));
+        self::assertStringContainsString('nc=00000001', $requests[1]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('uri="/two"', $requests[2]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestPreemptiveAuthSkippedForBodyBearingRequests(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+        $client->post('http://example.com', ['auth' => ['a', 'b', 'digest'], 'body' => 'payload']);
+
+        self::assertCount(4, $requests);
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+        self::assertSame('', (string) $requests[2]->getBody());
+    }
+
+    public function testDigestPreemptiveRejectionFallsBackToFreshHandshake(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $mock = new MockHandler([
+            $record(new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="one", qop="auth"'])),
+            $record(new Response(200)),
+            $record(new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="two", qop="auth"'])),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+        $response = $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertCount(4, $requests);
+        self::assertStringContainsString('nonce="one"', $requests[2]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nonce="two"', $requests[3]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000001', $requests[3]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestNonceCountContinuesWhenSameNonceIsRechallenged(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com/one', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/two', ['auth' => ['a', 'b', 'digest']]);
+        $client->post('http://example.com/three', ['auth' => ['a', 'b', 'digest'], 'body' => 'payload']);
+        $client->get('http://example.com/four', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(6, $requests);
+        self::assertStringContainsString('nc=00000001', $requests[1]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertFalse($requests[3]->hasHeader('Authorization'));
+        self::assertStringContainsString('nc=00000003', $requests[4]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nonce="abc"', $requests[4]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000004', $requests[5]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestPreemptiveRejectedResponseClearsCache(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(403)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+        try {
+            $client->get('http://example.com', [
+                'auth' => ['a', 'b', 'digest'],
+                'on_headers' => static function (ResponseInterface $response): void {
+                    if ($response->getStatusCode() >= 400) {
+                        throw new \RuntimeException('rejected by on_headers');
+                    }
+                },
+            ]);
+
+            self::fail('Expected ResponseException.');
+        } catch (ResponseException $e) {
+            self::assertSame(403, $e->getResponse()->getStatusCode());
+        }
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(5, $requests);
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertFalse($requests[3]->hasHeader('Authorization'));
+    }
+
+    public function testDigestCacheHonorsDomainParameter(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", domain="/api"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com/api/one', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/api/two', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/other', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(5, $requests);
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertFalse($requests[3]->hasHeader('Authorization'));
+    }
+
+    public function testDigestCacheIsNotSharedAcrossCredentials(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com', ['auth' => ['c', 'd', 'digest']]);
+
+        self::assertCount(4, $requests);
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+    }
+
+    public function testDigestCacheClearedByAuthenticationInfo(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200, ['Authentication-Info' => 'nextnonce="fresh"'])),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(4, $requests);
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+    }
+
+    public function testDigestAuthenticationInfoClearsExistingCachedChallenge(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(200, ['Authentication-Info' => 'nextnonce="fresh"'])),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com/one', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/two', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/three', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(5, $requests);
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertFalse($requests[3]->hasHeader('Authorization'));
+    }
+
+    public function testDigestTerminalUnusable401ClearsExistingCachedChallenge(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth-int"'])),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com/one', ['auth' => ['a', 'b', 'digest']]);
+        self::assertSame(401, $client->get('http://example.com/two', [
+            'auth' => ['a', 'b', 'digest'],
+            'http_errors' => false,
+        ])->getStatusCode());
+        $client->get('http://example.com/three', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(4, $requests);
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertFalse($requests[3]->hasHeader('Authorization'));
+    }
+
+    public function testDigestChallengeReuseCanBeDisabled(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::auth(false), 'auth');
+        $client = new Client(['handler' => $stack]);
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(4, $requests);
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+    }
+
+    public function testDigestDoesNotCacheChallengeUntilRetrySucceeds(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        self::assertSame(401, $client->get('http://example.com/one', ['auth' => ['a', 'b', 'digest']])->getStatusCode());
+        self::assertSame(200, $client->get('http://example.com/two', ['auth' => ['a', 'b', 'digest']])->getStatusCode());
+
+        self::assertCount(4, $requests);
+        self::assertFalse($requests[0]->hasHeader('Authorization'));
+        self::assertStringContainsString('nc=00000001', $requests[1]->getHeaderLine('Authorization'));
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+    }
+
+    public function testDigestRetryFailureDoesNotSeedCache(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(500)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        self::assertSame(500, $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']])->getStatusCode());
+        self::assertSame(200, $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']])->getStatusCode());
+
+        self::assertCount(4, $requests);
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+    }
+
+    public function testDigestStaleRefreshCachesFinalChallenge(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $mock = new MockHandler([
+            $record(new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="one", qop="auth"'])),
+            $record(new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="two", qop="auth", stale=true'])),
+            $record(new Response(200)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(4, $requests);
+        self::assertStringContainsString('nonce="two"', $requests[3]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000002', $requests[3]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestPreemptiveNon401ResponseClearsCache(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(403)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+        self::assertSame(403, $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']])->getStatusCode());
+        self::assertSame(200, $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']])->getStatusCode());
+
+        self::assertCount(5, $requests);
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertFalse($requests[3]->hasHeader('Authorization'));
+    }
+
+    public function testDigestQoplessChallengeIsNotCached(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(4, $requests);
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+    }
+
+    public function testDigestCacheScopedByHostHeader(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://127.0.0.1/', ['auth' => ['a', 'b', 'digest'], 'headers' => ['Host' => 'tenant-a.example']]);
+        $client->get('http://127.0.0.1/', ['auth' => ['a', 'b', 'digest'], 'headers' => ['Host' => 'tenant-b.example']]);
+        $client->get('http://127.0.0.1/', ['auth' => ['a', 'b', 'digest'], 'headers' => ['Host' => 'tenant-a.example']]);
+
+        self::assertCount(5, $requests);
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+        self::assertStringContainsString('nc=00000002', $requests[4]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestCacheIsNotSharedAcrossSchemes(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com/', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('https://example.com/', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(4, $requests);
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+    }
+
+    public function testDigestCacheIsNotSharedAcrossPorts(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com:8080/', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com:8081/', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(4, $requests);
+        self::assertFalse($requests[2]->hasHeader('Authorization'));
+    }
+
+    public function testDigestCacheNormalizesDefaultPort(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com:80/one', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/two', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(3, $requests);
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestCacheHonorsAbsoluteDomainQuery(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", domain="http://example.com/api?tenant=a"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(200)),
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com/api?tenant=a', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/api?tenant=a', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/api?tenant=b', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(5, $requests);
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertFalse($requests[3]->hasHeader('Authorization'));
+    }
+
+    public function testDigestDomainQueryUsesLiteralPrefix(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", domain="http://example.com/api?tenant=a"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com/api?tenant=a', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/api?tenant=abc', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertCount(3, $requests);
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('uri="/api?tenant=abc"', $requests[2]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestCacheHonorsAbsoluteDomainWithPreservedHostHeader(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", domain="http://tenant-a.example/api"'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(200)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $options = ['auth' => ['a', 'b', 'digest'], 'headers' => ['Host' => 'tenant-a.example']];
+
+        $client->get('http://127.0.0.1/api/one', $options);
+        $client->get('http://127.0.0.1/api/two', $options);
+
+        self::assertCount(3, $requests);
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+    }
+
     /**
      * @param (callable(): string)|null $cnonceGenerator
      */

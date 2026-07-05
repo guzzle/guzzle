@@ -26,12 +26,14 @@ final class Middleware
      * Middleware that applies built-in Basic authentication and handles Digest
      * authentication challenges when the "auth" request option is set.
      *
+     * @param bool $reuseChallenges Whether Digest challenges may be reused preemptively.
+     *
      * @return callable((callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)
      */
-    public static function auth(): callable
+    public static function auth(bool $reuseChallenges = true): callable
     {
-        return static function (callable $handler): AuthMiddleware {
-            return new AuthMiddleware($handler);
+        return static function (callable $handler) use ($reuseChallenges): AuthMiddleware {
+            return new AuthMiddleware($handler, null, $reuseChallenges);
         };
     }
 

@@ -284,6 +284,9 @@ final class DigestAuth
         $challenge->realm = $params['realm'] ?? '';
         $challenge->nonce = $params['nonce'];
         $challenge->opaque = $params['opaque'] ?? null;
+        $challenge->domain = isset($params['domain'])
+            ? \array_values(\array_filter(\preg_split('/[ \t]+/', $params['domain']) ?: []))
+            : [];
         $challenge->qop = $qop;
         $challenge->stale = isset($params['stale']) && \strcasecmp($params['stale'], 'true') === 0;
         $challenge->userhash = isset($params['userhash']) && \strcasecmp($params['userhash'], 'true') === 0;
