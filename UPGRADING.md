@@ -122,7 +122,64 @@ independently of Digest. If the server answers the probe with anything other
 than a 401 response, a 407 proxy challenge, or a followable redirect, the request
 fails with a `GuzzleHttp\Exception\ResponseException` carrying that response,
 because the probe did not represent the original request; remove the `auth`
-option for endpoints that do not require authentication.
+option for endpoints that do not require authentication. See "Differences from
+libcurl's Digest implementation" below.
+
+#### Differences from libcurl's Digest implementation
+
+Guzzle 8's Digest middleware deliberately diverges from libcurl, which
+implemented the `auth` option's Digest support in Guzzle 7, in the following
+ways:
+
+- **Unchallenged probes fail loudly.** Body-bearing requests are probed with an
+  empty body. If the server answers the probe with anything other than a 401
+  response, a 407 proxy challenge, or a followable redirect, Guzzle throws
+  `GuzzleHttp\Exception\ResponseException` with that response attached. This
+  exception pre-empts the `ClientException` or `ServerException` that
+  `http_errors` would otherwise raise for such a response; `catch
+  (RequestException $e)` catches both. For unchallenged sub-300 probe responses
+  libcurl instead re-issues the request unauthenticated, which can cause the
+  server to process both the empty probe and the replay; for other statuses it
+  surfaces the probe response. If a server does not require authentication,
+  remove the `auth` option.
+- **Probe payload headers.** The probe strips the payload-describing headers:
+  `Expect`, `Transfer-Encoding`, `Trailer`, `Content-Range`,
+  `Content-Encoding`, `Content-MD5`, `Digest`, `Content-Digest`, and
+  `Repr-Digest`, and forces `Content-Length: 0`. `Content-Type` is kept, as
+  libcurl does. libcurl's probe is bodyless but not header-identical: it keeps a
+  caller-supplied `Expect`, keeps HTTP/1.1 `Transfer-Encoding`, sending a
+  chunked probe with a zero chunk and no `Content-Length`, and forwards other
+  caller headers untouched. Guzzle's stripping is deliberately stricter.
+- **`auth-int` is rejected.** Challenges offering only `qop=auth-int` are
+  ignored. libcurl selects `auth-int` when `auth` is absent but hashes an empty
+  entity body, providing no actual body integrity.
+- **Challenge selection.** With multiple Digest challenges, Guzzle picks the
+  strongest supported algorithm. libcurl decodes the first Digest
+  `WWW-Authenticate` header field and ignores later Digest fields. Multiple
+  Digest challenges inside one field are parser-dependent in curl.
+- **Strict challenge parsing.** Challenges with duplicated or malformed
+  parameters are rejected. When another usable Digest challenge is present, it
+  is used instead, always across separate `WWW-Authenticate` header fields and
+  in some same-field shapes. The 401 is returned untouched only when no usable
+  Digest challenge remains. libcurl is lenient: later duplicate values overwrite
+  earlier ones, `stale` and `userhash` flags are sticky once set, and malformed
+  tails are tolerated after enough valid material has been parsed.
+- **Per-leg observability.** Each handshake leg is a separate transfer:
+  `on_stats`, `on_headers`, and `progress` fire per leg, and `delay` applies
+  once, before the probe. libcurl performed the whole handshake inside one
+  transfer with one stats callback.
+- **Streaming sinks.** With `stream => true` plus a configured `sink`, a Digest
+  request drains the final body into the sink, protecting sinks from challenge
+  bodies on handlers that ignore `stream`. A non-digest request on the stream
+  handler leaves the sink untouched.
+- **Proxy Digest (407) is not implemented.** The response passes through. The
+  built-in cURL handlers allow proxy credentials but not `CURLOPT_PROXYAUTH`,
+  and libcurl defaults proxy auth to Basic, so proxy Digest requires a custom
+  handler.
+
+Non-seekable request bodies work for the normal handshake because the probe never
+consumes them. A stale-nonce retry after the body has been consumed still
+requires a seekable body, the same limit libcurl has.
 
 Built-in Basic and Digest authentication continue to work for clients using
 Guzzle's default handler or `GuzzleHttp\HandlerStack::create($handler)`, but
