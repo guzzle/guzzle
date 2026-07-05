@@ -10,6 +10,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\FnStream;
+use GuzzleHttp\Psr7\NoSeekStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
@@ -702,6 +703,27 @@ class RedirectMiddlewareTest extends TestCase
             );
             self::assertSame($previous, $e->getPrevious());
         }
+    }
+
+    public function testNonSeekableBodyIsNotRewoundWhenRedirectDiscardsBody()
+    {
+        $mock = new MockHandler([
+            new Response(303, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $body = new NoSeekStream(Utils::streamFor('a=b'));
+        $body->getContents();
+        $request = new Request('POST', 'http://example.com', [], $body);
+
+        $response = $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+        $lastRequest = $mock->getLastRequest();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('GET', $lastRequest->getMethod());
+        self::assertSame('', (string) $lastRequest->getBody());
     }
 
     /**
