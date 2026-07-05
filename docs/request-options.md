@@ -159,7 +159,15 @@ $client->request('GET', '/get', [
 ]);
 ```
 
-Supported Digest algorithms are `MD5`, `MD5-sess`, `SHA-256`, `SHA-256-sess`, and the `SHA-512-256` variants when PHP supports the `sha512/256` hash algorithm. Guzzle supports legacy non-session challenges without `qop` and challenges with `qop=auth`. Session algorithms require `qop`. `auth-int` is not supported.
+Supported Digest algorithms are `MD5`, `MD5-sess`, `SHA-256`, `SHA-256-sess`, and the `SHA-512-256` variants when PHP supports the `sha512/256` hash algorithm. Guzzle uses PHP's FIPS SHA-512/256, matching libcurl builds with SHA-512/256 support; servers built against RFC 7616's erratum test vectors for truncated SHA-512 will not interoperate with either Guzzle or curl. Guzzle supports legacy non-session challenges without `qop` and challenges with `qop=auth`. Session algorithms require `qop`. `auth-int` is not supported.
+
+Each Digest leg is a separate Guzzle handler invocation with its own request options. `on_stats` fires once per leg; `on_headers` and `progress` are also attached per leg. The `delay` option applies once, before the initial probe.
+
+When multiple usable Digest challenges are present, Guzzle selects the strongest supported algorithm, preferring `SHA-512-256` over `SHA-256` over `MD5`, and preferring `-sess` variants within a family. If a challenge offers only `auth-int`, uses a session algorithm without `qop`, uses an unknown or unavailable algorithm, is malformed, or contains values that cannot be safely placed in a header, Guzzle ignores that challenge. If no usable Digest challenge remains, the original 401 response is returned for normal `http_errors` handling; inspect its `WWW-Authenticate` header to debug the failure.
+
+`Proxy-Authenticate` Digest challenges are not handled by the auth middleware. A 407 response to a Digest probe passes through unchanged. The built-in cURL handlers allow proxy credentials through `CURLOPT_PROXYUSERPWD`, but they do not expose `CURLOPT_PROXYAUTH` through the raw cURL option allow-list, and libcurl defaults proxy authentication to Basic.
+
+Probe redirects are followed by the redirect middleware under normal redirect rules. Non-strict 301/302 and 303 redirects clear the body, with exact `GET`, `HEAD`, and `OPTIONS` keeping their method and other methods rewritten to `GET`, except exact `QUERY` on non-strict 301/302 preserves the method and body. 307/308 and strict 301/302 redirects preserve the method and body. A redirected body-bearing request performs its own Digest handshake at the new URI.
 
 To use libcurl's native Digest implementation instead, omit `auth` and configure cURL options such as `CURLOPT_HTTPAUTH => CURLAUTH_DIGEST` and `CURLOPT_USERPWD` directly with a cURL handler. The same direct cURL configuration is required for legacy NTLM, which is no longer a built-in `auth` type.
 
