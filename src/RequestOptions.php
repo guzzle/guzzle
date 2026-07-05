@@ -282,13 +282,13 @@ final class RequestOptions
 
     /**
      * progress: (callable(int, int, int, int): mixed)
-     * Defines a function to invoke when transfer progress is made. The function accepts the following positional
-     * arguments: the total number of bytes expected to be downloaded, the
-     * number of bytes downloaded so far, the number of bytes expected to be
-     * uploaded, the number of bytes uploaded so far. With the built-in cURL
-     * handlers, returning a truthy value aborts the transfer and throwing
-     * rejects the promise with a RequestException. The built-in stream handler
-     * ignores return values.
+     * Defines a function to invoke when transfer progress is made. The function
+     * accepts the following positional arguments: the total number of bytes
+     * expected to be downloaded, the number of bytes downloaded so far, the
+     * number of bytes expected to be uploaded, the number of bytes uploaded so
+     * far. With the built-in cURL handlers, returning a truthy value aborts the
+     * transfer and throwing rejects the promise with a RequestException. The
+     * built-in stream handler ignores return values.
      */
     public const PROGRESS = 'progress';
 
@@ -300,17 +300,17 @@ final class RequestOptions
     public const PROTOCOLS = 'protocols';
 
     /**
-     * proxy: (string|array) Pass a string to specify an HTTP proxy, or an
-     * array to specify different proxies for different protocols (where the
-     * key is the protocol and the value is a proxy string or null). Provide a
-     * "no" key as a comma- or whitespace-delimited string, array of strings,
-     * or null to specify hosts, host-and-port pairs, IP literals, IP CIDR
-     * rules, or wildcard rules that should not be proxied. Domain rules are
-     * matched case-insensitively. Exact IP literals are normalized before
-     * matching. CIDR rules match IP literals only and are not port-specific.
-     * Custom handlers can use ProxyOptions::resolve() to apply
-     * Guzzle-compatible proxy selection; the built-in cURL handlers'
-     * environment-variable fallback is not part of that helper.
+     * proxy: (string|array) Pass a string to specify an HTTP proxy, or an array
+     * to specify different proxies for different protocols (where the key is
+     * the protocol and the value is a proxy string or null). Provide a "no" key
+     * as a comma- or whitespace-delimited string, array of strings, or null to
+     * specify hosts, host-and-port pairs, IP literals, IP CIDR rules, or
+     * wildcard rules that should not be proxied. Domain rules are matched
+     * case-insensitively. Exact IP literals are normalized before matching.
+     * CIDR rules match IP literals only and are not port-specific. Custom
+     * handlers can use ProxyOptions::resolve() to apply Guzzle-compatible proxy
+     * selection; the built-in handlers' environment-variable fallback is not
+     * part of that helper.
      */
     public const PROXY = 'proxy';
 

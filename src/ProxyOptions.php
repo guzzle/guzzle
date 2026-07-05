@@ -41,10 +41,9 @@ final class ProxyOptions
         }
 
         // A matching "no" entry is always a final decision, even when the
-        // array selects no proxy for the request scheme. Without this, the
-        // same option input routes differently per handler: StreamHandler
-        // (no environment fallback) goes direct, while the cURL handlers
-        // fall through to an environment proxy the user excluded.
+        // array selects no proxy for the request scheme. Without this, an
+        // option-level bypass could fall through to handler-level environment
+        // fallback and route through a proxy the user excluded.
         $noProxy = isset($proxy['no']) ? self::normalizeNoProxy($proxy['no']) : [];
         if ($noProxy !== [] && self::isUriInNoProxy($uri, $noProxy)) {
             return ProxySelection::bypassed();

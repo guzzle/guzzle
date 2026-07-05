@@ -1091,7 +1091,7 @@ Domain entries are matched case-insensitively, and one final DNS root dot is ign
 > [!NOTE]
 > Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
 
-Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply Guzzle-compatible proxy selection. The helper resolves the documented `proxy` request option shape, including scheme-specific proxy entries and `no` exclusion rules. Handlers remain responsible for translating the selected proxy string into their transport-specific configuration. The environment-variable fallback performed by the built-in cURL handlers is not part of this helper; custom handlers that want it must implement their own environment lookup.
+Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply Guzzle-compatible proxy selection. The helper resolves the documented `proxy` request option shape, including scheme-specific proxy entries and `no` exclusion rules. Handlers remain responsible for translating the selected proxy string into their transport-specific configuration. The environment-variable fallback performed by the built-in handlers is not part of this helper; custom handlers that want it must implement their own environment lookup.
 
 ```php
 use GuzzleHttp\ProxyOptions;
