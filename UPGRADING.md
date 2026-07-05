@@ -112,6 +112,18 @@ $client->request('GET', '/', [
 ]);
 ```
 
+Digest requests that carry a body send the initial unauthenticated probe with an
+empty body and `Content-Length: 0`, as libcurl does. The body is sent on
+authenticated attempts: once in the normal one-challenge handshake, and again if
+a stale-nonce challenge must be retried. Because of this, non-seekable request
+bodies work with Digest authentication unless a stale-nonce retry forces a
+rewind. Followed redirects also rewind the body under the normal redirect rules,
+independently of Digest. If the server answers the probe with anything other
+than a 401 response, a 407 proxy challenge, or a followable redirect, the request
+fails with a `GuzzleHttp\Exception\ResponseException` carrying that response,
+because the probe did not represent the original request; remove the `auth`
+option for endpoints that do not require authentication.
+
 Built-in Basic and Digest authentication continue to work for clients using
 Guzzle's default handler or `GuzzleHttp\HandlerStack::create($handler)`, but
 they are now applied by the default auth middleware instead of while the client

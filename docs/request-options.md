@@ -151,7 +151,7 @@ $client->request('GET', '/get', ['auth' => ['username', 'password']]);
 ```
 
 digest
-Use [digest authentication](https://www.rfc-editor.org/rfc/rfc7616.html) through Guzzle's auth middleware. Digest authentication sends an initial unauthenticated request, processes a `WWW-Authenticate: Digest ...` challenge, then retries with an `Authorization: Digest ...` header.
+Use [digest authentication](https://www.rfc-editor.org/rfc/rfc7616.html) through Guzzle's auth middleware. Digest authentication sends an initial unauthenticated probe, processes a `WWW-Authenticate: Digest ...` challenge, then retries with an `Authorization: Digest ...` header. Requests with a body are probed with an empty body and `Content-Length: 0`; the body is sent only on authenticated attempts: once in the normal one-challenge handshake, and again if a stale-nonce challenge must be retried. A non-401 answer to a body-withholding probe other than a proxy challenge (407) or a followable redirect fails the request with `ResponseException`.
 
 ```php
 $client->request('GET', '/get', [
