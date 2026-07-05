@@ -144,6 +144,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Added rejection of explicit `multiplex` requests when `CURLMOPT_PIPELINING` disables multiplexing
 - Added the `max_host_connections` and `max_total_connections` client and cURL multi handler options
 
+### Changed
+
+- Redirects that discard the request body no longer require it to be rewindable
+- Check linked curl/libcurl NTLM support before applying NTLM auth
+- Clarify that NTLM is deprecated by both Guzzle and curl/libcurl
+- Remove deprecation for the raw cURL `CURLOPT_CERTINFO` option
+- Warn when a cURL multi option cannot be applied
+
 ### Deprecated
 
 - Deprecate the raw `CURLOPT_PIPEWAIT` cURL option in favour of the `multiplex` request option
@@ -151,13 +159,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecate invalid `select_timeout` cURL multi handler option values
 - Deprecate raw cURL multi connection cap options in favour of the named options
 
-### Changed
 
-- Remove deprecation for the raw cURL `CURLOPT_CERTINFO` option
-- Warn when a cURL multi option cannot be applied
-
-
-## 7.13.2 - Upcoming
+## 7.13.2 - 2026-07-05
 
 ### Fixed
 
@@ -167,6 +170,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Preserve response headers when a response includes HTTP trailers
 - Harden cURL response header block detection when HTTP trailers are received
 - Corrected the PSR-7 class names in the Pool iterator exception
+- Redirect body rewind failures no longer leak a bare `RuntimeException`
 
 
 ## 7.13.1 - 2026-06-29
