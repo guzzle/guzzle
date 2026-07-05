@@ -4,13 +4,16 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7\Utils;
 use GuzzleHttp\RedirectMiddleware;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -664,6 +667,41 @@ class RedirectMiddlewareTest extends TestCase
             'Authorization' => 'Bearer token',
             'Cookie' => 'session=abc',
         ], 'secret=query'));
+    }
+
+    public function testRedirectRequestBodyRewindFailureThrowsRequestException()
+    {
+        $previous = new \RuntimeException('cannot rewind');
+        $body = FnStream::decorate(Utils::streamFor('data'), [
+            'tell' => static function (): int {
+                return 4;
+            },
+            'rewind' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $mock = new MockHandler([
+            new Response(307, ['Location' => 'http://example.com/redirected']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('POST', 'http://example.com', [], $body);
+
+        try {
+            $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertNotInstanceOf(BadResponseException::class, $e);
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(307, $e->getResponse()->getStatusCode());
+            self::assertSame(
+                'Redirect failed because the request body could not be rewound: cannot rewind',
+                $e->getMessage()
+            );
+            self::assertSame($previous, $e->getPrevious());
+        }
     }
 
     /**
