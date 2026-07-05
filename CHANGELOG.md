@@ -60,6 +60,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Validate malformed `auth` request option arrays
 - Move built-in Basic and Digest authentication handling to the default auth middleware
 - Probe Digest authentication without the request body and reject unchallenged probes for body-bearing requests
+- Protect a configured Digest sink from challenge bodies regardless of the stream option
+- Apply the delay request option once per Digest-authenticated request
 - Remove first-class NTLM authentication from the `auth` request option
 - Stop forwarding the generic `auth` request option when following cross-origin redirects
 - Limit the `Referer` header to the origin on cross-origin redirects
