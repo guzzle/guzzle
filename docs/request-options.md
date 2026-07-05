@@ -183,16 +183,7 @@ When multiple usable Digest challenges are present, Guzzle selects the strongest
 
 Probe redirects are followed by the redirect middleware under normal redirect rules. Non-strict 301/302 and 303 redirects clear the body, with exact `GET`, `HEAD`, and `OPTIONS` keeping their method and other methods rewritten to `GET`, except exact `QUERY` on non-strict 301/302 preserves the method and body. 307/308 and strict 301/302 redirects preserve the method and body. A redirected body-bearing request performs its own Digest handshake at the new URI.
 
-To use libcurl's native Digest implementation instead, omit `auth` and configure cURL options such as `CURLOPT_HTTPAUTH => CURLAUTH_DIGEST` and `CURLOPT_USERPWD` directly with a cURL handler. The same direct cURL configuration is required for legacy NTLM, which is no longer a built-in `auth` type.
-
-```php
-$client->request('GET', '/get', [
-    'curl' => [
-        CURLOPT_HTTPAUTH => CURLAUTH_NTLM,
-        CURLOPT_USERPWD => 'username:password',
-    ],
-]);
-```
+To use libcurl's native Digest implementation instead, omit `auth` and configure cURL options such as `CURLOPT_HTTPAUTH => CURLAUTH_DIGEST` and `CURLOPT_USERPWD` directly with a cURL handler.
 
 ## body
 
