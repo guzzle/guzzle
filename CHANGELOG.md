@@ -23,7 +23,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Remove deprecation for the raw cURL `CURLOPT_CERTINFO` option
 - Warn when a cURL multi option cannot be applied
-- Check linked curl/libcurl NTLM support before applying deprecated NTLM auth
+- Check linked curl/libcurl NTLM support before applying NTLM auth
 - Clarify that NTLM is deprecated by both Guzzle and curl/libcurl
 
 
