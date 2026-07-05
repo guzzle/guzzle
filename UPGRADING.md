@@ -99,9 +99,11 @@ Digest authentication is no longer implemented with cURL `CURLOPT_HTTPAUTH` and
 `qop` and challenges with `qop=auth`; session algorithms require `qop`.
 `auth-int` is not supported. To use libcurl's native Digest implementation
 instead, omit `auth` and configure cURL options directly with a cURL handler,
-including `CURLOPT_HTTPAUTH => CURLAUTH_DIGEST` and `CURLOPT_USERPWD`. The same
-direct cURL configuration is required for legacy NTLM, which is no longer a
-built-in `auth` type:
+including `CURLOPT_HTTPAUTH => CURLAUTH_DIGEST` and `CURLOPT_USERPWD`.
+
+Guzzle 8 no longer treats `ntlm` as a built-in `auth` type. If an existing
+NTLM-only integration must be kept temporarily, configure cURL options directly
+with a cURL handler and a libcurl build that still supports NTLM:
 
 ```php
 $client->request('GET', '/', [
@@ -111,6 +113,11 @@ $client->request('GET', '/', [
     ],
 ]);
 ```
+
+This is not a long-term migration path. curl/libcurl has deprecated NTLM
+because it is weak, deprecated by Microsoft, and does not work over HTTP/2 or
+HTTP/3. curl made NTLM opt-in in curl 8.20.0 and plans to remove support in
+September 2026.
 
 Digest requests that carry a body send the initial unauthenticated probe with an
 empty body and `Content-Length: 0`, as libcurl does. The body is sent on
