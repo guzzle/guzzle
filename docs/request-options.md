@@ -151,7 +151,7 @@ $client->request('GET', '/get', ['auth' => ['username', 'password']]);
 ```
 
 digest
-Use [digest authentication](https://www.rfc-editor.org/rfc/rfc7616.html) through Guzzle's auth middleware. Digest authentication sends an initial unauthenticated probe, processes a `WWW-Authenticate: Digest ...` challenge, then retries with an `Authorization: Digest ...` header. Requests with a body are probed with an empty body and `Content-Length: 0`; the body is sent only on authenticated attempts: once in the normal one-challenge handshake, and again if a stale-nonce challenge must be retried. A non-401 answer to a body-withholding probe other than a proxy challenge (407) or a followable redirect fails the request with `ResponseException`.
+Use [digest authentication](https://www.rfc-editor.org/rfc/rfc7616.html) through Guzzle's auth middleware. When no reusable challenge is available, Digest authentication sends an initial unauthenticated probe, processes a `WWW-Authenticate: Digest ...` challenge, and retries with an `Authorization: Digest ...` header. Requests with a body are probed with an empty body and `Content-Length: 0`; the body is sent only on authenticated attempts: once in the normal one-challenge handshake, and again if a stale-nonce challenge must be retried. When challenge reuse is enabled (the default) and a cached challenge applies, later body-less requests send the first Digest leg preemptively, with an incremented nonce count; body-bearing requests always keep the probe handshake. The `delay` option applies before the first Digest leg, whether that leg is a probe or a preemptive request. A non-401 answer to a body-withholding probe other than a proxy challenge (407) or a followable redirect fails the request with `ResponseException`.
 
 ```php
 $client->request('GET', '/get', [
@@ -159,9 +159,23 @@ $client->request('GET', '/get', [
 ]);
 ```
 
+When a Digest challenge omits `domain`, RFC 7616 scopes the protection space to the whole origin. Do not rely on default reuse across same-origin trust boundaries: a preemptive request can disclose the Digest username or userhash and password-derived response material for the cached realm to another same-origin endpoint before that endpoint challenges. When `domain` is present, Guzzle applies RFC literal-prefix matching to request targets, so `domain="/api"` also covers `/api-internal`, and a query-scoped prefix such as `/api?tenant=a` also covers longer targets beginning with that same string, such as `/api?tenant=abc`. Use separate origins, configure a narrow server `domain`, or disable reuse by replacing the default auth middleware:
+
+```php
+use GuzzleHttp\Client;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+
+$stack = HandlerStack::create();
+$stack->remove('auth');
+$stack->after('allow_redirects', Middleware::auth(false), 'auth');
+
+$client = new Client(['handler' => $stack]);
+```
+
 Supported Digest algorithms are `MD5`, `MD5-sess`, `SHA-256`, `SHA-256-sess`, and the `SHA-512-256` variants when PHP supports the `sha512/256` hash algorithm. Guzzle uses PHP's FIPS SHA-512/256, matching libcurl builds with SHA-512/256 support; servers built against RFC 7616's erratum test vectors for truncated SHA-512 will not interoperate with either Guzzle or curl. Guzzle supports legacy non-session challenges without `qop` and challenges with `qop=auth`. Session algorithms require `qop`. `auth-int` is not supported.
 
-Each Digest leg is a separate Guzzle handler invocation with its own request options. `on_stats` fires once per leg; `on_headers` and `progress` are also attached per leg. The `delay` option applies once, before the initial probe.
+Each Digest leg is a separate Guzzle handler invocation with its own request options. `on_stats` fires once per leg; `on_headers` and `progress` are also attached per leg. The `delay` option applies once, before the first Digest leg: the probe, or a preemptive request when challenge reuse applies.
 
 When multiple usable Digest challenges are present, Guzzle selects the strongest supported algorithm, preferring `SHA-512-256` over `SHA-256` over `MD5`, and preferring `-sess` variants within a family. If a challenge offers only `auth-int`, uses a session algorithm without `qop`, uses an unknown or unavailable algorithm, is malformed, or contains values that cannot be safely placed in a header, Guzzle ignores that challenge. If no usable Digest challenge remains, the original 401 response is returned for normal `http_errors` handling; inspect its `WWW-Authenticate` header to debug the failure.
 

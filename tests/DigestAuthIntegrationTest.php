@@ -94,6 +94,33 @@ class DigestAuthIntegrationTest extends TestCase
         self::assertStringContainsString('uri="/secure/by-digest/qop-auth/echo?answer=42"', $authorization);
     }
 
+    public function testDigestReusesChallengePreemptivelyAgainstServerFirewall(): void
+    {
+        Server::enqueue([
+            new Response(200, [], 'first'),
+            new Response(200, [], 'second'),
+        ]);
+
+        $client = new Client(['http_errors' => false]);
+
+        $first = $client->get(Server::$url.'secure/by-digest/qop-auth/echo', [
+            'auth' => ['me', 'test', 'digest'],
+        ]);
+        $second = $client->get(Server::$url.'secure/by-digest/qop-auth/echo', [
+            'auth' => ['me', 'test', 'digest'],
+        ]);
+
+        self::assertSame(200, $first->getStatusCode());
+        self::assertSame(200, $second->getStatusCode());
+        self::assertSame('first', (string) $first->getBody());
+        self::assertSame('second', (string) $second->getBody());
+
+        $requests = Server::received();
+        self::assertCount(2, $requests);
+        self::assertStringContainsString('nc=00000001', $requests[0]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000002', $requests[1]->getHeaderLine('Authorization'));
+    }
+
     public function testDigestLegacyHandshakeWithoutQop(): void
     {
         // The /secure/by-digest/ endpoint (no qop segment) issues an

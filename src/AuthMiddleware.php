@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp;
 
 use GuzzleHttp\Auth\DigestAuth;
+use GuzzleHttp\Auth\DigestChallenge;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Promise as P;
@@ -15,6 +16,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * Applies built-in Basic authentication and handles Digest authentication challenges.
@@ -24,6 +26,8 @@ final class AuthMiddleware
     use NonSerializableTrait;
 
     private const DIGEST_MAX_RETRIES = 2;
+
+    private const CHALLENGE_CACHE_LIMIT = 32;
 
     /**
      * Headers that describe the request payload. A probe with an empty body
@@ -53,16 +57,27 @@ final class AuthMiddleware
      */
     private $cnonceGenerator;
 
+    private bool $reuseChallenges;
+
+    private ?string $credentialHashSecret = null;
+
+    /**
+     * @var array<string, array{challenge: DigestChallenge, credentials: string, nextNc: int}>
+     */
+    private array $digestChallenges = [];
+
     /**
      * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $nextHandler
      * @param (callable(): string)|null                                                                       $cnonceGenerator
+     * @param bool                                                                                            $reuseChallenges
      */
-    public function __construct(callable $nextHandler, ?callable $cnonceGenerator = null)
+    public function __construct(callable $nextHandler, ?callable $cnonceGenerator = null, bool $reuseChallenges = true)
     {
         $this->nextHandler = $nextHandler;
         $this->cnonceGenerator = $cnonceGenerator ?? static function (): string {
             return \bin2hex(\random_bytes(16));
         };
+        $this->reuseChallenges = $reuseChallenges;
     }
 
     /**
@@ -138,6 +153,31 @@ final class AuthMiddleware
      */
     private function sendDigest(RequestInterface $request, array $options, string $username, string $password): PromiseInterface
     {
+        $preemptive = $this->reuseChallenges
+            ? $this->preemptiveDigestRequest($request, $username, $password)
+            : null;
+
+        if ($preemptive !== null) {
+            $preemptiveOptions = self::withTemporarySink($options);
+            unset($preemptiveOptions['auth']);
+
+            return ($this->nextHandler)($preemptive, $preemptiveOptions)->then(
+                function (ResponseInterface $response) use ($request, $options, $preemptiveOptions, $username, $password) {
+                    // Clear on 4xx/5xx other than 401 so non-conformant stale-nonce
+                    // errors cannot poison the cache indefinitely.
+                    $status = $response->getStatusCode();
+                    if ($status >= 400 && $status !== 401) {
+                        $this->clearDigestChallenge($request);
+                    }
+
+                    return $this->handleDigestResponse($request, $options, $preemptiveOptions, $response, $username, $password, false);
+                },
+                function ($reason) use ($request, $preemptiveOptions) {
+                    return $this->handleDigestRejection($request, $preemptiveOptions, $reason, true);
+                }
+            );
+        }
+
         $probeOptions = self::withTemporarySink($options);
         unset($probeOptions['auth']);
 
@@ -153,10 +193,51 @@ final class AuthMiddleware
             function (ResponseInterface $response) use ($request, $options, $probeOptions, $username, $password, $bodyWithheld) {
                 return $this->handleDigestResponse($request, $options, $probeOptions, $response, $username, $password, $bodyWithheld);
             },
-            static function ($reason) use ($probeOptions) {
-                return self::restoreOriginalSinkOnRejection($probeOptions, $reason);
+            function ($reason) use ($request, $probeOptions) {
+                return $this->handleDigestRejection($request, $probeOptions, $reason, false);
             }
         );
+    }
+
+    private function preemptiveDigestRequest(RequestInterface $request, string $username, string $password): ?RequestInterface
+    {
+        try {
+            if ($request->getBody()->getSize() !== 0) {
+                return null;
+            }
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        $key = self::digestCacheKey($request);
+        if ($key === null) {
+            return null;
+        }
+
+        $entry = $this->digestChallenges[$key] ?? null;
+        if ($entry === null
+            || $entry['credentials'] !== $this->digestCredentialKey($username, $password)
+            || !self::challengeCoversRequest($entry['challenge'], $request)
+        ) {
+            return null;
+        }
+
+        $authorization = DigestAuth::authorizationHeader(
+            $request,
+            $entry['challenge'],
+            $username,
+            $password,
+            ($this->cnonceGenerator)(),
+            \sprintf('%08x', $entry['nextNc'])
+        );
+
+        if ($authorization === null) {
+            return null;
+        }
+
+        ++$this->digestChallenges[$key]['nextNc'];
+
+        return $request->withHeader('Authorization', $authorization);
     }
 
     /**
@@ -206,7 +287,18 @@ final class AuthMiddleware
     ) {
         $status = $response->getStatusCode();
 
+        $previousEntry = null;
+        if ($this->reuseChallenges && $status === 401) {
+            $key = self::digestCacheKey($request);
+            $previousEntry = $key !== null ? ($this->digestChallenges[$key] ?? null) : null;
+            $this->clearDigestChallenge($request);
+        }
+
         if ($status !== 401) {
+            if ($this->reuseChallenges && $response->hasHeader('Authentication-Info')) {
+                $this->clearDigestChallenge($request);
+            }
+
             $response = self::restoreOriginalSink($request, $response, $probeOptions);
 
             if ($bodyWithheld && $status !== 407 && !self::isRedirectLikeResponse($response)) {
@@ -247,12 +339,15 @@ final class AuthMiddleware
             );
         }
 
+        $nc = $this->nextDigestNonceCount($challenge, $username, $password, $previousEntry);
+
         $authorization = DigestAuth::authorizationHeader(
             $request,
             $challenge,
             $username,
             $password,
-            ($this->cnonceGenerator)()
+            ($this->cnonceGenerator)(),
+            \sprintf('%08x', $nc)
         );
 
         if ($authorization === null) {
@@ -264,7 +359,7 @@ final class AuthMiddleware
         $retryOptions = $options;
         $retryOptions['__guzzle_digest_retries'] = $retries + 1;
         $downstreamOptions = $retryOptions;
-        // The caller's delay applies once, before the initial probe, not
+        // The caller's delay applies once, before the first Digest leg, not
         // before each handshake retry.
         unset($downstreamOptions[RequestOptions::DELAY]);
         $downstreamOptions = self::withTemporarySink($downstreamOptions);
@@ -273,13 +368,187 @@ final class AuthMiddleware
         $retryRequest = $request->withHeader('Authorization', $authorization);
 
         return ($this->nextHandler)($retryRequest, $downstreamOptions)->then(
-            function (ResponseInterface $retryResponse) use ($retryRequest, $retryOptions, $downstreamOptions, $username, $password) {
+            function (ResponseInterface $retryResponse) use ($retryRequest, $retryOptions, $downstreamOptions, $username, $password, $challenge, $nc) {
+                if ($this->reuseChallenges && self::isCacheableDigestSuccess($retryResponse)) {
+                    $this->storeDigestChallenge($retryRequest, $challenge, $username, $password, $nc + 1);
+                }
+
                 return $this->handleDigestResponse($retryRequest, $retryOptions, $downstreamOptions, $retryResponse, $username, $password, false);
             },
-            static function ($reason) use ($downstreamOptions) {
-                return self::restoreOriginalSinkOnRejection($downstreamOptions, $reason);
+            function ($reason) use ($retryRequest, $downstreamOptions) {
+                return $this->handleDigestRejection($retryRequest, $downstreamOptions, $reason, false);
             }
         );
+    }
+
+    private static function isCacheableDigestSuccess(ResponseInterface $response): bool
+    {
+        $status = $response->getStatusCode();
+
+        return $status >= 200 && $status < 400 && !$response->hasHeader('Authentication-Info');
+    }
+
+    private function storeDigestChallenge(RequestInterface $request, DigestChallenge $challenge, string $username, string $password, int $nextNc): void
+    {
+        $key = self::digestCacheKey($request);
+        if ($key === null || $challenge->qop === null) {
+            return;
+        }
+
+        unset($this->digestChallenges[$key]);
+
+        if (\count($this->digestChallenges) >= self::CHALLENGE_CACHE_LIMIT) {
+            \array_shift($this->digestChallenges);
+        }
+
+        $this->digestChallenges[$key] = [
+            'challenge' => $challenge,
+            'credentials' => $this->digestCredentialKey($username, $password),
+            'nextNc' => $nextNc,
+        ];
+    }
+
+    private function clearDigestChallenge(RequestInterface $request): void
+    {
+        $key = self::digestCacheKey($request);
+        if ($key !== null) {
+            unset($this->digestChallenges[$key]);
+        }
+    }
+
+    /**
+     * @param array{challenge: DigestChallenge, credentials: string, nextNc: int}|null $previousEntry
+     */
+    private function nextDigestNonceCount(DigestChallenge $challenge, string $username, string $password, ?array $previousEntry): int
+    {
+        if ($previousEntry !== null
+            && $previousEntry['credentials'] === $this->digestCredentialKey($username, $password)
+            && self::sameDigestNonce($previousEntry['challenge'], $challenge)
+        ) {
+            return $previousEntry['nextNc'];
+        }
+
+        return 1;
+    }
+
+    private static function sameDigestNonce(DigestChallenge $left, DigestChallenge $right): bool
+    {
+        return $left->nonce === $right->nonce
+            && $left->realm === $right->realm
+            && $left->qop === $right->qop
+            && $left->algorithm['header'] === $right->algorithm['header'];
+    }
+
+    /**
+     * @param mixed $reason
+     *
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
+    private function handleDigestRejection(RequestInterface $request, array $options, $reason, bool $preemptive): PromiseInterface
+    {
+        if ($this->reuseChallenges && $reason instanceof ResponseException) {
+            $response = $reason->getResponse();
+
+            if ($response->getStatusCode() === 401
+                || $response->hasHeader('Authentication-Info')
+                || ($preemptive && $response->getStatusCode() >= 400)
+            ) {
+                $this->clearDigestChallenge($request);
+            }
+        }
+
+        return self::restoreOriginalSinkOnRejection($options, $reason);
+    }
+
+    private static function digestCacheKey(RequestInterface $request): ?string
+    {
+        $uri = $request->getUri();
+        $scheme = \strtolower($uri->getScheme());
+        $host = \strtolower($uri->getHost());
+
+        if (($scheme !== 'http' && $scheme !== 'https') || $host === '') {
+            return null;
+        }
+
+        $port = $uri->getPort() ?? ($scheme === 'https' ? 443 : 80);
+
+        return $scheme.'://'.$host.':'.$port.'|'.\strtolower($request->getHeaderLine('Host'));
+    }
+
+    private function digestCredentialKey(string $username, string $password): string
+    {
+        if ($this->credentialHashSecret === null) {
+            $this->credentialHashSecret = \random_bytes(32);
+        }
+
+        return \hash_hmac('sha256', $username."\0".$password, $this->credentialHashSecret);
+    }
+
+    private static function challengeCoversRequest(DigestChallenge $challenge, RequestInterface $request): bool
+    {
+        if ($challenge->domain === []) {
+            return true;
+        }
+
+        $target = $request->getRequestTarget();
+        foreach ($challenge->domain as $space) {
+            $prefix = self::protectionSpacePath($space, $request);
+            if ($prefix !== null && \str_starts_with($target, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function protectionSpacePath(string $space, RequestInterface $request): ?string
+    {
+        if ($space === '') {
+            return null;
+        }
+
+        if ($space[0] === '/') {
+            return $space;
+        }
+
+        try {
+            $uri = new Psr7\Uri($space);
+        } catch (\InvalidArgumentException $e) {
+            return null;
+        }
+
+        if (Psr7\UriComparator::isCrossOrigin($uri, self::effectiveRequestUri($request))) {
+            return null;
+        }
+
+        $path = $uri->getPath();
+        $prefix = $path === '' ? '/' : $path;
+
+        if ($uri->getQuery() !== '') {
+            $prefix .= '?'.$uri->getQuery();
+        }
+
+        return $prefix;
+    }
+
+    private static function effectiveRequestUri(RequestInterface $request): UriInterface
+    {
+        $uri = $request->getUri();
+        $host = $request->getHeaderLine('Host');
+        if ($host === '' || \strcasecmp($host, $uri->getHost()) === 0) {
+            return $uri;
+        }
+
+        try {
+            $authority = new Psr7\Uri('//'.$host);
+            if ($authority->getHost() === '') {
+                return $uri;
+            }
+
+            return $uri->withHost($authority->getHost())->withPort($authority->getPort());
+        } catch (\InvalidArgumentException $e) {
+            return $uri;
+        }
     }
 
     private static function isRedirectLikeResponse(ResponseInterface $response): bool

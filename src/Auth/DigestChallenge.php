@@ -18,6 +18,9 @@ final class DigestChallenge
 
     public ?string $opaque = null;
 
+    /** @var list<string> */
+    public array $domain = [];
+
     public ?string $qop = null;
 
     public bool $stale = false;
