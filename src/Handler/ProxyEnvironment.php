@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\ProxyOptions;
+use GuzzleHttp\ProxySelection;
+use Psr\Http\Message\UriInterface;
+
 /**
  * Resolves proxy configuration from the process environment with the same
- * semantics libcurl applies, so the cURL handlers can pin CURLOPT_PROXY and
- * CURLOPT_NOPROXY explicitly and libcurl never reads the environment itself.
+ * semantics libcurl applies, shared by the built-in handlers: the cURL
+ * handlers pin CURLOPT_PROXY and CURLOPT_NOPROXY explicitly so libcurl never
+ * reads the environment itself, and the stream handler resolves the same way.
  *
  * @internal
  */
@@ -15,6 +20,40 @@ final class ProxyEnvironment
 {
     private function __construct()
     {
+    }
+
+    /**
+     * Resolves the proxy selection for a request, falling back to the proxy
+     * environment variables when the proxy request option makes no decision.
+     *
+     * The environment no_proxy list is tokenized the way libcurl tokenizes
+     * it and matched here with the same rules as the proxy option's "no"
+     * list, so behavior does not depend on the installed libcurl's matcher.
+     *
+     * @param mixed $proxyOption
+     */
+    public static function resolveProxySelection(UriInterface $uri, $proxyOption): ProxySelection
+    {
+        $selection = ProxyOptions::resolve($uri, $proxyOption);
+
+        // Any option decision (proxy, bypassed, or disabled) is final; only
+        // a none() selection leaves room for the environment.
+        if ($selection->hasProxy() || $selection->shouldDisableProxy()) {
+            return $selection;
+        }
+
+        $envProxy = self::getProxyForScheme($uri->getScheme());
+        if ($envProxy === null) {
+            return $selection;
+        }
+
+        $noProxy = self::getNoProxy();
+        if ($noProxy !== null && ProxyOptions::isUriInNoProxy($uri, self::splitNoProxy($noProxy))) {
+            return ProxySelection::bypassed();
+        }
+
+        // $envProxy is never '' (empty env values are treated as unset).
+        return ProxySelection::proxy($envProxy);
     }
 
     /**

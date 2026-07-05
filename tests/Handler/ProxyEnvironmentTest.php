@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Handler\ProxyEnvironment;
+use GuzzleHttp\Psr7\Uri;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -163,6 +164,35 @@ class ProxyEnvironmentTest extends TestCase
     {
         self::assertSame(['.'], ProxyEnvironment::splitNoProxy(' ,, . '));
         self::assertSame([], ProxyEnvironment::splitNoProxy(' ,, '));
+    }
+
+    public function testResolveProxySelectionPrefersOptionThenEnvironment(): void
+    {
+        self::skipIfWindows();
+
+        self::withProxyEnvironment([
+            'http_proxy' => 'http://env.example.com:8125',
+            'NO_PROXY' => 'blocked.example.com',
+        ], static function (): void {
+            $uri = new Uri('http://example.com');
+
+            // An explicit option decision wins over the environment.
+            self::assertSame(
+                'http://option.example.com:8125',
+                ProxyEnvironment::resolveProxySelection($uri, 'http://option.example.com:8125')->getProxy()
+            );
+
+            // No option decision falls back to the environment proxy.
+            self::assertSame(
+                'http://env.example.com:8125',
+                ProxyEnvironment::resolveProxySelection($uri, null)->getProxy()
+            );
+
+            // An environment no_proxy match bypasses the environment proxy.
+            self::assertNull(
+                ProxyEnvironment::resolveProxySelection(new Uri('http://blocked.example.com'), null)->getProxy()
+            );
+        });
     }
 
     private static function skipIfWindows(): void

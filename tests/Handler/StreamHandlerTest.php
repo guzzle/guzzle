@@ -1492,11 +1492,11 @@ class StreamHandlerTest extends TestCase
     /**
      * @param mixed $value
      */
-    private function applyProxyOption(string $uri, array $context, $value): array
+    private function applyProxy(string $uri, array $context, $value): array
     {
         $handler = new StreamHandler();
         $request = new Request('GET', $uri);
-        $method = new \ReflectionMethod(StreamHandler::class, 'applyProxyOption');
+        $method = new \ReflectionMethod(StreamHandler::class, 'applyProxy');
         if (\PHP_VERSION_ID < 80100) {
             $method->setAccessible(true);
         }
@@ -1504,6 +1504,45 @@ class StreamHandlerTest extends TestCase
         $method->invokeArgs($handler, [$request, &$context, $value]);
 
         return $context;
+    }
+
+    private static function skipIfWindows(): void
+    {
+        if (\PHP_OS_FAMILY === 'Windows') {
+            self::markTestSkipped('Environment variables are case-insensitive on Windows.');
+        }
+    }
+
+    /**
+     * Runs the callback with only the given proxy environment variables set,
+     * restoring the process environment afterwards.
+     *
+     * @param array<string, string> $env
+     */
+    private static function withProxyEnvironment(array $env, callable $test): void
+    {
+        $names = ['http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY', 'no_proxy', 'NO_PROXY'];
+        $previous = [];
+        foreach ($names as $name) {
+            $previous[$name] = \getenv($name, true);
+            \putenv($name);
+        }
+        foreach ($env as $name => $value) {
+            \putenv($name.'='.$value);
+        }
+
+        try {
+            $test();
+        } finally {
+            foreach ($names as $name) {
+                \putenv($name);
+            }
+            foreach ($previous as $name => $value) {
+                if ($value !== false) {
+                    \putenv($name.'='.$value);
+                }
+            }
+        }
     }
 
     private function matchesStreamHandlerError(string $method, string $message): bool
@@ -1633,14 +1672,14 @@ class StreamHandlerTest extends TestCase
         $this->expectExceptionMessage($message);
 
         $context = [];
-        $this->applyProxyOption('http://example.com', $context, $proxy);
+        $this->applyProxy('http://example.com', $context, $proxy);
     }
 
     public function testPassesRawTransportProxySchemesThrough(): void
     {
         foreach (['tcp://127.0.0.1:8125', 'ssl://127.0.0.1:8125', 'tls://127.0.0.1:8125'] as $proxy) {
             $context = [];
-            $result = $this->applyProxyOption('http://example.com', $context, $proxy);
+            $result = $this->applyProxy('http://example.com', $context, $proxy);
 
             self::assertSame($proxy, $result['http']['proxy']);
         }
@@ -1656,7 +1695,87 @@ class StreamHandlerTest extends TestCase
         $this->expectExceptionMessage('proxy transport is not available in this PHP build');
 
         $context = [];
-        $this->applyProxyOption('http://example.com', $context, 'tlsv1.9://proxy.example.com:443');
+        $this->applyProxy('http://example.com', $context, 'tlsv1.9://proxy.example.com:443');
+    }
+
+    public function testResolvesProxyFromEnvironmentWithoutProxyOption(): void
+    {
+        self::skipIfWindows();
+
+        // With no proxy option, the closed-port http_proxy is used only if the
+        // createStream hoist resolves it (refused); prime before setting it.
+        $this->queueRes();
+
+        self::withProxyEnvironment(['http_proxy' => 'http://127.0.0.1:8125'], function (): void {
+            $handler = new StreamHandler();
+            try {
+                $handler(new Request('GET', Server::$url), [])->wait();
+                self::fail('Expected a ConnectException for the environment proxy');
+            } catch (ConnectException $e) {
+                self::assertMatchesRegularExpression('/refused/i', $e->getMessage());
+            }
+        });
+    }
+
+    public function testResolvesLowercaseHttpProxyFromEnvironment(): void
+    {
+        self::skipIfWindows();
+
+        self::withProxyEnvironment(['http_proxy' => 'http://env.example.com:8125'], function (): void {
+            $context = $this->applyProxy('http://example.com', [], null);
+
+            self::assertSame('tcp://env.example.com:8125', $context['http']['proxy']);
+        });
+    }
+
+    public function testEnvironmentNoProxyWildcardDisablesProxy(): void
+    {
+        self::skipIfWindows();
+
+        self::withProxyEnvironment([
+            'http_proxy' => 'http://env.example.com:8125',
+            'NO_PROXY' => '*',
+        ], function (): void {
+            self::assertSame([], $this->applyProxy('http://example.com', [], null));
+        });
+    }
+
+    public function testExplicitProxyOptionBeatsEnvironmentProxy(): void
+    {
+        self::skipIfWindows();
+
+        self::withProxyEnvironment(['http_proxy' => 'http://env.example.com:8125'], function (): void {
+            $context = $this->applyProxy('http://example.com', [], 'http://option.example.com:8125');
+
+            self::assertSame('tcp://option.example.com:8125', $context['http']['proxy']);
+        });
+    }
+
+    public function testRejectsEnvironmentHttpsProxy(): void
+    {
+        self::skipIfWindows();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('HTTPS proxies are not supported by the stream handler.');
+
+        self::withProxyEnvironment(['https_proxy' => 'https://env.example.com:8125'], function (): void {
+            $this->applyProxy('https://example.com', [], null);
+        });
+    }
+
+    public function testAddsProxyAuthorizationHeaderForEnvironmentProxyCredentials(): void
+    {
+        self::skipIfWindows();
+
+        self::withProxyEnvironment(['http_proxy' => 'http://user:pass@env.example.com:8125'], function (): void {
+            $context = $this->applyProxy('http://example.com', [], null);
+
+            self::assertSame('tcp://env.example.com:8125', $context['http']['proxy']);
+            self::assertStringContainsString(
+                'Proxy-Authorization: Basic '.\base64_encode('user:pass'),
+                $context['http']['header']
+            );
+        });
     }
 
     public static function malformedProxyUrlProvider(): array
@@ -1681,7 +1800,7 @@ class StreamHandlerTest extends TestCase
         $this->expectExceptionMessage('Invalid proxy URL');
 
         $context = [];
-        $this->applyProxyOption('http://example.com', $context, $proxy);
+        $this->applyProxy('http://example.com', $context, $proxy);
     }
 
     public function testUsesProxy(): void
@@ -3735,7 +3854,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', $uri);
         $context = ['http' => []];
-        $method = new \ReflectionMethod(StreamHandler::class, 'applyProxyOption');
+        $method = new \ReflectionMethod(StreamHandler::class, 'applyProxy');
         if (\PHP_VERSION_ID < 80100) {
             $method->setAccessible(true);
         }

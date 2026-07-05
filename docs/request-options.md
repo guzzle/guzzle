@@ -1091,7 +1091,7 @@ Domain entries are matched case-insensitively, and one final DNS root dot is ign
 > [!NOTE]
 > Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
 
-Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply Guzzle-compatible proxy selection. The helper resolves the documented `proxy` request option shape, including scheme-specific proxy entries and `no` exclusion rules. Handlers remain responsible for translating the selected proxy string into their transport-specific configuration. The environment-variable fallback performed by the built-in cURL handlers is not part of this helper; custom handlers that want it must implement their own environment lookup.
+Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply Guzzle-compatible proxy selection. The helper resolves the documented `proxy` request option shape, including scheme-specific proxy entries and `no` exclusion rules. Handlers remain responsible for translating the selected proxy string into their transport-specific configuration. The environment-variable fallback performed by the built-in handlers is not part of this helper; custom handlers that want it must implement their own environment lookup.
 
 ```php
 use GuzzleHttp\ProxyOptions;
@@ -1130,15 +1130,15 @@ The `proxy` option — including the `no` list and its validation — means the 
 | HTTPS proxy (TLS to the proxy itself) | yes (libcurl 7.52+) | no |
 | SOCKS proxies (`socks4://`, `socks4a://`, `socks5://`, `socks5h://`) | yes | no |
 | Proxy credentials in the proxy URL | yes | yes (Basic only) |
-| Proxy resolution from environment variables | yes | no |
+| Proxy resolution from environment variables | yes | yes |
 
-The stream handler forwards requests through PHP's HTTP stream wrapper, which supports plain HTTP proxying only: it cannot establish CONNECT tunnels, so "https" requests through a proxy fail with a connection error. It rejects any proxy URL whose scheme it cannot execute, throwing an `InvalidArgumentException` before the request is sent. That covers `https://`, SOCKS (`socks4://`, `socks4a://`, `socks5://`, `socks5h://`), and anything other than `http://` or a raw PHP transport such as `tcp://`, `ssl://`, or `tls://`. A recognized SSL/TLS-family transport that this PHP build's `stream_get_transports()` does not provide (for example `tls://` on a build without OpenSSL) is build-specific, so it throws a `RequestException` instead of the `InvalidArgumentException` used for a scheme invalid on every build. The last row is by design, since only the cURL handlers resolve proxy environment variables (see below). A proxy given without an explicit port defaults to port 1080, libcurl's default HTTP proxy port.
+The stream handler forwards requests through PHP's HTTP stream wrapper, which supports plain HTTP proxying only: it cannot establish CONNECT tunnels, so "https" requests through a proxy fail with a connection error. It rejects any proxy URL whose scheme it cannot execute, throwing an `InvalidArgumentException` before the request is sent. That covers `https://`, SOCKS (`socks4://`, `socks4a://`, `socks5://`, `socks5h://`), and anything other than `http://` or a raw PHP transport such as `tcp://`, `ssl://`, or `tls://`. A recognized SSL/TLS-family transport that this PHP build's `stream_get_transports()` does not provide (for example `tls://` on a build without OpenSSL) is build-specific, so it throws a `RequestException` instead of the `InvalidArgumentException` used for a scheme invalid on every build. The stream handler now resolves proxies from the environment too (see below); the scheme rejections above apply identically to an environment-resolved proxy. A proxy given without an explicit port defaults to port 1080, libcurl's default HTTP proxy port.
 
 HTTPS proxies (an `https://` proxy URL, where the connection to the proxy itself is encrypted) require libcurl 7.52.0 or newer built with HTTPS-proxy support. When libcurl lacks that support, it mishandles such a proxy: versions before 7.50.2 silently downgrade it to a plaintext HTTP proxy, and later versions fail at connect time with a cryptic error. To avoid both outcomes, the cURL handlers reject the request up front. They also reject any `proxy` URL whose scheme libcurl cannot use as a proxy, with an `InvalidArgumentException`.
 
 ### Proxy environment variables
 
-The cURL handlers always configure libcurl's proxy options explicitly, so libcurl never reads proxy environment variables itself. When the `proxy` request option makes a decision for a request, that decision is final, and proxy environment variables are ignored for the request. For an "https" request, the option resolves like this:
+The built-in handlers resolve proxies from the environment themselves: the cURL handlers configure libcurl's proxy options explicitly so libcurl never reads the environment itself, and the stream handler resolves the same way and installs the result in the PHP stream context. When the `proxy` request option makes a decision for a request, that decision is final, and proxy environment variables are ignored for the request. For an "https" request, the option resolves like this:
 
 | `proxy` option value | Result |
 | --- | --- |
@@ -1152,7 +1152,7 @@ The cURL handlers always configure libcurl's proxy options explicitly, so libcur
 
 In particular, the `no_proxy`/`NO_PROXY` environment variables do not bypass an explicitly configured proxy; add the hosts to the option's `no` list instead.
 
-When the `proxy` request option makes no decision for a request, the cURL handlers resolve the proxy from the environment with the same lookup semantics libcurl uses:
+When the `proxy` request option makes no decision for a request, the built-in handlers resolve the proxy from the environment with the same lookup semantics libcurl uses:
 
 1. The lowercase scheme-specific variable, e.g. `https_proxy` for an "https" request. For "http" requests, the uppercase `HTTP_PROXY` variant is never read (see <https://httpoxy.org>, and the Windows note below); for other schemes the uppercase variant is read when the lowercase one is not set.
 2. `all_proxy`, then `ALL_PROXY`.

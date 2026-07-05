@@ -540,12 +540,11 @@ cannot carry HTTP/3 over an HTTP proxy. A request excluded by the environment
 
 #### No-Proxy Interpretation
 
-No-proxy lists are interpreted identically everywhere they appear — the
-option's `no` list, the client-mapped `NO_PROXY` environment variable, and the
-environment `no_proxy` consulted by the cURL handlers — and the shared
-interpretation follows libcurl's. Compared to Guzzle 7, this changes how
-string lists are tokenized, how leading-dot entries match, and what a match
-means.
+No-proxy lists are interpreted identically everywhere they appear — the option's
+`no` list, the client-mapped `NO_PROXY` environment variable, and the
+environment `no_proxy` consulted by the built-in handlers — and the shared
+interpretation follows libcurl's. Compared to Guzzle 7, this changes how string
+lists are tokenized, how leading-dot entries match, and what a match means.
 
 String `no` lists are split on whitespace as well as commas, and a leading-dot
 entry such as `.example.com` now matches `example.com` as well as its
@@ -556,11 +555,11 @@ spaces from `NO_PROXY` values, while the option form treats space-joined
 values as a single entry that never matches and limits leading-dot entries to
 subdomains.
 
-A matching `no` entry now applies even when the array does not configure a
-proxy for the request scheme: the request goes direct, and the cURL handlers
-no longer fall back to an environment proxy for it. The `no` list is also
-validated in that case. Guzzle 7 ignores the `no` list entirely unless the
-array selects a proxy for the request scheme.
+A matching `no` entry now applies even when the array does not configure a proxy
+for the request scheme: the request goes direct, and the built-in handlers do
+not fall back to an environment proxy for it. The `no` list is also validated in
+that case. Guzzle 7 ignores the `no` list entirely unless the array selects a
+proxy for the request scheme.
 
 #### Proxy URL Validation
 
@@ -583,6 +582,32 @@ libcurl's default HTTP proxy port, so `proxy.example.com` resolves to
 `tcp://proxy.example.com:1080`. Guzzle 7 passed a port-less proxy through
 unchanged, which PHP's stream wrapper could not use because it requires an
 explicit port.
+
+#### Proxy Environment Variable Resolution
+
+The stream handler now resolves proxies from the environment the same way the
+cURL handlers do. When the `proxy` request option makes no decision for a
+request, it reads `http_proxy` (lowercase only), `https_proxy`/`HTTPS_PROXY`,
+and `all_proxy`/`ALL_PROXY`, and consults `no_proxy`/`NO_PROXY` — including `*`
+to disable proxying entirely. The uppercase `HTTP_PROXY` is never read (an
+httpoxy defense), empty values are treated as unset, and on Windows proxy
+environment variables are resolved only under the CLI SAPI. Guzzle 7's stream
+handler never consulted the environment; it honored only the explicit `proxy`
+option.
+
+Because the stream handler cannot tunnel or speak TLS to a proxy, an
+`https_proxy` or `all_proxy` set to an `https://` or SOCKS URL now throws
+`InvalidArgumentException`, exactly as the same value passed through the `proxy`
+option already does, instead of connecting directly. An environment `http://`
+proxy used for an "https" request still fails at connect time, because the
+handler cannot open a CONNECT tunnel.
+
+To ignore the proxy environment variables for a request or client, set the
+`proxy` option to `''`: an explicit option decision is final, so this forces a
+direct connection with no environment fallback. To send only selected hosts
+directly, add them to the `proxy` option's `no` list, or list them in
+`no_proxy`/`NO_PROXY` (`*` bypasses every host). These work identically on both
+built-in handlers.
 
 #### Handler-Specific Option Overrides
 
@@ -943,11 +968,11 @@ pass a custom delay callable to `Middleware::retry()`.
 `Utils::isHostInNoProxy()` has been removed.
 
 Use `ProxyOptions::resolve()` when implementing Guzzle-compatible proxy handling
-in a custom handler. Use `ProxyOptions::isUriInNoProxy()` when checking whether a
-request URI matches a no-proxy list. Use `ProxyOptions::isHostInNoProxy()` only
-when checking a host string directly. The environment-variable fallback performed
-by the built-in cURL handlers is not part of `ProxyOptions::resolve()`; custom
-handlers that want it must implement their own environment lookup.
+in a custom handler. Use `ProxyOptions::isUriInNoProxy()` when checking whether
+a request URI matches a no-proxy list. Use `ProxyOptions::isHostInNoProxy()`
+only when checking a host string directly. The environment-variable fallback
+performed by the built-in handlers is not part of `ProxyOptions::resolve()`;
+custom handlers that want it must implement their own environment lookup.
 
 These helpers share the normalized no-proxy matching of the Guzzle 7 `Utils`
 helpers: domain matching is case-insensitive and ignores a single trailing DNS
