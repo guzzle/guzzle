@@ -1492,8 +1492,7 @@ usable Digest challenge, is the final response and its body is restored into the
 configured sink. Non-challenge response bodies, including redirect-hop bodies,
 follow normal sink behavior; with resource or stream sinks, redirect-hop bodies
 may be written before the final response body for Digest and non-Digest requests
-alike. See [UPGRADING.md](../UPGRADING.md#differences-from-libcurls-digest-implementation)
-for differences from libcurl's Digest implementation.
+alike.
 
 If `sink` is a string path, Guzzle opens the file and owns that stream.
 
@@ -1581,8 +1580,7 @@ Handlers that do not support `stream` fall back to `sink` behavior. Digest
 authentication still protects configured sinks from intermediate challenge
 bodies. With `StreamHandler`, `stream => true`, and a configured `sink`, a Digest
 request drains the final body into the sink while a non-Digest request leaves the
-sink untouched. See [UPGRADING.md](../UPGRADING.md#differences-from-libcurls-digest-implementation)
-for differences from libcurl's Digest implementation.
+sink untouched.
 
 ## stream_context
 
