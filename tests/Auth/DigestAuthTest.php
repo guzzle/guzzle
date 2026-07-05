@@ -121,6 +121,120 @@ class DigestAuthTest extends TestCase
         self::assertSame('three', $challenge->nonce);
     }
 
+    public function testMissingParameterSeparatorInvalidatesChallenge(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="test", nonce="abc" qop="auth"',
+        ]));
+
+        self::assertNull($challenge);
+    }
+
+    public function testTrailingGarbageInvalidatesChallenge(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"; charset=utf-8',
+        ]));
+
+        self::assertNull($challenge);
+    }
+
+    public function testMalformedChallengeInOneHeaderDoesNotAffectOtherHeader(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => [
+                'Digest realm="bad", nonce="one" qop="auth"',
+                'Digest realm="good", nonce="two", qop="auth"',
+            ],
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertSame('good', $challenge->realm);
+        self::assertSame('two', $challenge->nonce);
+    }
+
+    public function testGarbageParameterNameInvalidatesChallenge(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="r", nonce="n", ="x"',
+        ]));
+
+        self::assertNull($challenge);
+    }
+
+    public function testTrailingCommaAndWhitespaceStaysValid(): void
+    {
+        $challenges = DigestAuth::parseAuthenticateHeader("Digest realm=\"r\", nonce=\"n\", qop=\"auth\", \t");
+
+        self::assertCount(1, $challenges);
+        self::assertSame('digest', $challenges[0]['scheme']);
+        self::assertFalse($challenges[0]['invalid']);
+        self::assertSame('auth', $challenges[0]['params']['qop']);
+    }
+
+    public function testKnownDigestParameterWithoutValueInvalidatesChallenge(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop',
+        ]));
+
+        self::assertNull($challenge);
+    }
+
+    public function testKnownDigestParameterWithoutValueDoesNotHideLaterDigestInSameHeader(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="bad", nonce="one", qop, Digest realm="good", nonce="two", qop="auth"',
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertSame('good', $challenge->realm);
+        self::assertSame('two', $challenge->nonce);
+        self::assertSame('auth', $challenge->qop);
+    }
+
+    public function testTrailingEmptyParameterElementsRemainAccepted(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", , ',
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertSame('abc', $challenge->nonce);
+        self::assertSame('auth', $challenge->qop);
+    }
+
+    public function testEmptyParameterValueInvalidatesChallenge(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="r", nonce="n", qop="auth", opaque=',
+        ]));
+
+        self::assertNull($challenge);
+    }
+
+    /**
+     * @dataProvider nonDigestChallengeAfterDigestProvider
+     */
+    public function testNonDigestChallengeAfterDigestDoesNotInvalidateDigest(string $suffix): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="test", nonce="abc"'.$suffix,
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertSame('test', $challenge->realm);
+        self::assertSame('abc', $challenge->nonce);
+    }
+
+    public static function nonDigestChallengeAfterDigestProvider(): iterable
+    {
+        yield 'basic challenge' => [', Basic realm="basic"'];
+        yield 'unknown auth-param challenge' => [', Newauth realm="apps", type=1'];
+        yield 'unknown token68 challenge' => [', Newauth abc/def+ghi=='];
+        yield 'unknown bare challenge' => [', Newauth'];
+    }
+
     public function testAuthIntOnlyChallengeIsUnsupported(): void
     {
         $challenge = DigestAuth::selectChallenge(new Response(401, [
@@ -158,5 +272,145 @@ class DigestAuthTest extends TestCase
         self::assertNotNull($challenge);
         self::assertSame('good', $challenge->realm);
         self::assertSame('two', $challenge->nonce);
+    }
+
+    public function testRejectsHeaderUnsafeUsernameAndCnonce(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"',
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertNull(DigestAuth::authorizationHeader(
+            new Request('GET', 'http://example.com/'),
+            $challenge,
+            "bad\x01user",
+            'b',
+            'cnonce'
+        ));
+        self::assertNull(DigestAuth::authorizationHeader(
+            new Request('GET', 'http://example.com/'),
+            $challenge,
+            'a',
+            'b',
+            "bad\x7Fcnonce"
+        ));
+    }
+
+    public function testRejectsHeaderUnsafeChallengeValues(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", opaque="safe"',
+        ]));
+
+        self::assertNotNull($challenge);
+
+        $request = new Request('GET', 'http://example.com/');
+
+        $unsafeRealm = clone $challenge;
+        $unsafeRealm->realm = "bad\x01realm";
+        self::assertNull(DigestAuth::authorizationHeader($request, $unsafeRealm, 'a', 'b', 'cnonce'));
+
+        $unsafeNonce = clone $challenge;
+        $unsafeNonce->nonce = "bad\x7Fnonce";
+        self::assertNull(DigestAuth::authorizationHeader($request, $unsafeNonce, 'a', 'b', 'cnonce'));
+
+        $unsafeOpaque = clone $challenge;
+        $unsafeOpaque->opaque = "bad\x1Fopaque";
+        self::assertNull(DigestAuth::authorizationHeader($request, $unsafeOpaque, 'a', 'b', 'cnonce'));
+    }
+
+    public function testRejectsUnsafeNonceCount(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"',
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertNull(DigestAuth::authorizationHeader(
+            new Request('GET', 'http://example.com/'),
+            $challenge,
+            'a',
+            'b',
+            'cnonce',
+            '00000001, stale=true'
+        ));
+        self::assertNull(DigestAuth::authorizationHeader(
+            new Request('GET', 'http://example.com/'),
+            $challenge,
+            'a',
+            'b',
+            'cnonce',
+            '00000000'
+        ));
+        self::assertStringContainsString('nc=00000002', (string) DigestAuth::authorizationHeader(
+            new Request('GET', 'http://example.com/'),
+            $challenge,
+            'a',
+            'b',
+            'cnonce',
+            '00000002'
+        ));
+    }
+
+    public function testSelectsStrongestSupportedDigestChallenge(): void
+    {
+        if (!\in_array('sha512/256', \hash_algos(), true)) {
+            self::markTestSkipped('sha512/256 is not available.');
+        }
+
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="weak", nonce="one", qop="auth", algorithm=MD5, Digest realm="strong", nonce="two", qop="auth", algorithm=SHA-512-256',
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertSame('strong', $challenge->realm);
+        self::assertSame('SHA-512-256', $challenge->algorithm['name']);
+    }
+
+    public function testRejectsNonUtf8Charset(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", charset=ISO-8859-1',
+        ]));
+
+        self::assertNull($challenge);
+    }
+
+    public function testUnknownDigestAlgorithmIsUnsupported(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="r", nonce="n", qop="auth", algorithm=SHA-999',
+        ]));
+
+        self::assertNull($challenge);
+    }
+
+    public function testGeneratesFipsSha512256UserhashHeaderWithUtf8Credentials(): void
+    {
+        if (!\in_array('sha512/256', \hash_algos(), true)) {
+            self::markTestSkipped('sha512/256 is not available.');
+        }
+
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="api@example.org", qop="auth", algorithm=SHA-512-256, nonce="5TsQWLVdgBdmrQ0XsxbDODV+57QdFR34I9HAbC/RVvkK", opaque="HRPCssKJSGjCrkzDg8OhwpzCiGPChXYjwrI2QmXDnsOS", charset=UTF-8, userhash=true',
+        ]));
+
+        self::assertNotNull($challenge);
+
+        $header = DigestAuth::authorizationHeader(
+            new Request('GET', 'http://api.example.org/doe.json'),
+            $challenge,
+            "J\xC3\xA4s\xC3\xB8n Doe",
+            'Secret, or not?',
+            'NTg6RKcb9boFIAS3KrFK9BGeh+iDa/sm6jUMp2wds69v'
+        );
+
+        self::assertNotNull($header);
+        self::assertStringContainsString('username="793263caabb707a56211940d90411ea4a575adeccb7e360aeb624ed06ece9b0b"', $header);
+        self::assertStringContainsString('response="3798d4131c277846293534c3edc11bd8a5e4cdcbff78b05db9d95eeb1cec68a5"', $header);
+        self::assertStringContainsString('algorithm=SHA-512-256', $header);
+        self::assertStringContainsString('opaque="HRPCssKJSGjCrkzDg8OhwpzCiGPChXYjwrI2QmXDnsOS"', $header);
+        self::assertStringContainsString('userhash=true', $header);
     }
 }
