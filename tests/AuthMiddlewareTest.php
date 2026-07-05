@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -989,6 +990,122 @@ class AuthMiddlewareTest extends TestCase
                 \fclose($sink);
             }
         }
+    }
+
+    public function testDigestChallengeBodyDoesNotReachSinkWhenStreamRequested(): void
+    {
+        $sink = Psr7\Utils::tryFopen('php://temp', 'w+');
+
+        try {
+            $mock = new MockHandler([
+                new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'], 'challenge'),
+                new Response(200, [], 'ok'),
+            ]);
+            $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+            $response = $client->get('http://example.com', [
+                'auth' => ['a', 'b', 'digest'],
+                'sink' => $sink,
+                'stream' => true,
+            ]);
+
+            self::assertSame('ok', (string) $response->getBody());
+            \rewind($sink);
+            self::assertSame('ok', \stream_get_contents($sink));
+        } finally {
+            if (\is_resource($sink)) {
+                \fclose($sink);
+            }
+        }
+    }
+
+    public function testDigestChallengeBodyDoesNotReachStreamSinkWhenStreamRequested(): void
+    {
+        $sink = Psr7\Utils::streamFor('');
+
+        $mock = new MockHandler([
+            new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'], 'challenge'),
+            new Response(200, [], 'ok'),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $response = $client->get('http://example.com', [
+            'auth' => ['a', 'b', 'digest'],
+            'sink' => $sink,
+            'stream' => true,
+        ]);
+
+        self::assertSame('ok', (string) $response->getBody());
+        $sink->rewind();
+        self::assertSame('ok', $sink->getContents());
+    }
+
+    public function testDigestRestoreDrainsStreamedBodyIntoSinkWhenHandlerHonorsStream(): void
+    {
+        $sink = Psr7\Utils::tryFopen('php://temp', 'w+');
+
+        try {
+            $responses = [
+                new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'], 'challenge'),
+                new Response(200, [], new Psr7\NoSeekStream(Psr7\Utils::streamFor('ok'))),
+            ];
+            // Stand-in for StreamHandler with stream=true: returns live
+            // bodies and never writes to the sink option.
+            $handler = static function (RequestInterface $request, array $options) use (&$responses) {
+                return \GuzzleHttp\Promise\Create::promiseFor(\array_shift($responses));
+            };
+            $stack = new HandlerStack($handler);
+            $stack->push(Middleware::auth(), 'auth');
+            $client = new Client(['handler' => $stack]);
+
+            $response = $client->get('http://example.com', [
+                'auth' => ['a', 'b', 'digest'],
+                'sink' => $sink,
+                'stream' => true,
+            ]);
+
+            self::assertSame('ok', (string) $response->getBody());
+            \rewind($sink);
+            self::assertSame('ok', \stream_get_contents($sink));
+        } finally {
+            if (\is_resource($sink)) {
+                \fclose($sink);
+            }
+        }
+    }
+
+    public function testDigestRetriesDoNotReapplyDelay(): void
+    {
+        $optionsSeen = [];
+        $mock = new MockHandler([
+            static function (RequestInterface $request, array $options) use (&$optionsSeen): ResponseInterface {
+                $optionsSeen[] = $options;
+
+                return new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="one", qop="auth"']);
+            },
+            static function (RequestInterface $request, array $options) use (&$optionsSeen): ResponseInterface {
+                $optionsSeen[] = $options;
+
+                return new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="two", qop="auth", stale=true']);
+            },
+            static function (RequestInterface $request, array $options) use (&$optionsSeen): ResponseInterface {
+                $optionsSeen[] = $options;
+
+                return new Response(200);
+            },
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $response = $client->get('http://example.com', [
+            'auth' => ['a', 'b', 'digest'],
+            'delay' => 1,
+        ]);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertCount(3, $optionsSeen);
+        self::assertSame(1, $optionsSeen[0]['delay']);
+        self::assertArrayNotHasKey('delay', $optionsSeen[1]);
+        self::assertArrayNotHasKey('delay', $optionsSeen[2]);
     }
 
     public function testDigestSinkRestoreFailureRejectsWithResponseException(): void

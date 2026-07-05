@@ -264,6 +264,9 @@ final class AuthMiddleware
         $retryOptions = $options;
         $retryOptions['__guzzle_digest_retries'] = $retries + 1;
         $downstreamOptions = $retryOptions;
+        // The caller's delay applies once, before the initial probe, not
+        // before each handshake retry.
+        unset($downstreamOptions[RequestOptions::DELAY]);
         $downstreamOptions = self::withTemporarySink($downstreamOptions);
         unset($downstreamOptions['auth']);
 
@@ -310,7 +313,10 @@ final class AuthMiddleware
 
     private static function withTemporarySink(array $options): array
     {
-        if (!empty($options['stream']) || !isset($options[RequestOptions::SINK])) {
+        // The 'stream' option is deliberately not checked here: the cURL
+        // handlers do not support streaming and write each leg to the sink,
+        // so a configured sink always needs challenge-body protection.
+        if (!isset($options[RequestOptions::SINK])) {
             return $options;
         }
 

@@ -1478,6 +1478,14 @@ before returning the response. If the sink is not seekable, the request still
 succeeds and the response body is left at the sink's current position, usually
 EOF.
 
+Digest authentication buffers intermediate challenge bodies away from a
+configured sink. A terminal 401 response, such as authentication failure or no
+usable Digest challenge, is the final response and its body is restored into the
+configured sink. Non-challenge response bodies, including redirect-hop bodies,
+follow normal sink behavior; with resource or stream sinks, redirect-hop bodies
+may be written before the final response body for Digest and non-Digest requests
+alike.
+
 If `sink` is a string path, Guzzle opens the file and owns that stream.
 
 If `sink` is a PHP resource, the caller owns the resource and is responsible for
@@ -1559,6 +1567,12 @@ while (!$body->eof()) {
 
 > [!NOTE]
 > Streaming response support must be implemented by the HTTP handler used by a client. This option might not be supported by every HTTP handler, but the interface of the response object remains the same regardless of whether or not it is supported by the handler.
+
+Handlers that do not support `stream` fall back to `sink` behavior. Digest
+authentication still protects configured sinks from intermediate challenge
+bodies. With `StreamHandler`, `stream => true`, and a configured `sink`, a Digest
+request drains the final body into the sink while a non-Digest request leaves the
+sink untouched.
 
 ## stream_context
 
