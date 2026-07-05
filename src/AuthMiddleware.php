@@ -69,7 +69,6 @@ final class AuthMiddleware
     /**
      * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $nextHandler
      * @param (callable(): string)|null                                                                       $cnonceGenerator
-     * @param bool                                                                                            $reuseChallenges
      */
     public function __construct(callable $nextHandler, ?callable $cnonceGenerator = null, bool $reuseChallenges = true)
     {
