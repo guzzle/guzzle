@@ -37,6 +37,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Preserve response headers when a response includes HTTP trailers
 - Harden cURL response header block detection when HTTP trailers are received
 - Corrected the PSR-7 class names in the Pool iterator exception
+- Redirect body rewind failures no longer leak a bare `RuntimeException`
 
 
 ## 7.13.1 - 2026-06-29
