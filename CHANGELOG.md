@@ -162,6 +162,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - The cURL handler no longer transmits request bodies on HEAD requests
 - Preserve response headers when a response includes HTTP trailers
 - Harden cURL response header block detection when HTTP trailers are received
+- Corrected the PSR-7 class names in the Pool iterator exception
 
 
 ## 7.13.1 - 2026-06-29
