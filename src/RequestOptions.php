@@ -274,7 +274,9 @@ final class RequestOptions
      * GuzzleHttp\Exception\ResponseException (a RequestException subtype)
      * wrapping the thrown exception. Only the built-in cURL handlers invoke
      * on_trailers; the built-in stream and mock handlers cannot observe
-     * trailer fields and ignore the option.
+     * trailer fields and ignore the option. Malformed trailer field lines are
+     * discarded before parsing. Trailer fields are reported separately from
+     * response headers and are never merged into the response.
      */
     public const ON_TRAILERS = 'on_trailers';
 
