@@ -71,7 +71,7 @@ class Pool implements PromisorInterface
                 } elseif (\is_callable($rfn)) {
                     yield $key => $rfn($opts);
                 } else {
-                    throw new \InvalidArgumentException('Each value yielded by the iterator must be a Psr7\Http\Message\RequestInterface or a callable that returns a promise that fulfills with a Psr7\Message\Http\ResponseInterface object.');
+                    throw new \InvalidArgumentException('Each value yielded by the iterator must be a Psr\Http\Message\RequestInterface or a callable that returns a promise that fulfills with a Psr\Http\Message\ResponseInterface object.');
                 }
             }
         };
