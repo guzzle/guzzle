@@ -28,7 +28,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecate raw cURL multi connection cap options in favour of the named options
 
 
-## 7.13.2 - Upcoming
+## 7.13.2 - 2026-07-05
 
 ### Fixed
 
