@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Handler\CurlMultiHandler;
@@ -17,9 +18,11 @@ use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Server\Server;
+use GuzzleHttp\TransferStats;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 
 class PoolTest extends TestCase
 {
@@ -119,6 +122,352 @@ class PoolTest extends TestCase
             ['http://example.com/one', 'one'],
             ['http://example.com/two', 'two'],
         ], $seen);
+    }
+
+    public function testOnHeadersOptionReceivesStringPoolKey(): void
+    {
+        $requests = [
+            'key_one' => new Request('GET', 'http://example.com/one'),
+            'key_two' => new Request('GET', 'http://example.com/two'),
+        ];
+        $handler = new MockHandler([
+            new Response(200, ['X-Num' => '1']),
+            new Response(200, ['X-Num' => '2']),
+        ]);
+        $client = new Client(['handler' => $handler]);
+        $seen = [];
+
+        $pool = new Pool($client, $requests, [
+            'concurrency' => 1,
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$seen): void {
+                    $seen[$key] = $response->getHeaderLine('X-Num');
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame(['key_one' => '1', 'key_two' => '2'], $seen);
+    }
+
+    public function testOnHeadersOptionReceivesIntegerPoolKey(): void
+    {
+        $requests = [
+            new Request('GET', 'http://example.com/one'),
+            new Request('GET', 'http://example.com/two'),
+        ];
+        $handler = new MockHandler([
+            new Response(200),
+            new Response(200),
+        ]);
+        $client = new Client(['handler' => $handler]);
+        $seen = [];
+
+        $pool = new Pool($client, $requests, [
+            'concurrency' => 1,
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$seen): void {
+                    $seen[] = $key;
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame([0, 1], $seen);
+    }
+
+    public function testOnHeadersOptionKeepsPoolKeyForConcurrentPendingRequests(): void
+    {
+        $first = new Promise();
+        $second = new Promise();
+        $handler = new MockHandler([$first, $second]);
+        $client = new Client(['handler' => $handler]);
+        $seen = [];
+
+        $pool = new Pool($client, [
+            'first' => new Request('GET', 'http://example.com/first'),
+            'second' => new Request('GET', 'http://example.com/second'),
+        ], [
+            'concurrency' => 2,
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$seen): void {
+                    $seen[] = [$key, $response->getHeaderLine('X-Request')];
+                },
+            ],
+        ]);
+
+        $promise = $pool->promise();
+
+        $first->resolve(new Response(200, ['X-Request' => 'first']));
+        $second->resolve(new Response(200, ['X-Request' => 'second']));
+        $promise->wait();
+
+        self::assertSame([
+            ['first', 'first'],
+            ['second', 'second'],
+        ], $seen);
+    }
+
+    public function testOnHeadersOptionReceivesPoolKeyWithCustomHandler(): void
+    {
+        $capturedKey = null;
+        $customHandler = static function (RequestInterface $request, array $options): ResponseInterface {
+            $response = new Response(200);
+            if (isset($options['on_headers'])) {
+                ($options['on_headers'])($response, $request);
+            }
+
+            return $response;
+        };
+        $client = new Client(['handler' => $customHandler]);
+
+        $requests = ['my_key' => new Request('GET', 'http://example.com')];
+        $pool = new Pool($client, $requests, [
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$capturedKey): void {
+                    $capturedKey = $key;
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame('my_key', $capturedKey);
+    }
+
+    public function testOnHeadersOptionReceivesPoolKeyAcrossRedirects(): void
+    {
+        $handler = new MockHandler([
+            new Response(301, ['Location' => 'http://example.com/next']),
+            new Response(200),
+        ]);
+        $client = new Client(['handler' => HandlerStack::create($handler)]);
+        $seen = [];
+
+        $pool = new Pool($client, ['redirect_key' => new Request('GET', 'http://example.com')], [
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$seen): void {
+                    $seen[] = $key;
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        // on_headers fires once per handler dispatch: the 301 and the final 200.
+        self::assertSame(['redirect_key', 'redirect_key'], $seen);
+    }
+
+    public function testOnTrailersOptionReceivesPoolKey(): void
+    {
+        $seen = [];
+        $customHandler = static function (RequestInterface $request, array $options): ResponseInterface {
+            $response = new Response(200);
+            if (isset($options['on_trailers'])) {
+                ($options['on_trailers'])(['x-checksum' => ['abc']], $response, $request);
+            }
+
+            return $response;
+        };
+        $client = new Client(['handler' => $customHandler]);
+
+        $requests = ['trailer_key' => new Request('GET', 'http://example.com')];
+        $pool = new Pool($client, $requests, [
+            'options' => [
+                'on_trailers' => static function (
+                    array $trailers,
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$seen): void {
+                    $seen[$key] = $trailers;
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame(['trailer_key' => ['x-checksum' => ['abc']]], $seen);
+    }
+
+    public function testOnStatsOptionReceivesPoolKey(): void
+    {
+        $handler = new MockHandler([new Response(200)]);
+        $client = new Client(['handler' => $handler]);
+        $seen = [];
+
+        $pool = new Pool($client, ['stats_key' => new Request('GET', 'http://example.com')], [
+            'options' => [
+                'on_stats' => static function (TransferStats $stats, $key) use (&$seen): void {
+                    $seen[] = $key;
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame(['stats_key'], $seen);
+    }
+
+    public function testProgressOptionReceivesPoolKeyAndForwardsReturn(): void
+    {
+        $seen = [];
+        $progressReturn = null;
+        $customHandler = static function (RequestInterface $request, array $options) use (&$progressReturn): ResponseInterface {
+            if (isset($options['progress'])) {
+                $progressReturn = ($options['progress'])(100, 50, 20, 10);
+            }
+
+            return new Response(200);
+        };
+        $client = new Client(['handler' => $customHandler]);
+
+        $pool = new Pool($client, ['progress_key' => new Request('GET', 'http://example.com')], [
+            'options' => [
+                'progress' => static function (
+                    int $downloadTotal,
+                    int $downloadedBytes,
+                    int $uploadTotal,
+                    int $uploadedBytes,
+                    $key
+                ) use (&$seen) {
+                    $seen[] = [$downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes, $key];
+
+                    return 0;
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame([[100, 50, 20, 10, 'progress_key']], $seen);
+        self::assertSame(0, $progressReturn);
+    }
+
+    public function testOnRedirectOptionReceivesPoolKey(): void
+    {
+        $handler = new MockHandler([
+            new Response(301, ['Location' => 'http://example.com/next']),
+            new Response(200),
+        ]);
+        $client = new Client(['handler' => HandlerStack::create($handler)]);
+        $seen = [];
+
+        $pool = new Pool($client, ['redirect_key' => new Request('GET', 'http://example.com')], [
+            'options' => [
+                'allow_redirects' => [
+                    'on_redirect' => static function (
+                        RequestInterface $request,
+                        ResponseInterface $response,
+                        UriInterface $uri,
+                        $key
+                    ) use (&$seen): void {
+                        $seen[] = [$key, (string) $uri];
+                    },
+                ],
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame([['redirect_key', 'http://example.com/next']], $seen);
+    }
+
+    public function testOnHeadersOptionReceivesPoolKeyForCallableRequests(): void
+    {
+        $handler = new MockHandler([new Response(200)]);
+        $client = new Client(['handler' => $handler]);
+        $seen = [];
+
+        $requests = [
+            'lazy' => static function (array $options) use ($client): PromiseInterface {
+                return $client->sendAsync(new Request('GET', 'http://example.com'), $options);
+            },
+        ];
+
+        $pool = new Pool($client, $requests, [
+            'options' => [
+                'on_headers' => static function (
+                    ResponseInterface $response,
+                    RequestInterface $request,
+                    $key
+                ) use (&$seen): void {
+                    $seen[] = $key;
+                },
+            ],
+        ]);
+
+        $pool->promise()->wait();
+
+        self::assertSame(['lazy'], $seen);
+    }
+
+    public static function nonCallablePoolObserverOptionProvider(): iterable
+    {
+        yield 'on_headers' => [
+            ['on_headers' => 'not-a-callable'],
+            'Passing string to request option "on_headers" is invalid; expected callable.',
+        ];
+
+        yield 'on_stats' => [
+            ['on_stats' => 'not-a-callable'],
+            'Passing string to request option "on_stats" is invalid; expected callable.',
+        ];
+
+        yield 'on_trailers' => [
+            ['on_trailers' => 'not-a-callable'],
+            'Passing string to request option "on_trailers" is invalid; expected callable.',
+        ];
+
+        yield 'progress' => [
+            ['progress' => 'not-a-callable'],
+            'Passing string to request option "progress" is invalid; expected callable.',
+        ];
+
+        yield 'allow_redirects.on_redirect' => [
+            ['allow_redirects' => ['on_redirect' => 'not-a-callable']],
+            'Passing string to request option "allow_redirects.on_redirect" is invalid; expected callable.',
+        ];
+    }
+
+    /**
+     * @dataProvider nonCallablePoolObserverOptionProvider
+     */
+    public function testNonCallableObserverOptionsStillRejectedWhenPooled(array $options, string $message): void
+    {
+        $handler = new MockHandler([new Response(200)]);
+        $client = new Client(['handler' => $handler]);
+
+        $pool = new Pool($client, [new Request('GET', 'http://example.com')], [
+            'options' => $options,
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+
+        $pool->promise()->wait();
     }
 
     public function testCanProvideCallablesThatReturnResponses(): void

@@ -235,6 +235,12 @@ parameters:
 			path: src/Middleware.php
 
 		-
+			message: '#^Method GuzzleHttp\\Pool\:\:keyedRequestOptions\(\) should return .+ but returns .+\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Pool.php
+
+		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 1

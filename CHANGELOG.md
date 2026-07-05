@@ -43,6 +43,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Honor `no_proxy`/`NO_PROXY` from the environment in the stream handler, including `*` to disable proxying
 - Reject an environment-resolved `https://` or SOCKS proxy in the stream handler, matching its `proxy` option behavior
 - Pass the request as the second argument to `on_headers` callbacks
+- Pass the `Pool` iterable key as a trailing argument to per-request observer callbacks
 - Declare strict types across remaining source files
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use
 - Reject non-finite floats in the `query` and `form_params` options

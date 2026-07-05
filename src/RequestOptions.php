@@ -44,7 +44,10 @@ final class RequestOptions
      * - on_redirect: (callable(RequestInterface, ResponseInterface, UriInterface): mixed)
      *   PHP callable that is invoked when a redirect is encountered. The
      *   callable is invoked with the request, the redirect response that was
-     *   received, and the effective URI. Any return value is ignored.
+     *   received, and the effective URI. Any return value is ignored. When
+     *   this callback is supplied via GuzzleHttp\Pool's "options"
+     *   configuration, the pool appends the request's iterable key as a
+     *   fourth argument.
      * - track_redirects: (bool, default=false) Track redirected URI and status
      *   history in response headers.
      */
@@ -244,7 +247,9 @@ final class RequestOptions
      * passed the response and request as {@see ResponseInterface} and
      * {@see RequestInterface} objects, respectively. If it throws, the request
      * promise is rejected with a GuzzleHttp\Exception\ResponseException (a
-     * RequestException subtype) wrapping the thrown exception.
+     * RequestException subtype) wrapping the thrown exception. When this
+     * callback is supplied via GuzzleHttp\Pool's "options" configuration, the
+     * pool appends the request's iterable key as a third argument.
      */
     public const ON_HEADERS = 'on_headers';
 
@@ -259,6 +264,9 @@ final class RequestOptions
      * by Guzzle. Built-in handlers reject non-callable values before starting
      * the transfer. The built-in cURL handlers release native easy handles
      * before invoking on_stats and invoke it per low-level transfer attempt.
+     * When this callback is supplied via GuzzleHttp\Pool's "options"
+     * configuration, the pool appends the request's iterable key as a second
+     * argument.
      */
     public const ON_STATS = 'on_stats';
 
@@ -276,7 +284,9 @@ final class RequestOptions
      * on_trailers; the built-in stream and mock handlers cannot observe
      * trailer fields and ignore the option. Malformed trailer field lines are
      * discarded before parsing. Trailer fields are reported separately from
-     * response headers and are never merged into the response.
+     * response headers and are never merged into the response. When this
+     * callback is supplied via GuzzleHttp\Pool's "options" configuration, the
+     * pool appends the request's iterable key as a fourth argument.
      */
     public const ON_TRAILERS = 'on_trailers';
 
@@ -288,7 +298,9 @@ final class RequestOptions
      * number of bytes expected to be uploaded, the number of bytes uploaded so
      * far. With the built-in cURL handlers, returning a truthy value aborts the
      * transfer and throwing rejects the promise with a RequestException. The
-     * built-in stream handler ignores return values.
+     * built-in stream handler ignores return values. When this callback is
+     * supplied via GuzzleHttp\Pool's "options" configuration, the pool appends
+     * the request's iterable key as a fifth argument.
      */
     public const PROGRESS = 'progress';
 
