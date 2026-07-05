@@ -7,6 +7,7 @@ use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlShareHandleState;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
@@ -1150,8 +1151,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     \trigger_deprecation(
                         'guzzlehttp/guzzle',
                         '7.12',
-                        'Passing "ntlm" as the built-in auth type is deprecated; guzzlehttp/guzzle 8.0 will no longer apply NTLM through the "auth" request option. Configure NTLM with cURL HTTP authentication options instead.'
+                        'Passing "ntlm" as the built-in auth type is deprecated; guzzlehttp/guzzle 8.0 will no longer apply NTLM through the "auth" request option. NTLM is also deprecated by curl/libcurl and may be unavailable in current or future libcurl builds. Avoid NTLM; if you must use it temporarily, configure cURL HTTP authentication options directly with a libcurl build that still supports NTLM.'
                     );
+                    if (!CurlVersion::supportsNtlm()) {
+                        throw new InvalidArgumentException('NTLM authentication is not available because the installed curl/libcurl build does not provide NTLM support.');
+                    }
                     $options['curl'][\CURLOPT_HTTPAUTH] = \CURLAUTH_NTLM;
                     $options['curl'][\CURLOPT_USERPWD] = "$value[0]:$value[1]";
                     break;
