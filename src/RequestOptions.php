@@ -240,6 +240,9 @@ final class RequestOptions
      * on_trailers: (callable) A callable that is invoked once per successful
      * transfer, after the response body has been received, with an
      * associative array of the parsed HTTP trailers followed by the response.
+     * Malformed trailer field lines are discarded before parsing. Trailer
+     * fields are reported separately from response headers and are never
+     * merged into the response.
      */
     public const ON_TRAILERS = 'on_trailers';
 

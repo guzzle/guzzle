@@ -925,7 +925,12 @@ $client->request('GET', 'https://example.com/stream', [
 ```
 
 > [!NOTE]
-> Only the built-in cURL handlers can observe trailers; other handlers, such as the stream handler, ignore this option. Trailer lookups on the array are case-sensitive, and HTTP/2 field names are always lowercase on the wire.
+> Only the built-in cURL handlers can observe trailers; other handlers, such as
+> the stream handler, ignore this option. Trailer lookups on the array are
+> case-sensitive, and HTTP/2 field names are always lowercase on the wire.
+> Malformed trailer field lines are discarded before parsing. Trailer fields are
+> reported separately from response headers and are never merged into the
+> response.
 
 ## progress
 

@@ -3779,6 +3779,44 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testDoesNotStartFreshHeaderBlockForMalformedHttpTrailerLine()
+    {
+        $factory = new CurlFactory(1);
+        $onHeadersCalls = 0;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_headers' => static function () use (&$onHeadersCalls) {
+                ++$onHeadersCalls;
+            },
+        ]);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Type: text/plain\r\n",
+                "\r\n",
+                " HTTP/1.1 204 No Content\r\n",
+                "HTTP/1.1\t204 No Content\r\n",
+                "HTTP/1.1  204 No Content\r\n",
+                "HTTP/foo: not a status line\r\n",
+                "HTTP/1.1 200abc Weird: not a status line\r\n",
+                "Foo: bar\r\n",
+                "\r\n",
+            ]);
+
+            self::assertNull($easy->createResponseException);
+            self::assertSame(1, $onHeadersCalls);
+            self::assertSame(
+                ['HTTP/1.1 200 OK', 'Content-Type: text/plain'],
+                $easy->headers
+            );
+            self::assertNotNull($easy->response);
+            self::assertSame(200, $easy->response->getStatusCode());
+            self::assertSame(['Foo: bar'], $easy->trailers);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     /**
      * @dataProvider trailerStatusLineProvider
      */
@@ -3813,7 +3851,7 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testDiscardsTrailerLinesWithoutColon()
+    public function testDiscardsMalformedTrailerLines()
     {
         $factory = new CurlFactory(1);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
@@ -3824,13 +3862,26 @@ class CurlFactoryTest extends TestCase
                 "Transfer-Encoding: chunked\r\n",
                 "\r\n",
                 "X-Checksum: abc\r\n",
+                ": pseudo\r\n",
+                " Bad-Leading-Space: value\r\n",
+                "Bad Name: value\r\n",
+                "Bad\tName: value\r\n",
+                "Bad/Name: value\r\n",
+                "Bad\x01Name: value\r\n",
+                "Bad: value\x00\r\n",
+                "Bad: value\rmore\r\n",
+                "Bad: value\nmore\r\n",
+                "Bad: value\x7F\r\n",
+                "HTTP/1.1\t200 OK\r\n",
+                "HTTP/1.1  200 OK\r\n",
                 " folded-continuation\r\n",
                 "junk-no-colon\r\n",
+                "X-Valid-After: ok\r\n",
                 "\r\n",
             ]);
 
-            self::assertNotNull($easy->response);
-            self::assertSame(['X-Checksum: abc'], $easy->trailers);
+            self::assertNull($easy->createResponseException);
+            self::assertSame(['X-Checksum: abc', 'X-Valid-After: ok'], $easy->trailers);
         } finally {
             $factory->release($easy);
         }
@@ -3895,6 +3946,36 @@ class CurlFactoryTest extends TestCase
         self::assertSame($response, $gotResponse);
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('text/plain', $response->getHeaderLine('content-type'));
+    }
+
+    public function testOnTrailersDoesNotExposeMalformedTrailerFields()
+    {
+        $factory = new CurlFactory(1);
+        $gotTrailers = null;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function (array $trailers, ResponseInterface $response) use (&$gotTrailers): void {
+                $gotTrailers = $trailers;
+            },
+        ]);
+
+        self::receiveCurlHeaders($easy, [
+            "HTTP/1.1 200 OK\r\n",
+            "Content-Type: text/plain\r\n",
+            "\r\n",
+            "x-valid: ok\r\n",
+            "Bad: value\x00\r\n",
+            " Bad-Leading-Space: value\r\n",
+            "\r\n",
+        ]);
+
+        CurlFactory::finish(
+            static function () {
+            },
+            $easy,
+            $factory
+        )->wait();
+
+        self::assertSame(['x-valid' => ['ok']], $gotTrailers);
     }
 
     public function testOnTrailersReceivesRewoundResponseBody()
