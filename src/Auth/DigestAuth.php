@@ -24,6 +24,21 @@ final class DigestAuth
         'SHA-512-256-SESS' => ['hash' => 'sha512/256', 'sess' => true, 'rank' => 31, 'header' => 'SHA-512-256-sess'],
     ];
 
+    /**
+     * @var array<string, true>
+     */
+    private const DIGEST_CHALLENGE_PARAMETER_NAMES = [
+        'realm' => true,
+        'domain' => true,
+        'nonce' => true,
+        'opaque' => true,
+        'stale' => true,
+        'algorithm' => true,
+        'qop' => true,
+        'charset' => true,
+        'userhash' => true,
+    ];
+
     private function __construct()
     {
     }
@@ -76,6 +91,10 @@ final class DigestAuth
         }
 
         if ($challenge->opaque !== null && !self::isHeaderSafe($challenge->opaque)) {
+            return null;
+        }
+
+        if ($challenge->qop !== null && !self::isNonceCount($nc)) {
             return null;
         }
 
@@ -166,6 +185,13 @@ final class DigestAuth
 
                 if ($offset < $length && $header[$offset] === ',') {
                     if (self::commaStartsNextChallenge($header, $offset + 1, $length)) {
+                        if (\strcasecmp($scheme, 'Digest') === 0
+                            && self::commaStartsKnownDigestParameterWithoutValue($header, $offset + 1, $length)
+                        ) {
+                            $invalid = true;
+                            break;
+                        }
+
                         ++$offset;
                         break;
                     }
@@ -176,11 +202,16 @@ final class DigestAuth
 
                 $name = self::readToken($header, $offset, $length);
                 if ($name === null) {
+                    if ($offset < $length) {
+                        $invalid = true;
+                    }
+
                     break;
                 }
 
                 self::skipWhitespace($header, $offset, $length);
                 if ($offset >= $length || $header[$offset] !== '=') {
+                    $invalid = true;
                     break;
                 }
 
@@ -201,7 +232,12 @@ final class DigestAuth
                 $params[$lowerName] = $value;
 
                 self::skipWhitespace($header, $offset, $length);
-                if ($offset >= $length || $header[$offset] !== ',') {
+                if ($offset >= $length) {
+                    break;
+                }
+
+                if ($header[$offset] !== ',') {
+                    $invalid = true;
                     break;
                 }
             }
@@ -303,7 +339,13 @@ final class DigestAuth
 
     private static function isHeaderSafe(string $value): bool
     {
-        return \strcspn($value, "\r\n\0") === \strlen($value);
+        return \preg_match('/^[\x20\x09\x21-\x7E\x80-\xFF]*$/D', $value) === 1;
+    }
+
+    private static function isNonceCount(string $nc): bool
+    {
+        // Nonce counts start at one.
+        return $nc !== '00000000' && \preg_match('/^[0-9a-f]{8}$/D', $nc) === 1;
     }
 
     private static function commaStartsNextChallenge(string $header, int $offset, int $length): bool
@@ -318,6 +360,19 @@ final class DigestAuth
         self::skipWhitespace($header, $nextOffset, $length);
 
         return $nextOffset >= $length || $header[$nextOffset] !== '=';
+    }
+
+    private static function commaStartsKnownDigestParameterWithoutValue(string $header, int $offset, int $length): bool
+    {
+        self::skipWhitespace($header, $offset, $length);
+        $name = self::readToken($header, $offset, $length);
+        if ($name === null || !isset(self::DIGEST_CHALLENGE_PARAMETER_NAMES[\strtolower($name)])) {
+            return false;
+        }
+
+        self::skipWhitespace($header, $offset, $length);
+
+        return $offset >= $length || $header[$offset] !== '=';
     }
 
     private static function skipToken68Challenge(string $header, int &$offset, int $length): bool

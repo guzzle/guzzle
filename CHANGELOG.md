@@ -60,6 +60,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Validate malformed `auth` request option arrays
 - Move built-in Basic and Digest authentication handling to the default auth middleware
 - Reject unchallenged Digest probes for body-bearing requests instead of replaying the request unauthenticated
+- Reject Digest challenges with malformed parameter lists instead of using a truncated parameter set
+- Validate Digest header material against PSR-7 field-value rules before building the Authorization header
 - Remove first-class NTLM authentication from the `auth` request option
 - Stop forwarding the generic `auth` request option when following cross-origin redirects
 - Limit the `Referer` header to the origin on cross-origin redirects

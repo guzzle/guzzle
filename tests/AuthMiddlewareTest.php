@@ -116,6 +116,42 @@ class AuthMiddlewareTest extends TestCase
         self::assertCount(1, $mock);
     }
 
+    public function testDigestUnsafeUsernameReturnsChallengeWithoutRetry(): void
+    {
+        $mock = new MockHandler([
+            new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"']),
+            new Response(200),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $response = $client->get('http://example.com', [
+            'auth' => ["bad\x01user", 'b', 'digest'],
+            'http_errors' => false,
+        ]);
+
+        self::assertSame(401, $response->getStatusCode());
+        self::assertCount(1, $mock);
+    }
+
+    public function testDigestUnsafeCnonceReturnsChallengeWithoutRetry(): void
+    {
+        $mock = new MockHandler([
+            new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"']),
+            new Response(200),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock, static function (): string {
+            return "bad\x7Fcnonce";
+        })]);
+
+        $response = $client->get('http://example.com', [
+            'auth' => ['a', 'b', 'digest'],
+            'http_errors' => false,
+        ]);
+
+        self::assertSame(401, $response->getStatusCode());
+        self::assertCount(1, $mock);
+    }
+
     public function testDigestStaleChallengeRetriesOnceMore(): void
     {
         $requests = [];
