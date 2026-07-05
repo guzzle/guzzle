@@ -185,15 +185,19 @@ class RedirectMiddleware
         }
 
         $modify['uri'] = $uri;
-        try {
-            Psr7\Message::rewindBody($request);
-        } catch (\RuntimeException $e) {
-            throw new RequestException(
-                'Redirect failed because the request body could not be rewound: '.$e->getMessage(),
-                $request,
-                $response,
-                $e
-            );
+
+        // The body only needs to be rewound when the next request reuses it.
+        if (!isset($modify['body'])) {
+            try {
+                Psr7\Message::rewindBody($request);
+            } catch (\RuntimeException $e) {
+                throw new RequestException(
+                    'Redirect failed because the request body could not be rewound: '.$e->getMessage(),
+                    $request,
+                    $response,
+                    $e
+                );
+            }
         }
 
         // Add the Referer header if it is told to do so and only
