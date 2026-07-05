@@ -961,7 +961,13 @@ $client->request('GET', 'https://example.com/stream', [
 ```
 
 > [!NOTE]
-> Only the built-in cURL handlers invoke `on_trailers`; the built-in stream and mock handlers cannot observe trailer fields and ignore the option. When writing HTTP handlers that support trailer fields, invoke the `on_trailers` callable exactly once per successful transfer, after the response body has completed, and never for failed transfers.
+> Only the built-in cURL handlers invoke `on_trailers`; the built-in stream and
+> mock handlers cannot observe trailer fields and ignore the option. When writing
+> HTTP handlers that support trailer fields, invoke the `on_trailers` callable
+> exactly once per successful transfer, after the response body has completed,
+> and never for failed transfers. Malformed trailer field lines are discarded
+> before parsing. Trailer fields are reported separately from response headers
+> and are never merged into the response.
 
 ## progress
 

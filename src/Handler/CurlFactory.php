@@ -2589,7 +2589,7 @@ final class CurlFactory implements CurlFactoryInterface
             &$collectingTrailers
         ): int {
             $value = \trim($h);
-            if ($value === '') {
+            if ($h === "\r\n" || $h === "\n" || $h === "\r" || $h === '') {
                 if ($collectingTrailers) {
                     // A blank line ends the trailer section; the response has
                     // already been created.
@@ -2619,14 +2619,13 @@ final class CurlFactory implements CurlFactoryInterface
                     return -1;
                 }
             } elseif ($startingResponse || $collectingTrailers) {
-                if ($easy->response !== null && 0 !== \strncasecmp($value, 'HTTP/', 5)) {
+                if ($easy->response !== null && !HeaderProcessor::isStatusLineCandidate($h)) {
                     // Trailer fields arrive through the header callback after
                     // the body; a new header block always begins with a status
                     // line.
                     $collectingTrailers = true;
-                    // Older libcurl delivers trailer lines unvalidated;
-                    // discard any without a colon separator.
-                    if (\strpos($value, ':') !== false) {
+
+                    if (HeaderProcessor::isValidHeaderFieldLine($h)) {
                         $easy->trailers[] = $value;
                     }
                 } else {
