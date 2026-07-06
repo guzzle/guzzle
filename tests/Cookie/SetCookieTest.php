@@ -90,6 +90,15 @@ class SetCookieTest extends TestCase
         self::assertLessThanOrEqual(\time(), $cookie->getExpires());
     }
 
+    public function testFromStringTrimsOnlyRfc6265Whitespace(): void
+    {
+        $cookie = SetCookie::fromString("\tfoo\t=\t\x0Bbar\x0B\t; \tPath\t=\t/p\t");
+
+        self::assertSame('foo', $cookie->getName());
+        self::assertSame("\x0Bbar\x0B", $cookie->getValue());
+        self::assertSame('/p', $cookie->getPath());
+    }
+
     public function testHoldsValues(): void
     {
         $t = \time();

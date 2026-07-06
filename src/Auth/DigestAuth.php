@@ -284,9 +284,17 @@ final class DigestAuth
         $challenge->realm = $params['realm'] ?? '';
         $challenge->nonce = $params['nonce'];
         $challenge->opaque = $params['opaque'] ?? null;
-        $challenge->domain = isset($params['domain'])
-            ? \array_values(\array_filter(\preg_split('/[ \t]+/', $params['domain']) ?: []))
-            : [];
+        if (isset($params['domain'])) {
+            $domainAreas = \preg_split('/[ \t]+/', $params['domain']);
+
+            if ($domainAreas === false) {
+                throw new \RuntimeException('Unable to split the Digest domain list: '.\preg_last_error_msg());
+            }
+
+            $challenge->domain = \array_values(\array_filter($domainAreas));
+        } else {
+            $challenge->domain = [];
+        }
         $challenge->qop = $qop;
         $challenge->stale = isset($params['stale']) && \strcasecmp($params['stale'], 'true') === 0;
         $challenge->userhash = isset($params['userhash']) && \strcasecmp($params['userhash'], 'true') === 0;
@@ -324,7 +332,7 @@ final class DigestAuth
 
         $tokens = \array_map(
             static function (string $token): string {
-                return \strtolower(\trim($token));
+                return \strtolower(\trim($token, " \t"));
             },
             \explode(',', $qop)
         );

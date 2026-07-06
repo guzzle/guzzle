@@ -88,6 +88,16 @@ class DigestAuthTest extends TestCase
         self::assertSame('auth', $challenge->qop);
     }
 
+    public function testParsesQopTokensWithOptionalWhitespace(): void
+    {
+        $challenge = DigestAuth::selectChallenge(new Response(401, [
+            'WWW-Authenticate' => 'Digest realm="r", nonce="n", qop="auth-int, auth"',
+        ]));
+
+        self::assertNotNull($challenge);
+        self::assertSame('auth', $challenge->qop);
+    }
+
     /**
      * @dataProvider token68ChallengeProvider
      */
