@@ -1444,6 +1444,53 @@ final class CurlFactory implements CurlFactoryInterface
         return !self::isSocksProxyType($conf[\CURLOPT_PROXYTYPE] ?? null);
     }
 
+    private static function proxyScheme(string $proxy): ?string
+    {
+        $position = \strpos($proxy, '://');
+
+        return $position === false ? null : \strtolower(\substr($proxy, 0, $position));
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function isSocksProxy(string $proxy, array $conf): bool
+    {
+        $scheme = self::proxyScheme($proxy);
+        if ($scheme !== null) {
+            return \in_array($scheme, ['socks', 'socks4', 'socks4a', 'socks5', 'socks5h'], true);
+        }
+
+        return self::isSocksProxyType($conf[\CURLOPT_PROXYTYPE] ?? null);
+    }
+
+    /**
+     * Computes the connection-reuse section signature for a SOCKS proxy.
+     * libcurl compares SOCKS credentials on connection reuse from 7.69.0 (curl
+     * #4835), so no sectioning is needed there. Older libcurl matches a SOCKS
+     * proxy by type, host, and port only, so every SOCKS request is sectioned
+     * by its credential state; hashing the credential-less state too keeps an
+     * unauthenticated request from inheriting an authenticated connection. See
+     * docs/contributing/curl-connection-reuse.md.
+     *
+     * @param array<int|string, mixed> $conf
+     */
+    private static function socksProxySignature(string $proxy, array $conf): ?string
+    {
+        if (CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse()) {
+            return null;
+        }
+
+        $credentialState = [];
+        foreach (['CURLOPT_PROXYUSERPWD', 'CURLOPT_PROXYUSERNAME', 'CURLOPT_PROXYPASSWORD', 'CURLOPT_PROXYTYPE'] as $name) {
+            $credentialState[$name] = \defined($name)
+                ? ($conf[(int) \constant($name)] ?? null)
+                : null;
+        }
+
+        return \hash('sha256', \serialize(['socks', $proxy, $credentialState]));
+    }
+
     /**
      * @param mixed $proxyType
      */
@@ -1633,17 +1680,27 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * Computes the connection-reuse section signature for a proxy tunnel, or
-     * null when the request does not require sectioning.
+     * Computes the connection-reuse section signature for a proxy tunnel or
+     * SOCKS proxy, or null when the request does not require sectioning.
      *
      * @param array<int|string, mixed> $conf
      */
     private static function proxyTunnelSignature(RequestInterface $request, array $conf): ?string
     {
         $proxy = self::getEffectiveProxy($conf);
+        if ($proxy === null) {
+            return null;
+        }
+
+        // SOCKS authentication binds an identity to the connection itself, for
+        // plain http:// requests as much as https://, so it sections ahead of
+        // the CONNECT tunnel domain checks.
+        if (self::isSocksProxy($proxy, $conf)) {
+            return self::socksProxySignature($proxy, $conf);
+        }
+
         if (
-            $proxy === null
-            || !self::usesProxyTunnel($request, $conf)
+            !self::usesProxyTunnel($request, $conf)
             || !self::isHttpProxyForConnectionReuse($proxy, $conf)
         ) {
             return null;

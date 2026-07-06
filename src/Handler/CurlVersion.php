@@ -65,6 +65,11 @@ final class CurlVersion
     // fixed in 8.20.0, so connection reuse is trusted from 8.20.0 onwards.
     private const PROXY_CREDENTIAL_REUSE_VERSION = '8.20.0';
 
+    // curl 7.69.0 started comparing SOCKS proxy credentials when matching
+    // connections for reuse (curl #4835); older libcurl matches a SOCKS proxy
+    // by type, host, and port only.
+    private const SOCKS_PROXY_CREDENTIAL_REUSE_VERSION = '7.69.0';
+
     private const PROXY_HEADER_SEPARATION_VERSION = '7.37.0';
 
     /**
@@ -232,6 +237,14 @@ final class CurlVersion
 
         return null !== $version
             && version_compare($version, self::PROXY_CREDENTIAL_REUSE_VERSION, '>=');
+    }
+
+    public static function supportsSocksProxyCredentialAwareConnectionReuse(): bool
+    {
+        $version = self::get();
+
+        return null !== $version
+            && version_compare($version, self::SOCKS_PROXY_CREDENTIAL_REUSE_VERSION, '>=');
     }
 
     public static function supportsProxyHeaderSeparation(): bool

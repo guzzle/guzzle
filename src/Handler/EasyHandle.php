@@ -69,8 +69,8 @@ final class EasyHandle
     public ?string $effectiveProxy = null;
 
     /**
-     * Proxy tunnel section signature for connection-reuse isolation, or
-     * null when the request does not require sectioning.
+     * Proxy tunnel or SOCKS proxy section signature for connection-reuse
+     * isolation, or null when the request does not require sectioning.
      */
     public ?string $proxyTunnelSignature = null;
 

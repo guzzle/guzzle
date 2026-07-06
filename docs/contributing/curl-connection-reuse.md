@@ -141,15 +141,15 @@ sections are in flight right now.
 
 ## 5. The signature: what it covers and why
 
-**Domain (when a signature is computed at all).** Only for a request that
-establishes a proxy `CONNECT` tunnel through an HTTP(S), non-SOCKS proxy.
+**Domain (when a signature is computed at all).** Two proxy families section: a
+request that establishes a proxy `CONNECT` tunnel through an HTTP(S) proxy —
 `usesProxyTunnel()` is true for an `https://` target, an explicit
 `CURLOPT_HTTPPROXYTUNNEL`, or an `http://` target with a non-empty
-`CURLOPT_CONNECT_TO` (§6); `isHttpProxyForConnectionReuse()` excludes SOCKS.
-Direct, SOCKS, and non-tunnel requests get a `null` signature and never disturb
-the pool. Real delegated tunnels on fixed libcurl get a non-`null` sentinel, so
-they stay distinct from genuine non-tunnels and from literal proxy-header tunnel
-owners.
+`CURLOPT_CONNECT_TO` (§6) — and any request through a SOCKS proxy on libcurl
+older than 7.69.0 (below). Direct and non-tunnel HTTP-proxy requests get a
+`null` signature and never disturb the pool. Real delegated tunnels on fixed
+libcurl get a non-`null` sentinel, so they stay distinct from genuine
+non-tunnels and from literal proxy-header tunnel owners.
 
 > Non-tunnel proxy requests get a `null` signature and are deliberately left
 > unsectioned. For per-request (HTTP Basic) proxy auth this is safe: `proxy` URL
@@ -164,6 +164,31 @@ owners.
 > extend the signature domain beyond CONNECT tunnels, which is intentionally out
 > of scope. (A single static header value cannot complete NTLM's multi-leg
 > handshake, but a single-leg Negotiate token can, so the residual is real.)
+
+**SOCKS proxies (sectioned below 7.69.0).** SOCKS authentication is
+connection-scoped: the credentials are negotiated once, right after TCP connect,
+and the proxy attributes everything else sent on that connection to that
+identity — the same identity binding as an authenticated `CONNECT` tunnel, one
+layer down. libcurl only started comparing SOCKS credentials when matching
+connections for reuse in 7.69.0 (curl #4835); older libcurl matches a SOCKS
+proxy by type, host, and port only, so a pooled connection authenticated as one
+user could be reused for another — or for a request carrying no credentials at
+all. `proxyTunnelSignature()` therefore routes every SOCKS proxy (the `socks`,
+`socks4`, `socks4a`, `socks5`, and `socks5h` schemes, or a scheme-less proxy
+with a SOCKS `CURLOPT_PROXYTYPE`) to `socksProxySignature()` ahead of the tunnel
+domain checks, because SOCKS binds plain `http://` requests as much as
+`https://` ones. From 7.69.0 the signature is `null`: libcurl keys reuse on the
+parsed SOCKS credentials itself, both URL userinfo and the
+`CURLOPT_PROXYUSERPWD` family feed the compared fields, and SOCKS has no
+opaque-header analogue of `Proxy-Authorization`, so unlike `CONNECT` tunnels
+there is no channel libcurl cannot key. Below 7.69.0 every SOCKS request is
+sectioned by a hash of the effective proxy URL and the proxy credential options;
+the credential-less state hashes too, distinctly, because an anonymous request
+would otherwise match — and inherit — an authenticated pooled connection.
+The SOCKS5 auth-method mask, the SOCKS GSSAPI options, and `CURLOPT_PRE_PROXY`
+are not hashed: they are rejected raw options on 8.0, and branches that still
+apply them as deprecated raw options leave them the caller's responsibility —
+an accepted residual.
 
 **The channels hashed:** the effective proxy URL, the proxy credential and
 TLS-identity options, and any literal `Proxy-Authorization` header value.
@@ -285,6 +310,13 @@ channel's gate and 8.12.0 decides whether the throw can fire:
   literal-header case still does, since libcurl can never key on an opaque
   request header.
 
+**SOCKS proxies under a share handle → no special handling needed.** A shared
+connection cache requires libcurl 8.12.0 or newer (§3), which is above the
+7.69.0 SOCKS credential floor, so wherever a shared connection cache can exist
+libcurl already keys SOCKS credentials itself.
+`forceFreshConnectionForAuthenticatedProxy()` needs no SOCKS rule, and
+`PERSISTENT_REQUIRE` can never throw for SOCKS credentials.
+
 **SSL session sharing floor = 8.6.0 — why it is safe.** Sharing the TLS
 session cache could, in theory, let two handles resume each other's TLS session
 across *different* client certificates. It cannot: libcurl matches the client
@@ -336,6 +368,12 @@ sentinel —
 which always sections because libcurl can never key on an opaque request header
 (§5).
 
+`SOCKS_PROXY_CREDENTIAL_REUSE_VERSION = 7.69.0`. Below it, every SOCKS-proxied
+request is sectioned by its credential state, because libcurl matched a SOCKS
+proxy by type, host, and port only (curl #4835). At or above it the signature is
+`null` — full delegation — since libcurl compares the parsed SOCKS
+credentials itself and SOCKS has no literal-header channel it cannot key.
+
 This proxy-credential floor (8.20.0) is **distinct** from the connection-cache
 sharing floor (`CONNECTION_SHARING_VERSION = 8.12.0`, §3). The former gates how
 Guzzle sections proxy tunnels; the latter gates whether persistent sharing puts
@@ -360,6 +398,11 @@ or remove a channel, add or adjust a test** — a silently dropped channel is
 exactly how a leak gets reintroduced, and CI is the backstop the comments point
 at.
 
+`testSocksProxyCredentialsChangeSocksProxySignatureOnAffectedCurlVersion`, the
+SOCKS cases in `proxyTunnelSectionProvider`, and the scheme-less
+`CURLOPT_PROXYTYPE` reflection test pin the SOCKS credential channels, the
+credential-less sectioning, and the 7.69.0 delegation.
+
 `testProxyTlsCredentialsRequireFreshConnectionOnAffectedCurlVersion` does the
 same for the share-handle force-fresh path: it asserts
 `requiresFreshConnectionForAuthenticatedProxy` forces a fresh tunnel for a proxy
@@ -375,6 +418,9 @@ TLS credential below 7.83.1 and not at or above it.
 - Use a non-`null` delegated sentinel for real proxy tunnels whose parsed proxy
   credentials, if any, are trusted to libcurl.
 - Never trust libcurl `< 8.20` to distinguish proxy credentials itself.
+- Section every SOCKS-proxied request below 7.69.0 by its credential state,
+  including the credential-less state; from 7.69.0 libcurl compares SOCKS
+  credentials itself and SOCKS requests are deliberately unsectioned.
 - On the non-delegated signature path, key on the proxy private-key file and
   passphrase as fallback hardening (libcurl's mTLS private-key matching on reuse
   was incomplete below 8.21.0, CVE-2026-8932; the delegated path and configured
@@ -395,8 +441,10 @@ TLS credential below 7.83.1 and not at or above it.
 (origin client-cert reuse), CVE-2022-27782 (TLS / TLS-SRP config not compared on
 reuse), CVE-2024-0853 (client cert / OCSP on session reuse),
 CVE-2026-6253/6429/7168 (proxy-credential leaks on reuse, fixed 8.20.0),
-CVE-2026-8932 (incomplete mTLS private-key matching on reuse, fixed 8.21.0); the
-8.12.0 connection-cache floor also draws on curl's 8.12.0 session-cache rewrite
+CVE-2026-8932 (incomplete mTLS private-key matching on reuse, fixed 8.21.0),
+and curl issue #4835 (SOCKS proxy credentials not compared on connection reuse,
+fixed 7.69.0); the 8.12.0 connection-cache floor also draws on curl's 8.12.0
+session-cache rewrite
 ([curl PR #16245](https://github.com/curl/curl/pull/16245)). Source of record:
 `lib/url.c` (`proxy_info_matches`, the connection matcher, `tunnel_proxy`) and
 `lib/vtls/` (`ssl_primary_config` vs `ssl_config_data`, the session cache and
@@ -411,6 +459,6 @@ option, and `curl_setopt()` rejects unknown option integers (PHP 8
 `ValueError`), which is what makes the `\defined()` guard safe.
 
 **guzzle** — `src/Handler/CurlFactory.php` (`proxyTunnelSignature`,
-`usesProxyTunnel`, `isHttpProxyForConnectionReuse`),
+`socksProxySignature`, `usesProxyTunnel`, `isHttpProxyForConnectionReuse`),
 `src/Handler/CurlVersion.php` (the version floors), and
 [exception-guidelines.md](exception-guidelines.md) for exception types.
