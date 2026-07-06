@@ -11,9 +11,11 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
+- Stop matching cookie domains against hosts with a trailing newline
+- Reject HTTP status codes and certificate type extensions with a trailing newline
+- Treat PCRE engine failures as invalid cookie names during cookie validation
 - Report PCRE engine failures when formatting log messages
 - Report PCRE engine failures when splitting `no_proxy` values
-- Treat PCRE engine failures as invalid cookie names during cookie validation
 
 
 ## 7.13.2 - 2026-07-05

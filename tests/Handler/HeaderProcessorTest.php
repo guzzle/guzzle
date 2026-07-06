@@ -82,6 +82,16 @@ class HeaderProcessorTest extends TestCase
         ]);
     }
 
+    public function testRejectsStatusCodeWithTrailingNewline(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('HTTP status code is invalid');
+
+        HeaderProcessor::parseHeaders([
+            "HTTP/1.1 200\n",
+        ]);
+    }
+
     public function testRejectsMalformedHeaderLine(): void
     {
         $this->expectException(\RuntimeException::class);

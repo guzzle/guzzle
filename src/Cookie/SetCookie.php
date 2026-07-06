@@ -474,7 +474,7 @@ class SetCookie
             return false;
         }
 
-        return (bool) \preg_match('/\.'.\preg_quote($cookieDomain, '/').'$/', $domain);
+        return (bool) \preg_match('/\.'.\preg_quote($cookieDomain, '/').'$/D', $domain);
     }
 
     private static function isIpAddressOrNumericHost(string $host): bool
