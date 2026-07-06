@@ -357,6 +357,27 @@ class RedirectMiddlewareTest extends TestCase
         }
     }
 
+    public function testNonSeekableBodyIsNotRewoundWhenRedirectDiscardsBody(): void
+    {
+        $mock = new MockHandler([
+            new Response(303, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $body = new Psr7\NoSeekStream(Psr7\Utils::streamFor('a=b'));
+        $body->getContents();
+        $request = new Request('POST', 'http://example.com', [], $body);
+
+        $response = $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+        $lastRequest = $mock->getLastRequest();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('GET', $lastRequest->getMethod());
+        self::assertSame('', (string) $lastRequest->getBody());
+    }
+
     public function testSendPreservesCustomUriImplementationForRelativeRedirectsWithDefaultUriFactory(): void
     {
         $mock = new MockHandler([
