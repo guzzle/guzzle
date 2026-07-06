@@ -3,6 +3,19 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.13.3 - Upcoming
+
+### Changed
+
+- Pass explicit trim characters ahead of the PHP 8.6 trim default change
+
+### Fixed
+
+- Report PCRE engine failures when formatting log messages
+- Report PCRE engine failures when splitting `no_proxy` values
+- Treat PCRE engine failures as invalid cookie names during cookie validation
+
+
 ## 7.13.2 - 2026-07-05
 
 ### Fixed

@@ -45,7 +45,7 @@ final class Utils
                 /** @var string $varDumpContent */
                 $varDumpContent = \ob_get_clean();
 
-                return \str_replace('double(', 'float(', \rtrim($varDumpContent));
+                return \str_replace('double(', 'float(', \rtrim($varDumpContent, " \n\r\t\0\x0B"));
         }
     }
 
@@ -61,7 +61,7 @@ final class Utils
 
         foreach ($lines as $line) {
             $parts = \explode(':', $line, 2);
-            $headers[\trim($parts[0])][] = isset($parts[1]) ? \trim($parts[1]) : null;
+            $headers[\trim($parts[0], " \n\r\t\0\x0B")][] = isset($parts[1]) ? \trim($parts[1], " \n\r\t\0\x0B") : null;
         }
 
         return $headers;
@@ -383,7 +383,7 @@ EOT
                 continue;
             }
 
-            $area = \trim($area);
+            $area = \trim($area, " \n\r\t\0\x0B");
 
             // Always match on wildcards.
             if ($area === '*') {
@@ -432,7 +432,7 @@ EOT
      */
     private static function parseNoProxyRule(string $area): ?array
     {
-        $area = \trim($area);
+        $area = \trim($area, " \n\r\t\0\x0B");
         if ($area === '' || $area === '*') {
             return null;
         }
