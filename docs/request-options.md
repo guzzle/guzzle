@@ -1225,6 +1225,13 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > credential sectioning for option-supplied credentials is left to libcurl's own
 > credential-aware connection matching.
 >
+> SOCKS proxies authenticate the connection itself rather than a CONNECT
+> tunnel, and libcurl versions before 7.69.0 do not compare SOCKS credentials
+> when matching a pooled connection for reuse, so on those versions Guzzle
+> sections every SOCKS-proxied request by its proxy and credential state —
+> plain `http://` targets and credential-less requests included. From libcurl
+> 7.69.0, SOCKS credential matching is left to libcurl.
+>
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,
 > which also drops unrelated direct keep-alive connections pooled alongside

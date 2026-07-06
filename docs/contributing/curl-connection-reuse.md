@@ -174,21 +174,22 @@ connections for reuse in 7.69.0 (curl #4835); older libcurl matches a SOCKS
 proxy by type, host, and port only, so a pooled connection authenticated as one
 user could be reused for another — or for a request carrying no credentials at
 all. `proxyTunnelSignature()` therefore routes every SOCKS proxy (the `socks`,
-`socks4`, `socks4a`, `socks5`, and `socks5h` schemes, or a scheme-less proxy
-with a SOCKS `CURLOPT_PROXYTYPE`) to `socksProxySignature()` ahead of the tunnel
-domain checks, because SOCKS binds plain `http://` requests as much as
-`https://` ones. From 7.69.0 the signature is `null`: libcurl keys reuse on the
-parsed SOCKS credentials itself, both URL userinfo and the
-`CURLOPT_PROXYUSERPWD` family feed the compared fields, and SOCKS has no
-opaque-header analogue of `Proxy-Authorization`, so unlike `CONNECT` tunnels
-there is no channel libcurl cannot key. Below 7.69.0 every SOCKS request is
-sectioned by a hash of the effective proxy URL and the proxy credential options;
-the credential-less state hashes too, distinctly, because an anonymous request
-would otherwise match — and inherit — an authenticated pooled connection.
-The SOCKS5 auth-method mask, the SOCKS GSSAPI options, and `CURLOPT_PRE_PROXY`
-are not hashed: they are rejected raw options on 8.0, and branches that still
-apply them as deprecated raw options leave them the caller's responsibility —
-an accepted residual.
+`socks4`, `socks4a`, `socks5`, and `socks5h` schemes, or an `http`-scheme or
+scheme-less proxy with a SOCKS `CURLOPT_PROXYTYPE` — libcurl preserves the raw
+proxy type behind an `http` scheme, while every other scheme overrides it) to
+`socksProxySignature()` ahead of the tunnel domain checks, because SOCKS binds
+plain `http://` requests as much as `https://` ones. From 7.69.0 the signature
+is `null`: libcurl keys reuse on the parsed SOCKS credentials itself, both URL
+userinfo and the `CURLOPT_PROXYUSERPWD` family feed the compared fields, and
+SOCKS has no opaque-header analogue of `Proxy-Authorization`, so unlike
+`CONNECT` tunnels there is no channel libcurl cannot key. Below 7.69.0 every
+SOCKS request is sectioned by a hash of the effective proxy URL and the proxy
+credential options; the credential-less state hashes too, distinctly, because an
+anonymous request would otherwise match — and inherit — an authenticated
+pooled connection. The SOCKS5 auth-method mask, the SOCKS GSSAPI options, and
+`CURLOPT_PRE_PROXY` are not hashed: they are rejected raw options on 8.0, and
+branches that still apply them as deprecated raw options leave them the caller's
+responsibility — an accepted residual.
 
 **The channels hashed:** the effective proxy URL, the proxy credential and
 TLS-identity options, and any literal `Proxy-Authorization` header value.
@@ -310,12 +311,21 @@ channel's gate and 8.12.0 decides whether the throw can fire:
   literal-header case still does, since libcurl can never key on an opaque
   request header.
 
-**SOCKS proxies under a share handle → no special handling needed.** A shared
-connection cache requires libcurl 8.12.0 or newer (§3), which is above the
-7.69.0 SOCKS credential floor, so wherever a shared connection cache can exist
-libcurl already keys SOCKS credentials itself.
-`forceFreshConnectionForAuthenticatedProxy()` needs no SOCKS rule, and
-`PERSISTENT_REQUIRE` can never throw for SOCKS credentials.
+**SOCKS proxies under a share handle → authenticated requests force fresh
+below 7.69.0.** A configured share handle suppresses `proxyTunnelSignature()`,
+and handler-lifetime shares exist from libcurl 7.35.0 while locking only DNS and
+SSL sessions (§3): connections keep pooling in the factory's idle easy handles
+and in the multi handle's own cache, which below 7.69.0 match a SOCKS proxy
+credential-blind. `requiresFreshConnectionForAuthenticatedProxy()` therefore has
+a SOCKS rule ahead of its tunnel checks: below 7.69.0, an authenticated SOCKS
+request is forced onto a fresh non-reusable connection. `CURLOPT_FORBID_REUSE`
+keeps every authenticated SOCKS connection out of the pools, so anonymous
+requests cannot inherit one and need no forcing — unlike the signature path,
+which must hash the credential-less state because its authenticated connections
+do pool. The shared *connection cache* itself requires libcurl 8.12.0 or newer
+(§3), above the 7.69.0 floor, so wherever a shared connection cache can exist
+libcurl already keys SOCKS credentials and `PERSISTENT_REQUIRE` can never throw
+for SOCKS credentials.
 
 **SSL session sharing floor = 8.6.0 — why it is safe.** Sharing the TLS
 session cache could, in theory, let two handles resume each other's TLS session
@@ -399,9 +409,12 @@ exactly how a leak gets reintroduced, and CI is the backstop the comments point
 at.
 
 `testSocksProxyCredentialsChangeSocksProxySignatureOnAffectedCurlVersion`, the
-SOCKS cases in `proxyTunnelSectionProvider`, and the scheme-less
-`CURLOPT_PROXYTYPE` reflection test pin the SOCKS credential channels, the
-credential-less sectioning, and the 7.69.0 delegation.
+SOCKS cases in `proxyTunnelSectionProvider`, and the scheme-less and
+`http`-scheme `CURLOPT_PROXYTYPE` reflection tests pin the SOCKS credential
+channels, the credential-less sectioning, and the 7.69.0 delegation. The
+share-handle SOCKS tests assert the blanket force-fresh: an authenticated SOCKS
+request below 7.69.0 — a plain `http://` target included — forces a fresh
+non-reusable connection, while anonymous requests and fixed libcurl do not.
 
 `testProxyTlsCredentialsRequireFreshConnectionOnAffectedCurlVersion` does the
 same for the share-handle force-fresh path: it asserts
@@ -434,6 +447,10 @@ TLS credential below 7.83.1 and not at or above it.
   credential (client cert / TLS-SRP) below 7.83.1, mirroring the signature path;
   the 7.83.1 gate keeps it below the version where `PERSISTENT_REQUIRE` would
   throw.
+- Under a configured share handle, force a fresh non-reusable connection for an
+  authenticated SOCKS request below 7.69.0; anonymous SOCKS requests need no
+  forcing there, because `CURLOPT_FORBID_REUSE` keeps every authenticated SOCKS
+  connection out of the pools.
 
 ## References
 
