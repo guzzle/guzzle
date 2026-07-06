@@ -197,15 +197,19 @@ class RedirectMiddleware
         }
 
         $modify['uri'] = $uri;
-        try {
-            Psr7\Message::rewindBody($request);
-        } catch (\Exception $e) {
-            throw new ResponseException(
-                'Redirect failed because the request body could not be rewound',
-                $request,
-                $response,
-                $e
-            );
+
+        // The body only needs to be rewound when the next request reuses it.
+        if (!isset($modify['body'])) {
+            try {
+                Psr7\Message::rewindBody($request);
+            } catch (\Exception $e) {
+                throw new ResponseException(
+                    'Redirect failed because the request body could not be rewound',
+                    $request,
+                    $response,
+                    $e
+                );
+            }
         }
 
         $crossOrigin = Psr7\UriComparator::isCrossOrigin($request->getUri(), $modify['uri']);
