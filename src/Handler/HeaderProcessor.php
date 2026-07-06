@@ -44,7 +44,7 @@ final class HeaderProcessor
             throw new \RuntimeException('HTTP status code missing from header data');
         }
 
-        if (!\preg_match('/^\d{3}$/', $status)) {
+        if (!\preg_match('/^\d{3}$/D', $status)) {
             throw new \RuntimeException('HTTP status code is invalid');
         }
 
