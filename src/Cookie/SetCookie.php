@@ -78,7 +78,7 @@ class SetCookie
                             if ($value) {
                                 $data[$search] = true;
                             }
-                        } else {
+                        } elseif (\is_string($value)) {
                             $data[$search] = $value;
                         }
                         continue 2;

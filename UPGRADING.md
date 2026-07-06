@@ -890,7 +890,8 @@ new SetCookie([
 ```
 
 Cookies parsed from normal `Set-Cookie` headers continue to be normalized by
-`SetCookie::fromString()`.
+`SetCookie::fromString()`. Attributes that require a value (`Domain`, `Path`,
+`Expires`, `Max-Age`) are ignored when they appear without one.
 
 #### SetCookie Max-Age Precedence
 

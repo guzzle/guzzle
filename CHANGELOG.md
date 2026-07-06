@@ -120,6 +120,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject invalid `select_timeout` cURL multi handler option values
 - Reject raw cURL multi connection cap options in favour of the named options
 - Parse `Set-Cookie` strings with RFC 6265 whitespace trimming
+- Ignore valueless `Set-Cookie` attributes that require a value when parsing
 - Trim only the trailing CRLF from the stream handler header block
 
 ### Removed
