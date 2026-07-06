@@ -173,7 +173,11 @@ final class ProxyOptions
         if (\is_string($noProxy)) {
             // Entries may be separated by whitespace as well as commas,
             // matching the no_proxy environment variable conventions.
-            $noProxy = \preg_split('/[\s,]+/', $noProxy) ?: [];
+            $noProxy = \preg_split('/[\s,]+/', $noProxy);
+
+            if ($noProxy === false) {
+                throw new \RuntimeException('Unable to split the proxy no list: '.\preg_last_error_msg());
+            }
         } elseif (!\is_array($noProxy)) {
             throw new InvalidArgumentException('proxy no list must be null, a string, or an array of strings');
         }
@@ -184,7 +188,7 @@ final class ProxyOptions
                 throw new InvalidArgumentException('proxy no list must be null, a string, or an array of strings');
             }
 
-            $area = \trim($area);
+            $area = \trim($area, " \n\r\t\0\x0B");
             if ($area !== '') {
                 $result[] = $area;
             }
@@ -210,7 +214,7 @@ final class ProxyOptions
         }
 
         foreach ($noProxy as $area) {
-            $area = \trim($area);
+            $area = \trim($area, " \n\r\t\0\x0B");
 
             if ($area === '*') {
                 return true;
@@ -260,7 +264,7 @@ final class ProxyOptions
         }
 
         foreach ($noProxy as $area) {
-            $area = \trim($area);
+            $area = \trim($area, " \n\r\t\0\x0B");
 
             if ($area === '*') {
                 return true;
@@ -322,7 +326,7 @@ final class ProxyOptions
      */
     private static function parseNoProxyRule(string $area): ?array
     {
-        $area = \trim($area);
+        $area = \trim($area, " \n\r\t\0\x0B");
         if ($area === '' || $area === '*') {
             return null;
         }

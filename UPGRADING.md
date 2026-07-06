@@ -586,6 +586,14 @@ response body is closed or garbage-collected by the built-in cURL and stream
 handlers. Applications that relied on Guzzle closing a raw resource sink should
 close the resource explicitly or pass a string path instead.
 
+#### Stream Handler Header Serialization
+
+The stream handler now trims only the trailing CRLF pair from the serialized
+header block it passes to the PHP stream context. Guzzle 7 also removed other
+trailing whitespace there, which could drop trailing spaces or horizontal tabs
+from the final header value when a request came from a PSR-7 implementation
+that does not trim header values.
+
 #### TLS Minimum Version
 
 The built-in cURL and stream handlers now default HTTPS requests to TLS 1.2 or
@@ -896,6 +904,14 @@ future date.
 `SetCookie::fromString()` now ignores float-like or exponent `Max-Age` values
 such as `0.5`, `1.5`, or `1e3`. Guzzle 7 truncated these numeric forms toward
 zero. Use integer-second `Max-Age` values.
+
+#### Set-Cookie Parsing Whitespace
+
+`SetCookie::fromString()` now trims cookie names, cookie values, and attribute
+segments with the RFC 6265 whitespace characters, space and horizontal tab.
+Guzzle 7 also trimmed line feeds, carriage returns, null bytes, and vertical
+tabs. Header values produced by Guzzle PSR-7 cannot contain those bytes, so
+this only affects strings passed to `SetCookie::fromString()` directly.
 
 #### CookieJar::clear Null Semantics
 
