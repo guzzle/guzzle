@@ -15,6 +15,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Redirects that discard the request body no longer require it to be rewindable
+- Section SOCKS proxy connections by credentials on libcurl before 7.69.0
+- Reject request-level `CURLOPT_SHARE` when combined with authenticated SOCKS proxy configuration
 - Check linked curl/libcurl NTLM support before applying NTLM auth
 - Clarify that NTLM is deprecated by both Guzzle and curl/libcurl
 - Remove deprecation for the raw cURL `CURLOPT_CERTINFO` option

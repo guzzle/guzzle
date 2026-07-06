@@ -376,9 +376,18 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $proxy = self::getEffectiveProxy($conf);
+        if ($proxy === null) {
+            return;
+        }
+
+        // An external share handle may pool SOCKS connections where no section
+        // signature can reach them, so authenticated SOCKS state is rejected.
+        if (self::isSocksProxy($proxy, $conf) && self::hasAuthenticatedSocksProxyState($proxy, $conf)) {
+            throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with authenticated SOCKS proxy configuration; use Guzzle-managed "transport_sharing" or a custom handler/factory instead.');
+        }
+
         if (
-            $proxy === null
-            || !self::usesProxyTunnel($request, $conf)
+            !self::usesProxyTunnel($request, $conf)
             || !self::isHttpProxyForConnectionReuse($proxy, $conf)
             || !self::hasAuthenticatedHttpProxyState($proxy, $conf)
         ) {
@@ -1068,6 +1077,16 @@ class CurlFactory implements CurlFactoryInterface
      */
     private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $conf): bool
     {
+        // SOCKS authentication binds an identity to the connection itself, and
+        // below 7.69.0 the easy and multi handle pools match a SOCKS proxy
+        // credential-blind, so an authenticated SOCKS request is isolated onto
+        // a fresh non-reusable connection; FORBID_REUSE keeps it out of every
+        // pool, so anonymous requests cannot inherit it and need no forcing.
+        if (self::isSocksProxy($proxy, $conf)) {
+            return !CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse()
+                && self::hasAuthenticatedSocksProxyState($proxy, $conf);
+        }
+
         if (!self::usesProxyTunnel($request, $conf) || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {
             return false;
         }
@@ -1101,6 +1120,24 @@ class CurlFactory implements CurlFactoryInterface
         return \array_key_exists('user', $proxyParts)
             || \array_key_exists('pass', $proxyParts)
             || self::hasCurlProxyCredentials($conf);
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function hasAuthenticatedSocksProxyState(string $proxy, array $conf): bool
+    {
+        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
+        $proxyParts = \parse_url($proxyForParsing);
+
+        if (
+            \is_array($proxyParts)
+            && (\array_key_exists('user', $proxyParts) || \array_key_exists('pass', $proxyParts))
+        ) {
+            return true;
+        }
+
+        return self::hasCurlProxyCredentials($conf);
     }
 
     /**
@@ -1164,6 +1201,53 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         return !self::isSocksProxyType($conf[\CURLOPT_PROXYTYPE] ?? null);
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function isSocksProxy(string $proxy, array $conf): bool
+    {
+        $scheme = self::proxyScheme($proxy);
+        if ($scheme !== null) {
+            if (\in_array($scheme, ['socks', 'socks4', 'socks4a', 'socks5', 'socks5h'], true)) {
+                return true;
+            }
+
+            // libcurl preserves a raw SOCKS CURLOPT_PROXYTYPE behind an http
+            // scheme, while every other scheme overrides the proxy type.
+            if ($scheme !== 'http') {
+                return false;
+            }
+        }
+
+        return self::isSocksProxyType($conf[\CURLOPT_PROXYTYPE] ?? null);
+    }
+
+    /**
+     * Computes the connection-reuse section signature for a SOCKS proxy.
+     * libcurl compares SOCKS credentials on connection reuse from 7.69.0 (curl
+     * #4835), so no sectioning is needed there. Older libcurl matches a SOCKS
+     * proxy by type, host, and port only, so every SOCKS request is sectioned
+     * by its credential state; hashing the credential-less state too keeps an
+     * unauthenticated request from inheriting an authenticated connection.
+     *
+     * @param array<int|string, mixed> $conf
+     */
+    private static function socksProxySignature(string $proxy, array $conf): ?string
+    {
+        if (CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse()) {
+            return null;
+        }
+
+        $credentialState = [];
+        foreach (['CURLOPT_PROXYUSERPWD', 'CURLOPT_PROXYUSERNAME', 'CURLOPT_PROXYPASSWORD', 'CURLOPT_PROXYTYPE'] as $name) {
+            $credentialState[$name] = \defined($name)
+                ? ($conf[(int) \constant($name)] ?? null)
+                : null;
+        }
+
+        return \hash('sha256', \serialize(['socks', $proxy, $credentialState]));
     }
 
     /**
@@ -1356,17 +1440,27 @@ class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * Computes the connection-reuse section signature for a proxy tunnel, or
-     * null when the request does not require sectioning.
+     * Computes the connection-reuse section signature for a proxy tunnel or
+     * SOCKS proxy, or null when the request does not require sectioning.
      *
      * @param array<int|string, mixed> $conf
      */
     private static function proxyTunnelSignature(RequestInterface $request, array $conf): ?string
     {
         $proxy = self::getEffectiveProxy($conf);
+        if ($proxy === null) {
+            return null;
+        }
+
+        // SOCKS authentication binds an identity to the connection itself, for
+        // plain http:// requests as much as https://, so it sections ahead of
+        // the CONNECT tunnel domain checks.
+        if (self::isSocksProxy($proxy, $conf)) {
+            return self::socksProxySignature($proxy, $conf);
+        }
+
         if (
-            $proxy === null
-            || !self::usesProxyTunnel($request, $conf)
+            !self::usesProxyTunnel($request, $conf)
             || !self::isHttpProxyForConnectionReuse($proxy, $conf)
         ) {
             return null;
