@@ -58,7 +58,7 @@ final class HeaderProcessor
             throw new \RuntimeException('HTTP status code missing from header data');
         }
 
-        if (!\preg_match('/^[1-5]\d{2}$/', $status)) {
+        if (!\preg_match('/^[1-5]\d{2}$/D', $status)) {
             throw new \RuntimeException('HTTP status code is invalid');
         }
 
