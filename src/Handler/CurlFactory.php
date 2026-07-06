@@ -237,6 +237,7 @@ final class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
+        self::applyProxyConnectHeaderSuppression($request, $conf);
         self::normalizeCurlHeaderOptions($conf);
         $this->applyProxyAuthorizationHeaderHandling($request, $conf);
 
@@ -1408,6 +1409,31 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         return self::hasCurlProxyCredentials($conf);
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function applyProxyConnectHeaderSuppression(RequestInterface $request, array &$conf): void
+    {
+        $proxy = $conf[\CURLOPT_PROXY] ?? null;
+
+        if (!\is_string($proxy)
+            || $proxy === ''
+            || self::isSocksProxy($proxy, $conf)
+            || !self::usesProxyTunnel($request, $conf)
+        ) {
+            return;
+        }
+
+        if (!CurlVersion::supportsProxyTunneling()) {
+            throw new RequestException('Tunneling requests through an HTTP proxy is not supported by the installed libcurl; libcurl 7.54.0 or newer is required.', $request);
+        }
+
+        // Keep the proxy CONNECT reply out of the header callback so a
+        // tunnelled transfer failure is not misclassified as a response
+        // failure carrying the proxy's interim 200.
+        $conf[(int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS')] = true;
     }
 
     /**

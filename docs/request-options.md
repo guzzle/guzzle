@@ -484,7 +484,8 @@ reuse, such a request is rejected with an `InvalidArgumentException` instead of
 silently degrading reuse. On older libcurl (or a build missing the proxy-header
 constants), where proxy headers cannot be separated, the header is left in place
 for compatibility and a non-empty credential forces a fresh, non-reused
-connection.
+connection; this only arises for plain (non-tunnel) proxying, since a CONNECT
+tunnel requires libcurl 7.54.0 or newer.
 
 ## debug
 
@@ -1169,7 +1170,7 @@ The `proxy` option — including the `no` list and its validation — means the 
 | Capability | cURL handlers | Stream handler |
 | --- | --- | --- |
 | HTTP proxy for "http" requests | yes | yes |
-| HTTP proxy for "https" requests (CONNECT tunnel) | yes | no |
+| HTTP proxy for "https" requests (CONNECT tunnel) | yes (libcurl 7.54+) | no |
 | HTTPS proxy (TLS to the proxy itself) | yes (libcurl 7.52+) | no |
 | SOCKS proxies (`socks4://`, `socks4a://`, `socks5://`, `socks5h://`) | yes | no |
 | Proxy credentials in the proxy URL | yes | yes (Basic only) |
@@ -1178,6 +1179,8 @@ The `proxy` option — including the `no` list and its validation — means the 
 The stream handler forwards requests through PHP's HTTP stream wrapper, which supports plain HTTP proxying only: it cannot establish CONNECT tunnels, so "https" requests through a proxy fail with a connection error. It rejects any proxy URL whose scheme it cannot execute, throwing an `InvalidArgumentException` before the request is sent. That covers `https://`, SOCKS (`socks4://`, `socks4a://`, `socks5://`, `socks5h://`), and anything other than `http://` or a raw PHP transport such as `tcp://`, `ssl://`, or `tls://`. A recognized SSL/TLS-family transport that this PHP build's `stream_get_transports()` does not provide (for example `tls://` on a build without OpenSSL) is build-specific, so it throws a `RequestException` instead of the `InvalidArgumentException` used for a scheme invalid on every build. The stream handler now resolves proxies from the environment too (see below); the scheme rejections above apply identically to an environment-resolved proxy. A proxy given without an explicit port defaults to port 1080, libcurl's default HTTP proxy port.
 
 HTTPS proxies (an `https://` proxy URL, where the connection to the proxy itself is encrypted) require libcurl 7.52.0 or newer built with HTTPS-proxy support. When libcurl lacks that support, it mishandles such a proxy: versions before 7.50.2 silently downgrade it to a plaintext HTTP proxy, and later versions fail at connect time with a cryptic error. To avoid both outcomes, the cURL handlers reject the request up front. They also reject any `proxy` URL whose scheme libcurl cannot use as a proxy, with an `InvalidArgumentException`.
+
+Proxying an "https" request establishes a CONNECT tunnel through the proxy, which requires libcurl 7.54.0 or newer (including tunnels forced through raw `curl` options); on older libcurl the cURL handlers reject the request up front with a `RequestException`. The proxy's interim `200 Connection established` reply is suppressed on these tunnels, so `on_headers` observes only origin responses and a tunneled transfer failure is classified by its transport phase.
 
 ### Proxy environment variables
 

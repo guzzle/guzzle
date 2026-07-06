@@ -205,7 +205,9 @@ signature is hashed, never the delegated owner. (The empty
 credential, so it does not section.) On libcurl older than 7.37.0 the header
 cannot be separated; the handlers keep a non-empty credential header on the wire
 but force a fresh, non-reused connection, which under `PERSISTENT_REQUIRE` is
-reported as a conflict rather than silently degrading reuse.
+reported as a conflict rather than silently degrading reuse. That path only
+arises for plain (non-tunnel) proxying: CONNECT tunnels require libcurl 7.54.0
+or newer.
 
 Proxy TLS credential coverage stays tunnel-only and private: it is
 reflection-tested hardening for CONNECT tunnels, not public non-tunneled

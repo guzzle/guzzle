@@ -72,6 +72,11 @@ final class CurlVersion
 
     private const PROXY_HEADER_SEPARATION_VERSION = '7.37.0';
 
+    // CURLOPT_SUPPRESS_CONNECT_HEADERS arrived in curl 7.54.0; proxy CONNECT
+    // tunneling is gated on it so the proxy's interim reply can never surface
+    // as a phantom response on any build that can tunnel.
+    private const PROXY_TUNNEL_VERSION = '7.54.0';
+
     /**
      * @var array{version: string, features: int}|false|null
      */
@@ -265,6 +270,15 @@ final class CurlVersion
         return \defined('CURLOPT_PROTOCOLS_STR')
             && null !== $version
             && version_compare($version, self::PROTOCOLS_STR_VERSION, '>=');
+    }
+
+    public static function supportsProxyTunneling(): bool
+    {
+        $version = self::get();
+
+        return \defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')
+            && null !== $version
+            && version_compare($version, self::PROXY_TUNNEL_VERSION, '>=');
     }
 
     public static function ensureSupported(RequestInterface $request): void
