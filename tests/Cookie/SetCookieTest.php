@@ -99,6 +99,19 @@ class SetCookieTest extends TestCase
         self::assertSame('/p', $cookie->getPath());
     }
 
+    public function testFromStringIgnoresValuelessTypedAttributes(): void
+    {
+        $cookie = SetCookie::fromString('foo=bar; Domain; Path; Expires; Max-Age; Value; Secure');
+
+        self::assertSame('foo', $cookie->getName());
+        self::assertSame('bar', $cookie->getValue());
+        self::assertNull($cookie->getDomain());
+        self::assertSame('/', $cookie->getPath());
+        self::assertNull($cookie->getExpires());
+        self::assertNull($cookie->getMaxAge());
+        self::assertTrue($cookie->getSecure());
+    }
+
     public function testHoldsValues(): void
     {
         $t = \time();
