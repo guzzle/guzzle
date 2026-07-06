@@ -1397,7 +1397,7 @@ class CurlFactory implements CurlFactoryInterface
             return false;
         }
 
-        return 0 === \strcasecmp(\trim(\substr($header, 0, $length)), 'Proxy-Authorization');
+        return 0 === \strcasecmp(\trim(\substr($header, 0, $length), " \n\r\t\0\x0B"), 'Proxy-Authorization');
     }
 
     private static function proxyAuthorizationHeaderValue(string $header): ?string
@@ -1407,11 +1407,11 @@ class CurlFactory implements CurlFactoryInterface
             return null;
         }
 
-        if (0 !== \strcasecmp(\trim(\substr($header, 0, $position)), 'Proxy-Authorization')) {
+        if (0 !== \strcasecmp(\trim(\substr($header, 0, $position), " \n\r\t\0\x0B"), 'Proxy-Authorization')) {
             return null;
         }
 
-        $value = \trim(\substr($header, $position + 1));
+        $value = \trim(\substr($header, $position + 1), " \n\r\t\0\x0B");
 
         return $value === '' ? null : $value;
     }
@@ -1654,11 +1654,11 @@ class CurlFactory implements CurlFactoryInterface
                 $conf[\CURLOPT_FILE],
                 $conf[\CURLOPT_INFILE]
             );
-            if (\trim($easy->request->getHeaderLine('Content-Length')) !== '0') {
+            if (\trim($easy->request->getHeaderLine('Content-Length'), " \n\r\t\0\x0B") !== '0') {
                 $this->removeHeader('Content-Length', $conf);
             }
             $this->removeHeader('Transfer-Encoding', $conf);
-            if (\strcasecmp(\trim($easy->request->getHeaderLine('Expect')), '100-continue') === 0) {
+            if (\strcasecmp(\trim($easy->request->getHeaderLine('Expect'), " \n\r\t\0\x0B"), '100-continue') === 0) {
                 $this->removeHeader('Expect', $conf);
             }
 
@@ -2134,7 +2134,7 @@ class CurlFactory implements CurlFactoryInterface
             &$startingResponse,
             &$collectingTrailers
         ) {
-            $value = \trim($h);
+            $value = \trim($h, " \n\r\t\0\x0B");
             if ($h === "\r\n" || $h === "\n" || $h === "\r" || $h === '') {
                 if ($collectingTrailers) {
                     // A blank line ends the trailer section; the response has

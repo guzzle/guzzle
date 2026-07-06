@@ -21,6 +21,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Clarify that NTLM is deprecated by both Guzzle and curl/libcurl
 - Remove deprecation for the raw cURL `CURLOPT_CERTINFO` option
 - Warn when a cURL multi option cannot be applied
+- Pass explicit trim characters ahead of the PHP 8.6 trim default change
 
 ### Deprecated
 
@@ -28,6 +29,12 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Deprecate unknown handler constructor options
 - Deprecate invalid `select_timeout` cURL multi handler option values
 - Deprecate raw cURL multi connection cap options in favour of the named options
+
+### Fixed
+
+- Report PCRE engine failures when formatting log messages
+- Report PCRE engine failures when splitting `no_proxy` values
+- Treat PCRE engine failures as invalid cookie names during cookie validation
 
 
 ## 7.13.2 - 2026-07-05
