@@ -1550,6 +1550,11 @@ class CurlFactoryTest extends TestCase
             'anonymous tunnel, fixed curl' => ['8.20.0', 'https://example.com', ['proxy' => 'http://proxy.example.com:8080'], true],
             'plain http proxy request' => ['8.19.0', 'http://example.com', ['proxy' => 'http://username:password@proxy.example.com:8080'], false],
             'socks proxy' => ['8.19.0', 'https://example.com', ['proxy' => 'socks5://username:password@proxy.example.com:1080'], false],
+            'auth socks proxy, affected curl' => ['7.68.0', 'https://example.com', ['proxy' => 'socks5://username:password@proxy.example.com:1080'], true],
+            'auth socks proxy, fixed curl' => ['7.69.0', 'https://example.com', ['proxy' => 'socks5://username:password@proxy.example.com:1080'], false],
+            'anonymous socks proxy, affected curl' => ['7.68.0', 'https://example.com', ['proxy' => 'socks5://proxy.example.com:1080'], true],
+            'http target socks proxy, affected curl' => ['7.68.0', 'http://example.com', ['proxy' => 'socks5://username:password@proxy.example.com:1080'], true],
+            'auth socks4a proxy, affected curl' => ['7.68.0', 'https://example.com', ['proxy' => 'socks4a://username:password@proxy.example.com:1080'], true],
             'no-proxy match' => ['8.19.0', 'https://example.com', ['proxy' => ['https' => 'http://username:password@proxy.example.com:8080', 'no' => ['example.com']]], false],
         ];
 
@@ -1568,6 +1573,64 @@ class CurlFactoryTest extends TestCase
         }
 
         return $cases;
+    }
+
+    public function testSocksProxyCredentialsChangeSocksProxySignatureOnAffectedCurlVersion(): void
+    {
+        $factory = new CurlFactory(3);
+        $userOne = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://username:one@proxy.example.com:1080',
+        ])->proxyTunnelSignature;
+        $userTwo = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://username:two@proxy.example.com:1080',
+        ])->proxyTunnelSignature;
+        $anonymous = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://proxy.example.com:1080',
+        ])->proxyTunnelSignature;
+        $stable = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://username:one@proxy.example.com:1080',
+        ])->proxyTunnelSignature;
+
+        self::assertNotNull($userOne);
+        self::assertNotNull($userTwo);
+        self::assertNotNull($anonymous);
+        self::assertNotSame($userOne, $userTwo);
+        self::assertNotSame($userOne, $anonymous);
+        self::assertSame($userOne, $stable);
+    }
+
+    public function testCurlSocksProxyCredentialsChangeSocksProxySignatureOnAffectedCurlVersion(): void
+    {
+        $factory = new CurlFactory(3);
+        $anonymous = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://proxy.example.com:1080',
+        ])->proxyTunnelSignature;
+        $credentialed = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://proxy.example.com:1080',
+            'curl' => [\CURLOPT_PROXYUSERPWD => 'username:password'],
+        ])->proxyTunnelSignature;
+
+        self::assertNotNull($credentialed);
+        self::assertNotSame($anonymous, $credentialed);
+    }
+
+    public function testSchemelessSocksProxySectionsByProxyTypeOnAffectedCurlVersion(): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.68.0', 'features' => self::curlSslFeature()]);
+
+        try {
+            $method = new \ReflectionMethod(CurlFactory::class, 'proxyTunnelSignature');
+            if (\PHP_VERSION_ID < 80100) {
+                $method->setAccessible(true);
+            }
+
+            self::assertNotNull($method->invoke(null, new Psr7\Request('GET', 'https://example.com'), [
+                \CURLOPT_PROXY => 'proxy.example.com:1080',
+                \CURLOPT_PROXYTYPE => \CURLPROXY_SOCKS5,
+            ]));
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     public function testRawCurlNoProxyWildcardDisablesEffectiveProxy(): void
