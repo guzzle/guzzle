@@ -705,6 +705,58 @@ class CurlFactoryTest extends TestCase
         $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
     }
 
+    public function testRejectsRequestLevelShareWithSocksProxyUrlCredentials(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $conf = [\CURLOPT_PROXY => 'socks5://username:password@proxy.example.com:1080'];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated SOCKS proxy configuration#');
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+    }
+
+    public function testRejectsRequestLevelShareWithSocksProxyUserPwd(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $conf = [
+            \CURLOPT_PROXY => 'socks5://proxy.example.com:1080',
+            \CURLOPT_PROXYUSERPWD => 'username:password',
+        ];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated SOCKS proxy configuration#');
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+    }
+
+    public function testAllowsRequestLevelShareWithAnonymousSocksProxy(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $conf = [\CURLOPT_PROXY => 'socks5://proxy.example.com:1080'];
+        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        self::assertNull($method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf));
+    }
+
     /**
      * @dataProvider requestTransportSharingOptionProvider
      *
@@ -1555,6 +1607,8 @@ class CurlFactoryTest extends TestCase
             'anonymous socks proxy, affected curl' => ['7.68.0', 'https://example.com', ['proxy' => 'socks5://proxy.example.com:1080'], true],
             'http target socks proxy, affected curl' => ['7.68.0', 'http://example.com', ['proxy' => 'socks5://username:password@proxy.example.com:1080'], true],
             'auth socks4a proxy, affected curl' => ['7.68.0', 'https://example.com', ['proxy' => 'socks4a://username:password@proxy.example.com:1080'], true],
+            'auth socks5h proxy, affected curl' => ['7.68.0', 'https://example.com', ['proxy' => 'socks5h://username:password@proxy.example.com:1080'], true],
+            'socks4 proxy, affected curl' => ['7.68.0', 'https://example.com', ['proxy' => 'socks4://proxy.example.com:1080'], true],
             'no-proxy match' => ['8.19.0', 'https://example.com', ['proxy' => ['https' => 'http://username:password@proxy.example.com:8080', 'no' => ['example.com']]], false],
         ];
 
@@ -1626,6 +1680,25 @@ class CurlFactoryTest extends TestCase
 
             self::assertNotNull($method->invoke(null, new Psr7\Request('GET', 'https://example.com'), [
                 \CURLOPT_PROXY => 'proxy.example.com:1080',
+                \CURLOPT_PROXYTYPE => \CURLPROXY_SOCKS5,
+            ]));
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testHttpSchemeSocksProxyTypeSectionsAsSocksOnAffectedCurlVersion(): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.68.0', 'features' => self::curlSslFeature()]);
+
+        try {
+            $method = new \ReflectionMethod(CurlFactory::class, 'proxyTunnelSignature');
+            if (\PHP_VERSION_ID < 80100) {
+                $method->setAccessible(true);
+            }
+
+            self::assertNotNull($method->invoke(null, new Psr7\Request('GET', 'http://example.com'), [
+                \CURLOPT_PROXY => 'http://proxy.example.com:1080',
                 \CURLOPT_PROXYTYPE => \CURLPROXY_SOCKS5,
             ]));
         } finally {
@@ -2253,6 +2326,51 @@ class CurlFactoryTest extends TestCase
         self::assertNull($easy->proxyTunnelSignature);
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testShareHandleUsesBlanketForceFreshForAuthenticatedSocksProxyOnAffectedCurlVersion(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
+        $easy = self::createOnFactory($factory, '7.68.0', 'http://example.com', [
+            'proxy' => 'socks5://username:password@proxy.example.com:1080',
+        ]);
+
+        self::assertNull($easy->proxyTunnelSignature);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testShareHandleSkipsBlanketForceFreshForAnonymousSocksProxyOnAffectedCurlVersion(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
+        $easy = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://proxy.example.com:1080',
+        ]);
+
+        self::assertNull($easy->proxyTunnelSignature);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testShareHandleSkipsBlanketForceFreshForSocksProxyOnFixedCurlVersion(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
+        $easy = self::createOnFactory($factory, '7.69.0', 'https://example.com', [
+            'proxy' => 'socks5://username:password@proxy.example.com:1080',
+        ]);
+
+        self::assertNull($easy->proxyTunnelSignature);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
     private function checkNoProxyForHost($url, $noProxy, $assertUseProxy)

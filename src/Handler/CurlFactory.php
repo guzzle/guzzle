@@ -376,9 +376,18 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $proxy = self::getEffectiveProxy($conf);
+        if ($proxy === null) {
+            return;
+        }
+
+        // An external share handle may pool SOCKS connections where no section
+        // signature can reach them, so authenticated SOCKS state is rejected.
+        if (self::isSocksProxy($proxy, $conf) && self::hasAuthenticatedSocksProxyState($proxy, $conf)) {
+            throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with authenticated SOCKS proxy configuration; use Guzzle-managed "transport_sharing" or a custom handler/factory instead.');
+        }
+
         if (
-            $proxy === null
-            || !self::usesProxyTunnel($request, $conf)
+            !self::usesProxyTunnel($request, $conf)
             || !self::isHttpProxyForConnectionReuse($proxy, $conf)
             || !self::hasAuthenticatedHttpProxyState($proxy, $conf)
         ) {
@@ -1068,6 +1077,16 @@ class CurlFactory implements CurlFactoryInterface
      */
     private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $conf): bool
     {
+        // SOCKS authentication binds an identity to the connection itself, and
+        // below 7.69.0 the easy and multi handle pools match a SOCKS proxy
+        // credential-blind, so an authenticated SOCKS request is isolated onto
+        // a fresh non-reusable connection; FORBID_REUSE keeps it out of every
+        // pool, so anonymous requests cannot inherit it and need no forcing.
+        if (self::isSocksProxy($proxy, $conf)) {
+            return !CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse()
+                && self::hasAuthenticatedSocksProxyState($proxy, $conf);
+        }
+
         if (!self::usesProxyTunnel($request, $conf) || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {
             return false;
         }
@@ -1101,6 +1120,24 @@ class CurlFactory implements CurlFactoryInterface
         return \array_key_exists('user', $proxyParts)
             || \array_key_exists('pass', $proxyParts)
             || self::hasCurlProxyCredentials($conf);
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function hasAuthenticatedSocksProxyState(string $proxy, array $conf): bool
+    {
+        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
+        $proxyParts = \parse_url($proxyForParsing);
+
+        if (
+            \is_array($proxyParts)
+            && (\array_key_exists('user', $proxyParts) || \array_key_exists('pass', $proxyParts))
+        ) {
+            return true;
+        }
+
+        return self::hasCurlProxyCredentials($conf);
     }
 
     /**
@@ -1173,7 +1210,15 @@ class CurlFactory implements CurlFactoryInterface
     {
         $scheme = self::proxyScheme($proxy);
         if ($scheme !== null) {
-            return \in_array($scheme, ['socks', 'socks4', 'socks4a', 'socks5', 'socks5h'], true);
+            if (\in_array($scheme, ['socks', 'socks4', 'socks4a', 'socks5', 'socks5h'], true)) {
+                return true;
+            }
+
+            // libcurl preserves a raw SOCKS CURLOPT_PROXYTYPE behind an http
+            // scheme, while every other scheme overrides the proxy type.
+            if ($scheme !== 'http') {
+                return false;
+            }
         }
 
         return self::isSocksProxyType($conf[\CURLOPT_PROXYTYPE] ?? null);
