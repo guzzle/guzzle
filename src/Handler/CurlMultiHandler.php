@@ -108,10 +108,12 @@ final class CurlMultiHandler
     private array $activeProxyTunnelHandles = [];
 
     /**
-     * @var bool Guards against multi-handle recreation re-entrancy from
-     *           processMessages (a retried transfer re-invokes the handler)
+     * @var int Depth of nested processMessages() calls. Guards against
+     *          multi-handle recreation re-entrancy from processMessages (a
+     *          retried transfer re-invokes the handler) and keeps deferred
+     *          work parked until the outermost message loop unwinds.
      */
-    private bool $processingMessages = false;
+    private int $messageProcessingDepth = 0;
 
     /**
      * This handler accepts the following options:
@@ -431,7 +433,7 @@ final class CurlMultiHandler
         if (
             $this->handles === []
             && !$this->executingMulti
-            && !$this->processingMessages
+            && 0 === $this->messageProcessingDepth
             && $this->deferredCancels === []
             && !$this->deferredClose
         ) {
@@ -676,7 +678,7 @@ final class CurlMultiHandler
         $this->closing = true;
         $failure = null;
 
-        if ($this->executingMulti) {
+        if ($this->executingMulti || $this->messageProcessingDepth > 0) {
             $this->deferClose($explicit, $failure);
 
             if ($explicit && $failure !== null) {
@@ -831,30 +833,50 @@ final class CurlMultiHandler
     private function executeMulti(): int
     {
         $this->executingMulti = true;
-        $failure = null;
 
         try {
             return \curl_multi_exec($this->getMultiHandle(), $this->active);
         } finally {
             $this->executingMulti = false;
-            $this->cleanupDeferredCancels($failure);
+            $this->finishDeferredWork();
+        }
+    }
 
-            if ($this->deferredClose) {
-                $explicit = $this->deferredCloseExplicit;
+    /**
+     * Flushes cancels and a close deferred while the multi handle was busy
+     * executing transfers or processing completion messages.
+     */
+    private function finishDeferredWork(): void
+    {
+        if ($this->executingMulti || $this->messageProcessingDepth > 0) {
+            // A nested frame (a completion callback re-entered the handler)
+            // must not flush while an outer frame is still using the multi
+            // handle; the outermost frame flushes once it unwinds.
+            return;
+        }
 
-                try {
-                    $this->closeMultiHandle($failure);
-                    $this->closeOwnedFactory($failure);
-                } finally {
-                    $this->finishClose();
-                }
+        $failure = null;
+        $this->cleanupDeferredCancels($failure);
 
-                if ($explicit && $failure !== null) {
-                    throw $failure;
-                }
-            } elseif ($failure !== null) {
+        if ($this->deferredClose) {
+            $explicit = $this->deferredCloseExplicit;
+
+            try {
+                $this->closeMultiHandle($failure);
+                $this->closeOwnedFactory($failure);
+            } finally {
+                $this->finishClose();
+            }
+
+            if ($explicit && $failure !== null) {
                 throw $failure;
             }
+
+            return;
+        }
+
+        if ($failure !== null) {
+            throw $failure;
         }
     }
 
@@ -1004,11 +1026,22 @@ final class CurlMultiHandler
     {
         // CurlFactory::finish can retry a transfer by re-invoking this handler
         // from inside this loop; the guard keeps that re-entry from recreating
-        // the multi handle mid-iteration (see applyProxyTunnelOwnership).
-        $this->processingMessages = true;
+        // the multi handle mid-iteration (see applyProxyTunnelOwnership). A
+        // depth is tracked because a completion callback can re-enter tick(),
+        // and the nested frame must not clear the outer loop's guard.
+        ++$this->messageProcessingDepth;
 
         try {
-            while ($done = \curl_multi_info_read($this->getMultiHandle())) {
+            // A completion callback may close the handler mid-loop; the close
+            // is deferred (closing is set first), and the loop must stop
+            // before touching the multi handle again. Remaining in-flight
+            // transfers were moved to the deferred cancels by deferClose().
+            while (!$this->closed && !$this->closing) {
+                $done = \curl_multi_info_read($this->getMultiHandle());
+                if (false === $done) {
+                    break;
+                }
+
                 if ($done['msg'] !== \CURLMSG_DONE) {
                     // If it is not done, removing the handle would be premature.
                     // See https://github.com/guzzle/guzzle/pull/2892#issuecomment-945150216.
@@ -1043,7 +1076,8 @@ final class CurlMultiHandler
                 $entry['deferred']->resolve($result);
             }
         } finally {
-            $this->processingMessages = false;
+            --$this->messageProcessingDepth;
+            $this->finishDeferredWork();
         }
     }
 
