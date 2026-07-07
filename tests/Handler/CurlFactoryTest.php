@@ -2405,49 +2405,20 @@ class CurlFactoryTest extends TestCase
         self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
-    public function testLegacyCurlPreservesProxyAuthorizationAndForcesFreshConnection(): void
+    public function testRejectsProxyAuthorizationWithoutHeaderSeparationSupport(): void
     {
-        $factory = new CurlFactory(3);
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Proxy-Authorization headers through an HTTP proxy are not supported by the installed libcurl; libcurl 7.37.0 or newer built with proxy header separation support is required.');
+
+        // Legacy libcurl cannot separate proxy headers, so a request carrying
+        // a non-empty Proxy-Authorization credential is rejected up front,
+        // matching the other build- and version-specific capability checks.
         self::createRequestOnFactory(
-            $factory,
+            new CurlFactory(3),
             '7.36.0',
             new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
             ['proxy' => 'http://proxy.example.com:8080']
         );
-
-        // Legacy libcurl cannot separate proxy headers, so for plain (non-
-        // tunnel) proxying the credential stays on the wire via
-        // CURLOPT_HTTPHEADER and Guzzle forces a fresh, non-reused connection
-        // instead. A tunnel on such a build is rejected outright.
-        self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
-        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
-        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
-    }
-
-    public function testLegacyProxyAuthorizationConflictsWithPersistentRequire(): void
-    {
-        self::skipIfCurlShareIsUnavailable();
-
-        $shareHandle = \curl_share_init();
-        self::assertNotFalse($shareHandle);
-        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
-
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('fresh proxy tunnel connection');
-
-            // Plain http:// target through an http:// proxy is NOT a tunnel; the
-            // legacy fallback throws from applyProxyAuthorizationHeaderHandling()
-            // itself, which is deliberately not gated by usesProxyTunnel().
-            self::createRequestOnFactory(
-                $factory,
-                '7.36.0',
-                new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
-                ['proxy' => 'http://proxy.example.com:8080']
-            );
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
     }
 
     public function testRawHeaderOptIsRejected(): void
@@ -2528,7 +2499,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame($unauthenticated, $easy->proxyTunnelSignature);
     }
 
-    public function testLegacyCurlEmptyProxyAuthorizationHeaderDoesNotForceFreshConnection(): void
+    public function testLegacyCurlEmptyProxyAuthorizationHeaderIsNotRejected(): void
     {
         $factory = new CurlFactory(3);
         self::createRequestOnFactory(
@@ -2538,8 +2509,9 @@ class CurlFactoryTest extends TestCase
             ['proxy' => 'http://proxy.example.com:8080']
         );
 
-        // On legacy libcurl the empty header is left in place, and because it
-        // carries no credential value no fresh/no-reuse is forced.
+        // On legacy libcurl the empty header carries no credential value, so
+        // it is left in place rather than rejected, and no connection-reuse
+        // handling is engaged.
         self::assertContains('Proxy-Authorization;', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
         self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
         self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);

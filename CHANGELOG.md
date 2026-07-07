@@ -153,6 +153,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Section SOCKS proxy connections by credentials on libcurl before 7.69.0
 - Reject request-level `CURLOPT_SHARE` when combined with authenticated SOCKS proxy configuration
 - Require libcurl 7.54.0 for HTTPS proxies and requests tunneled through HTTP proxies
+- Require libcurl 7.37.0 for `Proxy-Authorization` headers through HTTP proxies
 - Suppress proxy CONNECT response headers for tunneled requests
 - Check linked curl/libcurl NTLM support before applying NTLM auth
 - Clarify that NTLM is deprecated by both Guzzle and curl/libcurl
