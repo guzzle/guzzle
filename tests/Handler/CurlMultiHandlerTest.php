@@ -1197,6 +1197,60 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testCanCloseFromOnHeadersCallbackAfterNestedTick(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+        ]);
+
+        // A close applied while cURL is still delivering the response would
+        // reset the easy handle's write callback, dumping the remaining body
+        // to the default output stream.
+        $this->expectOutputString('');
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $closed = false;
+
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
+            'timeout' => 5,
+            'on_headers' => static function () use ($handler, &$closed): void {
+                // Re-enter the handler before closing; the nested tick must
+                // not clear the outer exec's re-entrancy guard.
+                $handler->tick();
+                $closed = true;
+                $handler->close();
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+
+            while (P\Is::pending($promise)) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for cURL header close.');
+                }
+
+                $handler->tick();
+            }
+
+            self::assertTrue($closed);
+            self::assertTrue(P\Is::rejected($promise));
+
+            try {
+                $promise->wait();
+                self::fail('Expected HandlerClosedException.');
+            } catch (HandlerClosedException $e) {
+                self::assertSame('The cURL multi handler was closed before the transfer completed.', $e->getMessage());
+                self::assertSame($request, $e->getRequest());
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
     public function testCanCloseFromOnStatsCallback(): void
     {
         Server::flush();
