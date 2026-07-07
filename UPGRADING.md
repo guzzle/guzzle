@@ -715,6 +715,14 @@ observes only origin responses, and a tunneled transfer failure is classified
 by its transport phase instead of as a response failure carrying the proxy's
 interim reply.
 
+#### Proxy-Authorization Headers
+
+Requests that send a non-empty `Proxy-Authorization` header through an
+`http://` or `https://` proxy now require libcurl 7.37.0 or newer built with
+proxy header separation support, and are rejected with a `RequestException`
+on older libcurl. Guzzle 7 kept the header in the unified header list on such
+libcurl and forced a fresh, non-reused connection instead.
+
 #### Proxy Environment Variable Resolution
 
 The stream handler now resolves proxies from the environment the same way the

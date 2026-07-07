@@ -239,7 +239,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         self::applyProxyConnectHeaderSuppression($request, $conf);
         self::normalizeCurlHeaderOptions($conf);
-        $this->applyProxyAuthorizationHeaderHandling($request, $conf);
+        self::applyProxyAuthorizationHeaderHandling($request, $conf);
 
         if ($this->shareHandle !== null) {
             // Conservative blanket mode: a configured share handle hides the
@@ -1621,7 +1621,7 @@ final class CurlFactory implements CurlFactoryInterface
     /**
      * @param array<int|string, mixed> $conf
      */
-    private function applyProxyAuthorizationHeaderHandling(RequestInterface $request, array &$conf): void
+    private static function applyProxyAuthorizationHeaderHandling(RequestInterface $request, array &$conf): void
     {
         $proxy = self::getEffectiveProxy($conf);
         if ($proxy === null || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {
@@ -1662,12 +1662,7 @@ final class CurlFactory implements CurlFactoryInterface
             return;
         }
 
-        if ($this->shareMode === TransportSharing::PERSISTENT_REQUIRE) {
-            throw new InvalidArgumentException(self::PERSISTENT_REQUIRE_FRESH_PROXY_TUNNEL_MESSAGE);
-        }
-
-        $conf[\CURLOPT_FRESH_CONNECT] = true;
-        $conf[\CURLOPT_FORBID_REUSE] = true;
+        throw new RequestException('Proxy-Authorization headers through an HTTP proxy are not supported by the installed libcurl; libcurl 7.37.0 or newer built with proxy header separation support is required.', $request);
     }
 
     /**

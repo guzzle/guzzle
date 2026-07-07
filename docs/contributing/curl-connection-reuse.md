@@ -202,12 +202,10 @@ something libcurl can key connection reuse on, even on versions that key parsed
 proxy credentials (8.20.0+), so a tunnel carrying one always sections — its
 signature is hashed, never the delegated owner. (The empty
 `Proxy-Authorization;` form is migrated for wire correctness but carries no
-credential, so it does not section.) On libcurl older than 7.37.0 the header
-cannot be separated; the handlers keep a non-empty credential header on the wire
-but force a fresh, non-reused connection, which under `PERSISTENT_REQUIRE` is
-reported as a conflict rather than silently degrading reuse. That path only
-arises for plain (non-tunnel) proxying: CONNECT tunnels require libcurl 7.54.0
-or newer.
+credential, so it does not section.) On libcurl older than 7.37.0 (or a build
+missing the proxy-header constants) the header cannot be separated, so a
+request carrying a non-empty credential header through an HTTP or HTTPS proxy
+is rejected up front with a `RequestException`.
 
 Proxy TLS credential coverage stays tunnel-only and private: it is
 reflection-tested hardening for CONNECT tunnels, not public non-tunneled

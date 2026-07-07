@@ -482,10 +482,10 @@ requires a fresh connection, because libcurl cannot key connection reuse on that
 opaque header value. Under `TransportSharing::PERSISTENT_REQUIRE`, which requires
 reuse, such a request is rejected with an `InvalidArgumentException` instead of
 silently degrading reuse. On older libcurl (or a build missing the proxy-header
-constants), where proxy headers cannot be separated, the header is left in place
-for compatibility and a non-empty credential forces a fresh, non-reused
-connection; this only arises for plain (non-tunnel) proxying, since a CONNECT
-tunnel requires libcurl 7.54.0 or newer.
+constants), where proxy headers cannot be separated, a request carrying a
+non-empty `Proxy-Authorization` header through an HTTP or HTTPS proxy is
+rejected up front with a `RequestException`; libcurl 7.37.0 or newer is
+required.
 
 ## debug
 
