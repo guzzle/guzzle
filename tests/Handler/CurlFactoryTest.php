@@ -102,6 +102,67 @@ class CurlFactoryTest extends TestCase
         self::assertContains('Host: 127.0.0.1:8126', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
     }
 
+    public function testSuppressesProxyConnectHeadersForTunneledRequests(): void
+    {
+        if (!CurlVersion::supportsProxyTunneling()) {
+            self::markTestSkipped('CURLOPT_SUPPRESS_CONNECT_HEADERS is not supported by this cURL build.');
+        }
+
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => 'http://127.0.0.1:8125']);
+
+        $factory->release($easy);
+        self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS')]);
+    }
+
+    public function testDoesNotSuppressConnectHeadersWithoutProxyTunnel(): void
+    {
+        if (!CurlVersion::supportsProxyTunneling()) {
+            self::markTestSkipped('CURLOPT_SUPPRESS_CONNECT_HEADERS is not supported by this cURL build.');
+        }
+
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request('GET', 'http://example.com'), ['proxy' => 'http://127.0.0.1:8125']);
+
+        $factory->release($easy);
+        self::assertArrayNotHasKey((int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS'), $_SERVER['_curl']);
+    }
+
+    public function testRejectsTunneledProxyRequestsOnUnsupportedCurl(): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.53.0',
+            'features' => \curl_version()['features'],
+        ]);
+
+        try {
+            (new CurlFactory(3))->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => 'http://127.0.0.1:8125']);
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame(
+                'Tunneling requests through an HTTP proxy is not supported by the installed libcurl; libcurl 7.54.0 or newer is required.',
+                $e->getMessage()
+            );
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testAllowsTunneledProxyAtLibcurl754(): void
+    {
+        if (!\defined('CURLOPT_SUPPRESS_CONNECT_HEADERS')) {
+            self::markTestSkipped('CURLOPT_SUPPRESS_CONNECT_HEADERS is not supported by this cURL build.');
+        }
+
+        $factory = new CurlFactory(3);
+        $easy = self::createOnFactory($factory, '7.54.0', 'https://example.com', ['proxy' => 'http://127.0.0.1:8125']);
+
+        $factory->release($easy);
+        self::assertSame('http://127.0.0.1:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_SUPPRESS_CONNECT_HEADERS')]);
+    }
+
     public function testCloseClearsIdleHandles(): void
     {
         $factory = new CurlFactory(3);
@@ -1508,6 +1569,7 @@ class CurlFactoryTest extends TestCase
             ['7.50.0'],
             ['7.51.0'],
             ['7.52.0'],
+            ['7.53.1'],
             ['7.61.0'],
         ];
     }
@@ -1521,7 +1583,7 @@ class CurlFactoryTest extends TestCase
 
         try {
             $this->expectException(RequestException::class);
-            $this->expectExceptionMessage('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.');
+            $this->expectExceptionMessage('HTTPS proxies are not supported by the installed libcurl; libcurl 7.54.0 or newer built with HTTPS-proxy support is required.');
 
             $f = new CurlFactory(3);
             $f->create(new Psr7\Request('GET', 'https://example.com'), [
@@ -1608,7 +1670,9 @@ class CurlFactoryTest extends TestCase
 
         try {
             $f = new CurlFactory(3);
-            $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+            // An http target does not CONNECT, so only the HTTPS-proxy floor
+            // is in play, not the libcurl 7.54 tunneling requirement.
+            $f->create(new Psr7\Request('GET', 'http://example.com'), ['proxy' => $proxy]);
 
             self::assertSame($proxy, $_SERVER['_curl'][\CURLOPT_PROXY]);
         } finally {
@@ -1659,15 +1723,38 @@ class CurlFactoryTest extends TestCase
     public function testAllowsHttpsProxyWhenLibcurlSupportsIt(): void
     {
         $httpsProxyFeature = \defined('CURL_VERSION_HTTPS_PROXY') ? \CURL_VERSION_HTTPS_PROXY : (1 << 21);
-        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.52.0', 'features' => self::curlSslFeature() | $httpsProxyFeature]);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.54.0', 'features' => self::curlSslFeature() | $httpsProxyFeature]);
 
         try {
             $f = new CurlFactory(3);
-            $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            // An http target does not CONNECT, so this pins the 7.54.0
+            // HTTPS-proxy floor positively, independent of the tunneling gate.
+            $f->create(new Psr7\Request('GET', 'http://example.com'), [
                 'proxy' => 'https://proxy.example.com:3128',
             ]);
 
             self::assertSame('https://proxy.example.com:3128', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRejectsHttpsProxyBelowLibcurl754EvenWithFeature(): void
+    {
+        $httpsProxyFeature = \defined('CURL_VERSION_HTTPS_PROXY') ? \CURL_VERSION_HTTPS_PROXY : (1 << 21);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.53.1', 'features' => self::curlSslFeature() | $httpsProxyFeature]);
+
+        try {
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('libcurl 7.54.0 or newer built with HTTPS-proxy support is required');
+
+            // The 7.52.0-7.53.1 HTTPS-proxy TLS code carried verification
+            // flaws (CVE-2017-2629, CVE-2017-7468), so the feature bit alone
+            // is not enough below 7.54.0.
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'http://example.com'), [
+                'proxy' => 'https://proxy.example.com:3128',
+            ]);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
@@ -2180,13 +2267,14 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3);
         self::createRequestOnFactory(
             $factory,
-            '7.37.0',
+            '7.54.0',
             new Psr7\Request('GET', 'https://example.com'),
             ['proxy' => 'http://proxy.example.com:8080']
         );
 
-        // The HTTPS target tunnels via CONNECT; even with no proxy header,
-        // usesProxyTunnel() is true, so Guzzle sets CURLHEADER_SEPARATE.
+        // The HTTPS target tunnels via CONNECT (which requires libcurl 7.54);
+        // even with no proxy header, usesProxyTunnel() is true, so Guzzle
+        // sets CURLHEADER_SEPARATE.
         self::assertSame((int) \constant('CURLHEADER_SEPARATE'), $_SERVER['_curl'][(int) \constant('CURLOPT_HEADEROPT')]);
     }
 
@@ -2229,12 +2317,13 @@ class CurlFactoryTest extends TestCase
             $this->expectException(\InvalidArgumentException::class);
             $this->expectExceptionMessage('fresh proxy tunnel connection');
 
-            // The HTTPS target tunnels through the http:// proxy; the PSR header
-            // migrates into CURLOPT_PROXYHEADER before the configured-share
-            // fresh-connection logic observes it and rejects the reuse.
+            // The HTTPS target tunnels through the http:// proxy (requiring
+            // libcurl 7.54); the PSR header migrates into CURLOPT_PROXYHEADER
+            // before the configured-share fresh-connection logic observes it
+            // and rejects the reuse.
             self::createRequestOnFactory(
                 $factory,
-                '7.37.0',
+                '7.54.0',
                 new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
                 ['proxy' => 'http://proxy.example.com:8080']
             );
@@ -2322,13 +2411,14 @@ class CurlFactoryTest extends TestCase
         self::createRequestOnFactory(
             $factory,
             '7.36.0',
-            new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+            new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
             ['proxy' => 'http://proxy.example.com:8080']
         );
 
-        // Legacy libcurl cannot separate proxy headers, so the credential stays
-        // on the wire via CURLOPT_HTTPHEADER and Guzzle forces a fresh,
-        // non-reused connection instead.
+        // Legacy libcurl cannot separate proxy headers, so for plain (non-
+        // tunnel) proxying the credential stays on the wire via
+        // CURLOPT_HTTPHEADER and Guzzle forces a fresh, non-reused connection
+        // instead. A tunnel on such a build is rejected outright.
         self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
@@ -2444,7 +2534,7 @@ class CurlFactoryTest extends TestCase
         self::createRequestOnFactory(
             $factory,
             '7.36.0',
-            new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => '']),
+            new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => '']),
             ['proxy' => 'http://proxy.example.com:8080']
         );
 

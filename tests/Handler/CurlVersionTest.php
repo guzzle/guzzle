@@ -202,19 +202,19 @@ class CurlVersionTest extends TestCase
         }
 
         self::setVersionInfo([
-            'version' => '7.51.0',
+            'version' => '7.53.1',
             'features' => \CURL_VERSION_HTTPS_PROXY,
         ]);
         self::assertFalse(CurlVersion::supportsHttpsProxy());
 
         self::setVersionInfo([
-            'version' => '7.52.0',
+            'version' => '7.54.0',
             'features' => 0,
         ]);
         self::assertFalse(CurlVersion::supportsHttpsProxy());
 
         self::setVersionInfo([
-            'version' => '7.52.0',
+            'version' => '7.54.0',
             'features' => \CURL_VERSION_HTTPS_PROXY,
         ]);
         self::assertTrue(CurlVersion::supportsHttpsProxy());
