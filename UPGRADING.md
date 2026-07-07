@@ -463,6 +463,26 @@ on every build (such as `udp://` or `ftp://` for a proxy) still throws
 `InvalidArgumentException`. Only code catching the specific exception type for
 these build-misses needs to change.
 
+#### Per-request Handler Option
+
+Guzzle 7 deprecated the `handler` request option with a warning that Guzzle 8
+would ignore request-level handlers. Guzzle 8 rejects the option instead:
+passing `handler` in per-request options throws
+`GuzzleHttp\Exception\InvalidArgumentException` before a transfer starts.
+Silently ignoring the option would fail open — a test that supplied a
+per-request `MockHandler` would fall through to the client's real handler and
+hit the network. Configure the handler when creating the client, or use a
+separate client instance for requests that need a different handler:
+
+```php
+// Guzzle 7 (deprecated, used the request-level handler)
+$client->request('GET', '/status', ['handler' => $mockHandler]);
+
+// Guzzle 8
+$client = new Client(['handler' => HandlerStack::create($mockHandler)]);
+$client->request('GET', '/status');
+```
+
 #### Body Summaries In HTTP Error Exceptions
 
 Guzzle's default `http_errors` middleware uses `BodySummarizer` to include a

@@ -127,6 +127,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Dropped support for PHP 7.2 and 7.3
 - Removed support for the `GUZZLE_CURL_SELECT_TIMEOUT` environment variable; use `CurlMultiHandler`'s `select_timeout` option
+- Removed support for the `handler` request option; configure the handler on the client
 - Removed direct access to `CurlMultiHandler::$_mh`; pass `CURLMOPT_*` values through constructor `options` instead
 - Removed `RedirectMiddleware::$defaultSettings`; use `RedirectMiddleware::DEFAULT_SETTINGS`
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method

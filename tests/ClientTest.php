@@ -1632,6 +1632,17 @@ class ClientTest extends TestCase
         $client->get('http://foo.com', ['cookies' => 'foo']);
     }
 
+    public function testRejectsPerRequestHandlerOption(): void
+    {
+        $mock = new MockHandler([new Response(200, [], 'foo')]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "handler" request option is not supported');
+        $client->get('http://foo.com', ['handler' => new MockHandler([new Response()])]);
+    }
+
     public function testSetCookieToTrueUsesSharedJar(): void
     {
         $mock = new MockHandler([

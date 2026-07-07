@@ -845,6 +845,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     private function prepareDefaults(array $options): array
     {
+        if (isset($options['handler'])) {
+            throw new InvalidArgumentException('The "handler" request option is not supported; configure the handler when creating the client, or use a separate client instance for requests that need a different handler.');
+        }
+
         $defaults = $this->config;
 
         if (!empty($defaults['headers'])) {
