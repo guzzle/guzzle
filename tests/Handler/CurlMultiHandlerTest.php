@@ -1035,6 +1035,53 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testCanCancelFromProgressCallbackAfterNestedTick(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+            new Response(200),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $promise = null;
+        $cancelled = false;
+
+        $promise = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'progress' => static function () use ($handler, &$promise, &$cancelled): void {
+                if (!$cancelled) {
+                    $cancelled = true;
+                    // Re-enter the handler before cancelling; the nested tick
+                    // must not clear the outer exec's re-entrancy guard.
+                    $handler->tick();
+                    $promise->cancel();
+                }
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+
+            while (P\Is::pending($promise)) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for cURL progress cancellation.');
+                }
+
+                $handler->tick();
+            }
+
+            self::assertTrue($cancelled);
+            self::assertTrue(P\Is::rejected($promise));
+
+            // The handler stays usable after the deferred cancel.
+            self::assertSame(200, $handler(new Request('GET', Server::$url), ['timeout' => 5])->wait()->getStatusCode());
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
     public function testCanCloseFromProgressCallback(): void
     {
         Server::flush();
@@ -1092,6 +1139,57 @@ class CurlMultiHandlerTest extends TestCase
                 self::fail('Expected BadMethodCallException.');
             } catch (\BadMethodCallException $e) {
                 self::assertSame('Cannot use the cURL multi handler after it has been closed.', $e->getMessage());
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testCanCloseFromProgressCallbackAfterNestedTick(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $closed = false;
+
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
+            'timeout' => 5,
+            'progress' => static function () use ($handler, &$closed): void {
+                if (!$closed) {
+                    $closed = true;
+                    // Re-enter the handler before closing; the nested tick
+                    // must not clear the outer exec's re-entrancy guard.
+                    $handler->tick();
+                    $handler->close();
+                }
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+
+            while (P\Is::pending($promise)) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for cURL progress close.');
+                }
+
+                $handler->tick();
+            }
+
+            self::assertTrue($closed);
+            self::assertTrue(P\Is::rejected($promise));
+
+            try {
+                $promise->wait();
+                self::fail('Expected HandlerClosedException.');
+            } catch (HandlerClosedException $e) {
+                self::assertSame('The cURL multi handler was closed before the transfer completed.', $e->getMessage());
+                self::assertSame($request, $e->getRequest());
             }
         } finally {
             $handler->close();

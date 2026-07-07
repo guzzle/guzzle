@@ -84,7 +84,13 @@ final class CurlMultiHandler
 
     private bool $closing = false;
 
-    private bool $executingMulti = false;
+    /**
+     * @var int Depth of nested executeMulti() calls. A progress or header
+     *          callback can re-enter tick(), and the nested frame must not
+     *          clear the outer exec's guard; deferred work stays parked
+     *          until the outermost frame unwinds.
+     */
+    private int $multiExecDepth = 0;
 
     /**
      * @var array<int, array{easy: EasyHandle, attached: bool}>
@@ -432,7 +438,7 @@ final class CurlMultiHandler
 
         if (
             $this->handles === []
-            && !$this->executingMulti
+            && 0 === $this->multiExecDepth
             && 0 === $this->messageProcessingDepth
             && $this->deferredCancels === []
             && !$this->deferredClose
@@ -678,7 +684,7 @@ final class CurlMultiHandler
         $this->closing = true;
         $failure = null;
 
-        if ($this->executingMulti || $this->messageProcessingDepth > 0) {
+        if ($this->multiExecDepth > 0 || $this->messageProcessingDepth > 0) {
             $this->deferClose($explicit, $failure);
 
             if ($explicit && $failure !== null) {
@@ -832,12 +838,12 @@ final class CurlMultiHandler
      */
     private function executeMulti(): int
     {
-        $this->executingMulti = true;
+        ++$this->multiExecDepth;
 
         try {
             return \curl_multi_exec($this->getMultiHandle(), $this->active);
         } finally {
-            $this->executingMulti = false;
+            --$this->multiExecDepth;
             $this->finishDeferredWork();
         }
     }
@@ -848,7 +854,7 @@ final class CurlMultiHandler
      */
     private function finishDeferredWork(): void
     {
-        if ($this->executingMulti || $this->messageProcessingDepth > 0) {
+        if ($this->multiExecDepth > 0 || $this->messageProcessingDepth > 0) {
             // A nested frame (a completion callback re-entered the handler)
             // must not flush while an outer frame is still using the multi
             // handle; the outermost frame flushes once it unwinds.
@@ -983,7 +989,7 @@ final class CurlMultiHandler
         $delayed = isset($this->delays[$id]);
         unset($this->delays[$id], $this->handles[$id]);
 
-        if ($this->executingMulti) {
+        if ($this->multiExecDepth > 0) {
             $this->deferredCancels[$id] = ['easy' => $easy, 'attached' => !$delayed];
 
             return true;
