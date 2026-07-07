@@ -1099,6 +1099,287 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testCanCloseFromOnStatsCallback(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $closed = false;
+
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
+            'timeout' => 5,
+            'on_stats' => static function () use ($handler, &$closed): void {
+                $closed = true;
+                $handler->close();
+            },
+        ]);
+
+        try {
+            // The close is deferred until message processing finishes, so the
+            // fulfilled response is delivered rather than being replaced by a
+            // BadMethodCallException.
+            self::assertSame(200, $promise->wait()->getStatusCode());
+            self::assertTrue($closed);
+
+            try {
+                $handler->tick();
+                self::fail('Expected BadMethodCallException.');
+            } catch (\BadMethodCallException $e) {
+                self::assertSame('Cannot use the cURL multi handler after it has been closed.', $e->getMessage());
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testCanCloseFromOnStatsCallbackAfterNestedTick(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $closed = false;
+
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
+            'timeout' => 5,
+            'on_stats' => static function () use ($handler, &$closed): void {
+                // Re-enter the handler before closing; the nested tick must
+                // not clear the outer message loop's re-entrancy guard.
+                $handler->tick();
+                $closed = true;
+                $handler->close();
+            },
+        ]);
+
+        try {
+            self::assertSame(200, $promise->wait()->getStatusCode());
+            self::assertTrue($closed);
+
+            try {
+                $handler->tick();
+                self::fail('Expected BadMethodCallException.');
+            } catch (\BadMethodCallException $e) {
+                self::assertSame('Cannot use the cURL multi handler after it has been closed.', $e->getMessage());
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testCanCloseFromNestedProgressCallbackDuringOnStats(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200),
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $closed = false;
+        $spawned = null;
+        $spawnedRequest = null;
+
+        $promise = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'on_stats' => static function () use ($handler, &$closed, &$spawned, &$spawnedRequest): void {
+                $spawnedRequest = new Request('GET', Server::$url);
+                $spawned = $handler($spawnedRequest, [
+                    'timeout' => 5,
+                    'progress' => static function () use ($handler, &$closed): void {
+                        if (!$closed) {
+                            $closed = true;
+                            $handler->close();
+                        }
+                    },
+                ]);
+
+                $deadline = \microtime(true) + 5;
+
+                while (!$closed) {
+                    if (\microtime(true) >= $deadline) {
+                        self::fail('Timed out waiting for the nested progress close.');
+                    }
+
+                    $handler->tick();
+                }
+            },
+        ]);
+
+        try {
+            self::assertSame(200, $promise->wait()->getStatusCode());
+            self::assertTrue($closed);
+            self::assertInstanceOf(P\PromiseInterface::class, $spawned);
+            self::assertTrue(P\Is::rejected($spawned));
+
+            try {
+                $spawned->wait();
+                self::fail('Expected HandlerClosedException.');
+            } catch (HandlerClosedException $e) {
+                self::assertSame('The cURL multi handler was closed before the transfer completed.', $e->getMessage());
+                self::assertSame($spawnedRequest, $e->getRequest());
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testCanCloseFromOnTrailersCallback(): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes(
+            "HTTP/1.1 200 OK\r\n"
+            ."Transfer-Encoding: chunked\r\n"
+            ."Trailer: X-Checksum\r\n"
+            ."\r\n"
+            ."3\r\nabc\r\n"
+            ."0\r\n"
+            ."X-Checksum: abc123\r\n"
+            ."\r\n"
+        );
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $closed = false;
+        $trailers = null;
+
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
+            'timeout' => 5,
+            'on_trailers' => static function (array $receivedTrailers) use ($handler, &$closed, &$trailers): void {
+                $trailers = $receivedTrailers;
+                $closed = true;
+                $handler->close();
+            },
+        ]);
+
+        try {
+            // on_trailers runs inside CurlFactory::finish before on_stats;
+            // the close is deferred until message processing finishes, so
+            // the fulfilled response is still delivered.
+            $response = $promise->wait();
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame('abc', (string) $response->getBody());
+            self::assertSame(['X-Checksum' => ['abc123']], $trailers);
+            self::assertTrue($closed);
+
+            try {
+                $handler->tick();
+                self::fail('Expected BadMethodCallException.');
+            } catch (\BadMethodCallException $e) {
+                self::assertSame('Cannot use the cURL multi handler after it has been closed.', $e->getMessage());
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testCloseFromOnStatsCallbackRejectsOtherInFlightTransfers(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
+            'timeout' => 5,
+            'on_stats' => static function () use ($handler): void {
+                $handler->close();
+            },
+        ]);
+
+        $delayed = new Request('GET', Server::$url);
+        $delayedPromise = $handler($delayed, [
+            'delay' => 10000,
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+
+            while (P\Is::pending($promise)) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for the on_stats close.');
+                }
+
+                $handler->tick();
+            }
+
+            self::assertSame(200, $promise->wait()->getStatusCode());
+            self::assertTrue(P\Is::rejected($delayedPromise));
+
+            try {
+                $delayedPromise->wait();
+                self::fail('Expected HandlerClosedException.');
+            } catch (HandlerClosedException $e) {
+                self::assertSame('The cURL multi handler was closed before the transfer completed.', $e->getMessage());
+                self::assertSame($delayed, $e->getRequest());
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testCloseFromOnStatsCallbackRejectsAttachedSiblingTransfer(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0, 'max_host_connections' => 1]);
+
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, [
+            'timeout' => 5,
+            'on_stats' => static function () use ($handler): void {
+                $handler->close();
+            },
+        ]);
+
+        // The sibling is dispatched into the multi handle immediately (no
+        // delay), but the connection cap keeps it queued behind the first
+        // transfer, so it is still attached and unprocessed when the
+        // on_stats close runs.
+        $sibling = new Request('GET', Server::$url);
+        $siblingPromise = $handler($sibling, ['timeout' => 5]);
+
+        self::assertSame([], self::readMultiProperty($handler, 'delays'));
+        self::assertCount(2, self::readMultiProperty($handler, 'handles'));
+
+        try {
+            $deadline = \microtime(true) + 5;
+
+            while (P\Is::pending($promise)) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for the on_stats close.');
+                }
+
+                $handler->tick();
+            }
+
+            self::assertSame(200, $promise->wait()->getStatusCode());
+            self::assertTrue(P\Is::rejected($siblingPromise));
+
+            try {
+                $siblingPromise->wait();
+                self::fail('Expected HandlerClosedException.');
+            } catch (HandlerClosedException $e) {
+                self::assertSame('The cURL multi handler was closed before the transfer completed.', $e->getMessage());
+                self::assertSame($sibling, $e->getRequest());
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
     public function testCanCloseFromProgressCallbackWithDelayedTransfer(): void
     {
         Server::flush();
@@ -1334,7 +1615,7 @@ class CurlMultiHandlerTest extends TestCase
         self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
         self::initMultiHandle($handler);
         $mh = self::readMultiHandle($handler);
-        self::setMultiProperty($handler, 'processingMessages', true);
+        self::setMultiProperty($handler, 'messageProcessingDepth', 1);
 
         self::applyProxyTunnelOwnership($handler, self::easyWithSignature('sig-b'));
 
