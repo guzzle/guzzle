@@ -55,7 +55,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject proxy-auth header fresh connections when persistent transport sharing requires reuse
 - Reject PHP stream context options outside the built-in stream handler allow-list
 - Reject selected request options ignored by incompatible built-in handlers
-- Support retry delay callbacks with retry count only or full retry context
 - Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays
 - Move built-in Basic and Digest authentication handling to the default auth middleware

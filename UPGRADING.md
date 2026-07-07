@@ -974,36 +974,6 @@ user or process must read the file, adjust its permissions after saving. Saved
 cookie files also JSON-escape tag characters, and existing cookie files remain
 readable with unchanged cookie values.
 
-#### Retry Delay Callbacks
-
-The retry middleware accepts an optional delay callback as the second argument to
-`Middleware::retry()` or the third constructor argument to `RetryMiddleware`. The
-callback returns the number of milliseconds to wait before the next retry
-attempt.
-
-Delay callbacks may now explicitly use either the retry-count-only signature or
-the full retry-context signature:
-
-```php
-// Retry count only:
-$delay = static function (int $retries): int {
-    return $retries * 1000;
-};
-
-// Full retry context:
-$delay = static function (int $retries, ?ResponseInterface $response, RequestInterface $request): int {
-    return $retries * 1000;
-};
-```
-
-Callbacks that accept three arguments continue to receive the retry count, the
-response that triggered the retry when one exists, and the request being retried.
-One-argument callbacks are now called with only the retry count, which also
-allows internal PHP functions with a single-argument signature.
-
-The seeded `retries` request option must be an integer. Delay callbacks must
-return an integer number of milliseconds.
-
 #### Logging Middleware Formatter Types
 
 `GuzzleHttp\MessageFormatter` is now final. Applications that extended
