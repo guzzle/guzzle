@@ -30,7 +30,7 @@ class RetryMiddleware
     private $decider;
 
     /**
-     * @var (callable(int): int)|(callable(int, ResponseInterface|null, RequestInterface): int)
+     * @var callable(int, ResponseInterface|null, RequestInterface): int
      */
     private $delay;
 
@@ -39,7 +39,7 @@ class RetryMiddleware
      *                                                                                                                     a request, [response], and [rejection reason]
      *                                                                                                                     and returns true if the request is to be retried.
      * @param callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $nextHandler Next handler to invoke.
-     * @param (callable(int): int)|(callable(int, ResponseInterface|null, RequestInterface): int)|null        $delay       Function that returns the number of milliseconds to delay.
+     * @param (callable(int, ResponseInterface|null, RequestInterface): int)|null                             $delay       Function that returns the number of milliseconds to delay.
      */
     public function __construct(callable $decider, callable $nextHandler, ?callable $delay = null)
     {
@@ -114,26 +114,8 @@ class RetryMiddleware
     private function doRetry(RequestInterface $request, array $options, ?ResponseInterface $response = null): PromiseInterface
     {
         ++$options['retries'];
-        $options['delay'] = $this->getDelay($options['retries'], $response, $request);
+        $options['delay'] = ($this->delay)($options['retries'], $response, $request);
 
         return $this($request, $options);
-    }
-
-    private function getDelay(int $retries, ?ResponseInterface $response, RequestInterface $request): int
-    {
-        $delay = $this->delay;
-
-        if (self::acceptsRetryContext($delay)) {
-            return $delay($retries, $response, $request);
-        }
-
-        return $delay($retries);
-    }
-
-    private static function acceptsRetryContext(callable $callback): bool
-    {
-        $reflection = new \ReflectionFunction(\Closure::fromCallable($callback));
-
-        return $reflection->isVariadic() || $reflection->getNumberOfParameters() >= 3;
     }
 }
