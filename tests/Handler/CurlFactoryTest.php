@@ -1569,6 +1569,7 @@ class CurlFactoryTest extends TestCase
             ['7.50.0'],
             ['7.51.0'],
             ['7.52.0'],
+            ['7.53.1'],
             ['7.61.0'],
         ];
     }
@@ -1582,7 +1583,7 @@ class CurlFactoryTest extends TestCase
 
         try {
             $this->expectException(RequestException::class);
-            $this->expectExceptionMessage('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.');
+            $this->expectExceptionMessage('HTTPS proxies are not supported by the installed libcurl; libcurl 7.54.0 or newer built with HTTPS-proxy support is required.');
 
             $f = new CurlFactory(3);
             $f->create(new Psr7\Request('GET', 'https://example.com'), [
@@ -1722,17 +1723,38 @@ class CurlFactoryTest extends TestCase
     public function testAllowsHttpsProxyWhenLibcurlSupportsIt(): void
     {
         $httpsProxyFeature = \defined('CURL_VERSION_HTTPS_PROXY') ? \CURL_VERSION_HTTPS_PROXY : (1 << 21);
-        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.52.0', 'features' => self::curlSslFeature() | $httpsProxyFeature]);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.54.0', 'features' => self::curlSslFeature() | $httpsProxyFeature]);
 
         try {
             $f = new CurlFactory(3);
-            // An http target does not CONNECT, so the 7.52 HTTPS-proxy floor
-            // is exercised without the libcurl 7.54 tunneling requirement.
+            // An http target does not CONNECT, so this pins the 7.54.0
+            // HTTPS-proxy floor positively, independent of the tunneling gate.
             $f->create(new Psr7\Request('GET', 'http://example.com'), [
                 'proxy' => 'https://proxy.example.com:3128',
             ]);
 
             self::assertSame('https://proxy.example.com:3128', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRejectsHttpsProxyBelowLibcurl754EvenWithFeature(): void
+    {
+        $httpsProxyFeature = \defined('CURL_VERSION_HTTPS_PROXY') ? \CURL_VERSION_HTTPS_PROXY : (1 << 21);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.53.1', 'features' => self::curlSslFeature() | $httpsProxyFeature]);
+
+        try {
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('libcurl 7.54.0 or newer built with HTTPS-proxy support is required');
+
+            // The 7.52.0-7.53.1 HTTPS-proxy TLS code carried verification
+            // flaws (CVE-2017-2629, CVE-2017-7468), so the feature bit alone
+            // is not enough below 7.54.0.
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'http://example.com'), [
+                'proxy' => 'https://proxy.example.com:3128',
+            ]);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }

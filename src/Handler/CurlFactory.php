@@ -415,7 +415,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if ($scheme === 'https' && !CurlVersion::supportsHttpsProxy()) {
-            throw new RequestException('HTTPS proxies are not supported by the installed libcurl; libcurl 7.52.0 or newer built with HTTPS-proxy support is required.', $request);
+            throw new RequestException('HTTPS proxies are not supported by the installed libcurl; libcurl 7.54.0 or newer built with HTTPS-proxy support is required.', $request);
         }
     }
 

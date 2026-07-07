@@ -696,13 +696,16 @@ libcurl's default HTTP proxy port, so `proxy.example.com` resolves to
 unchanged, which PHP's stream wrapper could not use because it requires an
 explicit port.
 
-#### Proxy CONNECT Tunneling
+#### Proxy Tunnels and HTTPS Proxies
 
 Requests tunneled through an HTTP proxy, meaning an `https://` target sent
 through an `http://` or `https://` proxy, or a tunnel forced with raw `curl`
-options, now require libcurl 7.54.0 or newer. The built-in cURL handlers
-reject such a request on older libcurl with a `RequestException` before it is
-sent, matching the other build- and version-specific capability checks.
+options, now require libcurl 7.54.0 or newer. HTTPS proxies (an `https://`
+proxy URL, where the connection to the proxy itself is encrypted) also now
+require libcurl 7.54.0 built with HTTPS-proxy support, raised from the 7.52.0
+floor used in Guzzle 7. The built-in cURL handlers reject such requests on
+older libcurl with a `RequestException` before they are sent, matching the
+other build- and version-specific capability checks.
 
 On supported libcurl, the proxy's CONNECT reply is suppressed with
 `CURLOPT_SUPPRESS_CONNECT_HEADERS`. Guzzle 7 delivered the interim

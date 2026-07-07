@@ -40,7 +40,10 @@ final class CurlVersion
     // (a build can meet the version yet lack the feature). Earlier libcurl
     // mishandles an https:// proxy: before 7.50.2 it silently downgrades to a
     // plaintext HTTP proxy, and 7.50.2 through 7.51 reject it at connect time.
-    private const HTTPS_PROXY_VERSION = '7.52.0';
+    // The 7.52.0 TLS rework also shipped verification flaws in exactly this
+    // path (CVE-2017-2629, CVE-2017-7468); the latter affects 7.52.0-7.53.1
+    // and was fixed in 7.54.0, so TLS to a proxy is only trusted from there.
+    private const HTTPS_PROXY_VERSION = '7.54.0';
 
     // HTTP/3 arrived in libcurl 7.66.0, but CURL_HTTP_VERSION_3ONLY only
     // exists from 7.88.0; requiring it keeps every HTTP/3-capable runtime
