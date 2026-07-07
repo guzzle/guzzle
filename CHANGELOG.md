@@ -16,6 +16,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add PSR-17 `request_factory`, `response_factory`, `stream_factory`, and `uri_factory` request options
 - Add explicit `close()` lifecycle methods to the built-in cURL handlers and concrete cURL factory
 - Add `HandlerClosedException` for pending transfers rejected by `CurlMultiHandler::close()`
+- Add persistent transport sharing modes (`TransportSharing::PERSISTENT_PREFER` and `TransportSharing::PERSISTENT_REQUIRE`)
 - Add `ProxyOptions` for proxy option resolution
 - Add `ResponseException` for request failures with responses
 - Add auth middleware for built-in Basic and Digest authentication
@@ -45,6 +46,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Pass the request as the second argument to `on_headers` callbacks
 - Pass the `Pool` iterable key as a trailing argument to per-request observer callbacks
 - Declare strict types across remaining source files
+- Reject request option values that do not match their documented types
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use
 - Reject non-finite floats in the `query` and `form_params` options
 - Reject non-string scalar values in the `body` option
@@ -78,6 +80,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Default HTTPS requests sent by the built-in cURL and stream handlers to TLS 1.2 or newer
 - Apply the stream handler `crypto_method` option through the SSL context so it consistently controls the minimum TLS version
 - Validate built-in handler timeout options before applying them
+- Require a request when constructing `TransferException` and its subclasses
 - Classify empty, malformed, or handler-unsupported request protocol versions as request exceptions
 - Classify additional cURL transport failures without a response as `NetworkException`
 - Classify stream connect failures as `ConnectException`, with connect timeouts as `ConnectTimeoutException`
@@ -125,6 +128,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Removed
 
 - Dropped support for PHP 7.2 and 7.3
+- Removed `Client::__call()`; use the typed HTTP verb methods or `request()`/`requestAsync()`
+- Removed `ClientInterface::getConfig()`; the concrete `Client::getConfig()` remains available
 - Removed support for the `GUZZLE_CURL_SELECT_TIMEOUT` environment variable; use `CurlMultiHandler`'s `select_timeout` option
 - Removed support for the `handler` request option; configure the handler on the client
 - Removed direct access to `CurlMultiHandler::$_mh`; pass `CURLMOPT_*` values through constructor `options` instead
@@ -132,10 +137,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
 - Removed the deprecated `RequestException::wrapException()` method
 - Removed the deprecated `Utils::describeType()` method
+- Removed the deprecated `GuzzleHttp` namespace functions such as `GuzzleHttp\json_decode()`; use the `Utils` equivalents
+- Removed `Utils::defaultCaBundle()`; rely on the system trust store or pass a bundle path via the `verify` option
 - Removed `HandlerStack::__toString()`
 - Removed `RequestException::getHandlerContext()` and `ConnectException::getHandlerContext()`
 - Removed response access from `RequestException`; use `ResponseException`
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
+- Removed `Utils::isUriInNoProxy()`; use `ProxyOptions::isUriInNoProxy()`
 
 
 ## 7.14.0 - Upcoming
@@ -319,7 +327,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Added
 
-- Added persistent transport sharing modes
 - Added support for providing the `proxy` request option's `no` value as a comma-delimited string
 - Added the `protocols` request option to restrict allowed URI schemes for request transfers
 - Added `cert_type` and `ssl_key_type` request options for TLS certificate and private-key file types

@@ -443,6 +443,14 @@ or statistics. `GuzzleHttp\Exception\InvalidArgumentException` remains outside
 the transfer exception hierarchy and is still used for invalid configuration or
 request option values that can be rejected before a transfer starts.
 
+`TransferException` itself now also requires the failing request as its second
+constructor argument, and its message argument is no longer optional;
+`getRequest()` is available on the entire transfer exception hierarchy. The
+subclasses' own constructors, such as `RequestException` and
+`ConnectException`, already required a request in Guzzle 7, so only code
+constructing the base class changes: replace `new TransferException('msg')`
+with `new TransferException('msg', $request)`.
+
 #### Request Option Validation
 
 Guzzle 8 rejects additional malformed request option values at the client
@@ -451,6 +459,41 @@ boundary. `force_ip_resolve` must be `v4` or `v6`; `protocols` and
 must be finite and non-negative. Per-request `cookies` values must be `false`
 or a `CookieJarInterface`; the `true` shorthand is only valid in the client
 constructor.
+
+The following 33 options are now validated against their documented types
+before a transfer starts.
+
+The boolean flags `http_errors`, `stream`, and `synchronous` must be `bool`.
+`decode_content` and `verify` accept `bool` or `string`, `expect` accepts
+`bool` or `int`, and `debug` accepts `bool` or a stream resource.
+`allow_redirects` accepts `bool` or an array in which `max` is an `int`;
+`strict`, `referer`, and `track_redirects` are `bool`; `on_redirect` is a
+callable; and `protocols` is a non-empty array of `http` and `https` strings.
+
+`crypto_method`, `crypto_method_max`, and `retries` must be `int`.
+`connect_timeout`, `read_timeout`, and `timeout` must be `int` or `float`,
+`delay` must be a finite, non-negative `int` or `float`, and `version` accepts
+`string`, `int`, or `float`. `cert_type` and `ssl_key_type` must be `string`.
+
+`cert` and `ssl_key` accept a `string` path or a `[path, password]` array
+whose optional password may be a `string` or `null`. `auth` accepts `false`, a
+`string`, or a `[username, password]` array of strings with an optional third
+element that may be a `string` or `null`.
+
+`headers` must be an array whose values are strings or non-empty arrays of
+strings. `form_params` must be an array of strings, numbers, booleans, `null`,
+or nested arrays of the same, and its floats must be finite. `multipart` must
+be an array of part arrays, each with a `string` or `int` `name`, a `contents`
+entry, optional `string` header values, and an optional `string` `filename`.
+`protocols` must be a non-empty array containing only `http` and `https`.
+`curl` and `stream_context` must be arrays.
+
+`on_headers`, `on_stats`, `on_trailers`, and `progress` must be callables.
+`sink` accepts a `string` path, a stream resource, or a `StreamInterface`, and
+per-request `cookies` values must be `false` or a `CookieJarInterface` as
+described above. Invalid values throw
+`GuzzleHttp\Exception\InvalidArgumentException` naming the option and the
+expected types.
 
 A few build- or version-specific rejections that previously threw
 `InvalidArgumentException` now throw `RequestException`, matching how the
@@ -983,10 +1026,11 @@ exact stored name.
 
 #### Cookie Jar Persistence
 
-`FileCookieJar` and `SessionCookieJar` instances restored with `unserialize()`
-no longer save automatically on destruction. If your application intentionally
-unserializes one of these jars and expects changes to persist, call `save()`
-explicitly.
+`FileCookieJar` and `SessionCookieJar` can no longer be restored with
+`unserialize()`; attempting to unserialize either jar now throws a
+`LogicException`. Rebuild persisted jars instead: `new FileCookieJar($path)`
+reloads the persisted cookie file when it exists, and
+`new SessionCookieJar($key)` reloads the cookie data stored in the session.
 
 `FileCookieJar` now writes its cookie file with owner-only permissions (`0600`),
 so persisted cookies are not world-readable under the default umask; if another
@@ -1091,6 +1135,70 @@ The `GUZZLE_CURL_SELECT_TIMEOUT` environment variable is no longer read. Pass
 the `select_timeout` option to `CurlMultiHandler` instead. The
 `select_timeout` option must be numeric, finite, and non-negative. It must be
 `0` or greater than or equal to `0.001` seconds.
+
+#### Removed Client::__call and ClientInterface::getConfig
+
+`Client::__call()` has been removed. The typed HTTP verb methods (`get()`,
+`head()`, `put()`, `post()`, `patch()`, `delete()`, and their `*Async()`
+variants) have been real methods since Guzzle 7.0 and are unaffected. Only
+verbs without a typed method lose their magic form: calls such as
+`$client->options($uri)`, `$client->trace($uri)`,
+`$client->optionsAsync($uri)`, or any custom verb such as
+`$client->purge($uri)` now fail with a PHP undefined method error. Use
+`request()` or `requestAsync()` with an explicit method instead:
+
+```php
+// 7.x
+$response = $client->options('http://example.com');
+
+// 8.0
+$response = $client->request('OPTIONS', 'http://example.com');
+```
+
+`ClientInterface::getConfig()` has been removed from the interface. The
+concrete `Client::getConfig()` method remains available and is no longer
+deprecated. Code reading configuration through a `ClientInterface`-typed
+value must type against `Client` instead, and custom `ClientInterface`
+implementations no longer need to provide `getConfig()`, although keeping the
+method still satisfies the interface.
+
+#### Removed Function API
+
+The deprecated `GuzzleHttp` namespace functions were removed, along with the
+`functions.php` and `functions_include.php` files and the Composer `files`
+autoload entry that loaded them on every request.
+
+Replace namespaced function calls with the corresponding static methods:
+
+```php
+// Before:
+use function GuzzleHttp\json_decode;
+
+$data = json_decode($json);
+
+// After:
+use GuzzleHttp\Utils;
+
+$data = Utils::jsonDecode($json);
+```
+
+| Original Function | Replacement Method |
+|-------------------|--------------------|
+| `describe_type` | PHP's `get_debug_type` |
+| `headers_from_lines` | `Utils::headersFromLines` |
+| `debug_resource` | `Utils::debugResource` |
+| `choose_handler` | `Utils::chooseHandler` |
+| `default_user_agent` | `Utils::defaultUserAgent` |
+| `default_ca_bundle` | none; use the system trust store or `verify` |
+| `normalize_header_keys` | `Utils::normalizeHeaderKeys` |
+| `is_host_in_noproxy` | `ProxyOptions::isHostInNoProxy` |
+| `json_decode` | `Utils::jsonDecode` |
+| `json_encode` | `Utils::jsonEncode` |
+
+See the "Removed Proxy Helper API" section below for `is_host_in_noproxy()`
+behavior differences. The deprecated `Utils::defaultCaBundle()` and the
+internal `Utils::isUriInNoProxy()` helpers have also been removed; use the
+`verify` option and `ProxyOptions::isUriInNoProxy()` respectively.
 
 #### Removed Middleware Helper APIs
 
