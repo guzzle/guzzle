@@ -64,18 +64,33 @@ For more examples, see the [Quick Start](docs/quick-start.md).
 - [Upgrade Guide](UPGRADING.md)
 - [Changelog](CHANGELOG.md)
 
-We use GitHub issues only to discuss bugs and new features. For support, use [Stack Overflow](https://stackoverflow.com/questions/tagged/guzzle), the [#guzzle](https://app.slack.com/client/T0D2S9JCT/CE6UAAKL4) channel on [PHP-HTTP Slack](https://slack.httplug.io/), or [Gitter](https://gitter.im/guzzle/guzzle).
+We use GitHub issues only to discuss bugs and new features. For support, use
+[Stack Overflow](https://stackoverflow.com/questions/tagged/guzzle), the
+[#guzzle](https://app.slack.com/client/T0D2S9JCT/CE6UAAKL4) channel on
+[PHP-HTTP Slack](https://slack.httplug.io/), or
+[Gitter](https://gitter.im/guzzle/guzzle).
 
 ## Security
 
-If you discover a security vulnerability within this package, please send an email to security@tidelift.com. All security vulnerabilities will be promptly addressed. Please do not disclose security-related issues publicly until a fix has been announced. Please see [Security Policy](https://github.com/guzzle/guzzle/security/policy) for more information.
+If you discover a security vulnerability within this package, please send an
+email to security@tidelift.com. All security vulnerabilities will be promptly
+addressed. Please do not disclose security-related issues publicly until a fix
+has been announced. Please see
+[Security Policy](https://github.com/guzzle/guzzle/security/policy) for more
+information.
 
 ## License
 
-Guzzle is made available under the MIT License (MIT). Please see [License File](LICENSE) for more information.
+Guzzle is made available under the MIT License (MIT). Please see
+[License File](LICENSE) for more information.
 
 ## For Enterprise
 
 Available as part of the Tidelift Subscription
 
-The maintainers of Guzzle and thousands of other packages are working with Tidelift to deliver commercial support and maintenance for the open source dependencies you use to build your applications. Save time, reduce risk, and improve code health, while paying the maintainers of the exact dependencies you use. [Learn more.](https://tidelift.com/subscription/pkg/packagist-guzzlehttp-guzzle?utm_source=packagist-guzzlehttp-guzzle&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)
+The maintainers of Guzzle and thousands of other packages are working with
+Tidelift to deliver commercial support and maintenance for the open source
+dependencies you use to build your applications. Save time, reduce risk, and
+improve code health, while paying the maintainers of the exact dependencies you
+use.
+[Learn more.](https://tidelift.com/subscription/pkg/packagist-guzzlehttp-guzzle?utm_source=packagist-guzzlehttp-guzzle&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)
