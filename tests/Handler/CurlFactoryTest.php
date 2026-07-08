@@ -1505,13 +1505,7 @@ class CurlFactoryTest extends TestCase
         } catch (\GuzzleHttp\Exception\TransferException $e) {
             self::assertStringNotContainsString('secret', $e->getMessage());
             if (\strpos($e->getMessage(), 'foo://') !== false) {
-                // The redacted form follows the installed psr7 version:
-                // 'user:***' on psr7 2, '***' on psr7 3.
-                $redactedUserInfo = Psr7\Utils::redactUserInfo(
-                    new Psr7\Uri('foo://user:secret@127.0.0.1:1')
-                )->getUserInfo();
-
-                self::assertStringContainsString('foo://'.$redactedUserInfo.'@127.0.0.1:1', $e->getMessage());
+                self::assertStringContainsString('foo://user:***@127.0.0.1:1', $e->getMessage());
             }
         }
     }
@@ -1551,23 +1545,21 @@ class CurlFactoryTest extends TestCase
     public function testRedactsParseableProxyCredentialsIndependentlyOfCurlErrorText(): void
     {
         $proxy = 'http://user:secret@proxy.example.com:8125';
-        $redactedUserInfo = Psr7\Utils::redactUserInfo(new Psr7\Uri($proxy))->getUserInfo();
 
         $redacted = self::redactProxyUserInfo('Failed to connect via '.$proxy, $proxy);
 
         self::assertStringNotContainsString('secret', $redacted);
-        self::assertSame('Failed to connect via http://'.$redactedUserInfo.'@proxy.example.com:8125', $redacted);
+        self::assertSame('Failed to connect via http://user:***@proxy.example.com:8125', $redacted);
     }
 
     public function testRedactsProxyCredentialsContainingRawControlBytes(): void
     {
         $proxy = "http://user:se\x01cr\x7Fet@proxy.example.com:8125";
-        $redactedUserInfo = Psr7\Utils::redactUserInfo(new Psr7\Uri($proxy))->getUserInfo();
 
         $redacted = self::redactProxyUserInfo('Failed to connect via '.$proxy, $proxy);
 
         self::assertStringNotContainsString("se\x01cr\x7Fet", $redacted);
-        self::assertSame('Failed to connect via http://'.$redactedUserInfo.'@proxy.example.com:8125', $redacted);
+        self::assertSame('Failed to connect via http://user:***@proxy.example.com:8125', $redacted);
     }
 
     public function testRedactsUnparsableProxyCredentialsIndependentlyOfCurlErrorText(): void
@@ -1578,6 +1570,32 @@ class CurlFactoryTest extends TestCase
 
         self::assertStringNotContainsString('secret', $redacted);
         self::assertSame("Unsupported proxy syntax in 'http://***@127.0.0.1:99999999'", $redacted);
+    }
+
+    /**
+     * @dataProvider proxyCredentialSeparatorProvider
+     */
+    public function testRedactsProxyCredentialsContainingRawSeparators(string $proxy): void
+    {
+        $redacted = self::redactProxyUserInfo("Unsupported proxy syntax in '".$proxy."'", $proxy);
+
+        self::assertStringNotContainsString('cret', $redacted);
+        self::assertSame("Unsupported proxy syntax in 'http://***@proxy.example.com:8125'", $redacted);
+    }
+
+    public static function proxyCredentialSeparatorProvider(): iterable
+    {
+        yield 'slash in password' => ['http://user:se/cret@proxy.example.com:8125'];
+        yield 'question mark in password' => ['http://user:se?cret@proxy.example.com:8125'];
+        yield 'hash in password' => ['http://user:se#cret@proxy.example.com:8125'];
+    }
+
+    public function testLeavesCurlErrorsUntouchedForParseableProxiesWithAtInPath(): void
+    {
+        $proxy = 'http://proxy.example.com:8125/health@check';
+        $error = "Failed to connect via '".$proxy."'";
+
+        self::assertSame($error, self::redactProxyUserInfo($error, $proxy));
     }
 
     public function testLeavesCurlErrorsUntouchedForProxiesWithoutCredentials(): void
