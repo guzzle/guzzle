@@ -50,6 +50,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject invalid `idn_conversion`, `retries`, and built-in handler `on_stats` option values before use
 - Reject non-finite floats in the `query` and `form_params` options
 - Reject non-string scalar values in the `body` option
+- Apply automatic `Expect: 100-Continue` injection to HTTP/1.1 requests only
+- Wrap native `JsonException` from `Utils::jsonDecode()` and `Utils::jsonEncode()` in `GuzzleHttp\Exception\InvalidArgumentException`
 - Reject invalid `SetCookie` constructor field types instead of coercing them
 - Reject malformed, conflicting, or unrepresentable request `Content-Length` values in built-in handlers
 - Reject raw cURL request options outside the built-in cURL handlers' allow-list
@@ -145,6 +147,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed response access from `RequestException`; use `ResponseException`
 - Removed `Utils::isHostInNoProxy()`; use `ProxyOptions` helpers for Guzzle 8 no-proxy matching
 - Removed `Utils::isUriInNoProxy()`; use `ProxyOptions::isUriInNoProxy()`
+- Removed `Handler\Proxy::wrapTlsFallback()`; the default handler stack selects the cURL or stream handler by TLS support automatically
 
 
 ## 7.14.0 - Upcoming

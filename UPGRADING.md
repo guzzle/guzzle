@@ -15,8 +15,9 @@ signatures. It also adds generic PHPDoc types to async APIs for static analysis.
 Guzzle 8 requires PHP `^7.4 || ^8.0`. Guzzle 7 supported PHP
 `^7.2.5 || ^8.0`.
 
-Guzzle 8 also requires Guzzle Promises 3.x and Guzzle PSR-7 3.x. Guzzle 7
-supported Guzzle Promises `^2.3` and Guzzle PSR-7 `^2.8`.
+Guzzle 8 also requires Guzzle Promises 3.x and Guzzle PSR-7 3.x. If your
+application pins either package directly, update those constraints to allow the
+new major versions.
 
 Read the [Guzzle PSR-7 3.x upgrade guide][psr7-upgrade-guide] as part of every
 Guzzle 8 upgrade. Guzzle's normal request and response APIs use Guzzle PSR-7, so
@@ -443,6 +444,11 @@ or statistics. `GuzzleHttp\Exception\InvalidArgumentException` remains outside
 the transfer exception hierarchy and is still used for invalid configuration or
 request option values that can be rejected before a transfer starts.
 
+`RequestException::create()` no longer accepts a handler-context array. Its
+fourth argument is now the optional `BodySummarizerInterface`; remove any
+handler-context argument and use the new exception classes or `on_stats` when you
+need transport details.
+
 `TransferException` itself now also requires the failing request as its second
 constructor argument, and its message argument is no longer optional;
 `getRequest()` is available on the entire transfer exception hierarchy. The
@@ -450,6 +456,13 @@ subclasses' own constructors, such as `RequestException` and
 `ConnectException`, already required a request in Guzzle 7, so only code
 constructing the base class changes: replace `new TransferException('msg')`
 with `new TransferException('msg', $request)`.
+
+#### JSON Helper Exceptions
+
+`Utils::jsonDecode()` and `Utils::jsonEncode()` now wrap native `JsonException`
+failures in `GuzzleHttp\Exception\InvalidArgumentException`, including when
+callers pass `JSON_THROW_ON_ERROR`. Catch the Guzzle exception or inspect
+`getPrevious()` for the native `JsonException`.
 
 #### Request Option Validation
 
@@ -676,6 +689,10 @@ built-in cURL handlers. If this requirement is not met, the default handler
 stack will not select cURL automatically, and manually configured cURL handlers
 reject requests.
 
+`GuzzleHttp\Handler\Proxy::wrapTlsFallback()` has been removed. Custom handler
+stacks no longer need it; the default handler stack selects the cURL or stream
+handler based on this TLS support automatically.
+
 #### cURL Handler Lifecycle
 
 Applications that manage built-in cURL handlers or factories directly should
@@ -828,6 +845,16 @@ The cURL handlers also reject stream-only `stream_context` options, but accept
 cannot honor, but accepts `connect_timeout` without effect. These timeout options
 are intentionally best-effort so shared request configuration can be reused
 across transports.
+
+#### Expect: 100-Continue Injection
+
+Automatic `Expect: 100-Continue` injection now applies only to HTTP/1.1 requests.
+HTTP/1.0, HTTP/2, and HTTP/3 requests do not receive the header from Guzzle's
+body-preparation middleware.
+
+The stream handler rejects an explicit `expect` option when it results in an
+`Expect` header, because PHP streams do not support the `100-Continue` workflow.
+Set `expect => false` for stream-handler requests that must avoid this rejection.
 
 #### Native Type Declarations
 

@@ -368,17 +368,17 @@ use GuzzleHttp\Middleware;
 // Add a middleware with a name
 $stack->push(Middleware::mapRequest(function (RequestInterface $r) {
     return $r->withHeader('X-Foo', 'Bar');
-}, 'add_foo'));
+}), 'add_foo');
 
 // Add a middleware before a named middleware (unshift before).
 $stack->before('add_foo', Middleware::mapRequest(function (RequestInterface $r) {
     return $r->withHeader('X-Baz', 'Qux');
-}, 'add_baz'));
+}), 'add_baz');
 
 // Add a middleware after a named middleware (pushed after).
 $stack->after('add_baz', Middleware::mapRequest(function (RequestInterface $r) {
     return $r->withHeader('X-Lorem', 'Ipsum');
-}));
+}), 'add_lorem');
 
 // Remove a middleware by name
 $stack->remove('add_foo');
