@@ -736,7 +736,6 @@ final class StreamHandler
 
         $params = [];
         $context = $this->getDefaultContext($request);
-        $streamContextHasTlsSettings = self::hasStreamContextTlsSettings($options);
 
         if (isset($options['on_headers']) && !\is_callable($options['on_headers'])) {
             throw new InvalidArgumentException('on_headers must be callable');
@@ -762,11 +761,6 @@ final class StreamHandler
             self::rejectConflictingStreamContextOptions($streamContext);
             self::rejectUnsupportedStreamContextOptions($streamContext);
             $context = \array_replace_recursive($context, $streamContext);
-
-            $sslContext = $streamContext['ssl'] ?? null;
-            if ($streamContextHasTlsSettings && \is_array($sslContext) && !\array_key_exists('min_proto_version', $sslContext)) {
-                unset($context['ssl']['min_proto_version']);
-            }
         }
 
         $this->addDefaultTlsMinimum($request, $context);
@@ -860,21 +854,6 @@ final class StreamHandler
         }
 
         return $uri;
-    }
-
-    private static function hasStreamContextTlsSettings(array $options): bool
-    {
-        if (!isset($options['stream_context']) || !\is_array($options['stream_context'])) {
-            return false;
-        }
-
-        $sslContext = $options['stream_context']['ssl'] ?? null;
-        if (!\is_array($sslContext)) {
-            return false;
-        }
-
-        return \array_key_exists('crypto_method', $sslContext)
-            || \array_key_exists('min_proto_version', $sslContext);
     }
 
     private function addDefaultTlsMinimum(RequestInterface $request, array &$context): void
