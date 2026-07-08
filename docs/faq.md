@@ -2,14 +2,29 @@
 
 ## Does Guzzle require cURL?
 
-No. Guzzle can use any HTTP handler to send requests. This means that Guzzle can be used with cURL, PHP's stream wrapper, sockets, and non-blocking libraries like [React](https://reactphp.org/). You just need to configure an HTTP handler to use a different method of sending requests.
+No. Guzzle can use any HTTP handler to send requests. This means that Guzzle can
+be used with cURL, PHP's stream wrapper, sockets, and non-blocking libraries
+like [React](https://reactphp.org/). You just need to configure an HTTP handler
+to use a different method of sending requests.
 
 > [!NOTE]
-> Guzzle has historically only utilized cURL to send HTTP requests. cURL is an amazing HTTP client (arguably the best), and Guzzle will continue to use it by default when it is available. It is rare, but some developers don't have cURL installed on their systems or run into version specific issues. By allowing swappable HTTP handlers, Guzzle is now much more customizable and able to adapt to fit the needs of more developers.
+> Guzzle has historically only utilized cURL to send HTTP requests. cURL is an
+> amazing HTTP client (arguably the best), and Guzzle will continue to use it by
+> default when it is available. It is rare, but some developers don't have cURL
+> installed on their systems or run into version specific issues. By allowing
+> swappable HTTP handlers, Guzzle is now much more customizable and able to
+> adapt to fit the needs of more developers.
 
 ## Can Guzzle send asynchronous requests?
 
-Yes. You can use the `requestAsync`, `sendAsync`, `getAsync`, `headAsync`, `putAsync`, `postAsync`, `deleteAsync`, and `patchAsync` methods of a client to send an asynchronous request. For asynchronous requests that do not have a named shortcut method, such as OPTIONS requests, use `requestAsync()` with the method name. The client will return a `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>` object. You can chain `then` functions off of the promise for fulfilled responses and rejected reasons.
+Yes. You can use the `requestAsync`, `sendAsync`, `getAsync`, `headAsync`,
+`putAsync`, `postAsync`, `deleteAsync`, and `patchAsync` methods of a client to
+send an asynchronous request. For asynchronous requests that do not have a named
+shortcut method, such as OPTIONS requests, use `requestAsync()` with the method
+name. The client will return a
+`GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>`
+object. You can chain `then` functions off of the promise for fulfilled
+responses and rejected reasons.
 
 ```php
 $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
@@ -21,7 +36,9 @@ $promise->then(function ($response) {
 });
 ```
 
-You can force an asynchronous response to complete using the `wait()` method of the returned promise. It returns the response on fulfillment and throws when the promise is rejected.
+You can force an asynchronous response to complete using the `wait()` method of
+the returned promise. It returns the response on fulfillment and throws when the
+promise is rejected.
 
 ```php
 $promise = $client->requestAsync('GET', 'http://httpbin.org/get');
@@ -110,11 +127,17 @@ Custom cURL request options remain active during redirects unless Guzzle
 documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects)
 for cross-origin redirect credential behavior.
 
-Callbacks supplied directly through the `curl` request option are passed to PHP's cURL extension as low-level callbacks. Guzzle does not normalize exception or abort behavior for raw cURL callbacks. Prefer Guzzle's `progress`, `on_headers`, and `on_stats` request options when you want Guzzle's documented callback semantics.
+Callbacks supplied directly through the `curl` request option are passed to
+PHP's cURL extension as low-level callbacks. Guzzle does not normalize exception
+or abort behavior for raw cURL callbacks. Prefer Guzzle's `progress`,
+`on_headers`, and `on_stats` request options when you want Guzzle's documented
+callback semantics.
 
 ## How can I close cURL resources in long-running applications?
 
-If your application creates a cURL handler directly and needs deterministic cleanup, keep a reference to the handler and call `close()` when the handler is no longer needed.
+If your application creates a cURL handler directly and needs deterministic
+cleanup, keep a reference to the handler and call `close()` when the handler is
+no longer needed.
 
 ```php
 use GuzzleHttp\Client;
@@ -131,7 +154,13 @@ try {
 }
 ```
 
-After a cURL handler has been closed, it cannot be reused. `Client` and `HandlerStack` do not expose `close()`, so applications that need deterministic cleanup should keep the handler reference. If `CurlMultiHandler::close()` closes pending transfers, their promises are rejected with `GuzzleHttp\Exception\HandlerClosedException`. Explicit `close()` calls may throw if native cleanup fails; destructor cleanup remains best-effort and non-throwing.
+After a cURL handler has been closed, it cannot be reused. `Client` and
+`HandlerStack` do not expose `close()`, so applications that need deterministic
+cleanup should keep the handler reference. If `CurlMultiHandler::close()` closes
+pending transfers, their promises are rejected with
+`GuzzleHttp\Exception\HandlerClosedException`. Explicit `close()` calls may
+throw if native cleanup fails; destructor cleanup remains best-effort and
+non-throwing.
 
 ## How can I add custom stream context options?
 
@@ -162,19 +191,27 @@ for cross-origin redirect credential behavior.
 
 ## Why am I getting an SSL verification error?
 
-You need to specify the path on disk to the CA bundle used by Guzzle for verifying the peer certificate. See the [`verify` option](request-options.md#verify).
+You need to specify the path on disk to the CA bundle used by Guzzle for
+verifying the peer certificate. See the
+[`verify` option](request-options.md#verify).
 
 ## What is this Maximum function nesting error?
 
 > Maximum function nesting level of '100' reached, aborting
 
-You could run into this error if you have the XDebug extension installed and you execute a lot of requests in callbacks. This error message comes specifically from the XDebug extension. PHP itself does not have a function nesting limit. Change this setting in your php.ini to increase the limit:
+You could run into this error if you have the XDebug extension installed and you
+execute a lot of requests in callbacks. This error message comes specifically
+from the XDebug extension. PHP itself does not have a function nesting limit.
+Change this setting in your php.ini to increase the limit:
 
     xdebug.max_nesting_level = 1000
 
 ## Why am I getting a 417 error response?
 
-This can occur for a number of reasons, but if you are sending PUT, POST, or PATCH requests with an `Expect: 100-Continue` header, a server that does not support this header will return a 417 response. You can work around this by setting the `expect` request option to `false`:
+This can occur for a number of reasons, but if you are sending PUT, POST, or
+PATCH requests with an `Expect: 100-Continue` header, a server that does not
+support this header will return a 417 response. You can work around this by
+setting the `expect` request option to `false`:
 
 ```php
 $client = new GuzzleHttp\Client();
@@ -188,11 +225,17 @@ $client = new GuzzleHttp\Client(['expect' => false]);
 
 ## How can I track redirected requests?
 
-You can enable tracking of redirected URIs and status codes via the `track_redirects` option. Each redirected URI and status code will be stored in the `X-Guzzle-Redirect-History` and the `X-Guzzle-Redirect-Status-History` header respectively.
+You can enable tracking of redirected URIs and status codes via the
+`track_redirects` option. Each redirected URI and status code will be stored in
+the `X-Guzzle-Redirect-History` and the `X-Guzzle-Redirect-Status-History`
+header respectively.
 
-The initial request's URI and the final status code will be excluded from the results. With this in mind you should be able to easily track a request's full redirect path.
+The initial request's URI and the final status code will be excluded from the
+results. With this in mind you should be able to easily track a request's full
+redirect path.
 
-For example, let's say you need to track redirects and provide both results together in a single report:
+For example, let's say you need to track redirects and provide both results
+together in a single report:
 
 ```php
 // First you configure Guzzle with redirect tracking and make a request

@@ -60,12 +60,13 @@ final class ProxyOptions
      * Validate a proxy URL and return its lowercased scheme.
      *
      * A proxy is an authority ([userinfo@]host[:port]) with an optional scheme;
-     * a scheme-less value is an HTTP proxy. The scheme is matched anchored at the
-     * start, so leading junk before it is rejected as malformed, and the host and
-     * port grammar is delegated to Psr7\Rfc3986. The whole string is validated up
-     * front so a malformed proxy fails the same way on every handler, but the
-     * original value is what callers pin, so no normalization reaches the wire.
-     * The error message never includes the proxy, which may carry credentials.
+     * a scheme-less value is an HTTP proxy. The scheme is matched anchored at
+     * the start, so leading junk before it is rejected as malformed, and the
+     * host and port grammar is delegated to Psr7\Rfc3986. The whole string is
+     * validated up front so a malformed proxy fails the same way on every
+     * handler, but the original value is what callers pin, so no normalization
+     * reaches the wire. The error message never includes the proxy, which may
+     * carry credentials.
      *
      * @throws InvalidArgumentException on a malformed proxy URL
      */
@@ -112,9 +113,9 @@ final class ProxyOptions
             return false;
         }
 
-        // The host cannot contain '@', so userinfo is everything before the last
-        // one. It is not validated here. A value that is only userinfo, with
-        // nothing after the last '@', has no host and is rejected.
+        // The host cannot contain '@', so userinfo is everything before the
+        // last one. It is not validated here. A value that is only userinfo,
+        // with nothing after the last '@', has no host and is rejected.
         $segments = \explode('@', $authority);
         $authority = $segments[\count($segments) - 1];
         if ($authority === '') {

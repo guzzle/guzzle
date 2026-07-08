@@ -28,8 +28,10 @@ use Psr\Http\Message\ResponseInterface;
  * - {code}:           Status code of the response (if available)
  * - {phrase}:         Reason phrase of the response  (if available)
  * - {error}:          Any error messages (if available)
- * - {req_header_*}:   Replace `*` with the lowercased name of a request header to add to the message
- * - {res_header_*}:   Replace `*` with the lowercased name of a response header to add to the message
+ * - {req_header_*}:   Replace `*` with the lowercased name of a request header
+ *                     to add to the message
+ * - {res_header_*}:   Replace `*` with the lowercased name of a response header
+ *                     to add to the message
  * - {req_headers}:    Request headers
  * - {res_headers}:    Response headers
  * - {req_body}:       Request body

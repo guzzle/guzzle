@@ -142,7 +142,9 @@ final class Middleware
     }
 
     /**
-     * Middleware that invokes a callback before and after sending a request.
+     * Middleware that observes requests and responses as they flow through the
+     * stack without modifying them. This is useful for metrics, tracing, and
+     * debugging.
      *
      * The provided listener cannot modify or alter the response. It simply
      * "taps" into the chain to be notified before returning the promise. The

@@ -11,8 +11,8 @@ not normalized into Guzzle exceptions.
 
 This document covers the two exceptions contributors most often have to choose
 between — `InvalidArgumentException` (caller error) and `RequestException`
-(runtime request failure) — and the handful of cases where a bare SPL exception
-is correct.
+(runtime request failure) — and the handful of cases where a bare SPL
+exception is correct.
 
 `GuzzleHttp\Exception\NetworkException` exists only in Guzzle 8.0 and newer. On
 Guzzle 7.x maintenance branches, network failures without a response use
@@ -49,8 +49,8 @@ headers were received and a response object exists. This includes response-aware
 connection, network, protocol, content-decoding, partial-body, and response-body
 transfer failures.
 
-Do not use `ResponseTransferException` for local sink writes, request-body stream
-failures, progress callback failures, `on_headers` failures, or response
+Do not use `ResponseTransferException` for local sink writes, request-body
+stream failures, progress callback failures, `on_headers` failures, or response
 finalization such as rewinding a response sink after the body has been received.
 Deterministic platform-limit failures, such as a response length or byte count
 that cannot be represented as a PHP integer, are also plain `ResponseException`
@@ -60,14 +60,14 @@ failures when a response exists.
 the network transport timed out, such as cURL `CURLE_OPERATION_TIMEDOUT` or a
 stream send/connect timeout message. A timeout surfaced as a PSR-7
 `TimeoutException` from a caller stream is classified like any other failure of
-that stream: `RequestException` while reading the request body before a response,
-or `ResponseException` once a response exists. It is never a
+that stream: `RequestException` while reading the request body before a
+response, or `ResponseException` once a response exists. It is never a
 `NetworkTimeoutException`.
 
 Note: `ResponseException` extends `RequestException`, so it (and every subtype,
-including `ResponseTransferException` and `ResponseTimeoutException`) is a PSR-18
-`RequestExceptionInterface`. PSR-18 defines no interface for "a response was
-received, then the transfer failed": its `NetworkExceptionInterface` is a
+including `ResponseTransferException` and `ResponseTimeoutException`) is a
+PSR-18 `RequestExceptionInterface`. PSR-18 defines no interface for "a response
+was received, then the transfer failed": its `NetworkExceptionInterface` is a
 no-response interface, so among PSR-18's request-bound interfaces only
 `RequestExceptionInterface` remains once Guzzle holds a response. This is a
 deliberate classification, not a claim that the request message was malformed.
@@ -77,12 +77,12 @@ deliberate classification, not a claim that the request message was malformed.
 `final class InvalidArgumentException extends \InvalidArgumentException implements GuzzleException`
 
 **Use it when** the caller supplied something invalid: a bad option value, the
-wrong type, conflicting options, a non-callable callback, or a path that does not
-exist. It is the only SPL-extending Guzzle exception, by design.
+wrong type, conflicting options, a non-callable callback, or a path that does
+not exist. It is the only SPL-extending Guzzle exception, by design.
 
-**Why this type and not `RequestException`?** Invalid *options* are not an invalid
-*request*. The request message is well-formed; the caller misconfigured the
-client. PSR-18 reserves `RequestExceptionInterface` for malformed request
+**Why this type and not `RequestException`?** Invalid *options* are not an
+invalid *request*. The request message is well-formed; the caller misconfigured
+the client. PSR-18 reserves `RequestExceptionInterface` for malformed request
 *messages* ("method is missing", "body not seekable"). So this class implements
 `GuzzleException` (→ `ClientExceptionInterface`) but deliberately **does not**
 implement `RequestExceptionInterface`, and it does **not** carry a request.
@@ -114,7 +114,8 @@ throw new \InvalidArgumentException('on_headers must be callable');
 throw new RequestException('on_headers must be callable', $request);
 ```
 
-Because `GuzzleHttp\Exception\InvalidArgumentException extends \InvalidArgumentException`,
+Because
+`GuzzleHttp\Exception\InvalidArgumentException extends \InvalidArgumentException`,
 this is backward compatible: existing `catch (\InvalidArgumentException)` blocks
 still catch it. `catch` blocks that need both forms must use the global type:
 
@@ -140,11 +141,11 @@ try {
 ```
 
 Keep Guzzle-owned option validation *outside* such `try` blocks. Because
-`GuzzleHttp\Exception\InvalidArgumentException` extends the global class, a broad
-`catch (\InvalidArgumentException)` would otherwise reclassify a caller error
-(the wrong `uri_factory` type, an invalid `allow_redirects` value) as a response
-failure. Validate the option first and throw the Guzzle type, then wrap only the
-third-party call:
+`GuzzleHttp\Exception\InvalidArgumentException` extends the global class, a
+broad `catch (\InvalidArgumentException)` would otherwise reclassify a caller
+error (the wrong `uri_factory` type, an invalid `allow_redirects` value) as a
+response failure. Validate the option first and throw the Guzzle type, then wrap
+only the third-party call:
 
 ```php
 // GOOD — caller error is thrown before the wrapping try block.
@@ -201,10 +202,10 @@ if (!\extension_loaded('curl')) {
 
 ## When a bare SPL exception is the right answer
 
-These are deliberate programmer-error signals. They are **not** GuzzleExceptions,
-and that is intentional — they indicate misuse of a Guzzle-specific API, not a
-failure to transfer an HTTP request, and they are unreachable through a normal
-PSR-18 `sendRequest()` call:
+These are deliberate programmer-error signals. They are **not**
+GuzzleExceptions, and that is intentional — they indicate misuse of a
+Guzzle-specific API, not a failure to transfer an HTTP request, and they are
+unreachable through a normal PSR-18 `sendRequest()` call:
 
 | Situation | Exception | Why bare SPL |
 |---|---|---|
@@ -214,20 +215,20 @@ PSR-18 `sendRequest()` call:
 | `MockHandler` queued an unsupported value | `\TypeError` | Programming error (an `\Error`) |
 
 Do not "wrap" these into GuzzleExceptions to satisfy PSR-18 strictly: it would
-break `catch (\BadMethodCallException)` / `catch (\OutOfBoundsException)` and the
-tests that assert them, and PSR-18 governs `sendRequest()` transfers, not misuse
-of Guzzle's own lifecycle APIs.
+break `catch (\BadMethodCallException)` / `catch (\OutOfBoundsException)` and
+the tests that assert them, and PSR-18 governs `sendRequest()` transfers, not
+misuse of Guzzle's own lifecycle APIs.
 
 ## Hard rules (summary)
 
 1. **Never** throw the global `\InvalidArgumentException` from code reachable
    while preparing or sending a request — use
    `GuzzleHttp\Exception\InvalidArgumentException`.
-2. **Never** create a `GuzzleHttp\Exception\RuntimeException` — it does not exist.
-   Use `RequestException`/`TransferException` (request-bound) or bare
+2. **Never** create a `GuzzleHttp\Exception\RuntimeException` — it does not
+   exist. Use `RequestException`/`TransferException` (request-bound) or bare
    `\RuntimeException` (environment-only).
-3. **Never** make `InvalidArgumentException` a `RequestExceptionInterface` or give
-   it a request — invalid options are not a malformed request.
+3. **Never** make `InvalidArgumentException` a `RequestExceptionInterface` or
+   give it a request — invalid options are not a malformed request.
 4. **Never** throw for 4xx/5xx from `sendRequest()` — that is `http_errors`
    middleware, which PSR-18 mode disables.
 5. Pick `Network*`/`Connect*` (no response), `ResponseTransferException`
@@ -239,6 +240,6 @@ of Guzzle's own lifecycle APIs.
 
 `catch (\GuzzleHttp\Exception\GuzzleException)` (or PSR-18's
 `Psr\Http\Client\ClientExceptionInterface`) catches every Guzzle transfer error.
-`InvalidArgumentException` is also catchable as `\InvalidArgumentException`.
-The bare-SPL signals above (closed handler, exhausted mock) are programmer errors
+`InvalidArgumentException` is also catchable as `\InvalidArgumentException`. The
+bare-SPL signals above (closed handler, exhausted mock) are programmer errors
 you should fix, not catch.
