@@ -35,7 +35,7 @@ class ResponseException extends RequestException
     public function withResponse(ResponseInterface $response, ?\Throwable $previous = null): self
     {
         if ($response->getStatusCode() !== $this->response->getStatusCode()) {
-            throw new \InvalidArgumentException('Cannot replace response with a different status code.');
+            throw new InvalidArgumentException('Cannot replace response with a different status code.');
         }
 
         return new static(

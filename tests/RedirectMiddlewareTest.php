@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Handler\MockHandler;
@@ -80,7 +81,7 @@ class RedirectMiddlewareTest extends TestCase
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
 
-        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
 
         $stack->resolve()(new Request('GET', 'http://example.com'), [
@@ -270,7 +271,7 @@ class RedirectMiddlewareTest extends TestCase
         });
         $request = new Request('POST', 'http://example.com/', [], 'payload');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('stream_factory must be an instance of Psr\\Http\\Message\\StreamFactoryInterface');
 
         $redirectMiddleware->modifyRequest($request, [
@@ -574,13 +575,26 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('uri_factory must be an instance of Psr\\Http\\Message\\UriFactoryInterface');
 
         $handler($request, [
             'allow_redirects' => ['max' => 2],
             RequestOptions::URI_FACTORY => new \stdClass(),
         ])->wait();
+    }
+
+    public function testRejectsInvalidAllowRedirectsOption(): void
+    {
+        $middleware = new RedirectMiddleware(static function (): void {
+        });
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('allow_redirects must be true, false, or array');
+
+        $middleware(new Request('GET', 'http://example.com'), [
+            'allow_redirects' => 'yes',
+        ]);
     }
 
     public function testReducesRefererToOriginOnCrossOriginRedirect(): void
