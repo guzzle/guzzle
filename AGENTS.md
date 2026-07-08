@@ -18,16 +18,16 @@
   private constructor.
 - Resist native PHP serialization when a class holds live state (streams,
   resources, handles, callbacks, credentials) or when magic methods such as
-  `__destruct()` have side effects that unserialized attacker-controlled state
-  could redirect, as with the file and session write gadgets fixed in Guzzle's
-  persisting cookie jars. Plain data holders, such as Guzzle's in-memory cookie
-  jar, remain serializable.
+  `__destruct()` have side effects that untrusted unserialized data could
+  redirect, as with the file and session write fixes in Guzzle's persisting
+  cookie jars. Plain data holders, such as Guzzle's in-memory cookie jar, remain
+  serializable.
 - To resist, `__serialize()` and `__unserialize()` both throw
   `\LogicException(static::class.' should never be serialized')` and its
   unserialized counterpart, usually via the repo's `@internal` non-serializable
-  trait. Where a `__destruct()` gadget exists, the side effect is armed only by
-  the constructor and disarmed in `__wakeup()` and `__unserialize()` before
-  throwing, so the defense holds even if the exception is swallowed.
+  trait. Where a `__destruct()` has such a side effect, it is enabled only by
+  the constructor and disabled in `__wakeup()` and `__unserialize()` before
+  throwing, so the protection holds even if the exception is swallowed.
 - In general, numeric inputs should not accept non-finite floats. In situations
   where they are accepted and we need to cast to a string, we should branch on
   `\is_finite($value)`, using `(string) $value` for the finite case and
