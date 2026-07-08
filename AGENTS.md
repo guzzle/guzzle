@@ -14,14 +14,20 @@
   `\z`; a bare `$` accepts a trailing newline.
 - Never embed raw control bytes in exception messages and other diagnostics;
   escape or redact the offending value first.
-- Classes holding streams, resources, handles, callbacks, or credentials reject
-  native PHP serialization so they cannot join object-injection gadget chains:
-  `__serialize()` and `__unserialize()` both throw
+- Helper classes that expose only public static methods are `final` and have a
+  private constructor.
+- Resist native PHP serialization when a class holds live state (streams,
+  resources, handles, callbacks, credentials) or when magic methods such as
+  `__destruct()` have side effects that unserialized attacker-controlled state
+  could redirect, as with the file and session write gadgets fixed in Guzzle's
+  persisting cookie jars. Plain data holders, such as Guzzle's in-memory cookie
+  jar, remain serializable.
+- To resist, `__serialize()` and `__unserialize()` both throw
   `\LogicException(static::class.' should never be serialized')` and its
   unserialized counterpart, usually via the repo's `@internal` non-serializable
-  trait. Guards that protect a `__destruct()` gadget also neutralize the
-  dangerous state before throwing, so the protection holds even if the exception
-  is swallowed.
+  trait. Where a `__destruct()` gadget exists, the side effect is armed only by
+  the constructor and disarmed in `__wakeup()` and `__unserialize()` before
+  throwing, so the defense holds even if the exception is swallowed.
 - In general, numeric inputs should not accept non-finite floats. In situations
   where they are accepted and we need to cast to a string, we should branch on
   `\is_finite($value)`, using `(string) $value` for the finite case and
