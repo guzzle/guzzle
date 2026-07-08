@@ -658,8 +658,8 @@ final class CurlMultiHandler
     /**
      * Closes native cURL resources owned by this handler.
      *
-     * Pending transfers are rejected with HandlerClosedException. After closing,
-     * the handler is terminal and must not be reused.
+     * Pending transfers are rejected with HandlerClosedException. After
+     * closing, the handler is terminal and must not be reused.
      */
     public function close(): void
     {

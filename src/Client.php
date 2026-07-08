@@ -54,14 +54,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *   wire. The function is called with a Psr7\Http\Message\RequestInterface
      *   and array of transfer options, and must return a
      *   GuzzleHttp\Promise\PromiseInterface that is fulfilled with a
-     *   Psr7\Http\Message\ResponseInterface on success.
-     *   If no handler is provided, a default handler will be created
-     *   that enables all of the request options below by attaching all of the
-     *   default middleware to the handler.
+     *   Psr7\Http\Message\ResponseInterface on success. If no handler is
+     *   provided, a default handler will be created that enables all of the
+     *   request options below by attaching all of the default middleware to the
+     *   handler.
      * - base_uri: (string|UriInterface) Base URI of the client that is merged
      *   into relative URIs. Can be a string or instance of UriInterface.
-     * - transport_sharing: (string|null) Transport sharing mode for the
-     *   default handler. Accepts TransportSharing::* or null. Defaults to null.
+     * - transport_sharing: (string|null) Transport sharing mode for the default
+     *   handler. Accepts TransportSharing::* or null. Defaults to null.
      * - max_host_connections: (int|null) Maximum concurrent connections per
      *   host for the default cURL multi handler.
      * - max_total_connections: (int|null) Maximum concurrent connections for
@@ -621,8 +621,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * Get a client configuration option.
      *
      * These options include default request options of the client, a "handler"
-     * (if utilized by the concrete client), and a "base_uri" if utilized by
-     * the concrete client.
+     * (if utilized by the concrete client), and a "base_uri" if utilized by the
+     * concrete client.
      *
      * @param string|null $option The config option to retrieve.
      *

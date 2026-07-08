@@ -19,7 +19,8 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
- * Applies built-in Basic authentication and handles Digest authentication challenges.
+ * Applies built-in Basic authentication and handles Digest authentication
+ * challenges.
  */
 final class AuthMiddleware
 {

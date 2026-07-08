@@ -1211,7 +1211,8 @@ final class StreamHandler
     }
 
     /**
-     * Parses the given proxy URL to make it compatible with the format PHP's stream context expects.
+     * Parses the given proxy URL to make it compatible with the format PHP's
+     * stream context expects.
      */
     private function parseProxy(string $url, string $scheme): array
     {

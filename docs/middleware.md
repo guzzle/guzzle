@@ -1,10 +1,14 @@
 # Middleware
 
-A Guzzle client wraps the [handler](handlers.md) that sends requests in a stack of middleware. This page covers the built-in middleware, how to write your own, and the `HandlerStack` that composes them.
+A Guzzle client wraps the [handler](handlers.md) that sends requests in a stack
+of middleware. This page covers the built-in middleware, how to write your own,
+and the `HandlerStack` that composes them.
 
 ## Middleware
 
-Middleware augments the functionality of handlers by invoking them in the process of generating responses. Middleware is implemented as a higher order function that takes the following form.
+Middleware augments the functionality of handlers by invoking them in the
+process of generating responses. Middleware is implemented as a higher order
+function that takes the following form.
 
 ```php
 use Psr\Http\Message\RequestInterface;
@@ -19,7 +23,12 @@ function my_middleware()
 }
 ```
 
-Middleware functions return a function that accepts the next handler to invoke. This returned function then returns another function that acts as a composed handler-- it accepts a request and options, and returns a promise that is fulfilled with a response. Your composed middleware can modify the request, add custom request options, and modify the promise returned by the downstream handler.
+Middleware functions return a function that accepts the next handler to invoke.
+This returned function then returns another function that acts as a composed
+handler-- it accepts a request and options, and returns a promise that is
+fulfilled with a response. Your composed middleware can modify the request, add
+custom request options, and modify the promise returned by the downstream
+handler.
 
 Here's an example of adding a header to each request.
 
@@ -40,7 +49,8 @@ function add_header($header, $value)
 }
 ```
 
-Once a middleware has been created, you can add it to a client by either wrapping the handler used by the client or by decorating a handler stack.
+Once a middleware has been created, you can add it to a client by either
+wrapping the handler used by the client or by decorating a handler stack.
 
 ```php
 use GuzzleHttp\HandlerStack;
@@ -53,9 +63,11 @@ $stack->push(add_header('X-Foo', 'bar'));
 $client = new Client(['handler' => $stack]);
 ```
 
-Now when you send a request, the client will use a handler composed with your added middleware, adding a header to each request.
+Now when you send a request, the client will use a handler composed with your
+added middleware, adding a header to each request.
 
-Here's an example of creating a middleware that modifies the response of the downstream handler. This example adds a header to the response.
+Here's an example of creating a middleware that modifies the response of the
+downstream handler. This example adds a header to the response.
 
 ```php
 use Psr\Http\Message\RequestInterface;
@@ -87,7 +99,9 @@ $stack->push(add_response_header('X-Foo', 'bar'));
 $client = new Client(['handler' => $stack]);
 ```
 
-Creating a middleware that modifies a request is made much simpler using the `GuzzleHttp\Middleware::mapRequest()` middleware. This middleware accepts a function that takes the request argument and returns the request to send.
+Creating a middleware that modifies a request is made much simpler using the
+`GuzzleHttp\Middleware::mapRequest()` middleware. This middleware accepts a
+function that takes the request argument and returns the request to send.
 
 ```php
 use Psr\Http\Message\RequestInterface;
@@ -106,7 +120,8 @@ $stack->push(Middleware::mapRequest(function (RequestInterface $request) {
 $client = new Client(['handler' => $stack]);
 ```
 
-Modifying a response is also much simpler using the `GuzzleHttp\Middleware::mapResponse()` middleware.
+Modifying a response is also much simpler using the
+`GuzzleHttp\Middleware::mapResponse()` middleware.
 
 ```php
 use Psr\Http\Message\ResponseInterface;
@@ -127,14 +142,21 @@ $client = new Client(['handler' => $stack]);
 
 ### Tap Middleware
 
-Use `GuzzleHttp\Middleware::tap()` to observe requests and responses as they flow through the stack without modifying them. This is useful for metrics, tracing, and debugging.
+Use `GuzzleHttp\Middleware::tap()` to observe requests and responses as they
+flow through the stack without modifying them. This is useful for metrics,
+tracing, and debugging.
 
 `tap()` accepts two optional callables:
 
-- `$before` is invoked as `$before($request, $options)` immediately before the request is forwarded to the next handler.
-- `$after` is invoked as `$after($request, $options, $promise)` immediately after the request is forwarded. It receives the response *promise* rather than a response, because the transfer may still be in progress.
+- `$before` is invoked as `$before($request, $options)` immediately before the
+  request is forwarded to the next handler.
+- `$after` is invoked as `$after($request, $options, $promise)` immediately
+  after the request is forwarded. It receives the response *promise* rather than
+  a response, because the transfer may still be in progress.
 
-The return values of both callables are ignored. Tap middleware cannot change the request, the options, or the response; attach a `then()` callback to the promise in `$after` if you need to read the settled response.
+The return values of both callables are ignored. Tap middleware cannot change
+the request, the options, or the response; attach a `then()` callback to the
+promise in `$after` if you need to read the settled response.
 
 ```php
 use GuzzleHttp\Client;
@@ -163,7 +185,8 @@ $client->request('GET', 'https://example.com');
 
 ### Logging Middleware
 
-`GuzzleHttp\Middleware::log()` logs requests, responses, and errors using a `GuzzleHttp\MessageFormatterInterface` implementation.
+`GuzzleHttp\Middleware::log()` logs requests, responses, and errors using a
+`GuzzleHttp\MessageFormatterInterface` implementation.
 
 ```php
 public static function log(
@@ -173,7 +196,9 @@ public static function log(
 ): callable
 ```
 
-`$logger` is any PSR-3 logger. Successful responses are logged at `$logLevel` (`info` by default); failed transfers are always logged at the `error` level, regardless of `$logLevel`.
+`$logger` is any PSR-3 logger. Successful responses are logged at `$logLevel`
+(`info` by default); failed transfers are always logged at the `error` level,
+regardless of `$logLevel`.
 
 ```php
 use GuzzleHttp\Client;
@@ -189,10 +214,15 @@ $client = new Client(['handler' => $stack]);
 $client->request('GET', 'https://example.com');
 ```
 
-`GuzzleHttp\MessageFormatter` builds each log line from a template string, substituting `{placeholder}` tokens with values from the request, response, and any error. It ships with three preset templates:
+`GuzzleHttp\MessageFormatter` builds each log line from a template string,
+substituting `{placeholder}` tokens with values from the request, response, and
+any error. It ships with three preset templates:
 
-- `MessageFormatter::CLF` — the [Apache Common Log Format](https://httpd.apache.org/docs/2.4/logs.html#common). This is the default when no template is passed to the constructor.
-- `MessageFormatter::DEBUG` — a full dump of the request, the response, and any error.
+- `MessageFormatter::CLF` — the
+  [Apache Common Log Format](https://httpd.apache.org/docs/2.4/logs.html#common).
+  This is the default when no template is passed to the constructor.
+- `MessageFormatter::DEBUG` — a full dump of the request, the response, and any
+  error.
 - `MessageFormatter::SHORT` — a short, single-line summary.
 
 ```php
@@ -228,15 +258,29 @@ The following placeholders are supported:
 | `{res_header_*}` | A single response header; replace `*` with the header name |
 
 > [!WARNING]
-> Templates that include full messages, headers, bodies, URIs, URLs, or dynamic header placeholders can include sensitive data such as credentials, cookies, tokens, or request bodies. Avoid using debug or full-message templates in production unless logs are protected, or provide a custom formatter or logger processor that redacts sensitive data before logs are written.
+> Templates that include full messages, headers, bodies, URIs, URLs, or dynamic
+> header placeholders can include sensitive data such as credentials, cookies,
+> tokens, or request bodies. Avoid using debug or full-message templates in
+> production unless logs are protected, or provide a custom formatter or logger
+> processor that redacts sensitive data before logs are written.
 
 ### Customizing Error Messages
 
-When the `http_errors` request option is enabled, the `http_errors` middleware throws a `GuzzleHttp\Exception\ClientException` for `4xx` responses and a `GuzzleHttp\Exception\ServerException` for `5xx` responses, including a short summary of the response body in the exception message. `GuzzleHttp\Middleware::httpErrors()` accepts an optional `GuzzleHttp\BodySummarizerInterface` that controls how that body is summarized.
+When the `http_errors` request option is enabled, the `http_errors` middleware
+throws a `GuzzleHttp\Exception\ClientException` for `4xx` responses and a
+`GuzzleHttp\Exception\ServerException` for `5xx` responses, including a short
+summary of the response body in the exception message.
+`GuzzleHttp\Middleware::httpErrors()` accepts an optional
+`GuzzleHttp\BodySummarizerInterface` that controls how that body is summarized.
 
-The bundled `GuzzleHttp\BodySummarizer` takes an optional byte limit. Pass an integer to cap how much of the response body appears in exception messages, or implement `BodySummarizerInterface` for full control. This is useful for keeping large or binary response bodies out of exception messages and logs.
+The bundled `GuzzleHttp\BodySummarizer` takes an optional byte limit. Pass an
+integer to cap how much of the response body appears in exception messages, or
+implement `BodySummarizerInterface` for full control. This is useful for keeping
+large or binary response bodies out of exception messages and logs.
 
-The default handler stack registers this middleware under the name `http_errors`, pushed first so that it is the outermost middleware. Remove it and unshift a replacement to keep that position while changing the summarizer:
+The default handler stack registers this middleware under the name
+`http_errors`, pushed first so that it is the outermost middleware. Remove it
+and unshift a replacement to keep that position while changing the summarizer:
 
 ```php
 use GuzzleHttp\BodySummarizer;
@@ -319,7 +363,11 @@ milliseconds.
 
 ## HandlerStack
 
-A handler stack represents a stack of middleware to apply to a base handler function. You can push middleware to the stack to add to the top of the stack, and unshift middleware onto the stack to add to the bottom of the stack. When the stack is resolved, the handler is pushed onto the stack. Each value is then popped off of the stack, wrapping the previous value popped off of the stack.
+A handler stack represents a stack of middleware to apply to a base handler
+function. You can push middleware to the stack to add to the top of the stack,
+and unshift middleware onto the stack to add to the bottom of the stack. When
+the stack is resolved, the handler is pushed onto the stack. Each value is then
+popped off of the stack, wrapping the previous value popped off of the stack.
 
 ```php
 use GuzzleHttp\Client;
@@ -359,7 +407,8 @@ $client->request('GET', 'http://httpbin.org/');
 // echoes '0ABC';
 ```
 
-You can give middleware a name, which allows you to add middleware before other named middleware, after other named middleware, or remove middleware by name.
+You can give middleware a name, which allows you to add middleware before other
+named middleware, after other named middleware, or remove middleware by name.
 
 ```php
 use Psr\Http\Message\RequestInterface;

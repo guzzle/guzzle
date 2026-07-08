@@ -84,6 +84,8 @@ final class RequestOptions
      * the certificate password in the second array element. A null password is
      * treated the same as omitting it. Use cert_type to specify another
      * supported certificate format.
+     *
+     * @see self::CERT_TYPE
      */
     public const CERT = 'cert';
 
@@ -134,14 +136,19 @@ final class RequestOptions
     public const CRYPTO_METHOD_MAX = 'crypto_method_max';
 
     /**
-     * curl: (array) Raw cURL options to apply when using a built-in cURL handler.
+     * curl: (array) Raw cURL options to apply when using a built-in cURL
+     * handler.
      */
     public const CURL = 'curl';
 
     /**
      * debug: (bool|resource) Set to true or set to a PHP stream returned by
-     * fopen()  enable debug output with the HTTP handler used to send a
-     * request.
+     * fopen() to enable debug output with the handler used to send a request.
+     * For example, when using cURL to transfer requests, cURL's verbose of
+     * CURLOPT_VERBOSE will be emitted. When using the PHP stream wrapper,
+     * stream wrapper notifications will be emitted. If set to true, the output
+     * is written to PHP's STDOUT. If a PHP stream is provided, output is
+     * written to the stream.
      */
     public const DEBUG = 'debug';
 
@@ -186,23 +193,24 @@ final class RequestOptions
 
     /**
      * headers: (array<array-key, string|non-empty-array<array-key, string>>|null)
-     * Associative array of HTTP headers. Each value MUST be a string or non-empty
-     * array of strings.
+     * Associative array of HTTP headers. Each value MUST be a string or
+     * non-empty array of strings.
      */
     public const HEADERS = 'headers';
 
     /**
      * http_errors: (bool, default=true) Set to false to disable exceptions
-     * when a non- successful HTTP response is received. By default,
+     * when a non-successful HTTP response is received. By default,
      * exceptions will be thrown for 4xx and 5xx responses. This option only
      * works if your handler has the `httpErrors` middleware.
      */
     public const HTTP_ERRORS = 'http_errors';
 
     /**
-     * idn_conversion: (bool|int|null, default=false) A combination of IDNA_* constants
-     * for PHP's idn_to_ascii() function. Set to false or null to disable IDN
-     * support, or true to use the default configuration (IDNA_DEFAULT constant).
+     * idn_conversion: (bool|int|null, default=false) A combination of IDNA_*
+     * constants for PHP's idn_to_ascii() function. Set to false or null to
+     * disable IDN support, or true to use the default configuration
+     * (IDNA_DEFAULT constant).
      */
     public const IDN_CONVERSION = 'idn_conversion';
 
@@ -241,32 +249,33 @@ final class RequestOptions
     public const MULTIPLEX = 'multiplex';
 
     /**
-     * on_headers: (callable(ResponseInterface, RequestInterface): mixed) A callable that is invoked when the HTTP headers
-     * of the final response, or a 101 Switching Protocols response, have been
-     * received but the body has not yet begun to download. The callable is
-     * passed the response and request as {@see ResponseInterface} and
-     * {@see RequestInterface} objects, respectively. If it throws, the request
-     * promise is rejected with a GuzzleHttp\Exception\ResponseException (a
-     * RequestException subtype) wrapping the thrown exception. When this
-     * callback is supplied via GuzzleHttp\Pool's "options" configuration, the
-     * pool appends the request's iterable key as a third argument.
+     * on_headers: (callable(ResponseInterface, RequestInterface): mixed) A
+     * callable that is invoked when the HTTP headers of the final response, or
+     * a 101 Switching Protocols response, have been received but the body has
+     * not yet begun to download. The callable is passed the response and
+     * request as {@see ResponseInterface} and {@see RequestInterface} objects,
+     * respectively. If it throws, the request promise is rejected with a
+     * GuzzleHttp\Exception\ResponseException (a RequestException subtype)
+     * wrapping the thrown exception. When this callback is supplied via
+     * GuzzleHttp\Pool's "options" configuration, the pool appends the request's
+     * iterable key as a third argument.
      */
     public const ON_HEADERS = 'on_headers';
 
     /**
-     * on_stats: (callable(TransferStats): mixed) allows you to get access to transfer statistics of
-     * a request and access the lower level transfer details of the handler
-     * associated with your client. ``on_stats`` is a callable that is invoked
-     * when a handler has finished sending a request. The callback is invoked
-     * with transfer statistics about the request, the response received, or
-     * the error encountered. Included in the data is the total amount of time
-     * taken to send the request. Exceptions thrown by on_stats are not wrapped
-     * by Guzzle. Built-in handlers reject non-callable values before starting
-     * the transfer. The built-in cURL handlers release native easy handles
-     * before invoking on_stats and invoke it per low-level transfer attempt.
-     * When this callback is supplied via GuzzleHttp\Pool's "options"
-     * configuration, the pool appends the request's iterable key as a second
-     * argument.
+     * on_stats: (callable(TransferStats): mixed) allows you to get access to
+     * transfer statistics of a request and access the lower level transfer
+     * details of the handler associated with your client. ``on_stats`` is a
+     * callable that is invoked when a handler has finished sending a request.
+     * The callback is invoked with transfer statistics about the request, the
+     * response received, or the error encountered. Included in the data is the
+     * total amount of time taken to send the request. Exceptions thrown by
+     * on_stats are not wrapped by Guzzle. Built-in handlers reject non-callable
+     * values before starting the transfer. The built-in cURL handlers release
+     * native easy handles before invoking on_stats and invoke it per low-level
+     * transfer attempt. When this callback is supplied via GuzzleHttp\Pool's
+     * "options" configuration, the pool appends the request's iterable key as a
+     * second argument.
      */
     public const ON_STATS = 'on_stats';
 
@@ -380,6 +389,8 @@ final class RequestOptions
      * the first array element followed by the key password in the second
      * element. A null password is treated the same as omitting it. Use
      * ssl_key_type to specify another supported key format.
+     *
+     * @see self::SSL_KEY_TYPE
      */
     public const SSL_KEY = 'ssl_key';
 
@@ -411,16 +422,17 @@ final class RequestOptions
     public const VERIFY = 'verify';
 
     /**
-     * timeout: (int|float, default=0) Number describing the timeout of the
-     * request in seconds. Use 0 to wait indefinitely (the default behavior).
-     * Positive values below 0.001 seconds are rejected by the built-in handlers.
+     * timeout: (int|float, default=0) Number of seconds to use as the total
+     * timeout of the request. Use 0 to wait indefinitely (the default
+     * behavior). Positive values below 0.001 seconds are rejected by the
+     * built-in handlers.
      */
     public const TIMEOUT = 'timeout';
 
     /**
-     * read_timeout: (int|float, default=default_socket_timeout ini setting) Number
-     * describing the body read timeout, for stream requests. Positive values below
-     * 0.001 seconds are rejected by the built-in stream handler.
+     * read_timeout: (int|float, default=default_socket_timeout ini setting)
+     * Number of seconds to use when reading a streamed body. Positive values
+     * below 0.001 seconds are rejected by the built-in stream handler.
      */
     public const READ_TIMEOUT = 'read_timeout';
 

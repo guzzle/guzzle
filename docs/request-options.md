@@ -1,6 +1,9 @@
 # Request Options
 
-You can customize requests created and transferred by a client using **request options**. Request options control various aspects of a request including, headers, query string parameters, timeout settings, the body of a request, and much more.
+You can customize requests created and transferred by a client using **request
+options**. Request options control various aspects of a request including,
+headers, query string parameters, timeout settings, the body of a request, and
+much more.
 
 All of the following examples use the following client:
 
@@ -40,7 +43,8 @@ echo $res->getStatusCode();
 // 302
 ```
 
-Set to `true` (the default setting) to enable normal redirects with a maximum number of 5 redirects.
+Set to `true` (the default setting) to enable normal redirects with a maximum
+number of 5 redirects.
 
 ```php
 $res = $client->request('GET', '/redirect/3');
@@ -52,21 +56,52 @@ You can also pass an associative array containing the following key value pairs:
 
 - max: (int, default=5) maximum number of allowed redirects.
 
-- strict: (bool, default=false) Set to true to use strict redirects. Strict RFC compliant redirects mean that POST redirect requests are sent as POST requests vs. doing what most browsers do which is redirect POST requests with GET requests. The RFC 10008 QUERY method keeps its method and body across non-strict 301 and 302 redirects, matching the 307 and 308 behavior that already applies to every method, and a 303 redirect is followed with a body-less GET.
+- strict: (bool, default=false) Set to true to use strict redirects. Strict RFC
+  compliant redirects mean that POST redirect requests are sent as POST requests
+  vs. doing what most browsers do which is redirect POST requests with GET
+  requests. The RFC 10008 QUERY method keeps its method and body across
+  non-strict 301 and 302 redirects, matching the 307 and 308 behavior that
+  already applies to every method, and a 303 redirect is followed with a
+  body-less GET.
 
-- referer: (bool, default=false) Set to true to add a `Referer` header when redirecting. On a cross-origin redirect only the origin (scheme, host, and port) is sent, and the header is omitted entirely when the scheme changes, including an `https` to `http` downgrade. See [Cross-Origin Redirects](#cross-origin-redirects).
+- referer: (bool, default=false) Set to true to add a `Referer` header when
+  redirecting. On a cross-origin redirect only the origin (scheme, host, and
+  port) is sent, and the header is omitted entirely when the scheme changes,
+  including an `https` to `http` downgrade. See
+  [Cross-Origin Redirects](#cross-origin-redirects).
 
-- protocols: (non-empty array containing `http` and/or `https`, default=`['http', 'https']`) Specifies which protocols are allowed for redirect requests. Values are case-sensitive; only `http` and `https` are accepted.
+- protocols: (non-empty array containing `http` and/or `https`,
+  default=`['http', 'https']`) Specifies which protocols are allowed for
+  redirect requests. Values are case-sensitive; only `http` and `https` are
+  accepted.
 
-- on_redirect: (callable) PHP callable that is invoked when a redirect is encountered. The callable is invoked with the original request, the redirect response that was received, and the effective URI. Any return value from the on_redirect function is ignored. When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a fourth argument.
+- on_redirect: (callable) PHP callable that is invoked when a redirect is
+  encountered. The callable is invoked with the original request, the redirect
+  response that was received, and the effective URI. Any return value from the
+  on_redirect function is ignored. When requests are sent with `GuzzleHttp\Pool`
+  and this callback is supplied via the pool's `options` configuration, the
+  callable also receives the iterable key that identified the request as a
+  fourth argument.
 
-- track_redirects: (bool) When set to `true`, each redirected URI and status code encountered will be tracked in the `X-Guzzle-Redirect-History` and `X-Guzzle-Redirect-Status-History` headers respectively. All URIs and status codes will be stored in the order which the redirects were encountered.
+- track_redirects: (bool) When set to `true`, each redirected URI and status
+  code encountered will be tracked in the `X-Guzzle-Redirect-History` and
+  `X-Guzzle-Redirect-Status-History` headers respectively. All URIs and status
+  codes will be stored in the order which the redirects were encountered.
 
 > [!NOTE]
-> When tracking redirects the `X-Guzzle-Redirect-History` header will exclude the initial request's URI and the `X-Guzzle-Redirect-Status-History` header will exclude the final status code. Redirect history is stored in response headers, and those header names are not reserved by Guzzle. If the final response already contains headers with these names, including when no redirect occurs, those values may be server-provided. Do not use these headers as a security boundary. For security-sensitive redirect history, collect values with the `on_redirect` option instead.
+> When tracking redirects the `X-Guzzle-Redirect-History` header will exclude
+> the initial request's URI and the `X-Guzzle-Redirect-Status-History` header
+> will exclude the final status code. Redirect history is stored in response
+> headers, and those header names are not reserved by Guzzle. If the final
+> response already contains headers with these names, including when no redirect
+> occurs, those values may be server-provided. Do not use these headers as a
+> security boundary. For security-sensitive redirect history, collect values
+> with the `on_redirect` option instead.
 
 > [!NOTE]
-> Guzzle follows only the redirect status codes 301, 302, 303, 307, and 308. Other 3xx responses are returned as-is even when they include a Location header.
+> Guzzle follows only the redirect status codes 301, 302, 303, 307, and 308.
+> Other 3xx responses are returned as-is even when they include a Location
+> header.
 
 ```php
 use Psr\Http\Message\RequestInterface;
@@ -103,31 +138,69 @@ echo $res->getHeaderLine('X-Guzzle-Redirect-Status-History');
 ```
 
 > [!WARNING]
-> This option only has an effect if your handler has the `GuzzleHttp\Middleware::redirect` middleware. This middleware is added by default when a client is created with no handler, and is added by default when creating a handler with `GuzzleHttp\HandlerStack::create`.
+> This option only has an effect if your handler has the
+> `GuzzleHttp\Middleware::redirect` middleware. This middleware is added by
+> default when a client is created with no handler, and is added by default when
+> creating a handler with `GuzzleHttp\HandlerStack::create`.
 
 > [!NOTE]
-> This option has **no** effect when making requests using `GuzzleHttp\Client::sendRequest()`. In order to stay compliant with PSR-18 any redirect response is returned as is.
+> This option has **no** effect when making requests using
+> `GuzzleHttp\Client::sendRequest()`. In order to stay compliant with PSR-18 any
+> redirect response is returned as is.
 
 ### Cross-Origin Redirects
 
-Guzzle considers a redirect cross-origin when the scheme, host, or effective port changes.
+Guzzle considers a redirect cross-origin when the scheme, host, or effective
+port changes.
 
-On cross-origin redirects, Guzzle removes origin-scoped HTTP credentials before sending the redirected request. This includes the `Authorization` and `Cookie` headers, the generic `auth` request option, and cURL HTTP authentication options such as `CURLOPT_HTTPAUTH` and `CURLOPT_USERPWD`.
+On cross-origin redirects, Guzzle removes origin-scoped HTTP credentials before
+sending the redirected request. This includes the `Authorization` and `Cookie`
+headers, the generic `auth` request option, and cURL HTTP authentication options
+such as `CURLOPT_HTTPAUTH` and `CURLOPT_USERPWD`.
 
-Same-origin redirects preserve those values. Guzzle does not automatically remove transport identity or TLS client credential options solely because the redirect is cross-origin. In particular, TLS client authentication options such as `cert`, `ssl_key`, custom cURL TLS options, and stream context TLS options are not removed automatically on cross-origin redirects.
+Same-origin redirects preserve those values. Guzzle does not automatically
+remove transport identity or TLS client credential options solely because the
+redirect is cross-origin. In particular, TLS client authentication options such
+as `cert`, `ssl_key`, custom cURL TLS options, and stream context TLS options
+are not removed automatically on cross-origin redirects.
 
-When the optional `referer` setting is enabled, Guzzle also limits what it discloses to the new origin. On a cross-origin redirect it sends only the request's origin (scheme, host, and port) in the `Referer` header instead of the full URL, and it omits the header entirely when the scheme changes, including an `https` to `http` downgrade. Same-origin redirects send the full URL. This matches the `strict-origin-when-cross-origin` policy that modern browsers use by default.
+When the optional `referer` setting is enabled, Guzzle also limits what it
+discloses to the new origin. On a cross-origin redirect it sends only the
+request's origin (scheme, host, and port) in the `Referer` header instead of the
+full URL, and it omits the header entirely when the scheme changes, including an
+`https` to `http` downgrade. Same-origin redirects send the full URL. This
+matches the `strict-origin-when-cross-origin` policy that modern browsers use by
+default.
 
-If TLS client credentials are only trusted for the original origin, disable automatic redirects and handle redirect responses manually, or use separate clients and request options for trusted origins.
+If TLS client credentials are only trusted for the original origin, disable
+automatic redirects and handle redirect responses manually, or use separate
+clients and request options for trusted origins.
 
-The RFC 10008 QUERY method has method-specific redirect behavior. Guzzle keeps the QUERY method and request body across 301, 302, 307, and 308 redirects, and follows a 303 with a body-less GET. QUERY request bodies can carry sensitive query content. On cross-origin redirects Guzzle removes origin credentials such as the Authorization and Cookie headers and the auth request option, but it does not remove the request body. Disable automatic redirects or use on_redirect if a QUERY body must not be sent to another origin.
+The RFC 10008 QUERY method has method-specific redirect behavior. Guzzle keeps
+the QUERY method and request body across 301, 302, 307, and 308 redirects, and
+follows a 303 with a body-less GET. QUERY request bodies can carry sensitive
+query content. On cross-origin redirects Guzzle removes origin credentials such
+as the Authorization and Cookie headers and the auth request option, but it does
+not remove the request body. Disable automatic redirects or use on_redirect if a
+QUERY body must not be sent to another origin.
 
 ## auth
 
 Summary
-Pass HTTP authentication parameters to use with the request. An array must contain the username in index `[0]`, the password in index `[1]`, and can optionally provide a built-in authentication type in index `[2]`. Pass `false` or `null` to disable authentication for a request. String values are passed through for custom handlers.
+Pass HTTP authentication parameters to use with the request. An array must
+contain the username in index `[0]`, the password in index `[1]`, and can
+optionally provide a built-in authentication type in index `[2]`. Pass `false`
+or `null` to disable authentication for a request. String values are passed
+through for custom handlers.
 
-Built-in Basic and Digest authentication are applied by `GuzzleHttp\Middleware::auth()`, which is included by default when using `GuzzleHttp\HandlerStack::create()` or when the client creates its default handler. Raw custom handlers must be wrapped in `GuzzleHttp\HandlerStack::create($handler)` or explicitly include `GuzzleHttp\Middleware::auth()` to use built-in Basic or Digest authentication. Unrecognized array auth types are left in the request options for custom middleware or custom handlers.
+Built-in Basic and Digest authentication are applied by
+`GuzzleHttp\Middleware::auth()`, which is included by default when using
+`GuzzleHttp\HandlerStack::create()` or when the client creates its default
+handler. Raw custom handlers must be wrapped in
+`GuzzleHttp\HandlerStack::create($handler)` or explicitly include
+`GuzzleHttp\Middleware::auth()` to use built-in Basic or Digest authentication.
+Unrecognized array auth types are left in the request options for custom
+middleware or custom handlers.
 
 Types
 - array
@@ -144,14 +217,28 @@ Constant
 The built-in authentication types are as follows:
 
 basic
-Use [basic HTTP authentication](http://www.ietf.org/rfc/rfc7617.txt) in the `Authorization` header (the default setting used if none is specified).
+Use [basic HTTP authentication](http://www.ietf.org/rfc/rfc7617.txt) in the
+`Authorization` header (the default setting used if none is specified).
 
 ```php
 $client->request('GET', '/get', ['auth' => ['username', 'password']]);
 ```
 
 digest
-Use [digest authentication](https://www.rfc-editor.org/rfc/rfc7616.html) through Guzzle's auth middleware. When no reusable challenge is available, Digest authentication sends an initial unauthenticated probe, processes a `WWW-Authenticate: Digest ...` challenge, and retries with an `Authorization: Digest ...` header. Requests with a body are probed with an empty body and `Content-Length: 0`; the body is sent only on authenticated attempts: once in the normal one-challenge handshake, and again if a stale-nonce challenge must be retried. When challenge reuse is enabled (the default) and a cached challenge applies, later body-less requests send the first Digest leg preemptively, with an incremented nonce count; body-bearing requests always keep the probe handshake. The `delay` option applies before the first Digest leg, whether that leg is a probe or a preemptive request. A non-401 answer to a body-withholding probe other than a proxy challenge (407) or a followable redirect fails the request with `ResponseException`.
+Use [digest authentication](https://www.rfc-editor.org/rfc/rfc7616.html) through
+Guzzle's auth middleware. When no reusable challenge is available, Digest
+authentication sends an initial unauthenticated probe, processes a
+`WWW-Authenticate: Digest ...` challenge, and retries with an `Authorization:
+Digest ...` header. Requests with a body are probed with an empty body and
+`Content-Length: 0`; the body is sent only on authenticated attempts: once in
+the normal one-challenge handshake, and again if a stale-nonce challenge must be
+retried. When challenge reuse is enabled (the default) and a cached challenge
+applies, later body-less requests send the first Digest leg preemptively, with
+an incremented nonce count; body-bearing requests always keep the probe
+handshake. The `delay` option applies before the first Digest leg, whether that
+leg is a probe or a preemptive request. A non-401 answer to a body-withholding
+probe other than a proxy challenge (407) or a followable redirect fails the
+request with `ResponseException`.
 
 ```php
 $client->request('GET', '/get', [
@@ -159,7 +246,16 @@ $client->request('GET', '/get', [
 ]);
 ```
 
-When a Digest challenge omits `domain`, RFC 7616 scopes the protection space to the whole origin. Do not rely on default reuse across same-origin trust boundaries: a preemptive request can disclose the Digest username or userhash and password-derived response material for the cached realm to another same-origin endpoint before that endpoint challenges. When `domain` is present, Guzzle applies RFC literal-prefix matching to request targets, so `domain="/api"` also covers `/api-internal`, and a query-scoped prefix such as `/api?tenant=a` also covers longer targets beginning with that same string, such as `/api?tenant=abc`. Use separate origins, configure a narrow server `domain`, or disable reuse by replacing the default auth middleware:
+When a Digest challenge omits `domain`, RFC 7616 scopes the protection space to
+the whole origin. Do not rely on default reuse across same-origin trust
+boundaries: a preemptive request can disclose the Digest username or userhash
+and password-derived response material for the cached realm to another
+same-origin endpoint before that endpoint challenges. When `domain` is present,
+Guzzle applies RFC literal-prefix matching to request targets, so
+`domain="/api"` also covers `/api-internal`, and a query-scoped prefix such as
+`/api?tenant=a` also covers longer targets beginning with that same string, such
+as `/api?tenant=abc`. Use separate origins, configure a narrow server `domain`,
+or disable reuse by replacing the default auth middleware:
 
 ```php
 use GuzzleHttp\Client;
@@ -173,22 +269,50 @@ $stack->after('allow_redirects', Middleware::auth(false), 'auth');
 $client = new Client(['handler' => $stack]);
 ```
 
-Supported Digest algorithms are `MD5`, `MD5-sess`, `SHA-256`, `SHA-256-sess`, and the `SHA-512-256` variants when PHP supports the `sha512/256` hash algorithm. Guzzle uses PHP's FIPS SHA-512/256, matching libcurl builds with SHA-512/256 support; servers built against RFC 7616's erratum test vectors for truncated SHA-512 will not interoperate with either Guzzle or curl. Guzzle supports legacy non-session challenges without `qop` and challenges with `qop=auth`. Session algorithms require `qop`. `auth-int` is not supported.
+Supported Digest algorithms are `MD5`, `MD5-sess`, `SHA-256`, `SHA-256-sess`,
+and the `SHA-512-256` variants when PHP supports the `sha512/256` hash
+algorithm. Guzzle uses PHP's FIPS SHA-512/256, matching libcurl builds with
+SHA-512/256 support; servers built against RFC 7616's erratum test vectors for
+truncated SHA-512 will not interoperate with either Guzzle or curl. Guzzle
+supports legacy non-session challenges without `qop` and challenges with
+`qop=auth`. Session algorithms require `qop`. `auth-int` is not supported.
 
-Each Digest leg is a separate Guzzle handler invocation with its own request options. `on_stats` fires once per leg; `on_headers` and `progress` are also attached per leg. The `delay` option applies once, before the first Digest leg: the probe, or a preemptive request when challenge reuse applies.
+Each Digest leg is a separate Guzzle handler invocation with its own request
+options. `on_stats` fires once per leg; `on_headers` and `progress` are also
+attached per leg. The `delay` option applies once, before the first Digest leg:
+the probe, or a preemptive request when challenge reuse applies.
 
-When multiple usable Digest challenges are present, Guzzle selects the strongest supported algorithm, preferring `SHA-512-256` over `SHA-256` over `MD5`, and preferring `-sess` variants within a family. If a challenge offers only `auth-int`, uses a session algorithm without `qop`, uses an unknown or unavailable algorithm, is malformed, or contains values that cannot be safely placed in a header, Guzzle ignores that challenge. If no usable Digest challenge remains, the original 401 response is returned for normal `http_errors` handling; inspect its `WWW-Authenticate` header to debug the failure.
+When multiple usable Digest challenges are present, Guzzle selects the strongest
+supported algorithm, preferring `SHA-512-256` over `SHA-256` over `MD5`, and
+preferring `-sess` variants within a family. If a challenge offers only
+`auth-int`, uses a session algorithm without `qop`, uses an unknown or
+unavailable algorithm, is malformed, or contains values that cannot be safely
+placed in a header, Guzzle ignores that challenge. If no usable Digest challenge
+remains, the original 401 response is returned for normal `http_errors`
+handling; inspect its `WWW-Authenticate` header to debug the failure.
 
-`Proxy-Authenticate` Digest challenges are not handled by the auth middleware. A 407 response to a Digest probe passes through unchanged. The built-in cURL handlers allow proxy credentials through `CURLOPT_PROXYUSERPWD`, but they do not expose `CURLOPT_PROXYAUTH` through the raw cURL option allow-list, and libcurl defaults proxy authentication to Basic.
+`Proxy-Authenticate` Digest challenges are not handled by the auth middleware. A
+407 response to a Digest probe passes through unchanged. The built-in cURL
+handlers allow proxy credentials through `CURLOPT_PROXYUSERPWD`, but they do not
+expose `CURLOPT_PROXYAUTH` through the raw cURL option allow-list, and libcurl
+defaults proxy authentication to Basic.
 
-Probe redirects are followed by the redirect middleware under normal redirect rules. Non-strict 301/302 and 303 redirects clear the body, with exact `GET`, `HEAD`, and `OPTIONS` keeping their method and other methods rewritten to `GET`, except exact `QUERY` on non-strict 301/302 preserves the method and body. 307/308 and strict 301/302 redirects preserve the method and body. A redirected body-bearing request performs its own Digest handshake at the new URI.
+Probe redirects are followed by the redirect middleware under normal redirect
+rules. Non-strict 301/302 and 303 redirects clear the body, with exact `GET`,
+`HEAD`, and `OPTIONS` keeping their method and other methods rewritten to `GET`,
+except exact `QUERY` on non-strict 301/302 preserves the method and body.
+307/308 and strict 301/302 redirects preserve the method and body. A redirected
+body-bearing request performs its own Digest handshake at the new URI.
 
-To use libcurl's native Digest implementation instead, omit `auth` and configure cURL options such as `CURLOPT_HTTPAUTH => CURLAUTH_DIGEST` and `CURLOPT_USERPWD` directly with a cURL handler.
+To use libcurl's native Digest implementation instead, omit `auth` and configure
+cURL options such as `CURLOPT_HTTPAUTH => CURLAUTH_DIGEST` and `CURLOPT_USERPWD`
+directly with a cURL handler.
 
 ## body
 
 Summary
-The `body` option is used to control the body of an entity enclosing request (e.g., PUT, POST, PATCH).
+The `body` option is used to control the body of an entity enclosing request
+(e.g., PUT, POST, PATCH).
 
 Types
 - string
@@ -230,9 +354,18 @@ This setting can be set to any of the following types:
   $client->request('POST', '/post', ['body' => $stream]);
   ```
 
-Resource and object values with `__toString()` are converted to PSR-7 streams using the configured `stream_factory`. Callable and iterator bodies use Guzzle's existing PSR-7 stream handling because PSR-17 does not define factories for those stream types. Callable bodies may be closures or invokable objects. Strings are always used as literal body contents, even when they name a callable. Callable arrays are arrays, and arrays are not valid `body` values. `int`, `float`, and `bool` are not valid `body` values in Guzzle 8. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+Resource and object values with `__toString()` are converted to PSR-7 streams
+using the configured `stream_factory`. Callable and iterator bodies use Guzzle's
+existing PSR-7 stream handling because PSR-17 does not define factories for
+those stream types. Callable bodies may be closures or invokable objects.
+Strings are always used as literal body contents, even when they name a
+callable. Callable arrays are arrays, and arrays are not valid `body` values.
+`int`, `float`, and `bool` are not valid `body` values in Guzzle 8. Request
+bodies that already implement `Psr\Http\Message\StreamInterface` are used as
+provided.
 
-`int`, `float`, `bool`, arrays, and generic objects without `__toString()` are not valid `body` values in Guzzle 8.
+`int`, `float`, `bool`, arrays, and generic objects without `__toString()` are
+not valid `body` values in Guzzle 8.
 
 > [!NOTE]
 > This option cannot be used with `form_params`, `multipart`, or `json`
@@ -240,7 +373,12 @@ Resource and object values with `__toString()` are converted to PSR-7 streams us
 ## cert
 
 Summary
-Set to a string to specify the path to a file containing a client side certificate. PEM is the default certificate format. If a password is required, then set to an array containing the path to the certificate file in the first array element followed by the password required for the certificate in the second array element. A `null` password is treated the same as omitting it. Use [`cert_type`](#cert_type) to specify another supported certificate format.
+Set to a string to specify the path to a file containing a client side
+certificate. PEM is the default certificate format. If a password is required,
+then set to an array containing the path to the certificate file in the first
+array element followed by the password required for the certificate in the
+second array element. A `null` password is treated the same as omitting it. Use
+[`cert_type`](#cert_type) to specify another supported certificate format.
 
 Types
 - string
@@ -257,7 +395,8 @@ $client->request('GET', '/', ['cert' => ['/path/server.pem', 'password']]);
 ```
 
 > [!NOTE]
-> TLS client certificate options remain active during redirects. See [Cross-Origin Redirects](#cross-origin-redirects) for details.
+> TLS client certificate options remain active during redirects. See
+> [Cross-Origin Redirects](#cross-origin-redirects) for details.
 
 ## cert_type
 
@@ -280,7 +419,8 @@ $client->request('GET', '/', [
 ]);
 ```
 
-The cURL handler passes this value to `CURLOPT_SSLCERTTYPE`. Supported values depend on libcurl and its TLS backend.
+The cURL handler passes this value to `CURLOPT_SSLCERTTYPE`. Supported values
+depend on libcurl and its TLS backend.
 
 > [!NOTE]
 > The stream handler supports only `PEM` certificate files.
@@ -288,7 +428,8 @@ The cURL handler passes this value to `CURLOPT_SSLCERTTYPE`. Supported values de
 ## cookies
 
 Summary
-Specifies whether or not cookies are used in a request or what cookie jar to use or what cookies to send.
+Specifies whether or not cookies are used in a request or what cookie jar to use
+or what cookies to send.
 
 Types
 - `GuzzleHttp\Cookie\CookieJarInterface`
@@ -300,9 +441,12 @@ None
 Constant
 `GuzzleHttp\RequestOptions::COOKIES`
 
-You must specify the cookies option as a `GuzzleHttp\Cookie\CookieJarInterface` or `false`.
+You must specify the cookies option as a `GuzzleHttp\Cookie\CookieJarInterface`
+or `false`.
 
-`true` is only a client-constructor shorthand. Guzzle converts `['cookies' => true]` in the constructor into a shared `GuzzleHttp\Cookie\CookieJar`. Per-request `cookies` values must be `false` or a `CookieJarInterface` instance.
+`true` is only a client-constructor shorthand. Guzzle converts `['cookies' =>
+true]` in the constructor into a shared `GuzzleHttp\Cookie\CookieJar`.
+Per-request `cookies` values must be `false` or a `CookieJarInterface` instance.
 
 ```php
 $jar = new \GuzzleHttp\Cookie\CookieJar();
@@ -310,15 +454,21 @@ $client->request('GET', '/get', ['cookies' => $jar]);
 ```
 
 > [!WARNING]
-> This option only has an effect if your handler has the `GuzzleHttp\Middleware::cookies` middleware. This middleware is added by default when a client is created with no handler, and is added by default when creating a handler with `GuzzleHttp\HandlerStack::create`.
+> This option only has an effect if your handler has the
+> `GuzzleHttp\Middleware::cookies` middleware. This middleware is added by
+> default when a client is created with no handler, and is added by default when
+> creating a handler with `GuzzleHttp\HandlerStack::create`.
 
 > [!TIP]
-> When creating a client, you can set the default cookie option to `true` to use a shared cookie session associated with the client.
+> When creating a client, you can set the default cookie option to `true` to use
+> a shared cookie session associated with the client.
 
 ## connect_timeout
 
 Summary
-Number of seconds to wait while trying to connect to a server. Use `0` to wait 300 seconds (the default behavior). Positive values below `0.001` seconds are rejected by the built-in cURL handler.
+Number of seconds to wait while trying to connect to a server. Use `0` to wait
+300 seconds (the default behavior). Positive values below `0.001` seconds are
+rejected by the built-in cURL handler.
 
 Types
 - int
@@ -336,11 +486,11 @@ $client->request('GET', '/delay/5', ['connect_timeout' => 3.14]);
 ```
 
 > [!NOTE]
-> `connect_timeout` is implemented by cURL handlers. The PHP stream handler
-> does not provide a separate connection-timeout control; it accepts this option
+> `connect_timeout` is implemented by cURL handlers. The PHP stream handler does
+> not provide a separate connection-timeout control; it accepts this option
 > without effect so shared request configuration can enable a cURL connection
-> timeout when cURL is available. Use `timeout` to configure the stream handler's
-> overall stream timeout.
+> timeout when cURL is available. Use `timeout` to configure the stream
+> handler's overall stream timeout.
 
 ## crypto_method
 
@@ -351,7 +501,8 @@ Types
 int
 
 Default
-TLS 1.2 or newer for HTTPS requests sent by the built-in cURL and stream handlers.
+TLS 1.2 or newer for HTTPS requests sent by the built-in cURL and stream
+handlers.
 
 Constant
 `GuzzleHttp\RequestOptions::CRYPTO_METHOD`
@@ -361,7 +512,9 @@ $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2
 ```
 
 > [!NOTE]
-> This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT` constants. It controls the minimum TLS protocol version. cURL 7.52.0 or higher is required to use TLS 1.3 with the cURL handler.
+> This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT`
+> constants. It controls the minimum TLS protocol version. cURL 7.52.0 or higher
+> is required to use TLS 1.3 with the cURL handler.
 
 ## crypto_method_max
 
@@ -473,24 +626,29 @@ headers; passing `CURLOPT_HEADEROPT` yourself is rejected.
 When an effective HTTP or HTTPS proxy is used, the built-in cURL handlers treat
 PSR `Proxy-Authorization` as proxy-scoped rather than origin-scoped. On libcurl
 7.37.0 and newer (with the proxy-header cURL constants available), the header is
-moved to cURL's proxy-header channel (`CURLOPT_PROXYHEADER`), so it authenticates
-the proxy rather than leaking to the origin. Direct (no-proxy) and SOCKS-proxy
-requests are left untouched.
+moved to cURL's proxy-header channel (`CURLOPT_PROXYHEADER`), so it
+authenticates the proxy rather than leaking to the origin. Direct (no-proxy) and
+SOCKS-proxy requests are left untouched.
 
 A proxy CONNECT tunnel carrying a non-empty `Proxy-Authorization` credential
 requires a fresh connection, because libcurl cannot key connection reuse on that
-opaque header value. Under `TransportSharing::PERSISTENT_REQUIRE`, which requires
-reuse, such a request is rejected with an `InvalidArgumentException` instead of
-silently degrading reuse. On older libcurl (or a build missing the proxy-header
-constants), where proxy headers cannot be separated, a request carrying a
-non-empty `Proxy-Authorization` header through an HTTP or HTTPS proxy is
-rejected up front with a `RequestException`; libcurl 7.37.0 or newer is
+opaque header value. Under `TransportSharing::PERSISTENT_REQUIRE`, which
+requires reuse, such a request is rejected with an `InvalidArgumentException`
+instead of silently degrading reuse. On older libcurl (or a build missing the
+proxy-header constants), where proxy headers cannot be separated, a request
+carrying a non-empty `Proxy-Authorization` header through an HTTP or HTTPS proxy
+is rejected up front with a `RequestException`; libcurl 7.37.0 or newer is
 required.
 
 ## debug
 
 Summary
-Set to `true` or set to a PHP stream returned by `fopen()` to enable debug output with the handler used to send a request. For example, when using cURL to transfer requests, cURL's verbose of `CURLOPT_VERBOSE` will be emitted. When using the PHP stream wrapper, stream wrapper notifications will be emitted. If set to true, the output is written to PHP's STDOUT. If a PHP stream is provided, output is written to the stream.
+Set to `true` or set to a PHP stream returned by `fopen()` to enable debug
+output with the handler used to send a request. For example, when using cURL to
+transfer requests, cURL's verbose of `CURLOPT_VERBOSE` will be emitted. When
+using the PHP stream wrapper, stream wrapper notifications will be emitted. If
+set to true, the output is written to PHP's STDOUT. If a PHP stream is provided,
+output is written to the stream.
 
 Types
 - bool
@@ -527,7 +685,8 @@ Running the above example would output something like the following:
 ## decode_content
 
 Summary
-Specify whether or not `Content-Encoding` responses (gzip, deflate, etc.) are automatically decoded.
+Specify whether or not `Content-Encoding` responses (gzip, deflate, etc.) are
+automatically decoded.
 
 Types
 - string
@@ -539,9 +698,12 @@ Default
 Constant
 `GuzzleHttp\RequestOptions::DECODE_CONTENT`
 
-This option can be used to control how content-encoded response bodies are handled. By default, `decode_content` is set to true, meaning any gzipped or deflated response will be decoded by Guzzle.
+This option can be used to control how content-encoded response bodies are
+handled. By default, `decode_content` is set to true, meaning any gzipped or
+deflated response will be decoded by Guzzle.
 
-When set to `false`, the body of a response is never decoded, meaning the bytes pass through the handler unchanged.
+When set to `false`, the body of a response is never decoded, meaning the bytes
+pass through the handler unchanged.
 
 ```php
 // Request gzipped data, but do not decode it while downloading
@@ -551,7 +713,9 @@ $client->request('GET', '/foo.js', [
 ]);
 ```
 
-When set to a string, the bytes of a response are decoded and the string value provided to the `decode_content` option is passed as the `Accept-Encoding` header of the request.
+When set to a string, the bytes of a response are decoded and the string value
+provided to the `decode_content` option is passed as the `Accept-Encoding`
+header of the request.
 
 ```php
 // Pass "gzip" as the Accept-Encoding header.
@@ -559,9 +723,15 @@ $client->request('GET', '/foo.js', ['decode_content' => 'gzip']);
 ```
 
 > [!WARNING]
-> The `Accept-Encoding` header will not be sent unless you provide it explicitly, or pass a string value to `decode_content`. That is [equivalent](https://www.rfc-editor.org/rfc/rfc9110#field.accept-encoding) to sending `Accept-Encoding: *`. Most servers will probably return an uncompressed body in response to that but some might opt to use a compression method that is not supported by your system.
+> The `Accept-Encoding` header will not be sent unless you provide it
+> explicitly, or pass a string value to `decode_content`. That is
+> [equivalent](https://www.rfc-editor.org/rfc/rfc9110#field.accept-encoding) to
+> sending `Accept-Encoding: *`. Most servers will probably return an
+> uncompressed body in response to that but some might opt to use a compression
+> method that is not supported by your system.
 >
-> In order to enable compression, and to ensure that only supported encoding methods will be used, you should let curl send the `Accept-Encoding` header:
+> In order to enable compression, and to ensure that only supported encoding
+> methods will be used, you should let curl send the `Accept-Encoding` header:
 >
 > ```php
 > // Delegate choosing compression method to curl
@@ -587,7 +757,9 @@ null
 Constant
 `GuzzleHttp\RequestOptions::DELAY`
 
-`delay` must be an `int` or `float`, must be finite, and must be greater than or equal to `0`. Negative values, `NAN`, and `INF` are rejected before the handler is invoked.
+`delay` must be an `int` or `float`, must be finite, and must be greater than or
+equal to `0`. Negative values, `NAN`, and `INF` are rejected before the handler
+is invoked.
 
 ## expect
 
@@ -604,17 +776,27 @@ Default
 Constant
 `GuzzleHttp\RequestOptions::EXPECT`
 
-Set to `true` to enable the "Expect: 100-Continue" header for all requests that sends a body. Set to `false` to disable the "Expect: 100-Continue" header for all requests. Set to a number so that the size of the payload must be greater than the number in order to send the Expect header. Setting to a number will send the Expect header for all requests in which the size of the payload cannot be determined or where the body is not rewindable.
+Set to `true` to enable the "Expect: 100-Continue" header for all requests that
+sends a body. Set to `false` to disable the "Expect: 100-Continue" header for
+all requests. Set to a number so that the size of the payload must be greater
+than the number in order to send the Expect header. Setting to a number will
+send the Expect header for all requests in which the size of the payload cannot
+be determined or where the body is not rewindable.
 
-By default, Guzzle will add the "Expect: 100-Continue" header when the size of the body of a request is greater than 1 MB and a request is using HTTP/1.1.
+By default, Guzzle will add the "Expect: 100-Continue" header when the size of
+the body of a request is greater than 1 MB and a request is using HTTP/1.1.
 
 > [!NOTE]
-> This option only takes effect when using HTTP/1.1. The HTTP/1.0, HTTP/2, and HTTP/3 protocols do not support the "Expect: 100-Continue" header. Support for handling the "Expect: 100-Continue" workflow must be implemented by Guzzle HTTP handlers used by a client.
+> This option only takes effect when using HTTP/1.1. The HTTP/1.0, HTTP/2, and
+> HTTP/3 protocols do not support the "Expect: 100-Continue" header. Support for
+> handling the "Expect: 100-Continue" workflow must be implemented by Guzzle
+> HTTP handlers used by a client.
 
 ## force_ip_resolve
 
 Summary
-Set to "v4" if you want the HTTP handlers to use only ipv4 protocol or "v6" for ipv6 protocol.
+Set to "v4" if you want the HTTP handlers to use only ipv4 protocol or "v6" for
+ipv6 protocol.
 
 Types
 "v4" or "v6"
@@ -636,7 +818,9 @@ $client->request('GET', '/foo', ['force_ip_resolve' => 'v6']);
 Only the exact, case-sensitive values `v4` and `v6` are accepted.
 
 > [!NOTE]
-> This setting must be supported by the HTTP handler used to send a request. `force_ip_resolve` is currently only supported by the built-in cURL and stream handlers.
+> This setting must be supported by the HTTP handler used to send a request.
+> `force_ip_resolve` is currently only supported by the built-in cURL and stream
+> handlers.
 
 ## form_params
 
@@ -649,7 +833,10 @@ array
 Constant
 `GuzzleHttp\RequestOptions::FORM_PARAMS`
 
-Array mapping form field names to scalar, `null`, or nested array values. Values are serialized with PHP's `http_build_query()`. Sets the Content-Type header to application/x-www-form-urlencoded when no Content-Type header is already present.
+Array mapping form field names to scalar, `null`, or nested array values. Values
+are serialized with PHP's `http_build_query()`. Sets the Content-Type header to
+application/x-www-form-urlencoded when no Content-Type header is already
+present.
 
 ```php
 $client->request('POST', '/post', [
@@ -661,14 +848,20 @@ $client->request('POST', '/post', [
 ```
 
 > [!NOTE]
-> `form_params` cannot be used with the `multipart` option. You will need to use one or the other. Use `form_params` for `application/x-www-form-urlencoded` requests, and `multipart` for `multipart/form-data` requests.
+> `form_params` cannot be used with the `multipart` option. You will need to use
+> one or the other. Use `form_params` for `application/x-www-form-urlencoded`
+> requests, and `multipart` for `multipart/form-data` requests.
 >
 > This option cannot be used with `body`, `multipart`, or `json`
 
 ## headers
 
 Summary
-Array keyed by header names to add to the request. List-style header arrays are rejected. PHP stores numeric-string header names as integer keys; when such keys are accepted, Guzzle casts header keys back to strings while applying them. Each value is a string or non-empty array of strings representing the header field values.
+Array keyed by header names to add to the request. List-style header arrays are
+rejected. PHP stores numeric-string header names as integer keys; when such keys
+are accepted, Guzzle casts header keys back to strings while applying them. Each
+value is a string or non-empty array of strings representing the header field
+values.
 
 Types
 - array
@@ -691,7 +884,11 @@ $client->request('GET', '/get', [
 ]);
 ```
 
-Headers may be added as default options when creating a client. When headers are used as default options, they are only applied if the request being created does not already contain the specific header. This includes both requests passed to the client in the `send()` and `sendAsync()` methods, and requests created by the client (e.g., `request()` and `requestAsync()`).
+Headers may be added as default options when creating a client. When headers are
+used as default options, they are only applied if the request being created does
+not already contain the specific header. This includes both requests passed to
+the client in the `send()` and `sendAsync()` methods, and requests created by
+the client (e.g., `request()` and `requestAsync()`).
 
 ```php
 $client = new GuzzleHttp\Client(['headers' => ['X-Foo' => 'Bar']]);
@@ -721,7 +918,9 @@ $client->send($request, ['headers' => ['X-Foo' => 'overwrite']]);
 ## http_errors
 
 Summary
-Set to `false` to disable throwing exceptions on an HTTP protocol errors (i.e., 4xx and 5xx responses). Exceptions are thrown by default when HTTP protocol errors are encountered.
+Set to `false` to disable throwing exceptions on an HTTP protocol errors (i.e.,
+4xx and 5xx responses). Exceptions are thrown by default when HTTP protocol
+errors are encountered.
 
 Types
 bool
@@ -742,7 +941,10 @@ echo $res->getStatusCode();
 ```
 
 > [!WARNING]
-> This option only has an effect if your handler has the `GuzzleHttp\Middleware::httpErrors` middleware. This middleware is added by default when a client is created with no handler, and is added by default when creating a handler with `GuzzleHttp\HandlerStack::create`.
+> This option only has an effect if your handler has the
+> `GuzzleHttp\Middleware::httpErrors` middleware. This middleware is added by
+> default when a client is created with no handler, and is added by default when
+> creating a handler with `GuzzleHttp\HandlerStack::create`.
 
 ## idn_conversion
 
@@ -768,12 +970,20 @@ $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' =>
 // The domain part (яндекс.рф) stays unmodified
 ```
 
-Enables/disables IDN support, can also be used for precise control by combining `IDNA_*` constants (except `IDNA_ERROR_*`), see the `$options` parameter in the [idn_to_ascii()](https://www.php.net/manual/en/function.idn-to-ascii.php) documentation for more details. Pass `false` or `null` to disable IDN conversion.
+Enables/disables IDN support, can also be used for precise control by combining
+`IDNA_*` constants (except `IDNA_ERROR_*`), see the `$options` parameter in the
+[idn_to_ascii()](https://www.php.net/manual/en/function.idn-to-ascii.php)
+documentation for more details. Pass `false` or `null` to disable IDN
+conversion.
 
 ## json
 
 Summary
-The `json` option is used to easily upload JSON encoded data as the body of a request. A Content-Type header of `application/json` will be added if no Content-Type header is already present on the message. An Accept header is not added automatically; pass one explicitly if the server requires JSON response content negotiation.
+The `json` option is used to easily upload JSON encoded data as the body of a
+request. A Content-Type header of `application/json` will be added if no
+Content-Type header is already present on the message. An Accept header is not
+added automatically; pass one explicitly if the server requires JSON response
+content negotiation.
 
 Types
 Any PHP type that can be operated on by PHP's `json_encode()` function.
@@ -789,7 +999,13 @@ $response = $client->request('PUT', '/put', ['json' => ['foo' => 'bar']]);
 ```
 
 > [!NOTE]
-> This request option does not support customizing the Content-Type header or any of the options from PHP's [json_encode()](http://www.php.net/manual/en/function.json-encode.php) function. If you need to customize these settings, then you must pass the JSON encoded data into the request yourself using the `body` request option and you must specify the correct Content-Type header using the `headers` request option.
+> This request option does not support customizing the Content-Type header or
+> any of the options from PHP's
+> [json_encode()](http://www.php.net/manual/en/function.json-encode.php)
+> function. If you need to customize these settings, then you must pass the JSON
+> encoded data into the request yourself using the `body` request option and you
+> must specify the correct Content-Type header using the `headers` request
+> option.
 >
 > This option cannot be used with `body`, `form_params`, or `multipart`
 
@@ -804,11 +1020,17 @@ array
 Constant
 `GuzzleHttp\RequestOptions::MULTIPART`
 
-The value of `multipart` is an array of part arrays, each containing the following key value pairs:
+The value of `multipart` is an array of part arrays, each containing the
+following key value pairs:
 
 - `name`: (string|int, required) the form field name
-- `contents`: (mixed, required) Any non-array value accepted by `GuzzleHttp\Psr7\Utils::streamFor()`, including strings, resources, streams, iterators, closures, and invokable objects. Arrays are expanded as nested multipart fields; `headers` and `filename` cannot be used when `contents` is an array.
-- `headers`: (array) Optional array of custom string header values to use with the form element.
+- `contents`: (mixed, required) Any non-array value accepted by
+  `GuzzleHttp\Psr7\Utils::streamFor()`, including strings, resources, streams,
+  iterators, closures, and invokable objects. Arrays are expanded as nested
+  multipart fields; `headers` and `filename` cannot be used when `contents` is
+  an array.
+- `headers`: (array) Optional array of custom string header values to use with
+  the form element.
 - `filename`: (string) Optional string to send as the filename in the part.
 
 ```php
@@ -835,14 +1057,17 @@ $client->request('POST', '/post', [
 ```
 
 > [!NOTE]
-> `multipart` cannot be used with the `form_params` option. You will need to use one or the other. Use `form_params` for `application/x-www-form-urlencoded` requests, and `multipart` for `multipart/form-data` requests.
+> `multipart` cannot be used with the `form_params` option. You will need to use
+> one or the other. Use `form_params` for `application/x-www-form-urlencoded`
+> requests, and `multipart` for `multipart/form-data` requests.
 >
 > This option cannot be used with `body`, `form_params`, or `json`
 
 ## multiplex
 
 Summary
-Controls how an HTTP/2 or HTTP/3 request sent through a built-in cURL handler pursues a shared, multiplexed connection.
+Controls how an HTTP/2 or HTTP/3 request sent through a built-in cURL handler
+pursues a shared, multiplexed connection.
 
 Types
 - string (one of the `GuzzleHttp\Multiplexing` constants)
@@ -853,12 +1078,32 @@ Default
 Constant
 `GuzzleHttp\RequestOptions::MULTIPLEX`
 
-libcurl multiplexes concurrent HTTP/2 and HTTP/3 transfers over a single connection whenever a multiplexable connection to the origin already exists, whatever this option is set to. The modes grade how much further the request goes:
+libcurl multiplexes concurrent HTTP/2 and HTTP/3 transfers over a single
+connection whenever a multiplexable connection to the origin already exists,
+whatever this option is set to. The modes grade how much further the request
+goes:
 
-- `Multiplexing::EAGER` - never wait for a connection that is still being established: a burst of requests against a cold origin opens parallel connections.
-- `Multiplexing::WAIT` (default) - wait for a pending connection that libcurl considers eligible for multiplexing, normally one to the same origin, and share it. Silently ignored by the stream handler and the blocking `CurlHandler`, which has no multi handle to multiplex over. If the connection turns out not to multiplex, waiting requests open their own.
-- `Multiplexing::REQUIRE_EAGER` - guarantee a multiplexed protocol or fail loudly, while dialing eagerly. HTTP/2 requests are sent with prior knowledge, so TLS connections offer only `h2` via ALPN (libcurl 8.14.0+) and cleartext connections speak HTTP/2 directly; cleartext requests sent through a proxy are rejected. HTTP/3 requests are pinned to HTTP/3 with no downgrade at all (libcurl 8.13.0+, PHP 8.4+); a proxy cannot carry them and is rejected. A server limited to lower protocol versions fails the connection instead of downgrading. Requires protocol version `2`/`2.0` or `3`/`3.0` and a cURL handler; anything else throws. A cold burst dials connections in parallel, but libcurl still packs later streams onto the first established connection rather than balancing.
-- `Multiplexing::REQUIRE_WAIT` - the same guarantees as `Multiplexing::REQUIRE_EAGER`, plus `WAIT`'s waiting on pending connections.
+- `Multiplexing::EAGER` - never wait for a connection that is still being
+  established: a burst of requests against a cold origin opens parallel
+  connections.
+- `Multiplexing::WAIT` (default) - wait for a pending connection that libcurl
+  considers eligible for multiplexing, normally one to the same origin, and
+  share it. Silently ignored by the stream handler and the blocking
+  `CurlHandler`, which has no multi handle to multiplex over. If the connection
+  turns out not to multiplex, waiting requests open their own.
+- `Multiplexing::REQUIRE_EAGER` - guarantee a multiplexed protocol or fail
+  loudly, while dialing eagerly. HTTP/2 requests are sent with prior knowledge,
+  so TLS connections offer only `h2` via ALPN (libcurl 8.14.0+) and cleartext
+  connections speak HTTP/2 directly; cleartext requests sent through a proxy are
+  rejected. HTTP/3 requests are pinned to HTTP/3 with no downgrade at all
+  (libcurl 8.13.0+, PHP 8.4+); a proxy cannot carry them and is rejected. A
+  server limited to lower protocol versions fails the connection instead of
+  downgrading. Requires protocol version `2`/`2.0` or `3`/`3.0` and a cURL
+  handler; anything else throws. A cold burst dials connections in parallel, but
+  libcurl still packs later streams onto the first established connection rather
+  than balancing.
+- `Multiplexing::REQUIRE_WAIT` - the same guarantees as
+  `Multiplexing::REQUIRE_EAGER`, plus `WAIT`'s waiting on pending connections.
 
 ```php
 $client->requestAsync('GET', 'https://example.com/big-file', [
@@ -868,15 +1113,31 @@ $client->requestAsync('GET', 'https://example.com/big-file', [
 ```
 
 > [!NOTE]
-> None of the modes is a connection **cap**: once an established HTTP/2 connection has no free streams - servers commonly allow about 100 - additional requests open additional connections regardless of this option.
+> None of the modes is a connection **cap**: once an established HTTP/2
+> connection has no free streams - servers commonly allow about 100 - additional
+> requests open additional connections regardless of this option.
 
 > [!NOTE]
-> libcurl never reuses or coalesces a connection across differing TLS settings (`verify`, custom CA, client certificate/key, pinned public key) or proxy settings, so a verified request can never ride an unverified connection. Because libcurl coalesces HTTP/2 connections, requests to different hostnames that resolve to the same address and are covered by the server certificate may share one connection; a server not authoritative for the second name can reject it with HTTP/2 `421 Misdirected Request`. Waiting requests share one in-progress connection, so a slow lead connection adds latency to, and is charged against the `timeout` of, the requests waiting on it. Only requests whose protocol version resolves to HTTP/2 or HTTP/3 wait. Use `Multiplexing::EAGER` when you rely on independent connection timing; it stops the waiting but does not guarantee separate connections; established multiplex-capable connections are still shared.
+> libcurl never reuses or coalesces a connection across differing TLS settings
+> (`verify`, custom CA, client certificate/key, pinned public key) or proxy
+> settings, so a verified request can never ride an unverified connection.
+> Because libcurl coalesces HTTP/2 connections, requests to different hostnames
+> that resolve to the same address and are covered by the server certificate may
+> share one connection; a server not authoritative for the second name can
+> reject it with HTTP/2 `421 Misdirected Request`. Waiting requests share one
+> in-progress connection, so a slow lead connection adds latency to, and is
+> charged against the `timeout` of, the requests waiting on it. Only requests
+> whose protocol version resolves to HTTP/2 or HTTP/3 wait. Use
+> `Multiplexing::EAGER` when you rely on independent connection timing; it stops
+> the waiting but does not guarantee separate connections; established
+> multiplex-capable connections are still shared.
 
 ## on_headers
 
 Summary
-A callable that is invoked when the HTTP headers of the final response, or a `101 Switching Protocols` response, have been received but the body has not yet begun to download.
+A callable that is invoked when the HTTP headers of the final response, or a
+`101 Switching Protocols` response, have been received but the body has not yet
+begun to download.
 
 Types
 - callable
@@ -884,9 +1145,16 @@ Types
 Constant
 `GuzzleHttp\RequestOptions::ON_HEADERS`
 
-The callable accepts a `Psr\Http\Message\ResponseInterface` object and the corresponding `Psr\Http\Message\RequestInterface` object. Built-in handlers do not invoke it for interim informational responses such as `100 Continue` or `103 Early Hints`. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the exception that was thrown.
+The callable accepts a `Psr\Http\Message\ResponseInterface` object and the
+corresponding `Psr\Http\Message\RequestInterface` object. Built-in handlers do
+not invoke it for interim informational responses such as `100 Continue` or `103
+Early Hints`. If an exception is thrown by the callable, then the promise
+associated with the response will be rejected with a
+`GuzzleHttp\Exception\ResponseException` that wraps the exception that was
+thrown.
 
-You may need to know what headers and status codes were received before data can be written to the sink.
+You may need to know what headers and status codes were received before data can
+be written to the sink.
 
 ```php
 use Psr\Http\Message\RequestInterface;
@@ -902,7 +1170,9 @@ $client->request('GET', 'http://httpbin.org/stream/1024', [
 ]);
 ```
 
-When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a third argument:
+When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via
+the pool's `options` configuration, the callable also receives the iterable key
+that identified the request as a third argument:
 
 ```php
 use GuzzleHttp\Pool;
@@ -927,12 +1197,19 @@ $pool->promise()->wait();
 ```
 
 > [!NOTE]
-> When writing HTTP handlers, the `on_headers` function must be invoked for the final response, or for a `101 Switching Protocols` response, before writing data to the body of the response.
+> When writing HTTP handlers, the `on_headers` function must be invoked for the
+> final response, or for a `101 Switching Protocols` response, before writing
+> data to the body of the response.
 
 ## on_stats
 
 Summary
-`on_stats` allows you to get access to transfer statistics of a request and access the lower level transfer details of the handler associated with your client. `on_stats` is a callable that is invoked when a handler has finished sending a request. The callback is invoked with transfer statistics about the request, the response received, or the error encountered. Included in the data is the total amount of time taken to send the request.
+`on_stats` allows you to get access to transfer statistics of a request and
+access the lower level transfer details of the handler associated with your
+client. `on_stats` is a callable that is invoked when a handler has finished
+sending a request. The callback is invoked with transfer statistics about the
+request, the response received, or the error encountered. Included in the data
+is the total amount of time taken to send the request.
 
 Types
 - callable
@@ -940,9 +1217,14 @@ Types
 Constant
 `GuzzleHttp\RequestOptions::ON_STATS`
 
-The callable accepts a `GuzzleHttp\TransferStats` object. Built-in handlers reject non-callable `on_stats` values before starting the transfer.
+The callable accepts a `GuzzleHttp\TransferStats` object. Built-in handlers
+reject non-callable `on_stats` values before starting the transfer.
 
-Exceptions thrown by `on_stats` are not wrapped by Guzzle and may escape from the handler wait path. With the built-in cURL handlers, native cURL handles are released before `on_stats` is invoked. cURL handlers emit `on_stats` per low-level transfer attempt, so retries may invoke it more than once for one logical request.
+Exceptions thrown by `on_stats` are not wrapped by Guzzle and may escape from
+the handler wait path. With the built-in cURL handlers, native cURL handles are
+released before `on_stats` is invoked. cURL handlers emit `on_stats` per
+low-level transfer attempt, so retries may invoke it more than once for one
+logical request.
 
 ```php
 use GuzzleHttp\TransferStats;
@@ -969,12 +1251,15 @@ $client->request('GET', 'http://httpbin.org/stream/1024', [
 ]);
 ```
 
-When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a second argument.
+When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via
+the pool's `options` configuration, the callable also receives the iterable key
+that identified the request as a second argument.
 
 ## on_trailers
 
 Summary
-A callable that is invoked exactly once when a transfer completes successfully, with the HTTP trailer fields of the response.
+A callable that is invoked exactly once when a transfer completes successfully,
+with the HTTP trailer fields of the response.
 
 Types
 - callable
@@ -982,7 +1267,18 @@ Types
 Constant
 `GuzzleHttp\RequestOptions::ON_TRAILERS`
 
-The callable accepts an associative array of trailer field names mapped to lists of field values, the `Psr\Http\Message\ResponseInterface` object, and the corresponding `Psr\Http\Message\RequestInterface` object. The built-in cURL handlers invoke it after the entire response body has been written to the sink, after `on_headers`, and before `on_stats`. The array is empty when the response carried no trailer fields, for example because the server sent none or sent them as ordinary headers. Trailer names preserve the casing received on the wire, so array lookups are case-sensitive; HTTP/2 field names are always lowercase on the wire. The callable is never invoked for failed transfers. If an exception is thrown by the callable, then the promise associated with the response will be rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the exception that was thrown.
+The callable accepts an associative array of trailer field names mapped to lists
+of field values, the `Psr\Http\Message\ResponseInterface` object, and the
+corresponding `Psr\Http\Message\RequestInterface` object. The built-in cURL
+handlers invoke it after the entire response body has been written to the sink,
+after `on_headers`, and before `on_stats`. The array is empty when the response
+carried no trailer fields, for example because the server sent none or sent them
+as ordinary headers. Trailer names preserve the casing received on the wire, so
+array lookups are case-sensitive; HTTP/2 field names are always lowercase on the
+wire. The callable is never invoked for failed transfers. If an exception is
+thrown by the callable, then the promise associated with the response will be
+rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the
+exception that was thrown.
 
 ```php
 use GuzzleHttp\Psr7;
@@ -1000,16 +1296,18 @@ $client->request('GET', 'https://example.com/stream', [
 ]);
 ```
 
-When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a fourth argument.
+When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via
+the pool's `options` configuration, the callable also receives the iterable key
+that identified the request as a fourth argument.
 
 > [!NOTE]
 > Only the built-in cURL handlers invoke `on_trailers`; the built-in stream and
-> mock handlers cannot observe trailer fields and ignore the option. When writing
-> HTTP handlers that support trailer fields, invoke the `on_trailers` callable
-> exactly once per successful transfer, after the response body has completed,
-> and never for failed transfers. Malformed trailer field lines are discarded
-> before parsing. Trailer fields are reported separately from response headers
-> and are never merged into the response.
+> mock handlers cannot observe trailer fields and ignore the option. When
+> writing HTTP handlers that support trailer fields, invoke the `on_trailers`
+> callable exactly once per successful transfer, after the response body has
+> completed, and never for failed transfers. Malformed trailer field lines are
+> discarded before parsing. Trailer fields are reported separately from response
+> headers and are never merged into the response.
 
 ## progress
 
@@ -1032,15 +1330,15 @@ The function accepts the following positional arguments:
 - the total number of bytes expected to be uploaded
 - the number of bytes uploaded so far
 
-With the built-in cURL handlers, returning a truthy value aborts the transfer and
-rejects the request promise with a `GuzzleHttp\Exception\ResponseException` when a
-response is available, or a `GuzzleHttp\Exception\RequestException` otherwise. If
-the callable throws, the built-in cURL handlers abort the transfer and reject the
-promise with the same response-aware classification while wrapping the thrown
-exception. If a built-in handler receives a progress byte count that cannot be
-represented as a PHP integer, the transfer is rejected before the callback is
-invoked. The built-in stream handler treats progress callbacks as notifications
-only and ignores return values.
+With the built-in cURL handlers, returning a truthy value aborts the transfer
+and rejects the request promise with a `GuzzleHttp\Exception\ResponseException`
+when a response is available, or a `GuzzleHttp\Exception\RequestException`
+otherwise. If the callable throws, the built-in cURL handlers abort the transfer
+and reject the promise with the same response-aware classification while
+wrapping the thrown exception. If a built-in handler receives a progress byte
+count that cannot be represented as a PHP integer, the transfer is rejected
+before the callback is invoked. The built-in stream handler treats progress
+callbacks as notifications only and ignores return values.
 
 ```php
 // Send a GET request to /get?foo=bar
@@ -1060,7 +1358,9 @@ $result = $client->request(
 );
 ```
 
-When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via the pool's `options` configuration, the callable also receives the iterable key that identified the request as a fifth argument.
+When requests are sent with `GuzzleHttp\Pool` and this callback is supplied via
+the pool's `options` configuration, the callable also receives the iterable key
+that identified the request as a fifth argument.
 
 ## protocols
 
@@ -1098,7 +1398,8 @@ $client->request('GET', 'https://example.com', [
 ## proxy
 
 Summary
-Pass a string to specify a proxy, or an array to specify different proxies for different protocols.
+Pass a string to specify a proxy, or an array to specify different proxies for
+different protocols.
 
 Types
 - string
@@ -1116,7 +1417,11 @@ Pass a string to specify a proxy for all protocols.
 $client->request('GET', '/', ['proxy' => 'http://localhost:8125']);
 ```
 
-Pass an associative array to specify proxies for specific URI schemes (i.e., "http", "https"). Provide a `no` key value pair as a comma- or whitespace-delimited string or an array of entries that should not be proxied to; array entries are taken as-is and are never re-split. The `http`, `https`, and `no` entries may be set to `null` to leave that entry unconfigured.
+Pass an associative array to specify proxies for specific URI schemes (i.e.,
+"http", "https"). Provide a `no` key value pair as a comma- or
+whitespace-delimited string or an array of entries that should not be proxied
+to; array entries are taken as-is and are never re-split. The `http`, `https`,
+and `no` entries may be set to `null` to leave that entry unconfigured.
 
 The `no` list supports the following entry forms:
 
@@ -1130,12 +1435,31 @@ The `no` list supports the following entry forms:
 | `[::1]:8080` | that IP literal on port `8080` |
 | `10.0.0.0/8`, `fd00::/8` | IP-literal hosts inside the range |
 
-Domain entries are matched case-insensitively, and one final DNS root dot is ignored on each side before matching; repeated trailing dots are not collapsed, and only a single leading dot is ignored — entries with repeated leading dots match nothing. IP literals are normalized before matching, so equivalent IPv6 spellings such as `::1` and `0:0:0:0:0:0:0:1` match; trailing-dot normalization does not apply to IP literals or CIDR rules. IP and CIDR entries match only requests whose host is itself an IP literal: host names are never resolved to addresses when deciding whether to proxy. Ports are matched against the request's effective port — an explicit port in the URI, otherwise the scheme default (`80` for "http", `443` for "https") — and CIDR entries are not port-specific.
+Domain entries are matched case-insensitively, and one final DNS root dot is
+ignored on each side before matching; repeated trailing dots are not collapsed,
+and only a single leading dot is ignored — entries with repeated leading dots
+match nothing. IP literals are normalized before matching, so equivalent IPv6
+spellings such as `::1` and `0:0:0:0:0:0:0:1` match; trailing-dot normalization
+does not apply to IP literals or CIDR rules. IP and CIDR entries match only
+requests whose host is itself an IP literal: host names are never resolved to
+addresses when deciding whether to proxy. Ports are matched against the
+request's effective port — an explicit port in the URI, otherwise the scheme
+default (`80` for "http", `443` for "https") — and CIDR entries are not
+port-specific.
 
 > [!NOTE]
-> Guzzle will automatically populate this value with your environment's `NO_PROXY` environment variable. However, when providing a `proxy` request option, it is up to you to provide the `no` value from the `NO_PROXY` environment variable.
+> Guzzle will automatically populate this value with your environment's
+> `NO_PROXY` environment variable. However, when providing a `proxy` request
+> option, it is up to you to provide the `no` value from the `NO_PROXY`
+> environment variable.
 
-Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply Guzzle-compatible proxy selection. The helper resolves the documented `proxy` request option shape, including scheme-specific proxy entries and `no` exclusion rules. Handlers remain responsible for translating the selected proxy string into their transport-specific configuration. The environment-variable fallback performed by the built-in handlers is not part of this helper; custom handlers that want it must implement their own environment lookup.
+Custom handlers can use `GuzzleHttp\ProxyOptions::resolve()` to apply
+Guzzle-compatible proxy selection. The helper resolves the documented `proxy`
+request option shape, including scheme-specific proxy entries and `no` exclusion
+rules. Handlers remain responsible for translating the selected proxy string
+into their transport-specific configuration. The environment-variable fallback
+performed by the built-in handlers is not part of this helper; custom handlers
+that want it must implement their own environment lookup.
 
 ```php
 use GuzzleHttp\ProxyOptions;
@@ -1161,11 +1485,19 @@ $client->request('GET', '/', [
 ```
 
 > [!NOTE]
-> You can provide proxy URLs that contain a scheme, username, and password. For example, `"http://username:password@192.168.16.1:10"`. A scheme-less value such as `"127.0.0.1:8125"` is treated as an HTTP proxy. Both built-in handlers validate the proxy URL up front and reject a malformed one (an invalid host, an out-of-range port, or leading junk before the scheme) with an `InvalidArgumentException`.
+> You can provide proxy URLs that contain a scheme, username, and password. For
+> example, `"http://username:password@192.168.16.1:10"`. A scheme-less value
+> such as `"127.0.0.1:8125"` is treated as an HTTP proxy. Both built-in handlers
+> validate the proxy URL up front and reject a malformed one (an invalid host,
+> an out-of-range port, or leading junk before the scheme) with an
+> `InvalidArgumentException`.
 
 ### Handler support
 
-The `proxy` option — including the `no` list and its validation — means the same thing on every built-in handler: which proxy, if any, applies to a request is decided by the same rules everywhere. What differs is the transport executing that decision:
+The `proxy` option — including the `no` list and its validation — means the same
+thing on every built-in handler: which proxy, if any, applies to a request is
+decided by the same rules everywhere. What differs is the transport executing
+that decision:
 
 | Capability | cURL handlers | Stream handler |
 | --- | --- | --- |
@@ -1176,13 +1508,42 @@ The `proxy` option — including the `no` list and its validation — means the 
 | Proxy credentials in the proxy URL | yes | yes (Basic only) |
 | Proxy resolution from environment variables | yes | yes |
 
-The stream handler forwards requests through PHP's HTTP stream wrapper, which supports plain HTTP proxying only: it cannot establish CONNECT tunnels, so "https" requests through a proxy fail with a connection error. It rejects any proxy URL whose scheme it cannot execute, throwing an `InvalidArgumentException` before the request is sent. That covers `https://`, SOCKS (`socks4://`, `socks4a://`, `socks5://`, `socks5h://`), and anything other than `http://` or a raw PHP transport such as `tcp://`, `ssl://`, or `tls://`. A recognized SSL/TLS-family transport that this PHP build's `stream_get_transports()` does not provide (for example `tls://` on a build without OpenSSL) is build-specific, so it throws a `RequestException` instead of the `InvalidArgumentException` used for a scheme invalid on every build. The stream handler now resolves proxies from the environment too (see below); the scheme rejections above apply identically to an environment-resolved proxy. A proxy given without an explicit port defaults to port 1080, libcurl's default HTTP proxy port.
+The stream handler forwards requests through PHP's HTTP stream wrapper, which
+supports plain HTTP proxying only: it cannot establish CONNECT tunnels, so
+"https" requests through a proxy fail with a connection error. It rejects any
+proxy URL whose scheme it cannot execute, throwing an `InvalidArgumentException`
+before the request is sent. That covers `https://`, SOCKS (`socks4://`,
+`socks4a://`, `socks5://`, `socks5h://`), and anything other than `http://` or a
+raw PHP transport such as `tcp://`, `ssl://`, or `tls://`. A recognized
+SSL/TLS-family transport that this PHP build's `stream_get_transports()` does
+not provide (for example `tls://` on a build without OpenSSL) is build-specific,
+so it throws a `RequestException` instead of the `InvalidArgumentException` used
+for a scheme invalid on every build. The stream handler now resolves proxies
+from the environment too (see below); the scheme rejections above apply
+identically to an environment-resolved proxy. A proxy given without an explicit
+port defaults to port 1080, libcurl's default HTTP proxy port.
 
-HTTPS proxies (an `https://` proxy URL, where the connection to the proxy itself is encrypted) require libcurl 7.54.0 or newer built with HTTPS-proxy support. The cURL handlers reject a request using an HTTPS proxy on anything older up front, with a `RequestException`. They also reject any `proxy` URL whose scheme libcurl cannot use as a proxy, with an `InvalidArgumentException`. Proxying an "https" request establishes a CONNECT tunnel through the proxy, which likewise requires libcurl 7.54.0 or newer and is rejected up front on older libcurl (including tunnels forced through raw `curl` options). The proxy's interim `200 Connection established` reply is suppressed on these tunnels, so `on_headers` observes only origin responses and a tunneled transfer failure is classified by its transport phase.
+HTTPS proxies (an `https://` proxy URL, where the connection to the proxy itself
+is encrypted) require libcurl 7.54.0 or newer built with HTTPS-proxy support.
+The cURL handlers reject a request using an HTTPS proxy on anything older up
+front, with a `RequestException`. They also reject any `proxy` URL whose scheme
+libcurl cannot use as a proxy, with an `InvalidArgumentException`. Proxying an
+"https" request establishes a CONNECT tunnel through the proxy, which likewise
+requires libcurl 7.54.0 or newer and is rejected up front on older libcurl
+(including tunnels forced through raw `curl` options). The proxy's interim `200
+Connection established` reply is suppressed on these tunnels, so `on_headers`
+observes only origin responses and a tunneled transfer failure is classified by
+its transport phase.
 
 ### Proxy environment variables
 
-The built-in handlers resolve proxies from the environment themselves: the cURL handlers configure libcurl's proxy options explicitly so libcurl never reads the environment itself, and the stream handler resolves the same way and installs the result in the PHP stream context. When the `proxy` request option makes a decision for a request, that decision is final, and proxy environment variables are ignored for the request. For an "https" request, the option resolves like this:
+The built-in handlers resolve proxies from the environment themselves: the cURL
+handlers configure libcurl's proxy options explicitly so libcurl never reads the
+environment itself, and the stream handler resolves the same way and installs
+the result in the PHP stream context. When the `proxy` request option makes a
+decision for a request, that decision is final, and proxy environment variables
+are ignored for the request. For an "https" request, the option resolves like
+this:
 
 | `proxy` option value | Result |
 | --- | --- |
@@ -1194,18 +1555,42 @@ The built-in handlers resolve proxies from the environment themselves: the cURL 
 | `['https' => null]`, or an array without an `https` entry | environment proxies apply |
 | any array whose `no` list matches the request | direct connection; environment ignored (takes precedence over the array rows above) |
 
-In particular, the `no_proxy`/`NO_PROXY` environment variables do not bypass an explicitly configured proxy; add the hosts to the option's `no` list instead.
+In particular, the `no_proxy`/`NO_PROXY` environment variables do not bypass an
+explicitly configured proxy; add the hosts to the option's `no` list instead.
 
-When the `proxy` request option makes no decision for a request, the built-in handlers resolve the proxy from the environment with the same lookup semantics libcurl uses:
+When the `proxy` request option makes no decision for a request, the built-in
+handlers resolve the proxy from the environment with the same lookup semantics
+libcurl uses:
 
-1. The lowercase scheme-specific variable, e.g. `https_proxy` for an "https" request. For "http" requests, the uppercase `HTTP_PROXY` variant is never read (see <https://httpoxy.org>, and the Windows note below); for other schemes the uppercase variant is read when the lowercase one is not set.
+1. The lowercase scheme-specific variable, e.g. `https_proxy` for an "https"
+   request. For "http" requests, the uppercase `HTTP_PROXY` variant is never
+   read (see <https://httpoxy.org>, and the Windows note below); for other
+   schemes the uppercase variant is read when the lowercase one is not set.
 2. `all_proxy`, then `ALL_PROXY`.
 
-The first variable with a non-empty value ends the lookup; variables set to an empty string are treated as unset, matching libcurl. When an environment proxy is found, the `no_proxy` (or `NO_PROXY`) environment variable is matched against the request by Guzzle. The value is tokenized the way libcurl tokenizes it — entries may be separated by commas or whitespace, and a single leading dot is ignored, so `.example.com` bypasses `example.com` and its subdomains — and each entry is then matched using the same rules as the option's `no` list (including CIDR ranges); a match disables the proxy for the request.
+The first variable with a non-empty value ends the lookup; variables set to an
+empty string are treated as unset, matching libcurl. When an environment proxy
+is found, the `no_proxy` (or `NO_PROXY`) environment variable is matched against
+the request by Guzzle. The value is tokenized the way libcurl tokenizes it —
+entries may be separated by commas or whitespace, and a single leading dot is
+ignored, so `.example.com` bypasses `example.com` and its subdomains — and each
+entry is then matched using the same rules as the option's `no` list (including
+CIDR ranges); a match disables the proxy for the request.
 
-Only the real process environment is consulted, matching libcurl: values injected per-request by the SAPI (e.g. `fastcgi_param` or `SetEnv`) are not read by this handler-level resolution. On Windows, environment variable names are case-insensitive, so the lowercase-only protection for `HTTP_PROXY` is not possible; outside the CLI SAPI on Windows, proxy environment variables are therefore not resolved at all, and the `proxy` request option must be used instead.
+Only the real process environment is consulted, matching libcurl: values
+injected per-request by the SAPI (e.g. `fastcgi_param` or `SetEnv`) are not read
+by this handler-level resolution. On Windows, environment variable names are
+case-insensitive, so the lowercase-only protection for `HTTP_PROXY` is not
+possible; outside the CLI SAPI on Windows, proxy environment variables are
+therefore not resolved at all, and the `proxy` request option must be used
+instead.
 
-Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps the uppercase `HTTP_PROXY` (CLI SAPI only), `HTTPS_PROXY`, and `NO_PROXY` environment variables into a default for the `proxy` request option. The client mapping reads `$_SERVER` first, so it does honor SAPI-provided values such as those set with `fastcgi_param` or `SetEnv`. See [Environment Variables](quick-start.md#environment-variables).
+Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps
+the uppercase `HTTP_PROXY` (CLI SAPI only), `HTTPS_PROXY`, and `NO_PROXY`
+environment variables into a default for the `proxy` request option. The client
+mapping reads `$_SERVER` first, so it does honor SAPI-provided values such as
+those set with `fastcgi_param` or `SetEnv`. See
+[Environment Variables](quick-start.md#environment-variables).
 
 > [!NOTE]
 > When sending HTTPS requests, or requests explicitly tunneled with
@@ -1261,7 +1646,8 @@ Constant
 $client->request('GET', '/get', ['query' => ['foo' => 'bar']]);
 ```
 
-Query strings specified in the `query` option will overwrite all query string values supplied in the URI of a request.
+Query strings specified in the `query` option will overwrite all query string
+values supplied in the URI of a request.
 
 ```php
 // Send a GET request to /get?foo=bar
@@ -1271,7 +1657,8 @@ $client->request('GET', '/get?abc=123', ['query' => ['foo' => 'bar']]);
 ## read_timeout
 
 Summary
-Number of seconds to use when reading a streamed body. Positive values below `0.001` seconds are rejected by the built-in stream handler.
+Number of seconds to use when reading a streamed body. Positive values below
+`0.001` seconds are rejected by the built-in stream handler.
 
 Types
 - int
@@ -1338,18 +1725,30 @@ $client->request('GET', '/get', [
 ]);
 ```
 
-This option can be set on a client or per request. It affects request-side object creation only and does not affect response implementations returned by handlers.
+This option can be set on a client or per request. It affects request-side
+object creation only and does not affect response implementations returned by
+handlers.
 
 > [!NOTE]
-> This option only affects requests created by `request()`, `requestAsync()`, and shortcut methods such as `get()` and `post()`. Requests passed to `send()`, `sendAsync()`, or `sendRequest()` are used as provided.
+> This option only affects requests created by `request()`, `requestAsync()`,
+> and shortcut methods such as `get()` and `post()`. Requests passed to
+> `send()`, `sendAsync()`, or `sendRequest()` are used as provided.
 
 > [!WARNING]
-> Guzzle only checks that the value implements `Psr\Http\Message\RequestFactoryInterface`; it does not validate the requests it returns. Per PSR-7 the `Host` header is derived from the request URI, and Guzzle does not recompute it afterwards, so a factory that fails to set `Host` from the URI — or that lets a caller-controlled `Host` diverge from the URI actually dialed — can cause host confusion, cache poisoning, or requests routed to an unexpected origin. Supply a request implementation you trust to follow PSR-7.
+> Guzzle only checks that the value implements
+> `Psr\Http\Message\RequestFactoryInterface`; it does not validate the requests
+> it returns. Per PSR-7 the `Host` header is derived from the request URI, and
+> Guzzle does not recompute it afterwards, so a factory that fails to set `Host`
+> from the URI — or that lets a caller-controlled `Host` diverge from the URI
+> actually dialed — can cause host confusion, cache poisoning, or requests
+> routed to an unexpected origin. Supply a request implementation you trust to
+> follow PSR-7.
 
 ## response_factory
 
 Summary
-PSR-17 response factory used by the built-in handlers when creating the response message.
+PSR-17 response factory used by the built-in handlers when creating the response
+message.
 
 Types
 `Psr\Http\Message\ResponseFactoryInterface`
@@ -1368,13 +1767,28 @@ $client->request('GET', '/get', [
 ]);
 ```
 
-This option can be set on a client or per request. The built-in cURL and stream handlers build the response message (status code, reason phrase, headers, and protocol version) with this factory, and create the response body stream with the configured `stream_factory` where practical. The factory should return an empty, header-less response, because the handlers apply the parsed status line, headers, and body themselves.
+This option can be set on a client or per request. The built-in cURL and stream
+handlers build the response message (status code, reason phrase, headers, and
+protocol version) with this factory, and create the response body stream with
+the configured `stream_factory` where practical. The factory should return an
+empty, header-less response, because the handlers apply the parsed status line,
+headers, and body themselves.
 
 > [!NOTE]
-> This option is consumed by the built-in handlers when they create a response. `MockHandler` returns the responses you queue, and custom handlers are responsible for honoring this option themselves.
+> This option is consumed by the built-in handlers when they create a response.
+> `MockHandler` returns the responses you queue, and custom handlers are
+> responsible for honoring this option themselves.
 
 > [!WARNING]
-> Guzzle only checks that the value implements `Psr\Http\Message\ResponseFactoryInterface`; it does not validate the responses it returns. The handlers add each parsed header to the returned response with `withAddedHeader()`, so a factory that pre-seeds headers (or returns a non-empty response) duplicates them — for example emitting two `Content-Type` or `Content-Length` values and corrupting the message. The factory should return an empty, header-less response, and must reject CR/LF in any header it sets itself, or it can re-introduce header-injection and response-splitting issues. Supply a response implementation you trust.
+> Guzzle only checks that the value implements
+> `Psr\Http\Message\ResponseFactoryInterface`; it does not validate the
+> responses it returns. The handlers add each parsed header to the returned
+> response with `withAddedHeader()`, so a factory that pre-seeds headers (or
+> returns a non-empty response) duplicates them — for example emitting two
+> `Content-Type` or `Content-Length` values and corrupting the message. The
+> factory should return an empty, header-less response, and must reject CR/LF in
+> any header it sets itself, or it can re-introduce header-injection and
+> response-splitting issues. Supply a response implementation you trust.
 
 ## retries
 
@@ -1390,12 +1804,15 @@ Default
 Constant
 `GuzzleHttp\RequestOptions::RETRIES`
 
-The retry middleware initializes this option to `0` before the first attempt and increments it before each retry. Applications may seed it on a per-request basis when using the retry middleware.
+The retry middleware initializes this option to `0` before the first attempt and
+increments it before each retry. Applications may seed it on a per-request basis
+when using the retry middleware.
 
 ## stream_factory
 
 Summary
-PSR-17 stream factory used when Guzzle creates request body streams and, for the built-in handlers, response body streams where practical.
+PSR-17 stream factory used when Guzzle creates request body streams and, for the
+built-in handlers, response body streams where practical.
 
 Types
 `Psr\Http\Message\StreamFactoryInterface`
@@ -1415,13 +1832,42 @@ $client->request('POST', '/post', [
 ]);
 ```
 
-This option can be set on a client or per request. It is used when Guzzle converts supported `body`, `form_params`, or `json` request option values into `Psr\Http\Message\StreamInterface` instances, when redirect handling resets a request body, and by the built-in cURL and stream handlers when they wrap response body resources where practical. Request bodies that already implement `Psr\Http\Message\StreamInterface` are used as provided.
+This option can be set on a client or per request. It is used when Guzzle
+converts supported `body`, `form_params`, or `json` request option values into
+`Psr\Http\Message\StreamInterface` instances, when redirect handling resets a
+request body, and by the built-in cURL and stream handlers when they wrap
+response body resources where practical. Request bodies that already implement
+`Psr\Http\Message\StreamInterface` are used as provided.
 
 > [!NOTE]
-> This option does not replace every stream. Callable and iterator request bodies use Guzzle's existing PSR-7 stream handling, multipart internals are left untouched, string path sinks open lazily, and caller-owned resource sinks keep Guzzle's own stream wrapper so write-only sink resources remain supported. `MockHandler` queued responses and custom handler responses are used as provided. When decoding gzip/deflate responses, the factory still wraps the underlying transport resource, but Guzzle layers its own `InflateStream` decorator on top because PSR-17 cannot express a decoding stream.
+> This option does not replace every stream. Callable and iterator request
+> bodies use Guzzle's existing PSR-7 stream handling, multipart internals are
+> left untouched, string path sinks open lazily, and caller-owned resource sinks
+> keep Guzzle's own stream wrapper so write-only sink resources remain
+> supported. `MockHandler` queued responses and custom handler responses are
+> used as provided. When decoding gzip/deflate responses, the factory still
+> wraps the underlying transport resource, but Guzzle layers its own
+> `InflateStream` decorator on top because PSR-17 cannot express a decoding
+> stream.
 
 > [!WARNING]
-> Guzzle only checks that the value implements `Psr\Http\Message\StreamFactoryInterface`; it does not validate the streams it returns. For responses, `createStreamFromResource()` wraps the live transport socket, so the returned stream must behave like the default `GuzzleHttp\Psr7\Stream`. It must expose the resource's **live** `timed_out` metadata: a stream that snapshots metadata, or omits the `timed_out` key, silently disables read-timeout detection, so a stalled read is reported as a successful but truncated response instead of a timeout — with no error at all for chunked or `Connection: close` bodies. It must also **close the underlying resource** when closed, or each request leaks a socket or file descriptor (including `HEAD` and `stream => true` responses, which are not drained), eventually exhausting the descriptor limit. The stream must be readable for gzip/deflate decoding, and should stream the resource rather than buffer it entirely into memory. The full contract is described under *Creating Streams* in the [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.0/docs/streams-and-decorators.md#creating-streams). Supply a stream implementation you trust.
+> Guzzle only checks that the value implements
+> `Psr\Http\Message\StreamFactoryInterface`; it does not validate the streams it
+> returns. For responses, `createStreamFromResource()` wraps the live transport
+> socket, so the returned stream must behave like the default
+> `GuzzleHttp\Psr7\Stream`. It must expose the resource's **live** `timed_out`
+> metadata: a stream that snapshots metadata, or omits the `timed_out` key,
+> silently disables read-timeout detection, so a stalled read is reported as a
+> successful but truncated response instead of a timeout — with no error at all
+> for chunked or `Connection: close` bodies. It must also **close the underlying
+> resource** when closed, or each request leaks a socket or file descriptor
+> (including `HEAD` and `stream => true` responses, which are not drained),
+> eventually exhausting the descriptor limit. The stream must be readable for
+> gzip/deflate decoding, and should stream the resource rather than buffer it
+> entirely into memory. The full contract is described under *Creating Streams*
+> in the
+> [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.0/docs/streams-and-decorators.md#creating-streams).
+> Supply a stream implementation you trust.
 
 ## uri_factory
 
@@ -1446,13 +1892,33 @@ $client = new GuzzleHttp\Client([
 ]);
 ```
 
-This option can be set on a client or per request. It is used for string request URI values, string `base_uri` values, and redirect `Location` header parsing when redirects are enabled. URI objects implementing `Psr\Http\Message\UriInterface` are used as provided.
+This option can be set on a client or per request. It is used for string request
+URI values, string `base_uri` values, and redirect `Location` header parsing
+when redirects are enabled. URI objects implementing
+`Psr\Http\Message\UriInterface` are used as provided.
 
 > [!NOTE]
-> This option affects request-side URI creation only. It does not affect response implementations returned by handlers. `GuzzleHttp\Client::sendRequest()` still returns redirect responses as-is for PSR-18 compliance.
+> This option affects request-side URI creation only. It does not affect
+> response implementations returned by handlers.
+> `GuzzleHttp\Client::sendRequest()` still returns redirect responses as-is for
+> PSR-18 compliance.
 
 > [!WARNING]
-> Guzzle only checks that the value implements `Psr\Http\Message\UriFactoryInterface`; it does not validate the URIs it returns. When following redirects Guzzle strips credentials by comparing the origin (scheme, host, port) of the current and redirect-target URIs: on a cross-origin redirect it removes the `Authorization` and `Cookie` headers and clears HTTP auth, and it drops `Referer` whenever the scheme changes (including an `https` to `http` downgrade) and otherwise sends only the origin on cross-origin redirects — all by reading `getScheme()`, `getHost()`, and `getPort()` from the URI built from the `Location` header. A custom URI that misreports those, or whose getters disagree with the address actually dialed, can make a cross-origin redirect look same-origin and leak credentials to the target (the class of issue behind CVE-2022-31042, CVE-2022-31043, CVE-2022-31090, and CVE-2022-31091), or enable SSRF and protocol allow-list bypass. The default `GuzzleHttp\Psr7\Uri` lower-cases and validates the scheme and host and strips default ports; supply a URI implementation you trust.
+> Guzzle only checks that the value implements
+> `Psr\Http\Message\UriFactoryInterface`; it does not validate the URIs it
+> returns. When following redirects Guzzle strips credentials by comparing the
+> origin (scheme, host, port) of the current and redirect-target URIs: on a
+> cross-origin redirect it removes the `Authorization` and `Cookie` headers and
+> clears HTTP auth, and it drops `Referer` whenever the scheme changes
+> (including an `https` to `http` downgrade) and otherwise sends only the origin
+> on cross-origin redirects — all by reading `getScheme()`, `getHost()`, and
+> `getPort()` from the URI built from the `Location` header. A custom URI that
+> misreports those, or whose getters disagree with the address actually dialed,
+> can make a cross-origin redirect look same-origin and leak credentials to the
+> target (the class of issue behind CVE-2022-31042, CVE-2022-31043,
+> CVE-2022-31090, and CVE-2022-31091), or enable SSRF and protocol allow-list
+> bypass. The default `GuzzleHttp\Psr7\Uri` lower-cases and validates the scheme
+> and host and strips default ports; supply a URI implementation you trust.
 
 ## sink
 
@@ -1519,7 +1985,12 @@ object as-is and its own `close()` behavior applies.
 ## ssl_key
 
 Summary
-Specify the path to a file containing a private SSL key. PEM is the default private key format. If a password is required, then set to an array containing the path to the SSL key in the first array element followed by the password required for the key in the second element. A `null` password is treated the same as omitting it. Use [`ssl_key_type`](#ssl_key_type) to specify another supported key format.
+Specify the path to a file containing a private SSL key. PEM is the default
+private key format. If a password is required, then set to an array containing
+the path to the SSL key in the first array element followed by the password
+required for the key in the second element. A `null` password is treated the
+same as omitting it. Use [`ssl_key_type`](#ssl_key_type) to specify another
+supported key format.
 
 Types
 - string
@@ -1532,10 +2003,13 @@ Constant
 `GuzzleHttp\RequestOptions::SSL_KEY`
 
 > [!NOTE]
-> With the stream handler, `cert` and `ssl_key` must use the same passphrase when both options specify one because PHP streams expose only one SSL context passphrase.
+> With the stream handler, `cert` and `ssl_key` must use the same passphrase
+> when both options specify one because PHP streams expose only one SSL context
+> passphrase.
 
 > [!NOTE]
-> TLS client key options remain active during redirects. See [Cross-Origin Redirects](#cross-origin-redirects) for details.
+> TLS client key options remain active during redirects. See
+> [Cross-Origin Redirects](#cross-origin-redirects) for details.
 
 ## ssl_key_type
 
@@ -1558,7 +2032,8 @@ $client->request('GET', '/', [
 ]);
 ```
 
-The cURL handler passes this value to `CURLOPT_SSLKEYTYPE`. Supported values depend on libcurl and its TLS backend.
+The cURL handler passes this value to `CURLOPT_SSLKEYTYPE`. Supported values
+depend on libcurl and its TLS backend.
 
 > [!NOTE]
 > The stream handler supports only `PEM` private key files.
@@ -1587,13 +2062,16 @@ while (!$body->eof()) {
 ```
 
 > [!NOTE]
-> Streaming response support must be implemented by the HTTP handler used by a client. This option might not be supported by every HTTP handler, but the interface of the response object remains the same regardless of whether or not it is supported by the handler.
+> Streaming response support must be implemented by the HTTP handler used by a
+> client. This option might not be supported by every HTTP handler, but the
+> interface of the response object remains the same regardless of whether or not
+> it is supported by the handler.
 
 Handlers that do not support `stream` fall back to `sink` behavior. Digest
 authentication still protects configured sinks from intermediate challenge
-bodies. With `StreamHandler`, `stream => true`, and a configured `sink`, a Digest
-request drains the final body into the sink while a non-Digest request leaves the
-sink untouched.
+bodies. With `StreamHandler`, `stream => true`, and a configured `sink`, a
+Digest request drains the final body into the sink while a non-Digest request
+leaves the sink untouched.
 
 ## stream_context
 
@@ -1632,7 +2110,8 @@ option.
 ## synchronous
 
 Summary
-Set to true to inform HTTP handlers that you intend on waiting on the response. This can be useful for optimizations.
+Set to true to inform HTTP handlers that you intend on waiting on the response.
+This can be useful for optimizations.
 
 Types
 bool
@@ -1648,9 +2127,11 @@ Constant
 Summary
 Describes the SSL certificate verification behavior of a request.
 
-> - Set to `true` to enable SSL certificate verification and use the default CA bundle provided by operating system.
+> - Set to `true` to enable SSL certificate verification and use the default CA
+>   bundle provided by operating system.
 > - Set to `false` to disable certificate verification (this is insecure!).
-> - Set to a string to provide the path to a CA bundle to enable verification using a custom certificate.
+> - Set to a string to provide the path to a CA bundle to enable verification
+>   using a custom certificate.
 
 Types
 - bool
@@ -1673,12 +2154,20 @@ $client->request('GET', '/', ['verify' => '/path/to/cert.pem']);
 $client->request('GET', '/', ['verify' => false]);
 ```
 
-If you do not need a specific certificate bundle, then Mozilla provides a commonly used CA bundle which can be downloaded [here](https://curl.se/ca/cacert.pem) (provided by the maintainer of cURL). Once you have a CA bundle available on disk, you can set the "openssl.cafile" PHP ini setting to point to the path to the file, allowing you to omit the "verify" request option. Much more detail on SSL certificates can be found on the [cURL website](https://curl.se/docs/sslcerts.html).
+If you do not need a specific certificate bundle, then Mozilla provides a
+commonly used CA bundle which can be downloaded
+[here](https://curl.se/ca/cacert.pem) (provided by the maintainer of cURL). Once
+you have a CA bundle available on disk, you can set the "openssl.cafile" PHP ini
+setting to point to the path to the file, allowing you to omit the "verify"
+request option. Much more detail on SSL certificates can be found on the
+[cURL website](https://curl.se/docs/sslcerts.html).
 
 ## timeout
 
 Summary
-Number of seconds to use as the total timeout of the request. Use `0` to wait indefinitely (the default behavior). Positive values below `0.001` seconds are rejected by the built-in handlers.
+Number of seconds to use as the total timeout of the request. Use `0` to wait
+indefinitely (the default behavior). Positive values below `0.001` seconds are
+rejected by the built-in handlers.
 
 Types
 - int
@@ -1700,15 +2189,15 @@ determine. Connect timeouts throw
 `GuzzleHttp\Exception\ConnectTimeoutException`, which extends
 `ConnectException`. Other transport timeouts before a response is received throw
 `GuzzleHttp\Exception\NetworkTimeoutException`. Transport timeouts after a
-response is received throw `GuzzleHttp\Exception\ResponseTimeoutException`, which
-extends `GuzzleHttp\Exception\ResponseTransferException` and exposes the
+response is received throw `GuzzleHttp\Exception\ResponseTimeoutException`,
+which extends `GuzzleHttp\Exception\ResponseTransferException` and exposes the
 response.
 
-Timeouts from caller-supplied PSR-7 streams are not transport timeouts. A request
-body stream timeout while detecting size, buffering, rewinding, or reading upload
-bytes throws `GuzzleHttp\Exception\RequestException` before a response and
-`GuzzleHttp\Exception\ResponseException` after response headers. A slow response
-`sink` write also throws `ResponseException`.
+Timeouts from caller-supplied PSR-7 streams are not transport timeouts. A
+request body stream timeout while detecting size, buffering, rewinding, or
+reading upload bytes throws `GuzzleHttp\Exception\RequestException` before a
+response and `GuzzleHttp\Exception\ResponseException` after response headers. A
+slow response `sink` write also throws `ResponseException`.
 
 Timeout detection is best-effort: it relies on the stream exposing PHP's
 `timed_out` metadata. The network socket Guzzle opens for the stream handler
@@ -1742,20 +2231,60 @@ $request = $client->request('GET', 'https://example.com', ['version' => 2.0]);
 $request = $client->request('GET', 'https://example.com', ['version' => 3.0]);
 ```
 
-Guzzle defaults to HTTP/1.1. Set `version` when you want a request to use or attempt a different HTTP protocol version. Guzzle does not opt requests into HTTP/2 or HTTP/3 automatically just because the installed cURL stack supports them.
+Guzzle defaults to HTTP/1.1. Set `version` when you want a request to use or
+attempt a different HTTP protocol version. Guzzle does not opt requests into
+HTTP/2 or HTTP/3 automatically just because the installed cURL stack supports
+them.
 
-The built-in stream handler supports only `1.0` and `1.1`. The built-in cURL handler supports `1.0`, `1.1`, `2.0`, and `3.0`, but HTTP/2 and HTTP/3 depend on the PHP cURL extension and the linked runtime libcurl capabilities.
+The built-in stream handler supports only `1.0` and `1.1`. The built-in cURL
+handler supports `1.0`, `1.1`, `2.0`, and `3.0`, but HTTP/2 and HTTP/3 depend on
+the PHP cURL extension and the linked runtime libcurl capabilities.
 
-Empty or malformed `version` values are rejected before the request is sent. If the value is well-formed but the selected handler cannot use it, the transfer fails with `GuzzleHttp\Exception\RequestException`. For example, the stream handler rejects HTTP/2 and HTTP/3, the cURL handler rejects HTTP/2 when libcurl does not report HTTP/2 support, and the cURL handler rejects HTTP/3 when the installed cURL stack does not report HTTP/3 support.
+Empty or malformed `version` values are rejected before the request is sent. If
+the value is well-formed but the selected handler cannot use it, the transfer
+fails with `GuzzleHttp\Exception\RequestException`. For example, the stream
+handler rejects HTTP/2 and HTTP/3, the cURL handler rejects HTTP/2 when libcurl
+does not report HTTP/2 support, and the cURL handler rejects HTTP/3 when the
+installed cURL stack does not report HTTP/3 support.
 
-For cURL requests, `version` is converted to Guzzle-managed cURL options. Use this request option instead of passing raw `CURLOPT_HTTP_VERSION`; built-in cURL handlers reject raw cURL options that conflict with Guzzle-managed protocol handling.
+For cURL requests, `version` is converted to Guzzle-managed cURL options. Use
+this request option instead of passing raw `CURLOPT_HTTP_VERSION`; built-in cURL
+handlers reject raw cURL options that conflict with Guzzle-managed protocol
+handling.
 
-HTTP/2 uses libcurl's `CURL_HTTP_VERSION_2_0`. HTTP/3 uses libcurl's `CURL_HTTP_VERSION_3` unless `multiplex` is set to `Multiplexing::REQUIRE_EAGER` or `Multiplexing::REQUIRE_WAIT`, which use libcurl's strict HTTP/3-only mode. The non-required modes ask libcurl to attempt the requested protocol, but they are not strict modes: libcurl may use a lower HTTP version when negotiation or connection setup falls back. The response protocol version can therefore be lower than the `version` value you requested.
+HTTP/2 uses libcurl's `CURL_HTTP_VERSION_2_0`. HTTP/3 uses libcurl's
+`CURL_HTTP_VERSION_3` unless `multiplex` is set to `Multiplexing::REQUIRE_EAGER`
+or `Multiplexing::REQUIRE_WAIT`, which use libcurl's strict HTTP/3-only mode.
+The non-required modes ask libcurl to attempt the requested protocol, but they
+are not strict modes: libcurl may use a lower HTTP version when negotiation or
+connection setup falls back. The response protocol version can therefore be
+lower than the `version` value you requested.
 
-When multiple HTTP/2- or HTTP/3-capable requests start concurrently against the same origin, the `multiplex` request option controls whether they wait to share one connection instead of each opening their own.
+When multiple HTTP/2- or HTTP/3-capable requests start concurrently against the
+same origin, the `multiplex` request option controls whether they wait to share
+one connection instead of each opening their own.
 
-HTTP/3 support requires PHP to expose cURL's HTTP/3 constants, runtime libcurl 7.88.0 or higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3` feature. A libcurl version number is not enough by itself: libcurl must also be built with HTTP/3 and QUIC support, commonly through an HTTP/3 backend such as ngtcp2 with nghttp3 or quiche.
+HTTP/3 support requires PHP to expose cURL's HTTP/3 constants, runtime libcurl
+7.88.0 or higher, and runtime libcurl reporting the `CURL_VERSION_HTTP3`
+feature. A libcurl version number is not enough by itself: libcurl must also be
+built with HTTP/3 and QUIC support, commonly through an HTTP/3 backend such as
+ngtcp2 with nghttp3 or quiche.
 
-A request configured with `version => 3.0` must pass HTTP/3 support checks even if it uses a proxy. If a proxy is actually selected, whether through the `proxy` option or resolved from the environment, Guzzle does not try HTTP/3 through the proxy in non-required modes; it sends the transfer as HTTP/2 when available, otherwise HTTP/1.1. Required multiplexing rejects proxied HTTP/3 because it cannot guarantee HTTP/3 through the proxy. A matching proxy `no` rule or environment `no_proxy` entry makes the request direct, so HTTP/3 can still be attempted.
+A request configured with `version => 3.0` must pass HTTP/3 support checks even
+if it uses a proxy. If a proxy is actually selected, whether through the `proxy`
+option or resolved from the environment, Guzzle does not try HTTP/3 through the
+proxy in non-required modes; it sends the transfer as HTTP/2 when available,
+otherwise HTTP/1.1. Required multiplexing rejects proxied HTTP/3 because it
+cannot guarantee HTTP/3 through the proxy. A matching proxy `no` rule or
+environment `no_proxy` entry makes the request direct, so HTTP/3 can still be
+attempted.
 
-For HTTPS cURL requests, Guzzle sets a minimum of TLS 1.2 by default. That minimum also applies when HTTP/2 or HTTP/3 is requested, because cURL may fall back to a TLS-based HTTP/1.1 or HTTP/2 connection. If you set `crypto_method` to TLS 1.3, Guzzle keeps that stricter setting when the cURL stack exposes TLS 1.3 configuration. Raw `CURLOPT_SSLVERSION` values passed through the `curl` option are rejected because TLS version handling is managed by Guzzle. The `crypto_method_max` request option can cap the maximum TLS version, but the cap must not be lower than the effective minimum (TLS 1.2 by default for HTTPS unless `crypto_method` is set lower).
+For HTTPS cURL requests, Guzzle sets a minimum of TLS 1.2 by default. That
+minimum also applies when HTTP/2 or HTTP/3 is requested, because cURL may fall
+back to a TLS-based HTTP/1.1 or HTTP/2 connection. If you set `crypto_method` to
+TLS 1.3, Guzzle keeps that stricter setting when the cURL stack exposes TLS 1.3
+configuration. Raw `CURLOPT_SSLVERSION` values passed through the `curl` option
+are rejected because TLS version handling is managed by Guzzle. The
+`crypto_method_max` request option can cap the maximum TLS version, but the cap
+must not be lower than the effective minimum (TLS 1.2 by default for HTTPS
+unless `crypto_method` is set lower).
