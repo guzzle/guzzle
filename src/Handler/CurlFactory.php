@@ -23,7 +23,6 @@ use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\LazyOpenStream;
-use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
@@ -1222,42 +1221,11 @@ final class CurlFactory implements CurlFactoryInterface
 
     private static function redactProxyUserInfo(string $error, ?string $proxy): string
     {
-        if ($proxy === null || $proxy === '' || \strpos($proxy, '@') === false) {
+        if ($proxy === null || $proxy === '') {
             return $error;
         }
 
-        // The error message embeds the proxy string exactly as configured, so
-        // the userinfo needle is taken verbatim from the raw authority (up to
-        // the last '@' before any path, query, or fragment): parse_url() and
-        // Psr7\Uri normalize the components, e.g. by rewriting raw control
-        // bytes to '_', which could make the replacement miss.
-        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
-        $authority = \substr($proxyForParsing, \strpos($proxyForParsing, '://') + 3);
-        $authority = \substr($authority, 0, \strcspn($authority, '/?#'));
-        $atPosition = \strrpos($authority, '@');
-
-        if ($atPosition === false || $atPosition === 0) {
-            return $error;
-        }
-
-        $rawUserInfo = \substr($authority, 0, $atPosition);
-
-        // Redact with the same policy Psr7\Utils::redactUserInfo() applies to
-        // request URIs, so the bundled psr7 version governs the redacted form.
-        $redactedUserInfo = '***';
-
-        try {
-            $proxyUri = new Uri($proxyForParsing);
-            $redactedUserInfo = Psr7\Utils::redactUserInfo($proxyUri)->getUserInfo();
-
-            if ($redactedUserInfo === $proxyUri->getUserInfo()) {
-                return $error;
-            }
-        } catch (\InvalidArgumentException $e) {
-            // Unparseable as a URI: fall back to redacting the whole userinfo.
-        }
-
-        return \str_replace($rawUserInfo.'@', $redactedUserInfo.'@', $error);
+        return Psr7\Utils::redactUserInfoInString($error, $proxy);
     }
 
     /**
