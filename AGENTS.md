@@ -17,10 +17,10 @@
 - Classes holding streams, resources, or callbacks reject native PHP
   serialization, and refusal messages report the class name with
   `static::class`.
-- Never cast a float to string unless it is known to be finite: reject
-  non-finite floats where numeric values are accepted, and where one must be
-  stringified handle it explicitly, such as
-  `\is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF')`.
+- In general, numeric inputs should not accept non-finite floats. In situations
+  where they are accepted and we need to cast to a string, we should branch on
+  `\is_finite($value)`, using `(string) $value` for the finite case and
+  `\is_nan($value) ? 'NAN' : ($value > 0 ? 'INF' : '-INF')` otherwise.
 - Changes in behavior need a `CHANGELOG.md` entry in the unreleased section of
   the target branch and an `UPGRADING.md` note when the behavior differs between
   major versions.
