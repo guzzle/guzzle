@@ -71,7 +71,7 @@ class SessionCookieJar extends CookieJar
     {
         $this->autoSave = false;
 
-        throw new \LogicException(self::class.' should never be unserialized');
+        throw new \LogicException(static::class.' should never be unserialized');
     }
 
     /**
