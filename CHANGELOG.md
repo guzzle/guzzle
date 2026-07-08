@@ -119,6 +119,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Pass the request to `on_trailers` callbacks, reject non-callable `on_trailers` values, and wrap `on_trailers` callback exceptions in `ResponseException`
 - Wait for in-progress HTTP/2-capable connections by default (`multiplex` defaults to `Multiplexing::WAIT`)
 - Require libcurl 7.65.2 or newer for HTTP/2 requests so multiplex waiting is never silently unavailable
+- Require libcurl 7.54.0 for HTTPS proxies and requests tunneled through HTTP proxies
+- Require libcurl 7.37.0 for `Proxy-Authorization` headers through HTTP proxies
+- Suppress proxy CONNECT response headers for tunneled requests
 - Point rejections of the raw `CURLOPT_PIPEWAIT` cURL option at the `multiplex` request option
 - Reject cURL multi options that the runtime libcurl cannot apply
 - Reject unknown handler constructor options
