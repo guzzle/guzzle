@@ -14,9 +14,14 @@
   `\z`; a bare `$` accepts a trailing newline.
 - Never embed raw control bytes in exception messages and other diagnostics;
   escape or redact the offending value first.
-- Classes holding streams, resources, or callbacks reject native PHP
-  serialization, and refusal messages report the class name with
-  `static::class`.
+- Classes holding streams, resources, handles, callbacks, or credentials reject
+  native PHP serialization so they cannot join object-injection gadget chains:
+  `__serialize()` and `__unserialize()` both throw
+  `\LogicException(static::class.' should never be serialized')` and its
+  unserialized counterpart, usually via the repo's `@internal` non-serializable
+  trait. Guards that protect a `__destruct()` gadget also neutralize the
+  dangerous state before throwing, so the protection holds even if the exception
+  is swallowed.
 - In general, numeric inputs should not accept non-finite floats. In situations
   where they are accepted and we need to cast to a string, we should branch on
   `\is_finite($value)`, using `(string) $value` for the finite case and
