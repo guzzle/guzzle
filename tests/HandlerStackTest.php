@@ -206,6 +206,15 @@ class HandlerStackTest extends TestCase
         self::assertSame([], $meths[0]);
     }
 
+    public function testRemoveRejectsNonStringNonCallable(): void
+    {
+        $stack = new HandlerStack();
+
+        $this->expectException(\TypeError::class);
+
+        $stack->remove(new \stdClass());
+    }
+
     public function testCanAddBeforeByName(): void
     {
         $meths = $this->getFunctions();
