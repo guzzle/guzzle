@@ -30,6 +30,12 @@ final class AuthMiddleware
     private const CHALLENGE_CACHE_LIMIT = 32;
 
     /**
+     * Request option carrying nonce counts already spent during a Digest
+     * handshake, so stale retries advance instead of repeating a count.
+     */
+    private const DIGEST_NONCE_COUNTS_OPTION = '__guzzle_digest_nonce_counts';
+
+    /**
      * Headers that describe the request payload. A probe with an empty body
      * must not carry them.
      *
@@ -338,7 +344,15 @@ final class AuthMiddleware
             );
         }
 
-        $nc = $this->nextDigestNonceCount($challenge, $username, $password, $previousEntry);
+        $nonceCounts = self::digestNonceCountsFromOptions($options);
+
+        if ($previousEntry !== null
+            && $previousEntry['credentials'] === $this->digestCredentialKey($username, $password)
+        ) {
+            self::rememberDigestNonceCount($nonceCounts, $previousEntry['challenge'], $previousEntry['nextNc']);
+        }
+
+        $nc = $challenge->qop === null ? 1 : ($nonceCounts[self::digestNonceCountKey($challenge)] ?? 1);
 
         $authorization = DigestAuth::authorizationHeader(
             $request,
@@ -355,9 +369,15 @@ final class AuthMiddleware
 
         $response->getBody()->close();
 
+        self::rememberDigestNonceCount($nonceCounts, $challenge, $nc + 1);
+
         $retryOptions = $options;
         $retryOptions['__guzzle_digest_retries'] = $retries + 1;
+        $retryOptions[self::DIGEST_NONCE_COUNTS_OPTION] = $nonceCounts;
         $downstreamOptions = $retryOptions;
+        // The nonce-count map only carries handshake state into the retry
+        // recursion; downstream handlers must not observe it.
+        unset($downstreamOptions[self::DIGEST_NONCE_COUNTS_OPTION]);
         // The caller's delay applies once, before the first Digest leg, not
         // before each handshake retry.
         unset($downstreamOptions[RequestOptions::DELAY]);
@@ -416,26 +436,48 @@ final class AuthMiddleware
     }
 
     /**
-     * @param array{challenge: DigestChallenge, credentials: string, nextNc: int}|null $previousEntry
+     * @param array<array-key, mixed> $options
+     *
+     * @return array<string, int>
      */
-    private function nextDigestNonceCount(DigestChallenge $challenge, string $username, string $password, ?array $previousEntry): int
+    private static function digestNonceCountsFromOptions(array $options): array
     {
-        if ($previousEntry !== null
-            && $previousEntry['credentials'] === $this->digestCredentialKey($username, $password)
-            && self::sameDigestNonce($previousEntry['challenge'], $challenge)
-        ) {
-            return $previousEntry['nextNc'];
+        $counts = $options[self::DIGEST_NONCE_COUNTS_OPTION] ?? [];
+        if (!\is_array($counts)) {
+            return [];
         }
 
-        return 1;
+        $normalized = [];
+        foreach ($counts as $key => $nextNc) {
+            if (\is_string($key) && \is_int($nextNc) && $nextNc > 0 && $nextNc < \PHP_INT_MAX) {
+                $normalized[$key] = $nextNc;
+            }
+        }
+
+        return $normalized;
     }
 
-    private static function sameDigestNonce(DigestChallenge $left, DigestChallenge $right): bool
+    private static function digestNonceCountKey(DigestChallenge $challenge): string
     {
-        return $left->nonce === $right->nonce
-            && $left->realm === $right->realm
-            && $left->qop === $right->qop
-            && $left->algorithm['header'] === $right->algorithm['header'];
+        return \implode("\0", [
+            $challenge->realm,
+            $challenge->nonce,
+            $challenge->qop ?? '',
+            $challenge->algorithm['header'],
+        ]);
+    }
+
+    /**
+     * @param array<string, int> $counts
+     */
+    private static function rememberDigestNonceCount(array &$counts, DigestChallenge $challenge, int $nextNc): void
+    {
+        if ($challenge->qop === null) {
+            return;
+        }
+
+        $key = self::digestNonceCountKey($challenge);
+        $counts[$key] = \max($counts[$key] ?? 1, $nextNc);
     }
 
     /**

@@ -1408,6 +1408,66 @@ class AuthMiddlewareTest extends TestCase
         self::assertStringContainsString('nc=00000004', $requests[5]->getHeaderLine('Authorization'));
     }
 
+    public function testDigestNonceCountAdvancesWhenSameNonceIsStaleDuringInitialHandshake(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $staleHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", stale=true'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(401, $staleHeaders)),
+            $record(new Response(200)),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $response = $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertCount(3, $requests);
+        self::assertFalse($requests[0]->hasHeader('Authorization'));
+        self::assertStringContainsString('nonce="abc"', $requests[1]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000001', $requests[1]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nonce="abc"', $requests[2]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestNonceCountAdvancesForSameNonceStaleRetryWithoutChallengeReuse(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $staleHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", stale=true'];
+        $mock = new MockHandler([
+            $record(new Response(401, $challengeHeaders)),
+            $record(new Response(401, $staleHeaders)),
+            $record(new Response(200)),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::auth(false), 'auth');
+        $client = new Client(['handler' => $stack]);
+
+        $response = $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertCount(3, $requests);
+        self::assertFalse($requests[0]->hasHeader('Authorization'));
+        self::assertStringContainsString('nc=00000001', $requests[1]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+    }
+
     public function testDigestPreemptiveRejectedResponseClearsCache(): void
     {
         $requests = [];
@@ -1860,6 +1920,49 @@ class AuthMiddlewareTest extends TestCase
 
         self::assertCount(3, $requests);
         self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestChallengeCacheEvictsOldestOriginAndRefreshesRechallengedEntries(): void
+    {
+        $requests = [];
+        $record = static function (ResponseInterface $response) use (&$requests): callable {
+            return static function (RequestInterface $request) use (&$requests, $response): ResponseInterface {
+                $requests[] = $request;
+
+                return $response;
+            };
+        };
+        $limit = (new \ReflectionClass(AuthMiddleware::class))->getConstant('CHALLENGE_CACHE_LIMIT');
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'];
+        $refreshedHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="refreshed", qop="auth"'];
+        $queue = [];
+        for ($i = 0; $i < $limit; ++$i) {
+            $queue[] = $record(new Response(401, $challengeHeaders));
+            $queue[] = $record(new Response(200));
+        }
+        $queue[] = $record(new Response(401, $refreshedHeaders));
+        $queue[] = $record(new Response(200));
+        $queue[] = $record(new Response(401, $challengeHeaders));
+        $queue[] = $record(new Response(200));
+        $queue[] = $record(new Response(200));
+        $queue[] = $record(new Response(200));
+        $mock = new MockHandler($queue);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+        $options = ['auth' => ['a', 'b', 'digest']];
+
+        for ($i = 0; $i < $limit; ++$i) {
+            $client->get("http://origin{$i}.example.com", $options);
+        }
+        $client->get('http://origin0.example.com', $options);
+        $client->get("http://origin{$limit}.example.com", $options);
+        $client->get('http://origin0.example.com', $options);
+        $client->get('http://origin1.example.com', $options);
+
+        self::assertCount(2 * $limit + 6, $requests);
+        self::assertStringContainsString('nonce="abc"', $requests[2 * $limit]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nonce="refreshed"', $requests[2 * $limit + 4]->getHeaderLine('Authorization'));
+        self::assertStringContainsString('nc=00000002', $requests[2 * $limit + 4]->getHeaderLine('Authorization'));
+        self::assertFalse($requests[2 * $limit + 5]->hasHeader('Authorization'));
     }
 
     public function testDigestCacheHonorsAbsoluteDomainQuery(): void
