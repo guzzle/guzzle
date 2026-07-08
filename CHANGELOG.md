@@ -15,7 +15,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Redirects that discard the request body no longer require it to be rewindable
-- Synchronous requests sent through the cURL multi handler no longer wait for every queued transfer to complete
+- Synchronous cURL multi handler requests no longer wait for other queued transfers
 - Section SOCKS proxy connections by credentials on libcurl before 7.69.0
 - Reject request-level `CURLOPT_SHARE` when combined with authenticated SOCKS proxy configuration
 - Redact proxy userinfo containing raw control bytes in cURL errors
