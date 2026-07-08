@@ -122,6 +122,37 @@ still catch it. `catch` blocks that need both forms must use the global type:
 } catch (\InvalidArgumentException $e) { // catches global AND Guzzle's
 ```
 
+### Wrapping third-party SPL exceptions in middleware
+
+Middleware sometimes calls PSR-17 factories or PSR-7 parsers while handling a
+response — for example resolving a redirect `Location` header through the
+configured `uri_factory`. Those components are allowed to throw the global
+`\InvalidArgumentException`, so the wrapping `catch` must use the global type,
+and the failure should surface as the appropriate response-aware exception
+(`BadResponseException` for a malformed `Location`, since a response exists):
+
+```php
+try {
+    $uri = $uriFactory->createUri($location);
+} catch (\InvalidArgumentException $e) { // global type: also catches Guzzle's
+    throw new BadResponseException("Redirect URI, {$location}, is invalid", $request, $response, $e);
+}
+```
+
+Keep Guzzle-owned option validation *outside* such `try` blocks. Because
+`GuzzleHttp\Exception\InvalidArgumentException` extends the global class, a broad
+`catch (\InvalidArgumentException)` would otherwise reclassify a caller error
+(the wrong `uri_factory` type, an invalid `allow_redirects` value) as a response
+failure. Validate the option first and throw the Guzzle type, then wrap only the
+third-party call:
+
+```php
+// GOOD — caller error is thrown before the wrapping try block.
+if (!$uriFactory instanceof UriFactoryInterface) {
+    throw new InvalidArgumentException('uri_factory must be an instance of '.UriFactoryInterface::class);
+}
+```
+
 ## `GuzzleHttp\Exception\RequestException`
 
 `class RequestException extends TransferException implements RequestExceptionInterface`
