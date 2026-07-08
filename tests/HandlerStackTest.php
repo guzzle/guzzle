@@ -79,6 +79,26 @@ class HandlerStackTest extends TestCase
         $stack->resolve();
     }
 
+    public function testRejectsNativePhpUnserialization(): void
+    {
+        $class = HandlerStack::class;
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage($class.' should never be unserialized');
+
+        \unserialize(\sprintf('O:%d:"%s":0:{}', \strlen($class), $class), ['allowed_classes' => [$class]]);
+    }
+
+    public function testRejectsNativePhpUnserializationWithRuntimeClassName(): void
+    {
+        $class = HandlerStackSerializationTestDouble::class;
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage($class.' should never be unserialized');
+
+        \unserialize(\sprintf('O:%d:"%s":0:{}', \strlen($class), $class), ['allowed_classes' => [$class]]);
+    }
+
     public function testResolveRejectsMiddlewareReturningNonCallable(): void
     {
         $stack = new HandlerStack(static function (string $value): string {
@@ -305,4 +325,8 @@ class HandlerStackTest extends TestCase
     public function bar(): void
     {
     }
+}
+
+final class HandlerStackSerializationTestDouble extends HandlerStack
+{
 }

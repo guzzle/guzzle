@@ -8438,4 +8438,16 @@ class CurlFactoryTest extends TestCase
             \curl_share_close($shareHandle);
         }
     }
+
+    public function testRejectsNativePhpUnserialization(): void
+    {
+        $class = CurlFactory::class;
+
+        try {
+            \unserialize(\sprintf('O:%d:"%s":0:{}', \strlen($class), $class), ['allowed_classes' => [$class]]);
+            self::fail('Expected unserialization to fail.');
+        } catch (\LogicException $e) {
+            self::assertSame($class.' should never be unserialized', $e->getMessage());
+        }
+    }
 }

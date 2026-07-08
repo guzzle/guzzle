@@ -179,6 +179,30 @@ class SessionCookieJarTest extends TestCase
         self::assertSame(0, SessionCookieJarStringableMarker::$calls);
     }
 
+    public function testRejectsNativePhpUnserialization(): void
+    {
+        $class = SessionCookieJar::class;
+
+        try {
+            \unserialize(self::serializedObject($class), ['allowed_classes' => [$class]]);
+            self::fail('Expected unserialization to fail.');
+        } catch (\LogicException $e) {
+            self::assertSame($class.' should never be unserialized', $e->getMessage());
+        }
+    }
+
+    public function testRejectsNativePhpUnserializationWithRuntimeClassName(): void
+    {
+        $class = SessionCookieJarSerializationTestDouble::class;
+
+        try {
+            \unserialize(self::serializedObject($class), ['allowed_classes' => [$class]]);
+            self::fail('Expected unserialization to fail.');
+        } catch (\LogicException $e) {
+            self::assertSame($class.' should never be unserialized', $e->getMessage());
+        }
+    }
+
     public static function providerPersistsToSessionParameters(): array
     {
         return [
@@ -239,4 +263,8 @@ final class SessionCookieJarTestStringable
 final class SessionCookieJarStringableMarker
 {
     public static int $calls = 0;
+}
+
+final class SessionCookieJarSerializationTestDouble extends SessionCookieJar
+{
 }

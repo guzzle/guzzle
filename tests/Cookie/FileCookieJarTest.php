@@ -246,6 +246,30 @@ class FileCookieJarTest extends TestCase
         unset($jar, $reloaded);
     }
 
+    public function testRejectsNativePhpUnserialization(): void
+    {
+        $class = FileCookieJar::class;
+
+        try {
+            \unserialize(self::serializedObject($class), ['allowed_classes' => [$class]]);
+            self::fail('Expected unserialization to fail.');
+        } catch (\LogicException $e) {
+            self::assertSame($class.' should never be unserialized', $e->getMessage());
+        }
+    }
+
+    public function testRejectsNativePhpUnserializationWithRuntimeClassName(): void
+    {
+        $class = FileCookieJarSerializationTestDouble::class;
+
+        try {
+            \unserialize(self::serializedObject($class), ['allowed_classes' => [$class]]);
+            self::fail('Expected unserialization to fail.');
+        } catch (\LogicException $e) {
+            self::assertSame($class.' should never be unserialized', $e->getMessage());
+        }
+    }
+
     public static function providerPersistsToFileFileParameters(): array
     {
         return [
@@ -306,4 +330,8 @@ final class FileCookieJarTestStringable
 final class FileCookieJarStringableMarker
 {
     public static int $calls = 0;
+}
+
+final class FileCookieJarSerializationTestDouble extends FileCookieJar
+{
 }

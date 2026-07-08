@@ -116,7 +116,7 @@ final class CurlHandler
     {
         $this->closed = true;
 
-        throw new \LogicException(self::class.' should never be unserialized');
+        throw new \LogicException(static::class.' should never be unserialized');
     }
 
     private function assertOpen(): void

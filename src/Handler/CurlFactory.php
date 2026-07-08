@@ -2736,6 +2736,6 @@ final class CurlFactory implements CurlFactoryInterface
         $this->handles = [];
         $this->shareHandle = null;
 
-        throw new \LogicException(self::class.' should never be unserialized');
+        throw new \LogicException(static::class.' should never be unserialized');
     }
 }

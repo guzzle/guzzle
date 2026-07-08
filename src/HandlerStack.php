@@ -227,7 +227,7 @@ class HandlerStack
         $this->stack = [];
         $this->cached = null;
 
-        throw new \LogicException(self::class.' should never be unserialized');
+        throw new \LogicException(static::class.' should never be unserialized');
     }
 
     private function findByName(string $name): int

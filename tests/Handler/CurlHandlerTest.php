@@ -395,6 +395,18 @@ class CurlHandlerTest extends TestCase
         self::assertHandlerShareWasCreated();
     }
 
+    public function testRejectsNativePhpUnserialization(): void
+    {
+        $class = CurlHandler::class;
+
+        try {
+            \unserialize(\sprintf('O:%d:"%s":0:{}', \strlen($class), $class), ['allowed_classes' => [$class]]);
+            self::fail('Expected unserialization to fail.');
+        } catch (\LogicException $e) {
+            self::assertSame($class.' should never be unserialized', $e->getMessage());
+        }
+    }
+
     private static function assertHandlerShareWasCreated(): void
     {
         $locks = [\CURL_LOCK_DATA_DNS];
