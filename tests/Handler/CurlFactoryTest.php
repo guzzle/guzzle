@@ -1907,6 +1907,17 @@ class CurlFactoryTest extends TestCase
         self::assertSame('Failed to connect via http://'.$redactedUserInfo.'@proxy.example.com:8125', $redacted);
     }
 
+    public function testRedactsProxyCredentialsContainingRawControlBytes(): void
+    {
+        $proxy = "http://user:se\x01cr\x7Fet@proxy.example.com:8125";
+        $redactedUserInfo = Psr7\Utils::redactUserInfo(new Psr7\Uri($proxy))->getUserInfo();
+
+        $redacted = self::redactProxyUserInfo('Failed to connect via '.$proxy, $proxy);
+
+        self::assertStringNotContainsString("se\x01cr\x7Fet", $redacted);
+        self::assertSame('Failed to connect via http://'.$redactedUserInfo.'@proxy.example.com:8125', $redacted);
+    }
+
     public function testRedactsUnparsableProxyCredentialsIndependentlyOfCurlErrorText(): void
     {
         $proxy = 'http://user:secret@127.0.0.1:99999999';
