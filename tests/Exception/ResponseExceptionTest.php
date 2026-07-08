@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests\Exception;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Psr7\Request;
@@ -70,7 +71,7 @@ class ResponseExceptionTest extends TestCase
     {
         $e = new ResponseException('foo', new Request('GET', '/'), new Response(418));
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Cannot replace response with a different status code.');
 
         $e->withResponse(new Response(200));

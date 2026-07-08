@@ -270,7 +270,7 @@ class RedirectMiddlewareTest extends TestCase
         });
         $request = new Request('POST', 'http://example.com/', [], 'payload');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('stream_factory must be an instance of Psr\\Http\\Message\\StreamFactoryInterface');
 
         $redirectMiddleware->modifyRequest($request, [
@@ -574,13 +574,26 @@ class RedirectMiddlewareTest extends TestCase
         $handler = $stack->resolve();
         $request = new Request('GET', 'http://example.com');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('uri_factory must be an instance of Psr\\Http\\Message\\UriFactoryInterface');
 
         $handler($request, [
             'allow_redirects' => ['max' => 2],
             RequestOptions::URI_FACTORY => new \stdClass(),
         ])->wait();
+    }
+
+    public function testRejectsInvalidAllowRedirectsOption(): void
+    {
+        $middleware = new RedirectMiddleware(static function (): void {
+        });
+
+        $this->expectException(\GuzzleHttp\Exception\InvalidArgumentException::class);
+        $this->expectExceptionMessage('allow_redirects must be true, false, or array');
+
+        $middleware(new Request('GET', 'http://example.com'), [
+            'allow_redirects' => 'yes',
+        ]);
     }
 
     public function testReducesRefererToOriginOnCrossOriginRedirect(): void
