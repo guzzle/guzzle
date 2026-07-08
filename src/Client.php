@@ -819,6 +819,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (!isset($this->config['headers'])) {
             $this->config['headers'] = ['User-Agent' => Utils::defaultUserAgent()];
         } else {
+            self::assertHeaderOptionTypes($this->config['headers']);
+
             // Add the User-Agent header if one was not already set.
             $hasUserAgent = false;
             foreach (\array_keys($this->config['headers']) as $name) {
@@ -831,10 +833,6 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             if (!$hasUserAgent) {
                 $this->config['headers']['User-Agent'] = Utils::defaultUserAgent();
             }
-        }
-
-        if (\is_array($this->config['headers'])) {
-            self::assertHeaderOptionTypes($this->config['headers']);
         }
     }
 
@@ -1370,12 +1368,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     {
         $request = $this->applyOptions($request, $options);
 
-        self::assertRequestProtocolVersion($request);
-
         /** @var callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler */
         $handler = $this->config['handler'];
 
         try {
+            self::assertRequestProtocolVersion($request);
+
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::promiseFor($handler($request, $options));
         } catch (\Throwable $e) {

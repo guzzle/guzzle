@@ -162,6 +162,28 @@ class ClientTest extends TestCase
         yield ['foo'];
     }
 
+    public function testSendAsyncRejectsMalformedRequestProtocolVersion(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = self::requestWithProtocolVersion('HTTP/1.1');
+
+        $promise = $client->sendAsync($request);
+
+        self::assertTrue(Is::rejected($promise));
+
+        try {
+            $promise->wait();
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame('HTTP/1.1', $e->getRequest()->getProtocolVersion());
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertSame('HTTP protocol version must be a valid HTTP version number.', $e->getMessage());
+        }
+
+        self::assertCount(1, $mock);
+    }
+
     public function testClientHasOptions(): void
     {
         $client = new Client([
@@ -1726,6 +1748,16 @@ class ClientTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $client->get('http://foo.com', ['headers' => 'foo']);
+    }
+
+    public function testRejectsInvalidDefaultHeaders(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'Passing string to request option "headers" is invalid; expected array<array-key, string|non-empty-array<array-key, string>>|null.'
+        );
+
+        new Client(['headers' => 'foo']);
     }
 
     /**
