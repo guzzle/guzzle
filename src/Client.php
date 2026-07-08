@@ -392,7 +392,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
-     * The HttpClient PSR (PSR-18) specify this method.
+     * The HttpClient PSR (PSR-18) specifies this method.
      *
      * {@inheritDoc}
      */
