@@ -152,6 +152,28 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame('http://example.com/foo', (string) $mock->getLastRequest()->getUri());
     }
 
+    public function testProtocolRelativeRedirectUsesConfiguredUriFactory(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => '//test.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $factory = new RedirectTestUriFactory();
+        $request = new Request('GET', 'http://example.com/base?a=b');
+
+        $handler($request, [
+            'allow_redirects' => ['max' => 2],
+            RequestOptions::URI_FACTORY => $factory,
+        ])->wait();
+
+        self::assertSame(['//test.com/foo'], $factory->uriCalls());
+        self::assertInstanceOf(RedirectTestUri::class, $mock->getLastRequest()->getUri());
+        self::assertSame('http://test.com/foo', (string) $mock->getLastRequest()->getUri());
+    }
+
     public function testSendUsesClientUriFactoryForRedirects(): void
     {
         $mock = new MockHandler([
