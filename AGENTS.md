@@ -2,11 +2,8 @@
 
 ## Code and tooling
 
-- Backwards compatibility on released branches is paramount, and breaking
-  changes are only acceptable on an unreleased major version branch.
-- The minimum supported PHP version is 7.4, and all code must remain compatible
-  with it.
-- PHPStan and PHP-CS-Fixer must be run against PHP 7.4.
+- All code must remain compatible with PHP 7.4, and PHPStan and PHP-CS-Fixer
+  must be run against PHP 7.4.
 - Always pass an explicit character list to `trim()`, `ltrim()`, and `rtrim()`;
   never rely on the default characters.
 - Handle `preg_*` engine failures: when the result is used as data, test for
@@ -22,11 +19,9 @@
   `static::class`.
 - Reject non-finite floats where numeric values are accepted or converted to
   strings.
-- Keep new tests consistent with the existing tests in style and structure, and
-  only add tests that meaningfully cover behavior.
-- Changes in behavior need tests, a `CHANGELOG.md` entry in the unreleased
-  section of the target branch, and an `UPGRADING.md` note when the behavior
-  differs between major versions.
+- Changes in behavior need a `CHANGELOG.md` entry in the unreleased section of
+  the target branch and an `UPGRADING.md` note when the behavior differs between
+  major versions.
 
 ## Contributor references
 
@@ -41,8 +36,6 @@
 - Wrap markdown prose and PHPDoc text to 80 columns using greedy wrapping. Never
   split a markdown link or an inline code span across a line break; a line that
   cannot be broken may exceed the limit. Avoid em dashes.
-- PHPDoc generic types always put a space after each comma, as in
-  `array<array-key, string>`.
 - Keep PHPDoc and the corresponding `docs/` pages in sync: shared prose is
   deliberately word-for-word identical, including boilerplate copied verbatim
   between related functions, so apply the same edit to every copy. Only
