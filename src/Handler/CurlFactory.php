@@ -937,30 +937,32 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         // The error message embeds the proxy string exactly as configured, so
-        // the userinfo needle is taken verbatim from the raw authority (up to
-        // the last '@' before any path, query, or fragment): parse_url() and
-        // Psr7\Uri normalize the components, e.g. by rewriting raw control
-        // bytes to '_', which could make the replacement miss.
+        // the userinfo needle is taken verbatim from the raw string:
+        // parse_url() and Psr7\Uri normalize the components, e.g. by rewriting
+        // raw control bytes to '_', which could make the replacement miss.
         $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
         $remainder = \substr($proxyForParsing, \strpos($proxyForParsing, '://') + 3);
-        $authority = \substr($remainder, 0, \strcspn($remainder, '/?#'));
-        $atPosition = \strrpos($authority, '@');
 
-        if ($atPosition === false || $atPosition === 0) {
-            // The last '@' sits past a raw '/', '?', or '#': not userinfo in
-            // a parseable proxy URL, but a proxy that defeats parse_url() may
-            // carry the separator inside its credentials, so everything up to
-            // the last '@' is redacted as a safe-side fallback.
-            if (\parse_url($proxyForParsing) !== false) {
-                return $error;
-            }
-
+        if (\parse_url($proxyForParsing) === false) {
+            // Raw '/', '?', or '#' separators may sit inside the credentials
+            // of a proxy that defeats parse_url(), so the redaction cannot
+            // stop at the apparent authority.
             $atPosition = \strrpos($remainder, '@');
+
             if ($atPosition === false || $atPosition === 0) {
                 return $error;
             }
 
             return \str_replace(\substr($remainder, 0, $atPosition).'@', '***@', $error);
+        }
+
+        $authority = \substr($remainder, 0, \strcspn($remainder, '/?#'));
+        $atPosition = \strrpos($authority, '@');
+
+        if ($atPosition === false || $atPosition === 0) {
+            // A parseable proxy URL with '@' only past its authority, or with
+            // an empty userinfo, carries no credentials to redact.
+            return $error;
         }
 
         $rawUserInfo = \substr($authority, 0, $atPosition);

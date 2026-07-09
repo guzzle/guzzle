@@ -1590,12 +1590,40 @@ class CurlFactoryTest extends TestCase
         yield 'hash in password' => ['http://user:se#cret@proxy.example.com:8125'];
     }
 
-    public function testLeavesCurlErrorsUntouchedForParseableProxiesWithAtInPath(): void
+    /**
+     * @dataProvider proxyMultiAtSeparatorProvider
+     */
+    public function testRedactsUnparsableProxyCredentialsContainingMultipleAtSigns(string $proxy): void
     {
-        $proxy = 'http://proxy.example.com:8125/health@check';
+        $redacted = self::redactProxyUserInfo("Unsupported proxy syntax in '".$proxy."'", $proxy);
+
+        self::assertStringNotContainsString('old', $redacted);
+        self::assertStringNotContainsString('cret', $redacted);
+        self::assertSame("Unsupported proxy syntax in 'http://***@real.example'", $redacted);
+    }
+
+    public static function proxyMultiAtSeparatorProvider(): iterable
+    {
+        yield 'slash between at signs' => ['http://user:old@proxy.example.com:99999999/se:cret@real.example'];
+        yield 'question mark between at signs' => ['http://user:old@proxy.example.com:99999999?se:cret@real.example'];
+        yield 'hash between at signs' => ['http://user:old@proxy.example.com:99999999#se:cret@real.example'];
+    }
+
+    /**
+     * @dataProvider proxyParseableAtProvider
+     */
+    public function testLeavesCurlErrorsUntouchedForParseableProxiesWithAtPastTheAuthority(string $proxy): void
+    {
         $error = "Failed to connect via '".$proxy."'";
 
         self::assertSame($error, self::redactProxyUserInfo($error, $proxy));
+    }
+
+    public static function proxyParseableAtProvider(): iterable
+    {
+        yield 'at sign in path' => ['http://proxy.example.com:8125/health@check'];
+        yield 'at sign in query' => ['http://proxy.example.com:8125?q=user@example.com'];
+        yield 'at sign in fragment' => ['http://proxy.example.com:8125#frag@ment'];
     }
 
     public function testLeavesCurlErrorsUntouchedForProxiesWithoutCredentials(): void
