@@ -2070,6 +2070,44 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testReleasesHandleWhenOnStatsThrowsDuringTick(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $events = [];
+        $handler = new CurlMultiHandler([
+            'select_timeout' => 0,
+            'handle_factory' => self::recordingHandleFactory($events),
+        ]);
+        $previous = new \RuntimeException('stats failed');
+        $promise = $handler(new Request('GET', Server::$url), [
+            'on_stats' => static function () use (&$events, $previous): void {
+                $events[] = 'on_stats';
+                throw $previous;
+            },
+        ]);
+
+        try {
+            self::tickUntilSettled($handler, $promise);
+
+            self::assertTrue(P\Is::rejected($promise));
+            self::assertSame(['release', 'on_stats'], $events);
+
+            foreach (['handles', 'delays'] as $map) {
+                $property = new \ReflectionProperty(CurlMultiHandler::class, $map);
+                if (\PHP_VERSION_ID < 80100) {
+                    $property->setAccessible(true);
+                }
+
+                self::assertSame([], $property->getValue($handler));
+            }
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
     public function testWaitFalseRejectsPromiseWhenFinishThrows(): void
     {
         Server::flush();
@@ -2507,9 +2545,41 @@ class CurlMultiHandlerTest extends TestCase
         return $readShareHandleState($handler);
     }
 
+    /**
+     * @param array<int, string> $events
+     */
+    private static function recordingHandleFactory(array &$events): CurlFactoryInterface
+    {
+        return new class($events) implements CurlFactoryInterface {
+            /** @var array<int, string> */
+            private $events;
+
+            /** @var CurlFactory */
+            private $factory;
+
+            public function __construct(array &$events)
+            {
+                $this->events = &$events;
+                $this->factory = new CurlFactory(1);
+            }
+
+            public function create(RequestInterface $request, array $options): EasyHandle
+            {
+                return $this->factory->create($request, $options);
+            }
+
+            public function release(EasyHandle $easy): void
+            {
+                $this->events[] = 'release';
+                $this->factory->release($easy);
+            }
+        };
+    }
+
     private static function tickUntilSettled(CurlMultiHandler $handler, P\PromiseInterface $promise): void
     {
-        for ($i = 0; $i < 1000 && P\Is::pending($promise); ++$i) {
+        $deadline = \microtime(true) + 5;
+        while (P\Is::pending($promise) && \microtime(true) < $deadline) {
             $handler->tick();
         }
 
