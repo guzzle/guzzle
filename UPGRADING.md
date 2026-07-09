@@ -763,6 +763,16 @@ how `0` disables the `timeout` and `read_timeout` options. The stream handler
 still accepts `connect_timeout` without effect; its connect phase is bounded
 by the `read_timeout` idle timeout, which shares the 60-second default.
 
+#### Stream Handler Header Injection
+
+The stream handler no longer lets PHP's HTTP stream wrapper inject header
+values from ini configuration. A request without a User-Agent header no longer
+sends the `user_agent` ini value, and the `from` ini value is no longer sent:
+the wrapper offers no way to omit the From header entirely, so deployments
+that configure the ini send an empty From header instead of the configured
+address. Both now match the cURL handlers, which ignore those ini settings.
+Set the headers explicitly on the request or client to send them.
+
 #### Proxy Option Validation
 
 The `proxy` request option is validated more strictly. Proxy values must be

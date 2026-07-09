@@ -850,7 +850,18 @@ final class StreamHandler
         return $this->createResource(
             function () use ($uri, $contextResource, $idleTimeout, $timeout) {
                 $this->lastDeadline = $timeout > 0 ? Utils::currentTime() + $timeout / 1000 : null;
-                $resource = @\fopen((string) $uri, 'r', false, $contextResource);
+
+                // Blank the from ini setting for the transfer so ambient
+                // configuration cannot leak into a From header; the wrapper
+                // cannot omit the header, so a configured ini sends it empty.
+                $iniFrom = \function_exists('ini_set') ? \ini_set('from', '') : false;
+                try {
+                    $resource = @\fopen((string) $uri, 'r', false, $contextResource);
+                } finally {
+                    if ($iniFrom !== false) {
+                        \ini_set('from', $iniFrom);
+                    }
+                }
 
                 // PHP 8.5 deprecates the local $http_response_header variable.
                 if (function_exists('http_get_last_response_headers')) {
@@ -970,6 +981,13 @@ final class StreamHandler
                 'peer_name' => $request->getUri()->getHost(),
             ],
         ];
+
+        // An empty context user_agent stops the HTTP stream wrapper from
+        // appending a User-Agent header from the user_agent ini setting, so a
+        // request without the header sends none, like the cURL handlers.
+        if (!$request->hasHeader('User-Agent')) {
+            $context['http']['user_agent'] = '';
+        }
 
         try {
             $body = (string) $request->getBody();
