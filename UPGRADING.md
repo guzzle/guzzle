@@ -717,6 +717,28 @@ cURL handlers. When a built-in handler applies a timeout option, positive
 values below `0.001` seconds now throw `InvalidArgumentException` instead of
 being converted to no timeout.
 
+#### Stream Handler Timeout Enforcement
+
+The stream handler now enforces the `timeout` request option as a total
+transfer deadline when it buffers the response, matching the cURL handlers'
+treatment of the option as the total time of the request. Once the deadline
+passes while the response body is being buffered, the transfer is aborted and
+the request is rejected with `ResponseTimeoutException`. When `read_timeout` is
+also set, each body read is bounded by the shorter of the read timeout and the
+remaining total timeout. A buffered response whose header block arrives in
+small pieces past the deadline is rejected once the headers are complete,
+because PHP's HTTP stream wrapper can only bound the time between packets
+while waiting for response headers. In Guzzle 7, the stream handler applies
+`timeout` only while connecting and as the idle time between packets, so a
+server that keeps sending small pieces of data can extend a request past the
+configured timeout indefinitely and still produce a successful response.
+
+With the `stream` request option enabled, the deadline is not enforced: the
+stream handler applies `timeout` while connecting and as the idle time between
+packets, as in Guzzle 7, and `timeout` serves as the default idle cap between
+reads on the streamed body when `read_timeout` is not set. Use `read_timeout`
+to bound streamed reads explicitly.
+
 #### Proxy Option Validation
 
 The `proxy` request option is validated more strictly. Proxy values must be

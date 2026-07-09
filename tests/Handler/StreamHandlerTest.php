@@ -3406,6 +3406,164 @@ class StreamHandlerTest extends TestCase
         self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
+    public function testTimeoutAbortsDrainingWhenResponseBodyArrivesSlowly(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'guzzle-server/drip-timeout');
+        $stats = null;
+        $exception = null;
+
+        try {
+            $handler(
+                $request,
+                [
+                    RequestOptions::TIMEOUT => 0.5,
+                    'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                        $stats = $transferStats;
+                    },
+                ]
+            )->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            $exception = $e;
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('Timed out while transferring the response body', $e->getMessage());
+            self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($exception->getResponse(), $stats->getResponse());
+        self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testTimeoutAbortsDrainingWhenReadTimeoutIsLonger(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'guzzle-server/drip-timeout');
+
+        try {
+            $handler(
+                $request,
+                [
+                    RequestOptions::TIMEOUT => 0.5,
+                    RequestOptions::READ_TIMEOUT => 10,
+                ]
+            )->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('Timed out while transferring the response body', $e->getMessage());
+        }
+    }
+
+    public function testTimeoutAbortsDrainingWhenGzipBodyArrivesSlowly(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'guzzle-server/drip-timeout-gzip');
+
+        try {
+            $handler(
+                $request,
+                [
+                    'decode_content' => true,
+                    RequestOptions::TIMEOUT => 0.5,
+                ]
+            )->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('Timed out while transferring the response body', $e->getMessage());
+            self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
+        }
+    }
+
+    public function testTimeoutDoesNotApplyToStreamedResponseBody(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $response = $handler(
+            new Request('GET', Server::$url.'guzzle-server/drip-timeout'),
+            [
+                RequestOptions::TIMEOUT => 0.5,
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(\str_repeat('.', 20), $response->getBody()->getContents());
+    }
+
+    public function testTimeoutAllowsSlowResponseBodyToCompleteWithinDeadline(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $response = $handler(
+            new Request('GET', Server::$url.'guzzle-server/drip-timeout'),
+            [RequestOptions::TIMEOUT => 30]
+        )->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(\str_repeat('.', 20), (string) $response->getBody());
+    }
+
+    public function testTimeoutRejectsResponseWhenHeadersExceedDeadline(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'guzzle-server/drip-timeout-headers');
+        $stats = null;
+        $exception = null;
+
+        try {
+            $handler(
+                $request,
+                [
+                    RequestOptions::TIMEOUT => 0.4,
+                    'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                        $stats = $transferStats;
+                    },
+                ]
+            )->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            $exception = $e;
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('Timed out while receiving the response headers', $e->getMessage());
+            self::assertNull($e->getPrevious());
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertTrue($stats->hasResponse());
+        self::assertSame($exception->getResponse(), $stats->getResponse());
+        self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testTimeoutDoesNotRejectStreamedResponseWhenHeadersExceedDeadline(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $response = $handler(
+            new Request('GET', Server::$url.'guzzle-server/drip-timeout-headers'),
+            [
+                RequestOptions::TIMEOUT => 0.4,
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('ok', $response->getBody()->getContents());
+    }
+
     public function testHandlesGarbageHttpServerGracefully(): void
     {
         $handler = new StreamHandler();

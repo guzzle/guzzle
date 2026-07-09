@@ -75,6 +75,8 @@ final class StreamHandler
 
     private array $lastHeaders = [];
 
+    private ?float $lastDeadline = null;
+
     private ?\Throwable $onStatsException = null;
 
     private string $transportSharingMode;
@@ -299,6 +301,8 @@ final class StreamHandler
     {
         $hdrs = $this->lastHeaders;
         $this->lastHeaders = [];
+        $deadline = $this->lastDeadline;
+        $this->lastDeadline = null;
 
         try {
             [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($hdrs);
@@ -311,6 +315,7 @@ final class StreamHandler
 
         // Wrap the transport resource with the configured stream factory before
         // optional content decoding layers an InflateStream on top.
+        $resource = $stream;
         $stream = $streamFactory->createStreamFromResource($stream);
         [$stream, $headers] = self::checkDecode($options, $headers, $stream);
 
@@ -327,6 +332,17 @@ final class StreamHandler
             $response = $response->withBody($sink);
         } catch (\Throwable $e) {
             return $this->rejectResponseCreation($options, $request, $startTime, $e);
+        }
+
+        // The header phase inside fopen() can only bound the time between
+        // packets, so a header block that trickled in past the deadline is
+        // rejected here, once it is complete.
+        if ($deadline !== null && empty($options['stream']) && Utils::currentTime() >= $deadline) {
+            $reason = new ResponseTimeoutException('Timed out while receiving the response headers', $request, $response);
+            $this->invokeStats($options, $request, $startTime, $response, $reason);
+
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor($reason);
         }
 
         if (isset($options['on_headers'])) {
@@ -354,7 +370,10 @@ final class StreamHandler
             }
         } elseif ($sink !== $stream) {
             try {
-                $this->drain($request, $response, $stream, $sink);
+                $source = $deadline !== null
+                    ? self::createDeadlineSource($stream, $resource, $deadline, $options)
+                    : $stream;
+                $this->drain($request, $response, $source, $sink);
             } catch (ResponseException $e) {
                 $this->invokeStats($options, $request, $startTime, $response, $e);
 
@@ -657,6 +676,35 @@ final class StreamHandler
     }
 
     /**
+     * Decorates the drained source stream so each read is armed with the
+     * remaining wall-clock budget of the "timeout" request option, bounded
+     * by "read_timeout" when that is shorter.
+     *
+     * @param resource $resource
+     */
+    private static function createDeadlineSource(StreamInterface $stream, $resource, float $deadline, array $options): StreamInterface
+    {
+        $readTimeout = isset($options['read_timeout'])
+            ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout') / 1000
+            : null;
+
+        return Psr7\FnStream::decorate($stream, [
+            'read' => static function (int $length) use ($stream, $resource, $deadline, $readTimeout): string {
+                $remaining = $deadline - Utils::currentTime();
+                if ($remaining <= 0) {
+                    throw new TimeoutException('Unable to read from stream: timed out');
+                }
+
+                $arm = $readTimeout !== null ? \min($remaining, $readTimeout) : $remaining;
+                $sec = (int) $arm;
+                \stream_set_timeout($resource, $sec, (int) (($arm - $sec) * 1e6));
+
+                return $stream->read($length);
+            },
+        ]);
+    }
+
+    /**
      * Create a resource and check to ensure it was created successfully
      *
      * @param callable(): (resource|false) $callback Callable that returns a stream resource, or false when resource creation fails.
@@ -745,6 +793,10 @@ final class StreamHandler
             ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout')
             : null;
 
+        $timeout = isset($options['timeout'])
+            ? Utils::timeoutToMilliseconds($options['timeout'], 'timeout')
+            : 0;
+
         self::assertTlsVersionRangeForOptions($request, $options);
 
         $this->applyHandlerOptions($request, $context, $options, $params);
@@ -774,7 +826,8 @@ final class StreamHandler
         );
 
         return $this->createResource(
-            function () use ($uri, $contextResource, $readTimeout) {
+            function () use ($uri, $contextResource, $readTimeout, $timeout) {
+                $this->lastDeadline = $timeout > 0 ? Utils::currentTime() + $timeout / 1000 : null;
                 $resource = @\fopen((string) $uri, 'r', false, $contextResource);
 
                 // PHP 8.5 deprecates the local $http_response_header variable.

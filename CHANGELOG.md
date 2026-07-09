@@ -103,6 +103,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Throw `ConnectTimeoutException` for connect timeouts
 - Throw `NetworkTimeoutException` for cURL no-response timeout errors
 - Throw `ResponseTimeoutException` for response-aware transfer timeouts
+- Enforce the `timeout` option as a total transfer deadline in the stream handler when it buffers the response
+- Reject buffered stream handler responses whose header block arrives after the `timeout` deadline
 - Classify request-body stream size detection, read, stringification, and rewind failures as `RequestException` or `ResponseException` by phase
 - Classify cURL response sink write failures, including timeouts, as `ResponseException` or `RequestException` by phase
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior
