@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
@@ -16,6 +17,7 @@ use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 class CurlMultiHandlerTest extends TestCase
 {
@@ -1114,6 +1116,46 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testReleasesHandleWhenOnStatsThrowsDuringTick()
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $events = [];
+        $handler = new CurlMultiHandler([
+            'select_timeout' => 0,
+            'handle_factory' => self::recordingHandleFactory($events),
+        ]);
+        $previous = new \RuntimeException('stats failed');
+        $promise = $handler(new Request('GET', Server::$url), [
+            'on_stats' => static function () use (&$events, $previous) {
+                $events[] = 'on_stats';
+                throw $previous;
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+            while (P\Is::pending($promise) && \microtime(true) < $deadline) {
+                $handler->tick();
+            }
+
+            self::assertTrue(P\Is::rejected($promise));
+            self::assertSame(['on_stats', 'release'], $events);
+
+            foreach (['handles', 'delays'] as $map) {
+                $property = new \ReflectionProperty(CurlMultiHandler::class, $map);
+                if (\PHP_VERSION_ID < 80100) {
+                    $property->setAccessible(true);
+                }
+
+                self::assertSame([], $property->getValue($handler));
+            }
+        } finally {
+            Server::flush();
+        }
+    }
+
     public function testUsesTimeoutEnvironmentVariables()
     {
         unset($_SERVER['GUZZLE_CURL_SELECT_TIMEOUT']);
@@ -1479,6 +1521,37 @@ class CurlMultiHandlerTest extends TestCase
         }, null, CurlMultiHandler::class);
 
         return $readSelectTimeout($handler);
+    }
+
+    /**
+     * @param array<int, string> $events
+     */
+    private static function recordingHandleFactory(array &$events): CurlFactoryInterface
+    {
+        return new class($events) implements CurlFactoryInterface {
+            /** @var array<int, string> */
+            private $events;
+
+            /** @var CurlFactory */
+            private $factory;
+
+            public function __construct(array &$events)
+            {
+                $this->events = &$events;
+                $this->factory = new CurlFactory(1);
+            }
+
+            public function create(RequestInterface $request, array $options): EasyHandle
+            {
+                return $this->factory->create($request, $options);
+            }
+
+            public function release(EasyHandle $easy): void
+            {
+                $this->events[] = 'release';
+                $this->factory->release($easy);
+            }
+        };
     }
 
     private static function captureDeprecation(callable $callback): ?string

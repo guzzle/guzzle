@@ -18,6 +18,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Stop cURL multi completion processing double-settling promises canceled from completion callbacks
 - Run ready promise queue tasks before sleeping for delayed cURL multi requests
 - Avoid integer overflow in cURL multi delay timing on 32-bit platforms
+- Release the cURL easy handle when the `on_stats` callback throws
 
 ## 7.14.0 - 2026-07-08
 

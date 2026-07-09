@@ -870,7 +870,17 @@ class CurlFactory implements CurlFactoryInterface
     public static function finish(callable $handler, EasyHandle $easy, CurlFactoryInterface $factory): PromiseInterface
     {
         if (isset($easy->options['on_stats'])) {
-            self::invokeStats($easy);
+            try {
+                self::invokeStats($easy);
+            } catch (\Throwable $e) {
+                try {
+                    $factory->release($easy);
+                } catch (\Throwable $releaseFailure) {
+                    // Keep the on_stats throwable as the visible failure.
+                }
+
+                throw $e;
+            }
         }
 
         if (!$easy->response || $easy->errno) {
