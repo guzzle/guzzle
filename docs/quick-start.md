@@ -453,3 +453,8 @@ Guzzle can utilize PHP ini settings when configuring clients.
 Specifies the path on disk to a CA file in PEM format to use when sending
 requests over "https". See:
 <https://wiki.php.net/rfc/tls-peer-verification#phpini_defaults>
+
+The stream handler is deliberately independent of the ini settings that PHP's
+HTTP stream wrapper would otherwise consult: it does not use
+`default_socket_timeout` for its timeouts, and it does not send headers from the
+`user_agent` and `from` ini settings.
