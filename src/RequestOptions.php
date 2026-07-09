@@ -430,9 +430,10 @@ final class RequestOptions
     public const TIMEOUT = 'timeout';
 
     /**
-     * read_timeout: (int|float, default=default_socket_timeout ini setting)
-     * Number of seconds to use when reading a streamed body. Positive values
-     * below 0.001 seconds are rejected by the built-in stream handler.
+     * read_timeout: (int|float, default=the timeout option when set, otherwise
+     * the default_socket_timeout ini setting) Number of seconds to use when
+     * reading a streamed body. Positive values below 0.001 seconds are
+     * rejected by the built-in stream handler.
      */
     public const READ_TIMEOUT = 'read_timeout';
 

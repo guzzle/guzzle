@@ -341,8 +341,17 @@ final class StreamHandler
 
         // The header phase inside fopen() can only bound the time between
         // packets, so a header block that trickled in past the deadline is
-        // rejected here, once it is complete.
-        if ($deadline !== null && empty($options['stream']) && Utils::currentTime() >= $deadline) {
+        // rejected here, once it is complete. The transport is closed so a
+        // streamed response cannot hold the connection open through the
+        // rejection.
+        if ($deadline !== null && Utils::currentTime() >= $deadline) {
+            try {
+                $stream->close();
+            } catch (\Exception $e) {
+                // Best-effort release; a failing transport close must not
+                // mask the timeout rejection.
+            }
+
             $reason = new ResponseTimeoutException('Timed out while receiving the response headers', $request, $response);
             $this->invokeStats($options, $request, $startTime, $response, $reason);
 

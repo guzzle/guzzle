@@ -3563,6 +3563,7 @@ class StreamHandlerTest extends TestCase
             self::assertSame('Timed out while receiving the response headers', $e->getMessage());
             self::assertNull($e->getPrevious());
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertTrue($e->getResponse()->getBody()->isReadable());
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
@@ -3571,20 +3572,27 @@ class StreamHandlerTest extends TestCase
         self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
-    public function testTimeoutDoesNotRejectStreamedResponseWhenHeadersExceedDeadline(): void
+    public function testTimeoutRejectsStreamedResponseWhenHeadersExceedDeadline(): void
     {
         Server::flush();
         $handler = new StreamHandler();
-        $response = $handler(
-            new Request('GET', Server::$url.'guzzle-server/drip-timeout-headers'),
-            [
-                RequestOptions::TIMEOUT => 0.4,
-                RequestOptions::STREAM => true,
-            ]
-        )->wait();
+        $request = new Request('GET', Server::$url.'guzzle-server/drip-timeout-headers');
 
-        self::assertSame(200, $response->getStatusCode());
-        self::assertSame('ok', $response->getBody()->getContents());
+        try {
+            $handler(
+                $request,
+                [
+                    RequestOptions::TIMEOUT => 0.4,
+                    RequestOptions::STREAM => true,
+                ]
+            )->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('Timed out while receiving the response headers', $e->getMessage());
+            self::assertFalse($e->getResponse()->getBody()->isReadable());
+        }
     }
 
     public function testHandlesGarbageHttpServerGracefully(): void

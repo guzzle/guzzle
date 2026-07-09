@@ -725,19 +725,20 @@ treatment of the option as the total time of the request. Once the deadline
 passes while the response body is being buffered, the transfer is aborted and
 the request is rejected with `ResponseTimeoutException`. When `read_timeout` is
 also set, each body read is bounded by the shorter of the read timeout and the
-remaining total timeout. A buffered response whose header block arrives in
-small pieces past the deadline is rejected once the headers are complete,
-because PHP's HTTP stream wrapper can only bound the time between packets
-while waiting for response headers. In Guzzle 7, the stream handler applies
-`timeout` only while connecting and as the idle time between packets, so a
-server that keeps sending small pieces of data can extend a request past the
-configured timeout indefinitely and still produce a successful response.
+remaining total timeout. A response whose header block arrives in small pieces
+past the deadline is rejected once the headers are complete, because PHP's
+HTTP stream wrapper can only bound the time between packets while waiting for
+response headers. In Guzzle 7, the stream handler applies `timeout` only while
+connecting and as the idle time between packets, so a server that keeps
+sending small pieces of data can extend a request past the configured timeout
+indefinitely and still produce a successful response.
 
-With the `stream` request option enabled, the deadline is not enforced: the
-stream handler applies `timeout` while connecting and as the idle time between
-packets, as in Guzzle 7, and `timeout` serves as the default idle cap between
-reads on the streamed body when `read_timeout` is not set. Use `read_timeout`
-to bound streamed reads explicitly.
+With the `stream` request option enabled, a response whose header block
+completes past the deadline is rejected in the same way, and the response
+carried by the exception has a closed body. The deadline does not apply to the
+streamed response body: `timeout` serves as the default idle cap between reads
+when `read_timeout` is not set, and `read_timeout` bounds streamed reads
+explicitly.
 
 #### Proxy Option Validation
 
