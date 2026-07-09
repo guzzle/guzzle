@@ -94,7 +94,7 @@ final class Utils
         }
 
         if (\ini_get('allow_url_fopen')) {
-            return self::addStreamHandler($handler, $sharingMode);
+            return self::addStreamHandler($handler, $sharingMode, self::connectionCapOptions($handlerOptions));
         }
 
         if ($handler !== null) {
@@ -180,7 +180,7 @@ final class Utils
     /**
      * @param array{max_host_connections?: mixed, max_total_connections?: mixed} $handlerOptions
      *
-     * @return array<string, int>
+     * @return array{max_host_connections?: int, max_total_connections?: int}
      */
     private static function connectionCapOptions(array $handlerOptions): array
     {
@@ -203,12 +203,13 @@ final class Utils
 
     /**
      * @param (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)|null $handler
+     * @param array{max_host_connections?: int, max_total_connections?: int}                                         $connectionCapOptions
      *
      * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
      */
-    private static function addStreamHandler(?callable $handler, string $sharingMode): callable
+    private static function addStreamHandler(?callable $handler, string $sharingMode, array $connectionCapOptions): callable
     {
-        $streamHandler = new StreamHandler(['transport_sharing' => $sharingMode]);
+        $streamHandler = new StreamHandler(['transport_sharing' => $sharingMode] + $connectionCapOptions);
 
         return $handler
             ? Proxy::wrapStreaming($handler, $streamHandler)

@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlVersion;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
@@ -164,6 +165,23 @@ class UtilsTest extends TestCase
             self::setCurlVersionInfo($previousVersionInfo);
             unset($_SERVER['curl_test'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count'], $_SERVER['_curl_share_init_persistent_count']);
         }
+    }
+
+    /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testChooseHandlerRejectsStreamRequestsWhenConnectionCapsAreConfigured(string $option): void
+    {
+        if (!\ini_get('allow_url_fopen')) {
+            self::markTestSkipped('The allow_url_fopen ini setting is required.');
+        }
+
+        $handler = Utils::chooseHandler([$option => 1]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+
+        $handler(new Request('GET', 'http://localhost/'), ['stream' => true]);
     }
 
     public static function connectionCapOptionProvider(): iterable
