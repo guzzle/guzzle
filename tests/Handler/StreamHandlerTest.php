@@ -1433,6 +1433,76 @@ class StreamHandlerTest extends TestCase
         self::assertSame('1.0', Server::received()[0]->getProtocolVersion());
     }
 
+    public function testDoesNotInjectUserAgentFromIni(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $previous = \ini_set('user_agent', 'IniAgent/1.0');
+
+        try {
+            $handler(new Request('GET', Server::$url), [])->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('user_agent', $previous);
+            }
+        }
+
+        self::assertFalse(Server::received()[0]->hasHeader('User-Agent'));
+    }
+
+    public function testSendsOnlyTheRequestUserAgentWhenTheIniIsSet(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $previous = \ini_set('user_agent', 'IniAgent/1.0');
+
+        try {
+            $handler(new Request('GET', Server::$url, ['User-Agent' => 'RequestAgent/2.0']), [])->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('user_agent', $previous);
+            }
+        }
+
+        self::assertSame(['RequestAgent/2.0'], Server::received()[0]->getHeader('User-Agent'));
+    }
+
+    public function testDoesNotSendTheFromIniValue(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $previous = \ini_set('from', 'ini@example.com');
+
+        try {
+            $handler(new Request('GET', Server::$url), [])->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('from', $previous);
+            }
+        }
+
+        // The wrapper offers no way to omit the From header entirely when the
+        // ini is configured, so accept absence or an empty value.
+        self::assertSame('', Server::received()[0]->getHeaderLine('From'));
+    }
+
+    public function testSendsExplicitFromHeaderWhenTheIniIsSet(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $previous = \ini_set('from', 'ini@example.com');
+
+        try {
+            $handler(new Request('GET', Server::$url, ['From' => 'request@example.com']), [])->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('from', $previous);
+            }
+        }
+
+        self::assertSame(['request@example.com'], Server::received()[0]->getHeader('From'));
+    }
+
     protected function getSendResult(array $opts): ResponseInterface
     {
         $this->queueRes();
