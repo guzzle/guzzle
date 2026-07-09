@@ -492,6 +492,9 @@ $client->request('GET', '/delay/5', ['connect_timeout' => 3.14]);
 > timeout when cURL is available. The stream handler's connect phase is bounded
 > by the `read_timeout` idle timeout, and by `timeout` when that is lower.
 
+See [Timeout phases](#timeout-phases) for a summary of the timeout options
+across the built-in handlers.
+
 ## crypto_method
 
 Summary
@@ -1682,6 +1685,9 @@ When the stream handler buffers a response with [`timeout`](#timeout) set,
 each body read is bounded by the shorter of the idle timeout and the remaining
 total timeout.
 
+See [Timeout phases](#timeout-phases) for a summary of the timeout options
+across the built-in handlers.
+
 When a read on the streamed PSR-7 body times out, `read()` throws
 `GuzzleHttp\Psr7\Exception\TimeoutException`. A non-timeout read failure, for
 example the connection is reset mid-body or the body stream has been detached,
@@ -2083,6 +2089,14 @@ while (!$body->eof()) {
 > interface of the response object remains the same regardless of whether or not
 > it is supported by the handler.
 
+With Guzzle's default handler selection, streamed responses use the stream
+handler when PHP streams are available. The [`timeout`](#timeout) deadline then
+applies to obtaining the response and does not bound reads on the streamed body:
+each read is bounded by the [`read_timeout`](#read_timeout) idle timeout, and a
+timed-out read throws `GuzzleHttp\Psr7\Exception\TimeoutException` and can be
+retried. The built-in cURL handlers download the body up-front even when
+`stream` is enabled, so the deadline covers the whole transfer.
+
 Handlers that do not support `stream` fall back to `sink` behavior. Digest
 authentication still protects configured sinks from intermediate challenge
 bodies. With `StreamHandler`, `stream => true`, and a configured `sink`, a
@@ -2235,6 +2249,20 @@ exposes this metadata, but a caller-supplied request-body or `sink` stream might
 not, for example a custom `StreamInterface` implementation. When the metadata is
 absent, the failure is not recognized as a timeout and surfaces as an ordinary
 read/write error instead.
+
+### Timeout phases
+
+The following table shows the timeouts that bound each phase of a request sent
+by the built-in handlers and the exception thrown when one is exceeded. The
+deadline is this `timeout` option; the idle timeout is
+[`read_timeout`](#read_timeout).
+
+| Phase | cURL handlers | Stream handler |
+| --- | --- | --- |
+| Connecting | Bounded by [`connect_timeout`](#connect_timeout) and the deadline; times out with `ConnectTimeoutException` | Bounded by the idle timeout and the deadline; times out with `ConnectTimeoutException` |
+| Receiving headers | Bounded by the deadline; aborted mid-headers with `NetworkTimeoutException` | Packet gaps are bounded by the idle timeout and the remaining deadline; a header block completing past the deadline is rejected with `ResponseTimeoutException` |
+| Body, buffered (default) | Bounded by the deadline; aborted with `ResponseTimeoutException` | Bounded by the deadline and, on each read, the idle timeout; aborted with `ResponseTimeoutException` |
+| Body, `stream` enabled | The body is downloaded up-front regardless, so the deadline applies as above | Not bounded by the deadline; each read is bounded by the idle timeout, and a timed-out read throws a retryable `GuzzleHttp\Psr7\Exception\TimeoutException` |
 
 ## version
 

@@ -44,6 +44,10 @@ turns 4xx responses into `ClientException` and 5xx responses into
 `TooManyRedirectsException`. `Client::sendRequest()` follows PSR-18 and returns
 redirect, 4xx, and 5xx responses normally instead.
 
+The [Timeout phases](request-options.md#timeout-phases) table shows which
+exception each timeout produces at each phase of a request sent by the built-in
+handlers.
+
 All `TransferException` instances expose `getRequest()`. If a non-network
 request failure occurs before Guzzle has a response object, it throws
 `RequestException`. This includes invalid or handler-unsupported HTTP protocol
