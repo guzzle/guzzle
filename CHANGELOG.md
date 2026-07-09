@@ -3,6 +3,12 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.14.1 - Upcoming
+
+### Fixed
+
+- Reject the `stream` request option on the stream handler when connection caps are configured
+
 ## 7.14.0 - 2026-07-08
 
 ### Added

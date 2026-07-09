@@ -88,9 +88,12 @@ key of the `CurlMultiHandler` constructor. For example,
 
 Connection cap options apply to transfers managed by `CurlMultiHandler`. When
 the caps are configured, the default handler routes synchronous requests through
-the capped `CurlMultiHandler` as well. Requests routed to the `StreamHandler`
-with `stream => true` or stream fallback, and manually constructed `CurlHandler`
-or custom handlers, are outside these cURL multi caps.
+the capped `CurlMultiHandler` as well, and the `StreamHandler` rejects the
+`stream` request option because streamed connections cannot be capped. Stream
+handler transfers are therefore always buffered and hold at most one connection
+per in-flight call, including in stream fallback environments without a
+cap-capable cURL where every request uses the stream handler. Manually
+constructed `CurlHandler` or custom handlers are outside these caps.
 
 The caps bound open connections, including idle pooled connections, rather than
 in-flight requests. Transfers queued behind a cap keep consuming the request

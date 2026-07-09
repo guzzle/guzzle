@@ -285,25 +285,16 @@ class ClientTest extends TestCase
         }
     }
 
-    public function testConnectionCapsDoNotApplyToStreamRequests(): void
+    public function testConnectionCapsRejectStreamRequests(): void
     {
         self::skipIfStreamHandlerIsUnavailable();
 
-        $_SERVER['curl_test'] = true;
-        unset($_SERVER['_curl_multi']);
+        $client = new Client(['max_host_connections' => 1]);
 
-        try {
-            Server::flush();
-            Server::enqueue([new Response()]);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
 
-            $client = new Client(['max_host_connections' => 1]);
-            $response = $client->get(Server::$url, ['stream' => true]);
-
-            self::assertSame(200, $response->getStatusCode());
-            self::assertArrayNotHasKey('_curl_multi', $_SERVER);
-        } finally {
-            unset($_SERVER['curl_test'], $_SERVER['_curl_multi']);
-        }
+        $client->get('http://localhost/', ['stream' => true]);
     }
 
     public function testConnectionCapsFallBackToStreamHandlerWhenCurlCannotApplyThem(): void
@@ -326,6 +317,23 @@ class ClientTest extends TestCase
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
             unset($_SERVER['curl_test'], $_SERVER['_curl_multi']);
+        }
+    }
+
+    public function testConnectionCapsRejectStreamRequestsWhenCurlCannotApplyThem(): void
+    {
+        self::skipIfStreamHandlerIsUnavailable();
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.29.0', 'features' => 0]);
+
+        try {
+            $client = new Client(['max_host_connections' => 1]);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+
+            $client->get('http://localhost/', ['stream' => true]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
         }
     }
 

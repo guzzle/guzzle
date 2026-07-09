@@ -253,7 +253,7 @@ parameters:
 			path: src/Handler/EasyHandle.php
 
 		-
-			message: '#^Offset ''transport_sharing'' on array\{transport_sharing\: true\} in isset\(\) always exists and is not nullable\.$#'
+			message: '#^Offset ''max_host_connections''\|''max_total…''\|''transport_sharing'' on array\{max_host_connections\: true, max_total_connections\: true, transport_sharing\: true\} in isset\(\) always exists and is not nullable\.$#'
 			identifier: isset.offset
 			count: 1
 			path: src/Handler/StreamHandler.php
