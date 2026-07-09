@@ -104,9 +104,9 @@ final class RequestOptions
     public const COOKIES = 'cookies';
 
     /**
-     * connect_timeout: (int|float, default=0) Number of seconds to wait while
-     * trying to connect to a server. Use 0 to wait 300 seconds (the default
-     * behavior). Positive values below 0.001 seconds are rejected by the
+     * connect_timeout: (int|float, default=60) Number of seconds to wait
+     * while trying to connect to a server. Use 0 to disable the connect
+     * timeout. Positive values below 0.001 seconds are rejected by the
      * built-in cURL handler.
      */
     public const CONNECT_TIMEOUT = 'connect_timeout';
@@ -423,17 +423,17 @@ final class RequestOptions
 
     /**
      * timeout: (int|float, default=0) Number of seconds to use as the total
-     * timeout of the request. Use 0 to wait indefinitely (the default
+     * timeout of the request. Use 0 to disable the total timeout (the default
      * behavior). Positive values below 0.001 seconds are rejected by the
      * built-in handlers.
      */
     public const TIMEOUT = 'timeout';
 
     /**
-     * read_timeout: (int|float, default=the timeout option when set, otherwise
-     * the default_socket_timeout ini setting) Number of seconds to use when
-     * reading a streamed body. Positive values below 0.001 seconds are
-     * rejected by the built-in stream handler.
+     * read_timeout: (int|float, default=60) Number of seconds the connection
+     * may sit silent at any stage of the request. Use 0 to disable the idle
+     * timeout. Positive values below 0.001 seconds are rejected by the
+     * built-in stream handler.
      */
     public const READ_TIMEOUT = 'read_timeout';
 

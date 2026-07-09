@@ -105,6 +105,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Throw `ResponseTimeoutException` for response-aware transfer timeouts
 - Enforce the `timeout` option as a total transfer deadline in the stream handler when it buffers the response
 - Reject stream handler responses whose header block arrives after the `timeout` deadline
+- Stop consulting the `default_socket_timeout` ini setting in the stream handler
+- Treat stream handler `read_timeout` as an idle timeout for every request stage, defaulting to 60 seconds
+- Default the cURL connect timeout to 60 seconds, with `connect_timeout` set to `0` disabling it
 - Classify request-body stream size detection, read, stringification, and rewind failures as `RequestException` or `ResponseException` by phase
 - Classify cURL response sink write failures, including timeouts, as `ResponseException` or `RequestException` by phase
 - Treat request method names case-sensitively in built-in handler and redirect method-specific behavior

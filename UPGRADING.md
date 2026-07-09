@@ -723,12 +723,12 @@ The stream handler now enforces the `timeout` request option as a total
 transfer deadline when it buffers the response, matching the cURL handlers'
 treatment of the option as the total time of the request. Once the deadline
 passes while the response body is being buffered, the transfer is aborted and
-the request is rejected with `ResponseTimeoutException`. When `read_timeout` is
-also set, each body read is bounded by the shorter of the read timeout and the
-remaining total timeout. A response whose header block arrives in small pieces
-past the deadline is rejected once the headers are complete, because PHP's
-HTTP stream wrapper can only bound the time between packets while waiting for
-response headers. In Guzzle 7, the stream handler applies `timeout` only while
+the request is rejected with `ResponseTimeoutException`. Each body read is
+bounded by the shorter of the `read_timeout` idle timeout and the remaining
+total timeout. A response whose header block arrives in small pieces past the
+deadline is rejected once the headers are complete, because PHP's HTTP stream
+wrapper can only bound the time between packets while waiting for response
+headers. In Guzzle 7, the stream handler applies `timeout` only while
 connecting and as the idle time between packets, so a server that keeps
 sending small pieces of data can extend a request past the configured timeout
 indefinitely and still produce a successful response.
@@ -736,9 +736,32 @@ indefinitely and still produce a successful response.
 With the `stream` request option enabled, a response whose header block
 completes past the deadline is rejected in the same way, and the response
 carried by the exception has a closed body. The deadline does not apply to the
-streamed response body: `timeout` serves as the default idle cap between reads
-when `read_timeout` is not set, and `read_timeout` bounds streamed reads
-explicitly.
+streamed response body, which is governed by the `read_timeout` idle timeout.
+
+#### Stream Handler Timeout Model
+
+The stream handler now treats `timeout` and `read_timeout` as orthogonal
+controls. `timeout` is the total deadline for completing a buffered request or
+obtaining a streamed response, with no deadline by default. `read_timeout` is
+an idle timeout bounding how long the connection may sit silent at any stage,
+while connecting, waiting for response headers, and between reads on the body,
+defaulting to 60 seconds; `0` disables it. Any received data resets the idle
+clock; nothing resets the deadline.
+
+In Guzzle 7, both behaviours fall back to the `default_socket_timeout` ini
+setting (60 seconds by default), `timeout` also acts as the idle cap, and
+`read_timeout` only governs streamed reads. Set `read_timeout` explicitly to
+tune or disable idle protection; `default_socket_timeout` no longer has any
+effect on the stream handler.
+
+#### Connect Timeout Default
+
+The built-in cURL handlers now default the connect timeout to 60 seconds
+instead of libcurl's 300, and `connect_timeout` set to `0` now disables the
+connect timeout instead of selecting the 300-second libcurl default, matching
+how `0` disables the `timeout` and `read_timeout` options. The stream handler
+still accepts `connect_timeout` without effect; its connect phase is bounded
+by the `read_timeout` idle timeout, which shares the 60-second default.
 
 #### Proxy Option Validation
 

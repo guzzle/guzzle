@@ -1818,11 +1818,32 @@ class StreamHandlerTest extends TestCase
         self::assertSame('hi there', (string) $response->getBody());
     }
 
-    public function testAddsTimeout(): void
+    public function testContextTimeoutTakesTheIdleTimeoutWhenTheDeadlineIsHigher(): void
     {
         $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);
         $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertEquals(60, $opts['http']['timeout']);
+    }
+
+    public function testContextTimeoutTakesTheDeadlineWhenLowerThanTheIdleTimeout(): void
+    {
+        $res = $this->getSendResult(['stream' => true, 'timeout' => 0.5]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertEquals(0.5, $opts['http']['timeout']);
+    }
+
+    public function testContextTimeoutTakesTheReadTimeoutWhenSet(): void
+    {
+        $res = $this->getSendResult(['stream' => true, 'read_timeout' => 200]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
         self::assertEquals(200, $opts['http']['timeout']);
+    }
+
+    public function testContextTimeoutIsDisabledWhenTheReadTimeoutIsZero(): void
+    {
+        $res = $this->getSendResult(['stream' => true, 'read_timeout' => 0]);
+        $opts = \stream_context_get_options($res->getBody()->detach());
+        self::assertEquals(-1, $opts['http']['timeout']);
     }
 
     /**
@@ -3483,6 +3504,86 @@ class StreamHandlerTest extends TestCase
             self::assertSame('Timed out while transferring the response body', $e->getMessage());
             self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
         }
+    }
+
+    public function testTimeoutDoesNotCapStreamedBodyIdleTime(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $response = $handler(
+            new Request('GET', Server::$url.'guzzle-server/stall-brief'),
+            [
+                RequestOptions::TIMEOUT => 0.5,
+                RequestOptions::STREAM => true,
+            ]
+        )->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('partial-rest', $response->getBody()->getContents());
+    }
+
+    public function testZeroReadTimeoutDisablesTheIdleTimeout(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $previous = \ini_set('default_socket_timeout', '1');
+
+        try {
+            $response = $handler(
+                new Request('GET', Server::$url.'guzzle-server/stall-brief'),
+                [RequestOptions::READ_TIMEOUT => 0]
+            )->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('default_socket_timeout', $previous);
+            }
+        }
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('partial-rest', (string) $response->getBody());
+    }
+
+    public function testUnsetTimeoutDoesNotInheritDefaultSocketTimeoutIniWhenBuffering(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $previous = \ini_set('default_socket_timeout', '1');
+
+        try {
+            $response = $handler(
+                new Request('GET', Server::$url.'guzzle-server/stall-brief'),
+                [RequestOptions::TIMEOUT => 0]
+            )->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('default_socket_timeout', $previous);
+            }
+        }
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('partial-rest', (string) $response->getBody());
+    }
+
+    public function testUnsetTimeoutDoesNotInheritDefaultSocketTimeoutIniWhenStreaming(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $previous = \ini_set('default_socket_timeout', '1');
+
+        try {
+            $response = $handler(
+                new Request('GET', Server::$url.'guzzle-server/stall-brief'),
+                [RequestOptions::STREAM => true]
+            )->wait();
+            $body = $response->getBody()->getContents();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('default_socket_timeout', $previous);
+            }
+        }
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('partial-rest', $body);
     }
 
     public function testTimeoutAbortsDrainingWhenGzipBodyArrivesSlowly(): void

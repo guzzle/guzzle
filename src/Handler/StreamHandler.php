@@ -73,6 +73,13 @@ final class StreamHandler
         'unexpected eof while reading',
     ];
 
+    /**
+     * Default idle timeout in milliseconds when the "read_timeout" option is
+     * not set. Matches PHP's default_socket_timeout default, which the
+     * handler never consults.
+     */
+    private const DEFAULT_IDLE_TIMEOUT_MS = 60000;
+
     private array $lastHeaders = [];
 
     private ?float $lastDeadline = null;
@@ -689,22 +696,23 @@ final class StreamHandler
     /**
      * Decorates the transport stream so each buffered-body read observes the
      * remaining wall-clock budget of the "timeout" request option, bounded
-     * by "read_timeout" when that is shorter. The transport is switched to
-     * non-blocking mode because filtered reads (chunked and compressed
-     * responses) otherwise block until a full buffer arrives, which would
-     * keep the deadline from being enforced between small pieces of data.
+     * by the "read_timeout" idle timeout when that is shorter. The transport
+     * is switched to non-blocking mode because filtered reads (chunked and
+     * compressed responses) otherwise block until a full buffer arrives,
+     * which would keep the deadline from being enforced between small pieces
+     * of data.
      *
      * @param resource $resource
      */
     private static function createDeadlineSource(StreamInterface $stream, $resource, float $deadline, array $options): StreamInterface
     {
-        $readTimeout = isset($options['read_timeout'])
-            ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout') / 1000
-            : null;
+        $idleTimeout = isset($options['read_timeout'])
+            ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout')
+            : self::DEFAULT_IDLE_TIMEOUT_MS;
 
         \stream_set_blocking($resource, false);
 
-        return new DeadlineSourceStream($stream, $deadline, $readTimeout);
+        return new DeadlineSourceStream($stream, $deadline, $idleTimeout > 0 ? $idleTimeout / 1000 : null);
     }
 
     /**
@@ -792,9 +800,9 @@ final class StreamHandler
             throw new InvalidArgumentException('on_headers must be callable');
         }
 
-        $readTimeout = isset($options['read_timeout'])
+        $idleTimeout = isset($options['read_timeout'])
             ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout')
-            : null;
+            : self::DEFAULT_IDLE_TIMEOUT_MS;
 
         $timeout = isset($options['timeout'])
             ? Utils::timeoutToMilliseconds($options['timeout'], 'timeout')
@@ -820,6 +828,17 @@ final class StreamHandler
 
         $this->addDefaultTlsMinimum($request, $context);
 
+        // The context timeout governs connecting and the header-phase packet
+        // gaps: the idle timeout, tightened to the deadline when that is
+        // lower; -1 disables it so default_socket_timeout is never consulted.
+        if ($timeout > 0 && ($idleTimeout <= 0 || $timeout < $idleTimeout)) {
+            $context['http']['timeout'] = $timeout / 1000;
+        } elseif ($idleTimeout > 0) {
+            $context['http']['timeout'] = $idleTimeout / 1000;
+        } else {
+            $context['http']['timeout'] = -1;
+        }
+
         $uri = $this->resolveHost($request, $options);
 
         $contextResource = $this->createResource(
@@ -829,7 +848,7 @@ final class StreamHandler
         );
 
         return $this->createResource(
-            function () use ($uri, $contextResource, $readTimeout, $timeout) {
+            function () use ($uri, $contextResource, $idleTimeout, $timeout) {
                 $this->lastDeadline = $timeout > 0 ? Utils::currentTime() + $timeout / 1000 : null;
                 $resource = @\fopen((string) $uri, 'r', false, $contextResource);
 
@@ -844,10 +863,14 @@ final class StreamHandler
                     return false;
                 }
 
-                if ($readTimeout !== null) {
-                    $sec = \intdiv($readTimeout, 1000);
-                    $usec = ($readTimeout % 1000) * 1000;
+                // Arm reads with the idle timeout, replacing the context
+                // value the deadline may have tightened; -1 disables it.
+                if ($idleTimeout > 0) {
+                    $sec = \intdiv($idleTimeout, 1000);
+                    $usec = ($idleTimeout % 1000) * 1000;
                     \stream_set_timeout($resource, $sec, $usec);
+                } else {
+                    \stream_set_timeout($resource, -1);
                 }
 
                 return $resource;
@@ -858,9 +881,7 @@ final class StreamHandler
     private function applyHandlerOptions(RequestInterface $request, array &$context, array $options, array &$params): void
     {
         foreach ($options as $key => $value) {
-            if ($key === 'timeout') {
-                $this->applyTimeoutOption($context, $value);
-            } elseif ($key === 'crypto_method') {
+            if ($key === 'crypto_method') {
                 $this->applyCryptoMethodOption($context, $value);
             } elseif ($key === 'crypto_method_max') {
                 $this->applyCryptoMethodMaxOption($context, $value);
@@ -1114,7 +1135,7 @@ final class StreamHandler
                 'method' => 'the request method',
                 'protocol_version' => 'the request protocol version',
                 'proxy' => 'the "proxy" request option',
-                'timeout' => 'the "timeout" request option',
+                'timeout' => 'the "timeout" and "read_timeout" request options',
             ],
             'ssl' => [
                 'allow_self_signed' => 'the "verify" request option',
@@ -1299,18 +1320,6 @@ final class StreamHandler
             'proxy' => $url,
             'auth' => null,
         ];
-    }
-
-    /**
-     * @param mixed $value as passed via Request transfer options.
-     */
-    private function applyTimeoutOption(array &$context, $value): void
-    {
-        $timeout = Utils::timeoutToMilliseconds($value, 'timeout');
-
-        if ($timeout > 0) {
-            $context['http']['timeout'] = $timeout / 1000;
-        }
     }
 
     /**
