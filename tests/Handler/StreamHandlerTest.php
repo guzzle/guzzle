@@ -80,6 +80,68 @@ class StreamHandlerTest extends TestCase
         new StreamHandler(['unknown' => true]);
     }
 
+    /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testRejectsStreamRequestsWhenConnectionCapsAreConfigured(string $option): void
+    {
+        $handler = new StreamHandler([$option => 5]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+
+        $handler(new Request('GET', 'http://localhost/'), ['stream' => true]);
+    }
+
+    public static function connectionCapOptionProvider(): iterable
+    {
+        yield 'max host connections' => ['max_host_connections'];
+        yield 'max total connections' => ['max_total_connections'];
+    }
+
+    public function testAllowsBufferedRequestsWhenConnectionCapsAreConfigured(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler(['max_host_connections' => 1, 'max_total_connections' => 1]);
+
+        $response = $handler(new Request('GET', Server::$url), [])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testTreatsNullConnectionCapsAsUnset(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler(['max_host_connections' => null, 'max_total_connections' => null]);
+
+        $response = $handler(new Request('GET', Server::$url), ['stream' => true])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * @dataProvider invalidConnectionCapOptionProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidConnectionCapOptions(string $option, $value): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($option.' must be a positive integer.');
+
+        new StreamHandler([$option => $value]);
+    }
+
+    public static function invalidConnectionCapOptionProvider(): iterable
+    {
+        foreach (['max_host_connections', 'max_total_connections'] as $option) {
+            yield $option.' zero' => [$option, 0];
+            yield $option.' negative' => [$option, -1];
+            yield $option.' float' => [$option, 1.0];
+            yield $option.' string' => [$option, '1'];
+        }
+    }
+
     public function testRejectsEmptyProtocolVersion(): void
     {
         $handler = new StreamHandler();

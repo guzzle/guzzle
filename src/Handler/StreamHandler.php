@@ -40,6 +40,8 @@ final class StreamHandler
     use NonSerializableTrait;
 
     private const KNOWN_CONSTRUCTOR_OPTIONS = [
+        'max_host_connections' => true,
+        'max_total_connections' => true,
         'transport_sharing' => true,
     ];
 
@@ -88,12 +90,21 @@ final class StreamHandler
 
     private string $transportSharingMode;
 
+    private bool $connectionCapsConfigured = false;
+
     /**
      * Accepts an associative array of options:
      *
+     * - max_host_connections: Optional maximum concurrent connections per host.
+     * - max_total_connections: Optional maximum concurrent connections overall.
      * - transport_sharing: Optional transport sharing mode.
      *
-     * @param array{transport_sharing?: mixed} $options Array of options to use with the handler
+     * The stream handler cannot cap streamed connections, so configuring
+     * either connection cap rejects the "stream" request option. Other
+     * transfers are buffered and hold at most one connection per in-flight
+     * call.
+     *
+     * @param array{max_host_connections?: mixed, max_total_connections?: mixed, transport_sharing?: mixed} $options Array of options to use with the handler
      */
     public function __construct(array $options = [])
     {
@@ -107,6 +118,19 @@ final class StreamHandler
             $options['transport_sharing'] ?? null,
             'transport_sharing'
         );
+
+        foreach (['max_host_connections', 'max_total_connections'] as $capOption) {
+            $value = $options[$capOption] ?? null;
+            if ($value === null) {
+                continue;
+            }
+
+            if (!\is_int($value) || $value < 1) {
+                throw new InvalidArgumentException(\sprintf('%s must be a positive integer.', $capOption));
+            }
+
+            $this->connectionCapsConfigured = true;
+        }
     }
 
     /**
@@ -160,6 +184,7 @@ final class StreamHandler
         $startTime = isset($options['on_stats']) ? Utils::currentTime() : null;
 
         self::rejectUnsupportedRequestOptions($request, $options);
+        $this->rejectStreamingWithConnectionCaps($options);
         $this->assertTransportSharingSupported();
 
         $request = self::prepareRequest($request);
@@ -1024,6 +1049,13 @@ final class StreamHandler
 
         if (\array_key_exists('expect', $options) && $options['expect'] !== false && $request->hasHeader('Expect')) {
             throw new InvalidArgumentException('Passing the "expect" request option to the stream handler is not supported when it adds an Expect header because the stream handler does not support Expect: 100-Continue.');
+        }
+    }
+
+    private function rejectStreamingWithConnectionCaps(array $options): void
+    {
+        if ($this->connectionCapsConfigured && !empty($options['stream'])) {
+            throw new InvalidArgumentException('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
         }
     }
 

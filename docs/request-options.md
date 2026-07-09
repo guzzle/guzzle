@@ -2103,6 +2103,12 @@ bodies. With `StreamHandler`, `stream => true`, and a configured `sink`, a
 Digest request drains the final body into the sink while a non-Digest request
 leaves the sink untouched.
 
+The built-in stream handler rejects `stream => true` when the
+`max_host_connections` or `max_total_connections` options are configured because
+streamed connections cannot be capped. See
+[How can I add custom cURL options?](faq.md#how-can-i-add-custom-curl-options)
+for the connection cap semantics.
+
 ## stream_context
 
 Summary
