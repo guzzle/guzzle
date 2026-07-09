@@ -55,9 +55,13 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * - transport_sharing: (string|null) Transport sharing mode for the
      *   default handler. Accepts TransportSharing::* or null. Defaults to null.
      * - max_host_connections: (int|null) Maximum concurrent connections per
-     *   host for the default cURL multi handler.
+     *   host for the default handler; the default stream handler rejects the
+     *   "stream" request option when a cap is configured because streamed
+     *   connections cannot be capped.
      * - max_total_connections: (int|null) Maximum concurrent connections for
-     *   the default cURL multi handler.
+     *   the default handler; the default stream handler rejects the "stream"
+     *   request option when a cap is configured because streamed connections
+     *   cannot be capped.
      * - **: any request option
      *
      * @param array $config Client configuration settings.
