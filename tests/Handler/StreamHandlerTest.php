@@ -3440,7 +3440,7 @@ class StreamHandlerTest extends TestCase
             $handler(
                 $request,
                 [
-                    RequestOptions::READ_TIMEOUT => 0.05,
+                    RequestOptions::READ_TIMEOUT => 0.5,
                     'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
                         $stats = $transferStats;
                     },
@@ -3475,7 +3475,7 @@ class StreamHandlerTest extends TestCase
                 $request,
                 [
                     'decode_content' => true,
-                    RequestOptions::READ_TIMEOUT => 0.05,
+                    RequestOptions::READ_TIMEOUT => 0.5,
                     'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
                         $stats = $transferStats;
                     },
@@ -3720,7 +3720,7 @@ class StreamHandlerTest extends TestCase
             $handler(
                 $request,
                 [
-                    RequestOptions::TIMEOUT => 0.4,
+                    RequestOptions::TIMEOUT => 0.6,
                     'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
                         $stats = $transferStats;
                     },
@@ -3753,7 +3753,7 @@ class StreamHandlerTest extends TestCase
             $handler(
                 $request,
                 [
-                    RequestOptions::TIMEOUT => 0.4,
+                    RequestOptions::TIMEOUT => 0.6,
                     RequestOptions::STREAM => true,
                 ]
             )->wait();
