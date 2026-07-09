@@ -630,7 +630,7 @@ class SetCookieTest extends TestCase
                 true,
             ],
             [
-                'FOO=bar; expires='.\gmdate('D, d M Y H:i:s \G\M\T', \time() + 30).';',
+                'FOO=bar; expires='.\gmdate('D, d M Y H:i:s \G\M\T', \time() + 3600).';',
                 false,
             ],
             [
