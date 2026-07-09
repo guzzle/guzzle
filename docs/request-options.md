@@ -1665,7 +1665,8 @@ Types
 - float
 
 Default
-Defaults to the value of the `default_socket_timeout` PHP ini setting
+Defaults to the `timeout` option when it is set, otherwise to the value of the
+`default_socket_timeout` PHP ini setting
 
 Constant
 `GuzzleHttp\RequestOptions::READ_TIMEOUT`
@@ -1690,6 +1691,10 @@ when reading a streamed body. If you detach the body and read the raw PHP stream
 resource instead, functions such as `fgets()` return `false` on timeout,
 following PHP's stream semantics.
 
+A timed-out read does not invalidate the streamed body. Catching the
+`TimeoutException` and calling `read()` again resumes waiting for data, so
+idle timeouts can serve as poll ticks on long-lived streams.
+
 ```php
 $response = $client->request('GET', '/stream', [
     'stream' => true,
@@ -1700,6 +1705,13 @@ $body = $response->getBody();
 
 // Throws GuzzleHttp\Psr7\Exception\TimeoutException on timeout
 $data = $body->read(1024);
+
+// A timed-out read can be retried, so idle timeouts work as poll ticks
+try {
+    $data = $body->read(1024);
+} catch (\GuzzleHttp\Psr7\Exception\TimeoutException $e) {
+    // Check for cancellation, then call read() again to resume waiting.
+}
 
 // Returns false on timeout (raw stream resource)
 $line = fgets($body->detach());
@@ -2190,10 +2202,9 @@ The built-in cURL handlers enforce the timeout for the whole transfer. The
 built-in stream handler enforces it while connecting and while buffering the
 response: the transfer is aborted once the deadline passes. While waiting for
 response headers the stream handler can only bound the time between packets,
-so a buffered response whose header block arrives in small pieces past the
-deadline is rejected as soon as the headers complete. With the `stream` option
-enabled, the deadline is not enforced: the timeout bounds connecting and the
-time between packets while waiting for response headers, and serves as the
+so a response whose header block arrives in small pieces past the deadline is
+rejected as soon as the headers complete. With the `stream` option enabled,
+the deadline does not apply to the response body: the timeout serves as the
 default idle cap between reads on the streamed body when
 [`read_timeout`](#read_timeout) is not set.
 
