@@ -1675,7 +1675,9 @@ The timeout applies to individual read operations on a streamed body (when the
 handlers accept this option without effect so shared request configuration can
 be reused across transports. With Guzzle's default handler selection, streamed
 responses (`stream` => `true`) use the stream handler when PHP streams are
-available.
+available. When the stream handler buffers a response with both
+[`timeout`](#timeout) and `read_timeout` set, each body read is bounded by the
+shorter of the read timeout and the remaining total timeout.
 
 When a read on the streamed PSR-7 body times out, `read()` throws
 `GuzzleHttp\Psr7\Exception\TimeoutException`. A non-timeout read failure, for
@@ -2183,6 +2185,17 @@ Constant
 // Timeout if the request does not complete in 3.14 seconds.
 $client->request('GET', '/delay/5', ['timeout' => 3.14]);
 ```
+
+The built-in cURL handlers enforce the timeout for the whole transfer. The
+built-in stream handler enforces it while connecting and while buffering the
+response: the transfer is aborted once the deadline passes. While waiting for
+response headers the stream handler can only bound the time between packets,
+so a buffered response whose header block arrives in small pieces past the
+deadline is rejected as soon as the headers complete. With the `stream` option
+enabled, the deadline is not enforced: the timeout bounds connecting and the
+time between packets while waiting for response headers, and serves as the
+default idle cap between reads on the streamed body when
+[`read_timeout`](#read_timeout) is not set.
 
 Built-in handlers use the most specific transport timeout exception they can
 determine. Connect timeouts throw
