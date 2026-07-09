@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Reject the `stream` request option on the stream handler when connection caps are configured
+- Restore conservative proxy credential redaction for unparseable proxies with multiple `@` separators
 
 ## 7.14.0 - 2026-07-08
 
