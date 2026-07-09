@@ -95,6 +95,19 @@ final class CurlFactory implements CurlFactoryInterface
     private const CURLE_SEND_FAIL_REWIND = 65;
 
     /**
+     * Guzzle's default connect timeout in milliseconds, replacing libcurl's
+     * 300 seconds.
+     */
+    private const DEFAULT_CONNECT_TIMEOUT_MS = 60000;
+
+    /**
+     * Milliseconds passed to libcurl to disable the connect timeout: libcurl
+     * treats zero as its own 300-second default, so disabling means passing
+     * the largest value a 32-bit libcurl long accepts.
+     */
+    private const CONNECT_TIMEOUT_DISABLED_MS = 2147483647;
+
+    /**
      * @var resource[]|\CurlHandle[]
      */
     private array $handles = [];
@@ -1817,7 +1830,7 @@ final class CurlFactory implements CurlFactoryInterface
             \CURLOPT_URL => (string) $uri->withFragment(''),
             \CURLOPT_RETURNTRANSFER => false,
             \CURLOPT_HEADER => false,
-            \CURLOPT_CONNECTTIMEOUT => 300,
+            \CURLOPT_CONNECTTIMEOUT_MS => self::DEFAULT_CONNECT_TIMEOUT_MS,
         ];
 
         if (CurlVersion::supportsProtocolsStr()) {
@@ -2275,7 +2288,7 @@ final class CurlFactory implements CurlFactoryInterface
         $timeoutRequiresNoSignal = false;
         if (isset($options['timeout'])) {
             $timeout = Utils::timeoutToMilliseconds($options['timeout'], 'timeout');
-            $timeoutRequiresNoSignal |= $timeout < 1000;
+            $timeoutRequiresNoSignal |= $timeout > 0 && $timeout < 1000;
             $conf[\CURLOPT_TIMEOUT_MS] = $timeout;
         }
 
@@ -2290,8 +2303,12 @@ final class CurlFactory implements CurlFactoryInterface
 
         if (isset($options['connect_timeout'])) {
             $connectTimeout = Utils::timeoutToMilliseconds($options['connect_timeout'], 'connect_timeout');
-            $timeoutRequiresNoSignal |= $connectTimeout < 1000;
-            $conf[\CURLOPT_CONNECTTIMEOUT_MS] = $connectTimeout;
+            if ($connectTimeout > 0) {
+                $timeoutRequiresNoSignal |= $connectTimeout < 1000;
+                $conf[\CURLOPT_CONNECTTIMEOUT_MS] = $connectTimeout;
+            } else {
+                $conf[\CURLOPT_CONNECTTIMEOUT_MS] = self::CONNECT_TIMEOUT_DISABLED_MS;
+            }
         }
 
         if ($timeoutRequiresNoSignal && \PHP_OS_FAMILY !== 'Windows') {

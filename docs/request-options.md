@@ -466,8 +466,8 @@ $client->request('GET', '/get', ['cookies' => $jar]);
 ## connect_timeout
 
 Summary
-Number of seconds to wait while trying to connect to a server. Use `0` to wait
-300 seconds (the default behavior). Positive values below `0.001` seconds are
+Number of seconds to wait while trying to connect to a server. Use `0` to
+disable the connect timeout. Positive values below `0.001` seconds are
 rejected by the built-in cURL handler.
 
 Types
@@ -475,7 +475,7 @@ Types
 - float
 
 Default
-`0`
+`60`
 
 Constant
 `GuzzleHttp\RequestOptions::CONNECT_TIMEOUT`
@@ -489,8 +489,8 @@ $client->request('GET', '/delay/5', ['connect_timeout' => 3.14]);
 > `connect_timeout` is implemented by cURL handlers. The PHP stream handler does
 > not provide a separate connection-timeout control; it accepts this option
 > without effect so shared request configuration can enable a cURL connection
-> timeout when cURL is available. Use `timeout` to configure the stream
-> handler's overall stream timeout.
+> timeout when cURL is available. The stream handler's connect phase is bounded
+> by the `read_timeout` idle timeout, and by `timeout` when that is lower.
 
 ## crypto_method
 
@@ -1657,28 +1657,30 @@ $client->request('GET', '/get?abc=123', ['query' => ['foo' => 'bar']]);
 ## read_timeout
 
 Summary
-Number of seconds to use when reading a streamed body. Positive values below
-`0.001` seconds are rejected by the built-in stream handler.
+Number of seconds the connection may sit silent at any stage of the request.
+Use `0` to disable the idle timeout. Positive values below `0.001` seconds are
+rejected by the built-in stream handler.
 
 Types
 - int
 - float
 
 Default
-Defaults to the `timeout` option when it is set, otherwise to the value of the
-`default_socket_timeout` PHP ini setting
+`60`
 
 Constant
 `GuzzleHttp\RequestOptions::READ_TIMEOUT`
 
-The timeout applies to individual read operations on a streamed body (when the
-`stream` option is enabled). It is implemented by the PHP stream handler. cURL
-handlers accept this option without effect so shared request configuration can
-be reused across transports. With Guzzle's default handler selection, streamed
-responses (`stream` => `true`) use the stream handler when PHP streams are
-available. When the stream handler buffers a response with both
-[`timeout`](#timeout) and `read_timeout` set, each body read is bounded by the
-shorter of the read timeout and the remaining total timeout.
+The idle timeout bounds the silence between packets while connecting, while
+waiting for response headers, and between reads on the response body, whether
+the body is buffered or streamed; any received data resets it. It is
+implemented by the PHP stream handler. cURL handlers accept this option
+without effect so shared request configuration can be reused across
+transports. With Guzzle's default handler selection, streamed responses
+(`stream` => `true`) use the stream handler when PHP streams are available.
+When the stream handler buffers a response with [`timeout`](#timeout) set,
+each body read is bounded by the shorter of the idle timeout and the remaining
+total timeout.
 
 When a read on the streamed PSR-7 body times out, `read()` throws
 `GuzzleHttp\Psr7\Exception\TimeoutException`. A non-timeout read failure, for
@@ -2179,9 +2181,9 @@ request option. Much more detail on SSL certificates can be found on the
 ## timeout
 
 Summary
-Number of seconds to use as the total timeout of the request. Use `0` to wait
-indefinitely (the default behavior). Positive values below `0.001` seconds are
-rejected by the built-in handlers.
+Number of seconds to use as the total timeout of the request. Use `0` to
+disable the total timeout (the default behavior). Positive values below
+`0.001` seconds are rejected by the built-in handlers.
 
 Types
 - int
@@ -2204,9 +2206,13 @@ response: the transfer is aborted once the deadline passes. While waiting for
 response headers the stream handler can only bound the time between packets,
 so a response whose header block arrives in small pieces past the deadline is
 rejected as soon as the headers complete. With the `stream` option enabled,
-the deadline does not apply to the response body: the timeout serves as the
-default idle cap between reads on the streamed body when
-[`read_timeout`](#read_timeout) is not set.
+the deadline applies to obtaining the response and does not bound reads on the
+streamed body.
+
+The deadline never governs how long the connection may sit silent; that is the
+role of [`read_timeout`](#read_timeout), the idle timeout, which applies at
+every stage of a stream handler request and defaults to 60 seconds. The stream
+handler does not consult the `default_socket_timeout` ini setting.
 
 Built-in handlers use the most specific transport timeout exception they can
 determine. Connect timeouts throw

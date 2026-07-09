@@ -92,7 +92,7 @@ class CurlFactoryTest extends TestCase
         self::assertSame('testing', $_SERVER['_curl'][\CURLOPT_POSTFIELDS]);
         self::assertEquals(0, $_SERVER['_curl'][\CURLOPT_RETURNTRANSFER]);
         self::assertEquals(0, $_SERVER['_curl'][\CURLOPT_HEADER]);
-        self::assertSame(300, $_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT]);
+        self::assertSame(60000, $_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT_MS]);
         self::assertInstanceOf('Closure', $_SERVER['_curl'][\CURLOPT_HEADERFUNCTION]);
         self::assertCurlProtocols(['http', 'https']);
         self::assertContains('Expect:', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
@@ -5694,7 +5694,8 @@ class CurlFactoryTest extends TestCase
             'connect_timeout' => 0,
         ]);
         self::assertSame(0, $_SERVER['_curl'][\CURLOPT_TIMEOUT_MS]);
-        self::assertSame(0, $_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT_MS]);
+        self::assertSame(2147483647, $_SERVER['_curl'][\CURLOPT_CONNECTTIMEOUT_MS]);
+        self::assertArrayNotHasKey(\CURLOPT_NOSIGNAL, $_SERVER['_curl']);
     }
 
     public function testTruncatesTimeoutsToMilliseconds(): void
