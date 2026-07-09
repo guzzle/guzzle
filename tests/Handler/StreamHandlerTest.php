@@ -3462,6 +3462,29 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    public function testReadTimeoutAbortsDrainingWhenBodyStallsWithinDeadline(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'guzzle-server/stall-brief');
+
+        try {
+            $handler(
+                $request,
+                [
+                    RequestOptions::TIMEOUT => 10,
+                    RequestOptions::READ_TIMEOUT => 0.5,
+                ]
+            )->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertSame('Timed out while transferring the response body', $e->getMessage());
+            self::assertInstanceOf(Psr7\Exception\TimeoutException::class, $e->getPrevious());
+        }
+    }
+
     public function testTimeoutAbortsDrainingWhenGzipBodyArrivesSlowly(): void
     {
         Server::flush();

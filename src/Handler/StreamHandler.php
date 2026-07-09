@@ -313,10 +313,15 @@ final class StreamHandler
         $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new Psr7\HttpFactory());
         $responseFactory = self::requireResponseFactory($options[RequestOptions::RESPONSE_FACTORY] ?? new Psr7\HttpFactory());
 
-        // Wrap the transport resource with the configured stream factory before
-        // optional content decoding layers an InflateStream on top.
+        // Wrap the transport resource with the configured stream factory, and
+        // decorate buffered transfers with the deadline source before optional
+        // content decoding layers an InflateStream on top, so every read that
+        // pulls from the transport observes the deadline.
         $resource = $stream;
         $stream = $streamFactory->createStreamFromResource($stream);
+        if ($deadline !== null && empty($options['stream'])) {
+            $stream = self::createDeadlineSource($stream, $resource, $deadline, $options);
+        }
         [$stream, $headers] = self::checkDecode($options, $headers, $stream);
 
         $canHaveBody = HeaderProcessor::responseCanHaveBody($request->getMethod(), $status);
@@ -370,10 +375,7 @@ final class StreamHandler
             }
         } elseif ($sink !== $stream) {
             try {
-                $source = $deadline !== null
-                    ? self::createDeadlineSource($stream, $resource, $deadline, $options)
-                    : $stream;
-                $this->drain($request, $response, $source, $sink);
+                $this->drain($request, $response, $stream, $sink);
             } catch (ResponseException $e) {
                 $this->invokeStats($options, $request, $startTime, $response, $e);
 
@@ -676,9 +678,12 @@ final class StreamHandler
     }
 
     /**
-     * Decorates the drained source stream so each read is armed with the
+     * Decorates the transport stream so each buffered-body read observes the
      * remaining wall-clock budget of the "timeout" request option, bounded
-     * by "read_timeout" when that is shorter.
+     * by "read_timeout" when that is shorter. The transport is switched to
+     * non-blocking mode because filtered reads (chunked and compressed
+     * responses) otherwise block until a full buffer arrives, which would
+     * keep the deadline from being enforced between small pieces of data.
      *
      * @param resource $resource
      */
@@ -688,20 +693,9 @@ final class StreamHandler
             ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout') / 1000
             : null;
 
-        return Psr7\FnStream::decorate($stream, [
-            'read' => static function (int $length) use ($stream, $resource, $deadline, $readTimeout): string {
-                $remaining = $deadline - Utils::currentTime();
-                if ($remaining <= 0) {
-                    throw new TimeoutException('Unable to read from stream: timed out');
-                }
+        \stream_set_blocking($resource, false);
 
-                $arm = $readTimeout !== null ? \min($remaining, $readTimeout) : $remaining;
-                $sec = (int) $arm;
-                \stream_set_timeout($resource, $sec, (int) (($arm - $sec) * 1e6));
-
-                return $stream->read($length);
-            },
-        ]);
+        return new DeadlineSourceStream($stream, $deadline, $readTimeout);
     }
 
     /**
