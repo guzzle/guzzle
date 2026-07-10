@@ -960,6 +960,12 @@ class CurlFactory implements CurlFactoryInterface
             \CURLE_GOT_NOTHING => true,
         ];
 
+        $uri = $easy->request->getUri();
+
+        // Redact the native error before it reaches any exception so the
+        // handler context matches the sanitized exception message.
+        $ctx['error'] = self::sanitizeCurlError((string) ($ctx['error'] ?? ''), $uri, $easy->effectiveProxy);
+
         if ($easy->createResponseException) {
             return P\Create::rejectionFor(
                 new RequestException(
@@ -986,9 +992,7 @@ class CurlFactory implements CurlFactoryInterface
             );
         }
 
-        $uri = $easy->request->getUri();
-
-        $sanitizedError = self::sanitizeCurlError($ctx['error'] ?? '', $uri, $easy->effectiveProxy);
+        $sanitizedError = $ctx['error'];
 
         $message = \sprintf(
             'cURL error %s: %s (%s)',

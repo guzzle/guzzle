@@ -3,6 +3,12 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.15.0 - Upcoming
+
+### Changed
+
+- Sanitize the cURL error text exposed through exception handler context
+
 ## 7.14.1 - Upcoming
 
 ### Fixed
