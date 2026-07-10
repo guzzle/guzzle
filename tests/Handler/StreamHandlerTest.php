@@ -375,6 +375,22 @@ class StreamHandlerTest extends TestCase
         )->wait();
     }
 
+    public function testDoesNotLeakRequestUriCredentialsInConnectionErrorMessage(): void
+    {
+        $handler = new StreamHandler();
+        $promise = $handler(
+            new Request('GET', 'http://user:secret@localhost:123'),
+            ['timeout' => 0.01]
+        );
+
+        try {
+            $promise->wait();
+            self::fail('Expected ConnectException');
+        } catch (ConnectException $e) {
+            self::assertStringNotContainsString('secret', $e->getMessage());
+        }
+    }
+
     public function testClassifiesStreamTimeoutErrors(): void
     {
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): SSL: Handshake timed out'));
