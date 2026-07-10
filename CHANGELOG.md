@@ -24,6 +24,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Retain response trailers only when an `on_trailers` callback is configured
 - Validate the `on_trailers` callback before starting a cURL transfer
 - Reject the `on_trailers` request option on the stream handler, which cannot observe trailers
+- Roll back failed cURL multi handle attachment instead of leaving requests pending
 
 ## 7.14.0 - 2026-07-08
 

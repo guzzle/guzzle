@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Handler;
 
 use Closure;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
@@ -260,7 +261,13 @@ class CurlMultiHandler
             }
         );
 
-        $this->addRequest(['easy' => $easy, 'deferred' => $promise, 'wait_token' => $waitToken]);
+        $entry = ['easy' => $easy, 'deferred' => $promise, 'wait_token' => $waitToken];
+
+        try {
+            $this->addRequest($entry);
+        } catch (\Throwable $e) {
+            throw $this->discardPendingRequest($id, $entry, $e);
+        }
 
         return $promise;
     }
@@ -506,7 +513,23 @@ class CurlMultiHandler
     private function addCurlHandle(EasyHandle $easy): void
     {
         $this->isolateFromForeignActiveProxyTunnel($easy);
-        \curl_multi_add_handle($this->_mh, $easy->handle);
+
+        // Unqualified curl_multi_add_handle so the test bootstrap shadow can
+        // override the result.
+        $result = curl_multi_add_handle($this->_mh, $easy->handle);
+
+        if (\CURLM_OK !== $result) {
+            if (\PHP_VERSION_ID < 80226 || (\PHP_VERSION_ID >= 80300 && \PHP_VERSION_ID < 80314)) {
+                // Before PHP 8.2.26 and 8.3.14, ext-curl kept the easy handle
+                // in its multi bookkeeping even when the native add failed
+                // (https://github.com/php/php-src/pull/16302); remove it so
+                // the handle can be pooled or closed safely.
+                \curl_multi_remove_handle($this->_mh, $easy->handle);
+            }
+
+            throw new RequestException(\sprintf('Unable to add the cURL handle to the cURL multi handler: %s (%d).', (string) \curl_multi_strerror($result), $result), $easy->request);
+        }
+
         $this->markProxyTunnelActive($easy);
     }
 
@@ -606,8 +629,19 @@ class CurlMultiHandler
             $currentTime = Utils::currentTime();
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
+                    $entry = $this->handles[$id];
                     unset($this->delays[$id]);
-                    $this->addCurlHandle($this->handles[$id]['easy']);
+
+                    try {
+                        $this->addCurlHandle($entry['easy']);
+                    } catch (\Throwable $e) {
+                        // The promise has already escaped, so reject it
+                        // rather than throw.
+                        $rejection = $this->discardPendingRequest($id, $entry, $e);
+                        if (P\Is::pending($entry['deferred'])) {
+                            $entry['deferred']->reject($rejection);
+                        }
+                    }
                 }
             }
         }
@@ -741,6 +775,25 @@ class CurlMultiHandler
         } else {
             $this->delays[$id] = Utils::currentTime() + ($easy->options['delay'] / 1000);
         }
+    }
+
+    /**
+     * Rolls back a request that can no longer be attached, releasing the
+     * easy handle exactly once and preserving the original failure.
+     *
+     * @param array{easy: EasyHandle, deferred: Promise, wait_token?: object|null} $entry
+     */
+    private function discardPendingRequest(int $id, array $entry, \Throwable $failure): \Throwable
+    {
+        unset($this->handles[$id], $this->delays[$id]);
+
+        try {
+            $this->factory->release($entry['easy']);
+        } catch (\Throwable $e) {
+            // Preserve the original failure.
+        }
+
+        return $failure;
     }
 
     /**
