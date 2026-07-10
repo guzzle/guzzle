@@ -129,6 +129,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Require libcurl 7.37.0 for `Proxy-Authorization` headers through HTTP proxies
 - Suppress proxy CONNECT response headers for tunneled requests
 - Point rejections of the raw `CURLOPT_PIPEWAIT` cURL option at the `multiplex` request option
+- Require an integer `CURLMOPT_PIPELINING` when combined with explicit multiplexing
 - Reject cURL multi options that the runtime libcurl cannot apply
 - Reject unknown handler constructor options
 - Reject invalid `select_timeout` cURL multi handler option values
