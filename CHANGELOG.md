@@ -9,6 +9,12 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Sanitize the cURL error text exposed through exception handler context
 
+### Fixed
+
+- Defer cURL requests created from multi callbacks until native execution unwinds
+- Fail synchronous waits from native cURL callbacks promptly instead of self-deadlocking
+- Guard cURL multi handle removal against progress callbacks re-entering the handler
+
 ## 7.14.1 - Upcoming
 
 ### Fixed
