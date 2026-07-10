@@ -339,7 +339,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             // Add the User-Agent header if one was not already set.
             $hasUserAgent = false;
             foreach (\array_keys($this->config['headers']) as $name) {
-                if (\strtolower((string) $name) === 'user-agent') {
+                if (\strtr((string) $name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') === 'user-agent') {
                     $hasUserAgent = true;
                     break;
                 }
@@ -1138,7 +1138,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         if (!empty($options['auth']) && \is_array($options['auth'])) {
             $value = $options['auth'];
-            $type = isset($value[2]) ? \strtolower($value[2]) : 'basic';
+            $type = isset($value[2]) ? \strtr($value[2], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') : 'basic';
             switch ($type) {
                 case 'basic':
                     // Ensure that we don't have the header in different case and set the new value.

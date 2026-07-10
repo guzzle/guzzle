@@ -39,6 +39,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Validate the `on_trailers` callback before starting a cURL transfer
 - Reject the `on_trailers` request option on the stream handler, which cannot observe trailers
 - Roll back failed cURL multi handle attachment instead of leaving requests pending
+- Match cookie domains, proxy schemes, auth types, and header names with locale-independent ASCII folding
 
 ## 7.14.0 - 2026-07-08
 

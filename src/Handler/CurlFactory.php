@@ -1178,7 +1178,7 @@ class CurlFactory implements CurlFactoryInterface
     {
         $position = \strpos($proxy, '://');
 
-        return $position === false ? null : \strtolower(\substr($proxy, 0, $position));
+        return $position === false ? null : \strtr(\substr($proxy, 0, $position), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
     }
 
     /**
@@ -1304,7 +1304,7 @@ class CurlFactory implements CurlFactoryInterface
                 return false;
             }
 
-            $proxyScheme = \strtolower($proxyParts['scheme']);
+            $proxyScheme = \strtr($proxyParts['scheme'], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
 
             return $proxyScheme === 'http' || $proxyScheme === 'https';
         }
