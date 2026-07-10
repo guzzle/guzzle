@@ -286,7 +286,10 @@ final class CurlMultiHandler
 
         $pipelining = $this->options[\CURLMOPT_PIPELINING];
         if (!\is_scalar($pipelining)) {
-            return;
+            // ext-curl derives the integer mask from non-scalar values with
+            // type-dependent zval semantics, so the effective mask cannot be
+            // predicted here; require an explicit integer instead.
+            throw new InvalidArgumentException('The CurlMultiHandler CURLMOPT_PIPELINING option must be an integer when combined with the "multiplex" request option.');
         }
 
         $multiplexBit = \defined('CURLPIPE_MULTIPLEX') ? \CURLPIPE_MULTIPLEX : 2;

@@ -401,6 +401,48 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public static function nonScalarPipeliningProvider(): iterable
+    {
+        yield 'empty array with wait' => [Multiplexing::WAIT, []];
+        yield 'non-empty array with wait' => [Multiplexing::WAIT, [1]];
+        yield 'object with wait' => [Multiplexing::WAIT, new \stdClass()];
+        yield 'empty array with require_eager' => [Multiplexing::REQUIRE_EAGER, []];
+        yield 'non-empty array with require_wait' => [Multiplexing::REQUIRE_WAIT, [1]];
+        yield 'object with require_eager' => [Multiplexing::REQUIRE_EAGER, new \stdClass()];
+    }
+
+    /**
+     * @dataProvider nonScalarPipeliningProvider
+     *
+     * @param mixed $pipelining
+     */
+    public function testRejectsNonScalarPipeliningWithExplicitMultiplex(string $multiplex, $pipelining): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            // ext-curl derives the integer mask from non-scalar values with
+            // type-dependent zval semantics, so they are rejected as an
+            // invalid type instead of bypassing the guard.
+            $a = new CurlMultiHandler(['options' => [
+                \CURLMOPT_PIPELINING => $pipelining,
+            ]]);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('The CurlMultiHandler CURLMOPT_PIPELINING option must be an integer when combined with the "multiplex" request option.');
+            $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => $multiplex]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
     public function testAllowsExplicitMultiplexWhenPipeliningIncludesMultiplexBit(): void
     {
         if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
@@ -411,6 +453,21 @@ class CurlMultiHandlerTest extends TestCase
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler(['options' => [
             \CURLMOPT_PIPELINING => \CURLPIPE_MULTIPLEX,
+        ]]);
+        $response = $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testAllowsExplicitMultiplexWithCombinedPipeliningMask(): void
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler(['options' => [
+            \CURLMOPT_PIPELINING => \CURLPIPE_HTTP1 | \CURLPIPE_MULTIPLEX,
         ]]);
         $response = $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT])->wait();
         self::assertSame(200, $response->getStatusCode());
