@@ -78,7 +78,7 @@ final class ProxyOptions
             $authority = $proxy;
         } else {
             [$scheme, $authority] = $parts;
-            $scheme = \strtolower($scheme);
+            $scheme = Psr7\Utils::asciiToLower($scheme);
             if ($scheme === '' || !Rfc3986::isValidScheme($scheme)) {
                 throw new InvalidArgumentException('Invalid proxy URL.');
             }
@@ -406,7 +406,7 @@ final class ProxyOptions
 
         return [
             'type' => 'domain',
-            'value' => \strtolower($host),
+            'value' => Psr7\Utils::asciiToLower($host),
             'port' => $port,
         ];
     }

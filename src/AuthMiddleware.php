@@ -123,7 +123,7 @@ final class AuthMiddleware
                 throw new InvalidArgumentException('auth type must be a string');
             }
 
-            $type = \strtolower($auth[2]);
+            $type = Psr7\Utils::asciiToLower($auth[2]);
         }
 
         if (!\in_array($type, ['basic', 'digest'], true)) {
@@ -505,8 +505,8 @@ final class AuthMiddleware
     private static function digestCacheKey(RequestInterface $request): ?string
     {
         $uri = $request->getUri();
-        $scheme = \strtolower($uri->getScheme());
-        $host = \strtolower($uri->getHost());
+        $scheme = Psr7\Utils::asciiToLower($uri->getScheme());
+        $host = Psr7\Utils::asciiToLower($uri->getHost());
 
         if (($scheme !== 'http' && $scheme !== 'https') || $host === '') {
             return null;
@@ -514,7 +514,7 @@ final class AuthMiddleware
 
         $port = $uri->getPort() ?? ($scheme === 'https' ? 443 : 80);
 
-        return $scheme.'://'.$host.':'.$port.'|'.\strtolower($request->getHeaderLine('Host'));
+        return $scheme.'://'.$host.':'.$port.'|'.Psr7\Utils::asciiToLower($request->getHeaderLine('Host'));
     }
 
     private function digestCredentialKey(string $username, string $password): string
@@ -577,7 +577,7 @@ final class AuthMiddleware
     {
         $uri = $request->getUri();
         $host = $request->getHeaderLine('Host');
-        if ($host === '' || \strcasecmp($host, $uri->getHost()) === 0) {
+        if ($host === '' || Psr7\Utils::caselessEquals($host, $uri->getHost())) {
             return $uri;
         }
 

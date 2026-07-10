@@ -232,7 +232,7 @@ final class Utils
     {
         $result = [];
         foreach (\array_keys($headers) as $key) {
-            $result[\strtolower((string) $key)] = $key;
+            $result[Psr7\Utils::asciiToLower((string) $key)] = $key;
         }
 
         return $result;

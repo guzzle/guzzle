@@ -269,7 +269,7 @@ final class StreamHandler
     private static function isConnectTimeoutError(string $message): bool
     {
         foreach (self::CONNECT_TIMEOUT_ERRORS as $timeoutError) {
-            if (false !== \stripos($message, $timeoutError)) {
+            if (Psr7\Utils::caselessContains($message, $timeoutError)) {
                 return true;
             }
         }
@@ -280,7 +280,7 @@ final class StreamHandler
     private static function isConnectionError(string $message): bool
     {
         foreach (self::CONNECTION_ERRORS as $connectionError) {
-            if (false !== \stripos($message, $connectionError)) {
+            if (Psr7\Utils::caselessContains($message, $connectionError)) {
                 return true;
             }
         }
@@ -291,13 +291,13 @@ final class StreamHandler
     private static function isSendError(string $message): bool
     {
         // A failed write ("Send of N bytes failed ...") implies an established connection.
-        return false !== \stripos($message, 'bytes failed with errno=');
+        return Psr7\Utils::caselessContains($message, 'bytes failed with errno=');
     }
 
     private static function isNetworkError(string $message): bool
     {
         foreach (self::NETWORK_ERRORS as $networkError) {
-            if (false !== \stripos($message, $networkError)) {
+            if (Psr7\Utils::caselessContains($message, $networkError)) {
                 return true;
             }
         }
@@ -1270,7 +1270,7 @@ final class StreamHandler
             throw new InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
         }
 
-        if (\strtoupper($value) !== 'PEM') {
+        if (Psr7\Utils::asciiToUpper($value) !== 'PEM') {
             throw new InvalidArgumentException(\sprintf('The stream handler only supports "PEM" for the %s request option.', $option));
         }
     }
