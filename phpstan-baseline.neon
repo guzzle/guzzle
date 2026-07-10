@@ -231,7 +231,7 @@ parameters:
 		-
 			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$_mh \(CurlMultiHandle\|resource\) in isset\(\) is not nullable\.$#'
 			identifier: isset.property
-			count: 2
+			count: 5
 			path: src/Handler/CurlMultiHandler.php
 
 		-

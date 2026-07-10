@@ -529,6 +529,171 @@ class CurlMultiHandlerTest extends TestCase
         self::assertStringContainsString('ignored by the runtime libcurl', $warning);
     }
 
+    /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testFailsClosedWhenNamedConnectionCapCannotBeApplied(string $option, string $constant): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $handler = new CurlMultiHandler([$option => 2]);
+        $_SERVER['curl_multi_setopt_fail'] = \constant($constant);
+
+        try {
+            self::readMultiProperty($handler, '_mh');
+            self::fail('Expected InvalidArgumentException.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('Unable to apply the cURL multi option '.$constant, $e->getMessage());
+            self::assertStringContainsString('rejected by the runtime libcurl', $e->getMessage());
+        }
+
+        self::assertFalse(self::multiHandleIsInitialized($handler), 'A failed initialization must not publish the multi handle.');
+
+        // Removing the failure allows the same handler to retry.
+        unset($_SERVER['curl_multi_setopt_fail']);
+        self::readMultiProperty($handler, '_mh');
+        self::assertTrue(self::multiHandleIsInitialized($handler));
+        self::assertSame(2, $_SERVER['_curl_multi'][\constant($constant)]);
+    }
+
+    public function testEarlierOptionSuccessThenRequiredCapFailureDoesNotPublishHandle(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $handler = new CurlMultiHandler([
+            'max_host_connections' => 2,
+            'options' => [\CURLMOPT_MAXCONNECTS => 5],
+        ]);
+        $_SERVER['curl_multi_setopt_fail'] = \constant('CURLMOPT_MAX_HOST_CONNECTIONS');
+
+        try {
+            self::readMultiProperty($handler, '_mh');
+            self::fail('Expected InvalidArgumentException.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('rejected by the runtime libcurl', $e->getMessage());
+        }
+
+        self::assertFalse(self::multiHandleIsInitialized($handler), 'A partially configured multi handle must not be published.');
+    }
+
+    public function testThrowingWarningHandlerLeavesNoPartialState(): void
+    {
+        $handler = new CurlMultiHandler(['options' => [
+            \CURLMOPT_MAXCONNECTS => 5,
+        ]]);
+        $_SERVER['curl_multi_setopt_fail'] = \CURLMOPT_MAXCONNECTS;
+
+        \set_error_handler(static function (int $severity, string $message): bool {
+            if ($severity !== \E_USER_WARNING) {
+                return false;
+            }
+
+            throw new \RuntimeException($message);
+        }, \E_USER_WARNING);
+
+        try {
+            $handler(new Request('GET', Server::$url), []);
+            self::fail('Expected RuntimeException.');
+        } catch (\RuntimeException $e) {
+            self::assertStringContainsString('Unable to apply the cURL multi option CURLMOPT_MAXCONNECTS', $e->getMessage());
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertFalse(self::multiHandleIsInitialized($handler), 'A promoted warning must not leave a partially configured handle.');
+        self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        self::assertSame([], self::readMultiProperty($handler, 'delays'));
+
+        unset($_SERVER['curl_multi_setopt_fail']);
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        self::assertSame(200, $handler(new Request('GET', Server::$url), [])->wait()->getStatusCode());
+    }
+
+    public function testDelayedRequestRejectedWhenRequiredCapCannotBeApplied(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $handler = new CurlMultiHandler(['max_host_connections' => 2]);
+        $_SERVER['curl_multi_setopt_fail'] = \constant('CURLMOPT_MAX_HOST_CONNECTIONS');
+
+        $promise = $handler(new Request('GET', Server::$url), ['delay' => 1]);
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertCount(1, $handles);
+        $id = \key($handles);
+
+        self::setMultiProperty($handler, 'delays', [$id => Utils::currentTime() - 1]);
+
+        $handler->tick();
+
+        self::assertTrue(P\Is::rejected($promise));
+        self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        self::assertSame([], self::readMultiProperty($handler, 'delays'));
+        self::assertFalse(self::multiHandleIsInitialized($handler), 'The tick must not recreate the just-failed multi handle.');
+
+        try {
+            $promise->wait();
+            self::fail('Expected InvalidArgumentException.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('rejected by the runtime libcurl', $e->getMessage());
+        }
+    }
+
+    public function testSiblingDelayedRequestSurvivesRequiredCapFailure(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $handler = new CurlMultiHandler(['max_host_connections' => 2]);
+        $_SERVER['curl_multi_setopt_fail'] = \constant('CURLMOPT_MAX_HOST_CONNECTIONS');
+
+        $due = $handler(new Request('GET', Server::$url), ['delay' => 1]);
+        $dueId = \key(self::readMultiProperty($handler, 'handles'));
+        $pending = $handler(new Request('GET', Server::$url), ['delay' => 10000]);
+
+        $delays = self::readMultiProperty($handler, 'delays');
+        self::assertCount(2, $delays);
+        $delays[$dueId] = Utils::currentTime() - 1;
+        self::setMultiProperty($handler, 'delays', $delays);
+
+        $handler->tick();
+
+        self::assertTrue(P\Is::rejected($due));
+        self::assertTrue(P\Is::pending($pending));
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertCount(1, $handles);
+        self::assertArrayNotHasKey($dueId, $handles);
+        self::assertCount(1, self::readMultiProperty($handler, 'delays'));
+
+        $pending->cancel();
+    }
+
+    public function testRejectsRequestLevelShareWithNamedConnectionCap(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+        self::skipIfCurlShareIsUnavailable();
+
+        $share = \curl_share_init();
+        self::assertNotFalse($share);
+
+        $handler = new CurlMultiHandler(['max_host_connections' => 1]);
+
+        try {
+            $handler(new Request('GET', Server::$url), [
+                'curl' => [\CURLOPT_SHARE => $share],
+            ]);
+            self::fail('Expected InvalidArgumentException.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('CURLOPT_SHARE', $e->getMessage());
+        } finally {
+            if (\PHP_VERSION_ID < 80000 && \is_resource($share)) {
+                \curl_share_close($share);
+            }
+        }
+    }
+
     public function testDeprecatesUnknownConstructorOption()
     {
         $deprecation = self::captureDeprecation(static function (): void {
@@ -2016,6 +2181,16 @@ class CurlMultiHandlerTest extends TestCase
         } while (self::readMultiProperty($handler, 'active') !== $count && \microtime(true) < $deadline);
 
         self::assertSame($count, self::readMultiProperty($handler, 'active'), 'Timed out waiting for the expected number of running transfers.');
+    }
+
+    private static function multiHandleIsInitialized(CurlMultiHandler $handler): bool
+    {
+        // isset() does not trigger the lazy __get() initializer.
+        $check = \Closure::bind(static function (CurlMultiHandler $handler): bool {
+            return isset($handler->_mh);
+        }, null, CurlMultiHandler::class);
+
+        return $check($handler);
     }
 
     private static function readSelectTimeout(CurlMultiHandler $handler)

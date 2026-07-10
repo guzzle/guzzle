@@ -86,6 +86,14 @@ specified as an array keyed by integer `CURLMOPT_*` constants in the **options**
 key of the `CurlMultiHandler` constructor. For example,
 `CURLMOPT_MAX_CONCURRENT_STREAMS` can be used on PHP versions that expose it.
 
+If the runtime libcurl cannot apply a named connection cap, the handler fails
+closed: the first request fails with an exception instead of continuing
+without the cap. Raw `CURLMOPT_*` options in the **options** array keep their
+Guzzle 7 compatibility behavior and only trigger a warning when they cannot be
+applied. Named connection caps also cannot be combined with a request-level
+`CURLOPT_SHARE` option because Guzzle cannot verify that a caller-managed
+shared connection pool honors the caps.
+
 Connection cap options apply to transfers managed by `CurlMultiHandler`. When
 the caps are configured, the default handler routes synchronous requests through
 the capped `CurlMultiHandler` as well, and the `StreamHandler` rejects the

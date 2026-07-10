@@ -77,6 +77,13 @@ class CurlMultiHandler
      */
     private $options = [];
 
+    /**
+     * @var array<int, true> Native options derived from first-class
+     *                       constructor options; failing to apply one is an
+     *                       error rather than a compatibility warning.
+     */
+    private $requiredOptions = [];
+
     /** @var resource|\CurlMultiHandle */
     private $_mh;
 
@@ -208,8 +215,9 @@ class CurlMultiHandler
      *
      * @return resource|\CurlMultiHandle
      *
-     * @throws \BadMethodCallException when another field as `_mh` will be gotten
-     * @throws \RuntimeException       when curl can not initialize a multi handle
+     * @throws \BadMethodCallException   when another field as `_mh` will be gotten
+     * @throws \RuntimeException         when curl can not initialize a multi handle
+     * @throws \InvalidArgumentException when a required cURL multi option cannot be applied
      */
     public function __get($name)
     {
@@ -223,13 +231,33 @@ class CurlMultiHandler
             throw new \RuntimeException('Can not initialize curl multi handle.');
         }
 
-        $this->_mh = $multiHandle;
+        try {
+            foreach ($this->options as $option => $value) {
+                if (true === @curl_multi_setopt($multiHandle, $option, $value)) {
+                    continue;
+                }
 
-        foreach ($this->options as $option => $value) {
-            if (true !== @curl_multi_setopt($this->_mh, $option, $value)) {
+                if (isset($this->requiredOptions[$option])) {
+                    // A first-class option such as a connection cap must
+                    // never be silently dropped.
+                    throw new \InvalidArgumentException(\sprintf('Unable to apply the cURL multi option %s; it was rejected by the runtime libcurl.', self::formatCurlMultiOption($option)));
+                }
+
                 \trigger_error(\sprintf('Unable to apply the cURL multi option %s; it was ignored by the runtime libcurl.', self::formatCurlMultiOption($option)), \E_USER_WARNING);
             }
+        } catch (\Throwable $e) {
+            // Do not publish a partially configured handle; a later access
+            // retries the initialization from scratch.
+            try {
+                \curl_multi_close($multiHandle);
+            } catch (\Throwable $ignored) {
+                // Preserve the original failure.
+            }
+
+            throw $e;
         }
+
+        $this->_mh = $multiHandle;
 
         return $this->_mh;
     }
@@ -249,6 +277,17 @@ class CurlMultiHandler
 
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
+        if ($this->requiredOptions !== []
+            && \defined('CURLOPT_SHARE')
+            && isset($options['curl'])
+            && \is_array($options['curl'])
+            && \array_key_exists((int) \constant('CURLOPT_SHARE'), $options['curl'])
+        ) {
+            // Key presence alone conflicts: Guzzle cannot verify that a
+            // caller-managed shared connection pool honors the caps.
+            throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with CurlMultiHandler connection cap options because Guzzle cannot verify that an external shared connection pool honors cURL multi connection caps.');
+        }
+
         $easy = $this->factory->create($request, $options);
 
         try {
@@ -432,6 +471,7 @@ class CurlMultiHandler
             }
 
             $this->options[$option] = $value;
+            $this->requiredOptions[$option] = true;
         }
     }
 
@@ -715,8 +755,16 @@ class CurlMultiHandler
                 return;
             }
 
-            $this->processMessages();
+            if (isset($this->_mh)) {
+                $this->processMessages();
+            }
         } while (!P\Utils::queue()->isEmpty());
+
+        if (!isset($this->_mh)) {
+            // Nothing is attached natively (or initialization just failed);
+            // there is nothing to run and nothing to recreate the handle for.
+            return;
+        }
 
         if ($targetId !== null && !$this->hasRequest($targetId, $waitToken)) {
             return;
@@ -748,6 +796,12 @@ class CurlMultiHandler
         if ($this->multiExecDepth > 0) {
             // A cURL callback re-entered the handler while native execution
             // is running; the outer frame drives native cURL once it unwinds.
+            return;
+        }
+
+        if (!isset($this->_mh)) {
+            // Nothing is attached natively (or initialization just failed);
+            // there is nothing to run and nothing to recreate the handle for.
             return;
         }
 

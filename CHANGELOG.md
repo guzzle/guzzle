@@ -8,6 +8,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Sanitize the cURL error text exposed through exception handler context
+- Fail closed when a named cURL multi connection cap cannot be applied
+- Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured
 
 ### Fixed
 
