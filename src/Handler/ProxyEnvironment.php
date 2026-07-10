@@ -28,7 +28,7 @@ final class ProxyEnvironment
      */
     public static function getProxyForScheme(string $scheme): ?string
     {
-        $scheme = \strtolower($scheme);
+        $scheme = \strtr($scheme, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
         $candidates = [$scheme.'_proxy'];
         if ($scheme !== 'http') {
             // Uppercase HTTP_PROXY is deliberately never consulted: a CGI

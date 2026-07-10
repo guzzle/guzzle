@@ -448,7 +448,7 @@ class SetCookie
 
         // Remove the leading '.' as per spec in RFC 6265.
         // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.3
-        $cookieDomain = \strtolower($cookieDomain);
+        $cookieDomain = \strtr($cookieDomain, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
         if ($cookieDomain !== '' && $cookieDomain[0] === '.') {
             /** @var string */
             $cookieDomain = \substr($cookieDomain, 1);
@@ -457,7 +457,7 @@ class SetCookie
             return false;
         }
 
-        $domain = \strtolower($domain);
+        $domain = \strtr($domain, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
         if ($domain === $cookieDomain) {
             return true;
         }

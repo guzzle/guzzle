@@ -324,7 +324,7 @@ EOT
     {
         $result = [];
         foreach (\array_keys($headers) as $key) {
-            $result[\strtolower((string) $key)] = $key;
+            $result[\strtr((string) $key, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')] = $key;
         }
 
         return $result;
@@ -571,7 +571,7 @@ EOT
 
         return [
             'type' => 'domain',
-            'value' => \strtolower($host),
+            'value' => \strtr($host, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'),
             'port' => $port,
             'matchesRoot' => $matchesRoot,
         ];
