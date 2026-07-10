@@ -6355,6 +6355,8 @@ class CurlFactoryTest extends TestCase
             'on_headers' => static function () use (&$onHeadersCalls): void {
                 ++$onHeadersCalls;
             },
+            'on_trailers' => static function (): void {
+            },
         ]);
 
         try {
@@ -6390,7 +6392,10 @@ class CurlFactoryTest extends TestCase
     public function testCollectsTrailerFieldsInWireOrder(): void
     {
         $factory = new CurlFactory(1);
-        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function (): void {
+            },
+        ]);
 
         try {
             self::receiveCurlHeaders($easy, [
@@ -6423,7 +6428,10 @@ class CurlFactoryTest extends TestCase
     public function testDiscardsMalformedTrailerLines(): void
     {
         $factory = new CurlFactory(1);
-        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function (): void {
+            },
+        ]);
 
         try {
             self::receiveCurlHeaders($easy, [
@@ -6459,7 +6467,10 @@ class CurlFactoryTest extends TestCase
     public function testDiscardsIntermediateTrailerFieldsWhenANewHeaderBlockStarts(): void
     {
         $factory = new CurlFactory(1);
-        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function (): void {
+            },
+        ]);
 
         try {
             self::receiveCurlHeaders($easy, [
@@ -6490,7 +6501,10 @@ class CurlFactoryTest extends TestCase
         // A response whose fields all arrive in the initial header block has
         // no trailer fields; every field is an ordinary response header.
         $factory = new CurlFactory(1);
-        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function (): void {
+            },
+        ]);
 
         try {
             self::receiveCurlHeaders($easy, [
@@ -6679,7 +6693,7 @@ class CurlFactoryTest extends TestCase
 
         self::assertSame([
             'x-dup' => ['1', '2'],
-            'X-Mixed-Case' => ['Foo'],
+            'x-mixed-case' => ['Foo'],
             'x-empty' => [''],
         ], $received);
         self::assertSame($response, $receivedResponse);
@@ -6718,6 +6732,117 @@ class CurlFactoryTest extends TestCase
         )->wait();
 
         self::assertSame(['x-valid' => ['ok']], $gotTrailers);
+    }
+
+    public function testGroupsTrailerFieldNamesCaseInsensitively(): void
+    {
+        $factory = new CurlFactory(1);
+        $gotTrailers = null;
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function (array $trailers) use (&$gotTrailers): void {
+                $gotTrailers = $trailers;
+            },
+        ]);
+
+        self::receiveCurlHeaders($easy, [
+            "HTTP/1.1 200 OK\r\n",
+            "Content-Type: text/plain\r\n",
+            "\r\n",
+            "X-A: 1\r\n",
+            "x-b: only\r\n",
+            "x-a: 2\r\n",
+            "X-A: 3\r\n",
+            "X-Empty:\r\n",
+            "\r\n",
+        ]);
+
+        CurlFactory::finish(
+            static function (): void {
+            },
+            $easy,
+            $factory
+        )->wait();
+
+        self::assertSame(['x-a' => ['1', '2', '3'], 'x-b' => ['only'], 'x-empty' => ['']], $gotTrailers);
+    }
+
+    public function testDoesNotRetainTrailersWithoutOnTrailersCallback(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Type: text/plain\r\n",
+                "\r\n",
+                "Foo: bar\r\n",
+                "\r\n",
+            ]);
+
+            self::assertSame([], $easy->trailers);
+            self::assertNotNull($easy->response);
+            self::assertSame(200, $easy->response->getStatusCode());
+            self::assertSame('text/plain', $easy->response->getHeaderLine('Content-Type'));
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testTreatsNullOnTrailersAsAbsent(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), ['on_trailers' => null]);
+
+        try {
+            self::receiveCurlHeaders($easy, [
+                "HTTP/1.1 200 OK\r\n",
+                "\r\n",
+                "Foo: bar\r\n",
+                "\r\n",
+            ]);
+
+            self::assertSame([], $easy->trailers);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testReusedHandleDoesNotCarryTrailersIntoNextTransfer(): void
+    {
+        $factory = new CurlFactory(1);
+        $received = [];
+        $onTrailers = static function (array $trailers) use (&$received): void {
+            $received[] = $trailers;
+        };
+
+        $first = $factory->create(new Psr7\Request('GET', Server::$url), ['on_trailers' => $onTrailers]);
+        self::receiveCurlHeaders($first, [
+            "HTTP/1.1 200 OK\r\n",
+            "\r\n",
+            "Foo: bar\r\n",
+            "\r\n",
+        ]);
+        CurlFactory::finish(
+            static function (): void {
+            },
+            $first,
+            $factory
+        )->wait();
+
+        $second = $factory->create(new Psr7\Request('GET', Server::$url), ['on_trailers' => $onTrailers]);
+        self::receiveCurlHeaders($second, [
+            "HTTP/1.1 200 OK\r\n",
+            "\r\n",
+        ]);
+        CurlFactory::finish(
+            static function (): void {
+            },
+            $second,
+            $factory
+        )->wait();
+
+        self::assertSame([['foo' => ['bar']], []], $received);
     }
 
     public function testOnTrailersReceivesRewoundResponseBody(): void

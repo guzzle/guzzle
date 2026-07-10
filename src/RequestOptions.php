@@ -286,17 +286,19 @@ final class RequestOptions
      * successfully, with the HTTP trailer fields of the response. The callable
      * is passed an associative array of trailer field names mapped to lists of
      * field values, the response, and the request. The array is empty when the
-     * response carried no trailer fields, and trailer names preserve the
-     * casing received on the wire. The callable is never invoked for failed
-     * transfers. If it throws, the request promise is rejected with a
+     * response carried no trailer fields, and trailer field names are
+     * lowercased and grouped case-insensitively while values keep their wire
+     * order. The callable is never invoked for failed transfers. If it throws,
+     * the request promise is rejected with a
      * GuzzleHttp\Exception\ResponseException (a RequestException subtype)
      * wrapping the thrown exception. Only the built-in cURL handlers invoke
-     * on_trailers; the built-in stream and mock handlers cannot observe
-     * trailer fields and ignore the option. Malformed trailer field lines are
-     * discarded before parsing. Trailer fields are reported separately from
-     * response headers and are never merged into the response. When this
-     * callback is supplied via GuzzleHttp\Pool's "options" configuration, the
-     * pool appends the request's iterable key as a fourth argument.
+     * on_trailers; the built-in stream handler rejects the option because it
+     * cannot observe trailer fields, and the mock handler ignores it.
+     * Malformed trailer field lines are discarded before parsing. Trailer
+     * fields are reported separately from response headers and are never
+     * merged into the response. When this callback is supplied via
+     * GuzzleHttp\Pool's "options" configuration, the pool appends the
+     * request's iterable key as a fourth argument.
      */
     public const ON_TRAILERS = 'on_trailers';
 

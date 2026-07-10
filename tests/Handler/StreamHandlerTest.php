@@ -93,6 +93,19 @@ class StreamHandlerTest extends TestCase
         $handler(new Request('GET', 'http://localhost/'), ['stream' => true]);
     }
 
+    public function testRejectsOnTrailersRequestOption(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing the "on_trailers" request option to the stream handler is not supported because the stream handler cannot observe trailers.');
+
+        $handler(new Request('GET', 'http://localhost/'), [
+            'on_trailers' => static function (): void {
+            },
+        ]);
+    }
+
     public static function connectionCapOptionProvider(): iterable
     {
         yield 'max host connections' => ['max_host_connections'];
