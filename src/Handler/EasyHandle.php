@@ -31,7 +31,8 @@ final class EasyHandle
     public $headers = [];
 
     /**
-     * @var array Received HTTP trailer lines so far
+     * @var array Valid trailer lines, retained only when an on_trailers
+     *            callback is configured
      */
     public $trailers = [];
 
