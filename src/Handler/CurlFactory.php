@@ -249,6 +249,10 @@ final class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
+        if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+            self::assertRequiredMultiplexAuthSupported($conf);
+        }
+
         self::applyProxyConnectHeaderSuppression($request, $conf);
         self::normalizeCurlHeaderOptions($conf);
         self::applyProxyAuthorizationHeaderHandling($request, $conf);
@@ -411,6 +415,39 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ('https' !== $easy->request->getUri()->getScheme() && $proxy->hasProxy()) {
             throw new RequestException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
+        }
+    }
+
+    /**
+     * libcurl forces NTLM-authenticated transfers onto HTTP/1.1: when the
+     * server picks NTLM from the offered mask, the connection is closed and the
+     * request is retried over HTTP/1.1 whatever HTTP version was asked for,
+     * silently defeating the required protocol guarantee on both cleartext and
+     * TLS routes. The final merged mask is checked because the raw
+     * CURLOPT_HTTPAUTH cURL option is allow-listed, and any mask permitting
+     * NTLM, such as CURLAUTH_ANY, is rejected because the selection is
+     * server-controlled.
+     *
+     * @param array<int|string, mixed> $conf
+     */
+    private static function assertRequiredMultiplexAuthSupported(array $conf): void
+    {
+        if (!\array_key_exists(\CURLOPT_HTTPAUTH, $conf)) {
+            return;
+        }
+
+        $auth = $conf[\CURLOPT_HTTPAUTH];
+        if (!\is_scalar($auth)) {
+            throw new InvalidArgumentException('The "multiplex" request option cannot be required when the final CURLOPT_HTTPAUTH cURL option value is not an integer.');
+        }
+
+        $ntlmBits = \CURLAUTH_NTLM;
+        if (\defined('CURLAUTH_NTLM_WB')) {
+            $ntlmBits |= (int) \constant('CURLAUTH_NTLM_WB');
+        }
+
+        if (((int) $auth & $ntlmBits) !== 0) {
+            throw new InvalidArgumentException('The "multiplex" request option cannot be required when the final CURLOPT_HTTPAUTH cURL option value permits NTLM; libcurl retries NTLM authentication over HTTP/1.1.');
         }
     }
 
