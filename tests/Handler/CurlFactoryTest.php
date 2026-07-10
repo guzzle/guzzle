@@ -1635,6 +1635,79 @@ class CurlFactoryTest extends TestCase
     }
 
     /**
+     * @dataProvider handlerContextErrorBranchProvider
+     */
+    public function testSanitizesNativeErrorInHandlerContext(string $expectedException, \Closure $configure): void
+    {
+        $proxy = 'http://user:secret@proxy.example.com:8125';
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), ['proxy' => $proxy]);
+        $configure($easy);
+
+        $ctx = [
+            'errno' => $easy->errno,
+            'error' => "Unsupported proxy syntax in '".$proxy."'",
+            'total_time' => 1.5,
+        ];
+
+        $reason = self::rejectionReason($easy, $ctx);
+
+        self::assertInstanceOf($expectedException, $reason);
+        self::assertStringNotContainsString('secret', $reason->getMessage());
+
+        $context = $reason->getHandlerContext();
+        self::assertStringNotContainsString('secret', $context['error']);
+        self::assertSame("Unsupported proxy syntax in 'http://user:***@proxy.example.com:8125'", $context['error']);
+        self::assertSame(1.5, $context['total_time']);
+    }
+
+    public static function handlerContextErrorBranchProvider(): iterable
+    {
+        yield 'connect exception' => [ConnectException::class, static function (EasyHandle $easy): void {
+            $easy->errno = \CURLE_COULDNT_CONNECT;
+        }];
+        yield 'request exception' => [RequestException::class, static function (EasyHandle $easy): void {
+            $easy->errno = 18; // CURLE_PARTIAL_FILE
+        }];
+        yield 'response creation exception' => [RequestException::class, static function (EasyHandle $easy): void {
+            $easy->errno = 18;
+            $easy->createResponseException = new \RuntimeException('bad headers');
+        }];
+        yield 'on_headers exception' => [RequestException::class, static function (EasyHandle $easy): void {
+            $easy->errno = 18;
+            $easy->onHeadersException = new \RuntimeException('rejected');
+        }];
+    }
+
+    public function testLeavesUnrelatedHandlerContextErrorUnchanged(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy->errno = \CURLE_COULDNT_CONNECT;
+
+        $reason = self::rejectionReason($easy, [
+            'errno' => $easy->errno,
+            'error' => 'Connection timed out after 1000 ms',
+        ]);
+
+        self::assertSame('Connection timed out after 1000 ms', $reason->getHandlerContext()['error']);
+    }
+
+    public function testLeavesEmptyHandlerContextErrorEmpty(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $easy->errno = \CURLE_COULDNT_CONNECT;
+
+        $reason = self::rejectionReason($easy, [
+            'errno' => $easy->errno,
+            'error' => '',
+        ]);
+
+        self::assertSame('', $reason->getHandlerContext()['error']);
+    }
+
+    /**
      * @dataProvider proxyTunnelSectionProvider
      */
     public function testComputesProxyTunnelSignatureByChannel(string $version, string $uri, array $options, bool $sectioned): void
@@ -5289,6 +5362,25 @@ class CurlFactoryTest extends TestCase
         }
 
         return $method->invoke(null, $error, $proxy);
+    }
+
+    /**
+     * @param array<string, mixed> $ctx
+     */
+    private static function rejectionReason(EasyHandle $easy, array $ctx): \Throwable
+    {
+        $method = new \ReflectionMethod(CurlFactory::class, 'createRejection');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        try {
+            $method->invoke(null, $easy, $ctx)->wait();
+        } catch (\Throwable $e) {
+            return $e;
+        }
+
+        self::fail('Expected createRejection to produce a rejected promise.');
     }
 
     /**
