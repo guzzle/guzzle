@@ -15,7 +15,7 @@ namespace GuzzleHttp\Test {
     });
 }
 
-// Override curl_setopt(), curl_setopt_array(), curl_multi_setopt(), and curl_share_*() to get the last set curl options
+// Override curl_setopt(), curl_setopt_array(), curl_multi_setopt(), curl_multi_add_handle(), and curl_share_*() to get the last set curl options
 
 namespace GuzzleHttp\Handler {
     function curl_setopt($handle, int $option, $value)
@@ -64,6 +64,15 @@ namespace GuzzleHttp\Handler {
         }
 
         return \curl_multi_setopt($handle, $option, $value);
+    }
+
+    function curl_multi_add_handle($multiHandle, $handle)
+    {
+        if (isset($_SERVER['curl_multi_add_handle_result'])) {
+            return (int) $_SERVER['curl_multi_add_handle_result'];
+        }
+
+        return \curl_multi_add_handle($multiHandle, $handle);
     }
 
     function curl_share_init()

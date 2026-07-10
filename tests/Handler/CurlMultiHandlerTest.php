@@ -3,6 +3,7 @@
 namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlMultiHandler;
@@ -1164,6 +1165,78 @@ class CurlMultiHandlerTest extends TestCase
         } finally {
             Server::flush();
         }
+    }
+
+    public function testFailedAttachmentRollsBackImmediateRequest(): void
+    {
+        $handler = new CurlMultiHandler();
+        $_SERVER['curl_multi_add_handle_result'] = \CURLM_INTERNAL_ERROR;
+
+        try {
+            $handler(new Request('GET', Server::$url), []);
+            self::fail('Expected RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('Unable to add the cURL handle', $e->getMessage());
+        }
+
+        self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        self::assertSame([], self::readMultiProperty($handler, 'delays'));
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+
+        unset($_SERVER['curl_multi_add_handle_result']);
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        self::assertSame(200, $handler(new Request('GET', Server::$url), [])->wait()->getStatusCode());
+    }
+
+    public function testFailedAttachmentRejectsEscapedDelayedRequest(): void
+    {
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), ['delay' => 1]);
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertCount(1, $handles);
+        $id = \key($handles);
+
+        $_SERVER['curl_multi_add_handle_result'] = \CURLM_INTERNAL_ERROR;
+        self::setMultiProperty($handler, 'delays', [$id => Utils::currentTime() - 1]);
+
+        $handler->tick();
+
+        self::assertTrue(P\Is::rejected($promise));
+        self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        self::assertSame([], self::readMultiProperty($handler, 'delays'));
+
+        try {
+            $promise->wait();
+            self::fail('Expected RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('Unable to add the cURL handle', $e->getMessage());
+        }
+    }
+
+    public function testValidSiblingSurvivesAnotherRequestsFailedAttachment(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $sibling = $handler(new Request('GET', Server::$url), []);
+
+        $_SERVER['curl_multi_add_handle_result'] = \CURLM_INTERNAL_ERROR;
+
+        try {
+            $handler(new Request('GET', Server::$url), []);
+            self::fail('Expected RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('Unable to add the cURL handle', $e->getMessage());
+        }
+
+        unset($_SERVER['curl_multi_add_handle_result']);
+
+        self::assertCount(1, self::readMultiProperty($handler, 'handles'));
+        self::assertSame(200, $sibling->wait()->getStatusCode());
     }
 
     public function testUsesTimeoutEnvironmentVariables()
