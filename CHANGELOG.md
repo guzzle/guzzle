@@ -130,6 +130,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Suppress proxy CONNECT response headers for tunneled requests
 - Point rejections of the raw `CURLOPT_PIPEWAIT` cURL option at the `multiplex` request option
 - Require an integer `CURLMOPT_PIPELINING` when combined with explicit multiplexing
+- Reject required multiplexing when the final `CURLOPT_HTTPAUTH` mask permits NTLM
 - Reject cURL multi options that the runtime libcurl cannot apply
 - Reject unknown handler constructor options
 - Reject invalid `select_timeout` cURL multi handler option values

@@ -4298,6 +4298,123 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public static function requiredMultiplexNtlmAuthProvider(): iterable
+    {
+        yield 'require_eager with ntlm' => [Multiplexing::REQUIRE_EAGER, \CURLAUTH_NTLM];
+        yield 'require_wait with ntlm' => [Multiplexing::REQUIRE_WAIT, \CURLAUTH_NTLM];
+        yield 'require_eager with ntlm in a mask' => [Multiplexing::REQUIRE_EAGER, \CURLAUTH_NTLM | \CURLAUTH_BASIC];
+        yield 'require_eager with any' => [Multiplexing::REQUIRE_EAGER, \CURLAUTH_ANY];
+        yield 'require_wait with anysafe' => [Multiplexing::REQUIRE_WAIT, \CURLAUTH_ANYSAFE];
+    }
+
+    /**
+     * @dataProvider requiredMultiplexNtlmAuthProvider
+     */
+    public function testRequireRejectsNtlmAuthMasks(string $multiplex, int $auth): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+
+            // libcurl retries NTLM over HTTP/1.1 even on TLS routes, and the
+            // server controls which scheme an offered mask ends up picking.
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('The "multiplex" request option cannot be required when the final CURLOPT_HTTPAUTH cURL option value permits NTLM');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
+                'multiplex' => $multiplex,
+                'curl' => [\CURLOPT_HTTPAUTH => $auth],
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public static function requiredMultiplexAllowedAuthProvider(): iterable
+    {
+        yield 'basic' => [\CURLAUTH_BASIC];
+        yield 'digest' => [\CURLAUTH_DIGEST];
+    }
+
+    /**
+     * @dataProvider requiredMultiplexAllowedAuthProvider
+     */
+    public function testRequireAllowsNtlmFreeAuthMasks(int $auth): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+            $easy = $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
+                'multiplex' => Multiplexing::REQUIRE_EAGER,
+                'curl' => [\CURLOPT_HTTPAUTH => $auth],
+            ]);
+
+            try {
+                self::assertSame($auth, $_SERVER['_curl'][\CURLOPT_HTTPAUTH]);
+            } finally {
+                $factory->release($easy);
+            }
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRequireRejectsNonIntegerAuthMask(): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $factory = new CurlFactory(3);
+
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('The "multiplex" request option cannot be required when the final CURLOPT_HTTPAUTH cURL option value is not an integer.');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
+                'multiplex' => Multiplexing::REQUIRE_EAGER,
+                'curl' => [\CURLOPT_HTTPAUTH => [\CURLAUTH_NTLM]],
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testNonRequiredMultiplexAllowsRawNtlmAuth(): void
+    {
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [\CURLOPT_HTTPAUTH => \CURLAUTH_NTLM | \CURLAUTH_BASIC],
+        ]);
+
+        try {
+            self::assertSame(\CURLAUTH_NTLM | \CURLAUTH_BASIC, $_SERVER['_curl'][\CURLOPT_HTTPAUTH]);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     /**
      * @dataProvider requiredMultiplexProvider
      */

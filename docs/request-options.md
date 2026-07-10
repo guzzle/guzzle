@@ -1101,10 +1101,11 @@ goes:
   rejected. HTTP/3 requests are pinned to HTTP/3 with no downgrade at all
   (libcurl 8.13.0+, PHP 8.4+); a proxy cannot carry them and is rejected. A
   server limited to lower protocol versions fails the connection instead of
-  downgrading. Requires protocol version `2`/`2.0` or `3`/`3.0` and a cURL
-  handler; anything else throws. A cold burst dials connections in parallel, but
-  libcurl still packs later streams onto the first established connection rather
-  than balancing.
+  downgrading. The required family also rejects final `CURLOPT_HTTPAUTH` masks
+  that permit NTLM, which libcurl retries over HTTP/1.1. Requires protocol
+  version `2`/`2.0` or `3`/`3.0` and a cURL handler; anything else throws. A
+  cold burst dials connections in parallel, but libcurl still packs later
+  streams onto the first established connection rather than balancing.
 - `Multiplexing::REQUIRE_WAIT` - the same guarantees as
   `Multiplexing::REQUIRE_EAGER`, plus `WAIT`'s waiting on pending connections.
 

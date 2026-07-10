@@ -244,7 +244,8 @@ final class RequestOptions
      * Multiplexing::REQUIRE_WAIT for the same guarantee while also waiting on
      * pending connections. The stream handler ignores EAGER and WAIT, and
      * rejects the required family; CurlHandler has no multi handle to multiplex
-     * over.
+     * over. The required family also rejects final CURLOPT_HTTPAUTH masks that
+     * permit NTLM, which libcurl retries over HTTP/1.1.
      */
     public const MULTIPLEX = 'multiplex';
 
