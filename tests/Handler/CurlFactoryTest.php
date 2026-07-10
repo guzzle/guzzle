@@ -16,6 +16,7 @@ use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Multiplexing;
@@ -5466,6 +5467,37 @@ class CurlFactoryTest extends TestCase
         )->wait();
     }
 
+    /**
+     * @param array<int, string> $events
+     */
+    private static function recordingHandleFactory(array &$events): CurlFactoryInterface
+    {
+        return new class($events) implements CurlFactoryInterface {
+            /** @var array<int, string> */
+            private $events;
+
+            /** @var CurlFactory */
+            private $factory;
+
+            public function __construct(array &$events)
+            {
+                $this->events = &$events;
+                $this->factory = new CurlFactory(1);
+            }
+
+            public function create(RequestInterface $request, array $options): EasyHandle
+            {
+                return $this->factory->create($request, $options);
+            }
+
+            public function release(EasyHandle $easy): void
+            {
+                $this->events[] = 'release';
+                $this->factory->release($easy);
+            }
+        };
+    }
+
     public static function curlResponseTransferErrorProvider(): iterable
     {
         yield 'partial file' => [18];
@@ -6631,6 +6663,84 @@ class CurlFactoryTest extends TestCase
         ])->wait();
 
         self::assertSame(['on_headers', 'on_trailers', 'on_stats'], $order);
+    }
+
+    public function testReleasesHandleBeforeOnTrailersAndOnStatsOnSuccess(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [], 'abc 123'),
+        ]);
+        $events = [];
+        $handler = new Handler\CurlHandler(['handle_factory' => self::recordingHandleFactory($events)]);
+        $handler(new Psr7\Request('GET', Server::$url), [
+            'on_trailers' => static function () use (&$events): void {
+                $events[] = 'on_trailers';
+            },
+            'on_stats' => static function () use (&$events): void {
+                $events[] = 'on_stats';
+            },
+        ])->wait();
+
+        self::assertSame(['release', 'on_trailers', 'on_stats'], $events);
+    }
+
+    public function testReleasesHandleWhenOnStatsThrowsOnSuccessfulTransfer(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, [], 'abc 123'),
+        ]);
+        $events = [];
+        $sentinel = new \RuntimeException('stats failed');
+        $handler = new Handler\CurlHandler(['handle_factory' => self::recordingHandleFactory($events)]);
+
+        try {
+            $handler(new Psr7\Request('GET', Server::$url), [
+                'on_stats' => static function () use (&$events, $sentinel): void {
+                    $events[] = 'on_stats';
+                    throw $sentinel;
+                },
+            ]);
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($sentinel, $e);
+        }
+
+        self::assertSame(['release', 'on_stats'], $events);
+    }
+
+    public function testReleasesHandleWhenOnStatsThrowsOnErrorTransfer(): void
+    {
+        $events = [];
+        $sentinel = new \RuntimeException('stats failed');
+        $recording = self::recordingHandleFactory($events);
+        $easy = $recording->create(new Psr7\Request('GET', Server::$url), [
+            'on_stats' => static function () use (&$events, $sentinel): void {
+                $events[] = 'on_stats';
+                throw $sentinel;
+            },
+        ]);
+        self::receiveCurlHeaders($easy, [
+            "HTTP/1.1 200 OK\r\n",
+            "Content-Length: 3\r\n",
+            "\r\n",
+        ]);
+        $easy->errno = 18; // CURLE_PARTIAL_FILE
+
+        try {
+            CurlFactory::finish(
+                static function (): void {
+                },
+                $easy,
+                $recording
+            );
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($sentinel, $e);
+        }
+
+        self::assertSame(['release', 'on_stats'], $events);
     }
 
     public function testRejectsPromiseWhenOnTrailersThrowsThrowable(): void
