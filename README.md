@@ -72,11 +72,11 @@ composer require guzzlehttp/guzzle
 [guzzle-4-repo]: https://github.com/guzzle/guzzle/tree/4.x
 [guzzle-5-repo]: https://github.com/guzzle/guzzle/tree/5.3
 [guzzle-6-repo]: https://github.com/guzzle/guzzle/tree/6.5
-[guzzle-7-repo]: https://github.com/guzzle/guzzle/tree/7.14
+[guzzle-7-repo]: https://github.com/guzzle/guzzle/tree/7.15
 [guzzle-3-docs]: https://github.com/guzzle/guzzle3/tree/master/docs
 [guzzle-5-docs]: https://github.com/guzzle/guzzle/tree/5.3/docs
 [guzzle-6-docs]: https://github.com/guzzle/guzzle/tree/6.5/docs
-[guzzle-7-docs]: https://github.com/guzzle/guzzle/blob/7.14/docs/index.md
+[guzzle-7-docs]: https://github.com/guzzle/guzzle/blob/7.15/docs/index.md
 
 
 ## Security
