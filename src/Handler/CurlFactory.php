@@ -115,6 +115,26 @@ class CurlFactory implements CurlFactoryInterface
 
         $multiplex = self::normalizeMultiplex($options);
 
+        if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)
+            && isset($options['curl'])
+            && \is_array($options['curl'])
+        ) {
+            $requiredModeConflicts = [
+                \CURLOPT_HTTP_VERSION => ['CURLOPT_HTTP_VERSION', 'the request protocol version'],
+                \CURLOPT_URL => ['CURLOPT_URL', 'the request URI'],
+                \CURLOPT_FOLLOWLOCATION => ['CURLOPT_FOLLOWLOCATION', 'the "allow_redirects" request option'],
+            ];
+
+            foreach ($requiredModeConflicts as $option => [$name, $replacement]) {
+                if (\array_key_exists($option, $options['curl'])) {
+                    // Key presence alone conflicts: whatever the raw value,
+                    // it is a second authority over the protocol or route,
+                    // applied after the required mode's decisions.
+                    throw new \InvalidArgumentException(\sprintf('The "multiplex" request option cannot be required when the raw %s cURL option is set; remove the raw option and use %s instead.', $name, $replacement));
+                }
+            }
+        }
+
         if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp2()) {
                 if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
@@ -149,6 +169,11 @@ class CurlFactory implements CurlFactoryInterface
         // Add handler options from the request configuration options
         if (isset($options['curl'])) {
             $conf = \array_replace($conf, $options['curl']);
+        }
+
+        if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+            self::assertRequiredMultiplexRouteDirect($easy, $conf);
+            self::assertRequiredMultiplexAuthSupported($conf);
         }
 
         self::normalizeCurlHeaderOptions($conf);
@@ -290,18 +315,85 @@ class CurlFactory implements CurlFactoryInterface
         if (!CurlVersion::supportsRequiredMultiplex()) {
             throw new ConnectException('Required multiplexing needs libcurl 8.14.0 or newer built with HTTP/2 support.', $easy->request);
         }
+    }
 
-        if ('https' !== $easy->request->getUri()->getScheme() && self::proxyAppliesTo($easy)) {
+    /**
+     * Required multiplexing sends cleartext requests with HTTP/2 prior
+     * knowledge, which an HTTP proxy hop silently downgrades, so the request
+     * must reach the origin directly. The check runs against the final
+     * merged cURL configuration because deprecated raw proxy options are
+     * applied after Guzzle's own decisions and may add, replace, or disable
+     * the selected proxy. Value types that ext-curl would coerce are
+     * rejected as ambiguous, and only the exact CURLOPT_NOPROXY wildcard '*'
+     * counts as disabling the primary proxy and pre-proxy: host-specific
+     * patterns are conservatively treated as leaving them active.
+     *
+     * @param array<int|string, mixed> $conf
+     */
+    private static function assertRequiredMultiplexRouteDirect(EasyHandle $easy, array $conf): void
+    {
+        if ('https' === $easy->request->getUri()->getScheme()) {
+            return;
+        }
+
+        $proxyOptions = [\CURLOPT_PROXY => 'CURLOPT_PROXY'];
+        if (\defined('CURLOPT_NOPROXY')) {
+            $proxyOptions[(int) \constant('CURLOPT_NOPROXY')] = 'CURLOPT_NOPROXY';
+        }
+        if (\defined('CURLOPT_PRE_PROXY')) {
+            $proxyOptions[(int) \constant('CURLOPT_PRE_PROXY')] = 'CURLOPT_PRE_PROXY';
+        }
+
+        foreach ($proxyOptions as $option => $name) {
+            if (\array_key_exists($option, $conf) && !\is_string($conf[$option])) {
+                throw new \InvalidArgumentException(\sprintf('The "multiplex" request option cannot be required when the final %s cURL option value is not a string.', $name));
+            }
+        }
+
+        if (\defined('CURLOPT_NOPROXY') && ($conf[(int) \constant('CURLOPT_NOPROXY')] ?? null) === '*') {
+            // libcurl's exact wildcard disables the primary proxy and the
+            // pre-proxy together, leaving a direct route.
+            return;
+        }
+
+        if (self::getEffectiveProxy($conf) !== null
+            || (\defined('CURLOPT_PRE_PROXY') && ($conf[(int) \constant('CURLOPT_PRE_PROXY')] ?? '') !== '')
+        ) {
             throw new ConnectException('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.', $easy->request);
         }
     }
 
-    private static function proxyAppliesTo(EasyHandle $easy): bool
+    /**
+     * libcurl forces NTLM-authenticated transfers onto HTTP/1.1: when the
+     * server picks NTLM from the offered mask, the connection is closed and
+     * the request is retried over HTTP/1.1 whatever HTTP version was asked
+     * for, silently defeating the required protocol guarantee on both
+     * cleartext and TLS routes. The final merged mask is checked so the
+     * deprecated "auth" request option and the raw CURLOPT_HTTPAUTH cURL
+     * option are both covered, and any mask permitting NTLM, such as
+     * CURLAUTH_ANY, is rejected because the selection is server-controlled.
+     *
+     * @param array<int|string, mixed> $conf
+     */
+    private static function assertRequiredMultiplexAuthSupported(array $conf): void
     {
-        [$proxyConf] = self::resolveProxy($easy->request, $easy->options);
-        self::assertResolvedProxySupported($easy->request, $proxyConf);
+        if (!\array_key_exists(\CURLOPT_HTTPAUTH, $conf)) {
+            return;
+        }
 
-        return \is_string($proxyConf) && $proxyConf !== '';
+        $auth = $conf[\CURLOPT_HTTPAUTH];
+        if (!\is_scalar($auth)) {
+            throw new \InvalidArgumentException('The "multiplex" request option cannot be required when the final CURLOPT_HTTPAUTH cURL option value is not an integer.');
+        }
+
+        $ntlmBits = \CURLAUTH_NTLM;
+        if (\defined('CURLAUTH_NTLM_WB')) {
+            $ntlmBits |= (int) \constant('CURLAUTH_NTLM_WB');
+        }
+
+        if (((int) $auth & $ntlmBits) !== 0) {
+            throw new \InvalidArgumentException('The "multiplex" request option cannot be required when the final CURLOPT_HTTPAUTH cURL option value permits NTLM; libcurl retries NTLM authentication over HTTP/1.1.');
+        }
     }
 
     /**

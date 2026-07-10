@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlVersion;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
@@ -138,6 +139,34 @@ class CurlHandlerTest extends TestCase
 
         self::assertNotNull($deprecation, 'Expected a deprecation for the unknown constructor option.');
         self::assertStringContainsString('The "unknown" CurlHandler constructor option is unknown', $deprecation);
+    }
+
+    public function testAllowsRawPipewaitWithExplicitMultiplex()
+    {
+        if (!\defined('CURLOPT_PIPEWAIT') || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or multiplex support is unavailable.');
+        }
+
+        // A direct handler has no multi handle whose waiting behavior the
+        // raw option could reverse, so only the CurlMultiHandler rejects the
+        // raw CURLOPT_PIPEWAIT conflict.
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl']);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+            $handler = new CurlHandler();
+            $response = $handler(new Request('GET', Server::$url, [], null, '1.1'), [
+                'multiplex' => Multiplexing::WAIT,
+                'curl' => [(int) \constant('CURLOPT_PIPEWAIT') => true],
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_PIPEWAIT')]);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl']);
+        }
     }
 
     public function testUsesContentLengthWhenOverInMemorySize()
