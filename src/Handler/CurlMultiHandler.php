@@ -242,8 +242,8 @@ final class CurlMultiHandler
                     $this->execute();
                 }
             },
-            function () use ($id): void {
-                $this->cancel($id);
+            function () use ($id, $waitToken): void {
+                $this->cancel($id, $waitToken);
             }
         );
 
@@ -535,6 +535,16 @@ final class CurlMultiHandler
      */
     public function tick(): void
     {
+        $this->tickFor(null, null);
+    }
+
+    /**
+     * Ticks the curl event loop, returning before the blocking select if the
+     * targeted transfer has settled, been canceled, or been replaced by a
+     * request that reused its native handle ID.
+     */
+    private function tickFor(?int $targetId, ?object $waitToken): void
+    {
         $this->assertOpen();
 
         // Add any delayed handles if needed.
@@ -548,23 +558,40 @@ final class CurlMultiHandler
                     try {
                         $this->addHandleToMulti($id, $entry['easy']);
                     } catch (\Throwable $e) {
-                        $entry['deferred']->reject($this->discardPendingRequest($id, $entry, $e));
+                        $rejection = $this->discardPendingRequest($id, $entry, $e);
+                        if (P\Is::pending($entry['deferred'])) {
+                            $entry['deferred']->reject($rejection);
+                        }
                     }
                 }
             }
         }
 
-        // Run curl_multi_exec in the queue to enable other async tasks to run
-        P\Utils::queue()->add(Closure::fromCallable([$this, 'tickInQueue']));
+        // Run curl_multi_exec in the queue to enable other async tasks to
+        // run, surface completions, and drain any work they queued so a
+        // ready cancellation or new transfer is not held behind the select.
+        do {
+            P\Utils::queue()->add(Closure::fromCallable([$this, 'tickInQueue']));
 
-        // Step through the task queue which may add additional requests.
-        P\Utils::queue()->run();
+            // Step through the task queue which may add additional requests.
+            P\Utils::queue()->run();
 
-        if ($this->closed || $this->closing || !$this->hasMultiHandle()) {
+            if ($this->closed || $this->closing || !$this->hasMultiHandle()) {
+                return;
+            }
+
+            $this->processMessages();
+
+            if ($this->closed || $this->closing || !$this->hasMultiHandle()) {
+                return;
+            }
+        } while (!P\Utils::queue()->isEmpty());
+
+        if ($targetId !== null && !$this->hasRequest($targetId, $waitToken)) {
             return;
         }
 
-        if ($this->active && \curl_multi_select($this->getMultiHandle(), $this->selectTimeout) === -1) {
+        if ($this->active && \curl_multi_select($this->getMultiHandle(), $this->effectiveSelectTimeout()) === -1) {
             // Perform a usleep if a select returns -1.
             // See: https://bugs.php.net/bug.php?id=61141
             \usleep(250);
@@ -579,7 +606,7 @@ final class CurlMultiHandler
 
             // Prevent busy looping for slow HTTP requests.
             if ($exec === \CURLM_CALL_MULTI_PERFORM) {
-                \curl_multi_select($this->getMultiHandle(), $this->selectTimeout);
+                \curl_multi_select($this->getMultiHandle(), $this->effectiveSelectTimeout());
             }
         } while ($exec === \CURLM_CALL_MULTI_PERFORM);
 
@@ -617,8 +644,9 @@ final class CurlMultiHandler
         $queue = P\Utils::queue();
 
         while (!$this->closed && !$this->closing && ($this->handles || !$queue->isEmpty())) {
-            // If there are no transfers, then sleep for the next delay
-            if (!$this->active && $this->delays) {
+            // If there are no transfers, then sleep for the next delay,
+            // unless ready queue work could change what is pending.
+            if (!$this->active && $this->delays && $queue->isEmpty()) {
                 \usleep($this->timeToNext());
             }
             $this->tick();
@@ -643,19 +671,33 @@ final class CurlMultiHandler
         while (
             !$this->closed
             && !$this->closing
-            && isset($this->handles[$id])
-            && ($this->handles[$id]['wait_token'] ?? null) === $waitToken
+            && $this->hasRequest($id, $waitToken)
         ) {
-            // If the transfer is delayed, then sleep until it is due
-            if (!$this->active && isset($this->delays[$id])) {
+            // If the transfer is delayed, then sleep until it is due, unless
+            // ready queue work could cancel or replace it first.
+            if (!$this->active && isset($this->delays[$id]) && $queue->isEmpty()) {
                 \usleep($this->timeToNext());
             }
-            $this->tick();
+            $this->tickFor($id, $waitToken);
         }
 
         if (!$this->closed && !$this->closing && !$queue->isEmpty()) {
             $queue->run();
         }
+    }
+
+    /**
+     * Checks that the request with the given handle ID is still pending and,
+     * when a wait token is given, has not been replaced by a request that
+     * reused the ID.
+     */
+    private function hasRequest(int $id, ?object $waitToken = null): bool
+    {
+        if (!isset($this->handles[$id])) {
+            return false;
+        }
+
+        return $waitToken === null || ($this->handles[$id]['wait_token'] ?? null) === $waitToken;
     }
 
     /**
@@ -727,7 +769,7 @@ final class CurlMultiHandler
                 'attached' => !isset($delays[$id]),
             ];
 
-            if ($explicit) {
+            if ($explicit && P\Is::pending($entry['deferred'])) {
                 $this->captureFailure($failure, function () use ($entry): void {
                     $entry['deferred']->reject(new HandlerClosedException('The cURL multi handler was closed before the transfer completed.', $entry['easy']->request));
                 });
@@ -795,7 +837,7 @@ final class CurlMultiHandler
                 });
             }
 
-            if ($reject) {
+            if ($reject && P\Is::pending($entry['deferred'])) {
                 $this->captureFailure($failure, function () use ($entry): void {
                     $entry['deferred']->reject(new HandlerClosedException('The cURL multi handler was closed before the transfer completed.', $entry['easy']->request));
                 });
@@ -977,14 +1019,17 @@ final class CurlMultiHandler
     /**
      * Cancels a handle from sending and removes references to it.
      *
-     * @param int $id Handle ID to cancel and remove.
+     * @param int         $id        Handle ID to cancel and remove.
+     * @param object|null $waitToken Identity token that must still match the
+     *                               entry when given.
      *
      * @return bool True on success, false on failure.
      */
-    private function cancel(int $id): bool
+    private function cancel(int $id, ?object $waitToken = null): bool
     {
-        // Cannot cancel if it has been processed.
-        if (!isset($this->handles[$id])) {
+        // Cannot cancel if it has been processed or replaced by a request
+        // that reused the native handle ID.
+        if (!$this->hasRequest($id, $waitToken)) {
             return false;
         }
 
@@ -1074,15 +1119,21 @@ final class CurlMultiHandler
                 unset($this->handles[$id], $this->delays[$id]);
                 $entry['easy']->errno = $done['result'];
 
+                // finish() can run completion callbacks that cancel this
+                // promise; a settled promise must not be settled again.
                 try {
                     $result = CurlFactory::finish($this, $entry['easy'], $this->factory);
                 } catch (\Throwable $e) {
-                    $entry['deferred']->reject($e);
+                    if (P\Is::pending($entry['deferred'])) {
+                        $entry['deferred']->reject($e);
+                    }
 
                     continue;
                 }
 
-                $entry['deferred']->resolve($result);
+                if (P\Is::pending($entry['deferred'])) {
+                    $entry['deferred']->resolve($result);
+                }
             }
         } finally {
             --$this->messageProcessingDepth;
@@ -1090,17 +1141,41 @@ final class CurlMultiHandler
         }
     }
 
-    private function timeToNext(): int
+    /**
+     * Bounds a blocking select by the earliest pending request delay so a
+     * delayed transfer becoming due does not wait out an unrelated
+     * transfer's full select timeout.
+     */
+    private function effectiveSelectTimeout(): float
+    {
+        if ($this->delays === []) {
+            return $this->selectTimeout;
+        }
+
+        return \min($this->selectTimeout, $this->secondsToNext());
+    }
+
+    /**
+     * @return float Seconds until the earliest pending delay is due
+     */
+    private function secondsToNext(): float
     {
         $currentTime = Utils::currentTime();
-        $nextTime = \PHP_INT_MAX;
+        $nextTime = \PHP_FLOAT_MAX;
         foreach ($this->delays as $time) {
             if ($time < $nextTime) {
                 $nextTime = $time;
             }
         }
 
-        return (int) \max(0, ($nextTime - $currentTime) * 1000000);
+        return \max(0.0, $nextTime - $currentTime);
+    }
+
+    private function timeToNext(): int
+    {
+        // PHP_INT_MAX first: min() then returns the int operand whenever the
+        // microseconds exceed it, so the cast never sees an oversized float.
+        return (int) \min(\PHP_INT_MAX, $this->secondsToNext() * 1000000);
     }
 
     /**
