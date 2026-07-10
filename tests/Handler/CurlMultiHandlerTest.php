@@ -551,6 +551,33 @@ class CurlMultiHandlerTest extends TestCase
         self::assertTrue(self::hasMultiHandle($handler));
     }
 
+    /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testFailsClosedWhenNamedConnectionCapCannotBeApplied(string $option, string $constant): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $handler = new CurlMultiHandler([$option => 2]);
+        $_SERVER['curl_multi_setopt_fail'] = \constant($constant);
+
+        try {
+            self::initMultiHandle($handler);
+            self::fail('Expected InvalidArgumentException.');
+        } catch (InvalidArgumentException $e) {
+            self::assertStringContainsString('Unable to apply the cURL multi option '.$constant, $e->getMessage());
+            self::assertStringContainsString('rejected by the runtime libcurl', $e->getMessage());
+        }
+
+        self::assertFalse(self::hasMultiHandle($handler), 'A failed initialization must not publish the multi handle.');
+
+        // Removing the failure allows the same handler to retry.
+        unset($_SERVER['curl_multi_setopt_fail']);
+        self::initMultiHandle($handler);
+        self::assertTrue(self::hasMultiHandle($handler));
+        self::assertSame(2, $_SERVER['_curl_multi'][\constant($constant)]);
+    }
+
     public function testWrapsCurlMultiOptionThrowable(): void
     {
         $handler = new CurlMultiHandler(['options' => [
