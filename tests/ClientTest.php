@@ -285,16 +285,42 @@ class ClientTest extends TestCase
         }
     }
 
-    public function testConnectionCapsRejectStreamRequests(): void
+    /**
+     * @dataProvider clientConnectionCapOptionProvider
+     */
+    public function testConnectionCapsRejectStreamRequests(string $option): void
     {
         self::skipIfStreamHandlerIsUnavailable();
 
-        $client = new Client(['max_host_connections' => 1]);
+        $client = new Client([$option => 1]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+        $this->expectExceptionMessage('Enabling the "stream" request option on a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
 
         $client->get('http://localhost/', ['stream' => true]);
+    }
+
+    public static function clientConnectionCapOptionProvider(): iterable
+    {
+        yield 'max host connections' => ['max_host_connections'];
+        yield 'max total connections' => ['max_total_connections'];
+    }
+
+    public function testConnectionCapsRejectStreamRequestsWithARejectedPromise(): void
+    {
+        self::skipIfStreamHandlerIsUnavailable();
+
+        $client = new Client(['max_total_connections' => 1]);
+        $promise = $client->getAsync('http://localhost/', ['stream' => true]);
+
+        // The configuration error surfaces through the promise chain rather
+        // than being thrown before a promise is returned.
+        self::assertInstanceOf(PromiseInterface::class, $promise);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Enabling the "stream" request option on a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+
+        $promise->wait();
     }
 
     public function testConnectionCapsFallBackToStreamHandlerWhenCurlCannotApplyThem(): void
@@ -329,7 +355,7 @@ class ClientTest extends TestCase
             $client = new Client(['max_host_connections' => 1]);
 
             $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+            $this->expectExceptionMessage('Enabling the "stream" request option on a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
 
             $client->get('http://localhost/', ['stream' => true]);
         } finally {
@@ -343,7 +369,7 @@ class ClientTest extends TestCase
     public function testConnectionCapClientOptionsCannotBeUsedWithCustomHandler(string $option): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('max_host_connections');
+        $this->expectExceptionMessage('Configure the options on the CurlMultiHandler constructor to apply numeric connection caps, or on the StreamHandler constructor to reject enabled response streaming, when providing a custom handler.');
 
         new Client([
             'handler' => new MockHandler(),

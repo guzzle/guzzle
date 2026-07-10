@@ -4,6 +4,7 @@ namespace GuzzleHttp\Test;
 
 use GuzzleHttp;
 use GuzzleHttp\Handler\CurlVersion;
+use GuzzleHttp\Psr7;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
@@ -107,6 +108,29 @@ class UtilsTest extends TestCase
         } finally {
             unset($_SERVER['curl_test'], $_SERVER['_curl_share_init_count']);
         }
+    }
+
+    public static function connectionCapOptionProvider(): iterable
+    {
+        yield 'max host connections' => ['max_host_connections'];
+        yield 'max total connections' => ['max_total_connections'];
+    }
+
+    /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testChooseHandlerRejectsStreamRequestsWhenConnectionCapsAreConfigured(string $option): void
+    {
+        if (!\ini_get('allow_url_fopen')) {
+            self::markTestSkipped('The allow_url_fopen ini setting is required.');
+        }
+
+        $handler = Utils::chooseHandler([$option => 1]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Enabling the "stream" request option on a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+
+        $handler(new Psr7\Request('GET', 'http://localhost/'), ['stream' => true]);
     }
 
     public function testDefaultUserAgent()
@@ -332,7 +356,7 @@ class UtilsTest extends TestCase
      */
     public function testChecksUriNoProxyList($uri, $list, $result)
     {
-        self::assertSame($result, Utils::isUriInNoProxy(GuzzleHttp\Psr7\Utils::uriFor($uri), $list));
+        self::assertSame($result, Utils::isUriInNoProxy(Psr7\Utils::uriFor($uri), $list));
     }
 
     public function testEnsuresNoProxyCheckHostIsSet()

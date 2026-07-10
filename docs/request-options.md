@@ -1315,8 +1315,10 @@ while (!$body->eof()) {
 > Streaming response support must be implemented by the HTTP handler used by a client. This option might not be supported by every HTTP handler, but the interface of the response object remains the same regardless of whether or not it is supported by the handler.
 
 The built-in stream handler rejects `stream => true` when the
-`max_host_connections` or `max_total_connections` options are configured because
-streamed connections cannot be capped. See
+`max_host_connections` or `max_total_connections` constructor options are
+configured because streamed connections cannot be capped; `stream => false` and
+omitting the option remain valid, and the numeric values provide no
+stream-handler admission control. See
 [How can I add custom cURL options?](faq.md#how-can-i-add-custom-curl-options)
 for the connection cap semantics.
 

@@ -86,14 +86,22 @@ specified as an array keyed by integer `CURLMOPT_*` constants in the **options**
 key of the `CurlMultiHandler` constructor. For example,
 `CURLMOPT_MAX_CONCURRENT_STREAMS` can be used on PHP versions that expose it.
 
-Connection cap options apply to transfers managed by `CurlMultiHandler`. When
-the caps are configured, the default handler routes synchronous requests through
-the capped `CurlMultiHandler` as well, and the `StreamHandler` rejects the
-`stream` request option because streamed connections cannot be capped. Stream
-handler transfers are therefore always buffered and hold at most one connection
-per in-flight call, including in stream fallback environments without a
-cap-capable cURL where every request uses the stream handler. Manually
-constructed `CurlHandler` or custom handlers are outside these caps.
+Numeric connection caps apply to transfers managed by `CurlMultiHandler`. When
+the caps are configured, the default handler routes synchronous requests
+through the capped `CurlMultiHandler` as well, and a cap-configured fallback
+`StreamHandler` rejects enabled response streaming (`stream => true`) because
+streamed connections cannot be capped. Accepted stream-handler transfers are
+buffered and hold at most one connection per in-flight call, including in
+stream fallback environments without a cap-capable cURL where every request
+uses the stream handler. Overlapping buffered calls are not collectively
+limited by the configured numbers. Manually constructed `CurlHandler` or
+custom handlers are outside these caps. Guzzle-managed transport sharing
+shares only DNS and, when supported, TLS session data and composes with the
+caps unchanged, but a deprecated raw `CURLOPT_SHARE` cURL option whose share
+handle shares connection data is also outside the caps, because libcurl does
+not apply the cURL multi connection cap options to transfers that use a shared
+connection pool; Guzzle 7.15 rejects request-level `CURLOPT_SHARE` combined
+with the caps, and Guzzle 8 rejects the raw option entirely.
 
 The caps bound open connections, including idle pooled connections, rather than
 in-flight requests. Transfers queued behind a cap keep consuming the request

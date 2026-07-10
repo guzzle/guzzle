@@ -66,14 +66,18 @@ class StreamHandler
     /**
      * Accepts an associative array of options:
      *
-     * - max_host_connections: Optional maximum concurrent connections per host.
-     * - max_total_connections: Optional maximum concurrent connections overall.
+     * - max_host_connections: Optional positive integer or null. A non-null
+     *   value marks the handler as incompatible with enabled response
+     *   streaming; the number is not used for stream-handler admission.
+     * - max_total_connections: Optional positive integer or null. A non-null
+     *   value marks the handler as incompatible with enabled response
+     *   streaming; the number is not used for stream-handler admission.
      * - transport_sharing: Optional transport sharing mode.
      *
-     * The stream handler cannot cap streamed connections, so configuring
-     * either connection cap rejects the "stream" request option. Other
+     * The stream handler cannot cap streamed connections, so a configured cap
+     * marker rejects enabled response streaming ("stream" => true). Accepted
      * transfers are buffered and hold at most one connection per in-flight
-     * call.
+     * call, but overlapping buffered calls are not collectively limited.
      *
      * @param array{max_host_connections?: mixed, max_total_connections?: mixed, transport_sharing?: mixed} $options Array of options to use with the handler
      */
@@ -131,7 +135,7 @@ class StreamHandler
         }
 
         if ($this->connectionCapsConfigured && !empty($options['stream'])) {
-            throw new \InvalidArgumentException('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+            throw new \InvalidArgumentException('Enabling the "stream" request option on a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
         }
 
         if (isset($options['on_trailers'])) {
