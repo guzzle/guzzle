@@ -160,7 +160,19 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Handler\Proxy::wrapTlsFallback()`; the default handler stack selects the cURL or stream handler by TLS support automatically
 
 
-## 7.14.0 - Upcoming
+## 7.14.1 - Upcoming
+
+### Fixed
+
+- Reject the `stream` request option on the stream handler when connection caps are configured
+- Restore conservative proxy credential redaction for unparseable proxies with multiple `@` separators
+- Reject raw cURL options that conflict with explicit multiplexing guarantees
+- Reject required multiplexing when the final `CURLOPT_HTTPAUTH` mask permits NTLM
+- Require an integer `CURLMOPT_PIPELINING` when combined with explicit multiplexing
+- Check the required multiplexing cleartext proxy rule against the final cURL configuration
+
+
+## 7.14.0 - 2026-07-08
 
 ### Added
 
