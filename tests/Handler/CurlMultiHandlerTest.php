@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests\Handler;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7\Request;
@@ -37,7 +41,8 @@ class CurlMultiHandlerTest extends TestCase
             $_SERVER['_curl_share_init_persistent_count'],
             $_SERVER['_curl_share_persistent_options'],
             $_SERVER['curl_multi_setopt_fail'],
-            $_SERVER['curl_multi_setopt_throw']
+            $_SERVER['curl_multi_setopt_throw'],
+            $_SERVER['curl_multi_add_handle_result']
         );
     }
 
@@ -52,6 +57,7 @@ class CurlMultiHandlerTest extends TestCase
             $_SERVER['_curl_share_persistent_options'],
             $_SERVER['curl_multi_setopt_fail'],
             $_SERVER['curl_multi_setopt_throw'],
+            $_SERVER['curl_multi_add_handle_result'],
             $_SERVER['curl_test']
         );
     }
@@ -1837,7 +1843,7 @@ class CurlMultiHandlerTest extends TestCase
 
         $delayed = new Request('GET', Server::$url);
         $delayedPromise = $handler($delayed, [
-            'delay' => 10000,
+            'delay' => 3600000,
         ]);
 
         try {
@@ -1952,7 +1958,7 @@ class CurlMultiHandlerTest extends TestCase
         ]);
 
         $delayedPromise = $handler($delayedRequest, [
-            'delay' => 10000,
+            'delay' => 3600000,
         ]);
 
         try {
@@ -2115,6 +2121,653 @@ class CurlMultiHandlerTest extends TestCase
         } finally {
             $handler->close();
             Server::flush();
+        }
+    }
+
+    public function testAttachesCallbackCreatedRequestAfterExecUnwinds(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200), new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $nested = null;
+        $deferredDuringCallback = null;
+
+        try {
+            $response = $handler(new Request('GET', Server::$url), [
+                'on_headers' => static function () use ($handler, &$nested, &$deferredDuringCallback): void {
+                    $nested = $handler(new Request('GET', Server::$url), []);
+                    $deferredDuringCallback = self::readMultiProperty($handler, 'deferredAdds');
+                },
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertInstanceOf(P\PromiseInterface::class, $nested);
+            self::assertCount(1, $deferredDuringCallback, 'The callback-created request must defer its native attachment.');
+
+            self::assertSame(200, $nested->wait()->getStatusCode());
+            self::assertSame([], self::readMultiProperty($handler, 'deferredAdds'));
+            self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testFailedDeferredAttachmentRejectsCallbackCreatedRequest(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $nested = null;
+
+        try {
+            $response = $handler(new Request('GET', Server::$url), [
+                'on_headers' => static function () use ($handler, &$nested): void {
+                    $nested = $handler(new Request('GET', Server::$url), []);
+                    // Fail only the deferred attachment; the outer transfer
+                    // is already attached.
+                    $_SERVER['curl_multi_add_handle_result'] = \CURLM_INTERNAL_ERROR;
+                },
+            ])->wait();
+
+            unset($_SERVER['curl_multi_add_handle_result']);
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertInstanceOf(P\PromiseInterface::class, $nested);
+            self::assertTrue(P\Is::rejected($nested));
+            self::assertSame([], self::readMultiProperty($handler, 'deferredAdds'));
+            self::assertSame([], self::readMultiProperty($handler, 'handles'));
+
+            try {
+                $nested->wait();
+                self::fail('Expected RequestException.');
+            } catch (RequestException $e) {
+                self::assertStringContainsString('Unable to add the cURL handle', $e->getMessage());
+            }
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testRequestCreatedDuringPrematureRemovalIsDeferred(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+            new Response(200),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $nested = null;
+        $deferredDuringRemoval = null;
+        $depthDuringRemoval = null;
+        $canceling = false;
+
+        $promise = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'progress' => static function () use ($handler, &$nested, &$deferredDuringRemoval, &$depthDuringRemoval, &$canceling): void {
+                if ($canceling && $nested === null) {
+                    $depthDuringRemoval = self::readMultiProperty($handler, 'multiExecDepth');
+                    $nested = $handler(new Request('GET', Server::$url), []);
+                    $deferredDuringRemoval = self::readMultiProperty($handler, 'deferredAdds');
+                }
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+            while (self::readMultiProperty($handler, 'active') === 0) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for the transfer to start.');
+                }
+
+                $handler->tick();
+            }
+
+            $canceling = true;
+            $promise->cancel();
+            $canceling = false;
+
+            if ($nested === null) {
+                self::markTestSkipped('libcurl did not run a final progress update on premature removal.');
+            }
+
+            self::assertSame(1, $depthDuringRemoval, 'Premature removal must run under the native operation guard.');
+            self::assertCount(1, $deferredDuringRemoval, 'A request created during removal must defer its attachment.');
+            self::assertSame(200, $nested->wait()->getStatusCode());
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testCloseFromPrematureRemovalCallbackDefersClose(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $closedDuringRemoval = false;
+        $canceling = false;
+
+        $promise = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'progress' => static function () use ($handler, &$closedDuringRemoval, &$canceling): void {
+                if ($canceling && !$closedDuringRemoval) {
+                    $closedDuringRemoval = true;
+                    $handler->close();
+                }
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+            while (self::readMultiProperty($handler, 'active') === 0) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for the transfer to start.');
+                }
+
+                $handler->tick();
+            }
+
+            $canceling = true;
+            $promise->cancel();
+            $canceling = false;
+
+            if (!$closedDuringRemoval) {
+                self::markTestSkipped('libcurl did not run a final progress update on premature removal.');
+            }
+
+            self::assertTrue(P\Is::rejected($promise));
+            self::assertTrue(self::readMultiProperty($handler, 'closed'), 'A close deferred from the removal callback must complete once the removal unwinds.');
+            self::assertFalse(self::hasMultiHandle($handler));
+            self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        } finally {
+            Server::flush();
+        }
+    }
+
+    public function testCancelChainedFromPrematureRemovalIsDrained(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $first = null;
+        $second = null;
+        $cancelStarted = false;
+        $chained = false;
+
+        $first = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'progress' => static function () use ($handler, &$first, &$second, &$cancelStarted, &$chained): void {
+                if (!$cancelStarted) {
+                    $cancelStarted = true;
+                    $first->cancel();
+
+                    return;
+                }
+
+                if (!$chained && self::readMultiProperty($handler, 'finishingDeferredWork')) {
+                    // Final update while the deferred cancel flush removes
+                    // this transfer: cancel the sibling, chaining a deferred
+                    // cancel the flush snapshot cannot see.
+                    $chained = true;
+                    $second->cancel();
+                }
+            },
+        ]);
+
+        $second = $handler(new Request('GET', Server::$url), ['timeout' => 5]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+            while (!$cancelStarted) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for the transfer to start.');
+                }
+
+                $handler->tick();
+            }
+
+            if (!$chained) {
+                self::markTestSkipped('libcurl did not run a final progress update on premature removal.');
+            }
+
+            self::assertSame([], self::readMultiProperty($handler, 'deferredCancels'), 'A cancel chained from a removal callback must be drained.');
+            self::assertTrue(P\Is::rejected($second));
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testCloseChainedFromPrematureRemovalDisposesRemainingTransfer(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+            new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576)),
+        ]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $first = null;
+        $cancelStarted = false;
+        $closedDuringRemoval = false;
+        $secondRemovedDuringFlush = false;
+
+        $first = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'progress' => static function () use ($handler, &$first, &$cancelStarted, &$closedDuringRemoval): void {
+                if (!$cancelStarted) {
+                    $cancelStarted = true;
+                    $first->cancel();
+
+                    return;
+                }
+
+                if (!$closedDuringRemoval && self::readMultiProperty($handler, 'finishingDeferredWork')) {
+                    // Final update while the deferred cancel flush removes
+                    // this transfer: defer a close, which moves the sibling
+                    // into the deferred cancels mid-flush.
+                    $closedDuringRemoval = true;
+                    $handler->close();
+                }
+            },
+        ]);
+
+        $second = $handler(new Request('GET', Server::$url), [
+            'timeout' => 5,
+            'progress' => static function () use ($handler, &$secondRemovedDuringFlush): void {
+                if (self::readMultiProperty($handler, 'finishingDeferredWork')) {
+                    $secondRemovedDuringFlush = true;
+                }
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+            while (!$cancelStarted) {
+                if (\microtime(true) >= $deadline) {
+                    self::fail('Timed out waiting for the transfer to start.');
+                }
+
+                $handler->tick();
+            }
+
+            if (!$closedDuringRemoval) {
+                self::markTestSkipped('libcurl did not run a final progress update on premature removal.');
+            }
+
+            self::assertTrue($secondRemovedDuringFlush, 'The remaining transfer must be removed and disposed before the multi handle closes.');
+            self::assertTrue(self::readMultiProperty($handler, 'closed'));
+            self::assertFalse(self::hasMultiHandle($handler));
+            self::assertTrue(P\Is::rejected($second));
+        } finally {
+            Server::flush();
+        }
+    }
+
+    public function testSettledDeferredAddDoesNotStrandSiblings(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $first = null;
+        $second = null;
+
+        try {
+            $response = $handler(new Request('GET', Server::$url), [
+                'on_headers' => static function () use ($handler, &$first, &$second): void {
+                    $first = $handler(new Request('GET', Server::$url), []);
+                    $second = $handler(new Request('GET', Server::$url), []);
+                    // Settle the first promise directly, then fail every
+                    // deferred attachment; the settled promise must not abort
+                    // the flush.
+                    $first->resolve(new Response(299));
+                    $_SERVER['curl_multi_add_handle_result'] = \CURLM_INTERNAL_ERROR;
+                },
+            ])->wait();
+
+            unset($_SERVER['curl_multi_add_handle_result']);
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertTrue(P\Is::fulfilled($first));
+            self::assertSame(299, $first->wait()->getStatusCode());
+            self::assertTrue(P\Is::rejected($second));
+            self::assertSame([], self::readMultiProperty($handler, 'deferredAdds'));
+            self::assertSame([], self::readMultiProperty($handler, 'handles'));
+
+            try {
+                $second->wait();
+                self::fail('Expected RequestException.');
+            } catch (RequestException $e) {
+                self::assertStringContainsString('Unable to add the cURL handle', $e->getMessage());
+            }
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testNestedWaitOnRespondedTransferRejectsWithResponseException(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $nestedFailure = null;
+
+        try {
+            $delayed = $handler(new Request('GET', Server::$url), ['delay' => 3600000]);
+
+            // Simulate the delayed transfer having already received response
+            // headers by the time a callback waits on it.
+            $handles = self::readMultiProperty($handler, 'handles');
+            $delayedId = \array_key_first($handles);
+            $handles[$delayedId]['easy']->response = new Response(203);
+
+            // Synchronous, so the wait drives executeUntil() and never
+            // sleeps out the delayed sibling's timer like execute() would.
+            $response = $handler(new Request('GET', Server::$url), [
+                RequestOptions::SYNCHRONOUS => true,
+                'on_headers' => static function () use ($delayed, &$nestedFailure): void {
+                    try {
+                        $delayed->wait();
+                    } catch (\Throwable $e) {
+                        $nestedFailure = $e;
+                    }
+                },
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertInstanceOf(ResponseException::class, $nestedFailure);
+            self::assertSame(203, $nestedFailure->getResponse()->getStatusCode());
+            self::assertStringContainsString('inside a cURL callback', $nestedFailure->getMessage());
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testCompletionCallbackCanDriveAndAwaitNestedCallbackRequests(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200), new Response(200), new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $inner = null;
+        $nested = null;
+        $failure = null;
+
+        try {
+            $outer = $handler(new Request('GET', Server::$url), [
+                'on_stats' => static function () use ($handler, &$inner, &$nested, &$failure): void {
+                    try {
+                        $inner = $handler(new Request('GET', Server::$url), [
+                            'on_headers' => static function () use ($handler, &$nested): void {
+                                $nested = $handler(new Request('GET', Server::$url), []);
+                            },
+                        ]);
+
+                        $deadline = \microtime(true) + 5;
+                        while (P\Is::pending($inner)) {
+                            if (\microtime(true) >= $deadline) {
+                                throw new \RuntimeException('Timed out driving the inner transfer.');
+                            }
+
+                            $handler->tick();
+                        }
+
+                        self::assertSame([], self::readMultiProperty($handler, 'deferredAdds'), 'The nested request must attach once native execution unwinds.');
+                    } catch (\Throwable $e) {
+                        $failure = $e;
+                    }
+                },
+            ]);
+
+            self::assertSame(200, $outer->wait()->getStatusCode());
+            self::assertNull($failure);
+            self::assertSame(200, $inner->wait()->getStatusCode());
+            self::assertInstanceOf(P\PromiseInterface::class, $nested);
+            self::assertSame(200, $nested->wait()->getStatusCode());
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testCloseFromNativeCallbackRejectsUnattachedNestedRequest(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $nested = null;
+
+        $outer = $handler(new Request('GET', Server::$url), [
+            'on_headers' => static function () use ($handler, &$nested): void {
+                $nested = $handler(new Request('GET', Server::$url), []);
+                $handler->close();
+            },
+        ]);
+
+        try {
+            $outer->wait();
+            self::fail('Expected HandlerClosedException.');
+        } catch (HandlerClosedException $e) {
+            self::assertStringContainsString('closed before the transfer completed', $e->getMessage());
+        }
+
+        self::assertInstanceOf(P\PromiseInterface::class, $nested);
+        self::assertTrue(P\Is::rejected($nested));
+        self::assertSame([], self::readMultiProperty($handler, 'deferredAdds'));
+        self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        self::assertFalse(self::hasMultiHandle($handler));
+
+        try {
+            $nested->wait();
+            self::fail('Expected HandlerClosedException.');
+        } catch (HandlerClosedException $e) {
+            self::assertStringContainsString('closed before the transfer completed', $e->getMessage());
+        }
+    }
+
+    public function testCancelingCallbackCreatedRequestNeverAttachesIt(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $nested = null;
+
+        try {
+            $response = $handler(new Request('GET', Server::$url), [
+                'on_headers' => static function () use ($handler, &$nested): void {
+                    $nested = $handler(new Request('GET', Server::$url), []);
+                    $nested->cancel();
+                },
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertInstanceOf(P\PromiseInterface::class, $nested);
+            self::assertTrue(P\Is::rejected($nested));
+            self::assertSame([], self::readMultiProperty($handler, 'deferredAdds'));
+            self::assertSame([], self::readMultiProperty($handler, 'deferredCancels'));
+            self::assertSame([], self::readMultiProperty($handler, 'handles'));
+            self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testNestedSynchronousWaitFailsPromptly(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $nestedFailure = null;
+
+        try {
+            $response = $handler(new Request('GET', Server::$url), [
+                'on_headers' => static function () use ($handler, &$nestedFailure): void {
+                    try {
+                        $handler(new Request('GET', Server::$url), [])->wait();
+                    } catch (\Throwable $e) {
+                        $nestedFailure = $e;
+                    }
+                },
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertInstanceOf(RequestException::class, $nestedFailure);
+            self::assertStringContainsString('inside a cURL callback', $nestedFailure->getMessage());
+            self::assertSame([], self::readMultiProperty($handler, 'deferredAdds'));
+            self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testNestedSynchronousClientSendFailsWithRequestException(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $client = new Client(['handler' => HandlerStack::create($handler)]);
+        $nestedFailure = null;
+
+        try {
+            $response = $client->send(new Request('GET', Server::$url), [
+                'on_headers' => static function () use ($client, &$nestedFailure): void {
+                    try {
+                        $client->send(new Request('GET', Server::$url));
+                    } catch (\Throwable $e) {
+                        $nestedFailure = $e;
+                    }
+                },
+            ]);
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertInstanceOf(RequestException::class, $nestedFailure);
+            self::assertStringContainsString('inside a cURL callback', $nestedFailure->getMessage());
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testReentrantTickDoesNotExecuteNativeCurlRecursively(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $depthDuringCallback = null;
+
+        try {
+            $response = $handler(new Request('GET', Server::$url), [
+                'on_headers' => static function () use ($handler, &$depthDuringCallback): void {
+                    $handler->tick();
+                    $depthDuringCallback = self::readMultiProperty($handler, 'multiExecDepth');
+                },
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(1, $depthDuringCallback, 'A reentrant tick must not clear the outer native execution guard.');
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testFailedAttachmentRollsBackImmediateRequest(): void
+    {
+        $handler = new CurlMultiHandler();
+        $_SERVER['curl_multi_add_handle_result'] = \CURLM_INTERNAL_ERROR;
+
+        try {
+            try {
+                $handler(new Request('GET', Server::$url), []);
+                self::fail('Expected RequestException.');
+            } catch (RequestException $e) {
+                self::assertStringContainsString('Unable to add the cURL handle', $e->getMessage());
+            }
+
+            self::assertSame([], self::readMultiProperty($handler, 'handles'));
+            self::assertSame([], self::readMultiProperty($handler, 'delays'));
+            self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+
+            unset($_SERVER['curl_multi_add_handle_result']);
+            Server::flush();
+            Server::enqueue([new Response(200)]);
+
+            self::assertSame(200, $handler(new Request('GET', Server::$url), [])->wait()->getStatusCode());
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testFailedAttachmentRejectsEscapedDelayedRequest(): void
+    {
+        $handler = new CurlMultiHandler();
+
+        try {
+            $promise = $handler(new Request('GET', Server::$url), ['delay' => 1]);
+
+            $handles = self::readMultiProperty($handler, 'handles');
+            self::assertCount(1, $handles);
+            $id = \array_key_first($handles);
+
+            $_SERVER['curl_multi_add_handle_result'] = \CURLM_INTERNAL_ERROR;
+            self::setMultiProperty($handler, 'delays', [$id => Utils::currentTime() - 1]);
+
+            $handler->tick();
+
+            self::assertTrue(P\Is::rejected($promise));
+            self::assertSame([], self::readMultiProperty($handler, 'handles'));
+            self::assertSame([], self::readMultiProperty($handler, 'delays'));
+
+            try {
+                $promise->wait();
+                self::fail('Expected RequestException.');
+            } catch (RequestException $e) {
+                self::assertStringContainsString('Unable to add the cURL handle', $e->getMessage());
+            }
+        } finally {
+            $handler->close();
+        }
+    }
+
+    public function testValidSiblingSurvivesAnotherRequestsFailedAttachment(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+
+        try {
+            $sibling = $handler(new Request('GET', Server::$url), []);
+
+            $_SERVER['curl_multi_add_handle_result'] = \CURLM_INTERNAL_ERROR;
+
+            try {
+                $handler(new Request('GET', Server::$url), []);
+                self::fail('Expected RequestException.');
+            } catch (RequestException $e) {
+                self::assertStringContainsString('Unable to add the cURL handle', $e->getMessage());
+            }
+
+            unset($_SERVER['curl_multi_add_handle_result']);
+
+            self::assertCount(1, self::readMultiProperty($handler, 'handles'));
+            self::assertSame(200, $sibling->wait()->getStatusCode());
+        } finally {
+            $handler->close();
         }
     }
 

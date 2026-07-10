@@ -7,6 +7,8 @@ namespace GuzzleHttp\Handler;
 use Closure;
 use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Multiplexing;
 use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
@@ -85,17 +87,32 @@ final class CurlMultiHandler
     private bool $closing = false;
 
     /**
-     * @var int Depth of nested executeMulti() calls. A progress or header
+     * @var int Depth of nested guarded native operations (execution and
+     *          handle removal, both of which can run user callbacks). A
      *          callback can re-enter tick(), and the nested frame must not
-     *          clear the outer exec's guard; deferred work stays parked
+     *          clear the outer frame's guard; deferred work stays parked
      *          until the outermost frame unwinds.
      */
     private int $multiExecDepth = 0;
 
     /**
+     * @var bool Guards finishDeferredWork() against re-entry from the
+     *           guarded native removals it performs while flushing.
+     */
+    private bool $finishingDeferredWork = false;
+
+    /**
      * @var array<int, array{easy: EasyHandle, attached: bool}>
      */
     private array $deferredCancels = [];
+
+    /**
+     * @var array<int, object|null> Wait tokens of requests created from inside
+     *                              a cURL callback, keyed by handle id; native
+     *                              attachment is deferred until the outermost
+     *                              native execution unwinds.
+     */
+    private array $deferredAdds = [];
 
     private bool $deferredClose = false;
 
@@ -236,6 +253,15 @@ final class CurlMultiHandler
         /** @var Promise<ResponseInterface, mixed> $promise */
         $promise = new Promise(
             function () use ($id, $sync, $waitToken): void {
+                if ($this->multiExecDepth > 0) {
+                    // Waiting cannot drive native cURL while a callback has
+                    // the multi handle busy; fail the wait promptly instead
+                    // of self-deadlocking.
+                    $this->failNestedWait($id, $waitToken);
+
+                    return;
+                }
+
                 if ($sync) {
                     $this->executeUntil($id, $waitToken);
                 } else {
@@ -465,8 +491,30 @@ final class CurlMultiHandler
     private function addHandleToMulti(int $id, EasyHandle $easy): void
     {
         $this->isolateFromForeignActiveProxyTunnel($easy);
-        \curl_multi_add_handle($this->getMultiHandle(), $easy->handle);
+
+        $multiHandle = $this->getMultiHandle();
+
+        // Unqualified curl_multi_add_handle so the test bootstrap shadow can
+        // override the result.
+        $result = curl_multi_add_handle($multiHandle, $easy->handle);
+
+        if (\CURLM_OK !== $result) {
+            if (\PHP_VERSION_ID < 80226 || (\PHP_VERSION_ID >= 80300 && \PHP_VERSION_ID < 80314)) {
+                // Before PHP 8.2.26 and 8.3.14, ext-curl kept the easy handle
+                // in its multi bookkeeping even when the native add failed
+                // (https://github.com/php/php-src/pull/16302); remove it so
+                // the handle can be disposed safely.
+                \curl_multi_remove_handle($multiHandle, $easy->handle);
+            }
+
+            throw new RequestException(\sprintf('Unable to add the cURL handle to the cURL multi handler: %s (%d).', (string) \curl_multi_strerror($result), $result), $easy->request);
+        }
+
         $this->markProxyTunnelActive($id, $easy);
+
+        if (isset($this->handles[$id])) {
+            $this->handles[$id]['attached'] = true;
+        }
     }
 
     private function isolateFromForeignActiveProxyTunnel(EasyHandle $easy): void
@@ -547,8 +595,10 @@ final class CurlMultiHandler
     {
         $this->assertOpen();
 
-        // Add any delayed handles if needed.
-        if ($this->delays) {
+        // Add any delayed handles if needed. Attachment is skipped while a
+        // callback has native execution busy; the outer frame attaches due
+        // transfers once it unwinds.
+        if ($this->delays && 0 === $this->multiExecDepth) {
             $currentTime = Utils::currentTime();
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
@@ -575,6 +625,13 @@ final class CurlMultiHandler
 
             // Step through the task queue which may add additional requests.
             P\Utils::queue()->run();
+
+            if ($this->multiExecDepth > 0) {
+                // A cURL callback re-entered the handler while native
+                // execution is running; the outer frame drives native cURL
+                // once it unwinds.
+                return;
+            }
 
             if ($this->closed || $this->closing || !$this->hasMultiHandle()) {
                 return;
@@ -618,6 +675,12 @@ final class CurlMultiHandler
      */
     private function tickInQueue(): void
     {
+        if ($this->multiExecDepth > 0) {
+            // A cURL callback re-entered the handler while native execution
+            // is running; the outer frame drives native cURL once it unwinds.
+            return;
+        }
+
         if ($this->closed || $this->closing || !$this->hasMultiHandle()) {
             return;
         }
@@ -640,6 +703,12 @@ final class CurlMultiHandler
     public function execute(): void
     {
         $this->assertOpen();
+
+        if ($this->multiExecDepth > 0) {
+            // Native cURL cannot be driven while a callback has it busy, so
+            // the loop would spin without ever progressing.
+            throw new \LogicException('Cannot run the cURL multi event loop from inside a cURL callback; the callback must return before transfers can progress.');
+        }
 
         $queue = P\Utils::queue();
 
@@ -758,15 +827,15 @@ final class CurlMultiHandler
         $this->deferredCloseExplicit = $this->deferredCloseExplicit || $explicit;
 
         $entries = $this->handles;
-        $delays = $this->delays;
 
         $this->handles = [];
         $this->delays = [];
+        $this->deferredAdds = [];
 
         foreach ($entries as $id => $entry) {
             $this->deferredCancels[$id] = [
                 'easy' => $entry['easy'],
-                'attached' => !isset($delays[$id]),
+                'attached' => !empty($entry['attached']),
             ];
 
             if ($explicit && P\Is::pending($entry['deferred'])) {
@@ -782,6 +851,7 @@ final class CurlMultiHandler
         $this->handles = [];
         $this->delays = [];
         $this->deferredCancels = [];
+        $this->deferredAdds = [];
         $this->activeProxyTunnelSignatures = [];
         $this->activeProxyTunnelHandles = [];
         $this->active = 0;
@@ -808,7 +878,7 @@ final class CurlMultiHandler
      */
     private function discardPendingRequest(int $id, array $entry, \Throwable $failure): \Throwable
     {
-        unset($this->handles[$id], $this->delays[$id]);
+        unset($this->handles[$id], $this->delays[$id], $this->deferredAdds[$id]);
 
         try {
             $this->disposeEasyHandle($entry['easy']);
@@ -822,14 +892,14 @@ final class CurlMultiHandler
     private function cleanupPendingTransfers(bool $reject, ?\Throwable &$failure): void
     {
         $entries = $this->handles;
-        $delays = $this->delays;
 
         $this->handles = [];
         $this->delays = [];
+        $this->deferredAdds = [];
 
         foreach ($entries as $id => $entry) {
             $easy = $entry['easy'];
-            $attached = !isset($delays[$id]);
+            $attached = !empty($entry['attached']);
 
             if ($attached && $this->hasMultiHandle() && self::hasEasyHandle($easy)) {
                 $this->captureFailure($failure, function () use ($id, $easy): void {
@@ -894,41 +964,134 @@ final class CurlMultiHandler
     }
 
     /**
-     * Flushes cancels and a close deferred while the multi handle was busy
-     * executing transfers or processing completion messages.
+     * Flushes attachments deferred while the multi handle was busy executing
+     * transfers or removing a handle, and cancels and a close deferred while
+     * it was executing transfers or processing completion messages.
      */
     private function finishDeferredWork(): void
     {
-        if ($this->multiExecDepth > 0 || $this->messageProcessingDepth > 0) {
+        if ($this->multiExecDepth > 0 || $this->finishingDeferredWork) {
             // A nested frame (a completion callback re-entered the handler)
             // must not flush while an outer frame is still using the multi
             // handle; the outermost frame flushes once it unwinds.
             return;
         }
 
-        $failure = null;
-        $this->cleanupDeferredCancels($failure);
+        $this->finishingDeferredWork = true;
 
-        if ($this->deferredClose) {
-            $explicit = $this->deferredCloseExplicit;
-
-            try {
-                $this->closeMultiHandle($failure);
-                $this->closeOwnedFactory($failure);
-            } finally {
-                $this->finishClose();
+        try {
+            if (!$this->closed && !$this->closing) {
+                // Deferred adds only need native execution to be idle; a
+                // completion callback may drive and wait on them while the
+                // outermost message loop is still active.
+                $this->flushDeferredAdds();
             }
 
-            if ($explicit && $failure !== null) {
+            if ($this->messageProcessingDepth > 0) {
+                // Cancels and a deferred close must wait for the outermost
+                // message loop to unwind.
+                return;
+            }
+
+            $failure = null;
+
+            // Removing a cancelled transfer runs its final progress update,
+            // whose callback can cancel other transfers, create requests, or
+            // close the handler; drain until no deferred work remains.
+            do {
+                $this->cleanupDeferredCancels($failure);
+
+                if (!$this->closed && !$this->closing) {
+                    $this->flushDeferredAdds();
+                }
+            } while ($this->deferredCancels !== [] || (!$this->closed && !$this->closing && $this->deferredAdds !== []));
+
+            if ($this->deferredClose) {
+                $explicit = $this->deferredCloseExplicit;
+
+                try {
+                    $this->closeMultiHandle($failure);
+                    $this->closeOwnedFactory($failure);
+                } finally {
+                    $this->finishClose();
+                }
+
+                if ($explicit && $failure !== null) {
+                    throw $failure;
+                }
+
+                return;
+            }
+
+            if ($failure !== null) {
                 throw $failure;
             }
+        } finally {
+            $this->finishingDeferredWork = false;
+        }
+    }
 
+    /**
+     * Attaches requests whose native attachment was deferred because they
+     * were created from inside a cURL callback.
+     */
+    private function flushDeferredAdds(): void
+    {
+        if ($this->deferredAdds === []) {
             return;
         }
 
-        if ($failure !== null) {
-            throw $failure;
+        $adds = $this->deferredAdds;
+        $this->deferredAdds = [];
+
+        foreach ($adds as $id => $token) {
+            if (!$this->hasRequest($id, $token)) {
+                // Cancelled or replaced while the attachment was deferred.
+                continue;
+            }
+
+            $entry = $this->handles[$id];
+
+            try {
+                $this->addHandleToMulti($id, $entry['easy']);
+            } catch (\Throwable $e) {
+                // The promise has already escaped, so reject it rather than
+                // throw. User code may have settled it directly; a settled
+                // promise must not abort the rest of the snapshot.
+                $rejection = $this->discardPendingRequest($id, $entry, $e);
+                if (P\Is::pending($entry['deferred'])) {
+                    $entry['deferred']->reject($rejection);
+                }
+            }
         }
+    }
+
+    /**
+     * Fails a synchronous wait attempted from inside a cURL callback, where
+     * native execution cannot progress until the callback returns.
+     */
+    private function failNestedWait(int $id, object $token): void
+    {
+        if (!$this->hasRequest($id, $token)) {
+            return;
+        }
+
+        $entry = $this->handles[$id];
+        $message = 'Cannot synchronously wait for a transfer from inside a cURL callback on the same cURL multi handler; the callback must return before the transfer can progress.';
+        $response = $entry['easy']->response;
+        $failure = $response !== null
+            ? new ResponseException($message, $entry['easy']->request, $response)
+            : new RequestException($message, $entry['easy']->request);
+
+        if (!empty($entry['attached'])) {
+            // Native removal must wait until the outermost execution unwinds.
+            unset($this->handles[$id], $this->delays[$id], $this->deferredAdds[$id]);
+            $this->deferredCancels[$id] = ['easy' => $entry['easy'], 'attached' => true];
+        } else {
+            $this->discardPendingRequest($id, $entry, $failure);
+        }
+
+        $entry['deferred']->reject($failure);
     }
 
     private function disposeEasyHandle(EasyHandle $easy): void
@@ -987,10 +1150,17 @@ final class CurlMultiHandler
      */
     private function removeHandleFromMulti(int $id, $handle): void
     {
+        // Removing a still-running transfer performs a final progress update
+        // that can run a user progress callback, so removal is guarded like
+        // native execution.
+        ++$this->multiExecDepth;
+
         try {
             \curl_multi_remove_handle($this->getMultiHandle(), $handle);
         } finally {
+            --$this->multiExecDepth;
             $this->unmarkProxyTunnelActiveById($id);
+            $this->finishDeferredWork();
         }
     }
 
@@ -1008,11 +1178,19 @@ final class CurlMultiHandler
     {
         $easy = $entry['easy'];
         $id = (int) $easy->handle;
+        $entry['attached'] = false;
         $this->handles[$id] = $entry;
-        if (empty($easy->options['delay'])) {
-            $this->addHandleToMulti($id, $easy);
-        } else {
+
+        if (!empty($easy->options['delay'])) {
             $this->delays[$id] = Utils::currentTime() + ($easy->options['delay'] / 1000);
+        } elseif ($this->multiExecDepth > 0) {
+            // A request created from inside a cURL callback cannot be added
+            // natively while curl_multi_exec() is running; libcurl 7.59+
+            // rejects the recursive call. Attach it once the outermost
+            // native execution unwinds.
+            $this->deferredAdds[$id] = $entry['wait_token'] ?? null;
+        } else {
+            $this->addHandleToMulti($id, $easy);
         }
     }
 
@@ -1033,21 +1211,32 @@ final class CurlMultiHandler
             return false;
         }
 
-        $easy = $this->handles[$id]['easy'];
-        $delayed = isset($this->delays[$id]);
-        unset($this->delays[$id], $this->handles[$id]);
+        $entry = $this->handles[$id];
+        $easy = $entry['easy'];
+        $attached = !empty($entry['attached']);
+        unset($this->delays[$id], $this->deferredAdds[$id], $this->handles[$id]);
 
         if ($this->multiExecDepth > 0) {
-            $this->deferredCancels[$id] = ['easy' => $easy, 'attached' => !$delayed];
+            $this->deferredCancels[$id] = ['easy' => $easy, 'attached' => $attached];
 
             return true;
         }
 
-        if (!$delayed && $this->hasMultiHandle() && self::hasEasyHandle($easy)) {
-            $this->removeHandleFromMulti($id, $easy->handle);
+        $failure = null;
+
+        if ($attached && $this->hasMultiHandle() && self::hasEasyHandle($easy)) {
+            $this->captureFailure($failure, function () use ($id, $easy): void {
+                $this->removeHandleFromMulti($id, $easy->handle);
+            });
         }
 
-        $this->disposeEasyHandle($easy);
+        $this->captureFailure($failure, function () use ($easy): void {
+            $this->disposeEasyHandle($easy);
+        });
+
+        if ($failure !== null) {
+            throw $failure;
+        }
 
         return true;
     }
