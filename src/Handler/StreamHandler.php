@@ -754,7 +754,7 @@ class StreamHandler
             return false;
         }
 
-        $type = \strtr($options['auth'][2], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+        $type = Psr7\Utils::asciiToLower($options['auth'][2]);
         if ($type === 'digest') {
             $httpAuth = \defined('CURLAUTH_DIGEST') ? \constant('CURLAUTH_DIGEST') : null;
         } elseif ($type === 'ntlm') {
@@ -820,7 +820,7 @@ class StreamHandler
             throw new \InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
         }
 
-        if (\strtoupper($value) !== 'PEM') {
+        if (Psr7\Utils::asciiToUpper($value) !== 'PEM') {
             throw new \InvalidArgumentException(\sprintf('The stream handler only supports "PEM" for the %s request option.', $option));
         }
     }

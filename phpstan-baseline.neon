@@ -19,7 +19,7 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$str of function strtr expects string, mixed given\.$#'
+			message: '#^Parameter \#1 \$string of static method GuzzleHttp\\Psr7\\Utils\:\:asciiToLower\(\) expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Client.php

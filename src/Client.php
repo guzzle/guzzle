@@ -10,6 +10,7 @@ use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
@@ -128,7 +129,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         $isAsync = \substr($method, -5) === 'Async';
         $method = $isAsync ? \substr($method, 0, -5) : $method;
-        $method = \strtoupper($method);
+        $method = Psr7\Utils::asciiToUpper($method);
 
         return $isAsync
             ? $this->requestAsync($method, $uri, $opts)
@@ -195,7 +196,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
     {
-        $normalizedMethod = \strtoupper($method);
+        $normalizedMethod = Psr7\Utils::asciiToUpper($method);
         if ($method !== $normalizedMethod) {
             \trigger_deprecation(
                 'guzzlehttp/guzzle',
@@ -242,7 +243,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     public function request(string $method, $uri = '', array $options = []): ResponseInterface
     {
-        $normalizedMethod = \strtoupper($method);
+        $normalizedMethod = Psr7\Utils::asciiToUpper($method);
         if ($method !== $normalizedMethod) {
             \trigger_deprecation(
                 'guzzlehttp/guzzle',
@@ -339,7 +340,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             // Add the User-Agent header if one was not already set.
             $hasUserAgent = false;
             foreach (\array_keys($this->config['headers']) as $name) {
-                if (\strtr((string) $name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') === 'user-agent') {
+                if (Psr7\Utils::asciiToLower((string) $name) === 'user-agent') {
                     $hasUserAgent = true;
                     break;
                 }
@@ -1138,7 +1139,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         if (!empty($options['auth']) && \is_array($options['auth'])) {
             $value = $options['auth'];
-            $type = isset($value[2]) ? \strtr($value[2], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') : 'basic';
+            $type = isset($value[2]) ? Psr7\Utils::asciiToLower($value[2]) : 'basic';
             switch ($type) {
                 case 'basic':
                     // Ensure that we don't have the header in different case and set the new value.
