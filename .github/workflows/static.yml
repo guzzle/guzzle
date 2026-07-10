@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  COMPOSER_ROOT_VERSION: 7.14.x-dev
+  COMPOSER_ROOT_VERSION: 7.15.x-dev
 
 jobs:
   phpstan:
