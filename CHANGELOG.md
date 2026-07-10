@@ -161,6 +161,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Handler\Proxy::wrapTlsFallback()`; the default handler stack selects the cURL or stream handler by TLS support automatically
 
 
+## 7.15.0 - Upcoming
+
+### Changed
+
+- Sanitize the cURL error text exposed through exception handler context
+
+
 ## 7.14.1 - Upcoming
 
 ### Fixed
@@ -178,6 +185,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Avoid integer overflow in cURL multi delay timing on 32-bit platforms
 - Release the cURL easy handle when the `on_stats` callback throws
 - Redact request URI credentials from the stream handler connection error message
+- Normalize response trailer field names to lowercase with values in wire order
+- Retain response trailers only when an `on_trailers` callback is configured
+- Validate the `on_trailers` callback before starting a cURL transfer
+- Reject the `on_trailers` request option on the stream handler, which cannot observe trailers
 
 
 ## 7.14.0 - 2026-07-08
