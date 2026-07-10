@@ -9,6 +9,7 @@ use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -324,7 +325,7 @@ EOT
     {
         $result = [];
         foreach (\array_keys($headers) as $key) {
-            $result[\strtr((string) $key, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')] = $key;
+            $result[Psr7\Utils::asciiToLower((string) $key)] = $key;
         }
 
         return $result;
@@ -571,7 +572,7 @@ EOT
 
         return [
             'type' => 'domain',
-            'value' => \strtr($host, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'),
+            'value' => Psr7\Utils::asciiToLower($host),
             'port' => $port,
             'matchesRoot' => $matchesRoot,
         ];

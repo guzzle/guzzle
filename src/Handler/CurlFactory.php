@@ -1178,7 +1178,7 @@ class CurlFactory implements CurlFactoryInterface
     {
         $position = \strpos($proxy, '://');
 
-        return $position === false ? null : \strtr(\substr($proxy, 0, $position), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+        return $position === false ? null : Psr7\Utils::asciiToLower(\substr($proxy, 0, $position));
     }
 
     /**
@@ -1304,7 +1304,7 @@ class CurlFactory implements CurlFactoryInterface
                 return false;
             }
 
-            $proxyScheme = \strtr($proxyParts['scheme'], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+            $proxyScheme = Psr7\Utils::asciiToLower($proxyParts['scheme']);
 
             return $proxyScheme === 'http' || $proxyScheme === 'https';
         }
@@ -1740,7 +1740,7 @@ class CurlFactory implements CurlFactoryInterface
             throw new \InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
         }
 
-        return \strtoupper($type);
+        return Psr7\Utils::asciiToUpper($type);
     }
 
     private static function shouldValidateSslKeyFile(?string $type): bool
@@ -1957,7 +1957,7 @@ class CurlFactory implements CurlFactoryInterface
             $conf[\CURLOPT_CONNECTTIMEOUT_MS] = $options['connect_timeout'] * 1000;
         }
 
-        if ($timeoutRequiresNoSignal && \strtoupper(\substr(\PHP_OS, 0, 3)) !== 'WIN') {
+        if ($timeoutRequiresNoSignal && Psr7\Utils::asciiToUpper(\substr(\PHP_OS, 0, 3)) !== 'WIN') {
             $conf[\CURLOPT_NOSIGNAL] = true;
         }
 
@@ -2005,7 +2005,7 @@ class CurlFactory implements CurlFactoryInterface
             // see https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
             $ext = pathinfo($cert, \PATHINFO_EXTENSION);
             if ($certType === null && preg_match('#^(der|p12)$#iD', $ext)) {
-                $conf[\CURLOPT_SSLCERTTYPE] = strtoupper($ext);
+                $conf[\CURLOPT_SSLCERTTYPE] = Psr7\Utils::asciiToUpper($ext);
             }
             $conf[\CURLOPT_SSLCERT] = $cert;
         }
@@ -2233,7 +2233,7 @@ class CurlFactory implements CurlFactoryInterface
 
         foreach ($lines as $line) {
             [$name, $value] = \explode(':', $line, 2);
-            $name = \strtr(\trim($name, " \n\r\t\0\x0B"), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+            $name = Psr7\Utils::asciiToLower(\trim($name, " \n\r\t\0\x0B"));
             $headers[$name][] = \trim($value, " \n\r\t\0\x0B");
         }
 
