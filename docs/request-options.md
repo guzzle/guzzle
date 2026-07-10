@@ -1277,9 +1277,9 @@ corresponding `Psr\Http\Message\RequestInterface` object. The built-in cURL
 handlers invoke it after the entire response body has been written to the sink,
 after `on_headers`, and before `on_stats`. The array is empty when the response
 carried no trailer fields, for example because the server sent none or sent them
-as ordinary headers. Trailer names preserve the casing received on the wire, so
-array lookups are case-sensitive; HTTP/2 field names are always lowercase on the
-wire. The callable is never invoked for failed transfers. If an exception is
+as ordinary headers. Trailer field names are lowercased and grouped
+case-insensitively, matching the HTTP/2 wire format; values keep their wire
+order. The callable is never invoked for failed transfers. If an exception is
 thrown by the callable, then the promise associated with the response will be
 rejected with a `GuzzleHttp\Exception\ResponseException` that wraps the
 exception that was thrown.
@@ -1293,8 +1293,9 @@ use Psr\Http\Message\ResponseInterface;
 $client->request('GET', 'https://example.com/stream', [
     'version' => '2.0',
     'on_trailers' => function (array $trailers, ResponseInterface $response, RequestInterface $request) {
-        if (isset($trailers['x-checksum']) && !hash_equals($trailers['x-checksum'][0], Psr7\Utils::hash($response->getBody(), 'sha256'))) {
-            throw new \Exception('Response body checksum mismatch!');
+        $checksum = $trailers['x-checksum'][0] ?? null;
+        if ($checksum === null || !hash_equals($checksum, Psr7\Utils::hash($response->getBody(), 'sha256'))) {
+            throw new \Exception('Response body checksum missing or mismatched!');
         }
     }
 ]);
@@ -1305,13 +1306,14 @@ the pool's `options` configuration, the callable also receives the iterable key
 that identified the request as a fourth argument.
 
 > [!NOTE]
-> Only the built-in cURL handlers invoke `on_trailers`; the built-in stream and
-> mock handlers cannot observe trailer fields and ignore the option. When
-> writing HTTP handlers that support trailer fields, invoke the `on_trailers`
-> callable exactly once per successful transfer, after the response body has
-> completed, and never for failed transfers. Malformed trailer field lines are
-> discarded before parsing. Trailer fields are reported separately from response
-> headers and are never merged into the response.
+> Only the built-in cURL handlers invoke `on_trailers`; the built-in stream
+> handler rejects the option because it cannot observe trailer fields, and the
+> mock handler ignores it. When writing HTTP handlers that support trailer
+> fields, invoke the `on_trailers` callable exactly once per successful
+> transfer, after the response body has completed, and never for failed
+> transfers. Malformed trailer field lines are discarded before parsing. Trailer
+> fields are reported separately from response headers and are never merged into
+> the response.
 
 ## progress
 

@@ -1050,6 +1050,10 @@ final class StreamHandler
         if (\array_key_exists('expect', $options) && $options['expect'] !== false && $request->hasHeader('Expect')) {
             throw new InvalidArgumentException('Passing the "expect" request option to the stream handler is not supported when it adds an Expect header because the stream handler does not support Expect: 100-Continue.');
         }
+
+        if (isset($options['on_trailers'])) {
+            throw new InvalidArgumentException('Passing the "on_trailers" request option to the stream handler is not supported because the stream handler cannot observe trailers.');
+        }
     }
 
     private function rejectStreamingWithConnectionCaps(array $options): void

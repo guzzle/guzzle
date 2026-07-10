@@ -936,7 +936,7 @@ final class CurlFactory implements CurlFactoryInterface
             $onTrailers = $easy->options['on_trailers'];
 
             try {
-                $onTrailers(Utils::headersFromLines($easy->trailers), $response, $easy->request);
+                $onTrailers(self::headersFromTrailerLines($easy->trailers), $response, $easy->request);
             } catch (\Throwable $e) {
                 $reason = new ResponseException(
                     'An error was encountered during the on_trailers event',
@@ -2652,6 +2652,28 @@ final class CurlFactory implements CurlFactoryInterface
         return $handler($easy->request, $easy->options);
     }
 
+    /**
+     * Parses validated trailer field lines into an associative array keyed by
+     * lowercased field name, preserving first-occurrence key order and wire
+     * value order.
+     *
+     * @param list<string> $lines
+     *
+     * @return array<string, list<string>>
+     */
+    private static function headersFromTrailerLines(array $lines): array
+    {
+        $headers = [];
+
+        foreach ($lines as $line) {
+            [$name, $value] = \explode(':', $line, 2);
+            $name = \strtr(\trim($name, " \n\r\t\0\x0B"), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+            $headers[$name][] = \trim($value, " \n\r\t\0\x0B");
+        }
+
+        return $headers;
+    }
+
     private function createHeaderFn(EasyHandle $easy): callable
     {
         if (isset($easy->options['on_headers'])) {
@@ -2666,12 +2688,14 @@ final class CurlFactory implements CurlFactoryInterface
 
         $startingResponse = false;
         $collectingTrailers = false;
+        $retainTrailers = isset($easy->options['on_trailers']);
 
         return static function ($ch, string $h) use (
             $onHeaders,
             $easy,
             &$startingResponse,
-            &$collectingTrailers
+            &$collectingTrailers,
+            $retainTrailers
         ): int {
             $value = \trim($h, " \n\r\t\0\x0B");
             if ($h === "\r\n" || $h === "\n" || $h === "\r" || $h === '') {
@@ -2710,7 +2734,7 @@ final class CurlFactory implements CurlFactoryInterface
                     // line.
                     $collectingTrailers = true;
 
-                    if (HeaderProcessor::isValidHeaderFieldLine($h)) {
+                    if ($retainTrailers && HeaderProcessor::isValidHeaderFieldLine($h)) {
                         $easy->trailers[] = $value;
                     }
                 } else {

@@ -68,6 +68,16 @@ class CurlMultiHandlerTest extends TestCase
         self::assertEquals(5, $_SERVER['_curl_multi'][\CURLMOPT_MAXCONNECTS]);
     }
 
+    public function testRejectsNonCallableOnTrailersBeforeTransfer(): void
+    {
+        $handler = new CurlMultiHandler();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('on_trailers must be callable');
+
+        $handler(new Request('GET', Server::$url), ['on_trailers' => 'not-a-function']);
+    }
+
     public function testTimeToNextDoesNotTruncateSubSecondDelay(): void
     {
         $handler = new CurlMultiHandler();
@@ -1795,7 +1805,7 @@ class CurlMultiHandlerTest extends TestCase
             $response = $promise->wait();
             self::assertSame(200, $response->getStatusCode());
             self::assertSame('abc', (string) $response->getBody());
-            self::assertSame(['X-Checksum' => ['abc123']], $trailers);
+            self::assertSame(['x-checksum' => ['abc123']], $trailers);
             self::assertTrue($closed);
 
             try {
