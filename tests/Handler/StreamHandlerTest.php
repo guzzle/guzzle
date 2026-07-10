@@ -213,6 +213,23 @@ class StreamHandlerTest extends TestCase
         )->wait();
     }
 
+    public function testRedactsRequestUriCredentialsInConnectionErrorMessage()
+    {
+        $handler = new StreamHandler();
+        $promise = $handler(
+            new Request('GET', 'http://user:secret@localhost:123'),
+            ['timeout' => 0.01]
+        );
+
+        try {
+            $promise->wait();
+            self::fail('Expected ConnectException');
+        } catch (ConnectException $e) {
+            self::assertStringNotContainsString('secret', $e->getMessage());
+            self::assertStringContainsString('http://user:***@localhost:123', $e->getMessage());
+        }
+    }
+
     /**
      * @dataProvider forceIpResolveProvider
      */

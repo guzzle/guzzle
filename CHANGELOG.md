@@ -19,6 +19,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Run ready promise queue tasks before sleeping for delayed cURL multi requests
 - Avoid integer overflow in cURL multi delay timing on 32-bit platforms
 - Release the cURL easy handle when the `on_stats` callback throws
+- Redact request URI credentials from the stream handler connection error message
 
 ## 7.14.0 - 2026-07-08
 

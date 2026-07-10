@@ -483,7 +483,7 @@ class StreamHandler
                 $this->lastHeaders = $http_response_header ?? [];
 
                 if (false === $resource) {
-                    throw new ConnectException(sprintf('Connection refused for URI %s', $uri), $request, null, $context);
+                    throw new ConnectException(sprintf('Connection refused for URI %s', Psr7\Utils::redactUserInfo($uri)), $request, null, $context);
                 }
 
                 if (isset($options['read_timeout'])) {
