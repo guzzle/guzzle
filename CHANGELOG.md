@@ -13,6 +13,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject required multiplexing when the final `CURLOPT_HTTPAUTH` mask permits NTLM
 - Require an integer `CURLMOPT_PIPELINING` when combined with explicit multiplexing
 - Check the required multiplexing cleartext proxy rule against the final cURL configuration
+- Bound cURL multi handler blocking selects by the earliest pending request delay
+- Stop synchronous cURL multi handler waits blocking on unrelated transfers once the target has settled
+- Stop cURL multi completion processing double-settling promises canceled from completion callbacks
+- Run ready promise queue tasks before sleeping for delayed cURL multi requests
+- Avoid integer overflow in cURL multi delay timing on 32-bit platforms
+- Release the cURL easy handle when the `on_stats` callback throws
+- Redact request URI credentials from the stream handler connection error message
 
 ## 7.14.0 - 2026-07-08
 
