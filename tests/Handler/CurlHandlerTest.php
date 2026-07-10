@@ -36,6 +36,16 @@ class CurlHandlerTest extends TestCase
         $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001])->wait();
     }
 
+    public function testRejectsNonCallableOnTrailersBeforeTransfer()
+    {
+        $handler = new CurlHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('on_trailers must be callable');
+
+        $handler(new Request('GET', Server::$url), ['on_trailers' => 'not-a-function']);
+    }
+
     public function testRedactsUserInfoInErrors()
     {
         $handler = new CurlHandler();

@@ -104,6 +104,10 @@ class CurlFactory implements CurlFactoryInterface
     {
         self::validateRequestUriScheme($request);
 
+        if (isset($options['on_trailers']) && !\is_callable($options['on_trailers'])) {
+            throw new \InvalidArgumentException('on_trailers must be callable');
+        }
+
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {
@@ -898,7 +902,7 @@ class CurlFactory implements CurlFactoryInterface
 
         if (isset($easy->options['on_trailers'])) {
             try {
-                ($easy->options['on_trailers'])(Utils::headersFromLines($easy->trailers), $easy->response);
+                ($easy->options['on_trailers'])(self::headersFromTrailerLines($easy->trailers), $easy->response);
             } catch (\Throwable $e) {
                 return P\Create::rejectionFor(
                     new RequestException(
@@ -2218,6 +2222,24 @@ class CurlFactory implements CurlFactoryInterface
         return $handler($easy->request, $easy->options);
     }
 
+    /**
+     * Parses validated trailer field lines into an associative array keyed by
+     * lowercased field name, preserving first-occurrence key order and wire
+     * value order.
+     */
+    private static function headersFromTrailerLines(array $lines): array
+    {
+        $headers = [];
+
+        foreach ($lines as $line) {
+            [$name, $value] = \explode(':', $line, 2);
+            $name = \strtr(\trim($name, " \n\r\t\0\x0B"), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+            $headers[$name][] = \trim($value, " \n\r\t\0\x0B");
+        }
+
+        return $headers;
+    }
+
     private function createHeaderFn(EasyHandle $easy): callable
     {
         if (isset($easy->options['on_headers'])) {
@@ -2232,12 +2254,14 @@ class CurlFactory implements CurlFactoryInterface
 
         $startingResponse = false;
         $collectingTrailers = false;
+        $retainTrailers = isset($easy->options['on_trailers']);
 
         return static function ($ch, $h) use (
             $onHeaders,
             $easy,
             &$startingResponse,
-            &$collectingTrailers
+            &$collectingTrailers,
+            $retainTrailers
         ) {
             $value = \trim($h, " \n\r\t\0\x0B");
             if ($h === "\r\n" || $h === "\n" || $h === "\r" || $h === '') {
@@ -2273,7 +2297,7 @@ class CurlFactory implements CurlFactoryInterface
                     // line.
                     $collectingTrailers = true;
 
-                    if (HeaderProcessor::isValidHeaderFieldLine($h)) {
+                    if ($retainTrailers && HeaderProcessor::isValidHeaderFieldLine($h)) {
                         $easy->trailers[] = $value;
                     }
                 } else {

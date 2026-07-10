@@ -134,6 +134,10 @@ class StreamHandler
             throw new \InvalidArgumentException('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
         }
 
+        if (isset($options['on_trailers'])) {
+            throw new \InvalidArgumentException('Passing the "on_trailers" request option to the stream handler is not supported because the stream handler cannot observe trailers.');
+        }
+
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {

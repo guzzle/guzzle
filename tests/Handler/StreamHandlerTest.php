@@ -140,6 +140,19 @@ class StreamHandlerTest extends TestCase
         self::assertStringContainsString('The "unknown" StreamHandler constructor option is unknown', $deprecation);
     }
 
+    public function testRejectsOnTrailersRequestOption(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Passing the "on_trailers" request option to the stream handler is not supported because the stream handler cannot observe trailers.');
+
+        $handler(new Request('GET', 'http://localhost/'), [
+            'on_trailers' => static function (): void {
+            },
+        ]);
+    }
+
     /**
      * @dataProvider connectionCapOptionProvider
      */
