@@ -60,6 +60,24 @@ class CurlMultiHandlerTest extends TestCase
         self::assertGreaterThan(100000, $timeToNext->invoke($handler));
     }
 
+    public function testTimeToNextClampsOversizedDelays(): void
+    {
+        $handler = new CurlMultiHandler();
+
+        $delays = new \ReflectionProperty(CurlMultiHandler::class, 'delays');
+        if (\PHP_VERSION_ID < 80100) {
+            $delays->setAccessible(true);
+        }
+        $delays->setValue($handler, [1 => Utils::currentTime() + 1.0e15]);
+
+        $timeToNext = new \ReflectionMethod(CurlMultiHandler::class, 'timeToNext');
+        if (\PHP_VERSION_ID < 80100) {
+            $timeToNext->setAccessible(true);
+        }
+
+        self::assertSame(\PHP_INT_MAX, $timeToNext->invoke($handler));
+    }
+
     public function testCanAddConnectionCapOptions(): void
     {
         self::skipIfConnectionCapCurlMultiOptionsUnavailable();
@@ -117,6 +135,291 @@ class CurlMultiHandlerTest extends TestCase
         self::assertTrue(P\Is::pending($spawned));
 
         $spawned->cancel();
+    }
+
+    public function testSynchronousWaitDoesNotBlockOnSiblingAfterTargetCompletion(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+
+        $sibling = $handler(new Request('GET', Server::$url.'guzzle-server/read-timeout'), []);
+        $target = $handler(new Request('GET', Server::$url), [RequestOptions::SYNCHRONOUS => true]);
+
+        try {
+            // Drive nonblocking native work until the target's completion
+            // message is staged and the sibling is the only running transfer.
+            self::driveUntilActiveTransferCount($handler, 1);
+
+            $start = \microtime(true);
+            $response = $target->wait();
+            $elapsed = \microtime(true) - $start;
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertLessThan(2.5, $elapsed, 'The synchronous wait blocked on an unrelated transfer after the target had completed.');
+            self::assertTrue(P\Is::pending($sibling));
+        } finally {
+            $sibling->cancel();
+            Server::flush();
+        }
+    }
+
+    public function testSynchronousWaitStopsAfterTargetCancellationFromTaskQueue(): void
+    {
+        Server::flush();
+
+        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+
+        $sibling = $handler(new Request('GET', Server::$url.'guzzle-server/read-timeout'), []);
+        $target = $handler(new Request('GET', Server::$url), [RequestOptions::SYNCHRONOUS => true]);
+
+        P\Utils::queue()->add(static function () use ($target): void {
+            $target->cancel();
+        });
+
+        try {
+            $start = \microtime(true);
+
+            try {
+                $target->wait();
+                self::fail('Expected the canceled target to reject.');
+            } catch (P\CancellationException $e) {
+                $elapsed = \microtime(true) - $start;
+            }
+
+            self::assertLessThan(2.5, $elapsed, 'The synchronous wait selected for an unrelated transfer after the target had been canceled.');
+            self::assertTrue(P\Is::rejected($target));
+            self::assertSame(1, self::readMultiProperty($handler, 'active'));
+            self::assertTrue(P\Is::pending($sibling));
+        } finally {
+            $sibling->cancel();
+            Server::flush();
+        }
+    }
+
+    public function testDelayedSynchronousWaitIsNotBoundToSiblingSelectTimeout(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+
+        $sibling = $handler(new Request('GET', Server::$url.'guzzle-server/read-timeout'), []);
+
+        try {
+            self::driveUntilActiveTransferCount($handler, 1);
+
+            $target = $handler(new Request('GET', Server::$url), [
+                RequestOptions::SYNCHRONOUS => true,
+                'delay' => 100,
+            ]);
+
+            $start = \microtime(true);
+            $response = $target->wait();
+            $elapsed = \microtime(true) - $start;
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertLessThan(2.5, $elapsed, 'The delayed synchronous target waited for an unrelated transfer before attaching.');
+            self::assertTrue(P\Is::pending($sibling));
+        } finally {
+            $sibling->cancel();
+            Server::flush();
+        }
+    }
+
+    public function testDelayedRequestAttachesBeforeSiblingSelectTimeoutWhenTicking(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+
+        $sibling = $handler(new Request('GET', Server::$url.'guzzle-server/read-timeout'), []);
+
+        try {
+            self::driveUntilActiveTransferCount($handler, 1);
+
+            $delayed = $handler(new Request('GET', Server::$url), ['delay' => 100]);
+
+            $start = \microtime(true);
+            $deadline = $start + 10;
+            while (P\Is::pending($delayed) && \microtime(true) < $deadline) {
+                $handler->tick();
+            }
+            $elapsed = \microtime(true) - $start;
+
+            self::assertTrue(P\Is::fulfilled($delayed));
+            self::assertSame(200, $delayed->wait()->getStatusCode());
+            self::assertLessThan(2.5, $elapsed, 'The delayed request waited for an unrelated transfer before attaching.');
+            self::assertTrue(P\Is::pending($sibling));
+        } finally {
+            $sibling->cancel();
+            Server::flush();
+        }
+    }
+
+    public function testDelayedRequestAttachesBeforeSiblingSelectTimeoutWhenExecuting(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+
+        $sibling = $handler(new Request('GET', Server::$url.'guzzle-server/read-timeout'), []);
+
+        try {
+            self::driveUntilActiveTransferCount($handler, 1);
+
+            $delayed = $handler(new Request('GET', Server::$url), ['delay' => 100]);
+            $delayed->then(static function () use ($sibling): void {
+                $sibling->cancel();
+            });
+
+            $start = \microtime(true);
+            $handler->execute();
+            $elapsed = \microtime(true) - $start;
+
+            self::assertTrue(P\Is::fulfilled($delayed));
+            self::assertLessThan(2.5, $elapsed, 'The delayed request waited for an unrelated transfer while executing.');
+        } finally {
+            $sibling->cancel();
+            Server::flush();
+        }
+    }
+
+    public function testStalePromiseCancellationDoesNotCancelReplacementRequest(): void
+    {
+        Server::flush();
+
+        $handler = new CurlMultiHandler(['select_timeout' => 2]);
+        $promise = $handler(new Request('GET', Server::$url), ['delay' => 2000]);
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertCount(1, $handles);
+        $id = (int) \key($handles);
+
+        // Simulate the native handle ID having been reused by a replacement
+        // request created after this promise's transfer left the handler.
+        $handles[$id]['wait_token'] = new \stdClass();
+        $handles[$id]['deferred'] = new P\Promise();
+        self::setMultiProperty($handler, 'handles', $handles);
+
+        $promise->cancel();
+
+        self::assertTrue(P\Is::rejected($promise));
+        self::assertArrayHasKey($id, self::readMultiProperty($handler, 'handles'));
+    }
+
+    public function testSynchronousWaitStopsAfterCancellationFromSiblingCompletion(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+
+        // The target is quiescent, so only the sibling's completion
+        // continuation can end the wait early.
+        $target = $handler(new Request('GET', Server::$url.'guzzle-server/read-timeout'), [RequestOptions::SYNCHRONOUS => true]);
+        $sibling = $handler(new Request('GET', Server::$url), []);
+        $sibling->then(static function () use ($target): void {
+            $target->cancel();
+        });
+
+        try {
+            self::driveUntilActiveTransferCount($handler, 1);
+
+            $start = \microtime(true);
+
+            try {
+                $target->wait();
+                self::fail('Expected the canceled target to reject.');
+            } catch (P\CancellationException $e) {
+                $elapsed = \microtime(true) - $start;
+            }
+
+            self::assertLessThan(2.5, $elapsed, 'The wait selected on the quiescent target before running the sibling completion continuation.');
+            self::assertTrue(P\Is::fulfilled($sibling));
+        } finally {
+            $target->cancel();
+            Server::flush();
+        }
+    }
+
+    public function testCompletionCallbackCancellationOfOriginalDoesNotDoubleSettle(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200), new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+        $original = null;
+        $spawned = null;
+
+        $original = $handler(new Request('GET', Server::$url), [
+            'on_trailers' => static function () use ($handler, &$original, &$spawned): void {
+                $spawned = $handler(new Request('GET', Server::$url), ['delay' => 2000]);
+                $original->cancel();
+            },
+        ]);
+
+        try {
+            $deadline = \microtime(true) + 5;
+            while (P\Is::pending($original) && \microtime(true) < $deadline) {
+                $handler->tick();
+            }
+
+            self::assertTrue(P\Is::rejected($original));
+            self::assertInstanceOf(P\PromiseInterface::class, $spawned);
+            self::assertTrue(P\Is::pending($spawned));
+        } finally {
+            if ($spawned !== null) {
+                $spawned->cancel();
+            }
+            Server::flush();
+        }
+    }
+
+    public function testDelayedSynchronousWaitRunsQueuedCancellationBeforeSleeping(): void
+    {
+        Server::flush();
+
+        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+        $target = $handler(new Request('GET', Server::$url), [
+            RequestOptions::SYNCHRONOUS => true,
+            'delay' => 5000,
+        ]);
+
+        P\Utils::queue()->add(static function () use ($target): void {
+            $target->cancel();
+        });
+
+        $start = \microtime(true);
+
+        try {
+            $target->wait();
+            self::fail('Expected the canceled target to reject.');
+        } catch (P\CancellationException $e) {
+        }
+
+        self::assertLessThan(2.5, \microtime(true) - $start, 'The delayed wait slept over a queued cancellation.');
+    }
+
+    public function testExecuteRunsQueuedCancellationBeforeSleepingForDelays(): void
+    {
+        Server::flush();
+
+        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 5000]);
+
+        P\Utils::queue()->add(static function () use ($delayed): void {
+            $delayed->cancel();
+        });
+
+        $start = \microtime(true);
+        $handler->execute();
+
+        self::assertTrue(P\Is::rejected($delayed));
+        self::assertLessThan(2.5, \microtime(true) - $start, 'execute() slept over a queued cancellation.');
     }
 
     /**
@@ -887,7 +1190,7 @@ class CurlMultiHandlerTest extends TestCase
         $mh = self::readMultiProperty($handler, '_mh');
         // The multi is idle by every other measure, but a retried transfer is
         // re-invoking the handler from inside processMessages.
-        self::setMultiProperty($handler, 'processingMessages', true);
+        self::setMultiProperty($handler, 'messageProcessingDepth', 1);
 
         $easy = self::easyWithSignature('sig-b');
         self::applyProxyTunnelOwnership($handler, $easy);
@@ -1145,6 +1448,28 @@ class CurlMultiHandlerTest extends TestCase
         }, null, CurlMultiHandler::class);
 
         return $get($handler);
+    }
+
+    /**
+     * Repeatedly runs the nonblocking native execution step until the given
+     * number of transfers remains running, without selecting or processing
+     * completion messages.
+     */
+    private static function driveUntilActiveTransferCount(CurlMultiHandler $handler, int $count): void
+    {
+        $tickInQueue = new \ReflectionMethod(CurlMultiHandler::class, 'tickInQueue');
+        if (\PHP_VERSION_ID < 80100) {
+            $tickInQueue->setAccessible(true);
+        }
+
+        $deadline = \microtime(true) + 5;
+
+        do {
+            $tickInQueue->invoke($handler);
+            \usleep(5000);
+        } while (self::readMultiProperty($handler, 'active') !== $count && \microtime(true) < $deadline);
+
+        self::assertSame($count, self::readMultiProperty($handler, 'active'), 'Timed out waiting for the expected number of running transfers.');
     }
 
     private static function readSelectTimeout(CurlMultiHandler $handler)
