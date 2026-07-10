@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Multiplexing;
@@ -4820,6 +4821,116 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testReleasesHandleWhenOnStatsThrowsOnSuccessfulTransfer()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $events = [];
+        $sentinel = new \RuntimeException('stats failed');
+        $trailersCalled = false;
+        $handler = new Handler\CurlHandler(['handle_factory' => self::recordingHandleFactory($events)]);
+
+        try {
+            $handler(new Psr7\Request('GET', Server::$url), [
+                'on_stats' => static function () use (&$events, $sentinel) {
+                    $events[] = 'on_stats';
+                    throw $sentinel;
+                },
+                'on_trailers' => static function () use (&$trailersCalled) {
+                    $trailersCalled = true;
+                },
+            ]);
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($sentinel, $e);
+        }
+
+        self::assertSame(['on_stats', 'release'], $events);
+        self::assertFalse($trailersCalled);
+    }
+
+    public function testReleasesHandleWhenOnStatsThrowsOnErrorTransfer()
+    {
+        $events = [];
+        $sentinel = new \RuntimeException('stats failed');
+        $recording = self::recordingHandleFactory($events);
+        $easy = $recording->create(new Psr7\Request('GET', Server::$url), [
+            'on_stats' => static function () use (&$events, $sentinel) {
+                $events[] = 'on_stats';
+                throw $sentinel;
+            },
+        ]);
+        $easy->errno = 7; // CURLE_COULDNT_CONNECT
+        $handler = static function (): void {
+            self::fail('The handler must not be re-invoked');
+        };
+
+        try {
+            CurlFactory::finish($handler, $easy, $recording);
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($sentinel, $e);
+        }
+
+        self::assertSame(['on_stats', 'release'], $events);
+    }
+
+    public function testReleasesHandleBetweenOnStatsAndOnTrailersOnSuccess()
+    {
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(200, ['X-Foo' => 'bar'], 'abc 123'),
+        ]);
+        $events = [];
+        $handler = new Handler\CurlHandler(['handle_factory' => self::recordingHandleFactory($events)]);
+        $promise = $handler(new Psr7\Request('GET', Server::$url), [
+            'on_stats' => static function () use (&$events) {
+                $events[] = 'on_stats';
+            },
+            'on_trailers' => static function () use (&$events) {
+                $events[] = 'on_trailers';
+            },
+        ]);
+
+        $response = $promise->wait();
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(['on_stats', 'release', 'on_trailers'], $events);
+    }
+
+    public function testPreservesOnStatsThrowableWhenReleaseFailsDuringCleanup()
+    {
+        $sentinel = new \RuntimeException('stats failed');
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'on_stats' => static function () use ($sentinel) {
+                throw $sentinel;
+            },
+        ]);
+        $throwingFactory = new class implements CurlFactoryInterface {
+            public function create(RequestInterface $request, array $options): EasyHandle
+            {
+                throw new \LogicException('The factory must not create handles');
+            }
+
+            public function release(EasyHandle $easy): void
+            {
+                throw new \LogicException('release failed');
+            }
+        };
+        $handler = static function (): void {
+            self::fail('The handler must not be re-invoked');
+        };
+
+        try {
+            CurlFactory::finish($handler, $easy, $throwingFactory);
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame($sentinel, $e);
+        }
+    }
+
     public function testDoesNotInvokeOnTrailersOnTransferError()
     {
         $req = new Psr7\Request('GET', 'http://127.0.0.1:123');
@@ -5178,6 +5289,37 @@ class CurlFactoryTest extends TestCase
         }
 
         return $method->invoke(null, $error, $proxy);
+    }
+
+    /**
+     * @param array<int, string> $events
+     */
+    private static function recordingHandleFactory(array &$events): CurlFactoryInterface
+    {
+        return new class($events) implements CurlFactoryInterface {
+            /** @var array<int, string> */
+            private $events;
+
+            /** @var CurlFactory */
+            private $factory;
+
+            public function __construct(array &$events)
+            {
+                $this->events = &$events;
+                $this->factory = new CurlFactory(1);
+            }
+
+            public function create(RequestInterface $request, array $options): EasyHandle
+            {
+                return $this->factory->create($request, $options);
+            }
+
+            public function release(EasyHandle $easy): void
+            {
+                $this->events[] = 'release';
+                $this->factory->release($easy);
+            }
+        };
     }
 
     /**
