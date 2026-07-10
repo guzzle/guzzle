@@ -1191,7 +1191,10 @@ handlers.
 
 `CurlMultiHandler` now rejects cURL multi options that cannot be applied by the
 installed runtime libcurl. Values passed through the constructor `options` key
-must be an array keyed by integer `CURLMOPT_*` constants.
+must be an array keyed by integer `CURLMOPT_*` constants. Guzzle 7 already
+fails closed when a named connection cap cannot be applied; Guzzle 8 extends
+this rejection to every cURL multi option, including raw `CURLMOPT_*` entries
+that Guzzle 7 only warns about.
 
 `CurlMultiHandler` now rejects `CURLMOPT_MAX_HOST_CONNECTIONS` and
 `CURLMOPT_MAX_TOTAL_CONNECTIONS` entries in the constructor `options` array. Use
