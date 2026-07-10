@@ -19,7 +19,7 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: '#^Parameter \#1 \$str of function strtolower expects string, mixed given\.$#'
+			message: '#^Parameter \#1 \$str of function strtr expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
 			path: src/Client.php

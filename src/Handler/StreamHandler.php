@@ -754,7 +754,7 @@ class StreamHandler
             return false;
         }
 
-        $type = \strtolower($options['auth'][2]);
+        $type = \strtr($options['auth'][2], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
         if ($type === 'digest') {
             $httpAuth = \defined('CURLAUTH_DIGEST') ? \constant('CURLAUTH_DIGEST') : null;
         } elseif ($type === 'ntlm') {
