@@ -832,6 +832,9 @@ foreach ($uris as $uri) {
 > [!NOTE]
 > libcurl never reuses or coalesces a connection across differing TLS settings (`verify`, custom CA, client certificate/key, pinned public key) or proxy settings, so a verified request can never ride an unverified connection. Because libcurl coalesces HTTP/2 connections, hostnames that resolve to the same address and are covered by the server certificate may share one connection; a server not authoritative for a name can reject it with HTTP/2 `421 Misdirected Request`. Waiting requests share one in-progress connection, so a slow lead connection delays them and is charged against their `timeout`. Only HTTP/2 requests wait; `Multiplexing::EAGER` stops the waiting but does not guarantee separate connections - established multiplex-capable connections are still shared.
 
+> [!NOTE]
+> Explicit modes reject deprecated raw cURL options they conflict with: the required family cannot be combined with a raw `CURLOPT_HTTP_VERSION`, `CURLOPT_URL`, or `CURLOPT_FOLLOWLOCATION`, and no explicit mode can be combined with a raw `CURLOPT_PIPEWAIT` on the `CurlMultiHandler`. The required family also rejects final `CURLOPT_HTTPAUTH` masks that permit NTLM, which libcurl retries over HTTP/1.1. The required family validates its cleartext proxy rule against the final cURL configuration, after raw options such as `CURLOPT_PROXY` and `CURLOPT_PRE_PROXY` are applied; only the exact raw `CURLOPT_NOPROXY` wildcard `'*'` disables the primary proxy and pre-proxy there, and raw host-specific patterns are conservatively treated as leaving them active. These rejections are configuration-conflict checks, not remote security checks.
+
 ## on_headers
 
 Summary

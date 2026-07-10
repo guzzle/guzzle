@@ -3437,6 +3437,533 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public static function requiredMultiplexRawHttpVersionProvider(): iterable
+    {
+        yield 'require_eager with raw HTTP/1.1' => [Multiplexing::REQUIRE_EAGER, \CURL_HTTP_VERSION_1_1];
+        yield 'require_wait with raw HTTP/1.1' => [Multiplexing::REQUIRE_WAIT, \CURL_HTTP_VERSION_1_1];
+
+        if (\defined('CURL_HTTP_VERSION_2_0')) {
+            yield 'require_eager with raw negotiable HTTP/2' => [Multiplexing::REQUIRE_EAGER, (int) \constant('CURL_HTTP_VERSION_2_0')];
+        }
+
+        if (\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE')) {
+            yield 'require_eager with equivalent raw prior knowledge' => [Multiplexing::REQUIRE_EAGER, (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE')];
+            yield 'require_wait with equivalent raw prior knowledge' => [Multiplexing::REQUIRE_WAIT, (int) \constant('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE')];
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexRawHttpVersionProvider
+     */
+    public function testRequireRejectsRawHttpVersionOption(string $multiplex, int $rawVersion)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be required when the raw CURLOPT_HTTP_VERSION cURL option is set');
+
+        $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+            'multiplex' => $multiplex,
+            'curl' => [\CURLOPT_HTTP_VERSION => $rawVersion],
+        ]);
+    }
+
+    public function testRequireRejectsRawHttpVersionOptionBeforeProtocolVersionRejection()
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be required when the raw CURLOPT_HTTP_VERSION cURL option is set');
+
+        $f->create(new Psr7\Request('GET', Server::$url, [], null, '1.1'), [
+            'multiplex' => Multiplexing::REQUIRE_EAGER,
+            'curl' => [\CURLOPT_HTTP_VERSION => \CURL_HTTP_VERSION_1_1],
+        ]);
+    }
+
+    public static function requiredMultiplexRawRouteOptionProvider(): iterable
+    {
+        yield 'require_eager with raw URL' => [Multiplexing::REQUIRE_EAGER, [\CURLOPT_URL => 'http://127.0.0.1:8126/'], 'CURLOPT_URL'];
+        yield 'require_wait with raw URL' => [Multiplexing::REQUIRE_WAIT, [\CURLOPT_URL => 'http://127.0.0.1:8126/'], 'CURLOPT_URL'];
+        yield 'require_eager with raw redirect following enabled' => [Multiplexing::REQUIRE_EAGER, [\CURLOPT_FOLLOWLOCATION => true], 'CURLOPT_FOLLOWLOCATION'];
+        yield 'require_wait with raw redirect following disabled' => [Multiplexing::REQUIRE_WAIT, [\CURLOPT_FOLLOWLOCATION => false], 'CURLOPT_FOLLOWLOCATION'];
+    }
+
+    /**
+     * @dataProvider requiredMultiplexRawRouteOptionProvider
+     */
+    public function testRequireRejectsRawRouteOptions(string $multiplex, array $curlOptions, string $name)
+    {
+        $f = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('The "multiplex" request option cannot be required when the raw %s cURL option is set', $name));
+
+        $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+            'multiplex' => $multiplex,
+            'curl' => $curlOptions,
+        ]);
+    }
+
+    public function testRequireRejectsRawUrlForProxiedHttpsRequests()
+    {
+        $f = new CurlFactory(3);
+
+        // A raw URL could turn an allowed proxied HTTPS route into a
+        // cleartext one after the route check has read the request URI.
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be required when the raw CURLOPT_URL cURL option is set');
+
+        $f->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
+            'multiplex' => Multiplexing::REQUIRE_EAGER,
+            'proxy' => 'http://proxy.example.com:8125',
+            'curl' => [\CURLOPT_URL => 'http://example.com/'],
+        ]);
+    }
+
+    public function testNonRequiredMultiplexPreservesRawRouteOptionPrecedence()
+    {
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url), [
+            'multiplex' => Multiplexing::EAGER,
+            'curl' => [\CURLOPT_FOLLOWLOCATION => true],
+        ]);
+
+        try {
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FOLLOWLOCATION]);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
+    public static function nonRequiredMultiplexProvider(): iterable
+    {
+        yield 'option absent' => [[]];
+        yield 'option eager' => [['multiplex' => Multiplexing::EAGER]];
+        yield 'option wait' => [['multiplex' => Multiplexing::WAIT]];
+    }
+
+    /**
+     * @dataProvider nonRequiredMultiplexProvider
+     */
+    public function testNonRequiredMultiplexPreservesRawHttpVersionPrecedence(array $options)
+    {
+        if (!CurlVersion::supportsHttp2()) {
+            self::markTestSkipped('HTTP/2 support is unavailable.');
+        }
+
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), $options + [
+            'curl' => [\CURLOPT_HTTP_VERSION => \CURL_HTTP_VERSION_1_1],
+        ]);
+
+        try {
+            self::assertSame(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsRawProxyForCleartextRequests(string $multiplex)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], function () use ($multiplex): void {
+                $f = new CurlFactory(3);
+
+                $this->expectException(ConnectException::class);
+                $this->expectExceptionMessage('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.');
+
+                $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => $multiplex,
+                    'curl' => [\CURLOPT_PROXY => 'http://proxy.example.com:8125'],
+                ]);
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireAcceptsRawEmptyProxyOverrideForCleartextRequests(string $multiplex)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], static function () use ($multiplex): void {
+                $f = new CurlFactory(3);
+                $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => $multiplex,
+                    'proxy' => 'http://proxy.example.com:8125',
+                    'curl' => [\CURLOPT_PROXY => ''],
+                ]);
+
+                try {
+                    self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+                } finally {
+                    $f->release($easy);
+                }
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireAcceptsRawNoproxyWildcardForCleartextRequests(string $multiplex)
+    {
+        if (!\defined('CURLOPT_NOPROXY') || !\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_NOPROXY, CURLOPT_PIPEWAIT, or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], static function () use ($multiplex): void {
+                $f = new CurlFactory(3);
+                $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => $multiplex,
+                    'proxy' => 'http://proxy.example.com:8125',
+                    'curl' => [(int) \constant('CURLOPT_NOPROXY') => '*'],
+                ]);
+
+                try {
+                    self::assertSame('*', $_SERVER['_curl'][(int) \constant('CURLOPT_NOPROXY')]);
+                } finally {
+                    $f->release($easy);
+                }
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRequireAcceptsRawNoproxyWildcardWithPreProxy()
+    {
+        if (!\defined('CURLOPT_NOPROXY') || !\defined('CURLOPT_PRE_PROXY') || !\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_NOPROXY, CURLOPT_PRE_PROXY, CURLOPT_PIPEWAIT, or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], static function (): void {
+                $f = new CurlFactory(3);
+
+                // libcurl's exact wildcard disables the primary proxy and the
+                // pre-proxy together, so the route is direct.
+                $easy = $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => Multiplexing::REQUIRE_EAGER,
+                    'proxy' => 'http://proxy.example.com:8125',
+                    'curl' => [
+                        (int) \constant('CURLOPT_NOPROXY') => '*',
+                        (int) \constant('CURLOPT_PRE_PROXY') => 'socks5h://proxy.example.com:1080',
+                    ],
+                ]);
+
+                try {
+                    self::assertSame('*', $_SERVER['_curl'][(int) \constant('CURLOPT_NOPROXY')]);
+                    self::assertSame('socks5h://proxy.example.com:1080', $_SERVER['_curl'][(int) \constant('CURLOPT_PRE_PROXY')]);
+                } finally {
+                    $f->release($easy);
+                }
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRequireRejectsRawHostSpecificNoproxyPatternForCleartextRequests()
+    {
+        if (!\defined('CURLOPT_NOPROXY') || !\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_NOPROXY, CURLOPT_PIPEWAIT, or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], function (): void {
+                $f = new CurlFactory(3);
+
+                // Only the exact raw wildcard disables the proxy; host
+                // patterns would need libcurl's matcher and are treated
+                // conservatively as leaving the proxy active.
+                $this->expectException(ConnectException::class);
+                $this->expectExceptionMessage('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.');
+
+                $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => Multiplexing::REQUIRE_EAGER,
+                    'proxy' => 'http://proxy.example.com:8125',
+                    'curl' => [(int) \constant('CURLOPT_NOPROXY') => '127.0.0.1'],
+                ]);
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireRejectsRawPreProxyForCleartextRequests(string $multiplex)
+    {
+        if (!\defined('CURLOPT_PRE_PROXY') || !\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PRE_PROXY, CURLOPT_PIPEWAIT, or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], function () use ($multiplex): void {
+                $f = new CurlFactory(3);
+
+                $this->expectException(ConnectException::class);
+                $this->expectExceptionMessage('Required multiplexing cannot be guaranteed for cleartext requests sent through a proxy.');
+
+                $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => $multiplex,
+                    'curl' => [(int) \constant('CURLOPT_PRE_PROXY') => 'socks5h://proxy.example.com:1080'],
+                ]);
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider requiredMultiplexProvider
+     */
+    public function testRequireAllowsProxiedHttpsRequests(string $multiplex)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], static function () use ($multiplex): void {
+                $f = new CurlFactory(3);
+                $easy = $f->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
+                    'multiplex' => $multiplex,
+                    'proxy' => 'http://proxy.example.com:8125',
+                ]);
+
+                try {
+                    self::assertSame('http://proxy.example.com:8125', $_SERVER['_curl'][\CURLOPT_PROXY]);
+                } finally {
+                    $f->release($easy);
+                }
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public static function requiredMultiplexNtlmAuthProvider(): iterable
+    {
+        yield 'require_eager with ntlm' => [Multiplexing::REQUIRE_EAGER, \CURLAUTH_NTLM];
+        yield 'require_wait with ntlm' => [Multiplexing::REQUIRE_WAIT, \CURLAUTH_NTLM];
+        yield 'require_eager with ntlm in a mask' => [Multiplexing::REQUIRE_EAGER, \CURLAUTH_NTLM | \CURLAUTH_BASIC];
+        yield 'require_eager with any' => [Multiplexing::REQUIRE_EAGER, \CURLAUTH_ANY];
+        yield 'require_wait with anysafe' => [Multiplexing::REQUIRE_WAIT, \CURLAUTH_ANYSAFE];
+    }
+
+    /**
+     * @dataProvider requiredMultiplexNtlmAuthProvider
+     */
+    public function testRequireRejectsNtlmAuthMasks(string $multiplex, int $auth)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $f = new CurlFactory(3);
+
+            // libcurl retries NTLM over HTTP/1.1 even on TLS routes, and the
+            // server controls which scheme an offered mask ends up picking.
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('The "multiplex" request option cannot be required when the final CURLOPT_HTTPAUTH cURL option value permits NTLM');
+
+            $f->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
+                'multiplex' => $multiplex,
+                'curl' => [\CURLOPT_HTTPAUTH => $auth],
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public static function requiredMultiplexAllowedAuthProvider(): iterable
+    {
+        yield 'basic' => [\CURLAUTH_BASIC];
+        yield 'digest' => [\CURLAUTH_DIGEST];
+    }
+
+    /**
+     * @dataProvider requiredMultiplexAllowedAuthProvider
+     */
+    public function testRequireAllowsNtlmFreeAuthMasks(int $auth)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $f = new CurlFactory(3);
+            $easy = $f->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
+                'multiplex' => Multiplexing::REQUIRE_EAGER,
+                'curl' => [\CURLOPT_HTTPAUTH => $auth],
+            ]);
+
+            try {
+                self::assertSame($auth, $_SERVER['_curl'][\CURLOPT_HTTPAUTH]);
+            } finally {
+                $f->release($easy);
+            }
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRequireRejectsNonIntegerAuthMask()
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $f = new CurlFactory(3);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('The "multiplex" request option cannot be required when the final CURLOPT_HTTPAUTH cURL option value is not an integer.');
+
+            $f->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
+                'multiplex' => Multiplexing::REQUIRE_EAGER,
+                'curl' => [\CURLOPT_HTTPAUTH => [\CURLAUTH_NTLM]],
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testNonRequiredMultiplexAllowsRawNtlmAuth()
+    {
+        $f = new CurlFactory(3);
+        $easy = $f->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [\CURLOPT_HTTPAUTH => \CURLAUTH_NTLM | \CURLAUTH_BASIC],
+        ]);
+
+        try {
+            self::assertSame(\CURLAUTH_NTLM | \CURLAUTH_BASIC, $_SERVER['_curl'][\CURLOPT_HTTPAUTH]);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
+    public static function nonStringRawProxyOptionProvider(): iterable
+    {
+        yield 'integer proxy' => [[\CURLOPT_PROXY => 123], 'CURLOPT_PROXY'];
+        yield 'stringable proxy' => [[\CURLOPT_PROXY => new class {
+            public function __toString(): string
+            {
+                return 'http://proxy.example.com:8125';
+            }
+        }], 'CURLOPT_PROXY'];
+
+        if (\defined('CURLOPT_NOPROXY')) {
+            yield 'array no-proxy' => [[(int) \constant('CURLOPT_NOPROXY') => ['*']], 'CURLOPT_NOPROXY'];
+        }
+
+        if (\defined('CURLOPT_PRE_PROXY')) {
+            yield 'boolean pre-proxy' => [[(int) \constant('CURLOPT_PRE_PROXY') => false], 'CURLOPT_PRE_PROXY'];
+        }
+    }
+
+    /**
+     * @dataProvider nonStringRawProxyOptionProvider
+     */
+    public function testRequireRejectsNonStringProxyOptionsForCleartextRequests(array $curlOptions, string $name)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], function () use ($curlOptions, $name): void {
+                $f = new CurlFactory(3);
+
+                $this->expectException(\InvalidArgumentException::class);
+                $this->expectExceptionMessage(\sprintf('The "multiplex" request option cannot be required when the final %s cURL option value is not a string.', $name));
+
+                $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => Multiplexing::REQUIRE_EAGER,
+                    'curl' => $curlOptions,
+                ]);
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
     public function testDeprecatesRawPipewaitCurlOption()
     {
         if (!CurlVersion::supportsMultiplex()) {

@@ -382,6 +382,143 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+    public static function explicitMultiplexRawPipewaitProvider(): iterable
+    {
+        yield 'eager with raw true' => [Multiplexing::EAGER, true];
+        yield 'wait with raw false' => [Multiplexing::WAIT, false];
+        yield 'require_eager with raw true' => [Multiplexing::REQUIRE_EAGER, true];
+        yield 'require_wait with raw false' => [Multiplexing::REQUIRE_WAIT, false];
+    }
+
+    /**
+     * @dataProvider explicitMultiplexRawPipewaitProvider
+     *
+     * @param mixed $rawValue
+     */
+    public function testRejectsRawPipewaitWithExplicitMultiplex(string $multiplex, $rawValue)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $a = new CurlMultiHandler();
+
+            // Key presence conflicts whatever the raw value: WAIT with a raw
+            // false and EAGER with a raw true are both second authorities.
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('The "multiplex" request option cannot be combined with the raw CURLOPT_PIPEWAIT cURL option on the cURL multi handler');
+            $a(new Request('GET', 'https://example.com', [], null, '2.0'), [
+                'multiplex' => $multiplex,
+                'curl' => [(int) \constant('CURLOPT_PIPEWAIT') => $rawValue],
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testAllowsRawPipewaitWithoutMultiplexOption()
+    {
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is unavailable.');
+        }
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler();
+        $response = $a(new Request('GET', Server::$url), [
+            'curl' => [(int) \constant('CURLOPT_PIPEWAIT') => true],
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertTrue($_SERVER['_curl'][(int) \constant('CURLOPT_PIPEWAIT')]);
+    }
+
+    public function testRawPipewaitRejectionLeavesHandlerUsable()
+    {
+        if (!\defined('CURLOPT_PIPEWAIT') || !CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT, HTTP/2, or multiplex support is unavailable.');
+        }
+
+        $a = new CurlMultiHandler();
+
+        try {
+            $a(new Request('GET', Server::$url, [], null, '2.0'), [
+                'multiplex' => Multiplexing::WAIT,
+                'curl' => [(int) \constant('CURLOPT_PIPEWAIT') => true],
+            ]);
+            self::fail('Expected the raw CURLOPT_PIPEWAIT conflict to be rejected.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('CURLOPT_PIPEWAIT', $e->getMessage());
+        }
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $response = $a(new Request('GET', Server::$url), [])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public static function nonScalarPipeliningProvider(): iterable
+    {
+        yield 'empty array with wait' => [Multiplexing::WAIT, []];
+        yield 'non-empty array with wait' => [Multiplexing::WAIT, [1]];
+        yield 'object with wait' => [Multiplexing::WAIT, new \stdClass()];
+        yield 'empty array with require_eager' => [Multiplexing::REQUIRE_EAGER, []];
+        yield 'non-empty array with require_wait' => [Multiplexing::REQUIRE_WAIT, [1]];
+        yield 'object with require_eager' => [Multiplexing::REQUIRE_EAGER, new \stdClass()];
+    }
+
+    /**
+     * @dataProvider nonScalarPipeliningProvider
+     *
+     * @param mixed $pipelining
+     */
+    public function testRejectsNonScalarPipeliningWithExplicitMultiplex(string $multiplex, $pipelining)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            // ext-curl derives the integer mask from non-scalar values with
+            // type-dependent zval semantics, so they are rejected as an
+            // invalid type instead of bypassing the guard.
+            $a = new CurlMultiHandler(['options' => [
+                \CURLMOPT_PIPELINING => $pipelining,
+            ]]);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('The CurlMultiHandler CURLMOPT_PIPELINING option must be an integer when combined with the "multiplex" request option.');
+            $a(new Request('GET', 'https://example.com', [], null, '2.0'), ['multiplex' => $multiplex]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testAllowsExplicitMultiplexWithCombinedPipeliningMask()
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        $a = new CurlMultiHandler(['options' => [
+            \CURLMOPT_PIPELINING => \CURLPIPE_HTTP1 | \CURLPIPE_MULTIPLEX,
+        ]]);
+        $promise = $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT]);
+        $promise->cancel();
+        self::assertInstanceOf(P\PromiseInterface::class, $promise);
+    }
+
     public function testSendsRequest()
     {
         Server::enqueue([new Response()]);

@@ -270,11 +270,29 @@ class CurlMultiHandler
      * handler configured against it is a configuration error. The required
      * family conflicts marker-independently: a required guarantee on a handler
      * that disables multiplexing is contradictory even when the transfer would
-     * not wait.
+     * not wait. A raw CURLOPT_PIPEWAIT cURL option conflicts with every
+     * explicit mode on this handler, where waiting is operationally
+     * meaningful: whatever its value, it is a second wait/eager authority
+     * applied after the mode's own decision.
      */
     private function rejectMultiplexPipeliningConflict(EasyHandle $easy, array $options): void
     {
         $multiplex = $options['multiplex'] ?? null;
+
+        if (null === $multiplex) {
+            return;
+        }
+
+        if (\defined('CURLOPT_PIPEWAIT')
+            && isset($options['curl'])
+            && \is_array($options['curl'])
+            && \array_key_exists((int) \constant('CURLOPT_PIPEWAIT'), $options['curl'])
+        ) {
+            // Key presence alone conflicts, and it must be rejected before
+            // the marker below is consulted: the marker reflects the final
+            // merged configuration, which the raw value has falsified.
+            throw new \InvalidArgumentException('The "multiplex" request option cannot be combined with the raw CURLOPT_PIPEWAIT cURL option on the cURL multi handler; remove the raw option.');
+        }
 
         if (Multiplexing::WAIT === $multiplex && !$easy->usesPipewait) {
             // Explicit wait only conflicts when the transfer would actually
@@ -292,7 +310,10 @@ class CurlMultiHandler
 
         $pipelining = $this->options[\CURLMOPT_PIPELINING];
         if (!\is_scalar($pipelining)) {
-            return;
+            // ext-curl derives the integer mask from non-scalar values with
+            // type-dependent zval semantics, so the effective mask cannot be
+            // predicted here; require an explicit integer instead.
+            throw new \InvalidArgumentException('The CurlMultiHandler CURLMOPT_PIPELINING option must be an integer when combined with the "multiplex" request option.');
         }
 
         $multiplexBit = \defined('CURLPIPE_MULTIPLEX') ? \CURLPIPE_MULTIPLEX : 2;
