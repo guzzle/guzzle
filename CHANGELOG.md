@@ -8,7 +8,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Require `guzzlehttp/psr7` ^2.13
-- Use the psr7 ASCII case folding helpers everywhere case is normalized
 - Replace case-insensitive comparisons with the psr7 caseless helpers
 - Sanitize the cURL error text exposed through exception handler context
 - Fail closed when a named cURL multi connection cap cannot be applied
