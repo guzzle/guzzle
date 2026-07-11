@@ -67,6 +67,18 @@ $client->request('GET', '/', [
 ]);
 ```
 
+Custom cURL request options remain active during redirects unless Guzzle
+documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects)
+for cross-origin redirect credential behavior.
+
+Callbacks supplied directly through the `curl` request option are passed to
+PHP's cURL extension as low-level callbacks. Guzzle does not normalize exception
+or abort behavior for raw cURL callbacks. Prefer Guzzle's `progress`,
+`on_headers`, and `on_stats` request options when you want Guzzle's documented
+callback semantics.
+
+## How can I limit concurrent connections?
+
 If you use asynchronous requests with the cURL multi handler, the client can
 bound concurrent connections with named constructor options:
 
@@ -100,45 +112,67 @@ specified as an array keyed by integer `CURLMOPT_*` constants in the **options**
 key of the `CurlMultiHandler` constructor. For example,
 `CURLMOPT_MAX_CONCURRENT_STREAMS` can be used on PHP versions that expose it.
 
+### Which transfers do the caps govern?
+
 Numeric connection caps are enforced by `CurlMultiHandler`. When the caps are
 configured, the default handler routes synchronous requests through the capped
 `CurlMultiHandler` as well, and a cap-configured fallback `StreamHandler`
 rejects enabled response streaming (`stream => true`) because streamed
-connections cannot be capped. Accepted stream-handler transfers are buffered
-and hold at most one connection per in-flight call, including in stream
-fallback environments without a cap-capable cURL where every request uses the
-stream handler. Overlapping buffered calls are not collectively limited by the
-configured numbers. Manually constructed `CurlHandler` or custom handlers are
-outside these caps.
+connections cannot be capped. Accepted stream-handler transfers are buffered and
+hold at most one connection per in-flight call, including in stream fallback
+environments without a cap-capable cURL where every request uses the stream
+handler. Overlapping buffered calls are not collectively limited by the
+configured numbers.
 
-The caps bound open connections, including idle pooled connections, rather than
-in-flight requests. Transfers queued behind a cap keep consuming the request
-`timeout`, so low caps combined with aggressive timeouts and large request
-bursts can time out before a connection becomes available. To bound in-flight
-requests and memory, combine the caps with request-level concurrency controls
-such as `GuzzleHttp\Pool` or `GuzzleHttp\Promise\Each::ofLimit()`.
+Manually constructed `CurlHandler` or custom handlers are outside these caps. A
+custom `handle_factory` is likewise caller-controlled and must not attach an
+external connection-sharing `CURLOPT_SHARE` pool when the caps must hold,
+because Guzzle cannot inspect that native handle state.
+
+### How do the caps compose with connection sharing?
 
 Connection cap options compose with transport sharing as follows. Handler
 transport sharing shares only DNS and, when supported, TLS session data and
 works with the caps unchanged. Persistent transport sharing normally also pools
-connections in a shared cURL share handle, but libcurl does not apply the cURL
-multi connection cap options to transfers that use a shared connection pool.
-When connection cap options are configured,
-`TransportSharing::PERSISTENT_PREFER` therefore falls back to handler-lifetime
-sharing, and `TransportSharing::PERSISTENT_REQUIRE` is rejected because required
-persistent sharing cannot be honored together with the caps.
+connections in a shared cURL share handle, but libcurl 8.13.0 and newer does not
+apply the cURL multi connection cap options to transfers that use a shared
+connection pool (older libcurl checked the requesting transfer's own limits
+against the shared pool, which is not a coherent cap). When connection cap
+options are configured, `TransportSharing::PERSISTENT_PREFER` therefore falls
+back to handler-lifetime sharing, and `TransportSharing::PERSISTENT_REQUIRE` is
+rejected because required persistent sharing cannot be honored together with the
+caps.
 
-Custom cURL request options remain active during redirects unless Guzzle
-documents otherwise. See [`allow_redirects`](request-options.md#allow_redirects)
-for cross-origin redirect credential behavior.
+### What do the caps count?
 
-Callbacks supplied directly through the `curl` request option are passed to
-PHP's cURL extension as low-level callbacks. Guzzle does not normalize exception
-or abort behavior for raw cURL callbacks. Prefer Guzzle's `progress`,
-`on_headers`, and `on_stats` request options when you want Guzzle's documented
-callback semantics.
+The caps bound open connections, including idle pooled connections, rather than
+in-flight requests.
 
-## How can I close cURL resources in long-running applications?
+`max_host_connections` follows libcurl's connection-bundle grouping. Proxy
+forwarding, CONNECT tunnels, SOCKS proxies, and older libcurl versions do not
+necessarily group connections under the same host key, so it is not a portable
+per-proxy or per-credential socket limit.
+
+### What happens when a cap is reached?
+
+At the limit, libcurl queues transfers waiting for a connection slot. On libcurl
+8.8.0 and newer, transfers queued behind a cap keep consuming the request
+`timeout`; older libcurl does not run timeout checks on queued transfers, so a
+queued transfer can overstay its `timeout` until a connection slot frees (curl
+issue #13276). On libcurl 8.16.0 through 8.19.x, queued transfers resume one at
+a time in an order that can starve some transfers under sustained load (fixed in
+8.20.0). A transfer that must open a fresh connection, such as a proxied
+transfer Guzzle isolates for credential safety, does not bypass the caps: it can
+evict an eligible idle connection, and otherwise it stays pending until the
+applicable per-host or total cap frees.
+
+Low caps combined with aggressive timeouts and large request bursts can
+therefore time out, or wait longer than expected, before a connection becomes
+available. To bound in-flight requests and memory, combine the caps with
+request-level concurrency controls such as `GuzzleHttp\Pool` or
+`GuzzleHttp\Promise\Each::ofLimit()`.
+
+## How can I close a cURL handler deterministically?
 
 If your application creates a cURL handler directly and needs deterministic
 cleanup, keep a reference to the handler and call `close()` when the handler is

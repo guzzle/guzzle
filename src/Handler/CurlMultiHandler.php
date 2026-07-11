@@ -45,6 +45,16 @@ final class CurlMultiHandler
         'max_total_connections' => 'CURLMOPT_MAX_TOTAL_CONNECTIONS',
     ];
 
+    /**
+     * cURL options that isolate a transfer from foreign proxy tunnel
+     * connections. Failing to apply either one would fall open into
+     * credential-bearing connection reuse.
+     */
+    private const PROXY_TUNNEL_ISOLATION_OPTIONS = [
+        'CURLOPT_FRESH_CONNECT',
+        'CURLOPT_FORBID_REUSE',
+    ];
+
     private CurlFactoryInterface $factory;
 
     private bool $ownsFactory;
@@ -181,7 +191,7 @@ final class CurlMultiHandler
                 && \in_array($sharingMode, [TransportSharing::PERSISTENT_PREFER, TransportSharing::PERSISTENT_REQUIRE], true);
 
             if ($persistentShareState || $sharingMode === TransportSharing::PERSISTENT_REQUIRE) {
-                throw new InvalidArgumentException(\sprintf('%s cannot be combined with persistent transport sharing because libcurl does not apply connection caps to shared connection pools.', $connectionCapOption));
+                throw new InvalidArgumentException(\sprintf('%s cannot be combined with persistent transport sharing because libcurl does not reliably apply connection caps to shared connection pools.', $connectionCapOption));
             }
 
             if ($sharingMode === TransportSharing::PERSISTENT_PREFER) {
@@ -237,13 +247,16 @@ final class CurlMultiHandler
 
         try {
             $this->rejectMultiplexPipeliningConflict($easy, $options);
+            $this->applyProxyTunnelOwnership($easy);
         } catch (\Throwable $e) {
-            $this->factory->release($easy);
+            try {
+                $this->factory->release($easy);
+            } catch (\Throwable $releaseFailure) {
+                // Preserve the original failure.
+            }
 
             throw $e;
         }
-
-        $this->applyProxyTunnelOwnership($easy);
 
         $id = (int) $easy->handle;
 
@@ -534,9 +547,23 @@ final class CurlMultiHandler
 
     private function isolateProxyTunnelTransfer(EasyHandle $easy): void
     {
-        // Unqualified curl_setopt so the test bootstrap shadow records it.
-        curl_setopt($easy->handle, \CURLOPT_FRESH_CONNECT, true);
-        curl_setopt($easy->handle, \CURLOPT_FORBID_REUSE, true);
+        foreach (self::PROXY_TUNNEL_ISOLATION_OPTIONS as $name) {
+            try {
+                // Unqualified curl_setopt so the test bootstrap shadow records it.
+                $applied = curl_setopt($easy->handle, (int) \constant($name), true);
+            } catch (\Throwable $e) {
+                throw new RequestException(self::proxyTunnelIsolationFailureMessage($name), $easy->request, 0, $e);
+            }
+
+            if (true !== $applied) {
+                throw new RequestException(self::proxyTunnelIsolationFailureMessage($name), $easy->request);
+            }
+        }
+    }
+
+    private static function proxyTunnelIsolationFailureMessage(string $name): string
+    {
+        return \sprintf('Unable to apply the %s cURL option required to isolate the transfer from foreign proxy tunnel connections.', $name);
     }
 
     private function markProxyTunnelActive(int $id, EasyHandle $easy): void

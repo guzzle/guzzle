@@ -42,6 +42,7 @@ class CurlMultiHandlerTest extends TestCase
             $_SERVER['_curl_share_persistent_options'],
             $_SERVER['curl_multi_setopt_fail'],
             $_SERVER['curl_multi_setopt_throw'],
+            $_SERVER['curl_setopt_fail'],
             $_SERVER['curl_multi_add_handle_result']
         );
     }
@@ -57,6 +58,7 @@ class CurlMultiHandlerTest extends TestCase
             $_SERVER['_curl_share_persistent_options'],
             $_SERVER['curl_multi_setopt_fail'],
             $_SERVER['curl_multi_setopt_throw'],
+            $_SERVER['curl_setopt_fail'],
             $_SERVER['curl_multi_add_handle_result'],
             $_SERVER['curl_test']
         );
@@ -2852,6 +2854,50 @@ class CurlMultiHandlerTest extends TestCase
         self::assertNull(self::readMultiHandle($handler), 'An idle owner change must release the multi handle for lazy recreation.');
     }
 
+    public function testConnectionCapsAreReappliedAfterIdleProxyTunnelOwnerHandover(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $handler = new CurlMultiHandler([
+            'max_host_connections' => 2,
+            'max_total_connections' => 5,
+        ]);
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        self::initMultiHandle($handler);
+        self::assertSame(2, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+
+        unset($_SERVER['_curl_multi']);
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature('sig-b'));
+        self::assertNull(self::readMultiHandle($handler), 'An idle owner change must release the multi handle for lazy recreation.');
+
+        self::initMultiHandle($handler);
+
+        self::assertSame(2, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')], 'The handover-recreated multi handle must re-apply the connection caps.');
+        self::assertSame(5, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_TOTAL_CONNECTIONS')], 'The handover-recreated multi handle must re-apply the connection caps.');
+    }
+
+    public function testFailsClosedWhenConnectionCapCannotBeReappliedAfterProxyTunnelHandover(): void
+    {
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $handler = new CurlMultiHandler(['max_host_connections' => 2]);
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        self::initMultiHandle($handler);
+
+        self::applyProxyTunnelOwnership($handler, self::easyWithSignature('sig-b'));
+        $_SERVER['curl_multi_setopt_fail'] = \constant('CURLMOPT_MAX_HOST_CONNECTIONS');
+
+        try {
+            self::initMultiHandle($handler);
+            self::fail('Expected InvalidArgumentException.');
+        } catch (InvalidArgumentException $e) {
+            self::assertStringContainsString('Unable to apply the cURL multi option CURLMOPT_MAX_HOST_CONNECTIONS', $e->getMessage());
+            self::assertStringContainsString('rejected by the runtime libcurl', $e->getMessage());
+        }
+
+        self::assertFalse(self::hasMultiHandle($handler), 'A failed recreation must not publish the multi handle.');
+    }
+
     public function testBusyProxyTunnelOwnerChangeIsolatesTheTransfer(): void
     {
         $handler = new CurlMultiHandler();
@@ -2866,6 +2912,86 @@ class CurlMultiHandlerTest extends TestCase
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
         self::assertSame('sig-a', self::readMultiProperty($handler, 'proxyTunnelOwner'), 'A busy owner change must not move the owner.');
         self::assertSame($mh, self::readMultiHandle($handler), 'A busy owner change must not recreate the multi handle.');
+    }
+
+    public static function proxyTunnelIsolationOptionProvider(): iterable
+    {
+        return [
+            'fresh connect' => [\CURLOPT_FRESH_CONNECT, 'CURLOPT_FRESH_CONNECT'],
+            'forbid reuse' => [\CURLOPT_FORBID_REUSE, 'CURLOPT_FORBID_REUSE'],
+        ];
+    }
+
+    /**
+     * @dataProvider proxyTunnelIsolationOptionProvider
+     */
+    public function testIsolationOptionFailureFailsClosedAndReleasesTheTransfer(int $option, string $name): void
+    {
+        if (!CurlVersion::supportsProxyTunneling()) {
+            self::markTestSkipped('Requires proxy CONNECT tunnel support.');
+        }
+
+        $events = [];
+        $handler = new CurlMultiHandler(['handle_factory' => self::recordingHandleFactory($events)]);
+        self::setMultiProperty($handler, 'proxyTunnelOwner', 'sig-a');
+        self::initMultiHandle($handler);
+        $mh = self::readMultiHandle($handler);
+        self::setMultiProperty($handler, 'handles', [0 => ['busy']]);
+
+        $_SERVER['curl_setopt_fail'] = $option;
+
+        try {
+            $handler(new Request('GET', 'https://example.com'), [
+                'proxy' => 'http://user:pass@proxy.example.com:8080',
+            ]);
+            self::fail('Expected RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString($name, $e->getMessage());
+            self::assertStringContainsString('isolate the transfer from foreign proxy tunnel connections', $e->getMessage());
+        } finally {
+            unset($_SERVER['curl_setopt_fail']);
+        }
+
+        self::assertSame(['release'], $events, 'The failed easy handle must be released exactly once.');
+        self::assertSame([0 => ['busy']], self::readMultiProperty($handler, 'handles'), 'No transfer may be added for the failed request.');
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'), 'A failed isolation must not mark an active signature.');
+        self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
+        self::assertSame('sig-a', self::readMultiProperty($handler, 'proxyTunnelOwner'), 'The owner must not move on a failed isolation.');
+        self::assertSame($mh, self::readMultiHandle($handler), 'The multi handle must not be recreated.');
+    }
+
+    public function testAttachTimeIsolationFailureRollsBackThePendingRequest(): void
+    {
+        if (!CurlVersion::supportsProxyTunneling()) {
+            self::markTestSkipped('Requires proxy CONNECT tunnel support.');
+        }
+
+        $events = [];
+        $handler = new CurlMultiHandler(['handle_factory' => self::recordingHandleFactory($events)]);
+        self::initMultiHandle($handler);
+        self::setMultiProperty($handler, 'activeProxyTunnelSignatures', ['sig-b' => 1]);
+        self::setMultiProperty($handler, 'activeProxyTunnelHandles', [7 => 'sig-b']);
+
+        $_SERVER['curl_setopt_fail'] = \CURLOPT_FRESH_CONNECT;
+
+        try {
+            $handler(new Request('GET', 'https://example.com'), [
+                'proxy' => 'http://user:pass@proxy.example.com:8080',
+            ]);
+            self::fail('Expected RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('CURLOPT_FRESH_CONNECT', $e->getMessage());
+            self::assertStringContainsString('isolate the transfer from foreign proxy tunnel connections', $e->getMessage());
+        } finally {
+            unset($_SERVER['curl_setopt_fail']);
+        }
+
+        self::assertSame([], $events, 'The rolled-back easy handle is disposed directly, never released to the factory pool.');
+        self::assertSame([], self::readMultiProperty($handler, 'handles'), 'The failed request must be rolled back out of the pending map.');
+        self::assertSame([], self::readMultiProperty($handler, 'delays'));
+        self::assertSame([], self::readMultiProperty($handler, 'deferredAdds'));
+        self::assertSame(['sig-b' => 1], self::readMultiProperty($handler, 'activeProxyTunnelSignatures'), 'The foreign attachment bookkeeping must be unchanged.');
+        self::assertSame([7 => 'sig-b'], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
     }
 
     public function testProcessingMessagesGuardPreventsMultiRecreation(): void
