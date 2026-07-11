@@ -85,6 +85,11 @@ final class CurlHandler
             \usleep((int) ($options['delay'] * 1000));
         }
 
+        // A Multiplexing::NONE request option holds unconditionally here:
+        // the transfer runs alone during the blocking curl_exec(), and even
+        // under persistent transport sharing an in-use connection cannot be
+        // joined from another multi handle, so it never shares its
+        // connection with a concurrent transfer.
         $easy = $this->factory->create($request, $options);
 
         \curl_exec($easy->handle);

@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlVersion;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
@@ -188,6 +189,30 @@ class UtilsTest extends TestCase
     {
         yield 'max host connections' => ['max_host_connections'];
         yield 'max total connections' => ['max_total_connections'];
+    }
+
+    public function testChooseHandlerForwardsMultiplexNoneToTheCurlMultiHandler(): void
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previous = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $handler = Utils::chooseHandler(['multiplex' => Multiplexing::NONE]);
+
+            // An asynchronous required request reaches the CurlMultiHandler,
+            // whose conflict message proves the option was forwarded.
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler whose "multiplex" option is Multiplexing::NONE; remove the handler option or set the request option to "eager".');
+            $handler(new Request('GET', 'https://example.com', [], null, '2.0'), ['multiplex' => Multiplexing::REQUIRE_EAGER]);
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
     }
 
     public function testChooseHandlerAcceptsDisabledTransportSharing(): void

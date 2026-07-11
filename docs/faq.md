@@ -112,6 +112,15 @@ specified as an array keyed by integer `CURLMOPT_*` constants in the **options**
 key of the `CurlMultiHandler` constructor. For example,
 `CURLMOPT_MAX_CONCURRENT_STREAMS` can be used on PHP versions that expose it.
 
+Multiplexing on the multi handle is controlled by the named `multiplex` option
+rather than a raw cURL multi option: pass `Multiplexing::NONE` as the
+`multiplex` client option or, when constructing the handler yourself, to the
+`CurlMultiHandler` constructor to disallow multiplexing for every transfer the
+handler runs. `Multiplexing::NONE` is also accepted as a request option value
+exactly where its guarantee - the transfer does not share its connection with
+any concurrent transfer - holds and can be verified. Passing
+`CURLMOPT_PIPELINING` in the **options** array is rejected.
+
 ### Which transfers do the caps govern?
 
 Numeric connection caps are enforced by `CurlMultiHandler`. When the caps are

@@ -156,7 +156,9 @@ final class StreamHandler
 
         $multiplex = $options['multiplex'] ?? null;
 
-        if (null !== $multiplex && !\in_array($multiplex, [Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+        // Multiplexing::NONE is trivially satisfied: the stream handler sends
+        // one HTTP/1.x request per connection and never multiplexes.
+        if (null !== $multiplex && !\in_array($multiplex, [Multiplexing::NONE, Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
             throw new InvalidArgumentException(\sprintf(
                 'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received %s.',
                 \get_debug_type($multiplex)

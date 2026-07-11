@@ -325,6 +325,26 @@ channel's gate and 8.12.0 decides whether the throw can fire:
   literal-header case still does, since libcurl can never key on an opaque
   request header.
 
+**Multiplexed joins are same-multi only (why `Multiplexing::NONE` composes
+with persistent sharing).** libcurl never adds a transfer to an in-use
+connection owned by a different multi handle: curl 7.62.0's
+`ConnectionExists()` skips in-use connections whose attached transfer belongs
+to another multi (`check->data->multi != needle->data->multi` in `lib/url.c`),
+curl 8.12.1's `url_match_conn` returns false for the same case, and curl
+master's `url_match_multi()` compares `conn->attached_multi` against the
+joining transfer's multi. The
+[`CURLSHOPT_SHARE`](https://curl.se/libcurl/c/CURLSHOPT_SHARE.html)
+documentation states the same rule for shared connection caches: multiplexed
+connections "only get additional transfers added to them if the existing
+connection is held by the same multi or easy handle". Under
+`CURL_LOCK_DATA_CONNECT` sharing, *idle* connections migrate between handlers
+as sequential reuse, while *in-use* connections are join-protected by this
+rule on every libcurl generation. A `Multiplexing::NONE` handler therefore
+keeps its guarantee under persistent sharing without any sharing guard: its
+own multi never multiplexes (`CURLMOPT_PIPELINING = 0`), and no other
+handler's transfer can join its in-use connections. If a future libcurl
+relaxed the same-multi rule, this reasoning would need re-evaluation.
+
 **SOCKS proxies under a share handle → authenticated requests force fresh
 below 7.69.0.** A configured share handle suppresses `proxyTunnelSignature()`,
 and handler-lifetime shares exist from libcurl 7.35.0 while locking only DNS and

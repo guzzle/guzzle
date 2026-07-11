@@ -12,6 +12,7 @@ use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
+use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
@@ -35,6 +36,49 @@ class CurlHandlerTest extends TestCase
     protected function getHandler(array $options = []): CurlHandler
     {
         return new CurlHandler($options);
+    }
+
+    public function testAllowsMultiplexNoneRequests(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $handler = new CurlHandler();
+        $response = $handler(new Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => Multiplexing::NONE])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testAllowsMultiplexNoneRequestsForHttp2(): void
+    {
+        if (!CurlVersion::supportsHttp2()) {
+            self::markTestSkipped('HTTP/2 support is unavailable.');
+        }
+
+        // One half of the default stack's sync/async fork: CurlHandler
+        // satisfies Multiplexing::NONE for any protocol version, while
+        // CurlMultiHandlerTest pins the asynchronous HTTP/2 rejection.
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $handler = new CurlHandler();
+        $response = $handler(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::NONE])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testAllowsMultiplexNoneRequestsWithPersistentTransportSharing(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        // A blocking transfer runs alone, and even under persistent sharing
+        // an in-use connection cannot be joined from another multi handle.
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $handler = new CurlHandler([
+            'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
+        ]);
+        $response = $handler(new Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => Multiplexing::NONE])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
     }
 
     public function testCreatesCurlErrors(): void
