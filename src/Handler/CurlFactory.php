@@ -1069,6 +1069,14 @@ final class CurlFactory implements CurlFactoryInterface
             return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
+        if (self::isChallengeRewindFailure($easy)) {
+            $ctx['error'] = 'The server issued an authentication challenge '
+                .'after the request body had already been sent, and the body '
+                .'could not be rewound to resend it. The request was not '
+                .'retried because a retry replays the same challenge. See '
+                .'https://bugs.php.net/bug.php?id=47204 for more information.';
+        }
+
         return self::createRejection($easy, $ctx);
     }
 
@@ -1095,13 +1103,20 @@ final class CurlFactory implements CurlFactoryInterface
             return false;
         }
 
+        if (self::isChallengeRewindFailure($easy)) {
+            // Re-issuing the identical request replays the same challenge and
+            // the same in-transfer rewind, so retrying is futile and the
+            // challenge response is surfaced instead.
+            return false;
+        }
+
         // Two transfer outcomes warrant rewinding the body and retrying:
         //
         // - errno === CURLE_SEND_FAIL_REWIND (65): libcurl needed to rewind an
-        //   already-partially-sent upload to resend it (a redirect, multi-pass
-        //   auth such as NTLM/Negotiate, or a reused connection that died) but
-        //   could not, because PHP registers no seek callback for a streamed
-        //   request body. See https://bugs.php.net/bug.php?id=47204.
+        //   already-partially-sent upload to resend it on a reused connection
+        //   that died before any response arrived, but could not, because PHP
+        //   registers no seek callback for a streamed request body. See
+        //   https://bugs.php.net/bug.php?id=47204.
         //
         // - errno === 0: libcurl reported success yet no usable response
         //   reached us. This is the legacy curl_multi silent-failure variant of
@@ -1110,6 +1125,21 @@ final class CurlFactory implements CurlFactoryInterface
         //   only load-bearing for libcurl < 7.61.1 and may be removed once the
         //   minimum supported libcurl is >= 7.61.1.
         return $easy->errno === 0 || $easy->errno === self::CURLE_SEND_FAIL_REWIND;
+    }
+
+    /**
+     * Whether the transfer failed because libcurl could not rewind the
+     * request body to resend it in reply to a challenge response, such as a
+     * 401 or 407 during multi-pass authentication. libcurl's only other
+     * rewind triggers are followed redirects, which the built-in handlers
+     * never enable, and reused connections that died, which cannot have
+     * produced a response.
+     */
+    private static function isChallengeRewindFailure(EasyHandle $easy): bool
+    {
+        return $easy->errno === self::CURLE_SEND_FAIL_REWIND
+            && $easy->response !== null
+            && !self::hasLocalFailure($easy);
     }
 
     private static function createErrorContext(EasyHandle $easy): array
