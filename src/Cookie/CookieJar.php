@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Cookie;
 
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
