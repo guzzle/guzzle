@@ -6,6 +6,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\ProxySelection;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -69,13 +70,13 @@ final class ProxyEnvironment
      */
     public static function getProxyForScheme(string $scheme): ?string
     {
-        $scheme = \strtolower($scheme);
+        $scheme = Psr7\Utils::asciiToLower($scheme);
         $candidates = [$scheme.'_proxy'];
         if ($scheme !== 'http') {
             // Uppercase HTTP_PROXY is deliberately never consulted: a CGI
             // request header "Proxy:" becomes HTTP_PROXY in the environment.
             // See https://httpoxy.org for more information.
-            $candidates[] = \strtoupper($scheme).'_PROXY';
+            $candidates[] = Psr7\Utils::asciiToUpper($scheme).'_PROXY';
         }
         $candidates[] = 'all_proxy';
         $candidates[] = 'ALL_PROXY';

@@ -1240,13 +1240,13 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         foreach (self::CURL_CONNECT_TIMEOUT_ERRORS as $connectTimeoutError) {
-            if (\stripos($error, $connectTimeoutError) !== false) {
+            if (Psr7\Utils::caselessContains($error, $connectTimeoutError)) {
                 return true;
             }
         }
 
-        return \stripos($error, 'Failed to resolve') !== false
-            && \stripos($error, 'timeout') !== false;
+        return Psr7\Utils::caselessContains($error, 'Failed to resolve')
+            && Psr7\Utils::caselessContains($error, 'timeout');
     }
 
     private static function sanitizeCurlError(string $error, UriInterface $uri, ?string $proxy = null): string
@@ -1492,7 +1492,7 @@ final class CurlFactory implements CurlFactoryInterface
                 return false;
             }
 
-            $proxyScheme = \strtolower($proxyParts['scheme']);
+            $proxyScheme = Psr7\Utils::asciiToLower($proxyParts['scheme']);
 
             return $proxyScheme === 'http' || $proxyScheme === 'https';
         }
@@ -1504,7 +1504,7 @@ final class CurlFactory implements CurlFactoryInterface
     {
         $position = \strpos($proxy, '://');
 
-        return $position === false ? null : \strtolower(\substr($proxy, 0, $position));
+        return $position === false ? null : Psr7\Utils::asciiToLower(\substr($proxy, 0, $position));
     }
 
     /**
@@ -1703,7 +1703,7 @@ final class CurlFactory implements CurlFactoryInterface
             return false;
         }
 
-        return 0 === \strcasecmp(\trim(\substr($header, 0, $length), " \n\r\t\0\x0B"), $name);
+        return Psr7\Utils::caselessEquals(\trim(\substr($header, 0, $length), " \n\r\t\0\x0B"), $name);
     }
 
     /**
@@ -1725,7 +1725,7 @@ final class CurlFactory implements CurlFactoryInterface
                 continue;
             }
 
-            if (0 !== \strcasecmp(\trim(\substr($header, 0, $position), " \n\r\t\0\x0B"), 'Proxy-Authorization')) {
+            if (!Psr7\Utils::caselessEquals(\trim(\substr($header, 0, $position), " \n\r\t\0\x0B"), 'Proxy-Authorization')) {
                 continue;
             }
 
@@ -1968,7 +1968,7 @@ final class CurlFactory implements CurlFactoryInterface
             throw new InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
         }
 
-        return \strtoupper($type);
+        return Psr7\Utils::asciiToUpper($type);
     }
 
     private static function shouldValidateSslKeyFile(?string $type): bool
@@ -2013,7 +2013,7 @@ final class CurlFactory implements CurlFactoryInterface
                 $this->removeHeader('Content-Length', $conf);
             }
             $this->removeHeader('Transfer-Encoding', $conf);
-            if (\strcasecmp(\trim($easy->request->getHeaderLine('Expect'), " \n\r\t\0\x0B"), '100-continue') === 0) {
+            if (Psr7\Utils::caselessEquals(\trim($easy->request->getHeaderLine('Expect'), " \n\r\t\0\x0B"), '100-continue')) {
                 $this->removeHeader('Expect', $conf);
             }
 
@@ -2177,7 +2177,7 @@ final class CurlFactory implements CurlFactoryInterface
     private function removeHeader(string $name, array &$options): void
     {
         foreach (\array_keys($options['_headers']) as $key) {
-            if (!\strcasecmp((string) $key, $name)) {
+            if (Psr7\Utils::caselessEquals((string) $key, $name)) {
                 unset($options['_headers'][$key]);
 
                 return;
@@ -2401,7 +2401,7 @@ final class CurlFactory implements CurlFactoryInterface
             // see https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
             $ext = pathinfo($cert, \PATHINFO_EXTENSION);
             if ($certType === null && preg_match('#^(der|p12)$#iD', $ext)) {
-                $conf[\CURLOPT_SSLCERTTYPE] = strtoupper($ext);
+                $conf[\CURLOPT_SSLCERTTYPE] = Psr7\Utils::asciiToUpper($ext);
             }
             $conf[\CURLOPT_SSLCERT] = $cert;
         }
@@ -2667,7 +2667,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         foreach ($lines as $line) {
             [$name, $value] = \explode(':', $line, 2);
-            $name = \strtr(\trim($name, " \n\r\t\0\x0B"), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+            $name = Psr7\Utils::asciiToLower(\trim($name, " \n\r\t\0\x0B"));
             $headers[$name][] = \trim($value, " \n\r\t\0\x0B");
         }
 

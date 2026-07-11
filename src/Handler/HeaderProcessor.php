@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\Psr7;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -42,7 +43,7 @@ final class HeaderProcessor
         $parts = \explode(' ', $statusLine, 3);
         $protocol = $parts[0];
 
-        if (0 !== \strncasecmp($protocol, 'HTTP/', 5)) {
+        if (!Psr7\Utils::caselessEquals(\substr($protocol, 0, 5), 'HTTP/')) {
             throw new \RuntimeException('HTTP version missing from header data');
         }
 

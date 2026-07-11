@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Cookie;
 
+use GuzzleHttp\Psr7;
+
 /**
  * Set-Cookie object
  */
@@ -66,7 +68,7 @@ class SetCookie
                 $data['Value'] = $value;
             } else {
                 foreach (\array_keys(self::DEFAULTS) as $search) {
-                    if (!\strcasecmp($search, $key)) {
+                    if (Psr7\Utils::caselessEquals($search, $key)) {
                         if ($search === 'Max-Age') {
                             if (\is_string($value) && \preg_match('/^[+-]?[0-9]+$/D', $value) === 1) {
                                 $maxAge = self::parseNumericInteger($value);
@@ -84,7 +86,7 @@ class SetCookie
                         continue 2;
                     }
                 }
-                if (!\strcasecmp('HostOnly', $key)) {
+                if (Psr7\Utils::caselessEquals('HostOnly', $key)) {
                     continue;
                 }
                 $data[$key] = $value;
@@ -438,7 +440,7 @@ class SetCookie
             return false;
         }
 
-        $domain = \strtolower($domain);
+        $domain = Psr7\Utils::asciiToLower($domain);
 
         if ($this->getHostOnly()) {
             return $domain === $cookieDomain;
@@ -537,7 +539,7 @@ class SetCookie
 
     private static function normalizeDomain(string $domain): string
     {
-        $domain = \strtolower($domain);
+        $domain = Psr7\Utils::asciiToLower($domain);
 
         // Treat trailing-dot domains as host-only, but keep pure-dot domains invalid.
         if ($domain !== '' && \substr($domain, -1) === '.' && \trim($domain, '.') !== '') {

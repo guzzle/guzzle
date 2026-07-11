@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Auth;
 
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -169,7 +170,7 @@ final class DigestAuth
 
             if (self::skipToken68Challenge($header, $offset, $length)) {
                 $challenges[] = [
-                    'scheme' => \strtolower($scheme),
+                    'scheme' => Psr7\Utils::asciiToLower($scheme),
                     'params' => [],
                     'invalid' => false,
                 ];
@@ -185,7 +186,7 @@ final class DigestAuth
 
                 if ($offset < $length && $header[$offset] === ',') {
                     if (self::commaStartsNextChallenge($header, $offset + 1, $length)) {
-                        if (\strcasecmp($scheme, 'Digest') === 0
+                        if (Psr7\Utils::caselessEquals($scheme, 'Digest')
                             && self::commaStartsKnownDigestParameterWithoutValue($header, $offset + 1, $length)
                         ) {
                             $invalid = true;
@@ -224,7 +225,7 @@ final class DigestAuth
                     break;
                 }
 
-                $lowerName = \strtolower($name);
+                $lowerName = Psr7\Utils::asciiToLower($name);
                 if (\array_key_exists($lowerName, $params)) {
                     $invalid = true;
                 }
@@ -243,7 +244,7 @@ final class DigestAuth
             }
 
             $challenges[] = [
-                'scheme' => \strtolower($scheme),
+                'scheme' => Psr7\Utils::asciiToLower($scheme),
                 'params' => $params,
                 'invalid' => $invalid,
             ];
@@ -261,7 +262,7 @@ final class DigestAuth
             return null;
         }
 
-        if (isset($params['charset']) && \strcasecmp($params['charset'], 'UTF-8') !== 0) {
+        if (isset($params['charset']) && !Psr7\Utils::caselessEquals($params['charset'], 'UTF-8')) {
             return null;
         }
 
@@ -296,8 +297,8 @@ final class DigestAuth
             $challenge->domain = [];
         }
         $challenge->qop = $qop;
-        $challenge->stale = isset($params['stale']) && \strcasecmp($params['stale'], 'true') === 0;
-        $challenge->userhash = isset($params['userhash']) && \strcasecmp($params['userhash'], 'true') === 0;
+        $challenge->stale = isset($params['stale']) && Psr7\Utils::caselessEquals($params['stale'], 'true');
+        $challenge->userhash = isset($params['userhash']) && Psr7\Utils::caselessEquals($params['userhash'], 'true');
 
         return $challenge;
     }
@@ -307,7 +308,7 @@ final class DigestAuth
      */
     private static function algorithm(?string $algorithm): ?array
     {
-        $name = \strtoupper($algorithm ?? 'MD5');
+        $name = Psr7\Utils::asciiToUpper($algorithm ?? 'MD5');
 
         if (!isset(self::ALGORITHMS[$name])) {
             return null;
@@ -332,7 +333,7 @@ final class DigestAuth
 
         $tokens = \array_map(
             static function (string $token): string {
-                return \strtolower(\trim($token, " \t"));
+                return Psr7\Utils::asciiToLower(\trim($token, " \t"));
             },
             \explode(',', $qop)
         );
@@ -377,7 +378,7 @@ final class DigestAuth
     {
         self::skipWhitespace($header, $offset, $length);
         $name = self::readToken($header, $offset, $length);
-        if ($name === null || !isset(self::DIGEST_CHALLENGE_PARAMETER_NAMES[\strtolower($name)])) {
+        if ($name === null || !isset(self::DIGEST_CHALLENGE_PARAMETER_NAMES[Psr7\Utils::asciiToLower($name)])) {
             return false;
         }
 

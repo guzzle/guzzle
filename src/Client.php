@@ -828,7 +828,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             // Add the User-Agent header if one was not already set.
             $hasUserAgent = false;
             foreach (\array_keys($this->config['headers']) as $name) {
-                if (\strtolower((string) $name) === 'user-agent') {
+                if (Psr7\Utils::asciiToLower((string) $name) === 'user-agent') {
                     $hasUserAgent = true;
                     break;
                 }
