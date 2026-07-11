@@ -7,6 +7,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
+- Fail closed when a proxy tunnel isolation cURL option cannot be applied
+- Normalize Stringable proxy credential values before computing connection-reuse section signatures
 - Reject enabled response streaming (`stream => true`) on cap-configured stream handlers
 - Distinguish CurlMultiHandler and StreamHandler outcomes in the connection-cap custom-handler guidance
 - Restore conservative proxy credential redaction for unparseable proxies with multiple `@` separators
