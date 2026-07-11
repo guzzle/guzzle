@@ -165,6 +165,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 7.15.0 - Upcoming
 
+### Added
+
+- Added `Multiplexing::NONE` support as a client, cURL multi handler, and conditional request option
+
 ### Changed
 
 - Require `guzzlehttp/psr7` ^2.13
@@ -172,6 +176,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Sanitize the cURL error text exposed through exception handler context
 - Fail closed when a named cURL multi connection cap cannot be applied
 - Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured
+
+### Deprecated
+
+- Deprecated passing `CURLMOPT_PIPELINING` in the cURL multi handler `options` array
 
 ### Fixed
 
@@ -186,28 +194,27 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Fail closed when a proxy tunnel isolation cURL option cannot be applied
 - Normalize Stringable proxy credential values before computing connection-reuse section signatures
+- Restore conservative credential redaction for unparseable proxies with multiple `@` separators
+- Redact request URI credentials from the stream handler connection error message
 - Reject enabled response streaming (`stream => true`) on cap-configured stream handlers
-- Distinguish CurlMultiHandler and StreamHandler outcomes in the connection-cap custom-handler guidance
-- Restore conservative proxy credential redaction for unparseable proxies with multiple `@` separators
+- Distinguish CurlMultiHandler and StreamHandler outcomes in connection-cap custom-handler guidance
 - Reject raw cURL options that conflict with explicit multiplexing guarantees
-- Stop explicit multiplexing conflict checks faulting on non-array cURL multi handler `options` values
+- Stop explicit multiplexing conflict checks faulting on non-array cURL multi `options` values
 - Reject required multiplexing when the final `CURLOPT_HTTPAUTH` mask permits NTLM
 - Require an integer `CURLMOPT_PIPELINING` when combined with explicit multiplexing
 - Check the required multiplexing cleartext proxy rule against the final cURL configuration
 - Bound cURL multi handler blocking selects by the earliest pending request delay
-- Stop synchronous cURL multi handler waits blocking on unrelated transfers once the target has settled
+- Stop synchronous cURL multi handler waits blocking on other transfers once the target has settled
 - Stop cURL multi completion processing double-settling promises canceled from completion callbacks
 - Run ready promise queue tasks before sleeping for delayed cURL multi requests
 - Avoid integer overflow in cURL multi delay timing on 32-bit platforms
+- Roll back failed cURL multi handle attachment instead of leaving requests pending
 - Release the cURL easy handle when the `on_stats` callback throws
-- Redact request URI credentials from the stream handler connection error message
 - Normalize response trailer field names to lowercase with values in wire order
 - Retain response trailers only when an `on_trailers` callback is configured
 - Validate the `on_trailers` callback before starting a cURL transfer
 - Reject the `on_trailers` request option on the stream handler, which cannot observe trailers
-- Roll back failed cURL multi handle attachment instead of leaving requests pending
-- Match cookie domains, proxy schemes, auth types, and header names with locale-independent ASCII folding
-- Compare cookie attributes and credential header names with locale-independent ASCII folding
+- Match cookies, proxy schemes, auth types, and header names with locale-independent ASCII folding
 
 
 ## 7.14.0 - 2026-07-08
