@@ -74,6 +74,11 @@ class CurlHandler
             \usleep($options['delay'] * 1000);
         }
 
+        // A Multiplexing::NONE request option holds unconditionally here:
+        // transport sharing never shares the connection cache on this
+        // branch, and nothing else executes during the blocking curl_exec(),
+        // so the transfer cannot share its connection with a concurrent
+        // transfer.
         $easy = $this->factory->create($request, $options);
         \curl_exec($easy->handle);
         $easy->errno = \curl_errno($easy->handle);

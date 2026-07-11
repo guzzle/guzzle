@@ -89,6 +89,39 @@ class StreamHandlerTest extends TestCase
     }
 
     /**
+     * @dataProvider multiplexNoneHttp1Provider
+     */
+    public function testAllowsMultiplexNoneAsRequestOption(string $version)
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+
+        // Multiplexing::NONE is trivially satisfied: the stream handler sends
+        // one HTTP/1.x request per connection and never multiplexes.
+        $response = $handler(new Request('GET', Server::$url, [], null, $version), ['multiplex' => Multiplexing::NONE])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public static function multiplexNoneHttp1Provider(): iterable
+    {
+        yield 'http 1.0' => ['1.0'];
+        yield 'http 1.1' => ['1.1'];
+    }
+
+    public function testMultiplexNoneFailsOnTheProtocolSupportCheckForHttp2()
+    {
+        $handler = new StreamHandler();
+
+        // NONE passes the multiplex validation; the request then fails with
+        // the handler's pre-existing unsupported-protocol error.
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('HTTP/2 is not supported by the stream handler.');
+
+        $handler(new Request('GET', Server::$url, [], null, '2'), ['multiplex' => Multiplexing::NONE])->wait();
+    }
+
+    /**
      * @dataProvider invalidMultiplexProvider
      *
      * @param mixed $value

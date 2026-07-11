@@ -865,6 +865,529 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+    public function testMultiplexNoneDisablesPipeliningOnTheMultiHandle()
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler(['multiplex' => Multiplexing::NONE]);
+        $response = $a(new Request('GET', Server::$url), [])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(0, $_SERVER['_curl_multi'][\CURLMOPT_PIPELINING]);
+    }
+
+    public static function invalidHandlerMultiplexProvider(): iterable
+    {
+        yield 'eager' => [Multiplexing::EAGER, 'The "multiplex" CurlMultiHandler option only accepts Multiplexing::NONE; the eager, wait, and required modes are request options.'];
+        yield 'wait' => [Multiplexing::WAIT, 'The "multiplex" CurlMultiHandler option only accepts Multiplexing::NONE; the eager, wait, and required modes are request options.'];
+        yield 'require_eager' => [Multiplexing::REQUIRE_EAGER, 'The "multiplex" CurlMultiHandler option only accepts Multiplexing::NONE; the eager, wait, and required modes are request options.'];
+        yield 'require_wait' => [Multiplexing::REQUIRE_WAIT, 'The "multiplex" CurlMultiHandler option only accepts Multiplexing::NONE; the eager, wait, and required modes are request options.'];
+        yield 'bool true' => [true, 'The "multiplex" CurlMultiHandler option must be null or Multiplexing::NONE; received bool.'];
+        yield 'int' => [1, 'The "multiplex" CurlMultiHandler option must be null or Multiplexing::NONE; received int.'];
+        yield 'unknown string' => ['never', 'The "multiplex" CurlMultiHandler option must be null or Multiplexing::NONE; received string.'];
+    }
+
+    /**
+     * @dataProvider invalidHandlerMultiplexProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidHandlerMultiplexValues($value, string $message)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+
+        new CurlMultiHandler(['multiplex' => $value]);
+    }
+
+    public static function rawPipeliningWithMultiplexNoneProvider(): iterable
+    {
+        yield 'agreeing value' => [0];
+        yield 'disagreeing value' => [2];
+    }
+
+    /**
+     * @dataProvider rawPipeliningWithMultiplexNoneProvider
+     */
+    public function testRejectsMultiplexNoneWithRawPipelining(int $pipelining)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('multiplex conflicts with a CURLMOPT_PIPELINING entry in the "options" array.');
+
+        new CurlMultiHandler([
+            'multiplex' => Multiplexing::NONE,
+            'options' => [\CURLMOPT_PIPELINING => $pipelining],
+        ]);
+    }
+
+    public function testRejectsMultiplexNoneWithNonArrayOptions()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('options must be an array of cURL multi options when using the "multiplex" option.');
+
+        new CurlMultiHandler([
+            'multiplex' => Multiplexing::NONE,
+            'options' => 'invalid',
+        ]);
+    }
+
+    public function testDeprecatesRawPipeliningCurlMultiOption()
+    {
+        $deprecation = self::captureDeprecation(static function (): void {
+            new CurlMultiHandler(['options' => [\CURLMOPT_PIPELINING => 0]]);
+        });
+
+        self::assertNotNull($deprecation, 'Expected a deprecation for the raw CURLMOPT_PIPELINING option.');
+        self::assertStringContainsString('Passing CURLMOPT_PIPELINING', $deprecation);
+        self::assertStringContainsString('Use Multiplexing::NONE via the "multiplex" cURL multi handler or client option to disable multiplexing, or remove the raw option for the runtime default (multiplexing defaults on from libcurl 7.62, except 7.65.0 and 7.65.1) instead.', $deprecation);
+    }
+
+    public function testMultiplexNoneFailsClosedWhenPipeliningCannotBeApplied()
+    {
+        $handler = new CurlMultiHandler(['multiplex' => Multiplexing::NONE]);
+        $_SERVER['curl_multi_setopt_fail'] = \CURLMOPT_PIPELINING;
+
+        try {
+            self::readMultiProperty($handler, '_mh');
+            self::fail('Expected InvalidArgumentException.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('Unable to apply the cURL multi option CURLMOPT_PIPELINING', $e->getMessage());
+            self::assertStringContainsString('rejected by the runtime libcurl', $e->getMessage());
+        }
+
+        self::assertFalse(self::multiHandleIsInitialized($handler), 'A failed initialization must not publish the multi handle.');
+
+        // Removing the failure allows the same handler to retry.
+        unset($_SERVER['curl_multi_setopt_fail']);
+        self::readMultiProperty($handler, '_mh');
+        self::assertTrue(self::multiHandleIsInitialized($handler));
+        self::assertSame(0, $_SERVER['_curl_multi'][\CURLMOPT_PIPELINING]);
+    }
+
+    public function testRawPipeliningStillWarnsWhenItCannotBeApplied()
+    {
+        $_SERVER['curl_multi_setopt_fail'] = \CURLMOPT_PIPELINING;
+
+        $warning = null;
+        \set_error_handler(static function (int $severity, string $message) use (&$warning): bool {
+            if ($severity !== \E_USER_WARNING) {
+                return false;
+            }
+
+            $warning = $message;
+
+            return true;
+        }, \E_USER_WARNING);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+            $a = new CurlMultiHandler(['options' => [\CURLMOPT_PIPELINING => 0]]);
+            $response = $a(new Request('GET', Server::$url), [])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+        } finally {
+            \restore_error_handler();
+            unset($_SERVER['curl_multi_setopt_fail']);
+        }
+
+        self::assertNotNull($warning, 'Expected a warning for the rejected raw cURL multi option.');
+        self::assertStringContainsString('CURLMOPT_PIPELINING', $warning);
+    }
+
+    public static function multiplexNoneCustomFactoryVersionProvider(): iterable
+    {
+        yield 'http 1.1' => ['1.1'];
+        yield 'http 2.0' => ['2.0'];
+    }
+
+    /**
+     * @dataProvider multiplexNoneCustomFactoryVersionProvider
+     */
+    public function testRejectsMultiplexNoneWithCustomHandleFactoryOnEnabledHandler(string $version)
+    {
+        if ('2.0' === $version && (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex())) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        $events = [];
+        $a = new CurlMultiHandler(['handle_factory' => self::recordingHandleFactory($events)]);
+
+        try {
+            $a(new Request('GET', Server::$url, [], null, $version), ['multiplex' => Multiplexing::NONE]);
+            self::fail('Expected the custom handle factory conflict to be rejected.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertSame('The "multiplex" request option can only be Multiplexing::NONE on a CurlMultiHandler with a custom "handle_factory" when the handler\'s own "multiplex" option is Multiplexing::NONE, because the guarantee is enforced against the native easy handle the factory controls.', $e->getMessage());
+        }
+
+        self::assertSame(['release'], $events, 'The rejected easy handle must be released.');
+    }
+
+    public function testAllowsMultiplexNoneWithCustomHandleFactoryOnMultiplexNoneHandler()
+    {
+        // Acceptance logic is handler-owned: the multi-level
+        // CURLMOPT_PIPELINING = 0 enforces the guarantee independently of the
+        // easy handles the custom factory controls.
+        $events = [];
+        $a = new CurlMultiHandler([
+            'multiplex' => Multiplexing::NONE,
+            'handle_factory' => self::recordingHandleFactory($events),
+        ]);
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $response = $a(new Request('GET', Server::$url), ['multiplex' => Multiplexing::NONE])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testAllowsMultiplexNoneRequestOnMultiplexNoneHandler()
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler(['multiplex' => Multiplexing::NONE]);
+        $response = $a(new Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => Multiplexing::NONE])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+    }
+
+    public function testAllowsMultiplexNoneRequestForHttp2OnMultiplexNoneHandler()
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        // The handler's own multi-level guarantee covers every version, so
+        // no per-request hardening is applied.
+        $a = new CurlMultiHandler(['multiplex' => Multiplexing::NONE]);
+        $promise = $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::NONE]);
+        $promise->cancel();
+
+        self::assertInstanceOf(P\PromiseInterface::class, $promise);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+    }
+
+    public static function multiplexNoneMatcherSafeHttp1Provider(): iterable
+    {
+        yield 'http 1.0' => ['1.0'];
+        yield 'http 1.1' => ['1.1'];
+    }
+
+    /**
+     * @dataProvider multiplexNoneMatcherSafeHttp1Provider
+     */
+    public function testAllowsMultiplexNoneForHttp1WithoutHardeningOnMatcherSafeRuntimes(string $version)
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.13.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+            $a = new CurlMultiHandler();
+            $response = $a(new Request('GET', Server::$url, [], null, $version), ['multiplex' => Multiplexing::NONE])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public static function matcherVulnerableCurlVersionProvider(): iterable
+    {
+        yield 'below 7.77.0' => ['7.76.0'];
+        yield '8.11.0 through 8.12.1 regression window' => ['8.12.1'];
+    }
+
+    /**
+     * @dataProvider matcherVulnerableCurlVersionProvider
+     */
+    public function testHardensMultiplexNoneForHttp1OnMatcherVulnerableRuntimes(string $curlVersion)
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => $curlVersion,
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+            $a = new CurlMultiHandler();
+            $response = $a(new Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => Multiplexing::NONE])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testMultiplexNoneFailsClosedWhenFreshConnectCannotBeApplied()
+    {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '7.76.0',
+            'features' => self::curlSslFeature(),
+        ]);
+        $_SERVER['curl_setopt_fail'] = \CURLOPT_FRESH_CONNECT;
+
+        try {
+            $a = new CurlMultiHandler();
+
+            try {
+                $a(new Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => Multiplexing::NONE]);
+                self::fail('Expected the hardening failure to be rejected.');
+            } catch (\InvalidArgumentException $e) {
+                // The hardening is the guarantee on these runtimes, so
+                // failing to apply it must fail closed.
+                self::assertSame('Unable to set cURL option CURLOPT_FRESH_CONNECT.', $e->getMessage());
+            }
+        } finally {
+            unset($_SERVER['curl_setopt_fail']);
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+
+        // The rejected easy handle was released and the handler stays usable.
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $response = $a(new Request('GET', Server::$url), [])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public static function multiplexableVersionProvider(): iterable
+    {
+        yield 'version 2' => ['2'];
+        yield 'version 2.0' => ['2.0'];
+    }
+
+    /**
+     * @dataProvider multiplexableVersionProvider
+     */
+    public function testRejectsMultiplexNoneForHttp2OnMultiplexingHandler(string $version)
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        // The asynchronous half of the default stack's sync/async fork; the
+        // synchronous half is CurlHandlerTest's HTTP/2 acceptance.
+        $a = new CurlMultiHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option can only be Multiplexing::NONE for an HTTP/1.x request on a CurlMultiHandler that permits multiplexing; set the "multiplex" client or CurlMultiHandler constructor option to Multiplexing::NONE to disable multiplexing for every transfer, or send the request with its "version" option set to "1.1".');
+        $a(new Request('GET', Server::$url, [], null, $version), ['multiplex' => Multiplexing::NONE]);
+    }
+
+    public static function multiplexNoneRawPipeliningHandlerProvider(): iterable
+    {
+        yield 'agreeing zero, http 1.1' => [0, '1.1'];
+        yield 'multiplex mask, http 1.1' => [2, '1.1'];
+        yield 'non-scalar, http 1.1' => [[1], '1.1'];
+        yield 'agreeing zero, http 2.0' => [0, '2.0'];
+        yield 'multiplex mask, http 2.0' => [2, '2.0'];
+        yield 'non-scalar, http 2.0' => [[1], '2.0'];
+    }
+
+    /**
+     * @dataProvider multiplexNoneRawPipeliningHandlerProvider
+     *
+     * @param mixed $pipelining
+     */
+    public function testRejectsMultiplexNoneRequestWithRawPipeliningHandlerOption($pipelining, string $version)
+    {
+        if ('2.0' === $version && (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex())) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        // Key presence alone conflicts, even with an agreeing or non-scalar
+        // value: raw multi options that fail to apply only warn, so a
+        // configured zero mask cannot prove the guarantee.
+        $a = new CurlMultiHandler(['options' => [\CURLMOPT_PIPELINING => $pipelining]]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be Multiplexing::NONE alongside a raw CURLMOPT_PIPELINING cURL multi option; replace the raw option with the "multiplex" cURL multi handler option.');
+        $a(new Request('GET', Server::$url, [], null, $version), ['multiplex' => Multiplexing::NONE]);
+    }
+
+    public static function multiplexNoneRawCurlOptionConflictProvider(): iterable
+    {
+        yield 'http version' => ['CURLOPT_HTTP_VERSION', 2];
+        yield 'http auth' => ['CURLOPT_HTTPAUTH', 2];
+        yield 'proxy auth' => ['CURLOPT_PROXYAUTH', 1];
+        yield 'follow location' => ['CURLOPT_FOLLOWLOCATION', true];
+        yield 'http header' => ['CURLOPT_HTTPHEADER', ['X-Foo: bar']];
+        yield 'alt svc' => ['CURLOPT_ALTSVC', 'altsvc-cache.txt'];
+        yield 'alt svc ctrl' => ['CURLOPT_ALTSVC_CTRL', 8];
+        yield 'proxy type' => ['CURLOPT_PROXYTYPE', 3];
+    }
+
+    /**
+     * @dataProvider multiplexNoneRawCurlOptionConflictProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsMultiplexNoneWithConflictingRawCurlOptions(string $constant, $value)
+    {
+        if (!\defined($constant)) {
+            self::markTestSkipped(\sprintf('%s is unavailable.', $constant));
+        }
+
+        $a = new CurlMultiHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('The "multiplex" request option cannot be Multiplexing::NONE combined with the raw %s cURL option on a CurlMultiHandler that permits multiplexing; remove the raw option, or set the "multiplex" client or CurlMultiHandler constructor option to Multiplexing::NONE.', $constant));
+        $a(new Request('GET', Server::$url, [], null, '1.1'), [
+            'multiplex' => Multiplexing::NONE,
+            'curl' => [(int) \constant($constant) => $value],
+        ]);
+    }
+
+    public static function multiplexNoneExpectHeaderProvider(): iterable
+    {
+        yield 'lowercase' => ['100-continue'];
+        yield 'canonical case' => ['100-Continue'];
+        yield 'uppercase' => ['100-CONTINUE'];
+        yield 'surrounding whitespace' => [" 100-continue\t"];
+        yield 'composite value' => ['foo, 100-continue'];
+    }
+
+    /**
+     * @dataProvider multiplexNoneExpectHeaderProvider
+     */
+    public function testRejectsMultiplexNoneWithExpectContinueHeader(string $headerValue)
+    {
+        $a = new CurlMultiHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be Multiplexing::NONE for a request carrying an "Expect: 100-continue" header on a CurlMultiHandler that permits multiplexing; remove the explicitly supplied "Expect" header, set the "expect" request option to false to prevent it being added automatically, or set the "multiplex" client or CurlMultiHandler constructor option to Multiplexing::NONE.');
+        $a(new Request('GET', Server::$url, ['Expect' => $headerValue], null, '1.1'), ['multiplex' => Multiplexing::NONE]);
+    }
+
+    public function testRejectsMultiplexNoneWithRawPipewait()
+    {
+        if (!\defined('CURLOPT_PIPEWAIT')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT is unavailable.');
+        }
+
+        // Regression-pin that NONE takes the existing PIPEWAIT-conflict
+        // branch: whatever its value, a raw CURLOPT_PIPEWAIT is a second
+        // wait/eager authority.
+        $a = new CurlMultiHandler();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be combined with the raw CURLOPT_PIPEWAIT cURL option on the cURL multi handler; remove the raw option.');
+        $a(new Request('GET', Server::$url, [], null, '1.1'), [
+            'multiplex' => Multiplexing::NONE,
+            'curl' => [(int) \constant('CURLOPT_PIPEWAIT') => false],
+        ]);
+    }
+
+    public function testRejectsLegacyProtocolVersionsBeforeMultiplexNoneAcceptance()
+    {
+        // The factory's up-front version rejection surfaces, not a NONE
+        // rejection: acceptance runs after create().
+        $a = new CurlMultiHandler();
+
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('HTTP/0.9 is not supported by the cURL handler.');
+        $a(new Request('GET', Server::$url, [], null, '0.9'), ['multiplex' => Multiplexing::NONE]);
+    }
+
+    public function testMultiplexNoneAllowsEagerRequests()
+    {
+        if (!CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('Multiplex support is unavailable.');
+        }
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler(['multiplex' => Multiplexing::NONE]);
+        $response = $a(new Request('GET', Server::$url), ['multiplex' => Multiplexing::EAGER])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testMultiplexNoneAllowsExplicitWaitForHttp11()
+    {
+        if (!CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('Multiplex support is unavailable.');
+        }
+
+        // An HTTP/1.1 wait request never sets the PIPEWAIT marker, so nothing
+        // would wait on the disabled handle anyway.
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $a = new CurlMultiHandler(['multiplex' => Multiplexing::NONE]);
+        $response = $a(new Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => Multiplexing::WAIT])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testRejectsExplicitWaitOnMultiplexNoneHandler()
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        $a = new CurlMultiHandler(['multiplex' => Multiplexing::NONE]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler whose "multiplex" option is Multiplexing::NONE; remove the handler option or set the request option to "eager".');
+        $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT]);
+    }
+
+    public static function requiredMultiplexOnNoneHandlerProvider(): iterable
+    {
+        yield 'require_eager' => [Multiplexing::REQUIRE_EAGER];
+        yield 'require_wait' => [Multiplexing::REQUIRE_WAIT];
+    }
+
+    /**
+     * @dataProvider requiredMultiplexOnNoneHandlerProvider
+     */
+    public function testRejectsRequiredMultiplexOnMultiplexNoneHandler(string $multiplex)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $a = new CurlMultiHandler(['multiplex' => Multiplexing::NONE]);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler whose "multiplex" option is Multiplexing::NONE; remove the handler option or set the request option to "eager".');
+            $a(new Request('GET', 'https://example.com', [], null, '2.0'), ['multiplex' => $multiplex]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testMultiplexNoneRejectionLeavesHandlerUsable()
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        $a = new CurlMultiHandler(['multiplex' => Multiplexing::NONE]);
+
+        try {
+            $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT]);
+            self::fail('Expected the multiplex handler conflict to be rejected.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('Multiplexing::NONE', $e->getMessage());
+        }
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $response = $a(new Request('GET', Server::$url), [])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
     public static function explicitMultiplexRawPipewaitProvider(): iterable
     {
         yield 'eager with raw true' => [Multiplexing::EAGER, true];

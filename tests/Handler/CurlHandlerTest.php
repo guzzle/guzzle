@@ -179,6 +179,33 @@ class CurlHandlerTest extends TestCase
         }
     }
 
+    public function testAllowsMultiplexNoneRequests()
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $handler = new CurlHandler();
+        $response = $handler(new Request('GET', Server::$url, [], null, '1.1'), ['multiplex' => Multiplexing::NONE])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testAllowsMultiplexNoneRequestsForHttp2()
+    {
+        if (!CurlVersion::supportsHttp2()) {
+            self::markTestSkipped('HTTP/2 support is unavailable.');
+        }
+
+        // One half of the default stack's sync/async fork: CurlHandler
+        // satisfies Multiplexing::NONE for any protocol version, while
+        // CurlMultiHandlerTest pins the asynchronous HTTP/2 rejection.
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $handler = new CurlHandler();
+        $response = $handler(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::NONE])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+    }
+
     public function testUsesContentLengthWhenOverInMemorySize()
     {
         Server::flush();

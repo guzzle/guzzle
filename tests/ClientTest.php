@@ -4,6 +4,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -1193,6 +1194,148 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mock]);
         $client->send(new Request('GET', 'http://foo.com'));
         self::assertTrue($mock->getLastOptions()['synchronous']);
+    }
+
+    public function testForwardsClientMultiplexNoneToTheDefaultHandler()
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            $client = new Client(['multiplex' => Multiplexing::NONE]);
+
+            // Asynchronous and explicitly versioned: synchronous requests
+            // never reach the CurlMultiHandler on the default stack, and a
+            // default-version required request is rejected inside the
+            // factory before the handler conflict fires. The conflict
+            // message proves the constructor forwarded NONE to the default
+            // handler.
+            $promise = $client->requestAsync('GET', 'https://example.com', [
+                'multiplex' => Multiplexing::REQUIRE_EAGER,
+                'version' => '2.0',
+            ]);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('The "multiplex" request option cannot be combined with a CurlMultiHandler whose "multiplex" option is Multiplexing::NONE; remove the handler option or set the request option to "eager".');
+            $promise->wait();
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testMultiplexNoneForksByCallStyleOnTheDefaultStack()
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $client = new Client();
+
+        // Synchronous requests run on the CurlHandler path, which satisfies
+        // the guarantee for any protocol version.
+        $response = $client->request('GET', Server::$url, [
+            'multiplex' => Multiplexing::NONE,
+            'version' => '2',
+        ]);
+        self::assertSame(200, $response->getStatusCode());
+
+        // The identical asynchronous call runs on the CurlMultiHandler and
+        // is rejected.
+        $promise = $client->requestAsync('GET', Server::$url, [
+            'multiplex' => Multiplexing::NONE,
+            'version' => '2',
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option can only be Multiplexing::NONE for an HTTP/1.x request on a CurlMultiHandler that permits multiplexing');
+        $promise->wait();
+    }
+
+    public function testMultiplexNoneExpectConflictThroughTheDefaultStack()
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $client = new Client();
+        $body = \str_repeat('a', 1024 * 1024 + 1);
+
+        // prepare_body adds "Expect: 100-Continue" for bodies over 1 MiB,
+        // which conflicts with the request-level guarantee on the multi
+        // handler.
+        $promise = $client->requestAsync('PUT', Server::$url, [
+            'multiplex' => Multiplexing::NONE,
+            'body' => $body,
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected the Expect header conflict to be rejected.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('Expect: 100-continue', $e->getMessage());
+        }
+
+        // Suppressing the header with the "expect" request option resolves
+        // the conflict.
+        $response = $client->requestAsync('PUT', Server::$url, [
+            'multiplex' => Multiplexing::NONE,
+            'body' => $body,
+            'expect' => false,
+        ])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testRejectsMultiplexNoneWithDigestAuthThroughTheClient()
+    {
+        // Only the client translates "auth" into the raw CURLOPT_HTTPAUTH
+        // cURL option the handler guard checks.
+        $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler())]);
+
+        $promise = $client->requestAsync('GET', Server::$url, [
+            'multiplex' => Multiplexing::NONE,
+            'auth' => ['user', 'pass', 'digest'],
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "multiplex" request option cannot be Multiplexing::NONE combined with the raw CURLOPT_HTTPAUTH cURL option on a CurlMultiHandler that permits multiplexing; remove the raw option, or set the "multiplex" client or CurlMultiHandler constructor option to Multiplexing::NONE.');
+        $promise->wait();
+    }
+
+    public function testAllowsMultiplexNoneWithBasicAuthThroughTheClient()
+    {
+        Server::flush();
+        Server::enqueue([new Response()]);
+        $client = new Client(['handler' => HandlerStack::create(new CurlMultiHandler())]);
+
+        // Basic sends a preemptive Authorization header, never writes
+        // CURLOPT_HTTPAUTH, and involves no challenge-response retry.
+        $response = $client->requestAsync('GET', Server::$url, [
+            'multiplex' => Multiplexing::NONE,
+            'auth' => ['user', 'pass'],
+        ])->wait();
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testClientMultiplexNoneFlowsToCustomHandlersAsADefaultRequestOption()
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client([
+            'handler' => $mock,
+            'multiplex' => Multiplexing::NONE,
+        ]);
+
+        $response = $client->request('GET', 'http://foo.com');
+
+        // No constructor rejection and no client-side enforcement: the value
+        // flows to the custom handler as a default request option.
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame(Multiplexing::NONE, $mock->getLastOptions()['multiplex']);
     }
 
     public function testSendWithInvalidHeader()

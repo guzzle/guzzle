@@ -8,6 +8,7 @@ use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
@@ -28,6 +29,7 @@ class CurlMultiHandler
         'handle_factory' => true,
         'max_host_connections' => true,
         'max_total_connections' => true,
+        'multiplex' => true,
         'options' => true,
         'select_timeout' => true,
         'transport_sharing' => true,
@@ -94,6 +96,23 @@ class CurlMultiHandler
      */
     private $requiredOptions = [];
 
+    /**
+     * @var bool Whether any connection cap constructor option was applied
+     */
+    private $connectionCapsApplied = false;
+
+    /**
+     * @var bool Whether the "multiplex" constructor option disabled
+     *           multiplexing on this handler's multi handle
+     */
+    private $multiplexDisabled = false;
+
+    /**
+     * @var bool Whether a custom "handle_factory" constructor option supplies
+     *           the easy handles
+     */
+    private $customHandleFactory = false;
+
     /** @var resource|\CurlMultiHandle */
     private $_mh;
 
@@ -154,6 +173,10 @@ class CurlMultiHandler
      *   out while selecting curl handles. Defaults to 1 second.
      * - max_host_connections: Optional maximum concurrent connections per host.
      * - max_total_connections: Optional maximum concurrent connections overall.
+     * - multiplex: Optional Multiplexing::NONE to disallow multiplexing on
+     *   this handler's multi handle. The eager, wait, and required modes are
+     *   request options, not handler options; Multiplexing::NONE is also
+     *   conditionally accepted as a request option value.
      * - options: An associative array of CURLMOPT_* options and
      *   corresponding values for curl_multi_setopt()
      */
@@ -165,6 +188,23 @@ class CurlMultiHandler
             }
         }
 
+        $handlerMultiplex = $options['multiplex'] ?? null;
+        if (null !== $handlerMultiplex && Multiplexing::NONE !== $handlerMultiplex) {
+            if (\in_array($handlerMultiplex, [Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+                throw new \InvalidArgumentException('The "multiplex" CurlMultiHandler option only accepts Multiplexing::NONE; the eager, wait, and required modes are request options.');
+            }
+
+            throw new \InvalidArgumentException(\sprintf('The "multiplex" CurlMultiHandler option must be null or Multiplexing::NONE; received %s.', \get_debug_type($handlerMultiplex)));
+        }
+        $this->multiplexDisabled = null !== $handlerMultiplex;
+
+        if ($this->multiplexDisabled && !\defined('CURLMOPT_PIPELINING')) {
+            // ext-curl only defines the constant when built against libcurl
+            // 7.16 or newer headers, and such builds compile out the matching
+            // curl_multi_setopt() case, so the guarantee cannot be applied.
+            throw new \InvalidArgumentException('The "multiplex" CurlMultiHandler option requires CURLMOPT_PIPELINING, but it is not available in the installed PHP cURL extension.');
+        }
+
         CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict($options, 'CurlMultiHandler');
         $transportSharing = $options['transport_sharing'] ?? null;
         $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
@@ -172,6 +212,7 @@ class CurlMultiHandler
         if (\array_key_exists('handle_factory', $options) && $options['handle_factory'] !== null) {
             $this->shareHandleState = null;
             $this->factory = $options['handle_factory'];
+            $this->customHandleFactory = true;
         } else {
             $this->shareHandleState = $sharingMode !== TransportSharing::NONE
                 ? CurlShareHandleState::fromOption($transportSharing)
@@ -204,15 +245,33 @@ class CurlMultiHandler
         $multiOptions = $options['options'] ?? [];
         if (\is_array($multiOptions)) {
             self::rejectConnectionCapOptionConflicts($options, $multiOptions);
+
+            if ($this->multiplexDisabled && \array_key_exists(\CURLMOPT_PIPELINING, $multiOptions)) {
+                // Key presence alone conflicts, even with an agreeing value:
+                // the named option is the single multiplexing authority.
+                throw new \InvalidArgumentException('multiplex conflicts with a CURLMOPT_PIPELINING entry in the "options" array.');
+            }
+
             self::triggerConflictingCurlMultiOptionDeprecations($multiOptions);
         } elseif (self::hasConnectionCapOption($options)) {
             throw new \InvalidArgumentException('options must be an array of cURL multi options when using connection cap options.');
+        } elseif ($this->multiplexDisabled) {
+            throw new \InvalidArgumentException('options must be an array of cURL multi options when using the "multiplex" option.');
         }
 
         $this->options = $multiOptions;
 
         if (\is_array($multiOptions)) {
             $this->addConnectionCapOptions($options);
+
+            if ($this->multiplexDisabled) {
+                // CURLPIPE_NOTHING; the constant itself needs libcurl 7.43
+                // headers, newer than the oldest supported runtimes. The
+                // option is required: a handler-wide guarantee must fail
+                // closed rather than warn like the deprecated raw options.
+                $this->options[\CURLMOPT_PIPELINING] = 0;
+                $this->requiredOptions[\CURLMOPT_PIPELINING] = true;
+            }
         }
 
         // unsetting the property forces the first access to go through
@@ -287,7 +346,7 @@ class CurlMultiHandler
 
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
-        if ($this->requiredOptions !== []
+        if ($this->connectionCapsApplied
             && \defined('CURLOPT_SHARE')
             && isset($options['curl'])
             && \is_array($options['curl'])
@@ -302,6 +361,7 @@ class CurlMultiHandler
 
         try {
             $this->rejectMultiplexPipeliningConflict($easy, $options);
+            $this->applyMultiplexNone($easy, $options);
             $this->applyProxyTunnelOwnership($easy);
         } catch (\Throwable $e) {
             try {
@@ -392,6 +452,12 @@ class CurlMultiHandler
             return;
         }
 
+        if ($this->multiplexDisabled) {
+            // Checked before the raw option: the handler wrote its own
+            // CURLMOPT_PIPELINING value when "multiplex" disabled it.
+            throw new \InvalidArgumentException('The "multiplex" request option cannot be combined with a CurlMultiHandler whose "multiplex" option is Multiplexing::NONE; remove the handler option or set the request option to "eager".');
+        }
+
         if (!\is_array($this->options) || !\array_key_exists(\CURLMOPT_PIPELINING, $this->options)) {
             // A legacy non-array "options" value is tolerated by the
             // constructor and cannot contain the option.
@@ -415,6 +481,91 @@ class CurlMultiHandler
     }
 
     /**
+     * A Multiplexing::NONE request option is a sole-use guarantee: the
+     * transfer must not share its connection with any concurrent transfer.
+     * It holds structurally on a handler whose "multiplex" option is
+     * Multiplexing::NONE, and for HTTP/1.x transfers, which never join a
+     * multiplexed connection and open connections nothing can join. An
+     * HTTP/2 request on a handler that multiplexes is rejected, as is any
+     * configuration under which the guarantee cannot be verified (custom
+     * handle factories control the native handle) or cannot be hardened
+     * (challenge-response authentication retries and Expect 417 retries
+     * re-enter connection selection as internal follows, which disarm
+     * CURLOPT_FRESH_CONNECT). A raw CURLMOPT_PIPELINING multi option, and
+     * deprecated-but-applied raw cURL options that can defeat the declared
+     * protocol version, retry through internal follows, or replace the
+     * managed header list, are rejected by key presence. On runtimes whose
+     * matcher can hand an HTTP/1.x transfer an idle multiplexed connection
+     * (below libcurl 7.77.0, and 8.11.0-8.12.1), accepted transfers force
+     * a fresh connection.
+     */
+    private function applyMultiplexNone(EasyHandle $easy, array $options): void
+    {
+        if (Multiplexing::NONE !== ($options['multiplex'] ?? null) || $this->multiplexDisabled) {
+            return;
+        }
+
+        if (\defined('CURLMOPT_PIPELINING') && \is_array($this->options) && \array_key_exists(\CURLMOPT_PIPELINING, $this->options)) {
+            // Key presence alone conflicts, matching the constructor's rule
+            // for the named option: raw multi options that fail to apply only
+            // warn (they are not in requiredOptions), so even an agreeing
+            // zero mask cannot prove the guarantee. is_array: legacy non-array
+            // "options" values are deprecated but still stored.
+            throw new \InvalidArgumentException('The "multiplex" request option cannot be Multiplexing::NONE alongside a raw CURLMOPT_PIPELINING cURL multi option; replace the raw option with the "multiplex" cURL multi handler option.');
+        }
+
+        if ($this->customHandleFactory) {
+            throw new \InvalidArgumentException('The "multiplex" request option can only be Multiplexing::NONE on a CurlMultiHandler with a custom "handle_factory" when the handler\'s own "multiplex" option is Multiplexing::NONE, because the guarantee is enforced against the native easy handle the factory controls.');
+        }
+
+        $version = $easy->request->getProtocolVersion();
+        if ('2' === $version || '2.0' === $version) {
+            throw new \InvalidArgumentException('The "multiplex" request option can only be Multiplexing::NONE for an HTTP/1.x request on a CurlMultiHandler that permits multiplexing; set the "multiplex" client or CurlMultiHandler constructor option to Multiplexing::NONE to disable multiplexing for every transfer, or send the request with its "version" option set to "1.1".');
+        }
+
+        if (isset($options['curl']) && \is_array($options['curl'])) {
+            foreach (['CURLOPT_HTTP_VERSION', 'CURLOPT_HTTPAUTH', 'CURLOPT_PROXYAUTH', 'CURLOPT_FOLLOWLOCATION', 'CURLOPT_HTTPHEADER', 'CURLOPT_ALTSVC', 'CURLOPT_ALTSVC_CTRL', 'CURLOPT_PROXYTYPE'] as $constant) {
+                if (\defined($constant) && \array_key_exists((int) \constant($constant), $options['curl'])) {
+                    // Key presence alone conflicts. A raw CURLOPT_HTTP_VERSION
+                    // overrides the declared version after the factory
+                    // mapping, and raw alt-svc options or an HTTPS2 proxy
+                    // type can put a declared-HTTP/1.x transfer on a joinable
+                    // HTTP/2 connection; raw challenge-response
+                    // authentication (origin 401 or proxy 407) and native
+                    // redirects re-enter connection selection as internal
+                    // follows, which disarm CURLOPT_FRESH_CONNECT, so the
+                    // hardening below cannot cover them; a raw
+                    // CURLOPT_HTTPHEADER replaces the managed header list,
+                    // including the Expect suppression the check below
+                    // relies on.
+                    throw new \InvalidArgumentException(\sprintf('The "multiplex" request option cannot be Multiplexing::NONE combined with the raw %s cURL option on a CurlMultiHandler that permits multiplexing; remove the raw option, or set the "multiplex" client or CurlMultiHandler constructor option to Multiplexing::NONE.', $constant));
+                }
+            }
+        }
+
+        if (Psr7\Utils::caselessContains($easy->request->getHeaderLine('Expect'), '100-continue')) {
+            // libcurl arms its Expect handling by a caseless substring scan
+            // of the header value (Curl_compareheader), so any value
+            // containing 100-continue can make a 417 response retry as an
+            // internal follow, which disarms CURLOPT_FRESH_CONNECT; requests
+            // without the header are safe because the factory suppresses
+            // libcurl's automatic Expect.
+            throw new \InvalidArgumentException('The "multiplex" request option cannot be Multiplexing::NONE for a request carrying an "Expect: 100-continue" header on a CurlMultiHandler that permits multiplexing; remove the explicitly supplied "Expect" header, set the "expect" request option to false to prevent it being added automatically, or set the "multiplex" client or CurlMultiHandler constructor option to Multiplexing::NONE.');
+        }
+
+        if (CurlVersion::supportsHttpVersionReuseMatching()) {
+            return;
+        }
+
+        // Unqualified curl_setopt so the test bootstrap shadow records it.
+        if (true !== curl_setopt($easy->handle, \CURLOPT_FRESH_CONNECT, true)) {
+            // The hardening is the guarantee on these runtimes; failing to
+            // apply it must fail closed, mirroring applyCurlOptions().
+            throw new \InvalidArgumentException('Unable to set cURL option CURLOPT_FRESH_CONNECT.');
+        }
+    }
+
+    /**
      * @param array<mixed> $options
      */
     private static function triggerConflictingCurlMultiOptionDeprecations(array $options): void
@@ -424,11 +575,26 @@ class CurlMultiHandler
         }
 
         $conflictingOptions = self::conflictingCurlMultiOptions();
+        $sinceOverrides = self::conflictingCurlMultiOptionSinceOverrides();
         foreach ($options as $option => $_) {
             if (\array_key_exists($option, $conflictingOptions)) {
-                \trigger_deprecation('guzzlehttp/guzzle', '7.14', \sprintf('Passing %s in the cURL multi handler "options" is deprecated; guzzlehttp/guzzle 8.0 will reject this option. Use %s instead.', self::formatCurlMultiOption($option), $conflictingOptions[$option]));
+                \trigger_deprecation('guzzlehttp/guzzle', $sinceOverrides[$option] ?? '7.14', \sprintf('Passing %s in the cURL multi handler "options" is deprecated; guzzlehttp/guzzle 8.0 will reject this option. Use %s instead.', self::formatCurlMultiOption($option), $conflictingOptions[$option]));
             }
         }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function conflictingCurlMultiOptionSinceOverrides(): array
+    {
+        if (!\defined('CURLMOPT_PIPELINING')) {
+            // Matches conflictingCurlMultiOptions(): ext-curl builds against
+            // pre-7.16 libcurl headers do not define the constant.
+            return [];
+        }
+
+        return [\CURLMOPT_PIPELINING => '7.15'];
     }
 
     /**
@@ -487,6 +653,7 @@ class CurlMultiHandler
 
             $this->options[$option] = $value;
             $this->requiredOptions[$option] = true;
+            $this->connectionCapsApplied = true;
         }
     }
 
@@ -532,6 +699,7 @@ class CurlMultiHandler
 
         self::addConflictingCurlMultiOption($options, 'CURLMOPT_MAX_HOST_CONNECTIONS', 'the "max_host_connections" client option or cURL multi handler option');
         self::addConflictingCurlMultiOption($options, 'CURLMOPT_MAX_TOTAL_CONNECTIONS', 'the "max_total_connections" client option or cURL multi handler option');
+        self::addConflictingCurlMultiOption($options, 'CURLMOPT_PIPELINING', 'Multiplexing::NONE via the "multiplex" cURL multi handler or client option to disable multiplexing, or remove the raw option for the runtime default (multiplexing defaults on from libcurl 7.62, except 7.65.0 and 7.65.1)');
 
         return $options;
     }

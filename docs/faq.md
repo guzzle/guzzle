@@ -105,6 +105,21 @@ applied. Named connection caps also cannot be combined with a request-level
 `CURLOPT_SHARE` option because Guzzle cannot verify that a caller-managed
 shared connection pool honors the caps.
 
+Multiplexing on the multi handle is controlled by the named `multiplex`
+option rather than a raw cURL multi option: pass `Multiplexing::NONE` as the
+`multiplex` client option or, when constructing the handler yourself, to the
+`CurlMultiHandler` constructor to disallow multiplexing for every transfer
+the handler runs; like the named caps, it fails closed when the runtime
+libcurl cannot apply it. `Multiplexing::NONE` is also accepted as a request
+option value exactly where its guarantee - the transfer does not share its
+connection with any concurrent transfer - holds and can be verified. Passing
+`CURLMOPT_PIPELINING` in the **options** array is deprecated and will be
+rejected by Guzzle 8.0. Multiplexing is on by default
+from libcurl 7.62, except for a regression that turned the default back off in
+7.65.0 and 7.65.1. On libcurl 7.43 to 7.61, and on 7.65.0 and 7.65.1, a raw
+multiplex-enabling mask is the only way to turn it on, so keep the raw option
+there until the runtime is upgraded.
+
 ### Which transfers do the caps govern?
 
 Numeric connection caps apply to transfers managed by `CurlMultiHandler`. When
