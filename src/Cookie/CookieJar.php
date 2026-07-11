@@ -88,7 +88,7 @@ class CookieJar implements CookieJarInterface
     public function getCookieByName(string $name): ?SetCookie
     {
         foreach ($this->cookies as $cookie) {
-            if ($cookie->getName() !== null && \strtr($cookie->getName(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') === \strtr($name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')) {
+            if ($cookie->getName() !== null && Psr7\Utils::caselessEquals($cookie->getName(), $name)) {
                 return $cookie;
             }
         }

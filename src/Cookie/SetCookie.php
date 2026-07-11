@@ -61,7 +61,7 @@ class SetCookie
                 $data['Value'] = $value;
             } else {
                 foreach (\array_keys(self::$defaults) as $search) {
-                    if (\strtr($search, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') === \strtr($key, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')) {
+                    if (Psr7\Utils::caselessEquals($search, $key)) {
                         if ($search === 'Max-Age') {
                             if (is_numeric($value)) {
                                 $data[$search] = (int) $value;

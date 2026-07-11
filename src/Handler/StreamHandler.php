@@ -164,8 +164,8 @@ class StreamHandler
             // the behavior of `CurlHandler`
             if (
                 (
-                    0 === \strcasecmp('PUT', $request->getMethod())
-                    || 0 === \strcasecmp('POST', $request->getMethod())
+                    Psr7\Utils::caselessEquals('PUT', $request->getMethod())
+                    || Psr7\Utils::caselessEquals('POST', $request->getMethod())
                 )
                 && 0 === $request->getBody()->getSize()
             ) {
@@ -235,7 +235,7 @@ class StreamHandler
         $stream = Psr7\Utils::streamFor($stream);
         $sink = $stream;
 
-        if (\strcasecmp('HEAD', $request->getMethod())) {
+        if (!Psr7\Utils::caselessEquals('HEAD', $request->getMethod())) {
             $sink = $this->createSink($stream, $options);
         }
 
@@ -882,7 +882,7 @@ class StreamHandler
             }
         }
 
-        if (\is_array($parsed) && isset($parsed['scheme']) && \strcasecmp($parsed['scheme'], 'http') === 0) {
+        if (\is_array($parsed) && isset($parsed['scheme']) && Psr7\Utils::caselessEquals($parsed['scheme'], 'http')) {
             if (isset($parsed['host'], $parsed['port'])) {
                 $user = $parsed['user'] ?? '';
                 $pass = $parsed['pass'] ?? '';
