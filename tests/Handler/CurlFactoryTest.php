@@ -5242,7 +5242,10 @@ class CurlFactoryTest extends TestCase
      * redirect, multi-pass auth, or a dead reused connection) but cannot,
      * because PHP exposes no seek callback for a streamed request body
      * (https://bugs.php.net/bug.php?id=47204). Guzzle works around this by
-     * rewinding the PSR-7 body itself and re-issuing the request.
+     * rewinding the PSR-7 body itself and re-issuing the request when the
+     * transfer died without a response; a challenge-response rewind failure
+     * fails fast instead (see
+     * testDoesNotRetryFailedRewindWhenChallengeResponseWasReceived).
      *
      * Until this commit the errno === 0 arm was covered
      * (testRetriesWhenBodyCanBeRewound, testFailsWhenRetryMoreThanThreeTimes)
@@ -5321,6 +5324,82 @@ class CurlFactoryTest extends TestCase
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('The cURL request was retried 3 times');
         $promise->wait(true);
+    }
+
+    /**
+     * Companion boundary to the errno-65 retry tests: when the failed rewind
+     * was demanded by a challenge response, re-issuing the identical request
+     * replays the same challenge, so the transfer fails on the first attempt
+     * with the challenge response attached instead of being retried.
+     */
+    public function testDoesNotRetryFailedRewindWhenChallengeResponseWasReceived(): void
+    {
+        $factory = new CurlFactory(1);
+        $handlerCalled = false;
+        $handler = static function () use (&$handlerCalled): P\PromiseInterface {
+            $handlerCalled = true;
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+        $response = new Psr7\Response(401, ['WWW-Authenticate' => 'Digest realm="fixture"']);
+        $easy = $factory->create(new Psr7\Request('PUT', Server::$url, [], 'test'), []);
+        // Simulate libcurl failing to rewind (errno 65) after receiving a
+        // challenge response.
+        $easy->errno = 65;
+        $easy->response = $response;
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame($response, $e->getResponse());
+            self::assertStringContainsString('cURL error 65', $e->getMessage());
+            self::assertStringContainsString('The request was not retried because a retry replays the same challenge', $e->getMessage());
+        }
+
+        self::assertFalse($handlerCalled, 'The request must not be retried when a challenge response was received');
+    }
+
+    /**
+     * End-to-end companion to
+     * testDoesNotRetryFailedRewindWhenChallengeResponseWasReceived: a real
+     * transfer whose streamed body must be rewound to answer an
+     * authentication challenge fails on the first attempt with the challenge
+     * response attached, because libcurl has no way to rewind a streamed
+     * request body. The node server's digest firewall drains the body before
+     * challenging, then rejects the request until libcurl authenticates.
+     */
+    public function testStreamedUploadFailsFastOnChallengeRewind(): void
+    {
+        Server::flush();
+        Server::enqueue([]);
+
+        $handler = new Handler\CurlHandler();
+
+        $payload = \str_repeat('a', 1000000);
+        $statsCalls = 0;
+        $request = new Psr7\Request('PUT', Server::$url.'secure/by-digest/qop-auth/echo', ['Content-Length' => (string) \strlen($payload)], Psr7\Utils::streamFor($payload));
+
+        try {
+            $handler($request, [
+                'curl' => [
+                    \CURLOPT_HTTPAUTH => \CURLAUTH_ANY,
+                    \CURLOPT_USERPWD => 'me:test',
+                ],
+                'on_stats' => static function () use (&$statsCalls): void {
+                    ++$statsCalls;
+                },
+            ])->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame(401, $e->getResponse()->getStatusCode());
+            self::assertStringContainsString('The request was not retried because a retry replays the same challenge', $e->getMessage());
+        }
+
+        self::assertSame(1, $statsCalls, 'The transfer should have failed on the first attempt');
+        self::assertSame([], Server::received(), 'No request should have passed the digest firewall');
     }
 
     public function testHandles100Continue(): void
