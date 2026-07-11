@@ -42,6 +42,27 @@ final class CurlFactory implements CurlFactoryInterface
 
     private const DELEGATED_PROXY_TUNNEL_OWNER = 'proxy-tunnel:delegated-to-libcurl';
 
+    /**
+     * String-valued proxy credential cURL options whose values feed the
+     * connection-reuse section signatures. Stringable values are cast
+     * exactly once, before signature computation, so the signature and
+     * ext-curl observe the same string; a stateful __toString() could
+     * otherwise produce one value for the signature and a different one on
+     * the wire, giving two credentials the same section. Numeric options
+     * (CURLOPT_PROXYTYPE, CURLOPT_PROXY_SSLVERSION) and blob options
+     * (CURLOPT_PROXY_SSLCERT_BLOB) are deliberately excluded.
+     */
+    private const STRINGABLE_PROXY_CREDENTIAL_OPTIONS = [
+        'CURLOPT_PROXYUSERPWD',
+        'CURLOPT_PROXYUSERNAME',
+        'CURLOPT_PROXYPASSWORD',
+        'CURLOPT_PROXY_SSLCERT',
+        'CURLOPT_PROXY_SSLKEY',
+        'CURLOPT_PROXY_KEYPASSWD',
+        'CURLOPT_PROXY_TLSAUTH_USERNAME',
+        'CURLOPT_PROXY_TLSAUTH_PASSWORD',
+    ];
+
     private const PERSISTENT_REQUIRE_FRESH_PROXY_TUNNEL_MESSAGE = 'Persistent cURL sharing is required, but this request requires a fresh proxy tunnel connection.';
 
     private const CURL_CONNECTION_ERRORS = [
@@ -249,6 +270,8 @@ final class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
+        self::normalizeStringableProxyCredentialOptions($conf);
+
         if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
             self::assertRequiredMultiplexAuthSupported($conf);
         }
@@ -345,6 +368,39 @@ final class CurlFactory implements CurlFactoryInterface
                     'Unable to set cURL option %s.',
                     self::formatCurlOption($option)
                 ));
+            }
+        }
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function normalizeStringableProxyCredentialOptions(array &$conf): void
+    {
+        foreach (self::STRINGABLE_PROXY_CREDENTIAL_OPTIONS as $name) {
+            if (!\defined($name)) {
+                continue;
+            }
+
+            $option = (int) \constant($name);
+            if (!isset($conf[$option]) || !\is_object($conf[$option]) || !\method_exists($conf[$option], '__toString')) {
+                continue;
+            }
+
+            try {
+                $conf[$option] = (string) $conf[$option];
+            } catch (\Throwable $e) {
+                // Wrap the failure exactly as applyCurlOptions() does for a
+                // value that cannot be applied.
+                throw new InvalidArgumentException(
+                    \sprintf(
+                        'Unable to set cURL option %s: %s',
+                        self::formatCurlOption($option),
+                        $e->getMessage()
+                    ),
+                    0,
+                    $e
+                );
             }
         }
     }

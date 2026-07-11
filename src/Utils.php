@@ -77,7 +77,7 @@ final class Utils
         $connectionCapsRequired = self::hasConnectionCapOptions($handlerOptions);
 
         if ($connectionCapsRequired && $sharingMode === TransportSharing::PERSISTENT_REQUIRE) {
-            throw new InvalidArgumentException('The "max_host_connections" and "max_total_connections" options cannot be combined with required persistent transport sharing because libcurl does not apply connection caps to shared connection pools.');
+            throw new InvalidArgumentException('The "max_host_connections" and "max_total_connections" options cannot be combined with required persistent transport sharing because libcurl does not reliably apply connection caps to shared connection pools.');
         }
 
         if ($connectionCapsRequired && $sharingMode === TransportSharing::PERSISTENT_PREFER) {

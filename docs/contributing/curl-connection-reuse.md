@@ -76,8 +76,13 @@ The `transport_sharing` client option attaches a cURL **share handle**
 (`CURLSH`, via `CURLOPT_SHARE`) to the pooled easy handles so they share state.
 Modes: `NONE` (default), `HANDLER_PREFER`/`HANDLER_REQUIRE` (share within one
 handler), and `PERSISTENT_PREFER`/`PERSISTENT_REQUIRE` (share a long-lived
-cache). `*_REQUIRE` errors if sharing is unavailable; `*_PREFER` falls back to
-no sharing.
+cache). `*_REQUIRE` errors if the requested sharing is unavailable. The
+`*_PREFER` modes degrade along a chain: `HANDLER_PREFER` falls back from
+handler-lifetime sharing to no sharing, and `PERSISTENT_PREFER` falls back from
+persistent sharing to handler-lifetime sharing and then to no sharing. When
+connection caps are configured, persistent preference begins at handler-lifetime
+sharing, because a shared connection pool cannot honor the cap guarantee
+(section 7).
 
 What a share handle can share, and the libcurl floor Guzzle requires for each
 (see `CurlVersion`):
@@ -146,10 +151,13 @@ request that establishes a proxy `CONNECT` tunnel through an HTTP(S) proxy —
 `usesProxyTunnel()` is true for an `https://` target, an explicit
 `CURLOPT_HTTPPROXYTUNNEL`, or an `http://` target with a non-empty
 `CURLOPT_CONNECT_TO` (§6) — and any request through a SOCKS proxy on libcurl
-older than 7.69.0 (below). Direct and non-tunnel HTTP-proxy requests get a
-`null` signature and never disturb the pool. Real delegated tunnels on fixed
-libcurl get a non-`null` sentinel, so they stay distinct from genuine
-non-tunnels and from literal proxy-header tunnel owners.
+older than 7.69.0 (below). On 8.0 the cURL handlers additionally reject
+HTTP-proxy CONNECT tunnels below libcurl 7.54.0 (`PROXY_TUNNEL_VERSION`), so the
+hashed tunnel regime described here spans 7.54.0 and newer there; on 7.x it
+extends down to the oldest supported libcurl. Direct and non-tunnel HTTP-proxy
+requests get a `null` signature and never disturb the pool. Real delegated
+tunnels on fixed libcurl get a non-`null` sentinel, so they stay distinct from
+genuine non-tunnels and from literal proxy-header tunnel owners.
 
 > Non-tunnel proxy requests get a `null` signature and are deliberately left
 > unsectioned. For per-request (HTTP Basic) proxy auth this is safe: `proxy` URL
@@ -203,9 +211,10 @@ proxy credentials (8.20.0+), so a tunnel carrying one always sections — its
 signature is hashed, never the delegated owner. (The empty
 `Proxy-Authorization;` form is migrated for wire correctness but carries no
 credential, so it does not section.) On libcurl older than 7.37.0 (or a build
-missing the proxy-header constants) the header cannot be separated, so a
-request carrying a non-empty credential header through an HTTP or HTTPS proxy
-is rejected up front with a `RequestException`.
+missing the proxy-header constants) the header cannot be separated, so a request
+carrying a non-empty credential header through an HTTP or HTTPS proxy is
+rejected up front with a `RequestException`. The 7.x branches instead force this
+case onto a fresh, non-reusable connection rather than rejecting it.
 
 Proxy TLS credential coverage stays tunnel-only and private: it is
 reflection-tested hardening for CONNECT tunnels, not public non-tunneled
@@ -238,10 +247,15 @@ non-empty literal proxy-auth header) or configured share handles. The blob and
 the two encoding types are an **accepted residual**, not proven-safe.
 
 **The golden rule — over-sectioning is safe.** A non-`null`, changed signature
-only ever forces a *fresh* connection; it never relaxes reuse. So an over-broad
-signature merely costs an extra connection — it can never cause a leak.
-*Under*-covering (omitting a channel libcurl ignores) is the only way to leak.
-**When in doubt, include the channel.**
+only ever forces a *fresh* connection; it never relaxes reuse, so it can never
+cause a leak. Over-sectioning therefore remains safe for credential isolation,
+but it is not operationally free once connection caps are configured: a
+forced-fresh transfer can evict an eligible idle connection, and otherwise stays
+pending behind the applicable per-host or total cap, reducing throughput; on
+libcurl older than 8.8.0 a pending transfer does not run timeout checks, and on
+newer libcurl it can time out while pending. *Under*-covering (omitting a
+channel libcurl ignores) is the only way to leak. **When in doubt, include the
+channel.**
 
 Raw `CURLOPT_PROXY`/`CURLOPT_NOPROXY` are rejected before this logic in 8.0. On
 branches that still accept raw `CURLOPT_NOPROXY`, effective-proxy detection must
@@ -365,6 +379,33 @@ accidental per-request one. For per-request routing that does **not** touch the
 DNS cache, use `CURLOPT_CONNECT_TO`. (Contrast `CURLOPT_SHARE`, which *is*
 rejected under a configured share handle: a second, request-level share handle
 is simply incoherent, with no legitimate use.)
+
+**Connection caps and tunnel sectioning.** The `max_host_connections` and
+`max_total_connections` options apply to the handler's single multi handle: busy
+foreign tunnel sections stay attached to that same multi handle and compete for
+the same total budget, and an idle owner handover closes the old multi handle
+before lazily creating the next one, so sections never hold concurrent
+independent budgets. `CURLOPT_FRESH_CONNECT` does not bypass either cap; when no
+eligible idle connection can be evicted, the isolated transfer stays pending.
+`max_host_connections` counts libcurl's connection-bundle grouping, not a fixed
+notion of host: in modern libcurl, non-tunnel HTTP proxy forwarding is keyed by
+the proxy endpoint while CONNECT tunnels and SOCKS connections are keyed by the
+target destination, and older implementations differed (the original 7.30.0 code
+keyed even forwarding by the target hostname), so the cap is not a portable
+per-proxy or per-credential limit.
+
+**Connection caps and shared pools.** With connection caps configured,
+`PERSISTENT_PREFER` transport sharing degrades to handler-lifetime sharing,
+`PERSISTENT_REQUIRE` is rejected, and a preconstructed persistent
+`CurlShareHandleState` of either persistent mode is rejected. libcurl 7.57.0
+through 8.12.x checked the requesting transfer's multi-handle limits against all
+connections in the share-owned pool; different sharers could use different
+multi-handle limits, so this never provided a coherent per-handler or global
+cap. From libcurl 8.13.0, share-owned pools have no associated multi-handle
+limits and those caps are skipped entirely. A custom `handle_factory` is
+caller-controlled: it is responsible for not attaching an external
+connection-sharing `CURLOPT_SHARE` pool when multi-handle connection caps must
+be enforced, because Guzzle cannot inspect that native handle state.
 
 ## 8. The version trust floor
 

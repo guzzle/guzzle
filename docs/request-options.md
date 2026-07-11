@@ -2111,7 +2111,7 @@ The built-in stream handler rejects `stream => true` when the
 configured because streamed connections cannot be capped; `stream => false` and
 omitting the option remain valid, and the numeric values provide no
 stream-handler admission control. See
-[How can I add custom cURL options?](faq.md#how-can-i-add-custom-curl-options)
+[How can I limit concurrent connections?](faq.md#how-can-i-limit-concurrent-connections)
 for the connection cap semantics.
 
 ## stream_context
