@@ -1799,6 +1799,92 @@ class CurlFactoryTest extends TestCase
         self::assertNotSame($anonymous, $credentialed);
     }
 
+    public function testStringableProxyCredentialIsNormalizedOnceBeforeSignatureComputation(): void
+    {
+        MutableStringableCredential::$value = 'username:one';
+        MutableStringableCredential::$calls = 0;
+
+        $factory = new CurlFactory(3);
+        $easy = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [\CURLOPT_PROXYUSERPWD => new MutableStringableCredential()],
+        ]);
+
+        self::assertSame('username:one', $_SERVER['_curl'][\CURLOPT_PROXYUSERPWD], 'ext-curl must receive the normalized string, not the Stringable object.');
+        self::assertSame(1, MutableStringableCredential::$calls, 'The Stringable credential must be cast exactly once, before signature computation.');
+        self::assertNotNull($easy->proxyTunnelSignature);
+    }
+
+    public function testStringableProxyCredentialValueChangesProxyTunnelSignatureOnAffectedCurlVersion(): void
+    {
+        $factory = new CurlFactory(3);
+
+        MutableStringableCredential::$value = 'username:one';
+        $one = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [\CURLOPT_PROXYUSERPWD => new MutableStringableCredential()],
+        ])->proxyTunnelSignature;
+
+        MutableStringableCredential::$value = 'username:two';
+        $two = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [\CURLOPT_PROXYUSERPWD => new MutableStringableCredential()],
+        ])->proxyTunnelSignature;
+
+        MutableStringableCredential::$value = 'username:one';
+        $stable = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [\CURLOPT_PROXYUSERPWD => new MutableStringableCredential()],
+        ])->proxyTunnelSignature;
+
+        self::assertNotNull($one);
+        self::assertNotNull($two);
+        self::assertNotSame($one, $two, 'Different effective credentials must land in different sections.');
+        self::assertSame($one, $stable, 'Equal effective credentials must share a section.');
+    }
+
+    public function testStringableSocksProxyCredentialValueChangesSocksSignatureOnAffectedCurlVersion(): void
+    {
+        $factory = new CurlFactory(3);
+
+        MutableStringableCredential::$value = 'username:one';
+        $one = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://proxy.example.com:1080',
+            'curl' => [\CURLOPT_PROXYUSERPWD => new MutableStringableCredential()],
+        ])->proxyTunnelSignature;
+
+        MutableStringableCredential::$value = 'username:two';
+        $two = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://proxy.example.com:1080',
+            'curl' => [\CURLOPT_PROXYUSERPWD => new MutableStringableCredential()],
+        ])->proxyTunnelSignature;
+
+        self::assertNotNull($one);
+        self::assertNotNull($two);
+        self::assertNotSame($one, $two, 'Different effective SOCKS credentials must land in different sections.');
+    }
+
+    public function testThrowingStringableProxyCredentialIsWrappedLikeOptionApplication(): void
+    {
+        if (\PHP_VERSION_ID < 70400) {
+            self::markTestSkipped('A throwing __toString() requires PHP 7.4.');
+        }
+
+        $factory = new CurlFactory(3);
+
+        try {
+            self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+                'proxy' => 'http://proxy.example.com:8080',
+                'curl' => [\CURLOPT_PROXYUSERPWD => new ThrowingStringableCredential()],
+            ]);
+            self::fail('Expected InvalidArgumentException.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('Unable to set cURL option CURLOPT_PROXYUSERPWD', $e->getMessage());
+            self::assertStringContainsString('credential unavailable', $e->getMessage());
+            self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
+        }
+    }
+
     public function testSchemelessSocksProxySectionsByProxyTypeOnAffectedCurlVersion(): void
     {
         $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.68.0', 'features' => self::curlSslFeature()]);
