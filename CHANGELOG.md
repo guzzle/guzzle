@@ -7,7 +7,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
-- Reject the `stream` request option on the stream handler when connection caps are configured
+- Reject enabled response streaming (`stream => true`) on cap-configured stream handlers
+- Distinguish CurlMultiHandler and StreamHandler outcomes in the connection-cap custom-handler guidance
 - Restore conservative proxy credential redaction for unparseable proxies with multiple `@` separators
 - Reject raw cURL options that conflict with explicit multiplexing guarantees
 - Reject required multiplexing when the final `CURLOPT_HTTPAUTH` mask permits NTLM

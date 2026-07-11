@@ -161,7 +161,7 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler([$option => 5]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+        $this->expectExceptionMessage('Enabling the "stream" request option on a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
 
         $handler(new Request('GET', 'http://localhost/'), ['stream' => true]);
     }
@@ -180,6 +180,17 @@ class StreamHandlerTest extends TestCase
         $response = $handler(new Request('GET', Server::$url), [])->wait();
 
         self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testAllowsDisabledStreamingWhenConnectionCapsAreConfigured(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler(['max_host_connections' => 1, 'max_total_connections' => 1]);
+
+        $response = $handler(new Request('GET', Server::$url), ['stream' => false])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertTrue($response->getBody()->isSeekable());
     }
 
     public function testTreatsNullConnectionCapsAsUnset(): void
