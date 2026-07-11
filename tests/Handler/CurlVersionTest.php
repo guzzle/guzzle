@@ -91,6 +91,48 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsMultiplex());
     }
 
+    public function testSupportsHttpVersionReuseMatchingUsesRegressionWindow(): void
+    {
+        self::setVersionInfo([
+            'version' => '7.76.0',
+            'features' => 0,
+        ]);
+        self::assertFalse(CurlVersion::supportsHttpVersionReuseMatching());
+
+        self::setVersionInfo([
+            'version' => '7.77.0',
+            'features' => 0,
+        ]);
+        self::assertTrue(CurlVersion::supportsHttpVersionReuseMatching());
+
+        self::setVersionInfo([
+            'version' => '8.10.1',
+            'features' => 0,
+        ]);
+        self::assertTrue(CurlVersion::supportsHttpVersionReuseMatching());
+
+        self::setVersionInfo([
+            'version' => '8.11.0',
+            'features' => 0,
+        ]);
+        self::assertFalse(CurlVersion::supportsHttpVersionReuseMatching());
+
+        self::setVersionInfo([
+            'version' => '8.12.1',
+            'features' => 0,
+        ]);
+        self::assertFalse(CurlVersion::supportsHttpVersionReuseMatching());
+
+        self::setVersionInfo([
+            'version' => '8.13.0',
+            'features' => 0,
+        ]);
+        self::assertTrue(CurlVersion::supportsHttpVersionReuseMatching());
+
+        self::setVersionInfo(false);
+        self::assertFalse(CurlVersion::supportsHttpVersionReuseMatching());
+    }
+
     public function testSupportsRequiredHttp2MultiplexUsesRuntimeVersion(): void
     {
         if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURL_VERSION_HTTP2')) {

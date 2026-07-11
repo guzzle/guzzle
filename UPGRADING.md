@@ -1196,6 +1196,27 @@ fails closed when a named connection cap cannot be applied; Guzzle 8 extends
 this rejection to every cURL multi option, including raw `CURLMOPT_*` entries
 that Guzzle 7 only warns about.
 
+`CurlMultiHandler` now rejects `CURLMOPT_PIPELINING` in the constructor
+`options` array, deprecated since Guzzle 7.15. Pass `Multiplexing::NONE` as the
+`multiplex` client option or, when constructing the handler yourself, as the
+`multiplex` constructor option to disallow multiplexing on the handler
+(replacing `CURLPIPE_NOTHING` and `0`), or remove the option entirely for
+multiplex-capable behavior (replacing masks containing `CURLPIPE_MULTIPLEX`);
+multiplexing is on by default from libcurl 7.62, except on 7.65.0 and 7.65.1
+where a regression dropped the default, and Guzzle 8's HTTP/2 floor of libcurl
+7.65.2 is the version that restored it, so removing the option preserves
+multiplex-capable behavior on every supported HTTP/2 runtime. `CURLPIPE_HTTP1`
+and `1` also map to `Multiplexing::NONE` on libcurl 7.62 and newer, where
+HTTP/1.1 pipelining is a no-op; on older libcurl they enabled HTTP/1.1
+pipelining, which has no replacement. A handler configured with
+`Multiplexing::NONE` wins over the default `WAIT` request mode: default requests
+run without waiting, explicitly requested wait modes are rejected as a
+configuration conflict when the transfer would actually wait, and the required
+modes are always rejected. `Multiplexing::NONE` is also accepted as a request
+option value exactly where its guarantee - the transfer does not share its
+connection with any concurrent transfer - holds and can be verified; see the
+`multiplex` request option documentation for the acceptance rules.
+
 `CurlMultiHandler` now rejects `CURLMOPT_MAX_HOST_CONNECTIONS` and
 `CURLMOPT_MAX_TOTAL_CONNECTIONS` entries in the constructor `options` array. Use
 the `max_host_connections` and `max_total_connections` client options when

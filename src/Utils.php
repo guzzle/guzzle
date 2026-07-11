@@ -64,7 +64,7 @@ final class Utils
      *
      * The returned handler is not wrapped by any default middlewares.
      *
-     * @param array{transport_sharing?: mixed, max_host_connections?: mixed, max_total_connections?: mixed} $handlerOptions Handler constructor options.
+     * @param array{transport_sharing?: mixed, max_host_connections?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions Handler constructor options.
      *
      * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> Returns the best handler for the given system.
      *
@@ -122,7 +122,7 @@ final class Utils
     }
 
     /**
-     * @param array{max_host_connections?: mixed, max_total_connections?: mixed} $handlerOptions
+     * @param array{max_host_connections?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions
      *
      * @return (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)|null
      */
@@ -139,6 +139,12 @@ final class Utils
 
         $curlHandlerOptions = self::createCurlHandlerOptions($sharingMode);
         $curlMultiHandlerOptions = $curlHandlerOptions + $connectionCapOptions;
+        if (($handlerOptions['multiplex'] ?? null) === Multiplexing::NONE) {
+            // Forwarded to the CurlMultiHandler only: CurlHandler and
+            // StreamHandler validate known options, and both satisfy NONE
+            // per-request without a handler option.
+            $curlMultiHandlerOptions['multiplex'] = Multiplexing::NONE;
+        }
 
         if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
             $multiHandler = new CurlMultiHandler($curlMultiHandlerOptions);

@@ -23,6 +23,19 @@ final class CurlVersion
     // which PIPEWAIT is reliably effective.
     private const MULTIPLEX_VERSION = '7.65.2';
 
+    // libcurl's connection matcher refuses to hand a transfer wanting
+    // HTTP/1.x a pooled connection that already negotiated HTTP/2 or newer
+    // from 7.77.0: ConnectionExists() in lib/url.c gained the check between
+    // the 7.76.0 and 7.77.0 releases. The HTTP/2 branch of the check
+    // regressed to a debug log in 8.11.0 (curl commit 433d730) and was
+    // restored in 8.13.0 via the negotiation mask (curl commit db72b8d), so
+    // 8.11.0 through 8.12.1 are vulnerable again.
+    private const HTTP_VERSION_REUSE_MATCH_VERSION = '7.77.0';
+
+    private const HTTP_VERSION_REUSE_MATCH_REGRESSION = '8.11.0';
+
+    private const HTTP_VERSION_REUSE_MATCH_RESTORED = '8.13.0';
+
     // CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE restricts the ALPN offer to h2 only
     // since libcurl 8.10.0, and connection reuse matching stopped handing
     // lower-version connections to prior-knowledge transfers in 8.14.0; below
@@ -118,6 +131,18 @@ final class CurlVersion
         return \defined('CURLOPT_PIPEWAIT')
             && null !== $version
             && version_compare($version, self::MULTIPLEX_VERSION, '>=');
+    }
+
+    public static function supportsHttpVersionReuseMatching(): bool
+    {
+        $version = self::get();
+
+        if (null === $version || version_compare($version, self::HTTP_VERSION_REUSE_MATCH_VERSION, '<')) {
+            return false;
+        }
+
+        return version_compare($version, self::HTTP_VERSION_REUSE_MATCH_REGRESSION, '<')
+            || version_compare($version, self::HTTP_VERSION_REUSE_MATCH_RESTORED, '>=');
     }
 
     public static function supportsRequiredHttp2Multiplex(): bool

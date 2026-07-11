@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Added
 
 - Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
+- Add `Multiplexing::NONE` support as a client, cURL multi handler, and conditional request option
 - Add generic and structured PHPDoc annotations to client request/config option, async promise, handler, middleware, pool, and mock handler APIs
 - Add `ConnectTimeoutException` for connect-phase timeouts, extending `ConnectException`
 - Add `NetworkException` for no-response network failures
@@ -129,7 +130,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Require libcurl 7.37.0 for `Proxy-Authorization` headers through HTTP proxies
 - Suppress proxy CONNECT response headers for tunneled requests
 - Point rejections of the raw `CURLOPT_PIPEWAIT` cURL option at the `multiplex` request option
-- Require an integer `CURLMOPT_PIPELINING` when combined with explicit multiplexing
+- Reject raw `CURLMOPT_PIPELINING` in favour of the `multiplex` cURL multi handler option
 - Reject required multiplexing when the final `CURLOPT_HTTPAUTH` mask permits NTLM
 - Reject cURL multi options that the runtime libcurl cannot apply
 - Reject unknown handler constructor options

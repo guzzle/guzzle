@@ -450,7 +450,7 @@ final class CurlFactory implements CurlFactoryInterface
             return Multiplexing::WAIT;
         }
 
-        if (!\in_array($multiplex, [Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+        if (!\in_array($multiplex, [Multiplexing::NONE, Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
             throw new InvalidArgumentException(\sprintf(
                 'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received %s.',
                 \get_debug_type($multiplex)

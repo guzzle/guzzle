@@ -72,6 +72,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *   fallback receives the cap as a marker only: it rejects enabled
      *   response streaming ("stream" => true) and does not limit overlapping
      *   buffered calls.
+     * - multiplex: (string|null) Multiplexing::NONE to disable multiplexing on
+     *   the default CurlMultiHandler; the value also becomes the default
+     *   "multiplex" request option. Other Multiplexing::* values act as the
+     *   default request option only.
      * - **: any request option
      *
      * @param array{
@@ -168,6 +172,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
         }
 
+        // Deliberately not unset: the value also becomes the default
+        // "multiplex" request option, which the configured handler accepts.
+        $handlerMultiplex = ($config['multiplex'] ?? null) === Multiplexing::NONE;
+
         $transportSharing = \array_key_exists('transport_sharing', $config) ? $config['transport_sharing'] : null;
         $transportSharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
         unset($config['transport_sharing']);
@@ -175,6 +183,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (!isset($config['handler'])) {
             if ($transportSharingMode !== TransportSharing::NONE) {
                 $handlerOptions['transport_sharing'] = $transportSharingMode;
+            }
+
+            if ($handlerMultiplex) {
+                $handlerOptions['multiplex'] = Multiplexing::NONE;
             }
 
             $config['handler'] = $handlerOptions === []
@@ -1211,7 +1223,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             return;
         }
 
-        if (!\in_array($options['multiplex'], [Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+        if (!\in_array($options['multiplex'], [Multiplexing::NONE, Multiplexing::EAGER, Multiplexing::WAIT, Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
             throw new InvalidArgumentException(\sprintf(
                 'The "multiplex" option must be null or a GuzzleHttp\\Multiplexing::* constant; received %s.',
                 \get_debug_type($options['multiplex'])
