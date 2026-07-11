@@ -189,6 +189,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Distinguish CurlMultiHandler and StreamHandler outcomes in the connection-cap custom-handler guidance
 - Restore conservative proxy credential redaction for unparseable proxies with multiple `@` separators
 - Reject raw cURL options that conflict with explicit multiplexing guarantees
+- Stop explicit multiplexing conflict checks faulting on non-array cURL multi handler `options` values
 - Reject required multiplexing when the final `CURLOPT_HTTPAUTH` mask permits NTLM
 - Require an integer `CURLMOPT_PIPELINING` when combined with explicit multiplexing
 - Check the required multiplexing cleartext proxy rule against the final cURL configuration
