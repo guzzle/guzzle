@@ -1002,6 +1002,22 @@ class CurlMultiHandlerTest extends TestCase
         self::assertInstanceOf(P\PromiseInterface::class, $promise);
     }
 
+    public function testAllowsExplicitMultiplexWithNonArrayOptions()
+    {
+        if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
+            self::markTestSkipped('HTTP/2 or multiplex support is unavailable.');
+        }
+
+        // A legacy non-array "options" value is tolerated by the constructor
+        // and cannot contain CURLMOPT_PIPELINING, so probing it for the
+        // conflict must not fault.
+        $a = new CurlMultiHandler(['options' => new \stdClass()]);
+
+        $promise = $a(new Request('GET', Server::$url, [], null, '2.0'), ['multiplex' => Multiplexing::WAIT]);
+        $promise->cancel();
+        self::assertInstanceOf(P\PromiseInterface::class, $promise);
+    }
+
     public function testSendsRequest()
     {
         Server::enqueue([new Response()]);

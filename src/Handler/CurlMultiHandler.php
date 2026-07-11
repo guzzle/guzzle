@@ -392,7 +392,9 @@ class CurlMultiHandler
             return;
         }
 
-        if (!\array_key_exists(\CURLMOPT_PIPELINING, $this->options)) {
+        if (!\is_array($this->options) || !\array_key_exists(\CURLMOPT_PIPELINING, $this->options)) {
+            // A legacy non-array "options" value is tolerated by the
+            // constructor and cannot contain the option.
             return;
         }
 
