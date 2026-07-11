@@ -166,7 +166,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Require `guzzlehttp/psr7` ^2.13
-- Replace case-insensitive comparisons with the psr7 caseless helpers
+- Use locale-independent ASCII folding for all case normalization and comparison
 - Sanitize the cURL error text exposed through exception handler context
 - Fail closed when a named cURL multi connection cap cannot be applied
 - Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured
@@ -182,7 +182,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
-- Reject the `stream` request option on the stream handler when connection caps are configured
+- Reject enabled response streaming (`stream => true`) on cap-configured stream handlers
+- Distinguish CurlMultiHandler and StreamHandler outcomes in the connection-cap custom-handler guidance
 - Restore conservative proxy credential redaction for unparseable proxies with multiple `@` separators
 - Reject raw cURL options that conflict with explicit multiplexing guarantees
 - Reject required multiplexing when the final `CURLOPT_HTTPAUTH` mask permits NTLM
