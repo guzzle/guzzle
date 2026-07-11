@@ -63,13 +63,15 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * - transport_sharing: (string|null) Transport sharing mode for the default
      *   handler. Accepts TransportSharing::* or null. Defaults to null.
      * - max_host_connections: (int|null) Maximum concurrent connections per
-     *   host for the default handler; the default stream handler rejects the
-     *   "stream" request option when a cap is configured because streamed
-     *   connections cannot be capped.
-     * - max_total_connections: (int|null) Maximum concurrent connections for
-     *   the default handler; the default stream handler rejects the "stream"
-     *   request option when a cap is configured because streamed connections
-     *   cannot be capped.
+     *   host, enforced by the default CurlMultiHandler. The default stream
+     *   fallback receives the cap as a marker only: it rejects enabled
+     *   response streaming ("stream" => true) and does not limit overlapping
+     *   buffered calls.
+     * - max_total_connections: (int|null) Maximum concurrent connections
+     *   overall, enforced by the default CurlMultiHandler. The default stream
+     *   fallback receives the cap as a marker only: it rejects enabled
+     *   response streaming ("stream" => true) and does not limit overlapping
+     *   buffered calls.
      * - **: any request option
      *
      * @param array{
@@ -181,7 +183,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         } elseif (!\is_callable($config['handler'])) {
             throw new InvalidArgumentException('handler must be a callable');
         } elseif ($handlerOptions !== []) {
-            throw new InvalidArgumentException('The "max_host_connections" and "max_total_connections" client options require Guzzle to create the default handler. Configure the option on CurlMultiHandler when providing a custom handler.');
+            throw new InvalidArgumentException('The "max_host_connections" and "max_total_connections" client options require Guzzle to create the default handler. Configure the options on the CurlMultiHandler constructor for numeric enforcement, or on the StreamHandler constructor to reject enabled response streaming, when providing a custom handler.');
         } elseif (\in_array($transportSharingMode, [TransportSharing::HANDLER_REQUIRE, TransportSharing::PERSISTENT_REQUIRE], true)) {
             throw new InvalidArgumentException('The "transport_sharing" client option can only require sharing when Guzzle creates the default handler. Configure the "transport_sharing" option on CurlHandler or CurlMultiHandler when providing a custom cURL handler.');
         }

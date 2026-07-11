@@ -179,7 +179,7 @@ class UtilsTest extends TestCase
         $handler = Utils::chooseHandler([$option => 1]);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Passing the "stream" request option to a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
+        $this->expectExceptionMessage('Enabling the "stream" request option on a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
 
         $handler(new Request('GET', 'http://localhost/'), ['stream' => true]);
     }
