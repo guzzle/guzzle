@@ -3430,6 +3430,21 @@ class CurlFactoryTest extends TestCase
         yield 'unknown string' => ['always'];
     }
 
+    public function testAllowsMultiplexNoneAsRequestOption()
+    {
+        $f = new CurlFactory(3);
+
+        // Acceptance logic is handler-owned; the factory only validates the
+        // value and never writes CURLOPT_PIPEWAIT for it.
+        $easy = $f->create(new Psr7\Request('GET', Server::$url), ['multiplex' => Multiplexing::NONE]);
+
+        try {
+            self::assertArrayNotHasKey(\CURLOPT_PIPEWAIT, $_SERVER['_curl']);
+        } finally {
+            $f->release($easy);
+        }
+    }
+
     public static function requiredMultiplexProvider(): iterable
     {
         yield 'require_eager' => [Multiplexing::REQUIRE_EAGER];

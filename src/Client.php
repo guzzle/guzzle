@@ -64,6 +64,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *   fallback receives the cap as a marker only: it rejects enabled
      *   response streaming ("stream" => true) and does not limit overlapping
      *   buffered calls.
+     * - multiplex: (string|null) Multiplexing::NONE to disable multiplexing on
+     *   the default CurlMultiHandler; the value also becomes the default
+     *   "multiplex" request option. Other Multiplexing::* values act as the
+     *   default request option only.
      * - **: any request option
      *
      * @param array $config Client configuration settings.
@@ -83,6 +87,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
         }
 
+        // Deliberately not unset: the value also becomes the default
+        // "multiplex" request option, which the configured handler accepts.
+        $handlerMultiplex = ($config['multiplex'] ?? null) === Multiplexing::NONE;
+
         $transportSharing = \array_key_exists('transport_sharing', $config) ? $config['transport_sharing'] : null;
         $transportSharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
         unset($config['transport_sharing']);
@@ -90,6 +98,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         if (!isset($config['handler'])) {
             if ($transportSharingMode !== TransportSharing::NONE) {
                 $handlerOptions['transport_sharing'] = $transportSharingMode;
+            }
+
+            if ($handlerMultiplex) {
+                $handlerOptions['multiplex'] = Multiplexing::NONE;
             }
 
             $config['handler'] = $handlerOptions === []

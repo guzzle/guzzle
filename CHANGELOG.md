@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 7.15.0 - Upcoming
 
+### Added
+
+- Added `Multiplexing::NONE` support as a client, cURL multi handler, and conditional request option
+
 ### Changed
 
 - Require `guzzlehttp/psr7` ^2.13
@@ -13,11 +17,16 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fail closed when a named cURL multi connection cap cannot be applied
 - Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured
 
+### Deprecated
+
+- Deprecated passing `CURLMOPT_PIPELINING` in the cURL multi handler `options` array
+
 ### Fixed
 
 - Defer cURL requests created from multi callbacks until native execution unwinds
 - Fail synchronous waits from native cURL callbacks promptly instead of self-deadlocking
 - Guard cURL multi handle removal against progress callbacks re-entering the handler
+
 
 ## 7.14.1 - Upcoming
 
@@ -47,6 +56,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Roll back failed cURL multi handle attachment instead of leaving requests pending
 - Match cookie domains, proxy schemes, auth types, and header names with locale-independent ASCII folding
 - Compare cookie attributes and credential header names with locale-independent ASCII folding
+
 
 ## 7.14.0 - 2026-07-08
 

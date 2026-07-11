@@ -117,6 +117,35 @@ class CurlVersionTest extends TestCase
         }
     }
 
+    public function testSupportsHttpVersionReuseMatchingUsesRegressionWindow(): void
+    {
+        $previous = self::setCurlVersionInfo(['version' => '7.76.0', 'features' => 0]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsHttpVersionReuseMatching());
+
+            self::setCurlVersionInfo(['version' => '7.77.0', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsHttpVersionReuseMatching());
+
+            self::setCurlVersionInfo(['version' => '8.10.1', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsHttpVersionReuseMatching());
+
+            self::setCurlVersionInfo(['version' => '8.11.0', 'features' => 0]);
+            self::assertFalse(CurlVersion::supportsHttpVersionReuseMatching());
+
+            self::setCurlVersionInfo(['version' => '8.12.1', 'features' => 0]);
+            self::assertFalse(CurlVersion::supportsHttpVersionReuseMatching());
+
+            self::setCurlVersionInfo(['version' => '8.13.0', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsHttpVersionReuseMatching());
+
+            self::setCurlVersionInfo(false);
+            self::assertFalse(CurlVersion::supportsHttpVersionReuseMatching());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
     public function testSupportsConnectionCapsUsesMinimumVersion(): void
     {
         if (!\defined('CURLMOPT_MAX_HOST_CONNECTIONS') || !\defined('CURLMOPT_MAX_TOTAL_CONNECTIONS')) {
