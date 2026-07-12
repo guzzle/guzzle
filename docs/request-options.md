@@ -399,6 +399,10 @@ deprecation warning; PHP, libcurl, or the TLS backend may still reject or ignore
 an option depending on the runtime. The allow-list is limited to the following
 `CURLOPT_*` constants when they are defined by the installed PHP cURL extension:
 
+Raw `CURLOPT_PROXY`, `CURLOPT_NOPROXY`, and `CURLOPT_PRE_PROXY` values must be
+strings, and raw `CURLOPT_PROXYTYPE` values must be integers. Guzzle rejects
+other types rather than classify a value differently from ext-curl.
+
 - `CURLOPT_ADDRESS_SCOPE`
 - `CURLOPT_CERTINFO`
 - `CURLOPT_CONNECT_TO`
@@ -1098,6 +1102,14 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > sections every SOCKS-proxied request by its proxy and credential state —
 > plain `http://` targets and credential-less requests included. From libcurl
 > 7.69.0, SOCKS credential matching is left to libcurl.
+>
+> A non-empty deprecated raw `CURLOPT_PRE_PROXY` route is forced onto a fresh,
+> non-reusable connection before libcurl 7.69.0. This conservative rule applies
+> to anonymous and authenticated pre-proxies because an anonymous request must
+> not inherit a previously authenticated SOCKS connection. On those versions,
+> request-level `CURLOPT_SHARE` is rejected for every SOCKS route because
+> Guzzle cannot inspect an external shared connection pool. Guzzle-managed
+> `transport_sharing` does not share connection caches.
 >
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,

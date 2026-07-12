@@ -196,6 +196,8 @@ class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
+        self::assertFinalProxyOptionTypes($conf);
+        self::isolatePreProxyOnAffectedCurl($conf);
         self::normalizeStringableProxyCredentialOptions($conf);
 
         if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
@@ -533,9 +535,16 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         // An external share handle may pool SOCKS connections where no section
-        // signature can reach them, so authenticated SOCKS state is rejected.
-        if (self::isSocksProxy($proxy, $conf) && self::hasAuthenticatedSocksProxyState($proxy, $conf)) {
-            throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with authenticated SOCKS proxy configuration; use Guzzle-managed "transport_sharing" or a custom handler/factory instead.');
+        // signature can reach them. On affected libcurl, even an anonymous
+        // request could inherit authenticated state already in that pool.
+        if (self::isSocksProxy($proxy, $conf)) {
+            if (!CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse()) {
+                throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with SOCKS proxy configuration on libcurl before 7.69.0; use Guzzle-managed "transport_sharing" or a custom handler/factory instead.');
+            }
+
+            if (self::hasAuthenticatedSocksProxyState($proxy, $conf)) {
+                throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with authenticated SOCKS proxy configuration; use Guzzle-managed "transport_sharing" or a custom handler/factory instead.');
+            }
         }
 
         if (
@@ -1159,6 +1168,45 @@ class CurlFactory implements CurlFactoryInterface
         $proxy = self::getEffectiveProxy($conf);
 
         if ($proxy === null || !self::requiresFreshConnectionForAuthenticatedProxy($request, $proxy, $conf)) {
+            return;
+        }
+
+        $conf[\CURLOPT_FRESH_CONNECT] = true;
+        $conf[\CURLOPT_FORBID_REUSE] = true;
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function assertFinalProxyOptionTypes(array $conf): void
+    {
+        if (\array_key_exists(\CURLOPT_PROXYTYPE, $conf) && !\is_int($conf[\CURLOPT_PROXYTYPE])) {
+            throw new \InvalidArgumentException('CURLOPT_PROXYTYPE must be an integer.');
+        }
+
+        foreach (['CURLOPT_PROXY', 'CURLOPT_NOPROXY', 'CURLOPT_PRE_PROXY'] as $name) {
+            if (!\defined($name)) {
+                continue;
+            }
+
+            $option = (int) \constant($name);
+            if (\array_key_exists($option, $conf) && !\is_string($conf[$option])) {
+                throw new \InvalidArgumentException($name.' must be a string.');
+            }
+        }
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function isolatePreProxyOnAffectedCurl(array &$conf): void
+    {
+        if (CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse() || !\defined('CURLOPT_PRE_PROXY')) {
+            return;
+        }
+
+        $option = (int) \constant('CURLOPT_PRE_PROXY');
+        if (!\array_key_exists($option, $conf) || $conf[$option] === '') {
             return;
         }
 
