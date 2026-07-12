@@ -1108,8 +1108,12 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > to anonymous and authenticated pre-proxies because an anonymous request must
 > not inherit a previously authenticated SOCKS connection. On those versions,
 > request-level `CURLOPT_SHARE` is rejected for every SOCKS route because
-> Guzzle cannot inspect an external shared connection pool. Guzzle-managed
-> `transport_sharing` does not share connection caches.
+> Guzzle cannot inspect an external shared connection pool. A configured share
+> handle also forces every SOCKS request onto a fresh, non-reusable connection
+> because its provenance is opaque to `CurlFactory`; Guzzle-managed
+> `transport_sharing` does not itself share connection caches. Caller-supplied
+> false `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE` values cannot disable
+> either isolation rule.
 >
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,

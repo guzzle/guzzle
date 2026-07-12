@@ -535,8 +535,8 @@ class CurlFactoryTest extends TestCase
         self::skipIfCurlShareIsUnavailable();
 
         $shareHandle = \curl_share_init();
-        $requestShareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
+        $requestShareHandle = \curl_share_init();
         self::assertNotFalse($requestShareHandle);
         $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
@@ -743,19 +743,25 @@ class CurlFactoryTest extends TestCase
         $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
     }
 
-    public function testAllowsRequestLevelShareWithAnonymousSocksProxy(): void
+    public function testAllowsRequestLevelShareWithAnonymousSocksProxyOnFixedCurlVersion(): void
     {
         self::skipIfCurlShareIsUnavailable();
 
-        $conf = [\CURLOPT_PROXY => 'socks5://proxy.example.com:1080'];
-        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.69.0', 'features' => 0]);
 
-        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
+        try {
+            $conf = [\CURLOPT_PROXY => 'socks5://proxy.example.com:1080'];
+            $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+
+            $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+            if (\PHP_VERSION_ID < 80100) {
+                $method->setAccessible(true);
+            }
+
+            self::assertNull($method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf));
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
         }
-
-        self::assertNull($method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf));
     }
 
     public function testRejectsRequestLevelShareWithAnonymousSocksProxyOnAffectedCurlVersion(): void
@@ -2583,7 +2589,7 @@ class CurlFactoryTest extends TestCase
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
     }
 
-    public function testShareHandleSkipsBlanketForceFreshForAnonymousSocksProxyOnAffectedCurlVersion(): void
+    public function testShareHandleUsesBlanketForceFreshForAnonymousSocksProxyOnAffectedCurlVersion(): void
     {
         self::skipIfCurlShareIsUnavailable();
 
@@ -2594,8 +2600,8 @@ class CurlFactoryTest extends TestCase
         ]);
 
         self::assertNull($easy->proxyTunnelSignature);
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
     }
 
     public function testShareHandleSkipsBlanketForceFreshForSocksProxyOnFixedCurlVersion(): void
@@ -2628,6 +2634,41 @@ class CurlFactoryTest extends TestCase
             ],
         ]);
 
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testIsolatesAnonymousPreProxyOnAffectedCurlVersion(): void
+    {
+        if (!\defined('CURLOPT_PRE_PROXY')) {
+            self::markTestSkipped('CURLOPT_PRE_PROXY is not available.');
+        }
+
+        self::createOnFactory(new CurlFactory(3), '7.68.0', 'https://example.com', [
+            'curl' => [(int) \constant('CURLOPT_PRE_PROXY') => 'socks5://pre-proxy.example.com:1080'],
+        ]);
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testPreProxyIsolationPreservesPrimaryProxySignature(): void
+    {
+        if (!\defined('CURLOPT_PRE_PROXY')) {
+            self::markTestSkipped('CURLOPT_PRE_PROXY is not available.');
+        }
+
+        $proxy = 'http://username:password@proxy.example.com:8080';
+        $baseline = self::createOnFactory(new CurlFactory(3), '7.68.0', 'https://example.com', [
+            'proxy' => $proxy,
+        ])->proxyTunnelSignature;
+        $chained = self::createOnFactory(new CurlFactory(3), '7.68.0', 'https://example.com', [
+            'proxy' => $proxy,
+            'curl' => [(int) \constant('CURLOPT_PRE_PROXY') => 'socks5://pre-proxy.example.com:1080'],
+        ])->proxyTunnelSignature;
+
+        self::assertNotNull($baseline);
+        self::assertSame($baseline, $chained);
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
         self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
     }
@@ -2665,18 +2706,28 @@ class CurlFactoryTest extends TestCase
     {
         yield 'numeric string proxy type' => [[\CURLOPT_PROXYTYPE => (string) \CURLPROXY_HTTP], 'CURLOPT_PROXYTYPE'];
         yield 'float proxy type' => [[\CURLOPT_PROXYTYPE => (float) \CURLPROXY_HTTP], 'CURLOPT_PROXYTYPE'];
+        yield 'fractional float proxy type' => [[\CURLOPT_PROXYTYPE => 4.5], 'CURLOPT_PROXYTYPE'];
         yield 'null proxy type' => [[\CURLOPT_PROXYTYPE => null], 'CURLOPT_PROXYTYPE'];
         yield 'boolean proxy type' => [[\CURLOPT_PROXYTYPE => false], 'CURLOPT_PROXYTYPE'];
         yield 'array proxy type' => [[\CURLOPT_PROXYTYPE => [\CURLPROXY_HTTP]], 'CURLOPT_PROXYTYPE'];
         yield 'object proxy type' => [[\CURLOPT_PROXYTYPE => new \stdClass()], 'CURLOPT_PROXYTYPE'];
         yield 'integer proxy' => [[\CURLOPT_PROXY => 123], 'CURLOPT_PROXY'];
+        yield 'null proxy' => [[\CURLOPT_PROXY => null], 'CURLOPT_PROXY'];
+        yield 'stringable proxy' => [[\CURLOPT_PROXY => new class {
+            public function __toString(): string
+            {
+                return 'http://proxy.example.com:8080';
+            }
+        }], 'CURLOPT_PROXY'];
 
         if (\defined('CURLOPT_NOPROXY')) {
             yield 'array no-proxy' => [[(int) \constant('CURLOPT_NOPROXY') => ['*']], 'CURLOPT_NOPROXY'];
+            yield 'null no-proxy' => [[(int) \constant('CURLOPT_NOPROXY') => null], 'CURLOPT_NOPROXY'];
         }
 
         if (\defined('CURLOPT_PRE_PROXY')) {
             yield 'boolean pre-proxy' => [[(int) \constant('CURLOPT_PRE_PROXY') => false], 'CURLOPT_PRE_PROXY'];
+            yield 'integer pre-proxy' => [[(int) \constant('CURLOPT_PRE_PROXY') => 1080], 'CURLOPT_PRE_PROXY'];
         }
     }
 
@@ -2693,14 +2744,97 @@ class CurlFactoryTest extends TestCase
         ]);
     }
 
-    public function testAcceptsIntegerSocksProxyType(): void
+    public function testRejectsResourceProxyType(): void
     {
-        $easy = (new CurlFactory(3))->create(new Psr7\Request('GET', 'https://example.com'), [
+        $resource = \fopen('php://temp', 'r');
+        self::assertIsResource($resource);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_PROXYTYPE must be an integer.');
+
+            (new CurlFactory(3))->create(new Psr7\Request('GET', 'https://example.com'), [
+                'curl' => [\CURLOPT_PROXYTYPE => $resource],
+            ]);
+        } finally {
+            \fclose($resource);
+        }
+    }
+
+    public function testRejectsInvalidProxyTypeBeforeRequestLevelShareInspection(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_PROXYTYPE must be an integer.');
+
+            (new CurlFactory(3))->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => 'socks5://proxy.example.com:1080',
+                'curl' => [
+                    \CURLOPT_PROXYTYPE => (string) \CURLPROXY_SOCKS5,
+                    (int) \constant('CURLOPT_SHARE') => $shareHandle,
+                ],
+            ]);
+        } finally {
+            if (\PHP_VERSION_ID < 80000) {
+                \curl_share_close($shareHandle);
+            }
+        }
+    }
+
+    public function testRejectsInvalidProxyTypeBeforeConfiguredShareConflict(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $configuredShareHandle = \curl_share_init();
+        $requestShareHandle = \curl_share_init();
+        self::assertNotFalse($configuredShareHandle);
+        self::assertNotFalse($requestShareHandle);
+
+        try {
+            $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $configuredShareHandle);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_PROXYTYPE must be an integer.');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+                'curl' => [
+                    \CURLOPT_PROXYTYPE => (string) \CURLPROXY_SOCKS5,
+                    (int) \constant('CURLOPT_SHARE') => $requestShareHandle,
+                ],
+            ]);
+        } finally {
+            if (\PHP_VERSION_ID < 80000) {
+                \curl_share_close($configuredShareHandle);
+                \curl_share_close($requestShareHandle);
+            }
+        }
+    }
+
+    public static function integerSocksProxyTypeProvider(): iterable
+    {
+        foreach (['CURLPROXY_SOCKS4', 'CURLPROXY_SOCKS5', 'CURLPROXY_SOCKS4A', 'CURLPROXY_SOCKS5_HOSTNAME'] as $name) {
+            if (\defined($name)) {
+                yield $name => [(int) \constant($name)];
+            }
+        }
+    }
+
+    /**
+     * @dataProvider integerSocksProxyTypeProvider
+     */
+    public function testAcceptsIntegerSocksProxyTypes(int $proxyType): void
+    {
+        $easy = self::createOnFactory(new CurlFactory(3), '7.68.0', 'https://example.com', [
             'proxy' => 'http://proxy.example.com:1080',
-            'curl' => [\CURLOPT_PROXYTYPE => \CURLPROXY_SOCKS5],
+            'curl' => [\CURLOPT_PROXYTYPE => $proxyType],
         ]);
 
-        self::assertSame(\CURLPROXY_SOCKS5, $_SERVER['_curl'][\CURLOPT_PROXYTYPE]);
+        self::assertSame($proxyType, $_SERVER['_curl'][\CURLOPT_PROXYTYPE]);
         self::assertNotNull($easy->proxyTunnelSignature);
     }
 
