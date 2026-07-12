@@ -159,13 +159,38 @@ final class CurlFactory implements CurlFactoryInterface
     private string $shareMode;
 
     /**
-     * @param int                                                       $maxHandles  Maximum number of idle handles.
-     * @param resource|\CurlShareHandle|\CurlSharePersistentHandle|null $shareHandle
+     * @var bool Whether the configured share handle may own a connection
+     *           cache populated outside this factory
+     */
+    private bool $opaqueShareConnectionCache = false;
+
+    /**
+     * @param int                                                                            $maxHandles  Maximum number of idle handles.
+     * @param resource|\CurlShareHandle|\CurlSharePersistentHandle|CurlShareHandleState|null $shareHandle
      */
     public function __construct(int $maxHandles, string $shareMode = TransportSharing::NONE, $shareHandle = null)
     {
         $this->maxHandles = $maxHandles;
         $this->shareMode = CurlShareHandleState::normalizeMode($shareMode, 'transport_sharing');
+
+        if ($shareHandle instanceof CurlShareHandleState) {
+            if ($shareHandle->mode !== $this->shareMode) {
+                throw new InvalidArgumentException('The cURL share handle state mode does not match the configured transport sharing mode.');
+            }
+
+            // A Guzzle-created handler-lifetime state locks only DNS and TLS
+            // session data, so its handle can never own a connection cache. A
+            // persistent state's connection cache is worker-global, so other
+            // producers in the worker may populate it.
+            $this->opaqueShareConnectionCache = $shareHandle->mode === TransportSharing::PERSISTENT_PREFER
+                || $shareHandle->mode === TransportSharing::PERSISTENT_REQUIRE;
+            $shareHandle = $shareHandle->handle;
+        } elseif ($shareHandle !== null) {
+            // An externally supplied handle's cached contents cannot be
+            // inspected from PHP, so it may own a connection cache populated
+            // outside this factory.
+            $this->opaqueShareConnectionCache = true;
+        }
 
         if ($this->shareMode === TransportSharing::NONE && $shareHandle !== null) {
             throw new InvalidArgumentException('A cURL share handle cannot be provided when transport sharing is disabled.');
@@ -1371,7 +1396,11 @@ final class CurlFactory implements CurlFactoryInterface
     {
         $proxy = self::getEffectiveProxy($conf);
 
-        if ($proxy === null || !self::requiresFreshConnectionForAuthenticatedProxy($request, $proxy, $conf)) {
+        if (
+            $proxy === null
+            || (!self::requiresFreshConnectionForAuthenticatedProxy($request, $proxy, $conf)
+                && !$this->isOpaqueShareAnonymousProxyTunnel($request, $proxy, $conf))
+        ) {
             return;
         }
 
@@ -1381,6 +1410,45 @@ final class CurlFactory implements CurlFactoryInterface
 
         $conf[\CURLOPT_FRESH_CONNECT] = true;
         $conf[\CURLOPT_FORBID_REUSE] = true;
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private function isOpaqueShareAnonymousProxyTunnel(RequestInterface $request, string $proxy, array $conf): bool
+    {
+        if (!$this->opaqueShareConnectionCache || !CurlVersion::supportsShareConnectionCaches()) {
+            return false;
+        }
+
+        if (!self::usesProxyTunnel($request, $conf) || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {
+            return false;
+        }
+
+        if (
+            self::hasCurlProxyAuthorizationHeader($conf)
+            || self::hasCurlProxyTlsCredentials($conf)
+            || self::hasCurlProxyCredentials($conf)
+        ) {
+            return false;
+        }
+
+        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
+        $proxyParts = \parse_url($proxyForParsing);
+        if (
+            \is_array($proxyParts)
+            && (\array_key_exists('user', $proxyParts) || \array_key_exists('pass', $proxyParts))
+        ) {
+            return false;
+        }
+
+        // From libcurl 7.57.0 an opaque share handle can own a connection
+        // cache, and a tunnel seeded there with a literal Proxy-Authorization
+        // header is never keyed on credentials, so an anonymous request could
+        // inherit it on every later libcurl version. Requests carrying
+        // recognized credential state keep the version-gated channel
+        // safeguards in requiresFreshConnectionForAuthenticatedProxy().
+        return true;
     }
 
     /**

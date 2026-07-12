@@ -859,6 +859,19 @@ proxy header separation support, and are rejected with a `RequestException`
 on older libcurl. Guzzle 7 kept the header in the unified header list on such
 libcurl and forced a fresh, non-reused connection instead.
 
+#### Proxy Tunnels Under Shared Connection Caches
+
+From libcurl 7.57.0, a cURL share handle passed directly to `CurlFactory` and
+Guzzle's worker-global persistent sharing pools are treated as opaque
+connection caches: anonymous HTTP and HTTPS proxy tunnels are forced onto
+fresh, non-reusable connections, and `TransportSharing::PERSISTENT_REQUIRE`
+rejects them. Guzzle 7 applies the same policy to its configured share handles
+and additionally rejects the deprecated request-level `CURLOPT_SHARE` option
+for proxy tunnels there; Guzzle 8 rejects that raw option outright, so only
+the configured and persistent surfaces exist. Handler-lifetime
+`transport_sharing` keeps ordinary tunnel reuse because its shares never lock
+connections.
+
 #### Proxy Environment Variable Resolution
 
 The stream handler now resolves proxies from the environment the same way the

@@ -57,7 +57,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject malformed, conflicting, or unrepresentable request `Content-Length` values in built-in handlers
 - Reject raw cURL request options outside the built-in cURL handlers' allow-list
 - Reject non-string raw cURL header-list entries before applying them
-- Reject proxy-auth header fresh connections when persistent transport sharing requires reuse
+- Reject proxy tunnels that require fresh connections when persistent transport sharing requires reuse
 - Reject PHP stream context options outside the built-in stream handler allow-list
 - Reject selected request options ignored by incompatible built-in handlers
 - Treat only `null` as an omitted path or name when clearing cookies

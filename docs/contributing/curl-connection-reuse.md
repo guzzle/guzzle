@@ -290,6 +290,14 @@ provenance. For an authenticated proxy tunnel Guzzle then sets
 `CURLOPT_FRESH_CONNECT` / `CURLOPT_FORBID_REUSE` (and `PERSISTENT_REQUIRE` turns
 the conflict into an error rather than silently degrading).
 
+From libcurl 7.57.0 an opaque-provenance share, meaning an externally supplied
+handle or Guzzle's worker-global persistent pool, additionally forces every
+anonymous HTTP/HTTPS tunnel fresh: a foreign tunnel seeded with a literal
+`Proxy-Authorization` header carries an empty credential key that an anonymous
+request would match at every later version. Guzzle-created handler-lifetime
+states are known not to share connections and are exempt from this anonymous
+arm; requests carrying recognized credential channels keep the gates below.
+
 "Authenticated" here mirrors the signature's channels, each gated to the libcurl
 version below which libcurl does not itself key reuse on it: a non-empty literal
 `Proxy-Authorization` header (every version), Basic/Digest proxy credentials
@@ -324,6 +332,11 @@ channel's gate and 8.12.0 decides whether the throw can fire:
   so the throw no longer applies to parsed credentials; the non-empty
   literal-header case still does, since libcurl can never key on an opaque
   request header.
+- The opaque-share anonymous-tunnel arm has no version ceiling, and persistent
+  provenance is always opaque, so an anonymous `PERSISTENT_REQUIRE` tunnel
+  reaches `forceFreshConnectionForAuthenticatedProxy` and throws on every
+  persistent-capable build; recognized credential channels keep the gates
+  above.
 
 **Multiplexed joins are same-multi only (why `Multiplexing::NONE` composes
 with persistent sharing).** libcurl never adds a transfer to an in-use
@@ -354,12 +367,13 @@ and anonymous alike, is forced onto a fresh non-reusable connection. The old
 argument that `CURLOPT_FORBID_REUSE` keeps authenticated SOCKS connections out
 of the pools, so anonymous requests need no forcing, only covered connections
 this factory created: the constructor accepts externally built share handles
-whose lock set cannot be introspected from PHP, and libcurl supports
+whose cached contents cannot be inspected from PHP, and libcurl supports
 `CURL_LOCK_DATA_CONNECT` from 7.57.0, so on libcurl 7.57.0 through 7.68.x such
 a handle may already hold an authenticated SOCKS connection Guzzle never saw.
-Guzzle-managed shares lock only the DNS cache on those versions (§3) but pay
-the same conservative cost because handle provenance is opaque to
-`CurlFactory`. The connection cache Guzzle itself shares requires libcurl
+Guzzle-managed shares lock only the DNS cache on those versions (§3) yet
+deliberately pay the same conservative cost: the HTTP opaque-share arm in §7
+distinguishes handler-state provenance, and a matching SOCKS relaxation is
+left as future work. The connection cache Guzzle itself shares requires libcurl
 8.12.0 or newer (§3), above the 7.69.0 floor, so wherever a Guzzle-shared
 connection cache can exist libcurl already keys SOCKS credentials and
 `PERSISTENT_REQUIRE` can never throw for SOCKS credentials.
@@ -478,7 +492,11 @@ SOCKS cases in `proxyTunnelSectionProvider`, and the scheme-less and
 channels, the credential-less sectioning, and the 7.69.0 delegation. The
 share-handle SOCKS tests assert the blanket force-fresh: every SOCKS request
 below 7.69.0, authenticated (a plain `http://` target included) or anonymous,
-forces a fresh non-reusable connection, while fixed libcurl does not.
+forces a fresh non-reusable connection, while fixed libcurl does not. The HTTP
+opaque-share arm is pinned by `testOpaqueShareHandleForcesFreshProxyTunnels`,
+the handler-state exemption by
+`testHandlerShareStateRetainsAnonymousProxyTunnelReuse`, and the persistent
+modes by the prefer/require opaque-tunnel tests.
 
 `testProxyTlsCredentialsRequireFreshConnectionOnAffectedCurlVersion` does the
 same for the share-handle force-fresh path: it asserts
@@ -515,6 +533,13 @@ TLS credential below 7.83.1 and not at or above it.
   every SOCKS request below 7.69.0, anonymous ones included; an externally
   built share handle may already hold an authenticated SOCKS connection this
   factory never created.
+- Under an opaque-provenance connection share (an externally supplied handle
+  or a persistent pool), force a fresh non-reusable connection for every
+  anonymous HTTP/HTTPS proxy tunnel from libcurl 7.57.0, with no upper
+  version bound; a foreign literal-header tunnel is never credential-keyed.
+- Treat Guzzle-created handler-lifetime share states as no-CONNECT: they keep
+  ordinary HTTP tunnel reuse, while raw handles passed to the factory stay
+  opaque.
 
 ## References
 

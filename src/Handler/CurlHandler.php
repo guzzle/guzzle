@@ -68,7 +68,7 @@ final class CurlHandler
             : null;
 
         $this->factory = $this->shareHandleState !== null
-            ? new CurlFactory(3, $this->shareHandleState->mode, $this->shareHandleState->handle)
+            ? new CurlFactory(3, $this->shareHandleState->mode, $this->shareHandleState)
             : new CurlFactory(3);
 
         $this->ownsFactory = true;

@@ -71,6 +71,13 @@ final class CurlVersion
 
     private const CONNECTION_SHARING_VERSION = '8.12.0';
 
+    // curl 7.57.0 added share-handle connection caches through
+    // CURL_LOCK_DATA_CONNECT; older share objects can only hold DNS, TLS
+    // session, and cookie data, never connections. This is libcurl's raw
+    // capability floor for the opaque share safeguards; Guzzle-managed
+    // connection sharing is separately gated by CONNECTION_SHARING_VERSION.
+    private const SHARE_CONNECTION_CACHE_VERSION = '7.57.0';
+
     // curl 7.83.1 added proxy TLS-SRP to the connection-reuse match
     // (CVE-2022-27782); the proxy client certificate was matched from 7.52.0,
     // so proxy TLS credentials are trusted from 7.83.1 onwards.
@@ -254,6 +261,16 @@ final class CurlVersion
                 self::CONNECTION_SHARING_VERSION
             ));
         }
+    }
+
+    public static function supportsShareConnectionCaches(): bool
+    {
+        $version = self::get();
+
+        // An undetectable libcurl version is treated as capable so the
+        // opaque share safeguards fail closed.
+        return null === $version
+            || version_compare($version, self::SHARE_CONNECTION_CACHE_VERSION, '>=');
     }
 
     public static function supportsProxyTlsCredentialAwareConnectionReuse(): bool
