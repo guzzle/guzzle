@@ -139,11 +139,9 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $multiplex = self::normalizeMultiplex($options);
+        $requiredMultiplex = \in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true);
 
-        if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)
-            && isset($options['curl'])
-            && \is_array($options['curl'])
-        ) {
+        if ($requiredMultiplex && isset($options['curl']) && \is_array($options['curl'])) {
             $requiredModeConflicts = [
                 \CURLOPT_HTTP_VERSION => ['CURLOPT_HTTP_VERSION', 'the request protocol version'],
                 \CURLOPT_URL => ['CURLOPT_URL', 'the request URI'],
@@ -162,7 +160,7 @@ class CurlFactory implements CurlFactoryInterface
 
         if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!CurlVersion::supportsHttp2()) {
-                if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+                if ($requiredMultiplex) {
                     throw new ConnectException('Required multiplexing needs libcurl 8.14.0 or newer built with HTTP/2 support.', $request);
                 }
 
@@ -178,7 +176,6 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         self::triggerUnsupportedRequestOptionDeprecations($options);
-        $this->rejectRequestLevelShareConflict($options);
         self::triggerUnsupportedCurlOptionDeprecations($options);
         self::triggerConflictingCurlOptionDeprecations($options);
 
@@ -196,15 +193,18 @@ class CurlFactory implements CurlFactoryInterface
             $conf = \array_replace($conf, $options['curl']);
         }
 
+        self::assertFinalProxyOptionTypes($conf, $requiredMultiplex && 'https' !== $request->getUri()->getScheme());
+        self::isolatePreProxyOnAffectedCurl($conf);
         self::normalizeStringableProxyCredentialOptions($conf);
 
-        if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
+        if ($requiredMultiplex) {
             self::assertRequiredMultiplexRouteDirect($easy, $conf);
             self::assertRequiredMultiplexAuthSupported($conf);
         }
 
         self::normalizeCurlHeaderOptions($conf);
         self::applyProxyAuthorizationHeaderHandling($request, $conf);
+        $this->rejectRequestLevelShareConflict($options);
         self::rejectRequestLevelShareWithProxyAuth($request, $options, $conf);
 
         if ($this->shareHandle !== null) {
@@ -533,9 +533,16 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         // An external share handle may pool SOCKS connections where no section
-        // signature can reach them, so authenticated SOCKS state is rejected.
-        if (self::isSocksProxy($proxy, $conf) && self::hasAuthenticatedSocksProxyState($proxy, $conf)) {
-            throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with authenticated SOCKS proxy configuration; use Guzzle-managed "transport_sharing" or a custom handler/factory instead.');
+        // signature can reach them. On affected libcurl, even an anonymous
+        // request could inherit authenticated state already in that pool.
+        if (self::isSocksProxy($proxy, $conf)) {
+            if (!CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse()) {
+                throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with SOCKS proxy configuration on libcurl before 7.69.0; use Guzzle-managed "transport_sharing" or a custom handler/factory instead.');
+            }
+
+            if (self::hasAuthenticatedSocksProxyState($proxy, $conf)) {
+                throw new \InvalidArgumentException('The request-level CURLOPT_SHARE cURL option cannot be combined with authenticated SOCKS proxy configuration; use Guzzle-managed "transport_sharing" or a custom handler/factory instead.');
+            }
         }
 
         if (
@@ -1169,6 +1176,49 @@ class CurlFactory implements CurlFactoryInterface
     /**
      * @param array<int|string, mixed> $conf
      */
+    private static function assertFinalProxyOptionTypes(array $conf, bool $requiredCleartextMultiplex): void
+    {
+        if (\array_key_exists(\CURLOPT_PROXYTYPE, $conf) && !\is_int($conf[\CURLOPT_PROXYTYPE])) {
+            throw new \InvalidArgumentException('CURLOPT_PROXYTYPE must be an integer.');
+        }
+
+        foreach (['CURLOPT_PROXY', 'CURLOPT_NOPROXY', 'CURLOPT_PRE_PROXY'] as $name) {
+            if (!\defined($name)) {
+                continue;
+            }
+
+            $option = (int) \constant($name);
+            if (\array_key_exists($option, $conf) && !\is_string($conf[$option])) {
+                if ($requiredCleartextMultiplex) {
+                    throw new \InvalidArgumentException(\sprintf('The "multiplex" request option cannot be required when the final %s cURL option value is not a string.', $name));
+                }
+
+                throw new \InvalidArgumentException($name.' must be a string.');
+            }
+        }
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function isolatePreProxyOnAffectedCurl(array &$conf): void
+    {
+        if (CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse() || !\defined('CURLOPT_PRE_PROXY')) {
+            return;
+        }
+
+        $option = (int) \constant('CURLOPT_PRE_PROXY');
+        if (!\array_key_exists($option, $conf) || $conf[$option] === '') {
+            return;
+        }
+
+        $conf[\CURLOPT_FRESH_CONNECT] = true;
+        $conf[\CURLOPT_FORBID_REUSE] = true;
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
     private static function getEffectiveProxy(array $conf): ?string
     {
         if (!\array_key_exists(\CURLOPT_PROXY, $conf)) {
@@ -1243,13 +1293,11 @@ class CurlFactory implements CurlFactoryInterface
     private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $conf): bool
     {
         // SOCKS authentication binds an identity to the connection itself, and
-        // below 7.69.0 the easy and multi handle pools match a SOCKS proxy
-        // credential-blind, so an authenticated SOCKS request is isolated onto
-        // a fresh non-reusable connection; FORBID_REUSE keeps it out of every
-        // pool, so anonymous requests cannot inherit it and need no forcing.
+        // below 7.69.0 an opaque configured share may already contain a SOCKS
+        // connection whose credential state Guzzle cannot inspect. Isolate
+        // authenticated and anonymous requests so neither can inherit it.
         if (self::isSocksProxy($proxy, $conf)) {
-            return !CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse()
-                && self::hasAuthenticatedSocksProxyState($proxy, $conf);
+            return !CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse();
         }
 
         if (!self::usesProxyTunnel($request, $conf) || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {

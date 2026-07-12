@@ -393,6 +393,13 @@ integer cURL option constants and values are passed to cURL after Guzzle
 applies request options. Raw cURL options that conflict with Guzzle-managed
 request handling are deprecated.
 
+Raw `CURLOPT_PROXY`, `CURLOPT_NOPROXY`, and `CURLOPT_PRE_PROXY` values must be
+strings, and raw `CURLOPT_PROXYTYPE` values must be integers. Guzzle rejects
+other types rather than classify a value differently from ext-curl. The checks
+run against the final resolved configuration, so the proxy value resolved from
+the `proxy` request option must also be a string; an explicit `null` value is
+treated as if the option were unset.
+
 Raw cURL options outside the built-in cURL handlers' allow-list are deprecated.
 Allow-listing means Guzzle passes the option through without its own
 deprecation warning; PHP, libcurl, or the TLS backend may still reject or ignore
@@ -1098,6 +1105,20 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > sections every SOCKS-proxied request by its proxy and credential state —
 > plain `http://` targets and credential-less requests included. From libcurl
 > 7.69.0, SOCKS credential matching is left to libcurl.
+>
+> A non-empty deprecated raw `CURLOPT_PRE_PROXY` route is forced onto a fresh,
+> non-reusable connection before libcurl 7.69.0. This conservative rule applies
+> to anonymous and authenticated pre-proxies because an anonymous request must
+> not inherit a previously authenticated SOCKS connection. On those versions,
+> request-level `CURLOPT_SHARE` is rejected for every SOCKS-classified primary
+> proxy route because Guzzle cannot inspect an external shared connection pool;
+> pre-proxy-only routes are covered by the forced-fresh rule above. A
+> configured share handle also forces every SOCKS request onto a fresh,
+> non-reusable connection because its provenance is opaque to `CurlFactory`.
+> This applies to Guzzle-managed `transport_sharing` handles too, even though
+> they never share connection caches themselves. Caller-supplied false
+> `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE` values cannot disable
+> either isolation rule.
 >
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,
