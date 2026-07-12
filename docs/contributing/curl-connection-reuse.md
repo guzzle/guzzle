@@ -345,21 +345,24 @@ own multi never multiplexes (`CURLMOPT_PIPELINING = 0`), and no other
 handler's transfer can join its in-use connections. If a future libcurl
 relaxed the same-multi rule, this reasoning would need re-evaluation.
 
-**SOCKS proxies under a share handle → authenticated requests force fresh
-below 7.69.0.** A configured share handle suppresses `proxyTunnelSignature()`,
-and handler-lifetime shares exist from libcurl 7.35.0 while locking only DNS and
-SSL sessions (§3): connections keep pooling in the factory's idle easy handles
-and in the multi handle's own cache, which below 7.69.0 match a SOCKS proxy
-credential-blind. `requiresFreshConnectionForAuthenticatedProxy()` therefore has
-a SOCKS rule ahead of its tunnel checks: below 7.69.0, an authenticated SOCKS
-request is forced onto a fresh non-reusable connection. `CURLOPT_FORBID_REUSE`
-keeps every authenticated SOCKS connection out of the pools, so anonymous
-requests cannot inherit one and need no forcing — unlike the signature path,
-which must hash the credential-less state because its authenticated connections
-do pool. The shared *connection cache* itself requires libcurl 8.12.0 or newer
-(§3), above the 7.69.0 floor, so wherever a shared connection cache can exist
-libcurl already keys SOCKS credentials and `PERSISTENT_REQUIRE` can never throw
-for SOCKS credentials.
+**SOCKS proxies under a share handle → every request forces fresh below
+7.69.0.** A configured share handle suppresses `proxyTunnelSignature()`, and
+below 7.69.0 the connection pools match a SOCKS proxy credential-blind.
+`requiresFreshConnectionForAuthenticatedProxy()` therefore has a SOCKS rule
+ahead of its tunnel checks: below 7.69.0, every SOCKS request, authenticated
+and anonymous alike, is forced onto a fresh non-reusable connection. The old
+argument that `CURLOPT_FORBID_REUSE` keeps authenticated SOCKS connections out
+of the pools, so anonymous requests need no forcing, only covered connections
+this factory created: the constructor accepts externally built share handles
+whose lock set cannot be introspected from PHP, and libcurl supports
+`CURL_LOCK_DATA_CONNECT` from 7.57.0, so on libcurl 7.57.0 through 7.68.x such
+a handle may already hold an authenticated SOCKS connection Guzzle never saw.
+Guzzle-managed shares lock only the DNS cache on those versions (§3) but pay
+the same conservative cost because handle provenance is opaque to
+`CurlFactory`. The connection cache Guzzle itself shares requires libcurl
+8.12.0 or newer (§3), above the 7.69.0 floor, so wherever a Guzzle-shared
+connection cache can exist libcurl already keys SOCKS credentials and
+`PERSISTENT_REQUIRE` can never throw for SOCKS credentials.
 
 **SSL session sharing floor = 8.6.0 — why it is safe.** Sharing the TLS
 session cache could, in theory, let two handles resume each other's TLS session
@@ -473,9 +476,9 @@ at.
 SOCKS cases in `proxyTunnelSectionProvider`, and the scheme-less and
 `http`-scheme `CURLOPT_PROXYTYPE` reflection tests pin the SOCKS credential
 channels, the credential-less sectioning, and the 7.69.0 delegation. The
-share-handle SOCKS tests assert the blanket force-fresh: an authenticated SOCKS
-request below 7.69.0 — a plain `http://` target included — forces a fresh
-non-reusable connection, while anonymous requests and fixed libcurl do not.
+share-handle SOCKS tests assert the blanket force-fresh: every SOCKS request
+below 7.69.0, authenticated (a plain `http://` target included) or anonymous,
+forces a fresh non-reusable connection, while fixed libcurl does not.
 
 `testProxyTlsCredentialsRequireFreshConnectionOnAffectedCurlVersion` does the
 same for the share-handle force-fresh path: it asserts
@@ -508,10 +511,10 @@ TLS credential below 7.83.1 and not at or above it.
   credential (client cert / TLS-SRP) below 7.83.1, mirroring the signature path;
   the 7.83.1 gate keeps it below the version where `PERSISTENT_REQUIRE` would
   throw.
-- Under a configured share handle, force a fresh non-reusable connection for an
-  authenticated SOCKS request below 7.69.0; anonymous SOCKS requests need no
-  forcing there, because `CURLOPT_FORBID_REUSE` keeps every authenticated SOCKS
-  connection out of the pools.
+- Under a configured share handle, force a fresh non-reusable connection for
+  every SOCKS request below 7.69.0, anonymous ones included; an externally
+  built share handle may already hold an authenticated SOCKS connection this
+  factory never created.
 
 ## References
 

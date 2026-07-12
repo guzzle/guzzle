@@ -1437,13 +1437,11 @@ final class CurlFactory implements CurlFactoryInterface
     private static function requiresFreshConnectionForAuthenticatedProxy(RequestInterface $request, string $proxy, array $conf): bool
     {
         // SOCKS authentication binds an identity to the connection itself, and
-        // below 7.69.0 the easy and multi handle pools match a SOCKS proxy
-        // credential-blind, so an authenticated SOCKS request is isolated onto
-        // a fresh non-reusable connection; FORBID_REUSE keeps it out of every
-        // pool, so anonymous requests cannot inherit it and need no forcing.
+        // below 7.69.0 an opaque configured share may already contain a SOCKS
+        // connection whose credential state Guzzle cannot inspect. Isolate
+        // authenticated and anonymous requests so neither can inherit it.
         if (self::isSocksProxy($proxy, $conf)) {
-            return !CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse()
-                && self::hasAuthenticatedSocksProxyState($proxy, $conf);
+            return !CurlVersion::supportsSocksProxyCredentialAwareConnectionReuse();
         }
 
         if (!self::usesProxyTunnel($request, $conf) || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {
@@ -1479,24 +1477,6 @@ final class CurlFactory implements CurlFactoryInterface
         return \array_key_exists('user', $proxyParts)
             || \array_key_exists('pass', $proxyParts)
             || self::hasCurlProxyCredentials($conf);
-    }
-
-    /**
-     * @param array<int|string, mixed> $conf
-     */
-    private static function hasAuthenticatedSocksProxyState(string $proxy, array $conf): bool
-    {
-        $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
-        $proxyParts = \parse_url($proxyForParsing);
-
-        if (
-            \is_array($proxyParts)
-            && (\array_key_exists('user', $proxyParts) || \array_key_exists('pass', $proxyParts))
-        ) {
-            return true;
-        }
-
-        return self::hasCurlProxyCredentials($conf);
     }
 
     /**
