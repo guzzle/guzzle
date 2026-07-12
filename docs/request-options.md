@@ -393,15 +393,17 @@ integer cURL option constants and values are passed to cURL after Guzzle
 applies request options. Raw cURL options that conflict with Guzzle-managed
 request handling are deprecated.
 
+Raw `CURLOPT_PROXY`, `CURLOPT_NOPROXY`, and `CURLOPT_PRE_PROXY` values must be
+strings, and raw `CURLOPT_PROXYTYPE` values must be integers. Guzzle rejects
+other types rather than classify a value differently from ext-curl. The checks
+run against the final resolved configuration, so a non-string `proxy` request
+option value is rejected in the same way.
+
 Raw cURL options outside the built-in cURL handlers' allow-list are deprecated.
 Allow-listing means Guzzle passes the option through without its own
 deprecation warning; PHP, libcurl, or the TLS backend may still reject or ignore
 an option depending on the runtime. The allow-list is limited to the following
 `CURLOPT_*` constants when they are defined by the installed PHP cURL extension:
-
-Raw `CURLOPT_PROXY`, `CURLOPT_NOPROXY`, and `CURLOPT_PRE_PROXY` values must be
-strings, and raw `CURLOPT_PROXYTYPE` values must be integers. Guzzle rejects
-other types rather than classify a value differently from ext-curl.
 
 - `CURLOPT_ADDRESS_SCOPE`
 - `CURLOPT_CERTINFO`
@@ -1107,12 +1109,14 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > non-reusable connection before libcurl 7.69.0. This conservative rule applies
 > to anonymous and authenticated pre-proxies because an anonymous request must
 > not inherit a previously authenticated SOCKS connection. On those versions,
-> request-level `CURLOPT_SHARE` is rejected for every SOCKS route because
-> Guzzle cannot inspect an external shared connection pool. A configured share
-> handle also forces every SOCKS request onto a fresh, non-reusable connection
-> because its provenance is opaque to `CurlFactory`; Guzzle-managed
-> `transport_sharing` does not itself share connection caches. Caller-supplied
-> false `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE` values cannot disable
+> request-level `CURLOPT_SHARE` is rejected for every SOCKS-classified primary
+> proxy route because Guzzle cannot inspect an external shared connection pool;
+> pre-proxy-only routes are covered by the forced-fresh rule above. A
+> configured share handle also forces every SOCKS request onto a fresh,
+> non-reusable connection because its provenance is opaque to `CurlFactory`.
+> This applies to Guzzle-managed `transport_sharing` handles too, even though
+> they never share connection caches themselves. Caller-supplied false
+> `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE` values cannot disable
 > either isolation rule.
 >
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
