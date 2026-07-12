@@ -177,6 +177,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fail closed when a named cURL multi connection cap cannot be applied
 - Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured
 - Strengthen old-libcurl SOCKS isolation for raw `CURLOPT_PRE_PROXY` and opaque share handles
+- Isolate HTTP proxy tunnels from opaque shared connection caches
 
 ### Deprecated
 
