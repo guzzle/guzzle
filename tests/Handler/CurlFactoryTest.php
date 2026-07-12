@@ -2856,7 +2856,7 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testShareHandleSkipsBlanketForceFreshForAnonymousSocksProxyOnAffectedCurlVersion(): void
+    public function testShareHandleUsesBlanketForceFreshForAnonymousSocksProxyOnAffectedCurlVersion(): void
     {
         self::skipIfCurlShareIsUnavailable();
 
@@ -2867,11 +2867,15 @@ class CurlFactoryTest extends TestCase
         try {
             $easy = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
                 'proxy' => 'socks5://proxy.example.com:1080',
+                'curl' => [
+                    \CURLOPT_FRESH_CONNECT => false,
+                    \CURLOPT_FORBID_REUSE => false,
+                ],
             ]);
 
             self::assertNull($easy->proxyTunnelSignature);
-            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
         } finally {
             self::closeShareHandleOnPhp7($shareHandle);
         }

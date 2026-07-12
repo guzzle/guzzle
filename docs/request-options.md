@@ -1673,6 +1673,13 @@ those set with `fastcgi_param` or `SetEnv`. See
 > plain `http://` targets and credential-less requests included. From libcurl
 > 7.69.0, SOCKS credential matching is left to libcurl.
 >
+> A configured share handle forces every SOCKS request onto a fresh,
+> non-reusable connection before libcurl 7.69.0 because its provenance is
+> opaque to `CurlFactory`. This applies to Guzzle-managed `transport_sharing`
+> handles too, even though they never share connection caches themselves.
+> Caller-supplied false `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE`
+> values cannot disable this rule.
+>
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,
 > which also drops unrelated direct keep-alive connections pooled alongside
