@@ -16,6 +16,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Sanitize the cURL error text exposed through exception handler context
 - Fail closed when a named cURL multi connection cap cannot be applied
 - Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured
+- Complete old-libcurl SOCKS isolation for deprecated raw `CURLOPT_PRE_PROXY` routes and opaque connection share handles
 
 ### Deprecated
 
@@ -23,7 +24,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
-- Complete old-libcurl SOCKS isolation for deprecated raw `CURLOPT_PRE_PROXY` routes and opaque connection share handles
 - Reject raw proxy option values that Guzzle cannot classify identically to ext-curl
 - Defer cURL requests created from multi callbacks until native execution unwinds
 - Fail synchronous waits from native cURL callbacks promptly instead of self-deadlocking
