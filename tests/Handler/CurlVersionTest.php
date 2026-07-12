@@ -265,6 +265,21 @@ class CurlVersionTest extends TestCase
         self::assertFalse(CurlVersion::supportsHttpsProxy());
     }
 
+    public function testSupportsShareConnectionCachesUsesMinimumVersion(): void
+    {
+        self::setVersionInfo([
+            'version' => '7.56.1',
+            'features' => 0,
+        ]);
+        self::assertFalse(CurlVersion::supportsShareConnectionCaches());
+
+        self::setVersionInfo([
+            'version' => '7.57.0',
+            'features' => 0,
+        ]);
+        self::assertTrue(CurlVersion::supportsShareConnectionCaches());
+    }
+
     public function testSupportsTransportSharingUsesSharingFloors(): void
     {
         self::requiresCurlSslFeature();

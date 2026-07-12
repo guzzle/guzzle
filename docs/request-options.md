@@ -1680,6 +1680,20 @@ those set with `fastcgi_param` or `SetEnv`. See
 > libcurl versions. Caller-supplied false `CURLOPT_FRESH_CONNECT` and
 > `CURLOPT_FORBID_REUSE` values cannot disable this rule.
 >
+> HTTP and HTTPS proxy tunnels have an analogous opaque-share rule. From
+> libcurl 7.57.0 a cURL share handle can own a connection cache, and a tunnel
+> seeded there with a literal `Proxy-Authorization` header is never keyed on
+> credentials, so an anonymous tunnel through a share whose connection cache
+> may have outside producers is forced onto a fresh, non-reusable connection;
+> under `TransportSharing::PERSISTENT_REQUIRE` such a tunnel is rejected
+> instead. This covers share handles passed directly to `CurlFactory` and
+> Guzzle's persistent sharing modes, whose connection cache is worker-global.
+> Handler-lifetime `transport_sharing` shares never lock connections and keep
+> their current reuse behavior, and requests carrying recognized proxy
+> credential state keep the version-gated safeguards above. Caller-supplied
+> false `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE` values cannot
+> disable this rule either.
+>
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,
 > which also drops unrelated direct keep-alive connections pooled alongside

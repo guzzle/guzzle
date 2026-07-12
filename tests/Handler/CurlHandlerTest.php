@@ -263,6 +263,25 @@ class CurlHandlerTest extends TestCase
         }
     }
 
+    public function testTransportSharingPassesShareStateToFactory(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $handler = new CurlHandler([
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
+        ]);
+
+        $factory = \Closure::bind(static function (CurlHandler $handler) {
+            return $handler->factory;
+        }, null, CurlHandler::class)($handler);
+
+        $opaque = \Closure::bind(static function ($factory): bool {
+            return $factory->opaqueShareConnectionCache;
+        }, null, \GuzzleHttp\Handler\CurlFactory::class)($factory);
+
+        self::assertFalse($opaque);
+    }
+
     public function testPersistentPreferTransportSharingOptionAppliesCurlShare(): void
     {
         self::skipIfCurlShareIsUnavailable();

@@ -17,6 +17,7 @@ use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Handler;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
+use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Multiplexing;
@@ -861,6 +862,46 @@ class CurlFactoryTest extends TestCase
             ]);
 
             self::assertInstanceOf(EasyHandle::class, $easy);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public function testPersistentPreferForcesFreshAnonymousProxyTunnelsUnderOpaqueShares(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_PREFER, $shareHandle);
+
+        try {
+            self::createOnFactory($factory, '8.21.0', 'https://example.com', [
+                'proxy' => 'http://proxy.example.com:8080',
+            ]);
+
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public function testPersistentRequireRejectsAnonymousProxyTunnelsUnderOpaqueShares(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('fresh proxy tunnel connection');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => 'http://proxy.example.com:8080',
+            ]);
         } finally {
             self::closeShareHandleOnPhp7($shareHandle);
         }
@@ -2900,6 +2941,163 @@ class CurlFactoryTest extends TestCase
         } finally {
             self::closeShareHandleOnPhp7($shareHandle);
         }
+    }
+
+    public static function opaqueShareAnonymousProxyTunnelProvider(): iterable
+    {
+        yield 'https origin at the capability floor' => ['7.57.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ]];
+        yield 'https origin on modern libcurl' => ['8.21.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ]];
+        yield 'explicit tunnel option' => ['8.21.0', 'http://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [\CURLOPT_HTTPPROXYTUNNEL => true],
+        ]];
+
+        if (\defined('CURLOPT_CONNECT_TO')) {
+            yield 'connect-to tunnel' => ['8.21.0', 'http://example.com', [
+                'proxy' => 'http://proxy.example.com:8080',
+                'curl' => [(int) \constant('CURLOPT_CONNECT_TO') => ['example.com:80:backend.example.com:8080']],
+            ]];
+        }
+
+        yield 'authenticated tunnel below the credential floor' => ['7.56.1', 'https://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+        ]];
+    }
+
+    /**
+     * @dataProvider opaqueShareAnonymousProxyTunnelProvider
+     */
+    public function testOpaqueShareHandleForcesFreshProxyTunnels(string $version, string $uri, array $options): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
+
+        try {
+            $options['curl'] = ($options['curl'] ?? []) + [
+                \CURLOPT_FRESH_CONNECT => false,
+                \CURLOPT_FORBID_REUSE => false,
+            ];
+            self::createOnFactory($factory, $version, $uri, $options);
+
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public static function opaqueShareUntouchedRouteProvider(): iterable
+    {
+        yield 'anonymous tunnel below the capability floor' => ['7.56.1', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ]];
+        yield 'direct request' => ['8.21.0', 'https://example.com', [
+            'proxy' => '',
+        ]];
+        yield 'non-tunnel forward proxy' => ['8.21.0', 'http://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ]];
+        yield 'authenticated tunnel on credential-aware libcurl' => ['8.20.0', 'https://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+        ]];
+    }
+
+    /**
+     * @dataProvider opaqueShareUntouchedRouteProvider
+     */
+    public function testOpaqueShareHandleLeavesOtherRoutesUntouched(string $version, string $uri, array $options): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $shareHandle = \curl_share_init();
+        self::assertNotFalse($shareHandle);
+        $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
+
+        try {
+            self::createOnFactory($factory, $version, $uri, $options);
+
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        } finally {
+            self::closeShareHandleOnPhp7($shareHandle);
+        }
+    }
+
+    public static function handlerShareModeProvider(): iterable
+    {
+        yield 'handler prefer' => [TransportSharing::HANDLER_PREFER];
+        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
+    }
+
+    /**
+     * @dataProvider handlerShareModeProvider
+     */
+    public function testHandlerShareStateRetainsAnonymousProxyTunnelReuse(string $mode): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $state = CurlShareHandleState::fromOption($mode);
+        self::assertNotNull($state);
+        $factory = new CurlFactory(3, $state->mode, $state);
+
+        self::createOnFactory($factory, '8.21.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ]);
+
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+    }
+
+    public function testHandlerShareStateKeepsAuthenticatedProxyTunnelSafeguards(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $state = CurlShareHandleState::fromOption(TransportSharing::HANDLER_PREFER);
+        self::assertNotNull($state);
+        $factory = new CurlFactory(3, $state->mode, $state);
+
+        self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+        ]);
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testHandlerShareStateStillForcesFreshSocksProxyOnAffectedCurlVersion(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $state = CurlShareHandleState::fromOption(TransportSharing::HANDLER_PREFER);
+        self::assertNotNull($state);
+        $factory = new CurlFactory(3, $state->mode, $state);
+
+        self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://proxy.example.com:1080',
+        ]);
+
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
+    }
+
+    public function testRejectsShareHandleStateWithMismatchedSharingMode(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $state = CurlShareHandleState::fromOption(TransportSharing::HANDLER_PREFER);
+        self::assertNotNull($state);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The cURL share handle state mode does not match the configured transport sharing mode.');
+
+        new CurlFactory(3, TransportSharing::HANDLER_REQUIRE, $state);
     }
 
     public function testAuthenticatedHttpsProxyReuseOptionsCanBeSetOnFixedCurlVersion(): void

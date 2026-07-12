@@ -214,7 +214,10 @@ handler.
 
 Because `TransportSharing::PERSISTENT_REQUIRE` requires connection cache
 sharing, Guzzle rejects request-level cURL options or proxy tunnel cases that
-require a fresh connection for safety.
+require a fresh connection for safety. This includes anonymous HTTP and HTTPS
+proxy tunnels: the worker-global pool could lend them a tunnel another
+producer authenticated. `TransportSharing::PERSISTENT_PREFER` forces such
+tunnels onto fresh, non-reusable connections instead.
 
 > [!IMPORTANT]
 > **Persistent connection sharing carries two independent risks.**
@@ -230,8 +233,10 @@ require a fresh connection for safety.
 >    different key. Enabling persistent sharing accepts that risk; to avoid it,
 >    run libcurl 8.21.0+ or do not mix client-certificate identities under one
 >    pool. `HANDLER_*` narrows the exposure to your own code but does not fix
->    the libcurl bug. Proxy authentication is unaffected: Guzzle forces a fresh
->    tunnel, or rejects the request under `PERSISTENT_REQUIRE`.
+>    the libcurl bug. Proxy tunnels are unaffected: Guzzle forces a fresh
+>    tunnel for recognized proxy authentication and for anonymous tunnels
+>    through the worker-global pool, or rejects the request under
+>    `PERSISTENT_REQUIRE`.
 > 2. *Worker-global scope, at every libcurl version.* The persistent pool is
 >    keyed only by which cache types it shares and lives in process- or
 >    thread-global state, so it **cannot be scoped to Guzzle alone**: any other
