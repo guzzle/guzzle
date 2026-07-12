@@ -399,6 +399,10 @@ deprecation warning; PHP, libcurl, or the TLS backend may still reject or ignore
 an option depending on the runtime. The allow-list is limited to the following
 `CURLOPT_*` constants when they are defined by the installed PHP cURL extension:
 
+Raw `CURLOPT_PROXY`, `CURLOPT_NOPROXY`, and `CURLOPT_PRE_PROXY` values must be
+strings, and raw `CURLOPT_PROXYTYPE` values must be integers. Guzzle rejects
+other types rather than classify a value differently from ext-curl.
+
 - `CURLOPT_ADDRESS_SCOPE`
 - `CURLOPT_CERTINFO`
 - `CURLOPT_CONNECT_TO`
