@@ -281,6 +281,8 @@ final class CurlFactory implements CurlFactoryInterface
             $request = $request->withHeader('Content-Length', $contentLength);
         }
 
+        $managedProxyAuthorization = self::managedProxyAuthorizationHeaderLines($request);
+
         $easy = new EasyHandle();
         $easy->request = $request;
         $easy->options = $options;
@@ -303,7 +305,10 @@ final class CurlFactory implements CurlFactoryInterface
 
         self::applyProxyConnectHeaderSuppression($request, $conf);
         self::normalizeCurlHeaderOptions($conf);
-        self::applyProxyAuthorizationHeaderHandling($request, $conf);
+        self::applyProxyAuthorizationHeaderHandling($request, $conf, $managedProxyAuthorization);
+        // Validate the managed lines appended above too: a custom
+        // RequestInterface can return unvalidated header values.
+        self::normalizeCurlHeaderOptions($conf);
 
         if ($this->shareHandle !== null) {
             // Conservative blanket mode: a configured share handle hides the
@@ -1755,50 +1760,65 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @param array<int|string, mixed> $conf
+     * Collects the non-empty first-class Proxy-Authorization request header
+     * lines that Guzzle configures in cURL's proxy-only header channel. Empty
+     * values are omitted entirely. getHeaderLine() is deliberately not used:
+     * comma-joining multiple credentials would change their wire
+     * representation and connection signature.
+     *
+     * @return list<string>
      */
-    private static function applyProxyAuthorizationHeaderHandling(RequestInterface $request, array &$conf): void
+    private static function managedProxyAuthorizationHeaderLines(RequestInterface $request): array
     {
+        $headers = [];
+
+        foreach ($request->getHeader('Proxy-Authorization') as $value) {
+            if ($value !== '') {
+                $headers[] = 'Proxy-Authorization: '.$value;
+            }
+        }
+
+        return $headers;
+    }
+
+    /**
+     * Routes the managed Proxy-Authorization lines and any caller-provided
+     * proxy headers through cURL's proxy-only header channel without
+     * consulting Guzzle's route prediction, so no proxy-classification
+     * discrepancy can disclose them to an origin server. libcurl uses the
+     * proxy-only list only for HTTP requests it actually sends to a proxy, so
+     * direct, no-proxy-bypassed, and SOCKS transfers never deliver it.
+     *
+     * @param array<int|string, mixed> $conf
+     * @param list<string>             $managedHeaders
+     */
+    private static function applyProxyAuthorizationHeaderHandling(RequestInterface $request, array &$conf, array $managedHeaders): void
+    {
+        if ($managedHeaders !== [] || self::hasCurlProxyHeaderOption($conf)) {
+            if (!CurlVersion::supportsProxyHeaderSeparation()) {
+                throw new RequestException('Proxy headers require libcurl 7.37.0 or newer built with proxy header separation support.', $request);
+            }
+
+            if ($managedHeaders !== []) {
+                self::appendCurlProxyHeaders($conf, $managedHeaders);
+            }
+
+            $conf[(int) \constant('CURLOPT_HEADEROPT')] = (int) \constant('CURLHEADER_SEPARATE');
+        }
+
+        // Keep the conservative CONNECT header-list separation for effective
+        // HTTP(S) proxy tunnels without a proxy header: on libcurl
+        // 7.37.0-7.42.0 the default is CURLHEADER_UNIFIED. This broad route
+        // approximation never decides managed credential routing.
         $proxy = self::getEffectiveProxy($conf);
-        if ($proxy === null || !self::isHttpProxyForConnectionReuse($proxy, $conf)) {
-            return;
+        if (
+            CurlVersion::supportsProxyHeaderSeparation()
+            && $proxy !== null
+            && self::isHttpProxyForConnectionReuse($proxy, $conf)
+            && self::usesProxyTunnel($request, $conf)
+        ) {
+            $conf[(int) \constant('CURLOPT_HEADEROPT')] = (int) \constant('CURLHEADER_SEPARATE');
         }
-
-        $httpHeaders = $conf[\CURLOPT_HTTPHEADER] ?? null;
-        $movedHeaders = [];
-        $originHeaders = [];
-
-        if (\is_array($httpHeaders)) {
-            foreach ($httpHeaders as $header) {
-                if (\is_string($header) && self::curlHeaderLineNameMatches($header, 'Proxy-Authorization')) {
-                    $movedHeaders[] = $header;
-
-                    continue;
-                }
-
-                $originHeaders[] = $header;
-            }
-        }
-
-        if (CurlVersion::supportsProxyHeaderSeparation()) {
-            if ($movedHeaders !== []) {
-                $conf[\CURLOPT_HTTPHEADER] = $originHeaders;
-                self::appendCurlProxyHeaders($conf, $movedHeaders);
-            }
-
-            // On libcurl 7.37.0-7.42.0 the default is CURLHEADER_UNIFIED.
-            if ($movedHeaders !== [] || self::hasCurlProxyHeaderOption($conf) || self::usesProxyTunnel($request, $conf)) {
-                $conf[(int) \constant('CURLOPT_HEADEROPT')] = (int) \constant('CURLHEADER_SEPARATE');
-            }
-
-            return;
-        }
-
-        if (!\is_array($httpHeaders) || self::proxyAuthorizationHeaderValuesFromList($httpHeaders) === []) {
-            return;
-        }
-
-        throw new RequestException('Proxy-Authorization headers through an HTTP proxy are not supported by the installed libcurl; libcurl 7.37.0 or newer built with proxy header separation support is required.', $request);
     }
 
     /**
@@ -1811,7 +1831,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         if (\array_key_exists($option, $conf)) {
             if (!\is_array($conf[$option])) {
-                throw new InvalidArgumentException('CURLOPT_PROXYHEADER must be an array when Proxy-Authorization is migrated from CURLOPT_HTTPHEADER.');
+                throw new InvalidArgumentException('CURLOPT_PROXYHEADER must be an array when a Proxy-Authorization request header is routed to the proxy header channel.');
             }
 
             $headers = \array_merge($conf[$option], $headers);
@@ -1827,17 +1847,6 @@ final class CurlFactory implements CurlFactoryInterface
     {
         return \defined('CURLOPT_PROXYHEADER')
             && \array_key_exists((int) \constant('CURLOPT_PROXYHEADER'), $conf);
-    }
-
-    private static function curlHeaderLineNameMatches(string $header, string $name): bool
-    {
-        $length = \strcspn($header, ':;');
-
-        if ($length === \strlen($header)) {
-            return false;
-        }
-
-        return Psr7\Utils::caselessEquals(\trim(\substr($header, 0, $length), " \n\r\t\0\x0B"), $name);
     }
 
     /**
@@ -2284,6 +2293,13 @@ final class CurlFactory implements CurlFactoryInterface
     private function applyHeaders(EasyHandle $easy, array &$conf): void
     {
         foreach ($conf['_headers'] as $name => $values) {
+            // The managed Proxy-Authorization field never enters the origin
+            // header list; applyProxyAuthorizationHeaderHandling() routes the
+            // non-empty values through cURL's proxy-only header channel.
+            if (Psr7\Utils::caselessEquals((string) $name, 'Proxy-Authorization')) {
+                continue;
+            }
+
             foreach ($values as $value) {
                 $value = (string) $value;
                 if ($value === '') {

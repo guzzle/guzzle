@@ -995,6 +995,15 @@ final class StreamHandler
     {
         $headers = '';
         foreach ($request->getHeaders() as $name => $value) {
+            // The first-class Proxy-Authorization field never enters the
+            // stream context header block: PHP streams have no proxy-only
+            // header channel, so applyProxy() rejects the non-empty values
+            // when a proxy is selected and they are omitted on direct and
+            // bypassed routes.
+            if (Psr7\Utils::caselessEquals((string) $name, 'Proxy-Authorization')) {
+                continue;
+            }
+
             foreach ($value as $val) {
                 $headers .= "$name: $val\r\n";
             }
@@ -1327,6 +1336,18 @@ final class StreamHandler
         }
 
         $parsed = $this->parseProxy($proxyUri, $scheme);
+
+        // PHP streams do not expose separate proxy and origin header lists;
+        // the wrapper's CONNECT handling copies one textual match out of a
+        // generic user-header buffer and forwards the rest to the tunneled
+        // origin, so arbitrary first-class Proxy-Authorization values cannot
+        // be routed safely. Fail closed before any stream is created.
+        foreach ($request->getHeader('Proxy-Authorization') as $headerValue) {
+            if ($headerValue !== '') {
+                throw new InvalidArgumentException('Proxy-Authorization request headers are not supported through the stream handler; configure credentials in the proxy URI or use a cURL handler.');
+            }
+        }
+
         $context['http']['proxy'] = $parsed['proxy'];
 
         if ($parsed['auth']) {

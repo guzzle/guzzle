@@ -851,14 +851,6 @@ observes only origin responses, and a tunneled transfer failure is classified
 by its transport phase instead of as a response failure carrying the proxy's
 interim reply.
 
-#### Proxy-Authorization Headers
-
-Requests that send a non-empty `Proxy-Authorization` header through an
-`http://` or `https://` proxy now require libcurl 7.37.0 or newer built with
-proxy header separation support, and are rejected with a `RequestException`
-on older libcurl. Guzzle 7 kept the header in the unified header list on such
-libcurl and forced a fresh, non-reused connection instead.
-
 #### Proxy Tunnels Under Shared Connection Caches
 
 From libcurl 7.57.0, a cURL share handle passed directly to `CurlFactory` and
@@ -908,6 +900,10 @@ credentials, progress/debug callbacks, sink handling, cookies, protocols,
 connection coalescing, or cURL share handles. Use first-class Guzzle request
 options for those settings. Allowed raw cURL header-list options, such as
 `CURLOPT_PROXYHEADER`, now accept only strings or stringable objects as entries.
+On libcurl older than 7.37.0, or a PHP build missing the proxy header
+separation constants, a raw `CURLOPT_PROXYHEADER` list is now rejected with a
+`RequestException` before any network I/O; Guzzle 7 passes it through without
+separation support.
 
 The cURL handlers also reject stream-only `stream_context` options, but accept
 `read_timeout` without effect. The stream handler rejects cURL-only options it
