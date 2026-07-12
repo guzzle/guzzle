@@ -1676,9 +1676,9 @@ those set with `fastcgi_param` or `SetEnv`. See
 > A configured share handle forces every SOCKS request onto a fresh,
 > non-reusable connection before libcurl 7.69.0 because its provenance is
 > opaque to `CurlFactory`. This applies to Guzzle-managed `transport_sharing`
-> handles too, even though they never share connection caches themselves.
-> Caller-supplied false `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE`
-> values cannot disable this rule.
+> handles too, even though they do not share connection caches on those
+> libcurl versions. Caller-supplied false `CURLOPT_FRESH_CONNECT` and
+> `CURLOPT_FORBID_REUSE` values cannot disable this rule.
 >
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,

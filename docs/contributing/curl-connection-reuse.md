@@ -357,8 +357,8 @@ this factory created: the constructor accepts externally built share handles
 whose lock set cannot be introspected from PHP, and libcurl supports
 `CURL_LOCK_DATA_CONNECT` from 7.57.0, so on libcurl 7.57.0 through 7.68.x such
 a handle may already hold an authenticated SOCKS connection Guzzle never saw.
-Guzzle-managed shares lock only DNS and SSL sessions on those versions (§3)
-but pay the same conservative cost because handle provenance is opaque to
+Guzzle-managed shares lock only the DNS cache on those versions (§3) but pay
+the same conservative cost because handle provenance is opaque to
 `CurlFactory`. The connection cache Guzzle itself shares requires libcurl
 8.12.0 or newer (§3), above the 7.69.0 floor, so wherever a Guzzle-shared
 connection cache can exist libcurl already keys SOCKS credentials and
