@@ -243,6 +243,23 @@ class CurlVersionTest extends TestCase
         }
     }
 
+    public function testSupportsShareConnectionCachesUsesMinimumVersion(): void
+    {
+        $previous = self::setCurlVersionInfo(['version' => '7.56.1', 'features' => 0]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsShareConnectionCaches());
+
+            self::setCurlVersionInfo(['version' => '7.57.0', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsShareConnectionCaches());
+
+            self::setCurlVersionInfo(false);
+            self::assertTrue(CurlVersion::supportsShareConnectionCaches());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
     public function testSupportsProxyCredentialAwareConnectionReuseUsesSafeVersion(): void
     {
         $previous = self::setCurlVersionInfo(['version' => '8.19.0', 'features' => 0]);

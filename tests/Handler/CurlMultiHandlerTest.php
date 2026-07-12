@@ -1617,6 +1617,25 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testTransportSharingPassesShareStateToFactory(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $handler = new CurlMultiHandler([
+            'transport_sharing' => TransportSharing::HANDLER_PREFER,
+        ]);
+
+        $factory = \Closure::bind(static function (CurlMultiHandler $handler) {
+            return $handler->factory;
+        }, null, CurlMultiHandler::class)($handler);
+
+        $opaque = \Closure::bind(static function (CurlFactory $factory): bool {
+            return $factory->opaqueShareConnectionCache;
+        }, null, CurlFactory::class)($factory);
+
+        self::assertFalse($opaque);
+    }
+
     public function testPreferredTransportSharingCanBeUsedWithCustomFactory(): void
     {
         $handler = new CurlMultiHandler([
