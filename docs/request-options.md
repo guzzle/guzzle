@@ -1120,6 +1120,18 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE` values cannot disable
 > either isolation rule.
 >
+> HTTP and HTTPS proxy tunnels have an analogous opaque-share rule. From
+> libcurl 7.57.0 a cURL share handle can own a connection cache, and a tunnel
+> seeded there with a literal `Proxy-Authorization` header is never keyed on
+> credentials, so on those versions request-level `CURLOPT_SHARE` is rejected
+> for every HTTP/HTTPS proxy tunnel, and a share handle passed directly to
+> `CurlFactory` forces every anonymous tunnel onto a fresh, non-reusable
+> connection that caller-supplied false `CURLOPT_FRESH_CONNECT` and
+> `CURLOPT_FORBID_REUSE` values cannot restore. Requests carrying recognized
+> proxy credential state keep the version-gated safeguards above, and
+> Guzzle-managed `transport_sharing` handles are exempt from this HTTP tunnel
+> rule because they never share connection caches.
+>
 > Sectioning has a cost in mixed workloads: changing the proxy credentials in
 > use discards the idle pooled connections held for the previous credentials,
 > which also drops unrelated direct keep-alive connections pooled alongside

@@ -219,7 +219,7 @@ class CurlMultiHandler
                 : null;
 
             $this->factory = $this->shareHandleState !== null
-                ? new CurlFactory(50, $this->shareHandleState->mode, $this->shareHandleState->handle)
+                ? new CurlFactory(50, $this->shareHandleState->mode, $this->shareHandleState)
                 : new CurlFactory(50);
         }
 
