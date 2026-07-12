@@ -80,9 +80,9 @@ cache). `*_REQUIRE` errors if the requested sharing is unavailable. The
 `*_PREFER` modes degrade along a chain: `HANDLER_PREFER` falls back from
 handler-lifetime sharing to no sharing, and `PERSISTENT_PREFER` falls back from
 persistent sharing to handler-lifetime sharing and then to no sharing. When
-connection caps are configured, persistent preference begins at handler-lifetime
-sharing, because a shared connection pool cannot honor the cap guarantee
-(section 7).
+connection caps are configured on libcurl below 8.22.0, persistent preference
+begins at handler-lifetime sharing, because a shared connection pool cannot
+honor the cap guarantee there (section 7).
 
 What a share handle can share, and the libcurl floor Guzzle requires for each
 (see `CurlVersion`):
@@ -439,18 +439,28 @@ target destination, and older implementations differed (the original 7.30.0 code
 keyed even forwarding by the target hostname), so the cap is not a portable
 per-proxy or per-credential limit.
 
-**Connection caps and shared pools.** With connection caps configured,
+**Connection caps and shared pools.** On libcurl below
+`SHARED_POOL_CONNECTION_CAP_VERSION = 8.22.0`, with connection caps configured,
 `PERSISTENT_PREFER` transport sharing degrades to handler-lifetime sharing,
 `PERSISTENT_REQUIRE` is rejected, and a preconstructed persistent
 `CurlShareHandleState` of either persistent mode is rejected. libcurl 7.57.0
-through 8.12.x checked the requesting transfer's multi-handle limits against all
-connections in the share-owned pool; different sharers could use different
-multi-handle limits, so this never provided a coherent per-handler or global
-cap. From libcurl 8.13.0, share-owned pools have no associated multi-handle
-limits and those caps are skipped entirely. A custom `handle_factory` is
-caller-controlled: it is responsible for not attaching an external
-connection-sharing `CURLOPT_SHARE` pool when multi-handle connection caps must
-be enforced, because Guzzle cannot inspect that native handle state.
+through 8.12.x checked the requesting transfer's multi-handle limits against
+all connections in the share-owned pool, but the behavior was undocumented
+and untested, and Guzzle declined to rely on it. From libcurl 8.13.0
+(df67269), share-owned pools have no associated multi-handle limits and those
+caps are skipped entirely (curl #22265). libcurl 8.22.0 restored the
+per-transfer semantics, fixed idle-connection eviction for share-owned pools,
+and documented the contract: each transfer applies the limits of the multi
+handle it runs on to the shared cache (curl #22266). From 8.22.0 Guzzle
+permits the combination: each transfer applies its multi handle's limits to
+the shared pool, so every sharer's connections count toward a capped
+transfer's numbers, a capped transfer can evict other sharers' idle
+connections or wait behind their active ones, and sharers without caps can
+still grow the pool. There is no pool-global limit; different sharers can
+carry different numbers, and each handler enforces only its own. A custom
+`handle_factory` is caller-controlled: it is responsible for not attaching an
+external connection-sharing `CURLOPT_SHARE` pool when multi-handle connection
+caps must be enforced, because Guzzle cannot inspect that native handle state.
 
 ## 8. The version trust floor
 
