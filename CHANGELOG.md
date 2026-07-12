@@ -30,7 +30,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Validate the `on_trailers` callback before starting a cURL transfer
 - Reject the `on_trailers` request option on the stream handler, which cannot observe trailers
 - Match cookies, proxy schemes, auth types, and header names with locale-independent ASCII folding
-- Reject final proxy option values, including from the `proxy` request option, that Guzzle cannot classify identically to ext-curl
+- Reject proxy option values that Guzzle cannot classify identically to ext-curl
 
 
 ## 7.14.0 - 2026-07-08
