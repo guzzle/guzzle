@@ -140,7 +140,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Ignore valueless `Set-Cookie` attributes that require a value when parsing
 - Trim only the trailing CRLF from the stream handler header block
 - Fail streamed uploads immediately when the body cannot be resent for an auth challenge
-- Isolate anonymous SOCKS requests under configured share handles on libcurl before 7.69.0
 
 ### Removed
 
