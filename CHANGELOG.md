@@ -24,7 +24,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Fixed
 
-- Reject raw proxy option values that Guzzle cannot classify identically to ext-curl
 - Defer cURL requests created from multi callbacks until native execution unwinds
 - Fail synchronous waits from native cURL callbacks promptly instead of self-deadlocking
 - Guard cURL multi handle removal against progress callbacks re-entering the handler
