@@ -542,6 +542,17 @@ class StreamHandler
     {
         $headers = '';
         foreach ($request->getHeaders() as $name => $value) {
+            // A first-class Proxy-Authorization header is proxy-scoped and
+            // PHP's stream wrapper has no proxy-only header channel, so the
+            // field is never serialized into the request context; add_proxy()
+            // rejects a non-empty value when a proxy is selected. The
+            // caselessEquals() helper is locale-independent, unlike
+            // strcasecmp(), so a locale cannot make this match miss and
+            // re-leak the credential.
+            if (Psr7\Utils::caselessEquals((string) $name, 'Proxy-Authorization')) {
+                continue;
+            }
+
             foreach ($value as $val) {
                 $headers .= "$name: $val\r\n";
             }
@@ -857,6 +868,24 @@ class StreamHandler
         }
 
         $parsed = $this->parse_proxy($uri);
+
+        // PHP's stream wrapper exposes no proxy-only header channel: it
+        // forwards user headers to the origin and extracts one
+        // Proxy-Authorization line for a CONNECT tunnel by textual matching,
+        // which cannot safely carry arbitrary first-class values. Fail closed
+        // before any stream is created; proxy URI userinfo remains the
+        // supported mechanism for Basic proxy authentication.
+        $managed = \array_values(\array_filter(
+            $request->getHeader('Proxy-Authorization'),
+            static function (string $value): bool {
+                return $value !== '';
+            }
+        ));
+
+        if ($managed !== []) {
+            throw new \InvalidArgumentException('Proxy-Authorization request headers are not supported through the stream handler; configure credentials in the proxy URI or use a cURL handler.');
+        }
+
         $options['http']['proxy'] = $parsed['proxy'];
 
         if ($parsed['auth']) {

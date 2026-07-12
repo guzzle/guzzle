@@ -729,6 +729,120 @@ class StreamHandlerTest extends TestCase
         return $options;
     }
 
+    private function getDefaultContext(Request $request): array
+    {
+        $handler = new StreamHandler();
+        $method = new \ReflectionMethod(StreamHandler::class, 'getDefaultContext');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        return $method->invoke($handler, $request);
+    }
+
+    private function addProxyToContext(Request $request, array &$context, $proxy): void
+    {
+        $handler = new StreamHandler();
+        $params = [];
+        $method = new \ReflectionMethod(StreamHandler::class, 'add_proxy');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $method->invokeArgs($handler, [$request, &$context, $proxy, &$params]);
+    }
+
+    public function testOmitsProxyAuthorizationHeaderFromDefaultContext(): void
+    {
+        $context = $this->getDefaultContext(new Request('GET', 'http://example.com', [
+            'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+            'X-Control' => 'yes',
+        ]));
+
+        self::assertStringNotContainsString('Proxy-Authorization', $context['http']['header']);
+        self::assertStringContainsString('X-Control: yes', $context['http']['header']);
+    }
+
+    public function testBypassedStreamProxyOmitsProxyAuthorizationHeader(): void
+    {
+        $request = new Request('GET', 'http://example.com', [
+            'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+            'X-Control' => 'yes',
+        ]);
+        $context = $this->getDefaultContext($request);
+
+        $this->addProxyToContext($request, $context, [
+            'http' => 'http://proxy.example.com:8125',
+            'no' => ['*'],
+        ]);
+
+        self::assertArrayNotHasKey('proxy', $context['http']);
+        self::assertStringNotContainsString('Proxy-Authorization', $context['http']['header']);
+        self::assertStringContainsString('X-Control: yes', $context['http']['header']);
+    }
+
+    public function testSelectedStreamProxyRejectsManagedProxyAuthorization(): void
+    {
+        $request = new Request('GET', 'http://example.com', [
+            'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+        ]);
+        $context = $this->getDefaultContext($request);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Proxy-Authorization request headers are not supported through the stream handler; configure credentials in the proxy URI or use a cURL handler.');
+
+        $this->addProxyToContext($request, $context, 'http://proxy.example.com:8125');
+    }
+
+    public function testSelectedStreamProxyAllowsEmptyProxyAuthorizationHeader(): void
+    {
+        $request = new Request('GET', 'http://example.com', [
+            'Proxy-Authorization' => '',
+        ]);
+        $context = $this->getDefaultContext($request);
+
+        $this->addProxyToContext($request, $context, 'http://user:pass@proxy.example.com:8125');
+
+        self::assertSame('tcp://proxy.example.com:8125', $context['http']['proxy']);
+        // Only the proxy URI userinfo line exists; the empty first-class
+        // field was omitted from the serialized headers.
+        self::assertSame(1, \substr_count($context['http']['header'], 'Proxy-Authorization'));
+        self::assertStringContainsString('Proxy-Authorization: Basic '.\base64_encode('user:pass'), $context['http']['header']);
+    }
+
+    public function testDirectStreamRequestDoesNotSendProxyAuthorizationToOrigin(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+
+        $response = $handler(
+            new Request('GET', Server::$url, ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+            []
+        )->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertFalse(Server::received()[0]->hasHeader('Proxy-Authorization'));
+    }
+
+    public function testSelectedStreamProxyRejectsManagedProxyAuthorizationBeforeSendingRequest(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = new StreamHandler();
+
+        try {
+            $handler(
+                new Request('GET', 'http://www.example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+                ['proxy' => Server::$url]
+            )->wait();
+            self::fail('Expected the selected stream proxy to reject the Proxy-Authorization request header.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('configure credentials in the proxy URI', $e->getMessage());
+        }
+
+        self::assertCount(0, Server::received());
+    }
+
     public function testAddsTimeout()
     {
         $res = $this->getSendResult(['stream' => true, 'timeout' => 200]);
