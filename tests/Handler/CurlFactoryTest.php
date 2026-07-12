@@ -907,6 +907,56 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testPersistentShareStateIsTreatedAsOpaqueByTheFactory(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        if (!\function_exists('curl_share_init_persistent') || !\class_exists('CurlSharePersistentHandle')) {
+            self::markTestSkipped('Persistent cURL share handles are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '8.21.0', 'features' => self::curlSslFeature()]);
+
+        try {
+            $state = CurlShareHandleState::fromOption(TransportSharing::PERSISTENT_REQUIRE);
+            self::assertNotNull($state);
+            $factory = new CurlFactory(3, $state->mode, $state);
+
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('fresh proxy tunnel connection');
+
+            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+                'proxy' => 'http://proxy.example.com:8080',
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testPersistentPreferFallbackShareStateRemainsTrusted(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '8.21.0', 'features' => self::curlSslFeature()]);
+        $_SERVER['curl_share_init_persistent_fail'] = true;
+
+        try {
+            $state = CurlShareHandleState::fromOption(TransportSharing::PERSISTENT_PREFER);
+            self::assertNotNull($state);
+            self::assertSame(TransportSharing::HANDLER_PREFER, $state->mode);
+            $factory = new CurlFactory(3, $state->mode, $state);
+
+            self::createOnFactory($factory, '8.21.0', 'https://example.com', [
+                'proxy' => 'http://proxy.example.com:8080',
+            ]);
+
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        } finally {
+            unset($_SERVER['curl_share_init_persistent_fail']);
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
     public static function parsedProxyCredentialOptions(): array
     {
         return [
@@ -3043,16 +3093,22 @@ class CurlFactoryTest extends TestCase
     {
         self::skipIfCurlShareIsUnavailable();
 
-        $state = CurlShareHandleState::fromOption($mode);
-        self::assertNotNull($state);
-        $factory = new CurlFactory(3, $state->mode, $state);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '8.21.0', 'features' => self::curlSslFeature()]);
 
-        self::createOnFactory($factory, '8.21.0', 'https://example.com', [
-            'proxy' => 'http://proxy.example.com:8080',
-        ]);
+        try {
+            $state = CurlShareHandleState::fromOption($mode);
+            self::assertNotNull($state);
+            $factory = new CurlFactory(3, $state->mode, $state);
 
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+            self::createOnFactory($factory, '8.21.0', 'https://example.com', [
+                'proxy' => 'http://proxy.example.com:8080',
+            ]);
+
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     public function testHandlerShareStateKeepsAuthenticatedProxyTunnelSafeguards(): void

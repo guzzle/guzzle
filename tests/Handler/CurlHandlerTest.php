@@ -275,9 +275,9 @@ class CurlHandlerTest extends TestCase
             return $handler->factory;
         }, null, CurlHandler::class)($handler);
 
-        $opaque = \Closure::bind(static function ($factory): bool {
+        $opaque = \Closure::bind(static function (CurlFactory $factory): bool {
             return $factory->opaqueShareConnectionCache;
-        }, null, \GuzzleHttp\Handler\CurlFactory::class)($factory);
+        }, null, CurlFactory::class)($factory);
 
         self::assertFalse($opaque);
     }

@@ -278,6 +278,9 @@ class CurlVersionTest extends TestCase
             'features' => 0,
         ]);
         self::assertTrue(CurlVersion::supportsShareConnectionCaches());
+
+        self::setVersionInfo(false);
+        self::assertTrue(CurlVersion::supportsShareConnectionCaches());
     }
 
     public function testSupportsTransportSharingUsesSharingFloors(): void
