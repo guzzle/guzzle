@@ -142,15 +142,12 @@ because Guzzle cannot inspect that native handle state.
 
 Connection cap options compose with transport sharing as follows. Handler
 transport sharing shares only DNS and, when supported, TLS session data and
-works with the caps unchanged. Persistent transport sharing normally also pools
-connections in a shared cURL share handle, but libcurl 8.13.0 and newer does not
-apply the cURL multi connection cap options to transfers that use a shared
-connection pool (older libcurl checked the requesting transfer's own limits
-against the shared pool, which is not a coherent cap). When connection cap
-options are configured, `TransportSharing::PERSISTENT_PREFER` therefore falls
-back to handler-lifetime sharing, and `TransportSharing::PERSISTENT_REQUIRE` is
-rejected because required persistent sharing cannot be honored together with the
-caps.
+works with the caps unchanged. Persistent transport sharing also pools
+connections in a shared cURL share handle, and libcurl does not apply the cURL
+multi connection cap options to transfers that use a shared connection pool.
+When the caps are configured, `TransportSharing::PERSISTENT_PREFER` therefore
+falls back to handler-lifetime sharing, and
+`TransportSharing::PERSISTENT_REQUIRE` is rejected.
 
 ### What do the caps count?
 
