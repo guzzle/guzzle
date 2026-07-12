@@ -710,37 +710,49 @@ class CurlFactoryTest extends TestCase
     {
         self::skipIfCurlShareIsUnavailable();
 
-        $conf = [\CURLOPT_PROXY => 'socks5://username:password@proxy.example.com:1080'];
-        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.69.0', 'features' => 0]);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated SOCKS proxy configuration#');
+        try {
+            $conf = [\CURLOPT_PROXY => 'socks5://username:password@proxy.example.com:1080'];
+            $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
 
-        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated SOCKS proxy configuration#');
+
+            $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+            if (\PHP_VERSION_ID < 80100) {
+                $method->setAccessible(true);
+            }
+            $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
         }
-        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
     }
 
     public function testRejectsRequestLevelShareWithSocksProxyUserPwd(): void
     {
         self::skipIfCurlShareIsUnavailable();
 
-        $conf = [
-            \CURLOPT_PROXY => 'socks5://proxy.example.com:1080',
-            \CURLOPT_PROXYUSERPWD => 'username:password',
-        ];
-        $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.69.0', 'features' => 0]);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated SOCKS proxy configuration#');
+        try {
+            $conf = [
+                \CURLOPT_PROXY => 'socks5://proxy.example.com:1080',
+                \CURLOPT_PROXYUSERPWD => 'username:password',
+            ];
+            $options = ['curl' => [(int) \constant('CURLOPT_SHARE') => null]];
 
-        $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
-        if (\PHP_VERSION_ID < 80100) {
-            $method->setAccessible(true);
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessageMatches('#CURLOPT_SHARE.*authenticated SOCKS proxy configuration#');
+
+            $method = new \ReflectionMethod(CurlFactory::class, 'rejectRequestLevelShareWithProxyAuth');
+            if (\PHP_VERSION_ID < 80100) {
+                $method->setAccessible(true);
+            }
+            $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
         }
-        $method->invoke(null, new Psr7\Request('GET', 'https://example.com'), $options, $conf);
     }
 
     public function testAllowsRequestLevelShareWithAnonymousSocksProxyOnFixedCurlVersion(): void
