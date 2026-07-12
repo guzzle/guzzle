@@ -393,6 +393,13 @@ integer cURL option constants and values are passed to cURL after Guzzle
 applies request options. Raw cURL options that conflict with Guzzle-managed
 request handling are deprecated.
 
+Raw `CURLOPT_PROXY`, `CURLOPT_NOPROXY`, and `CURLOPT_PRE_PROXY` values must be
+strings, and raw `CURLOPT_PROXYTYPE` values must be integers. Guzzle rejects
+other types rather than classify a value differently from ext-curl. The checks
+run against the final resolved configuration, so the proxy value resolved from
+the `proxy` request option must also be a string; an explicit `null` value is
+treated as if the option were unset.
+
 Raw cURL options outside the built-in cURL handlers' allow-list are deprecated.
 Allow-listing means Guzzle passes the option through without its own
 deprecation warning; PHP, libcurl, or the TLS backend may still reject or ignore
