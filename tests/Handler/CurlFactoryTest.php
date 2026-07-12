@@ -2609,6 +2609,10 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
         $easy = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
             'proxy' => 'socks5://proxy.example.com:1080',
+            'curl' => [
+                \CURLOPT_FRESH_CONNECT => false,
+                \CURLOPT_FORBID_REUSE => false,
+            ],
         ]);
 
         self::assertNull($easy->proxyTunnelSignature);
@@ -2773,6 +2777,16 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testRejectsNonStringProxyRequestOption(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_PROXY must be a string.');
+
+        (new CurlFactory(3))->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => false,
+        ]);
+    }
+
     public function testRejectsInvalidProxyTypeBeforeRequestLevelShareInspection(): void
     {
         self::skipIfCurlShareIsUnavailable();
@@ -2785,7 +2799,7 @@ class CurlFactoryTest extends TestCase
             $this->expectExceptionMessage('CURLOPT_PROXYTYPE must be an integer.');
 
             (new CurlFactory(3))->create(new Psr7\Request('GET', 'https://example.com'), [
-                'proxy' => 'socks5://proxy.example.com:1080',
+                'proxy' => 'socks5://username:password@proxy.example.com:1080',
                 'curl' => [
                     \CURLOPT_PROXYTYPE => (string) \CURLPROXY_SOCKS5,
                     (int) \constant('CURLOPT_SHARE') => $shareHandle,
@@ -2803,8 +2817,8 @@ class CurlFactoryTest extends TestCase
         self::skipIfCurlShareIsUnavailable();
 
         $configuredShareHandle = \curl_share_init();
-        $requestShareHandle = \curl_share_init();
         self::assertNotFalse($configuredShareHandle);
+        $requestShareHandle = \curl_share_init();
         self::assertNotFalse($requestShareHandle);
 
         try {
@@ -4390,6 +4404,37 @@ class CurlFactoryTest extends TestCase
                 $this->expectExceptionMessage(\sprintf('The "multiplex" request option cannot be required when the final %s cURL option value is not a string.', $name));
 
                 $f->create(new Psr7\Request('GET', Server::$url, [], null, '2.0'), [
+                    'multiplex' => Multiplexing::REQUIRE_EAGER,
+                    'curl' => $curlOptions,
+                ]);
+            });
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider nonStringRawProxyOptionProvider
+     */
+    public function testRequireRejectsNonStringProxyOptionsWithPlainMessageForHttpsRequests(array $curlOptions, string $name)
+    {
+        if (!\defined('CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE') || !\defined('CURLOPT_PIPEWAIT') || !\defined('CURL_VERSION_HTTP2')) {
+            self::markTestSkipped('CURLOPT_PIPEWAIT or HTTP/2 cURL constants are unavailable.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.14.0',
+            'features' => self::curlSslFeature() | \CURL_VERSION_HTTP2,
+        ]);
+
+        try {
+            self::withProxyEnvironment([], function () use ($curlOptions, $name): void {
+                $f = new CurlFactory(3);
+
+                $this->expectException(\InvalidArgumentException::class);
+                $this->expectExceptionMessage($name.' must be a string.');
+
+                $f->create(new Psr7\Request('GET', 'https://example.com', [], null, '2.0'), [
                     'multiplex' => Multiplexing::REQUIRE_EAGER,
                     'curl' => $curlOptions,
                 ]);
