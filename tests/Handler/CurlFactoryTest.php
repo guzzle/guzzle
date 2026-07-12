@@ -2805,6 +2805,13 @@ class CurlFactoryTest extends TestCase
             'proxy' => 'http://username:password@proxy.example.com:8080',
         ]];
 
+        if (\defined('CURLOPT_PROXY_SSLCERT')) {
+            yield 'proxy tls credential on credential-aware libcurl' => ['7.83.1', 'https://example.com', [
+                'proxy' => 'http://proxy.example.com:8080',
+                'curl' => [(int) \constant('CURLOPT_PROXY_SSLCERT') => '/path/client.pem'],
+            ]];
+        }
+
         if (\defined('CURLOPT_NOPROXY')) {
             yield 'wildcard no-proxy bypass' => ['8.21.0', 'https://example.com', [
                 'proxy' => 'http://proxy.example.com:8080',
@@ -2841,16 +2848,22 @@ class CurlFactoryTest extends TestCase
     {
         self::skipIfCurlShareIsUnavailable();
 
-        $state = CurlShareHandleState::fromOption($mode);
-        self::assertNotNull($state);
-        $factory = new CurlFactory(3, $state->mode, $state);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '8.21.0', 'features' => self::curlSslFeature()]);
 
-        self::createOnFactory($factory, '8.21.0', 'https://example.com', [
-            'proxy' => 'http://proxy.example.com:8080',
-        ]);
+        try {
+            $state = CurlShareHandleState::fromOption($mode);
+            self::assertNotNull($state);
+            $factory = new CurlFactory(3, $state->mode, $state);
 
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+            self::createOnFactory($factory, '8.21.0', 'https://example.com', [
+                'proxy' => 'http://proxy.example.com:8080',
+            ]);
+
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     public function testHandlerShareStateKeepsAuthenticatedProxyTunnelSafeguards(): void

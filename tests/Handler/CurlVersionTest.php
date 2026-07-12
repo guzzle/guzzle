@@ -252,6 +252,9 @@ class CurlVersionTest extends TestCase
 
             self::setCurlVersionInfo(['version' => '7.57.0', 'features' => 0]);
             self::assertTrue(CurlVersion::supportsShareConnectionCaches());
+
+            self::setCurlVersionInfo(false);
+            self::assertTrue(CurlVersion::supportsShareConnectionCaches());
         } finally {
             self::setCurlVersionInfo($previous);
         }
