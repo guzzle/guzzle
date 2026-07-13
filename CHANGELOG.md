@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 7.14.1 - Upcoming
 
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.12.5`
+
 ### Fixed
 
 - Fail closed when a proxy tunnel isolation cURL option cannot be applied
