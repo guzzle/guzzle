@@ -190,7 +190,11 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Guard cURL multi handle removal against progress callbacks re-entering the handler
 
 
-## 7.14.1 - Upcoming
+## 7.14.1 - 2026-07-13
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.12.5`
 
 ### Fixed
 
