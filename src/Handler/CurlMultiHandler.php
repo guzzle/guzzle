@@ -9,7 +9,6 @@ use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
-use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
@@ -375,11 +374,10 @@ class CurlMultiHandler
 
         $id = (int) $easy->handle;
 
-        $sync = !empty($options[RequestOptions::SYNCHRONOUS]);
         $waitToken = new \stdClass();
 
         $promise = new Promise(
-            function () use ($id, $sync, $waitToken): void {
+            function () use ($id, $waitToken): void {
                 if ($this->multiExecDepth > 0) {
                     // Waiting cannot drive native cURL while a callback has
                     // the multi handle busy; fail the wait promptly instead
@@ -389,11 +387,7 @@ class CurlMultiHandler
                     return;
                 }
 
-                if ($sync) {
-                    $this->executeUntil($id, $waitToken);
-                } else {
-                    $this->execute();
-                }
+                $this->executeUntil($id, $waitToken);
             },
             function () use ($id, $waitToken) {
                 return $this->cancel($id, $waitToken);
@@ -1083,9 +1077,9 @@ class CurlMultiHandler
     }
 
     /**
-     * Runs the event loop until the given transfer has finished, so a
-     * synchronous transfer does not wait for every other transfer on the
-     * handler like execute() does.
+     * Runs the event loop until the given transfer has finished, so waiting
+     * on a promise does not wait for every other transfer on the handler
+     * like execute() does.
      *
      * The native cURL handle ID can be reused by a request created from a
      * completion callback, so the wait token guards against waiting on an
