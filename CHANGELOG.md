@@ -28,6 +28,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Defer cURL requests created from multi callbacks until native execution unwinds
 - Fail synchronous waits from native cURL callbacks promptly instead of self-deadlocking
 - Guard cURL multi handle removal against progress callbacks re-entering the handler
+- Scope promise waits on the cURL multi handler to the awaited transfer
+- Stop re-applying the `delay` request option to followed redirects
 
 
 ## 7.14.1 - 2026-07-13

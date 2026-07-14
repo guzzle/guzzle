@@ -105,6 +105,10 @@ class RedirectMiddleware
             );
         }
 
+        // The caller's delay applies once, before the initial request, not
+        // before each followed redirect.
+        unset($options['delay']);
+
         $promise = $this($nextRequest, $options);
 
         // Add headers to be able to track history of redirects.

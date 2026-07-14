@@ -298,6 +298,36 @@ class RedirectMiddlewareTest extends TestCase
         self::assertTrue($call);
     }
 
+    public function testDoesNotReapplyDelayOnRedirect()
+    {
+        $optionsSeen = [];
+        $mock = new MockHandler([
+            static function (RequestInterface $request, $options) use (&$optionsSeen) {
+                $optionsSeen[] = $options;
+
+                return new Response(302, ['Location' => 'http://test.com']);
+            },
+            static function (RequestInterface $request, $options) use (&$optionsSeen) {
+                $optionsSeen[] = $options;
+
+                return new Response(200);
+            },
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+
+        $response = $handler(new Request('GET', 'http://example.com'), [
+            'delay' => 1,
+            'allow_redirects' => true,
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertCount(2, $optionsSeen);
+        self::assertSame(1, $optionsSeen[0]['delay']);
+        self::assertArrayNotHasKey('delay', $optionsSeen[1]);
+    }
+
     /**
      * @testWith ["digest"]
      */

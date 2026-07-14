@@ -128,6 +128,38 @@ class CurlMultiHandlerTest extends TestCase
         $delayed->cancel();
     }
 
+    public function testAsynchronousWaitsDoNotWaitForOtherTransfers(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+
+        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 2000]);
+        $immediate = $handler(new Request('GET', Server::$url), []);
+
+        $response = $immediate->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertTrue(P\Is::pending($delayed));
+
+        $delayed->cancel();
+    }
+
+    public function testSiblingTransferCompletesWhenWaitedAfterTargetedWait(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200), new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+
+        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 1]);
+        $immediate = $handler(new Request('GET', Server::$url), []);
+
+        self::assertSame(200, $immediate->wait()->getStatusCode());
+        self::assertSame(200, $delayed->wait()->getStatusCode());
+    }
+
     public function testSynchronousWaitDoesNotFollowReusedHandleFromCompletionCallback(): void
     {
         self::skipIfConnectionCapCurlMultiOptionsUnavailable();
