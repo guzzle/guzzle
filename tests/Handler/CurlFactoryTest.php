@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Tests\Handler;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler;
@@ -10,6 +11,7 @@ use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\EasyHandle;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
@@ -2321,47 +2323,66 @@ class CurlFactoryTest extends TestCase
         self::assertSame((int) \constant('CURLHEADER_SEPARATE'), $_SERVER['_curl'][(int) \constant('CURLOPT_HEADEROPT')]);
     }
 
-    public function testLegacyCurlPreservesProxyAuthorizationHeaderAndForcesFreshConnection(): void
+    /**
+     * @dataProvider managedProxyAuthorizationRouteProvider
+     *
+     * @param array<string, string>    $env
+     * @param array<int|string, mixed> $options
+     */
+    public function testManagedProxyAuthorizationIsDelegatedToProxyOnlyChannel(array $env, array $options): void
     {
-        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.36.0', 'features' => 0]);
-
-        try {
-            (new CurlFactory(3))->create(
-                new Psr7\Request('GET', 'http://example.com', [
-                    'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
-                ]),
-                ['proxy' => 'http://proxy.example.com:8080']
-            );
-
-            self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
-        } finally {
-            self::setCurlVersionInfo($previousVersionInfo);
-        }
-    }
-
-    public function testDirectRequestDoesNotMoveProxyAuthorizationHeader(): void
-    {
-        self::withProxyEnvironment([], static function (): void {
-            $previousVersionInfo = self::setCurlVersionInfo(['version' => '8.20.0', 'features' => 0]);
+        self::withProxyEnvironment($env, static function () use ($options): void {
+            self::skipIfProxyHeaderSeparationUnavailable();
+            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.37.0', 'features' => 0]);
 
             try {
                 (new CurlFactory(3))->create(
                     new Psr7\Request('GET', 'http://example.com', [
                         'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
                     ]),
-                    ['proxy' => '']
+                    $options
                 );
 
-                self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
-                self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-                self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
+                self::assertNotContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+                self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][self::proxyHeaderOption()]);
+                self::assertSame((int) \constant('CURLHEADER_SEPARATE'), $_SERVER['_curl'][(int) \constant('CURLOPT_HEADEROPT')]);
+            } finally {
+                self::setCurlVersionInfo($previousVersionInfo);
+            }
+        });
+    }
+
+    public static function managedProxyAuthorizationRouteProvider(): iterable
+    {
+        yield 'direct' => [[], ['proxy' => '']];
+        yield 'managed no-proxy match' => [[], ['proxy' => ['http' => 'http://proxy.example.com:8125', 'no' => ['example.com']]]];
+        yield 'environment NO_PROXY match' => [['http_proxy' => 'http://proxy.example.com:8125', 'no_proxy' => 'example.com'], []];
+        yield 'socks proxy' => [[], ['proxy' => 'socks5://proxy.example.com:1080']];
+        yield 'raw socks proxy type' => [[], ['proxy' => 'proxy.example.com:1080', 'curl' => [\CURLOPT_PROXYTYPE => \CURLPROXY_SOCKS5]]];
+    }
+
+    /**
+     * @dataProvider legacySafeManagedProxyAuthorizationRouteProvider
+     *
+     * @param array<string, string>    $env
+     * @param array<int|string, mixed> $options
+     */
+    public function testLegacyCurlSafelyOmitsManagedProxyAuthorizationOnNonHttpProxyRoutes(array $env, array $options): void
+    {
+        self::withProxyEnvironment($env, static function () use ($options): void {
+            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.36.0', 'features' => 0]);
+
+            try {
+                (new CurlFactory(3))->create(
+                    new Psr7\Request('GET', 'http://example.com', [
+                        'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+                    ]),
+                    $options
+                );
+
+                self::assertNotContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
                 if (\defined('CURLOPT_PROXYHEADER')) {
                     self::assertArrayNotHasKey((int) \constant('CURLOPT_PROXYHEADER'), $_SERVER['_curl']);
-                }
-                if (\defined('CURLOPT_HEADEROPT')) {
-                    self::assertArrayNotHasKey((int) \constant('CURLOPT_HEADEROPT'), $_SERVER['_curl']);
                 }
             } finally {
                 self::setCurlVersionInfo($previousVersionInfo);
@@ -2369,28 +2390,74 @@ class CurlFactoryTest extends TestCase
         });
     }
 
-    public function testSocksProxyDoesNotMoveProxyAuthorizationHeader(): void
+    public static function legacySafeManagedProxyAuthorizationRouteProvider(): iterable
     {
-        $previousVersionInfo = self::setCurlVersionInfo(['version' => '8.20.0', 'features' => 0]);
+        yield 'direct' => [[], ['proxy' => '']];
+        yield 'socks proxy' => [[], ['proxy' => 'socks5://proxy.example.com:1080']];
+        yield 'managed no-proxy match' => [[], ['proxy' => ['http' => 'http://proxy.example.com:8125', 'no' => ['example.com']]]];
+        yield 'environment NO_PROXY match' => [['http_proxy' => 'http://proxy.example.com:8125', 'no_proxy' => 'example.com'], []];
+        yield 'raw SOCKS proxy type' => [[], ['proxy' => 'proxy.example.com:1080', 'curl' => [\CURLOPT_PROXYTYPE => \CURLPROXY_SOCKS5]]];
+        yield 'HTTP URL with raw SOCKS proxy type' => [[], ['proxy' => 'http://proxy.example.com:1080', 'curl' => [\CURLOPT_PROXYTYPE => \CURLPROXY_SOCKS5]]];
+        yield 'raw direct route replaces managed HTTP proxy' => [[], [
+            'proxy' => 'http://proxy.example.com:8125',
+            'curl' => [\CURLOPT_PROXY => ''],
+        ]];
+        yield 'raw SOCKS proxy replaces managed HTTP proxy' => [[], [
+            'proxy' => 'http://proxy.example.com:8125',
+            'curl' => [\CURLOPT_PROXY => 'socks5://proxy.example.com:1080'],
+        ]];
+
+        if (\defined('CURLOPT_NOPROXY')) {
+            yield 'exact raw no-proxy wildcard' => [[], [
+                'proxy' => 'http://proxy.example.com:8125',
+                'curl' => [(int) \constant('CURLOPT_NOPROXY') => '*'],
+            ]];
+        }
+    }
+
+    /**
+     * @dataProvider legacyHttpProxyRouteProvider
+     *
+     * @param array<int|string, mixed> $options
+     */
+    public function testRejectsManagedProxyAuthorizationForLegacyHttpProxyRoutes(array $options): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.36.0', 'features' => 0]);
 
         try {
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('Proxy-Authorization request headers through a possible HTTP or HTTPS proxy require libcurl 7.37.0 or newer built with proxy header separation support.');
+
             (new CurlFactory(3))->create(
                 new Psr7\Request('GET', 'http://example.com', [
                     'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
                 ]),
-                ['proxy' => 'socks5://proxy.example.com:1080']
+                $options
             );
-
-            self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
-            if (\defined('CURLOPT_PROXYHEADER')) {
-                self::assertArrayNotHasKey((int) \constant('CURLOPT_PROXYHEADER'), $_SERVER['_curl']);
-            }
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
     }
 
-    public function testNonArrayProxyHeaderThrowsWhenMigrationWouldAppend(): void
+    public static function legacyHttpProxyRouteProvider(): iterable
+    {
+        yield 'HTTP proxy' => [['proxy' => 'http://proxy.example.com:8080']];
+        yield 'scheme-less HTTP proxy' => [['proxy' => 'proxy.example.com:8080']];
+        yield 'unrecognized proxy scheme' => [['proxy' => 'ftp://proxy.example.com:2121']];
+        yield 'raw HTTP proxy replaces managed SOCKS proxy' => [[
+            'proxy' => 'socks5://proxy.example.com:1080',
+            'curl' => [\CURLOPT_PROXY => 'http://proxy.example.com:8125'],
+        ]];
+
+        if (\defined('CURLOPT_NOPROXY')) {
+            yield 'raw no-proxy match remains conservative' => [[
+                'proxy' => 'http://proxy.example.com:8080',
+                'curl' => [(int) \constant('CURLOPT_NOPROXY') => 'example.com'],
+            ]];
+        }
+    }
+
+    public function testNonArrayProxyHeaderThrowsWhenManagedHeaderWouldAppend(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
         self::skipIfProxyHeaderSeparationUnavailable();
@@ -2399,7 +2466,7 @@ class CurlFactoryTest extends TestCase
 
         try {
             $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('CURLOPT_PROXYHEADER');
+            $this->expectExceptionMessage('CURLOPT_PROXYHEADER must be an array when a Proxy-Authorization request header is routed to the proxy header channel.');
 
             (new CurlFactory(3))->create(
                 new Psr7\Request('GET', 'http://example.com', [
@@ -2415,11 +2482,65 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testMigratesEmptyPsrProxyAuthorizationHeaderWithoutTreatingItAsCredential(): void
+    public function testDeprecatesRawProxyHeaderWithoutSeparationSupport(): void
+    {
+        $proxyHeaderOption = self::proxyHeaderOption();
+        $deprecation = null;
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.36.0', 'features' => 0]);
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
+            $deprecation = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $factory = new CurlFactory(3);
+            $easy = $factory->create(
+                new Psr7\Request('GET', 'http://example.com'),
+                ['proxy' => '', 'curl' => [$proxyHeaderOption => []]]
+            );
+            $factory->release($easy);
+        } finally {
+            \restore_error_handler();
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+
+        self::assertNotNull($deprecation, 'Expected a deprecation for raw CURLOPT_PROXYHEADER without separation support.');
+        self::assertStringContainsString('CURLOPT_PROXYHEADER', $deprecation);
+        self::assertStringContainsString('guzzlehttp/guzzle 8.0 will reject this configuration', $deprecation);
+        self::assertStringContainsString('libcurl 7.37.0 or newer built with proxy header separation support', $deprecation);
+    }
+
+    public function testDoesNotDeprecateRawProxyHeaderWithSeparationSupport(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
         self::skipIfProxyHeaderSeparationUnavailable();
+        $deprecation = null;
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.37.0', 'features' => 0]);
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
+            $deprecation = $message;
 
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $factory = new CurlFactory(3);
+            $easy = $factory->create(
+                new Psr7\Request('GET', 'http://example.com'),
+                ['proxy' => '', 'curl' => [$proxyHeaderOption => []]]
+            );
+            $factory->release($easy);
+        } finally {
+            \restore_error_handler();
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+
+        self::assertNull($deprecation);
+    }
+
+    public function testRoutesEmptyProxyAuthorizationHeaderWithoutTreatingItAsCredential(): void
+    {
+        self::skipIfProxyHeaderSeparationUnavailable();
         $previousVersionInfo = self::setCurlVersionInfo(['version' => '8.20.0', 'features' => 0]);
 
         try {
@@ -2429,7 +2550,7 @@ class CurlFactoryTest extends TestCase
             );
 
             self::assertNotContains('Proxy-Authorization;', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
-            self::assertContains('Proxy-Authorization;', $_SERVER['_curl'][$proxyHeaderOption]);
+            self::assertSame(['Proxy-Authorization;'], $_SERVER['_curl'][self::proxyHeaderOption()]);
             self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
             self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
 
@@ -2442,22 +2563,319 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testLegacyCurlEmptyProxyAuthorizationHeaderDoesNotForceFreshConnection(): void
+    public function testLegacyCurlRejectsEmptyProxyAuthorizationHeaderForHttpProxy(): void
     {
         $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.36.0', 'features' => 0]);
 
         try {
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('Proxy-Authorization request headers through a possible HTTP or HTTPS proxy require libcurl 7.37.0 or newer built with proxy header separation support.');
+
             (new CurlFactory(3))->create(
                 new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => '']),
                 ['proxy' => 'http://proxy.example.com:8080']
             );
-
-            self::assertContains('Proxy-Authorization;', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
-            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
+    }
+
+    public function testManagedProxyAuthorizationPreservesValueOrderIncludingEmptyValues(): void
+    {
+        self::withProxyEnvironment([], static function (): void {
+            self::skipIfProxyHeaderSeparationUnavailable();
+            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.37.0', 'features' => 0]);
+
+            try {
+                (new CurlFactory(3))->create(
+                    new Psr7\Request('GET', 'http://example.com', [
+                        'Proxy-Authorization' => ['Basic dXNlcjE6cGFzczE=', '', 'Basic dXNlcjI6cGFzczI='],
+                    ]),
+                    ['proxy' => '']
+                );
+
+                self::assertSame(
+                    [
+                        'Proxy-Authorization: Basic dXNlcjE6cGFzczE=',
+                        'Proxy-Authorization;',
+                        'Proxy-Authorization: Basic dXNlcjI6cGFzczI=',
+                    ],
+                    $_SERVER['_curl'][self::proxyHeaderOption()]
+                );
+                self::assertNotContains('Proxy-Authorization: Basic dXNlcjE6cGFzczE=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+                self::assertNotContains('Proxy-Authorization: Basic dXNlcjI6cGFzczI=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+                self::assertNotContains('Proxy-Authorization;', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+            } finally {
+                self::setCurlVersionInfo($previousVersionInfo);
+            }
+        });
+    }
+
+    public function testRawHttpHeaderReplacementSuppressesManagedProxyAuthorization(): void
+    {
+        self::withProxyEnvironment([], static function (): void {
+            $rawHeaders = ['Host: example.com', 'Accept: application/json'];
+            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.36.0', 'features' => 0]);
+
+            try {
+                // No capability error even on legacy libcurl: the deprecated
+                // raw replacement suppresses every generated header, the
+                // managed Proxy-Authorization value included, and the managed
+                // value is not resynthesized into either header list.
+                (new CurlFactory(3))->create(
+                    new Psr7\Request('GET', 'http://example.com', [
+                        'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+                    ]),
+                    ['proxy' => '', 'curl' => [\CURLOPT_HTTPHEADER => $rawHeaders]]
+                );
+            } finally {
+                self::setCurlVersionInfo($previousVersionInfo);
+            }
+
+            self::assertSame($rawHeaders, $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+            if (\defined('CURLOPT_PROXYHEADER')) {
+                self::assertArrayNotHasKey((int) \constant('CURLOPT_PROXYHEADER'), $_SERVER['_curl']);
+            }
+        });
+    }
+
+    public function testManagedProxyAuthorizationOverwritesDeprecatedUnifiedHeaderOption(): void
+    {
+        self::withProxyEnvironment([], static function (): void {
+            self::skipIfProxyHeaderSeparationUnavailable();
+            if (!\defined('CURLHEADER_UNIFIED')) {
+                self::markTestSkipped('CURLHEADER_UNIFIED is not available.');
+            }
+
+            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.37.0', 'features' => 0]);
+
+            try {
+                (new CurlFactory(3))->create(
+                    new Psr7\Request('GET', 'http://example.com', [
+                        'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+                    ]),
+                    [
+                        'proxy' => '',
+                        'curl' => [(int) \constant('CURLOPT_HEADEROPT') => (int) \constant('CURLHEADER_UNIFIED')],
+                    ]
+                );
+
+                self::assertSame((int) \constant('CURLHEADER_SEPARATE'), $_SERVER['_curl'][(int) \constant('CURLOPT_HEADEROPT')]);
+                self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][self::proxyHeaderOption()]);
+            } finally {
+                self::setCurlVersionInfo($previousVersionInfo);
+            }
+        });
+    }
+
+    public function testRejectsManagedProxyAuthorizationContainingNewlinesFromCustomRequest(): void
+    {
+        self::skipIfProxyHeaderSeparationUnavailable();
+
+        $request = $this->createMock(RequestInterface::class);
+        $request->method('getMethod')->willReturn('GET');
+        $request->method('getUri')->willReturn(new Psr7\Uri('http://example.com'));
+        $request->method('getProtocolVersion')->willReturn('1.1');
+        $request->method('getHeaders')->willReturn(['Host' => ['example.com']]);
+        $request->method('getHeader')->willReturn(["Basic dXNlcm5hbWU6cGFzc3dvcmQ=\r\nX-Injected: yes"]);
+        $request->method('hasHeader')->willReturn(false);
+        $request->method('getBody')->willReturn(Psr7\Utils::streamFor(''));
+
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.37.0', 'features' => 0]);
+
+        try {
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('CURLOPT_PROXYHEADER entries must not contain a carriage return or line feed.');
+
+            (new CurlFactory(3))->create($request, ['proxy' => '']);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testLegacyCapabilityErrorWinsOverRequestLevelAuthenticatedShareRejection(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.36.0', 'features' => 0]);
+
+        try {
+            $this->expectException(RequestException::class);
+            $this->expectExceptionMessage('Proxy-Authorization request headers through a possible HTTP or HTTPS proxy require libcurl 7.37.0 or newer built with proxy header separation support.');
+
+            (new CurlFactory(3))->create(
+                new Psr7\Request('GET', 'https://example.com', [
+                    'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+                ]),
+                [
+                    'proxy' => 'http://username:password@proxy.example.com:8080',
+                    'curl' => [(int) \constant('CURLOPT_SHARE') => null],
+                ]
+            );
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testManagedProxyAuthorizationTunnelIsSeenAsAuthenticatedByShareGuards(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::skipIfProxyHeaderSeparationUnavailable();
+
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '8.21.0', 'features' => 0]);
+
+        try {
+            // The managed value routed to CURLOPT_PROXYHEADER keeps the
+            // tunnel classified as authenticated: the request-level share
+            // rejection names the authenticated tunnel rule, not the
+            // anonymous libcurl 7.57.0 rule.
+            try {
+                (new CurlFactory(3))->create(
+                    new Psr7\Request('GET', 'https://example.com', [
+                        'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+                    ]),
+                    [
+                        'proxy' => 'http://proxy.example.com:8080',
+                        'curl' => [(int) \constant('CURLOPT_SHARE') => null],
+                    ]
+                );
+                self::fail('Expected the request-level share to be rejected for the authenticated managed tunnel.');
+            } catch (\InvalidArgumentException $e) {
+                self::assertStringContainsString('authenticated HTTP/HTTPS proxy tunnel configuration', $e->getMessage());
+            }
+
+            // The opaque-share anonymous arm must not force-fresh the
+            // authenticated managed tunnel; it stays on the version-gated
+            // path.
+            $shareHandle = \curl_share_init();
+            $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
+            $conf = [
+                \CURLOPT_PROXY => 'http://proxy.example.com:8080',
+                self::proxyHeaderOption() => ['Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+            ];
+
+            $method = new \ReflectionMethod(CurlFactory::class, 'isolateOpaqueShareAnonymousProxyTunnel');
+            if (\PHP_VERSION_ID < 80100) {
+                $method->setAccessible(true);
+            }
+            $method->invokeArgs($factory, [new Psr7\Request('GET', 'https://example.com'), &$conf]);
+
+            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $conf);
+            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $conf);
+
+            // Control: without the managed line the same tunnel is anonymous
+            // and the arm does force a fresh connection.
+            $anonymousConf = [\CURLOPT_PROXY => 'http://proxy.example.com:8080'];
+            $method->invokeArgs($factory, [new Psr7\Request('GET', 'https://example.com'), &$anonymousConf]);
+
+            self::assertTrue($anonymousConf[\CURLOPT_FRESH_CONNECT]);
+            self::assertTrue($anonymousConf[\CURLOPT_FORBID_REUSE]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testDirectCurlRequestDoesNotSendProxyAuthorizationToOrigin(): void
+    {
+        self::skipIfProxyHeaderSeparationUnavailable();
+        if (!CurlVersion::supportsProxyHeaderSeparation()) {
+            self::markTestSkipped('The runtime libcurl does not support proxy header separation.');
+        }
+
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200)]);
+
+        $handler = new Handler\CurlHandler();
+        $handler(
+            new Psr7\Request('GET', Server::$url, [
+                'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+            ]),
+            ['proxy' => '']
+        )->wait();
+
+        self::assertFalse(Server::received()[0]->hasHeader('Proxy-Authorization'));
+    }
+
+    public function testProxyReceivesClientDefaultProxyAuthorizationHeader(): void
+    {
+        self::skipIfProxyHeaderSeparationUnavailable();
+        if (!CurlVersion::supportsProxyHeaderSeparation()) {
+            self::markTestSkipped('The runtime libcurl does not support proxy header separation.');
+        }
+
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200)]);
+
+        $client = new Client([
+            'handler' => HandlerStack::create(new Handler\CurlHandler()),
+            'headers' => ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+        ]);
+        $response = $client->request('GET', 'http://www.example.com', [
+            'proxy' => Server::$url,
+            'version' => '1.0',
+        ]);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('Basic dXNlcm5hbWU6cGFzc3dvcmQ=', Server::received()[0]->getHeaderLine('Proxy-Authorization'));
+    }
+
+    public function testEmptyProxyAuthorizationSuppressesProxyUrlUserinfoCredentials(): void
+    {
+        self::skipIfProxyHeaderSeparationUnavailable();
+        if (!CurlVersion::supportsProxyHeaderSeparation()) {
+            self::markTestSkipped('The runtime libcurl does not support proxy header separation.');
+        }
+
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200)]);
+
+        $proxy = (new Psr7\Uri(Server::$url))->withUserInfo('username', 'password');
+        $handler = new Handler\CurlHandler();
+        $response = $handler(
+            new Psr7\Request('GET', 'http://www.example.com', ['Proxy-Authorization' => ''], null, '1.0'),
+            ['proxy' => (string) $proxy]
+        )->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        $received = Server::received()[0];
+        self::assertTrue($received->hasHeader('Proxy-Authorization'));
+        self::assertSame('', $received->getHeaderLine('Proxy-Authorization'));
+    }
+
+    public function testRedirectToDirectHopKeepsManagedProxyAuthorizationOutOfOriginHeaders(): void
+    {
+        self::skipIfProxyHeaderSeparationUnavailable();
+        if (!CurlVersion::supportsProxyHeaderSeparation()) {
+            self::markTestSkipped('The runtime libcurl does not support proxy header separation.');
+        }
+
+        Server::flush();
+        Server::enqueue([
+            new Psr7\Response(301, ['Location' => Server::$url]),
+            new Psr7\Response(200),
+        ]);
+
+        $client = new Client(['handler' => HandlerStack::create(new Handler\CurlHandler())]);
+        $response = $client->request('GET', 'http://www.example.com', [
+            'headers' => ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+            'proxy' => ['http' => Server::$url, 'no' => ['127.0.0.1']],
+            'version' => '1.0',
+        ]);
+
+        self::assertSame(200, $response->getStatusCode());
+
+        // The captured configuration is the redirected hop's, which was
+        // direct: its host matched the managed "no" list.
+        self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertNotContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][self::proxyHeaderOption()]);
+
+        $received = Server::received();
+        self::assertCount(2, $received);
+        // The proxied first hop delivered the credential to the proxy; the
+        // direct hop did not deliver it to the origin.
+        self::assertTrue($received[0]->hasHeader('Proxy-Authorization'));
+        self::assertFalse($received[1]->hasHeader('Proxy-Authorization'));
     }
 
     public function testMigratesRawHttpHeaderProxyAuthorizationWhenSupportedUsingHelper(): void

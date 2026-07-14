@@ -22,6 +22,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Deprecated
 
 - Deprecated passing `CURLMOPT_PIPELINING` in the cURL multi handler `options` array
+- Deprecated passing `CURLOPT_PROXYHEADER` without cURL proxy header separation support
 
 ### Fixed
 
