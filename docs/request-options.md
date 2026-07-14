@@ -1143,8 +1143,8 @@ Separately from the handler-level resolution above, a `GuzzleHttp\Client` maps t
 > HTTP(S) proxy.
 
 A first-class `Proxy-Authorization` request header is proxy-scoped rather than
-origin-scoped, and the cURL handlers never generate its non-empty values in
-cURL's origin header list (`CURLOPT_HTTPHEADER`). On libcurl 7.37.0 and newer
+origin-scoped, and the cURL handlers never generate its values in cURL's origin
+header list (`CURLOPT_HTTPHEADER`). On libcurl 7.37.0 and newer
 built with proxy header separation support (the `CURLOPT_PROXYHEADER`,
 `CURLOPT_HEADEROPT`, and `CURLHEADER_SEPARATE` PHP constants), the values are
 configured in libcurl's proxy-only header channel (`CURLOPT_PROXYHEADER`) with
@@ -1158,29 +1158,43 @@ identity, so a routing change can offer it to a different proxy. Guzzle also
 enables separate proxy/origin header handling for CONNECT tunnels through an
 effective HTTP/HTTPS proxy, whether or not a proxy header is configured.
 
-That libcurl support is mandatory for a non-empty first-class value: on older
-libcurl, or a build missing those constants, the request fails before cURL
-initialization and network I/O instead of leaving the credential in an
-origin-bound channel. Empty values are omitted entirely and trigger neither the
-proxy-only channel nor the version requirement. Replacing the generated headers
+Every first-class value retains its field order in that proxy-only list. An
+empty value is encoded using cURL's explicit empty-header syntax
+(`Proxy-Authorization;`), so it remains non-credential state while suppressing
+proxy authorization that libcurl would otherwise generate from proxy URL
+userinfo. On older libcurl, or a build missing the separation constants, Guzzle
+safely omits the values for known direct, bypassed, and SOCKS routes. A request
+whose final configuration may use an HTTP or HTTPS proxy fails before cURL
+initialization and network I/O because its values cannot be routed safely.
+Raw route options are modeled conservatively: an exact bypass-all
+`CURLOPT_NOPROXY` or a recognized SOCKS `CURLOPT_PROXYTYPE` is respected, while
+other raw no-proxy patterns do not make the route provably direct.
+
+Passing raw `CURLOPT_PROXYHEADER` on a build without proxy header separation is
+deprecated and will be rejected in Guzzle 8.0. Replacing the generated headers
 with a deprecated raw `CURLOPT_HTTPHEADER` value suppresses the managed values
 along with every other generated header and remains outside this rule:
-deprecated raw origin-header lists stay caller-controlled and can defeat the
-managed guarantee. Proxy credential sectioning remains tunnel-focused:
-non-tunneled HTTPS-proxy TLS credential behavior is not expanded by this
-change.
+deprecated raw header lists stay caller-controlled and can defeat the managed
+guarantee. Proxy credential sectioning remains tunnel-focused: non-tunneled
+HTTPS-proxy TLS credential behavior is not expanded by this change.
 
-The stream handler has no proxy-only header channel, so it omits a first-class
-`Proxy-Authorization` header from the request context on direct and bypassed
-routes and rejects the request before creating a stream when it selects a
-proxy. Credentials in the proxy URI (userinfo) remain the supported
-stream-handler mechanism for Basic proxy authentication; alternatively, use a
-cURL handler. Deprecated raw `stream_context` overrides (`http.header`,
-`http.proxy`, and `http.follow_location`) remain caller-controlled and outside
-the managed guarantee; raw `follow_location` in particular can cause
-PHP-internal redirects that never re-enter Guzzle. A raw `http.header`
-replacement does not suppress the selected-proxy rejection of a simultaneous
-first-class value.
+The stream handler omits a first-class `Proxy-Authorization` header from direct
+and bypassed request contexts. When Guzzle selects a proxy, it accepts exactly
+one value, validates that it contains no carriage return or line feed, and adds
+one canonical proxy authorization line. For an HTTPS target, PHP's stream
+wrapper sends that line in CONNECT and removes it before the tunneled origin
+request; for a plain HTTP proxy, the line is sent to the proxy. Multiple values
+are rejected before a stream is created because PHP extracts and removes only
+one CONNECT line. A first-class value, including an empty one, takes precedence
+over Basic credentials in proxy URL userinfo.
+
+Deprecated raw `stream_context` overrides (`http.header`, `http.proxy`, and
+`http.follow_location`) remain caller-controlled and outside the managed
+guarantee. A raw `http.proxy` override is rejected when the selected proxy
+generated a proxy authorization line, because changing the proxy afterward
+could make that line origin-bound; unauthenticated raw proxy overrides remain
+allowed. Raw `follow_location` can cause PHP-internal redirects that never
+re-enter Guzzle, and raw `http.header` can replace the generated header context.
 
 ## query
 

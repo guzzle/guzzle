@@ -715,6 +715,21 @@ class CurlFactory implements CurlFactoryInterface
             return;
         }
 
+        if (
+            \defined('CURLOPT_PROXYHEADER')
+            && \array_key_exists((int) \constant('CURLOPT_PROXYHEADER'), $options['curl'])
+            && !CurlVersion::supportsProxyHeaderSeparation()
+        ) {
+            \trigger_deprecation(
+                'guzzlehttp/guzzle',
+                '7.15',
+                \sprintf(
+                    'Passing %s in the "curl" request option on a build without proxy header separation support is deprecated; guzzlehttp/guzzle 8.0 will reject this configuration because proxy headers require libcurl 7.37.0 or newer built with proxy header separation support.',
+                    self::formatCurlOption((int) \constant('CURLOPT_PROXYHEADER'))
+                )
+            );
+        }
+
         $supportedOptions = self::supportedCurlOptions();
         $conflictingOptions = self::conflictingCurlOptions();
 
@@ -1653,10 +1668,11 @@ class CurlFactory implements CurlFactoryInterface
      * proxy-only header channel, independently of Guzzle's proxy prediction:
      * libcurl alone decides whether the proxy-only list is used for the
      * actual transfer, so the credential can never reach an origin through
-     * CURLOPT_HTTPHEADER. Without proxy header separation support the
-     * request fails before cURL initialization and network I/O, unless a
-     * deprecated raw CURLOPT_HTTPHEADER replacement already suppressed every
-     * generated header, the managed values included.
+     * CURLOPT_HTTPHEADER. Without proxy header separation support, values are
+     * safely omitted on known direct, bypassed, and SOCKS routes; a route that
+     * may use an HTTP(S) proxy is rejected before cURL initialization and
+     * network I/O. A deprecated raw CURLOPT_HTTPHEADER replacement suppresses
+     * every generated header, the managed values included.
      *
      * @param array<int|string, mixed> $conf
      * @param list<string>             $headers
@@ -1668,7 +1684,12 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (!CurlVersion::supportsProxyHeaderSeparation()) {
-            throw new RequestException('Proxy-Authorization request headers require libcurl 7.37.0 or newer built with proxy header separation support.', $request);
+            $proxy = self::getEffectiveProxy($conf);
+            if ($proxy !== null && !self::isSocksProxy($proxy, $conf)) {
+                throw new RequestException('Proxy-Authorization request headers through a possible HTTP or HTTPS proxy require libcurl 7.37.0 or newer built with proxy header separation support.', $request);
+            }
+
+            return;
         }
 
         self::appendCurlProxyHeaders($conf, $headers);
@@ -1683,9 +1704,9 @@ class CurlFactory implements CurlFactoryInterface
         $headers = [];
 
         foreach ($request->getHeader('Proxy-Authorization') as $value) {
-            if ($value !== '') {
-                $headers[] = 'Proxy-Authorization: '.$value;
-            }
+            $headers[] = $value === ''
+                ? 'Proxy-Authorization;'
+                : 'Proxy-Authorization: '.$value;
         }
 
         return $headers;
@@ -2057,7 +2078,8 @@ class CurlFactory implements CurlFactoryInterface
         foreach ($conf['_headers'] as $name => $values) {
             // A first-class Proxy-Authorization header is proxy-scoped and
             // must never be generated in the origin header list; managed
-            // handling routes it to CURLOPT_PROXYHEADER instead. The
+            // handling routes it to CURLOPT_PROXYHEADER or safely omits it on
+            // a legacy non-HTTP-proxy route. The
             // caselessEquals() helper is locale-independent, unlike
             // strcasecmp(), so a locale cannot make this match miss and
             // re-leak the credential.

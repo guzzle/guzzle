@@ -16,6 +16,7 @@ use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -740,7 +741,7 @@ class StreamHandlerTest extends TestCase
         return $method->invoke($handler, $request);
     }
 
-    private function addProxyToContext(Request $request, array &$context, $proxy): void
+    private function addProxyToContext(RequestInterface $request, array &$context, $proxy): void
     {
         $handler = new StreamHandler();
         $params = [];
@@ -781,20 +782,21 @@ class StreamHandlerTest extends TestCase
         self::assertStringContainsString('X-Control: yes', $context['http']['header']);
     }
 
-    public function testSelectedStreamProxyRejectsManagedProxyAuthorization(): void
+    public function testSelectedStreamProxyAddsOneManagedProxyAuthorizationValue(): void
     {
         $request = new Request('GET', 'http://example.com', [
             'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
         ]);
         $context = $this->getDefaultContext($request);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Proxy-Authorization request headers are not supported through the stream handler; configure credentials in the proxy URI or use a cURL handler.');
-
         $this->addProxyToContext($request, $context, 'http://proxy.example.com:8125');
+
+        self::assertSame('tcp://proxy.example.com:8125', $context['http']['proxy']);
+        self::assertSame(1, \substr_count($context['http']['header'], 'Proxy-Authorization'));
+        self::assertStringContainsString("\r\nProxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=", $context['http']['header']);
     }
 
-    public function testSelectedStreamProxyAllowsEmptyProxyAuthorizationHeader(): void
+    public function testSelectedStreamProxyUsesEmptyManagedValueInsteadOfProxyUrlCredentials(): void
     {
         $request = new Request('GET', 'http://example.com', [
             'Proxy-Authorization' => '',
@@ -804,10 +806,35 @@ class StreamHandlerTest extends TestCase
         $this->addProxyToContext($request, $context, 'http://user:pass@proxy.example.com:8125');
 
         self::assertSame('tcp://proxy.example.com:8125', $context['http']['proxy']);
-        // Only the proxy URI userinfo line exists; the empty first-class
-        // field was omitted from the serialized headers.
         self::assertSame(1, \substr_count($context['http']['header'], 'Proxy-Authorization'));
-        self::assertStringContainsString('Proxy-Authorization: Basic '.\base64_encode('user:pass'), $context['http']['header']);
+        self::assertStringEndsWith("\r\nProxy-Authorization: ", $context['http']['header']);
+        self::assertStringNotContainsString('Basic '.\base64_encode('user:pass'), $context['http']['header']);
+    }
+
+    public function testSelectedStreamProxyRejectsMultipleManagedValues(): void
+    {
+        $request = new Request('GET', 'http://example.com', [
+            'Proxy-Authorization' => ['Basic dXNlcjE6cGFzczE=', 'Basic dXNlcjI6cGFzczI='],
+        ]);
+        $context = $this->getDefaultContext($request);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The stream handler supports exactly one Proxy-Authorization request header value when a proxy is selected.');
+
+        $this->addProxyToContext($request, $context, 'http://proxy.example.com:8125');
+    }
+
+    public function testSelectedStreamProxyRejectsManagedValueContainingNewlines(): void
+    {
+        $request = $this->createMock(RequestInterface::class);
+        $request->method('getUri')->willReturn(new Psr7\Uri('http://example.com'));
+        $request->method('getHeader')->with('Proxy-Authorization')->willReturn(["Basic credential\r\nX-Injected: yes"]);
+        $context = ['http' => ['header' => '']];
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Proxy-Authorization request header values must not contain a carriage return or line feed.');
+
+        $this->addProxyToContext($request, $context, 'http://proxy.example.com:8125');
     }
 
     public function testDirectStreamRequestDoesNotSendProxyAuthorizationToOrigin(): void
@@ -824,7 +851,71 @@ class StreamHandlerTest extends TestCase
         self::assertFalse(Server::received()[0]->hasHeader('Proxy-Authorization'));
     }
 
-    public function testSelectedStreamProxyRejectsManagedProxyAuthorizationBeforeSendingRequest(): void
+    public function testSelectedStreamProxySendsOneManagedProxyAuthorizationValue(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = new StreamHandler();
+
+        $response = $handler(
+            new Request('GET', 'http://www.example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='], null, '1.0'),
+            ['proxy' => Server::$url]
+        )->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('Basic dXNlcm5hbWU6cGFzc3dvcmQ=', Server::received()[0]->getHeaderLine('Proxy-Authorization'));
+    }
+
+    public function testEmptyManagedProxyAuthorizationSuppressesStreamProxyUrlCredentials(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = new StreamHandler();
+        $proxy = (new Psr7\Uri(Server::$url))->withUserInfo('username', 'password');
+
+        $response = $handler(
+            new Request('GET', 'http://www.example.com', ['Proxy-Authorization' => ''], null, '1.0'),
+            ['proxy' => (string) $proxy]
+        )->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        $received = Server::received()[0];
+        self::assertTrue($received->hasHeader('Proxy-Authorization'));
+        self::assertSame('', $received->getHeaderLine('Proxy-Authorization'));
+    }
+
+    public function testRawStreamHeaderReplacementSuppressesManagedProxyAuthorization(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = new StreamHandler();
+
+        $deprecation = self::captureDeprecation(static function () use ($handler): void {
+            $response = $handler(
+                new Request('GET', 'http://www.example.com', [
+                    'Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
+                ], null, '1.0'),
+                [
+                    'proxy' => Server::$url,
+                    'stream_context' => ['http' => ['header' => 'X-Control: raw']],
+                ]
+            )->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+        });
+
+        self::assertNotNull($deprecation);
+        $received = Server::received()[0];
+        self::assertSame('raw', $received->getHeaderLine('X-Control'));
+        self::assertFalse($received->hasHeader('Proxy-Authorization'));
+    }
+
+    /**
+     * @dataProvider generatedProxyAuthorizationProvider
+     *
+     * @param array<string, string> $headers
+     */
+    public function testRejectsRawStreamProxyOverrideAfterGeneratingProxyAuthorizationBeforeOriginIo(array $headers, string $proxy): void
     {
         Server::flush();
         Server::enqueue([new Response(200)]);
@@ -832,12 +923,76 @@ class StreamHandlerTest extends TestCase
 
         try {
             $handler(
-                new Request('GET', 'http://www.example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+                new Request('GET', Server::$url, $headers),
+                [
+                    'proxy' => $proxy,
+                    'stream_context' => ['http' => ['proxy' => '']],
+                ]
+            )->wait();
+            self::fail('Expected the raw stream proxy override to be rejected after proxy authorization was generated.');
+        } catch (\InvalidArgumentException $e) {
+            self::assertStringContainsString('stream_context.http.proxy cannot override a proxy after the stream handler has generated a Proxy-Authorization header', $e->getMessage());
+        }
+
+        self::assertCount(0, Server::received());
+    }
+
+    public static function generatedProxyAuthorizationProvider(): iterable
+    {
+        yield 'first-class credential' => [
+            ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ='],
+            'http://127.0.0.1:1',
+        ];
+        yield 'empty first-class control field' => [
+            ['Proxy-Authorization' => ''],
+            'http://127.0.0.1:1',
+        ];
+        yield 'proxy URI userinfo' => [
+            [],
+            'http://username:password@127.0.0.1:1',
+        ];
+    }
+
+    public function testUnauthenticatedRawStreamProxyOverrideRemainsAllowed(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = new StreamHandler();
+
+        $deprecation = self::captureDeprecation(static function () use ($handler): void {
+            $response = $handler(
+                new Request('GET', Server::$url),
+                [
+                    'proxy' => 'http://127.0.0.1:1',
+                    'stream_context' => ['http' => ['proxy' => '']],
+                ]
+            )->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+        });
+
+        self::assertNotNull($deprecation);
+        self::assertStringContainsString('stream_context.http.proxy', $deprecation);
+        self::assertCount(1, Server::received());
+        self::assertFalse(Server::received()[0]->hasHeader('Proxy-Authorization'));
+    }
+
+    public function testSelectedStreamProxyRejectsMultipleManagedValuesBeforeSendingRequest(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = new StreamHandler();
+
+        try {
+            $handler(
+                new Request('GET', 'http://www.example.com', [
+                    'Proxy-Authorization' => ['Basic dXNlcjE6cGFzczE=', 'Basic dXNlcjI6cGFzczI='],
+                ]),
                 ['proxy' => Server::$url]
             )->wait();
-            self::fail('Expected the selected stream proxy to reject the Proxy-Authorization request header.');
+            self::fail('Expected the selected stream proxy to reject multiple Proxy-Authorization values.');
         } catch (\InvalidArgumentException $e) {
-            self::assertStringContainsString('configure credentials in the proxy URI', $e->getMessage());
+            self::assertStringContainsString('supports exactly one Proxy-Authorization', $e->getMessage());
         }
 
         self::assertCount(0, Server::received());

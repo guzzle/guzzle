@@ -450,10 +450,17 @@ class StreamHandler
 
         self::assertTlsVersionRangeForOptions($options);
 
+        $proxyAuthorizationAdded = false;
         if (!empty($options)) {
             foreach ($options as $key => $value) {
                 $method = "add_{$key}";
                 if (isset($methods[$method])) {
+                    if ($method === 'add_proxy') {
+                        $proxyAuthorizationAdded = $this->add_proxy($request, $context, $value, $params);
+
+                        continue;
+                    }
+
                     $this->{$method}($request, $context, $value, $params);
                 }
             }
@@ -462,6 +469,14 @@ class StreamHandler
         if (isset($options['stream_context'])) {
             if (!\is_array($options['stream_context'])) {
                 throw new \InvalidArgumentException('stream_context must be an array');
+            }
+            if (
+                $proxyAuthorizationAdded
+                && isset($options['stream_context']['http'])
+                && \is_array($options['stream_context']['http'])
+                && \array_key_exists('proxy', $options['stream_context']['http'])
+            ) {
+                throw new \InvalidArgumentException('stream_context.http.proxy cannot override a proxy after the stream handler has generated a Proxy-Authorization header; configure the final proxy with the "proxy" request option.');
             }
             self::triggerConflictingStreamContextOptionDeprecations($options['stream_context']);
             self::triggerUnsupportedStreamContextOptionDeprecations($options['stream_context']);
@@ -542,13 +557,13 @@ class StreamHandler
     {
         $headers = '';
         foreach ($request->getHeaders() as $name => $value) {
-            // A first-class Proxy-Authorization header is proxy-scoped and
-            // PHP's stream wrapper has no proxy-only header channel, so the
-            // field is never serialized into the request context; add_proxy()
-            // rejects a non-empty value when a proxy is selected. The
-            // caselessEquals() helper is locale-independent, unlike
-            // strcasecmp(), so a locale cannot make this match miss and
-            // re-leak the credential.
+            // A first-class Proxy-Authorization header is proxy-scoped. Keep
+            // it out of the origin context; add_proxy() adds one
+            // validated canonical line only when Guzzle selects a proxy; PHP
+            // extracts that line for CONNECT and removes it before sending the
+            // tunneled origin request. The caselessEquals() helper is
+            // locale-independent, unlike strcasecmp(), so a locale cannot
+            // make this match miss and re-leak the credential.
             if (Psr7\Utils::caselessEquals((string) $name, 'Proxy-Authorization')) {
                 continue;
             }
@@ -845,7 +860,7 @@ class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_proxy(RequestInterface $request, array &$options, $value, array &$params): void
+    private function add_proxy(RequestInterface $request, array &$options, $value, array &$params): bool
     {
         $uri = null;
 
@@ -864,36 +879,40 @@ class StreamHandler
         }
 
         if (!$uri) {
-            return;
+            return false;
         }
 
         $parsed = $this->parse_proxy($uri);
 
-        // PHP's stream wrapper exposes no proxy-only header channel: it
-        // forwards user headers to the origin and extracts one
-        // Proxy-Authorization line for a CONNECT tunnel by textual matching,
-        // which cannot safely carry arbitrary first-class values. Fail closed
-        // before any stream is created; proxy URI userinfo remains the
-        // supported mechanism for Basic proxy authentication.
-        $managed = \array_values(\array_filter(
-            $request->getHeader('Proxy-Authorization'),
-            static function (string $value): bool {
-                return $value !== '';
-            }
-        ));
-
-        if ($managed !== []) {
-            throw new \InvalidArgumentException('Proxy-Authorization request headers are not supported through the stream handler; configure credentials in the proxy URI or use a cURL handler.');
+        // PHP extracts and removes only one Proxy-Authorization line for a
+        // CONNECT tunnel. Serialize exactly one validated first-class value;
+        // more than one could leave a credential in the tunneled origin
+        // request. A first-class value, including an empty one, is
+        // authoritative over Basic credentials embedded in the proxy URI.
+        $managed = $request->getHeader('Proxy-Authorization');
+        if (\count($managed) > 1) {
+            throw new \InvalidArgumentException('The stream handler supports exactly one Proxy-Authorization request header value when a proxy is selected.');
+        }
+        if ($managed !== [] && \strpbrk($managed[0], "\r\n") !== false) {
+            throw new \InvalidArgumentException('Proxy-Authorization request header values must not contain a carriage return or line feed.');
         }
 
         $options['http']['proxy'] = $parsed['proxy'];
 
-        if ($parsed['auth']) {
-            if (!isset($options['http']['header'])) {
-                $options['http']['header'] = '';
-            }
-            $options['http']['header'] .= "\r\nProxy-Authorization: {$parsed['auth']}";
+        if (($managed !== [] || $parsed['auth']) && !isset($options['http']['header'])) {
+            $options['http']['header'] = '';
         }
+        if ($managed !== []) {
+            $options['http']['header'] .= "\r\nProxy-Authorization: {$managed[0]}";
+
+            return true;
+        } elseif ($parsed['auth']) {
+            $options['http']['header'] .= "\r\nProxy-Authorization: {$parsed['auth']}";
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
