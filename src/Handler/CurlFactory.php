@@ -1567,9 +1567,12 @@ class CurlFactory implements CurlFactoryInterface
      * libcurl alone decides whether the proxy-only list is used for the
      * actual transfer, so the credential can never reach an origin through
      * CURLOPT_HTTPHEADER. Without proxy header separation support the
-     * request fails before cURL initialization and network I/O, unless a
-     * deprecated raw CURLOPT_HTTPHEADER replacement already suppressed every
-     * generated header, the managed values included.
+     * request fails before cURL initialization and network I/O when the final
+     * route may use an HTTP or HTTPS proxy. Known direct, bypassed, and SOCKS
+     * routes safely omit the values instead, because none of those routes can
+     * use libcurl's HTTP proxy header channel. A deprecated raw
+     * CURLOPT_HTTPHEADER replacement suppresses every generated header, the
+     * managed values included.
      *
      * @param array<int|string, mixed> $conf
      * @param list<string>             $headers
@@ -1581,7 +1584,13 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         if (!CurlVersion::supportsProxyHeaderSeparation()) {
-            throw new RequestException('Proxy-Authorization request headers require libcurl 7.37.0 or newer built with proxy header separation support.', $request);
+            $proxy = self::getEffectiveProxy($conf);
+
+            if ($proxy !== null && !self::isSocksProxy($proxy, $conf)) {
+                throw new RequestException('Proxy-Authorization request headers through a possible HTTP or HTTPS proxy require libcurl 7.37.0 or newer built with proxy header separation support.', $request);
+            }
+
+            return;
         }
 
         self::appendCurlProxyHeaders($conf, $headers);
@@ -1596,9 +1605,9 @@ class CurlFactory implements CurlFactoryInterface
         $headers = [];
 
         foreach ($request->getHeader('Proxy-Authorization') as $value) {
-            if ($value !== '') {
-                $headers[] = 'Proxy-Authorization: '.$value;
-            }
+            $headers[] = $value === ''
+                ? 'Proxy-Authorization;'
+                : 'Proxy-Authorization: '.$value;
         }
 
         return $headers;
