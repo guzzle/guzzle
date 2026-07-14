@@ -448,10 +448,17 @@ class StreamHandler
 
         self::assertTlsVersionRangeForOptions($options);
 
+        $proxyAuthorizationAdded = false;
         if (!empty($options)) {
             foreach ($options as $key => $value) {
                 $method = "add_{$key}";
                 if (isset($methods[$method])) {
+                    if ($method === 'add_proxy') {
+                        $proxyAuthorizationAdded = $this->add_proxy($request, $context, $value, $params);
+
+                        continue;
+                    }
+
                     $this->{$method}($request, $context, $value, $params);
                 }
             }
@@ -460,6 +467,14 @@ class StreamHandler
         if (isset($options['stream_context'])) {
             if (!\is_array($options['stream_context'])) {
                 throw new \InvalidArgumentException('stream_context must be an array');
+            }
+            if (
+                $proxyAuthorizationAdded
+                && isset($options['stream_context']['http'])
+                && \is_array($options['stream_context']['http'])
+                && \array_key_exists('proxy', $options['stream_context']['http'])
+            ) {
+                throw new \InvalidArgumentException('stream_context.http.proxy cannot override a proxy after the stream handler has generated a Proxy-Authorization header; configure the final proxy with the "proxy" request option.');
             }
             self::triggerConflictingStreamContextOptionDeprecations($options['stream_context']);
             self::triggerUnsupportedStreamContextOptionDeprecations($options['stream_context']);
@@ -540,6 +555,16 @@ class StreamHandler
     {
         $headers = '';
         foreach ($request->getHeaders() as $name => $value) {
+            // A first-class Proxy-Authorization header is proxy-scoped and
+            // PHP's stream wrapper has no separate proxy-only header option,
+            // so the field is never serialized before routing; add_proxy()
+            // restores one validated value only after selecting a proxy. The
+            // strtr() table is locale-independent, unlike strcasecmp(), so a
+            // locale cannot make this match miss and re-leak the credential.
+            if (\strtr((string) $name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') === 'proxy-authorization') {
+                continue;
+            }
+
             foreach ($value as $val) {
                 $headers .= "$name: $val\r\n";
             }
@@ -832,7 +857,7 @@ class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function add_proxy(RequestInterface $request, array &$options, $value, array &$params): void
+    private function add_proxy(RequestInterface $request, array &$options, $value, array &$params): bool
     {
         $uri = null;
 
@@ -851,18 +876,42 @@ class StreamHandler
         }
 
         if (!$uri) {
-            return;
+            return false;
         }
 
         $parsed = $this->parse_proxy($uri);
+
+        // PHP's stream wrapper extracts one Proxy-Authorization line for a
+        // CONNECT tunnel and removes it from the tunneled origin request. A
+        // plain HTTP proxy receives the same line on its forward request. Add
+        // one canonical line only after proxy selection so direct and bypassed
+        // routes cannot receive it. The first-class value is authoritative
+        // over proxy URI userinfo, including when it is empty.
+        $managed = $request->getHeader('Proxy-Authorization');
+        if (\count($managed) > 1) {
+            throw new \InvalidArgumentException('The stream handler supports exactly one Proxy-Authorization request header value through a proxy.');
+        }
+
+        if ($managed !== []) {
+            $managedValue = (string) $managed[0];
+            if (\strpbrk($managedValue, "\r\n") !== false) {
+                throw new \InvalidArgumentException('Proxy-Authorization request header values must not contain a carriage return or line feed.');
+            }
+        }
+
         $options['http']['proxy'] = $parsed['proxy'];
 
-        if ($parsed['auth']) {
+        $proxyAuthorization = $managedValue ?? $parsed['auth'];
+        if ($proxyAuthorization !== null) {
             if (!isset($options['http']['header'])) {
                 $options['http']['header'] = '';
             }
-            $options['http']['header'] .= "\r\nProxy-Authorization: {$parsed['auth']}";
+            $options['http']['header'] .= "\r\nProxy-Authorization: {$proxyAuthorization}";
+
+            return true;
         }
+
+        return false;
     }
 
     /**

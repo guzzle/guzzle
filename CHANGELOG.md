@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.14.2 - Upcoming
+
+### Security
+
+- Prevent first-class and proxy URL credentials from reaching origins (GHSA-94pj-82f3-465w)
+
+
 ## 7.14.1 - 2026-07-13
 
 ### Changed

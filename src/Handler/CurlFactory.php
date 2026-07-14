@@ -179,6 +179,17 @@ class CurlFactory implements CurlFactoryInterface
         self::triggerUnsupportedCurlOptionDeprecations($options);
         self::triggerConflictingCurlOptionDeprecations($options);
 
+        // Capture the managed Proxy-Authorization values before header
+        // serialization so they never enter the origin header list, and
+        // record whether a deprecated raw CURLOPT_HTTPHEADER value replaces
+        // every generated header, the managed values included. Key presence
+        // alone replaces: an empty or null raw value still suppresses the
+        // generated list.
+        $managedProxyAuthorization = self::managedProxyAuthorizationHeaderLines($request);
+        $rawHttpHeadersReplaceManaged = isset($options['curl'])
+            && \is_array($options['curl'])
+            && \array_key_exists(\CURLOPT_HTTPHEADER, $options['curl']);
+
         $easy = new EasyHandle();
         $easy->request = $request;
         $easy->options = $options;
@@ -203,6 +214,10 @@ class CurlFactory implements CurlFactoryInterface
 
         self::normalizeCurlHeaderOptions($conf);
         self::applyProxyAuthorizationHeaderHandling($request, $conf);
+        self::applyManagedProxyAuthorization($request, $conf, $managedProxyAuthorization, $rawHttpHeadersReplaceManaged);
+        // Validate the appended managed lines too: a custom RequestInterface
+        // can bypass a normal PSR-7 implementation's header validation.
+        self::normalizeCurlHeaderOptions($conf);
         $this->rejectRequestLevelShareConflict($options);
         self::rejectRequestLevelShareWithProxyAuth($request, $options, $conf);
 
@@ -1547,6 +1562,58 @@ class CurlFactory implements CurlFactoryInterface
     }
 
     /**
+     * Routes the managed first-class Proxy-Authorization values to libcurl's
+     * proxy-only header channel, independently of Guzzle's proxy prediction:
+     * libcurl alone decides whether the proxy-only list is used for the
+     * actual transfer, so the credential can never reach an origin through
+     * CURLOPT_HTTPHEADER. Without proxy header separation support the
+     * request fails before cURL initialization and network I/O when the final
+     * route may use an HTTP or HTTPS proxy. Known direct, bypassed, and SOCKS
+     * routes safely omit the values instead, because none of those routes can
+     * use libcurl's HTTP proxy header channel. A deprecated raw
+     * CURLOPT_HTTPHEADER replacement suppresses every generated header, the
+     * managed values included.
+     *
+     * @param array<int|string, mixed> $conf
+     * @param list<string>             $headers
+     */
+    private static function applyManagedProxyAuthorization(RequestInterface $request, array &$conf, array $headers, bool $rawHttpHeadersReplaceManaged): void
+    {
+        if ($rawHttpHeadersReplaceManaged || $headers === []) {
+            return;
+        }
+
+        if (!CurlVersion::supportsProxyHeaderSeparation()) {
+            $proxy = self::getEffectiveProxy($conf);
+
+            if ($proxy !== null && !self::isSocksProxy($proxy, $conf)) {
+                throw new RequestException('Proxy-Authorization request headers through a possible HTTP or HTTPS proxy require libcurl 7.37.0 or newer built with proxy header separation support.', $request);
+            }
+
+            return;
+        }
+
+        self::appendCurlProxyHeaders($conf, $headers);
+        $conf[(int) \constant('CURLOPT_HEADEROPT')] = (int) \constant('CURLHEADER_SEPARATE');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function managedProxyAuthorizationHeaderLines(RequestInterface $request): array
+    {
+        $headers = [];
+
+        foreach ($request->getHeader('Proxy-Authorization') as $value) {
+            $headers[] = $value === ''
+                ? 'Proxy-Authorization;'
+                : 'Proxy-Authorization: '.$value;
+        }
+
+        return $headers;
+    }
+
+    /**
      * @param array<int|string, mixed> $conf
      * @param list<string>             $headers
      */
@@ -1556,7 +1623,7 @@ class CurlFactory implements CurlFactoryInterface
 
         if (\array_key_exists($option, $conf)) {
             if (!\is_array($conf[$option])) {
-                throw new \InvalidArgumentException('CURLOPT_PROXYHEADER must be an array when Proxy-Authorization is migrated from CURLOPT_HTTPHEADER.');
+                throw new \InvalidArgumentException('CURLOPT_PROXYHEADER must be an array when a Proxy-Authorization request header is routed to the proxy header channel.');
             }
 
             $headers = \array_merge($conf[$option], $headers);
@@ -1910,6 +1977,15 @@ class CurlFactory implements CurlFactoryInterface
     private function applyHeaders(EasyHandle $easy, array &$conf): void
     {
         foreach ($conf['_headers'] as $name => $values) {
+            // A first-class Proxy-Authorization header is proxy-scoped and
+            // must never be generated in the origin header list; managed
+            // handling routes it to CURLOPT_PROXYHEADER instead. The strtr()
+            // table is locale-independent, unlike strcasecmp(), so a locale
+            // cannot make this match miss and re-leak the credential.
+            if (\strtr((string) $name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') === 'proxy-authorization') {
+                continue;
+            }
+
             foreach ($values as $value) {
                 $value = (string) $value;
                 if ($value === '') {
