@@ -202,19 +202,27 @@ responsibility — an accepted residual.
 **The channels hashed:** the effective proxy URL, the proxy credential and
 TLS-identity options, and any literal `Proxy-Authorization` header value.
 
-PSR `Proxy-Authorization` headers are normalized into the proxy-header channel
-(`CURLOPT_PROXYHEADER` with `CURLOPT_HEADEROPT => CURLHEADER_SEPARATE`) for
-effective HTTP and HTTPS proxies wherever libcurl supports header separation
-(7.37.0+). A non-empty literal `Proxy-Authorization: <value>` header is never
-something libcurl can key connection reuse on, even on versions that key parsed
-proxy credentials (8.20.0+), so a tunnel carrying one always sections — its
-signature is hashed, never the delegated owner. (The empty
-`Proxy-Authorization;` form is migrated for wire correctness but carries no
-credential, so it does not section.) On libcurl older than 7.37.0 (or a build
-missing the proxy-header constants) the header cannot be separated, so a request
-carrying a non-empty credential header through an HTTP or HTTPS proxy is
-rejected up front with a `RequestException`. The 7.x branches instead force this
-case onto a fresh, non-reusable connection rather than rejecting it.
+PSR `Proxy-Authorization` headers involve two distinct decisions. Recipient
+selection is delegated to libcurl and is route-independent in Guzzle: a
+first-class value never enters `CURLOPT_HTTPHEADER` and is always configured in
+the proxy-header channel (`CURLOPT_PROXYHEADER`) with
+`CURLOPT_HEADEROPT => CURLHEADER_SEPARATE`, regardless of Guzzle's route
+prediction, and libcurl decides whether that proxy-only list is used. An empty
+first-class value carries no credential and does not section. Its cURL
+`Proxy-Authorization;` form suppresses proxy authorization that would otherwise
+be generated from URL userinfo. Connection-reuse sectioning, by contrast,
+intentionally keeps using Guzzle's broad proxy approximation, because
+over-sectioning is safe and under-sectioning is not. A non-empty literal
+`Proxy-Authorization: <value>` header is never something libcurl can key
+connection reuse on, even on versions that key parsed proxy credentials
+(8.20.0+), so a tunnel carrying one always sections; its signature is hashed,
+never the delegated owner. On libcurl older than 7.37.0 (or a build missing the
+proxy-header constants) no proxy-only list can be represented safely, so a
+request carrying any first-class value or a raw `CURLOPT_PROXYHEADER` list is
+rejected up front with a `RequestException`, whatever the predicted route. That
+all-route rejection is specific to 8.0. Guzzle 7.14.2 and newer instead omit
+first-class values on known direct, bypassed, and SOCKS routes, rejecting them
+only when the route may use an HTTP(S) proxy.
 
 Proxy TLS credential coverage stays tunnel-only and private: it is
 reflection-tested hardening for CONNECT tunnels, not public non-tunneled

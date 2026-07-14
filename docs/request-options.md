@@ -626,22 +626,42 @@ sets it internally to `CURLHEADER_SEPARATE` whenever it configures
 proxy header is configured, so proxy headers stay separate from origin request
 headers; passing `CURLOPT_HEADEROPT` yourself is rejected.
 
-When an effective HTTP or HTTPS proxy is used, the built-in cURL handlers treat
-PSR `Proxy-Authorization` as proxy-scoped rather than origin-scoped. On libcurl
-7.37.0 and newer (with the proxy-header cURL constants available), the header is
-moved to cURL's proxy-header channel (`CURLOPT_PROXYHEADER`), so it
-authenticates the proxy rather than leaking to the origin. Direct (no-proxy) and
-SOCKS-proxy requests are left untouched.
+The built-in cURL handlers treat the first-class `Proxy-Authorization` request
+header as proxy-scoped rather than origin-scoped. Managed values never enter
+the cURL origin header list; they are configured in cURL's proxy-header channel
+(`CURLOPT_PROXYHEADER`) regardless of Guzzle's route prediction, and libcurl
+uses that list only for HTTP requests it actually sends to a proxy. Direct,
+no-proxy-bypassed, and SOCKS transfers therefore do not send the field to the
+origin server. An empty value uses cURL's `Proxy-Authorization;` form in the
+proxy-only list: it carries no credential or connection signature, but keeps
+its header-control meaning and suppresses proxy authorization generated from
+proxy URL userinfo. A non-empty credential is not bound to one proxy identity:
+it is sent to whichever proxy libcurl selects for the request. Raw
+`CURLOPT_PROXYHEADER` remains allow-listed and caller-controlled, and is always
+paired with header separation.
+
+In Guzzle 8, every first-class field requires libcurl 7.37.0 or newer built with
+proxy header separation support (with the `CURLOPT_PROXYHEADER`,
+`CURLOPT_HEADEROPT`, and `CURLHEADER_SEPARATE` constants available). On older
+libcurl the request is rejected up front with a `RequestException` regardless
+of the predicted route. Guzzle 7.14.2 and newer instead omit first-class values
+on known direct, bypassed, and SOCKS routes, requiring separation only when the
+final configuration may use an HTTP or HTTPS proxy. Guzzle 8 also rejects a raw
+`CURLOPT_PROXYHEADER` list there. Prefer proxy URI userinfo for portable Basic
+proxy authentication, or the native cURL proxy credential options for
+cURL-specific authentication.
 
 A proxy CONNECT tunnel carrying a non-empty `Proxy-Authorization` credential
 requires a fresh connection, because libcurl cannot key connection reuse on that
 opaque header value. Under `TransportSharing::PERSISTENT_REQUIRE`, which
 requires reuse, such a request is rejected with an `InvalidArgumentException`
-instead of silently degrading reuse. On older libcurl (or a build missing the
-proxy-header constants), where proxy headers cannot be separated, a request
-carrying a non-empty `Proxy-Authorization` header through an HTTP or HTTPS proxy
-is rejected up front with a `RequestException`; libcurl 7.37.0 or newer is
-required.
+instead of silently degrading reuse.
+
+The stream handler has no proxy-only header channel: it omits the first-class
+field on direct and bypassed routes and rejects a request carrying the field,
+including an empty value, with an `InvalidArgumentException` when a proxy is
+selected. Proxy URI userinfo remains available for Basic proxy authentication
+on every handler.
 
 ## debug
 

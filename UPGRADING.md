@@ -853,11 +853,28 @@ interim reply.
 
 #### Proxy-Authorization Headers
 
-Requests that send a non-empty `Proxy-Authorization` header through an
-`http://` or `https://` proxy now require libcurl 7.37.0 or newer built with
-proxy header separation support, and are rejected with a `RequestException`
-on older libcurl. Guzzle 7 kept the header in the unified header list on such
-libcurl and forced a fresh, non-reused connection instead.
+In Guzzle 8, every first-class `Proxy-Authorization` field handled by a built-in
+cURL handler requires libcurl 7.37.0 or newer with proxy header separation
+support, regardless of Guzzle's predicted route. This includes an empty field,
+which keeps its cURL header-control meaning in the proxy-only list, and requests
+predicted to be direct, no-proxy-bypassed, or sent through SOCKS. A request is
+rejected with a `RequestException` before network I/O when separation is not
+available. Guzzle 7 instead omits the field on those known non-HTTP-proxy routes
+and requires separation only when it cannot safely discard the field.
+
+Guzzle 8 also rejects a raw `CURLOPT_PROXYHEADER` list when proxy header
+separation is unavailable. Guzzle 7.15 only deprecates the raw option and passes
+it through to the installed PHP cURL extension and libcurl.
+
+When the stream handler selects a proxy, Guzzle 8 rejects any first-class
+`Proxy-Authorization` field, including an empty value, because PHP streams have
+no proxy-only header channel. Guzzle 7 instead accepts exactly one value,
+rejects carriage returns and line feeds, and adds one canonical proxy
+authorization line after selecting the proxy. That first-class value, including
+an empty one, takes precedence over Basic credentials in proxy URL userinfo;
+multiple values are rejected. Direct and no-proxy-bypassed stream requests omit
+the field in both versions. Configure Basic proxy credentials in the proxy URI
+or use a cURL handler for a first-class proxy authorization field.
 
 #### Proxy Tunnels Under Shared Connection Caches
 

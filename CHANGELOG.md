@@ -44,6 +44,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Resolve proxy environment variables in the stream handler, consistent with the cURL handlers
 - Honor `no_proxy`/`NO_PROXY` from the environment in the stream handler, including `*` to disable proxying
 - Reject an environment-resolved `https://` or SOCKS proxy in the stream handler, matching its `proxy` option behavior
+- Require cURL proxy header separation for first-class `Proxy-Authorization` on every route
+- Reject every first-class `Proxy-Authorization` field, including empty, on stream proxies
+- Reject raw `CURLOPT_PROXYHEADER` without proxy header separation support
 - Pass the request as the second argument to `on_headers` callbacks
 - Pass the `Pool` iterable key as a trailing argument to per-request observer callbacks
 - Declare strict types across remaining source files
@@ -127,7 +130,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Wait for in-progress HTTP/2-capable connections by default (`multiplex` defaults to `Multiplexing::WAIT`)
 - Require libcurl 7.65.2 or newer for HTTP/2 requests so multiplex waiting is never silently unavailable
 - Require libcurl 7.54.0 for HTTPS proxies and requests tunneled through HTTP proxies
-- Require libcurl 7.37.0 for `Proxy-Authorization` headers through HTTP proxies
 - Suppress proxy CONNECT response headers for tunneled requests
 - Point rejections of the raw `CURLOPT_PIPEWAIT` cURL option at the `multiplex` request option
 - Reject raw `CURLMOPT_PIPELINING` in favour of the `multiplex` cURL multi handler option
