@@ -7,7 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Security
 
-- Prevent first-class `Proxy-Authorization` headers from reaching origins (GHSA-94pj-82f3-465w)
+- Prevent first-class and proxy URL credentials from reaching origins (GHSA-94pj-82f3-465w)
 
 
 ## 7.14.1 - 2026-07-13
