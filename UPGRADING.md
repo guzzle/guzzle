@@ -851,6 +851,31 @@ observes only origin responses, and a tunneled transfer failure is classified
 by its transport phase instead of as a response failure carrying the proxy's
 interim reply.
 
+#### Proxy-Authorization Headers
+
+In Guzzle 8, every first-class `Proxy-Authorization` field handled by a built-in
+cURL handler requires libcurl 7.37.0 or newer with proxy header separation
+support, regardless of Guzzle's predicted route. This includes an empty field,
+which keeps its cURL header-control meaning in the proxy-only list, and requests
+predicted to be direct, no-proxy-bypassed, or sent through SOCKS. A request is
+rejected with a `RequestException` before network I/O when separation is not
+available. Guzzle 7 instead omits the field on those known non-HTTP-proxy routes
+and requires separation only when it cannot safely discard the field.
+
+Guzzle 8 also rejects a raw `CURLOPT_PROXYHEADER` list when proxy header
+separation is unavailable. Guzzle 7.15 only deprecates the raw option and passes
+it through to the installed PHP cURL extension and libcurl.
+
+When the stream handler selects a proxy, Guzzle 8 rejects any first-class
+`Proxy-Authorization` field, including an empty value, because PHP streams have
+no proxy-only header channel. Guzzle 7 instead accepts exactly one value,
+rejects carriage returns and line feeds, and adds one canonical proxy
+authorization line after selecting the proxy. That first-class value, including
+an empty one, takes precedence over Basic credentials in proxy URL userinfo;
+multiple values are rejected. Direct and no-proxy-bypassed stream requests omit
+the field in both versions. Configure Basic proxy credentials in the proxy URI
+or use a cURL handler for a first-class proxy authorization field.
+
 #### Proxy Tunnels Under Shared Connection Caches
 
 From libcurl 7.57.0, a cURL share handle passed directly to `CurlFactory` and
@@ -900,10 +925,6 @@ credentials, progress/debug callbacks, sink handling, cookies, protocols,
 connection coalescing, or cURL share handles. Use first-class Guzzle request
 options for those settings. Allowed raw cURL header-list options, such as
 `CURLOPT_PROXYHEADER`, now accept only strings or stringable objects as entries.
-On libcurl older than 7.37.0, or a PHP build missing the proxy header
-separation constants, a raw `CURLOPT_PROXYHEADER` list is now rejected with a
-`RequestException` before any network I/O; Guzzle 7 passes it through without
-separation support.
 
 The cURL handlers also reject stream-only `stream_context` options, but accept
 `read_timeout` without effect. The stream handler rejects cURL-only options it

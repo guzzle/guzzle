@@ -1760,11 +1760,12 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * Collects the non-empty first-class Proxy-Authorization request header
-     * lines that Guzzle configures in cURL's proxy-only header channel. Empty
-     * values are omitted entirely. getHeaderLine() is deliberately not used:
-     * comma-joining multiple credentials would change their wire
-     * representation and connection signature.
+     * Collects the first-class Proxy-Authorization request header lines that
+     * Guzzle configures in cURL's proxy-only header channel. Empty values use
+     * cURL's semicolon form so they suppress an automatically generated proxy
+     * authorization field without carrying a credential. getHeaderLine() is
+     * deliberately not used: comma-joining multiple credentials would change
+     * their wire representation and connection signature.
      *
      * @return list<string>
      */
@@ -1773,9 +1774,9 @@ final class CurlFactory implements CurlFactoryInterface
         $headers = [];
 
         foreach ($request->getHeader('Proxy-Authorization') as $value) {
-            if ($value !== '') {
-                $headers[] = 'Proxy-Authorization: '.$value;
-            }
+            $headers[] = $value === ''
+                ? 'Proxy-Authorization;'
+                : 'Proxy-Authorization: '.$value;
         }
 
         return $headers;
@@ -2295,7 +2296,7 @@ final class CurlFactory implements CurlFactoryInterface
         foreach ($conf['_headers'] as $name => $values) {
             // The managed Proxy-Authorization field never enters the origin
             // header list; applyProxyAuthorizationHeaderHandling() routes the
-            // non-empty values through cURL's proxy-only header channel.
+            // values through cURL's proxy-only header channel.
             if (Psr7\Utils::caselessEquals((string) $name, 'Proxy-Authorization')) {
                 continue;
             }

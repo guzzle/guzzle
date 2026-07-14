@@ -44,6 +44,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Resolve proxy environment variables in the stream handler, consistent with the cURL handlers
 - Honor `no_proxy`/`NO_PROXY` from the environment in the stream handler, including `*` to disable proxying
 - Reject an environment-resolved `https://` or SOCKS proxy in the stream handler, matching its `proxy` option behavior
+- Require cURL proxy header separation for first-class `Proxy-Authorization` on every route
+- Reject every first-class `Proxy-Authorization` field, including empty, on stream proxies
+- Reject raw `CURLOPT_PROXYHEADER` without proxy header separation support
 - Pass the request as the second argument to `on_headers` callbacks
 - Pass the `Pool` iterable key as a trailing argument to per-request observer callbacks
 - Declare strict types across remaining source files

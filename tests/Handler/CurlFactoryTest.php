@@ -2582,7 +2582,7 @@ class CurlFactoryTest extends TestCase
         ], $_SERVER['_curl'][$proxyHeaderOption]);
     }
 
-    public function testMultipleManagedProxyAuthorizationValuesKeepOrderAndOmitEmptyValues(): void
+    public function testMultipleManagedProxyAuthorizationValuesKeepOrderAndPreserveEmptyValues(): void
     {
         self::requireProxyHeaderSeparationConstants();
         $proxyHeaderOption = self::proxyHeaderOption();
@@ -2599,10 +2599,10 @@ class CurlFactoryTest extends TestCase
 
         // The values are configured line by line in their original order
         // (comma-joining them would change the wire representation), and the
-        // empty value is omitted instead of serialized as
-        // "Proxy-Authorization;".
+        // empty value keeps cURL's header-control semicolon form.
         self::assertSame([
             'Proxy-Authorization: Basic dXNlcjpvbmU=',
+            'Proxy-Authorization;',
             'Proxy-Authorization: Basic dXNlcjp0d28=',
         ], $_SERVER['_curl'][$proxyHeaderOption]);
         self::assertNotContains('Proxy-Authorization: Basic dXNlcjpvbmU=', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
@@ -2802,8 +2802,11 @@ class CurlFactoryTest extends TestCase
         self::assertNotSame($first, $second);
     }
 
-    public function testEmptyPsrProxyAuthorizationHeaderIsOmittedEntirely(): void
+    public function testEmptyPsrProxyAuthorizationHeaderUsesProxyOnlyControlField(): void
     {
+        self::requireProxyHeaderSeparationConstants();
+        $proxyHeaderOption = self::proxyHeaderOption();
+
         $factory = new CurlFactory(3);
         $easy = self::createRequestOnFactory(
             $factory,
@@ -2812,13 +2815,12 @@ class CurlFactoryTest extends TestCase
             ['proxy' => 'http://proxy.example.com:8080']
         );
 
-        // An empty first-class value carries no credential; it is omitted
-        // from both header channels instead of being serialized as
-        // "Proxy-Authorization;".
+        // An empty first-class value carries no credential, but its semicolon
+        // form remains in the proxy-only channel so it can suppress a proxy
+        // authorization field generated from URL userinfo.
         self::assertNotContains('Proxy-Authorization;', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
-        if (\defined('CURLOPT_PROXYHEADER')) {
-            self::assertArrayNotHasKey((int) \constant('CURLOPT_PROXYHEADER'), $_SERVER['_curl']);
-        }
+        self::assertSame(['Proxy-Authorization;'], $_SERVER['_curl'][$proxyHeaderOption]);
+        self::assertSame((int) \constant('CURLHEADER_SEPARATE'), $_SERVER['_curl'][(int) \constant('CURLOPT_HEADEROPT')]);
         self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
         self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
 
@@ -2830,25 +2832,17 @@ class CurlFactoryTest extends TestCase
         self::assertSame($unauthenticated, $easy->proxyTunnelSignature);
     }
 
-    public function testLegacyCurlEmptyProxyAuthorizationHeaderIsNotRejected(): void
+    public function testRejectsEmptyPsrProxyAuthorizationHeaderWithoutSeparationSupport(): void
     {
-        $factory = new CurlFactory(3);
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Proxy headers require libcurl 7.37.0 or newer built with proxy header separation support.');
+
         self::createRequestOnFactory(
-            $factory,
+            new CurlFactory(3),
             '7.36.0',
             new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => '']),
-            ['proxy' => 'http://proxy.example.com:8080']
+            ['proxy' => '']
         );
-
-        // The empty header carries no credential value, so it does not
-        // require proxy header separation; it is omitted entirely rather
-        // than rejected, and no connection-reuse handling is engaged.
-        self::assertNotContains('Proxy-Authorization;', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
-        if (\defined('CURLOPT_PROXYHEADER')) {
-            self::assertArrayNotHasKey((int) \constant('CURLOPT_PROXYHEADER'), $_SERVER['_curl']);
-        }
-        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
     public function testNonArrayProxyHeaderThrowsWhenManagedHeaderWouldAppend(): void
@@ -3493,6 +3487,25 @@ class CurlFactoryTest extends TestCase
         )->wait();
 
         self::assertSame('Basic dXNlcm5hbWU6cGFzc3dvcmQ=', Server::received()[0]->getHeaderLine('Proxy-Authorization'));
+    }
+
+    public function testEmptyProxyAuthorizationSuppressesProxyUrlCredentialsOnTheWire(): void
+    {
+        self::skipIfProxyHeaderSeparationIsUnsupported();
+
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200)]);
+
+        $proxy = (new Psr7\Uri(Server::$url))->withUserInfo('username', 'password');
+        $handler = new Handler\CurlHandler();
+        $handler(
+            new Psr7\Request('GET', 'http://www.example.com', ['Proxy-Authorization' => '']),
+            ['proxy' => (string) $proxy]
+        )->wait();
+
+        $received = Server::received()[0];
+        self::assertTrue($received->hasHeader('Proxy-Authorization'));
+        self::assertSame('', $received->getHeaderLine('Proxy-Authorization'));
     }
 
     public function testClientDefaultProxyAuthorizationHeaderIsNotSentToOrigin(): void
