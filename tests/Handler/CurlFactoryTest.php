@@ -6150,22 +6150,34 @@ class CurlFactoryTest extends TestCase
         }
     }
 
-    public function testUnrepresentableResponseContentLengthCreatesResponseException(): void
+    /**
+     * @dataProvider unrepresentableResponseContentLengthProvider
+     */
+    public function testUnrepresentableResponseContentLengthCreatesResponseException(bool $decodeContent): void
     {
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
         $stats = null;
-        $easy = $factory->create($request, [
+        $options = [
             'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
                 $stats = $transferStats;
             },
-        ]);
-        $overflow = ((string) \PHP_INT_MAX).'0';
+        ];
+        if ($decodeContent) {
+            $options['decode_content'] = true;
+        }
 
-        $header = self::receiveCurlHeaders($easy, [
+        $easy = $factory->create($request, $options);
+        $overflow = ((string) \PHP_INT_MAX).'0';
+        $headers = [
             "HTTP/1.1 200 OK\r\n",
             "Content-Length: {$overflow}\r\n",
-        ]);
+        ];
+        if ($decodeContent) {
+            $headers[] = "Content-Encoding: gzip\r\n";
+        }
+
+        $header = self::receiveCurlHeaders($easy, $headers);
         self::assertSame(-1, $header($easy->handle, "\r\n"));
         $easy->errno = \CURLE_WRITE_ERROR;
 
@@ -6186,22 +6198,40 @@ class CurlFactoryTest extends TestCase
         self::assertInstanceOf(\OverflowException::class, $stats->getHandlerErrorData());
     }
 
-    public function testOnHeadersExceptionWinsOverUnrepresentableResponseContentLength(): void
+    public static function unrepresentableResponseContentLengthProvider(): iterable
+    {
+        yield 'identity' => [false];
+        yield 'decoded' => [true];
+    }
+
+    /**
+     * @dataProvider unrepresentableResponseContentLengthProvider
+     */
+    public function testOnHeadersExceptionWinsOverUnrepresentableResponseContentLength(bool $decodeContent): void
     {
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
         $previous = new \RuntimeException('on headers failed');
-        $easy = $factory->create($request, [
+        $options = [
             'on_headers' => static function () use ($previous): void {
                 throw $previous;
             },
-        ]);
-        $overflow = ((string) \PHP_INT_MAX).'0';
+        ];
+        if ($decodeContent) {
+            $options['decode_content'] = true;
+        }
 
-        $header = self::receiveCurlHeaders($easy, [
+        $easy = $factory->create($request, $options);
+        $overflow = ((string) \PHP_INT_MAX).'0';
+        $headers = [
             "HTTP/1.1 200 OK\r\n",
             "Content-Length: {$overflow}\r\n",
-        ]);
+        ];
+        if ($decodeContent) {
+            $headers[] = "Content-Encoding: gzip\r\n";
+        }
+
+        $header = self::receiveCurlHeaders($easy, $headers);
         self::assertSame(-1, $header($easy->handle, "\r\n"));
         $easy->errno = \CURLE_WRITE_ERROR;
 

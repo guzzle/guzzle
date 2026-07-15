@@ -360,7 +360,13 @@ final class StreamHandler
         if ($deadline !== null && empty($options['stream'])) {
             $stream = self::createDeadlineSource($stream, $resource, $deadline, $options);
         }
-        [$stream, $headers] = self::checkDecode($options, $headers, $stream);
+        [$stream, $headers, $encodedBody] = self::checkDecode(
+            $options,
+            $headers,
+            $stream,
+            $request->getMethod(),
+            $status
+        );
 
         $canHaveBody = HeaderProcessor::responseCanHaveBody($request->getMethod(), $status);
         $sink = $canHaveBody
@@ -422,7 +428,7 @@ final class StreamHandler
             }
         } elseif ($sink !== $stream) {
             try {
-                $this->drain($request, $response, $stream, $sink);
+                $this->drain($request, $response, $stream, $sink, $encodedBody);
             } catch (ResponseException $e) {
                 $this->invokeStats($options, $request, $startTime, $response, $e);
 
@@ -529,14 +535,34 @@ final class StreamHandler
         return $factory;
     }
 
-    private static function checkDecode(array $options, array $headers, StreamInterface $stream): array
-    {
+    /**
+     * @return array{0: StreamInterface, 1: array, 2: ?EncodedBodyStream}
+     */
+    private static function checkDecode(
+        array $options,
+        array $headers,
+        StreamInterface $stream,
+        string $method,
+        int $status
+    ): array {
+        $encodedBody = null;
+
         // Automatically decode responses when instructed.
         if (isset($options['decode_content']) && $options['decode_content'] !== false) {
             $normalizedKeys = Utils::normalizeHeaderKeys($headers);
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
+                    $encodedLength = HeaderProcessor::parseContentLengthForResponseBodyHeaders(
+                        $method,
+                        $status,
+                        $headers
+                    );
+                    if (empty($options['stream']) && $encodedLength !== null && $encodedLength !== '0') {
+                        $encodedBody = new EncodedBodyStream($stream, $encodedLength);
+                        $stream = $encodedBody;
+                    }
+
                     $stream = new Psr7\InflateStream($stream);
                     $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
 
@@ -546,15 +572,15 @@ final class StreamHandler
                     // The decoded length cannot be known without inflating the
                     // stream, so keep the original length for inspection and
                     // drop the now-unknown Content-Length header.
-                    if (isset($normalizedKeys['content-length'])) {
-                        $headers['x-encoded-content-length'] = $headers[$normalizedKeys['content-length']];
-                        unset($headers[$normalizedKeys['content-length']]);
+                    $encodedContentLength = HeaderProcessor::removeHeader('Content-Length', $headers);
+                    if ($encodedContentLength !== []) {
+                        $headers['x-encoded-content-length'] = $encodedContentLength;
                     }
                 }
             }
         }
 
-        return [$stream, $headers];
+        return [$stream, $headers, $encodedBody];
     }
 
     /**
@@ -566,11 +592,16 @@ final class StreamHandler
         RequestInterface $request,
         ResponseInterface $response,
         StreamInterface $source,
-        StreamInterface $sink
+        StreamInterface $sink,
+        ?EncodedBodyStream $encodedBody = null
     ): StreamInterface {
         try {
-            $declaredLength = self::declaredResponseBodyLength($request, $response);
-            $copyLimit = $declaredLength ?? -1;
+            $declaredLength = self::declaredResponseBodyLength(
+                $request,
+                $response,
+                $encodedBody !== null ? $encodedBody->getDeclaredLength() : null
+            );
+            $copyLimit = $encodedBody === null ? $declaredLength ?? -1 : -1;
 
             try {
                 $target = $this->createResponseSink($request, $response, $sink);
@@ -601,7 +632,8 @@ final class StreamHandler
                 );
             }
 
-            if ($declaredLength !== null && $copied < $declaredLength) {
+            $receivedLength = $encodedBody !== null ? $encodedBody->getBytesRead() : $copied;
+            if ($declaredLength !== null && $receivedLength < $declaredLength) {
                 throw new ResponseTransferException(
                     'Response body ended before the declared Content-Length was reached',
                     $request,
@@ -632,9 +664,12 @@ final class StreamHandler
         }
     }
 
-    private static function declaredResponseBodyLength(RequestInterface $request, ResponseInterface $response): ?int
-    {
-        $parsed = HeaderProcessor::parseContentLengthForResponseBody($request, $response);
+    private static function declaredResponseBodyLength(
+        RequestInterface $request,
+        ResponseInterface $response,
+        ?string $encodedLength = null
+    ): ?int {
+        $parsed = $encodedLength ?? HeaderProcessor::parseContentLengthForResponseBody($request, $response);
         try {
             HeaderProcessor::assertContentLengthWithinPlatformLimit($parsed);
         } catch (\OverflowException $e) {

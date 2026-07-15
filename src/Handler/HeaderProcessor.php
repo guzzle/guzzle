@@ -161,21 +161,73 @@ final class HeaderProcessor
 
     public static function parseContentLengthForResponseBody(RequestInterface $request, ResponseInterface $response): ?string
     {
-        if (!self::responseCanHaveContentLengthBody($request, $response)) {
+        return self::parseContentLengthForResponseBodyValues(
+            $request->getMethod(),
+            $response->getStatusCode(),
+            $response->hasHeader('Transfer-Encoding'),
+            $response->getHeader('Content-Length')
+        );
+    }
+
+    /**
+     * @param array<string, string[]> $headers
+     */
+    public static function parseContentLengthForResponseBodyHeaders(
+        string $method,
+        int $status,
+        array $headers
+    ): ?string {
+        $normalizedKeys = Utils::normalizeHeaderKeys($headers);
+        $contentLength = self::removeHeader('Content-Length', $headers);
+
+        return self::parseContentLengthForResponseBodyValues(
+            $method,
+            $status,
+            isset($normalizedKeys['transfer-encoding']),
+            $contentLength
+        );
+    }
+
+    /**
+     * Removes every case-insensitive occurrence of a header and returns all
+     * removed values in their original field order.
+     *
+     * @param array<string, string[]> $headers
+     *
+     * @return string[] Removed values across all header-name casings
+     */
+    public static function removeHeader(string $name, array &$headers): array
+    {
+        $values = [];
+
+        foreach ($headers as $key => $headerValues) {
+            if (Psr7\Utils::caselessEquals((string) $key, $name)) {
+                \array_push($values, ...$headerValues);
+                unset($headers[$key]);
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param string[] $contentLength
+     */
+    private static function parseContentLengthForResponseBodyValues(
+        string $method,
+        int $status,
+        bool $hasTransferEncoding,
+        array $contentLength
+    ): ?string {
+        if (!self::responseCanHaveBody($method, $status) || $hasTransferEncoding) {
             return null;
         }
 
         try {
-            return self::parseContentLength($response->getHeader('Content-Length'));
+            return self::parseContentLength($contentLength);
         } catch (\RuntimeException $e) {
             return null;
         }
-    }
-
-    private static function responseCanHaveContentLengthBody(RequestInterface $request, ResponseInterface $response): bool
-    {
-        return self::responseCanHaveBody($request->getMethod(), $response->getStatusCode())
-            && !$response->hasHeader('Transfer-Encoding');
     }
 
     /**

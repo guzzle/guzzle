@@ -96,7 +96,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Classify response-aware transfer failures as `ResponseTransferException`
 - The stream handler returns an empty body and releases the connection at the end of the headers for HEAD and CONNECT-2xx exchanges and 1xx, 204, and 304 responses
 - The stream handler no longer writes to the `sink` option or reads trailing bytes for responses that cannot carry a body
-- Reject short non-streamed stream-handler response bodies with valid `Content-Length` as `ResponseTransferException`
+- Reject short buffered stream-handler bodies against `Content-Length`, including decoded gzip/deflate
+- Normalize duplicate `Content-Length` casings and preserve encoded values on decoded responses
 - Reject unrepresentable built-in handler response sizes and byte counts as `ResponseException`
 - Ignore cURL informational responses other than `101 Switching Protocols` before the final response
 - Treat response sink rewind failures as `ResponseException` and skip non-seekable sink rewinds
