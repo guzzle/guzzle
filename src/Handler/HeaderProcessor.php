@@ -163,9 +163,9 @@ final class HeaderProcessor
      *
      * @param array<string, string[]> $headers
      *
-     * @throws \RuntimeException when Content-Length is malformed or
-     *                           conflicting, or is combined with
-     *                           Transfer-Encoding
+     * @throws \RuntimeException  when Content-Length is malformed or
+     *                            conflicting, or is combined with
+     *                            Transfer-Encoding
      * @throws \OverflowException when Content-Length cannot fit in a PHP
      *                            integer
      */
