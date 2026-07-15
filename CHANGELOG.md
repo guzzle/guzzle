@@ -13,7 +13,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Require `guzzlehttp/psr7` ^2.13
 - Use locale-independent ASCII folding for all case normalization and comparison
-- Strip `Content-Length` and `Transfer-Encoding` when redirects discard the request body
 - Sanitize the cURL error text exposed through exception handler context
 - Fail closed when a named cURL multi connection cap cannot be applied
 - Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured
@@ -31,6 +30,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fail synchronous waits from native cURL callbacks promptly instead of self-deadlocking
 - Guard cURL multi handle removal against progress callbacks re-entering the handler
 - Scope promise waits on the cURL multi handler to the awaited transfer
+- Strip `Content-Length` and `Transfer-Encoding` when redirects discard the request body
 - Stop re-applying the `delay` request option to followed redirects
 
 
