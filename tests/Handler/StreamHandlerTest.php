@@ -1471,6 +1471,166 @@ class StreamHandlerTest extends TestCase
         self::assertSame((string) \strlen($gzip), $response->getHeaderLine('x-encoded-content-length'));
     }
 
+    public function testDecodedResponseStopsAtEncodedContentLength(): void
+    {
+        $decoded = 'decoded';
+        $gzip = \gzencode($decoded);
+        self::assertIsString($gzip);
+
+        $source = Psr7\Utils::streamFor($gzip.'trailing bytes');
+        $nonClosingSource = FnStream::decorate($source, [
+            'close' => static function (): void {
+            },
+        ]);
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: '.\strlen($gzip),
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse(
+            $handler,
+            $request,
+            ['decode_content' => true],
+            $nonClosingSource
+        )->wait();
+
+        self::assertSame($decoded, (string) $response->getBody());
+        self::assertSame(\strlen($gzip), $source->tell());
+    }
+
+    /**
+     * @dataProvider decodedContentEncodingProvider
+     */
+    public function testRejectsDecodedResponseWhenEncodedBodyIsShort(
+        string $encoding,
+        string $decoded,
+        string $encoded
+    ): void {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            "Content-Encoding: {$encoding}",
+            'Content-Length: '.\strlen($encoded),
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse(
+                $handler,
+                $request,
+                ['decode_content' => true],
+                Psr7\Utils::streamFor(\substr($encoded, 0, -1))
+            )->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame('Response body ended before the declared Content-Length was reached', $e->getMessage());
+            self::assertFalse($e->getResponse()->hasHeader('Content-Length'));
+            self::assertSame((string) \strlen($encoded), $e->getResponse()->getHeaderLine('x-encoded-content-length'));
+
+            $body = $e->getResponse()->getBody();
+            $body->rewind();
+            self::assertSame($decoded, (string) $body);
+        }
+    }
+
+    public static function decodedContentEncodingProvider(): iterable
+    {
+        $decoded = \str_repeat('payload-', 100);
+
+        yield 'gzip' => ['gzip', $decoded, (string) \gzencode($decoded)];
+        yield 'deflate' => ['deflate', $decoded, (string) \gzcompress($decoded)];
+    }
+
+    public function testDecodedTransferEncodingTakesPrecedenceOverContentLength(): void
+    {
+        $decoded = 'decoded';
+        $gzip = \gzencode($decoded);
+        self::assertIsString($gzip);
+
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Transfer-Encoding: chunked',
+            'Content-Encoding: gzip',
+            'Content-Length: '.(\strlen($gzip) + 1),
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse(
+            $handler,
+            $request,
+            ['decode_content' => true],
+            Psr7\Utils::streamFor($gzip)
+        )->wait();
+
+        self::assertSame($decoded, (string) $response->getBody());
+    }
+
+    public function testDecodedConflictingMixedCaseContentLengthsAreNotEnforced(): void
+    {
+        $decoded = 'decoded';
+        $gzip = \gzencode($decoded);
+        self::assertIsString($gzip);
+
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+        $encodedLength = (string) \strlen($gzip);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: '.$encodedLength,
+            'content-length: '.(\strlen($gzip) + 1),
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse(
+            $handler,
+            $request,
+            ['decode_content' => true],
+            Psr7\Utils::streamFor($gzip)
+        )->wait();
+
+        self::assertSame($decoded, (string) $response->getBody());
+        self::assertFalse($response->hasHeader('Content-Length'));
+        self::assertSame(
+            [$encodedLength, (string) (\strlen($gzip) + 1)],
+            $response->getHeader('x-encoded-content-length')
+        );
+    }
+
+    public function testUnrepresentableDecodedContentLengthCreatesResponseException(): void
+    {
+        $gzip = \gzencode('decoded');
+        self::assertIsString($gzip);
+
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: 99999999999999999999999999',
+        ]);
+
+        try {
+            $this->invokeStreamHandlerCreateResponse(
+                $handler,
+                $request,
+                ['decode_content' => true],
+                Psr7\Utils::streamFor($gzip)
+            )->wait();
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertResponseContentLengthPlatformException($e);
+        }
+    }
+
     public function testAutomaticallyDecompressGzipHead(): void
     {
         Server::flush();

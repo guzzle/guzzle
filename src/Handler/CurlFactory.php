@@ -2126,9 +2126,8 @@ final class CurlFactory implements CurlFactoryInterface
             return false;
         }
 
-        $length = HeaderProcessor::parseContentLengthForResponseBody($easy->request, $easy->response);
         try {
-            HeaderProcessor::assertContentLengthWithinPlatformLimit($length);
+            HeaderProcessor::assertContentLengthWithinPlatformLimit($easy->declaredResponseBodyLength);
         } catch (\OverflowException $e) {
             $easy->responseBodySizeException = $e;
 

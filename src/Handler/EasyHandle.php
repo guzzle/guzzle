@@ -131,6 +131,11 @@ final class EasyHandle
     public ?\OverflowException $responseBodySizeException = null;
 
     /**
+     * @var string|null Normalized response Content-Length before content decoding.
+     */
+    public ?string $declaredResponseBodyLength = null;
+
+    /**
      * Attach a response to the easy handle based on the received headers.
      *
      * @throws \RuntimeException if no headers have been received or the first
@@ -141,6 +146,7 @@ final class EasyHandle
         $this->response = null;
         $this->responseBodyBytes = 0;
         $this->responseBodySizeException = null;
+        $this->declaredResponseBodyLength = null;
 
         [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($this->headers);
 
@@ -152,12 +158,18 @@ final class EasyHandle
         }
 
         $normalizedKeys = Utils::normalizeHeaderKeys($headers);
+        $this->declaredResponseBodyLength = HeaderProcessor::parseContentLengthForResponseBodyHeaders(
+            $this->request->getMethod(),
+            $status,
+            $headers
+        );
 
         if (isset($this->options['decode_content']) && $this->options['decode_content'] !== false && isset($normalizedKeys['content-encoding'])) {
             $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
             unset($headers[$normalizedKeys['content-encoding']]);
-            if (isset($normalizedKeys['content-length'])) {
-                $headers['x-encoded-content-length'] = $headers[$normalizedKeys['content-length']];
+            $encodedContentLength = HeaderProcessor::removeHeader($headers, 'Content-Length');
+            if ($encodedContentLength !== []) {
+                $headers['x-encoded-content-length'] = $encodedContentLength;
 
                 try {
                     $bodyLength = $this->sink->getSize();
@@ -165,9 +177,7 @@ final class EasyHandle
                     $bodyLength = null;
                 }
                 if ($bodyLength) {
-                    $headers[$normalizedKeys['content-length']] = [(string) $bodyLength];
-                } else {
-                    unset($headers[$normalizedKeys['content-length']]);
+                    $headers['Content-Length'] = [(string) $bodyLength];
                 }
             }
         }

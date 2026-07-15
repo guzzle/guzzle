@@ -161,21 +161,70 @@ final class HeaderProcessor
 
     public static function parseContentLengthForResponseBody(RequestInterface $request, ResponseInterface $response): ?string
     {
-        if (!self::responseCanHaveContentLengthBody($request, $response)) {
+        return self::parseContentLengthForResponseBodyValues(
+            $request->getMethod(),
+            $response->getStatusCode(),
+            $response->hasHeader('Transfer-Encoding'),
+            $response->getHeader('Content-Length')
+        );
+    }
+
+    /**
+     * @param array<string, string[]> $headers
+     */
+    public static function parseContentLengthForResponseBodyHeaders(
+        string $method,
+        int $status,
+        array $headers
+    ): ?string {
+        $normalizedKeys = Utils::normalizeHeaderKeys($headers);
+        $contentLength = self::removeHeader($headers, 'Content-Length');
+
+        return self::parseContentLengthForResponseBodyValues(
+            $method,
+            $status,
+            isset($normalizedKeys['transfer-encoding']),
+            $contentLength
+        );
+    }
+
+    /**
+     * @param array<string, string[]> $headers
+     *
+     * @return string[]
+     */
+    public static function removeHeader(array &$headers, string $name): array
+    {
+        $values = [];
+
+        foreach ($headers as $key => $headerValues) {
+            if (Psr7\Utils::caselessEquals((string) $key, $name)) {
+                \array_push($values, ...$headerValues);
+                unset($headers[$key]);
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param string[] $contentLength
+     */
+    private static function parseContentLengthForResponseBodyValues(
+        string $method,
+        int $status,
+        bool $hasTransferEncoding,
+        array $contentLength
+    ): ?string {
+        if (!self::responseCanHaveBody($method, $status) || $hasTransferEncoding) {
             return null;
         }
 
         try {
-            return self::parseContentLength($response->getHeader('Content-Length'));
+            return self::parseContentLength($contentLength);
         } catch (\RuntimeException $e) {
             return null;
         }
-    }
-
-    private static function responseCanHaveContentLengthBody(RequestInterface $request, ResponseInterface $response): bool
-    {
-        return self::responseCanHaveBody($request->getMethod(), $response->getStatusCode())
-            && !$response->hasHeader('Transfer-Encoding');
     }
 
     /**

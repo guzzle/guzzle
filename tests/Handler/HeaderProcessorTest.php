@@ -115,6 +115,50 @@ class HeaderProcessorTest extends TestCase
     }
 
     /**
+     * @dataProvider responseBodyContentLengthHeaderProvider
+     *
+     * @param array<string, string[]> $headers
+     */
+    public function testParsesContentLengthForResponseBodyHeaders(
+        string $method,
+        int $status,
+        array $headers,
+        ?string $expected
+    ): void {
+        self::assertSame(
+            $expected,
+            HeaderProcessor::parseContentLengthForResponseBodyHeaders($method, $status, $headers)
+        );
+    }
+
+    public static function responseBodyContentLengthHeaderProvider(): iterable
+    {
+        yield 'valid' => ['GET', 200, ['Content-Length' => ['003']], '3'];
+        yield 'mixed case' => ['GET', 200, ['cOnTeNt-LeNgTh' => ['003']], '3'];
+        yield 'equivalent mixed-case duplicates' => [
+            'GET',
+            200,
+            ['Content-Length' => ['003'], 'content-length' => ['3']],
+            '3',
+        ];
+        yield 'head' => ['HEAD', 200, ['Content-Length' => ['3']], null];
+        yield 'transfer encoding' => [
+            'GET',
+            200,
+            ['Content-Length' => ['3'], 'transfer-encoding' => ['chunked']],
+            null,
+        ];
+        yield 'malformed' => ['GET', 200, ['Content-Length' => ['three']], null];
+        yield 'conflicting' => ['GET', 200, ['Content-Length' => ['3', '5']], null];
+        yield 'conflicting mixed-case duplicates' => [
+            'GET',
+            200,
+            ['Content-Length' => ['3'], 'content-length' => ['5']],
+            null,
+        ];
+    }
+
+    /**
      * @dataProvider contentLengthToIntProvider
      */
     public function testConvertsContentLengthToIntWhenRepresentable(?string $length, ?int $expected): void

@@ -37,7 +37,7 @@ class EasyHandleTest extends TestCase
 
     public function testCreateResponseIgnoresInterim1xxResponses(): void
     {
-        $easy = new EasyHandle();
+        $easy = self::createEasyHandle();
         $easy->sink = Psr7\Utils::streamFor('');
         $easy->headers = ['HTTP/1.1 103 Early Hints', 'Link: </style.css>; rel=preload'];
 
@@ -53,7 +53,7 @@ class EasyHandleTest extends TestCase
 
     public function testCreateResponseIgnores100Continue(): void
     {
-        $easy = new EasyHandle();
+        $easy = self::createEasyHandle();
         $easy->sink = Psr7\Utils::streamFor('');
         $easy->headers = ['HTTP/1.1 100 Continue'];
 
@@ -64,7 +64,7 @@ class EasyHandleTest extends TestCase
 
     public function testCreateResponsePreserves101SwitchingProtocols(): void
     {
-        $easy = new EasyHandle();
+        $easy = self::createEasyHandle();
         $easy->sink = Psr7\Utils::streamFor('');
         $easy->headers = ['HTTP/1.1 101 Switching Protocols', 'Upgrade: websocket', 'Connection: Upgrade'];
 
@@ -76,7 +76,7 @@ class EasyHandleTest extends TestCase
 
     public function testDecodedContentLengthIsOmittedWhenSinkSizeOverflows(): void
     {
-        $easy = new EasyHandle();
+        $easy = self::createEasyHandle();
         $easy->headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
@@ -98,9 +98,29 @@ class EasyHandleTest extends TestCase
         self::assertSame('3', $easy->response->getHeaderLine('x-encoded-content-length'));
     }
 
+    public function testDecodedContentLengthCombinesMixedCaseFields(): void
+    {
+        $easy = self::createEasyHandle();
+        $easy->headers = [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: 3',
+            'content-length: 3',
+        ];
+        $easy->options = ['decode_content' => true];
+        $easy->sink = Psr7\Utils::streamFor('decoded');
+
+        $easy->createResponse();
+
+        self::assertNotNull($easy->response);
+        self::assertSame('7', $easy->response->getHeaderLine('Content-Length'));
+        self::assertSame(['3', '3'], $easy->response->getHeader('x-encoded-content-length'));
+        self::assertSame('3', $easy->declaredResponseBodyLength);
+    }
+
     public function testZeroStringDecodeContentPreservesEncodedHeaders(): void
     {
-        $easy = new EasyHandle();
+        $easy = self::createEasyHandle();
         $easy->headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
@@ -120,7 +140,7 @@ class EasyHandleTest extends TestCase
     public function testCreateResponseIsBuiltViaConfiguredResponseFactory(): void
     {
         $factory = new Psr17SpyFactory();
-        $easy = new EasyHandle();
+        $easy = self::createEasyHandle();
         $easy->sink = Psr7\Utils::streamFor('hi');
         $easy->headers = ['HTTP/1.1 200 OK', 'Foo: Bar'];
         $easy->options = [RequestOptions::RESPONSE_FACTORY => $factory];
@@ -136,7 +156,7 @@ class EasyHandleTest extends TestCase
 
     public function testCreateResponsePreservesMixedCaseDuplicateHeaders(): void
     {
-        $easy = new EasyHandle();
+        $easy = self::createEasyHandle();
         $easy->sink = Psr7\Utils::streamFor('');
         $easy->headers = ['HTTP/1.1 200 OK', 'Set-Cookie: a=1', 'set-cookie: b=2'];
 
@@ -148,7 +168,7 @@ class EasyHandleTest extends TestCase
 
     public function testCreateResponsePropagatesResponseFactoryExceptions(): void
     {
-        $easy = new EasyHandle();
+        $easy = self::createEasyHandle();
         $easy->sink = Psr7\Utils::streamFor('');
         $easy->headers = ['HTTP/1.1 200 OK'];
         $easy->options = [
@@ -168,7 +188,7 @@ class EasyHandleTest extends TestCase
 
     public function testCreateResponseRejectsInvalidResponseFactory(): void
     {
-        $easy = new EasyHandle();
+        $easy = self::createEasyHandle();
         $easy->sink = Psr7\Utils::streamFor('');
         $easy->headers = ['HTTP/1.1 200 OK'];
         $easy->options = [RequestOptions::RESPONSE_FACTORY => new \stdClass()];
@@ -177,5 +197,13 @@ class EasyHandleTest extends TestCase
         $this->expectExceptionMessage('response_factory must be an instance of Psr\\Http\\Message\\ResponseFactoryInterface');
 
         $easy->createResponse();
+    }
+
+    private static function createEasyHandle(): EasyHandle
+    {
+        $easy = new EasyHandle();
+        $easy->request = new Psr7\Request('GET', 'http://example.com');
+
+        return $easy;
     }
 }
