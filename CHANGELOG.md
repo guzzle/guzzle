@@ -31,6 +31,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Guard cURL multi handle removal against progress callbacks re-entering the handler
 - Scope promise waits on the cURL multi handler to the awaited transfer
 - Stop re-applying the `delay` request option to followed redirects
+- Strip `Content-Length` and `Transfer-Encoding` when redirects discard the request body
 
 
 ## 7.14.2 - 2026-07-14

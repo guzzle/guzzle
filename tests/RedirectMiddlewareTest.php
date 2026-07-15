@@ -542,6 +542,7 @@ class RedirectMiddlewareTest extends TestCase
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('QUERY', 'http://example.com', [
+            'Content-Length' => '11',
             'Content-Type' => 'application/json',
         ], '{"q":"foo"}');
 
@@ -552,6 +553,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame('QUERY', $lastRequest->getMethod());
         self::assertSame('http://example.com/foo', (string) $lastRequest->getUri());
         self::assertSame('{"q":"foo"}', (string) $lastRequest->getBody());
+        self::assertSame('11', $lastRequest->getHeaderLine('Content-Length'));
         self::assertSame('application/json', $lastRequest->getHeaderLine('Content-Type'));
     }
 
@@ -676,6 +678,38 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('GET', $lastRequest->getMethod());
         self::assertSame('', (string) $lastRequest->getBody());
+    }
+
+    /**
+     * @dataProvider discardedBodyFramingHeaderProvider
+     */
+    public function testBodyDiscardingRedirectRemovesFramingHeader($headerName, $headerValue)
+    {
+        $mock = new MockHandler([
+            new Response(303, ['Location' => 'http://example.com/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('POST', 'http://example.com', [$headerName => $headerValue], 'a=b');
+
+        $response = $handler($request, ['allow_redirects' => ['max' => 2]])->wait();
+        $lastRequest = $mock->getLastRequest();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('GET', $lastRequest->getMethod());
+        self::assertSame('', (string) $lastRequest->getBody());
+        self::assertFalse($lastRequest->hasHeader('Content-Length'));
+        self::assertFalse($lastRequest->hasHeader('Transfer-Encoding'));
+    }
+
+    public static function discardedBodyFramingHeaderProvider()
+    {
+        return [
+            'Content-Length' => ['Content-Length', '3'],
+            'Transfer-Encoding' => ['Transfer-Encoding', 'chunked'],
+        ];
     }
 
     public function testCrossOriginQueryRedirectStripsCredentialsButPreservesBody()
