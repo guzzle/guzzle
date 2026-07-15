@@ -13,6 +13,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Require `guzzlehttp/psr7` ^2.13
 - Use locale-independent ASCII folding for all case normalization and comparison
+- Bound cURL upload reads to the declared `Content-Length`
 - Sanitize the cURL error text exposed through exception handler context
 - Fail closed when a named cURL multi connection cap cannot be applied
 - Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured

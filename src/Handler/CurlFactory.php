@@ -2057,8 +2057,19 @@ class CurlFactory implements CurlFactoryInterface
             if ($body->isSeekable()) {
                 $body->rewind();
             }
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body) {
-                return $body->read($length);
+            $remaining = $size;
+            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, $length) use ($body, &$remaining) {
+                if ($remaining === 0) {
+                    return '';
+                }
+
+                $limit = $remaining === null ? $length : \min($length, $remaining);
+                $data = $body->read($limit);
+                if ($remaining !== null) {
+                    $remaining -= \strlen($data);
+                }
+
+                return $data;
             };
         }
 
