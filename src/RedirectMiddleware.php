@@ -179,6 +179,7 @@ class RedirectMiddleware
             if ($requestMethod !== 'QUERY' || !\in_array($statusCode, [301, 302], true)) {
                 $modify['method'] = \in_array($requestMethod, ['GET', 'HEAD', 'OPTIONS'], true) ? $requestMethod : 'GET';
                 $modify['body'] = '';
+                $modify['remove_headers'] = ['Content-Length', 'Transfer-Encoding'];
             }
         }
 
