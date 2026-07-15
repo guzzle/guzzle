@@ -178,7 +178,7 @@ final class HeaderProcessor
         array $headers
     ): ?string {
         $normalizedKeys = Utils::normalizeHeaderKeys($headers);
-        $contentLength = self::removeHeader($headers, 'Content-Length');
+        $contentLength = self::removeHeader('Content-Length', $headers);
 
         return self::parseContentLengthForResponseBodyValues(
             $method,
@@ -189,11 +189,14 @@ final class HeaderProcessor
     }
 
     /**
+     * Removes every case-insensitive occurrence of a header and returns all
+     * removed values in their original field order.
+     *
      * @param array<string, string[]> $headers
      *
-     * @return string[]
+     * @return string[] Removed values across all header-name casings
      */
-    public static function removeHeader(array &$headers, string $name): array
+    public static function removeHeader(string $name, array &$headers): array
     {
         $values = [];
 

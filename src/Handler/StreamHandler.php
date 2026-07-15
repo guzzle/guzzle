@@ -572,7 +572,7 @@ final class StreamHandler
                     // The decoded length cannot be known without inflating the
                     // stream, so keep the original length for inspection and
                     // drop the now-unknown Content-Length header.
-                    $encodedContentLength = HeaderProcessor::removeHeader($headers, 'Content-Length');
+                    $encodedContentLength = HeaderProcessor::removeHeader('Content-Length', $headers);
                     if ($encodedContentLength !== []) {
                         $headers['x-encoded-content-length'] = $encodedContentLength;
                     }

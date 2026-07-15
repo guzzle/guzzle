@@ -167,7 +167,7 @@ final class EasyHandle
         if (isset($this->options['decode_content']) && $this->options['decode_content'] !== false && isset($normalizedKeys['content-encoding'])) {
             $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
             unset($headers[$normalizedKeys['content-encoding']]);
-            $encodedContentLength = HeaderProcessor::removeHeader($headers, 'Content-Length');
+            $encodedContentLength = HeaderProcessor::removeHeader('Content-Length', $headers);
             if ($encodedContentLength !== []) {
                 $headers['x-encoded-content-length'] = $encodedContentLength;
 

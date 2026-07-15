@@ -423,14 +423,14 @@ raise `ResponseTransferException`; platform-size failures raise plain
 `ResponseException` with the underlying `OverflowException` available via
 `getPrevious()`. For decoded gzip and deflate responses, the declared length is
 checked against the encoded bytes received before decompression; the exposed
-response still removes `Content-Length` and preserves its value as
-`x-encoded-content-length`. This matches the cURL handler for identity-coded,
-decoded, and pass-through responses. It does not apply to `stream => true`
-responses, chunked or other `Transfer-Encoding` responses, or conflicting or
-malformed `Content-Length` values. Responses to `HEAD`, any `1xx`, `204`, `304`,
-and successful `CONNECT` requests are never checked because they are bodiless by
-framing. `205 Reset Content` is checked because it remains framed by
-`Content-Length`.
+response still removes all `Content-Length` fields and preserves their values
+as `x-encoded-content-length`. This matches the cURL handler for
+identity-coded, decoded, and pass-through responses. It does not apply to
+`stream => true` responses, chunked or other `Transfer-Encoding` responses, or
+conflicting or malformed `Content-Length` values. Responses to `HEAD`, any
+`1xx`, `204`, `304`, and successful `CONNECT` requests are never checked
+because they are bodiless by framing. `205 Reset Content` is checked because
+it remains framed by `Content-Length`.
 
 The deprecated `RequestException::wrapException()` method was removed. Create a
 `RequestException` directly for request failures where Guzzle does not expose a

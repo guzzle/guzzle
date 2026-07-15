@@ -1471,6 +1471,34 @@ class StreamHandlerTest extends TestCase
         self::assertSame((string) \strlen($gzip), $response->getHeaderLine('x-encoded-content-length'));
     }
 
+    public function testStreamedDecodedResponseDoesNotEnforceEncodedContentLength(): void
+    {
+        $decoded = 'decoded';
+        $gzip = \gzencode($decoded);
+        self::assertIsString($gzip);
+
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://example.com');
+        $declaredLength = (string) (\strlen($gzip) + 1);
+
+        $this->setStreamHandlerLastHeaders($handler, [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: '.$declaredLength,
+        ]);
+
+        $response = $this->invokeStreamHandlerCreateResponse(
+            $handler,
+            $request,
+            ['decode_content' => true, 'stream' => true],
+            Psr7\Utils::streamFor($gzip)
+        )->wait();
+
+        self::assertSame($decoded, (string) $response->getBody());
+        self::assertFalse($response->hasHeader('Content-Length'));
+        self::assertSame($declaredLength, $response->getHeaderLine('x-encoded-content-length'));
+    }
+
     public function testDecodedResponseStopsAtEncodedContentLength(): void
     {
         $decoded = 'decoded';
