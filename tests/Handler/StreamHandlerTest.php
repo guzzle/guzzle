@@ -339,42 +339,6 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testNormalizesEquivalentRequestContentLengthValues(): void
-    {
-        $request = new Request('GET', Server::$url, [
-            'Content-Length' => ['0000', '0'],
-        ]);
-        $reflection = new \ReflectionMethod(StreamHandler::class, 'prepareRequest');
-        if (\PHP_VERSION_ID < 80100) {
-            $reflection->setAccessible(true);
-        }
-        $prepared = $reflection->invoke(null, $request);
-
-        self::assertInstanceOf(RequestInterface::class, $prepared);
-        self::assertSame(['0'], $prepared->getHeader('Content-Length'));
-    }
-
-    public function testRejectsUnrepresentableRequestContentLength(): void
-    {
-        $length = ((string) \PHP_INT_MAX).'0';
-        $request = new Request('GET', Server::$url, [
-            'Content-Length' => $length,
-        ]);
-        $reflection = new \ReflectionMethod(StreamHandler::class, 'prepareRequest');
-        if (\PHP_VERSION_ID < 80100) {
-            $reflection->setAccessible(true);
-        }
-
-        try {
-            $reflection->invoke(null, $request);
-            self::fail('Expected RequestException');
-        } catch (RequestException $e) {
-            self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
-            self::assertSame($request, $e->getRequest());
-            self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
-        }
-    }
-
     public function testRejectsInvalidRequestContentLengthBeforeAddingEmptyBodyDefault(): void
     {
         $handler = new StreamHandler();
@@ -469,19 +433,24 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $previous = new Psr7\Exception\TimeoutException('Unable to read stream contents: timed out');
         $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
             '__toString' => static function () use ($previous): string {
                 throw $previous;
             },
         ]);
         $request = new Request('PUT', Server::$url, [], $body);
         $stats = null;
+        $statsCalls = 0;
         $exception = null;
         $exceptionRequest = null;
 
         try {
             $handler($request, [
-                'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                'on_stats' => static function (TransferStats $transferStats) use (&$stats, &$statsCalls): void {
                     $stats = $transferStats;
+                    ++$statsCalls;
                 },
             ])->wait();
 
@@ -499,6 +468,7 @@ class StreamHandlerTest extends TestCase
         }
 
         self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertSame(1, $statsCalls);
         self::assertFalse($stats->hasResponse());
         self::assertSame($exceptionRequest->getMethod(), $stats->getRequest()->getMethod());
         self::assertSame((string) $exceptionRequest->getUri(), (string) $stats->getRequest()->getUri());
@@ -510,6 +480,9 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $previous = new \RuntimeException('');
         $body = FnStream::decorate(Psr7\Utils::streamFor('data'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
             '__toString' => static function () use ($previous): string {
                 throw $previous;
             },
@@ -537,6 +510,9 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $previous = new \RuntimeException($message);
         $body = FnStream::decorate(Psr7\Utils::streamFor('x'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
             '__toString' => static function () use ($previous): string {
                 throw $previous;
             },
@@ -1913,7 +1889,7 @@ class StreamHandlerTest extends TestCase
         if (\PHP_VERSION_ID < 80100) {
             $getDefaultContext->setAccessible(true);
         }
-        $context = $getDefaultContext->invoke($handler, $request);
+        $context = $getDefaultContext->invoke($handler, $request, (string) $request->getBody());
 
         $applyProxy = new \ReflectionMethod(StreamHandler::class, 'applyProxy');
         if (\PHP_VERSION_ID < 80100) {
@@ -2964,6 +2940,100 @@ class StreamHandlerTest extends TestCase
         self::assertEquals(3, $req->getHeaderLine('Content-Length'));
     }
 
+    public function testFinalizesProvisionalChunkedBodyWithExactContentLength(): void
+    {
+        $this->queueRes();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('foo'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $handler = new StreamHandler();
+
+        $handler(new Request('PUT', Server::$url, ['Transfer-Encoding' => 'chunked'], $body), [])->wait();
+
+        $request = Server::received()[0];
+        self::assertSame('3', $request->getHeaderLine('Content-Length'));
+        self::assertFalse($request->hasHeader('Transfer-Encoding'));
+        self::assertSame('foo', (string) $request->getBody());
+    }
+
+    public function testSendsOnlyExplicitContentLengthFromUnknownBody(): void
+    {
+        $this->queueRes();
+        $source = Psr7\Utils::streamFor('abcdef');
+        $body = FnStream::decorate($source, [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $handler = new StreamHandler();
+
+        $handler(new Request('PUT', Server::$url, ['Content-Length' => '3'], $body), [])->wait();
+
+        $request = Server::received()[0];
+        self::assertSame('3', $request->getHeaderLine('Content-Length'));
+        self::assertSame('abc', (string) $request->getBody());
+        self::assertSame('def', $source->getContents());
+    }
+
+    public function testRejectsShortUnknownBodyBeforeOpeningStreamTransport(): void
+    {
+        Server::flush();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('ab'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $handler = new StreamHandler();
+
+        try {
+            $handler(new Request('PUT', Server::$url, ['Content-Length' => '3'], $body), [])->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame('Request body ended before the declared Content-Length was reached', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public function testRejectsMismatchedHeadRequestBodyBeforeOpeningStreamTransport(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $request = new Request('HEAD', Server::$url, ['Content-Length' => '1'], 'abc');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertEquals($request, $e->getRequest());
+            self::assertSame('Content-Length does not match the request body size', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public function testRejectsUnknownHttp10BodyWithoutOpeningStreamTransport(): void
+    {
+        Server::flush();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('An unknown-size HTTP/1.0 request body requires Content-Length');
+
+        try {
+            $handler(new Request('PUT', Server::$url, [], $body, '1.0'), []);
+        } finally {
+            self::assertSame([], Server::received());
+        }
+    }
+
     public function testAddsContentLengthForPUTEvenWhenEmpty(): void
     {
         $this->queueRes();
@@ -3006,6 +3076,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame('Hello', $response->getHeaderLine('Test'));
         self::assertSame('4', $response->getHeaderLine('Content-Length'));
         self::assertSame('test', (string) $response->getBody());
+        self::assertFalse(Server::received()[0]->hasHeader('Expect'));
     }
 
     public function testDoesSleep(): void
@@ -4307,12 +4378,23 @@ class StreamHandlerTest extends TestCase
     public function testRejectsNonHttpSchemes(): void
     {
         $handler = new StreamHandler();
+        $body = FnStream::decorate(Psr7\Utils::streamFor('secret'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            '__toString' => static function (): string {
+                self::fail('The body must not be consumed for an unsupported URI');
+            },
+            'read' => static function (): string {
+                self::fail('The body must not be consumed for an unsupported URI');
+            },
+        ]);
 
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage("The scheme 'file' is not supported.");
 
         $handler(
-            new Request('GET', 'file:///etc/passwd'),
+            new Request('GET', 'file:///etc/passwd', [], $body),
             [
                 RequestOptions::STREAM => true,
             ]

@@ -57,7 +57,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Apply automatic `Expect: 100-Continue` injection to HTTP/1.1 requests only
 - Wrap native `JsonException` from `Utils::jsonDecode()` and `Utils::jsonEncode()` in `GuzzleHttp\Exception\InvalidArgumentException`
 - Reject invalid `SetCookie` constructor field types instead of coercing them
-- Reject malformed, conflicting, or unrepresentable request `Content-Length` values in built-in handlers
+- Enforce request framing across built-in handlers, request preparation, and body-discarding redirects
 - Reject raw cURL request options outside the built-in cURL handlers' allow-list
 - Reject non-string raw cURL header-list entries before applying them
 - Reject proxy tunnels that require fresh connections when persistent transport sharing requires reuse

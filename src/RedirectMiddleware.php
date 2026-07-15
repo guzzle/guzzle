@@ -249,7 +249,11 @@ class RedirectMiddleware
     }
 
     /**
-     * @return array{method?: string, body?: StreamInterface}
+     * @return array{
+     *     method?: string,
+     *     body?: StreamInterface,
+     *     remove_headers?: list<string>
+     * }
      */
     private static function getRedirectRequestModifiers(
         RequestInterface $request,
@@ -281,6 +285,7 @@ class RedirectMiddleware
         return [
             'method' => \in_array($requestMethod, ['GET', 'HEAD', 'OPTIONS'], true) ? $requestMethod : 'GET',
             'body' => $streamFactory->createStream(''),
+            'remove_headers' => ['Content-Length', 'Transfer-Encoding'],
         ];
     }
 

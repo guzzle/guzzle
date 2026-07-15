@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\Handler\RequestFraming;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -80,7 +81,10 @@ class PrepareBodyMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testAddsTransferEncodingWhenNoContentLength(): void
+    /**
+     * @dataProvider unknownBodyFramingProvider
+     */
+    public function testAddsTransferEncodingOnlyForHttp11UnknownBody(string $protocol, bool $chunked): void
     {
         $body = FnStream::decorate(Psr7\Utils::streamFor('foo'), [
             'getSize' => static function (): ?int {
@@ -88,9 +92,10 @@ class PrepareBodyMiddlewareTest extends TestCase
             },
         ]);
         $h = new MockHandler([
-            static function (RequestInterface $request): ResponseInterface {
+            static function (RequestInterface $request) use ($chunked): ResponseInterface {
                 self::assertFalse($request->hasHeader('Content-Length'));
-                self::assertSame('chunked', $request->getHeaderLine('Transfer-Encoding'));
+                self::assertSame($chunked, $request->hasHeader('Transfer-Encoding'));
+                self::assertSame($chunked ? 'chunked' : '', $request->getHeaderLine('Transfer-Encoding'));
 
                 return new Response(200);
             },
@@ -99,10 +104,68 @@ class PrepareBodyMiddlewareTest extends TestCase
         $stack = new HandlerStack($h);
         $stack->push($m);
         $comp = $stack->resolve();
-        $p = $comp(new Request('PUT', 'http://www.google.com', [], $body), []);
+        $p = $comp(new Request('PUT', 'http://www.google.com', [], $body, $protocol), []);
         self::assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         self::assertSame(200, $response->getStatusCode());
+    }
+
+    public static function unknownBodyFramingProvider(): iterable
+    {
+        yield 'HTTP/1.0' => ['1.0', false];
+        yield 'HTTP/1.1' => ['1.1', true];
+        yield 'HTTP/2' => ['2', false];
+        yield 'HTTP/3' => ['3', false];
+    }
+
+    public function testUsesRemainingSizeForPositionedNonSeekableBody(): void
+    {
+        $body = Psr7\Utils::streamFor('payload');
+        $body->read(2);
+        $body = new Psr7\NoSeekStream($body);
+        $handler = new MockHandler([
+            static function (RequestInterface $request): ResponseInterface {
+                self::assertSame('5', $request->getHeaderLine('Content-Length'));
+
+                return new Response();
+            },
+        ]);
+        $stack = new HandlerStack($handler);
+        $stack->push(Middleware::prepareBody());
+
+        $stack->resolve()(new Request('PUT', 'http://example.com', [], $body), [])->wait();
+    }
+
+    public function testFinalAnalysisReplacesProvisionalChunkedWhenSizeBecomesKnown(): void
+    {
+        $calls = 0;
+        $body = FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'isSeekable' => static function (): bool {
+                return false;
+            },
+            'tell' => static function () use (&$calls): int {
+                if ($calls++ === 0) {
+                    throw new \RuntimeException('temporarily unavailable');
+                }
+
+                return 0;
+            },
+        ]);
+        $handler = new MockHandler([
+            static function (RequestInterface $request): ResponseInterface {
+                self::assertSame('chunked', $request->getHeaderLine('Transfer-Encoding'));
+
+                $framing = RequestFraming::analyze($request);
+                self::assertSame('3', $framing->request->getHeaderLine('Content-Length'));
+                self::assertFalse($framing->request->hasHeader('Transfer-Encoding'));
+
+                return new Response();
+            },
+        ]);
+        $stack = new HandlerStack($handler);
+        $stack->push(Middleware::prepareBody());
+
+        $stack->resolve()(new Request('PUT', 'http://example.com', [], $body), [])->wait();
     }
 
     public function testAddsContentTypeWhenMissingAndPossible(): void

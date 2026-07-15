@@ -37,19 +37,17 @@ Guzzle 8 now requires `psr/http-factory:^1.0` directly.
 [psr7-upgrade-guide]: https://github.com/guzzle/psr7/blob/3.0/UPGRADING.md
 [promises-upgrade-guide]: https://github.com/guzzle/promises/blob/3.0/UPGRADING.md
 
-#### PSR-7 Header Values and Request Methods
+#### PSR-7 Header Values
 
 Guzzle 8 uses Guzzle PSR-7 3.x, and several of its behavior changes surface
 through normal Guzzle client usage. This section summarizes the inherited PSR-7
 changes most likely to affect Guzzle users; read the
 [Guzzle PSR-7 3.x upgrade guide][psr7-upgrade-guide] for the complete list.
 
-The highest-impact inherited changes are stricter header value validation and
-preserved request method casing. Header values passed through the `headers`
-request option or PSR-7 request APIs must now be strings or non-empty arrays of
-strings. Empty strings remain valid explicit header values, but empty arrays,
-`null`, `false`, integers, floats, and other non-string values are no longer cast
-or accepted.
+Header values passed through the `headers` request option or PSR-7 request APIs
+must now be strings or non-empty arrays of strings. Empty strings remain valid
+explicit header values, but empty arrays, `null`, `false`, integers, floats, and
+other non-string values are no longer cast or accepted.
 
 If your application builds headers from configuration, user input, or typed
 domain values, normalize them before creating or sending requests:
@@ -66,8 +64,10 @@ $client->request('GET', '/', [
 ]);
 ```
 
-Guzzle 8 also preserves explicitly provided request method casing. HTTP method
-names are case-sensitive, so Guzzle now sends the method exactly as provided and
+#### Request Method Casing
+
+Guzzle 8 preserves explicitly provided request method casing. HTTP method names
+are case-sensitive, so Guzzle now sends the method exactly as provided and
 applies built-in method-specific behavior only to exact standard method names
 such as `GET`, `HEAD`, `POST`, and `PUT`.
 
@@ -81,17 +81,6 @@ $client->request('GET', 'https://example.com');
 
 The convenience methods such as `$client->get()`, `$client->post()`, and their
 async variants continue to use uppercase standard methods.
-
-The built-in cURL and stream handlers now reject request `Content-Length` values
-that are malformed or conflicting before starting a transfer. Requests that
-previously succeeded after passing an invalid `Content-Length` header may now
-fail with `RequestException`. Duplicate `Content-Length` values are accepted
-only when every member has the same decimal value, including values with leading
-zeros. Valid lengths larger than `PHP_INT_MAX` now fail before the request is
-sent because built-in handlers cannot safely size such transfers on the current
-platform.
-Applications that set this header manually should send one valid non-negative
-decimal length or omit it and let Guzzle prepare the body headers.
 
 #### Auth Request Option Changes
 
@@ -458,12 +447,34 @@ subclasses' own constructors, such as `RequestException` and
 constructing the base class changes: replace `new TransferException('msg')`
 with `new TransferException('msg', $request)`.
 
-#### JSON Helper Exceptions
+#### Request Body Framing
 
-`Utils::jsonDecode()` and `Utils::jsonEncode()` now wrap native `JsonException`
-failures in `GuzzleHttp\Exception\InvalidArgumentException`, including when
-callers pass `JSON_THROW_ON_ERROR`. Catch the Guzzle exception or inspect
-`getPrevious()` for the native `JsonException`.
+Before sending a body, the built-in cURL and stream handlers now finalize the
+request framing. Each `Content-Length` value must be a non-negative decimal
+integer that the selected transport can represent. Multiple values are allowed
+only when they agree. Guzzle emits a single canonical value, and it must match
+the available body size when that size is known. A request cannot include both
+`Content-Length` and `Transfer-Encoding`. The only request transfer coding
+Guzzle supports is a single `chunked` value on HTTP/1.1. Guzzle removes that
+marker and adds an exact length when one is available. Otherwise, it lets the
+transport choose valid wire framing. Other codings, coding chains, repeated
+`chunked` values, unknown-length HTTP/1.0 bodies, and `chunked` on other HTTP
+versions are rejected.
+
+For an unknown-size body with an explicit `Content-Length`, that length is the
+body boundary. Guzzle does not read beyond it and rejects premature EOF. The
+stream handler captures an otherwise unknown body once and sends it with its
+exact length. Violations raise `RequestException` before a response, or plain
+`ResponseException` if a cURL request-body read fails after response headers.
+Applications should normally omit both framing headers and let Guzzle choose.
+
+`PrepareBodyMiddleware` now adds a provisional `Transfer-Encoding: chunked`
+marker only to unknown-size HTTP/1.1 bodies. For other protocol versions, custom
+handlers receive no provisional framing header.
+
+A retry that reuses a consumed non-seekable body now fails if its known
+remaining size no longer matches an explicit `Content-Length`. Use a seekable or
+otherwise repeatable body for requests that may be retried.
 
 #### Request Option Validation
 
@@ -519,6 +530,13 @@ build, so it is a request failure rather than a caller error; a scheme invalid
 on every build (such as `udp://` or `ftp://` for a proxy) still throws
 `InvalidArgumentException`. Only code catching the specific exception type for
 these build-misses needs to change.
+
+#### JSON Helper Exceptions
+
+`Utils::jsonDecode()` and `Utils::jsonEncode()` now wrap native `JsonException`
+failures in `GuzzleHttp\Exception\InvalidArgumentException`, including when
+callers pass `JSON_THROW_ON_ERROR`. Catch the Guzzle exception or inspect
+`getPrevious()` for the native `JsonException`.
 
 #### Per-request Handler Option
 
@@ -1037,7 +1055,7 @@ including an `https` to `http` downgrade. This matches the
 If you relied on the full URL crossing origins, collect it with the
 `on_redirect` setting, or disable automatic redirects and follow them manually.
 
-#### Automatic Redirect Status Codes
+#### Automatic Redirects
 
 Guzzle now follows only the redirect status codes 301, 302, 303, 307, and 308
 when `allow_redirects` is enabled. Other 3xx responses, including 300, 304, 305,
@@ -1045,6 +1063,10 @@ and 306, are returned to the caller unchanged even when they carry a Location
 header, in line with RFC 9110 section 15.4. Code that relied on Guzzle following
 one of those responses should handle it directly or inspect it with an
 on_redirect callback.
+
+When redirect processing replaces a request body with an empty stream, Guzzle
+now removes `Content-Length` and `Transfer-Encoding` from the redirected
+request. Redirects that reuse the body preserve its framing headers.
 
 #### Host-Only Cookies
 
