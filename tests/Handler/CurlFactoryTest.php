@@ -5399,6 +5399,28 @@ class CurlFactoryTest extends TestCase
         self::assertIsCallable($_SERVER['_curl'][\CURLOPT_READFUNCTION]);
     }
 
+    public function testBoundsStreamingBodyReadsToDeclaredContentLength()
+    {
+        $declaredLength = 1000000;
+        $body = Psr7\Utils::streamFor(\str_repeat('x', $declaredLength).'tail');
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('PUT', Server::$url, ['Content-Length' => (string) $declaredLength], $body);
+        $easy = $factory->create($request, []);
+
+        try {
+            $callback = $_SERVER['_curl'][\CURLOPT_READFUNCTION];
+
+            self::assertSame(600000, \strlen($callback($easy->handle, null, 600000)));
+            self::assertSame(400000, \strlen($callback($easy->handle, null, 600000)));
+            self::assertSame($declaredLength, $body->tell());
+            self::assertSame('', $callback($easy->handle, null, 600000));
+            self::assertSame($declaredLength, $body->tell());
+            self::assertSame('tail', $body->getContents());
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     public function testEnsuresDirExistsBeforeThrowingWarning()
     {
         $f = new CurlFactory(3);
