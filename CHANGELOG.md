@@ -83,6 +83,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Ignore float-like or exponent `Max-Age` cookie values instead of truncating them
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
 - Reject malformed response protocol versions and reason phrases
+- Reject malformed or conflicting response `Content-Length` and combinations with `Transfer-Encoding`
+- Expose raw stream-handler `Transfer-Encoding` metadata and coalesced framing in `progress` on newer PHP
 - Wrap malformed redirect `Location` values in `BadResponseException`
 - Default HTTPS requests sent by the built-in cURL and stream handlers to TLS 1.2 or newer
 - Apply the stream handler `crypto_method` option through the SSL context so it consistently controls the minimum TLS version

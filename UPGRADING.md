@@ -405,21 +405,29 @@ previously caught this path with `RequestException` or
 `TransferException` instead. `101 Switching Protocols` is unchanged and is still
 surfaced as a response.
 
-The stream handler now rejects a drained, non-streamed response when a valid,
-positive `Content-Length` declares more bytes than the handler receives or
-cannot be represented as a PHP integer on the current platform. Short bodies
-raise `ResponseTransferException`; platform-size failures raise plain
-`ResponseException` with the underlying `OverflowException` available via
-`getPrevious()`. For decoded gzip and deflate responses, the declared length is
-checked against the encoded bytes received before decompression; the exposed
-response still removes all `Content-Length` fields and preserves their values
-as `x-encoded-content-length`. This matches the cURL handler for
-identity-coded, decoded, and pass-through responses. It does not apply to
-`stream => true` responses, chunked or other `Transfer-Encoding` responses, or
-conflicting or malformed `Content-Length` values. Responses to `HEAD`, any
-`1xx`, `204`, `304`, and successful `CONNECT` requests are never checked
-because they are bodiless by framing. `205 Reset Content` is checked because
-it remains framed by `Content-Length`.
+The built-in cURL and stream handlers now reject a response subject to body
+framing when its `Content-Length` is malformed, conflicting, or present with
+`Transfer-Encoding`. Equivalent decimal duplicates remain valid, including
+leading zeroes. Framing failures detected from a complete header block occur
+before `on_headers` sees that response or any of its body bytes are delivered,
+and raise `ResponseTransferException`. A transport that rejects the block first
+can instead report its existing transfer failure. A valid length above
+`PHP_INT_MAX` raises plain `ResponseException`. These checks do not apply to
+responses to `HEAD`, any `1xx`, `204`, `304`, or successful `CONNECT`.
+`205 Reset Content` remains subject to framing validation.
+
+The stream handler also rejects a drained, non-streamed response when a valid,
+positive `Content-Length` declares more bytes than it receives. For decoded gzip
+and deflate, the length applies to encoded bytes before decompression, and the
+original values remain in `x-encoded-content-length`. Valid `stream => true`
+responses remain lazy after header validation.
+
+For chunked responses through the stream handler, the transport resource's
+`wrapper_data` can now retain the original `Transfer-Encoding`. This is visible
+on streamed bodies and to custom stream factories. On PHP 8.1.20+, 8.2.7+, and
+8.3+, `progress` also counts raw chunk framing coalesced with the response
+headers. Later socket reads were already counted before decoding. Guzzle's
+response continues to expose the decoded body without that consumed header.
 
 The deprecated `RequestException::wrapException()` method was removed. Create a
 `RequestException` directly for request failures where Guzzle does not expose a

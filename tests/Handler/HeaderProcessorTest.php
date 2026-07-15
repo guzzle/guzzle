@@ -115,24 +115,22 @@ class HeaderProcessorTest extends TestCase
     }
 
     /**
-     * @dataProvider responseBodyContentLengthHeaderProvider
+     * @dataProvider validResponseFramingProvider
      *
      * @param array<string, string[]> $headers
      */
-    public function testParsesContentLengthForResponseBodyHeaders(
+    public function testValidatesResponseFraming(
         string $method,
         int $status,
         array $headers,
         ?string $expected
     ): void {
-        self::assertSame(
-            $expected,
-            HeaderProcessor::parseContentLengthForResponseBodyHeaders($method, $status, $headers)
-        );
+        self::assertSame($expected, HeaderProcessor::validateResponseFraming($method, $status, $headers));
     }
 
-    public static function responseBodyContentLengthHeaderProvider(): iterable
+    public static function validResponseFramingProvider(): iterable
     {
+        yield 'absent' => ['GET', 200, [], null];
         yield 'valid' => ['GET', 200, ['Content-Length' => ['003']], '3'];
         yield 'mixed case' => ['GET', 200, ['cOnTeNt-LeNgTh' => ['003']], '3'];
         yield 'equivalent mixed-case duplicates' => [
@@ -141,21 +139,90 @@ class HeaderProcessorTest extends TestCase
             ['Content-Length' => ['003'], 'content-length' => ['3']],
             '3',
         ];
-        yield 'head' => ['HEAD', 200, ['Content-Length' => ['3']], null];
-        yield 'transfer encoding' => [
-            'GET',
+        yield 'transfer encoding only' => ['GET', 200, ['Transfer-Encoding' => ['gzip, chunked']], null];
+        yield 'head' => [
+            'HEAD',
             200,
-            ['Content-Length' => ['3'], 'transfer-encoding' => ['chunked']],
+            ['Content-Length' => ['bad'], 'Transfer-Encoding' => ['chunked']],
             null,
         ];
-        yield 'malformed' => ['GET', 200, ['Content-Length' => ['three']], null];
-        yield 'conflicting' => ['GET', 200, ['Content-Length' => ['3', '5']], null];
+        yield 'informational' => [
+            'GET',
+            101,
+            ['Content-Length' => ['bad'], 'Transfer-Encoding' => ['chunked']],
+            null,
+        ];
+        yield 'no content' => [
+            'GET',
+            204,
+            ['Content-Length' => ['bad'], 'Transfer-Encoding' => ['chunked']],
+            null,
+        ];
+        yield 'not modified' => [
+            'GET',
+            304,
+            ['Content-Length' => ['bad'], 'Transfer-Encoding' => ['chunked']],
+            null,
+        ];
+        yield 'successful connect' => [
+            'CONNECT',
+            200,
+            ['Content-Length' => ['bad'], 'Transfer-Encoding' => ['chunked']],
+            null,
+        ];
+    }
+
+    /**
+     * @dataProvider invalidResponseFramingProvider
+     *
+     * @param array<string, string[]> $headers
+     */
+    public function testRejectsInvalidResponseFraming(
+        string $method,
+        int $status,
+        array $headers,
+        string $expectedMessage
+    ): void {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        HeaderProcessor::validateResponseFraming($method, $status, $headers);
+    }
+
+    public static function invalidResponseFramingProvider(): iterable
+    {
+        yield 'malformed' => [
+            'GET',
+            200,
+            ['Content-Length' => ['three']],
+            'Invalid response Content-Length header: value is not a non-negative decimal integer',
+        ];
         yield 'conflicting mixed-case duplicates' => [
             'GET',
             200,
             ['Content-Length' => ['3'], 'content-length' => ['5']],
-            null,
+            'Invalid response Content-Length header: values conflict',
         ];
+        yield 'content length and transfer encoding' => [
+            'GET',
+            200,
+            ['Content-Length' => ['0'], 'tRaNsFeR-EnCoDiNg' => ['chunked']],
+            'Response contains both Transfer-Encoding and Content-Length',
+        ];
+        yield 'reset content remains framing-validated' => [
+            'GET',
+            205,
+            ['Content-Length' => ['0'], 'Transfer-Encoding' => ['chunked']],
+            'Response contains both Transfer-Encoding and Content-Length',
+        ];
+    }
+
+    public function testRejectsUnrepresentableResponseContentLength(): void
+    {
+        $this->expectException(\OverflowException::class);
+        $this->expectExceptionMessage('Content-Length exceeds the maximum integer size supported on this platform');
+
+        HeaderProcessor::validateResponseFraming('GET', 200, ['Content-Length' => [((string) \PHP_INT_MAX).'0']]);
     }
 
     /**

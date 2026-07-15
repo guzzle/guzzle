@@ -6174,6 +6174,7 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
         $stats = null;
+        $exception = null;
         $options = [
             'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
                 $stats = $transferStats;
@@ -6202,6 +6203,7 @@ class CurlFactoryTest extends TestCase
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
+            $exception = $e;
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
@@ -6211,7 +6213,7 @@ class CurlFactoryTest extends TestCase
 
         self::assertInstanceOf(TransferStats::class, $stats);
         self::assertTrue($stats->hasResponse());
-        self::assertInstanceOf(\OverflowException::class, $stats->getHandlerErrorData());
+        self::assertSame($exception, $stats->getHandlerErrorData());
     }
 
     public static function unrepresentableResponseContentLengthProvider(): iterable
@@ -6223,14 +6225,14 @@ class CurlFactoryTest extends TestCase
     /**
      * @dataProvider unrepresentableResponseContentLengthProvider
      */
-    public function testOnHeadersExceptionWinsOverUnrepresentableResponseContentLength(bool $decodeContent): void
+    public function testUnrepresentableResponseContentLengthPreventsOnHeaders(bool $decodeContent): void
     {
         $factory = new CurlFactory(1);
         $request = new Psr7\Request('GET', Server::$url);
-        $previous = new \RuntimeException('on headers failed');
+        $onHeadersCalled = false;
         $options = [
-            'on_headers' => static function () use ($previous): void {
-                throw $previous;
+            'on_headers' => static function () use (&$onHeadersCalled): void {
+                $onHeadersCalled = true;
             },
         ];
         if ($decodeContent) {
@@ -6256,10 +6258,77 @@ class CurlFactoryTest extends TestCase
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
-            self::assertSame('An error was encountered during the on_headers event', $e->getMessage());
-            self::assertSame($previous, $e->getPrevious());
+            self::assertSame('Content-Length exceeds the maximum integer size supported on this platform', $e->getMessage());
+            self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
         }
+
+        self::assertFalse($onHeadersCalled);
+    }
+
+    /**
+     * @dataProvider invalidResponseFramingProvider
+     *
+     * @param list<string> $headers
+     */
+    public function testRejectsInvalidResponseFramingBeforeOnHeaders(array $headers, string $expectedMessage): void
+    {
+        $factory = new CurlFactory(1);
+        $request = new Psr7\Request('GET', Server::$url);
+        $onHeadersCalled = false;
+        $stats = null;
+        $exception = null;
+        $easy = $factory->create($request, [
+            'decode_content' => true,
+            'on_headers' => static function () use (&$onHeadersCalled): void {
+                $onHeadersCalled = true;
+            },
+            'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
+                $stats = $transferStats;
+            },
+        ]);
+
+        $header = self::receiveCurlHeaders($easy, $headers);
+        self::assertSame(-1, $header($easy->handle, "\r\n"));
+        self::assertInstanceOf(ResponseTransferException::class, $easy->responseHeaderException);
+        self::assertSame($expectedMessage, $easy->responseHeaderException->getMessage());
+        $easy->errno = \CURLE_WRITE_ERROR;
+
+        try {
+            self::finishEasy($easy, $factory);
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            $exception = $e;
+            self::assertSame($easy->responseHeaderException, $e);
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+        }
+
+        self::assertFalse($onHeadersCalled);
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertInstanceOf(ResponseTransferException::class, $exception);
+        self::assertSame($exception, $stats->getHandlerErrorData());
+        self::assertSame($exception->getResponse(), $stats->getResponse());
+    }
+
+    public static function invalidResponseFramingProvider(): iterable
+    {
+        yield 'malformed content length' => [
+            ["HTTP/1.1 200 OK\r\n", "Content-Length: three\r\n"],
+            'Invalid response Content-Length header: value is not a non-negative decimal integer',
+        ];
+        yield 'conflicting mixed-case content length' => [
+            ["HTTP/1.1 200 OK\r\n", "Content-Length: 3\r\n", "content-length: 5\r\n"],
+            'Invalid response Content-Length header: values conflict',
+        ];
+        yield 'content length and transfer encoding' => [
+            [
+                "HTTP/1.1 200 OK\r\n",
+                "Content-Encoding: gzip\r\n",
+                "Content-Length: 0\r\n",
+                "Transfer-Encoding: chunked\r\n",
+            ],
+            'Response contains both Transfer-Encoding and Content-Length',
+        ];
     }
 
     public function testResponseBodyByteCountOverflowCreatesResponseException(): void

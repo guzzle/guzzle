@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -96,6 +98,11 @@ final class EasyHandle
     public ?\Throwable $createResponseException = null;
 
     /**
+     * @var ResponseException|null Response header failure, if any.
+     */
+    public ?ResponseException $responseHeaderException = null;
+
+    /**
      * @var TimeoutException|null Exception during request body read timeout.
      */
     public ?TimeoutException $bodyReadTimeoutException = null;
@@ -131,11 +138,6 @@ final class EasyHandle
     public ?\OverflowException $responseBodySizeException = null;
 
     /**
-     * @var string|null Normalized response Content-Length before content decoding.
-     */
-    public ?string $declaredResponseBodyLength = null;
-
-    /**
      * Attach a response to the easy handle based on the received headers.
      *
      * @throws \RuntimeException if no headers have been received or the first
@@ -146,7 +148,7 @@ final class EasyHandle
         $this->response = null;
         $this->responseBodyBytes = 0;
         $this->responseBodySizeException = null;
-        $this->declaredResponseBodyLength = null;
+        $this->responseHeaderException = null;
 
         [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($this->headers);
 
@@ -157,14 +159,20 @@ final class EasyHandle
             return;
         }
 
-        $normalizedKeys = Utils::normalizeHeaderKeys($headers);
-        $this->declaredResponseBodyLength = HeaderProcessor::parseContentLengthForResponseBodyHeaders(
-            $this->request->getMethod(),
-            $status,
-            $headers
-        );
+        $framingFailure = null;
+        try {
+            HeaderProcessor::validateResponseFraming(
+                $this->request->getMethod(),
+                $status,
+                $headers
+            );
+        } catch (\RuntimeException $e) {
+            $framingFailure = $e;
+        }
 
-        if (isset($this->options['decode_content']) && $this->options['decode_content'] !== false && isset($normalizedKeys['content-encoding'])) {
+        $normalizedKeys = Utils::normalizeHeaderKeys($headers);
+        $decodeContent = $this->options['decode_content'] ?? false;
+        if ($framingFailure === null && $decodeContent !== false && isset($normalizedKeys['content-encoding'])) {
             $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
             unset($headers[$normalizedKeys['content-encoding']]);
             $encodedContentLength = HeaderProcessor::removeHeader('Content-Length', $headers);
@@ -191,6 +199,22 @@ final class EasyHandle
             $response = $response->withAddedHeader((string) $name, $value);
         }
         $this->response = $response->withBody($this->sink);
+
+        if ($framingFailure instanceof \OverflowException) {
+            $this->responseHeaderException = new ResponseException(
+                $framingFailure->getMessage(),
+                $this->request,
+                $this->response,
+                $framingFailure
+            );
+        } elseif ($framingFailure !== null) {
+            $this->responseHeaderException = new ResponseTransferException(
+                $framingFailure->getMessage(),
+                $this->request,
+                $this->response,
+                $framingFailure
+            );
+        }
     }
 
     /**

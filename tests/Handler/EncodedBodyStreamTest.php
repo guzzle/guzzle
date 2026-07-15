@@ -20,7 +20,6 @@ class EncodedBodyStreamTest extends TestCase
 
         self::assertSame('ab', $stream->read(2));
         self::assertSame('c', $stream->read(2));
-        self::assertSame('3', $stream->getDeclaredLength());
         self::assertSame(3, $stream->getBytesRead());
         self::assertSame(3, $source->tell());
         self::assertFalse($stream->isSeekable());

@@ -6,8 +6,6 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Utils;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * @internal
@@ -159,33 +157,43 @@ final class HeaderProcessor
         throw new \OverflowException('Content-Length exceeds the maximum integer size supported on this platform');
     }
 
-    public static function parseContentLengthForResponseBody(RequestInterface $request, ResponseInterface $response): ?string
-    {
-        return self::parseContentLengthForResponseBodyValues(
-            $request->getMethod(),
-            $response->getStatusCode(),
-            $response->hasHeader('Transfer-Encoding'),
-            $response->getHeader('Content-Length')
-        );
-    }
-
     /**
+     * Validates applicable response framing and returns its applicable
+     * Content-Length.
+     *
      * @param array<string, string[]> $headers
+     *
+     * @throws \RuntimeException when Content-Length is malformed or
+     *                           conflicting, or is combined with
+     *                           Transfer-Encoding
+     * @throws \OverflowException when Content-Length cannot fit in a PHP
+     *                            integer
      */
-    public static function parseContentLengthForResponseBodyHeaders(
+    public static function validateResponseFraming(
         string $method,
         int $status,
         array $headers
     ): ?string {
+        if (!self::responseCanHaveBody($method, $status)) {
+            return null;
+        }
+
         $normalizedKeys = Utils::normalizeHeaderKeys($headers);
         $contentLength = self::removeHeader('Content-Length', $headers);
 
-        return self::parseContentLengthForResponseBodyValues(
-            $method,
-            $status,
-            isset($normalizedKeys['transfer-encoding']),
-            $contentLength
-        );
+        try {
+            $length = self::parseContentLength($contentLength);
+        } catch (\RuntimeException $e) {
+            throw new \RuntimeException('Invalid response Content-Length header: '.$e->getMessage(), 0, $e);
+        }
+
+        if ($length !== null && isset($normalizedKeys['transfer-encoding'])) {
+            throw new \RuntimeException('Response contains both Transfer-Encoding and Content-Length');
+        }
+
+        self::assertContentLengthWithinPlatformLimit($length);
+
+        return $length;
     }
 
     /**
@@ -211,30 +219,10 @@ final class HeaderProcessor
     }
 
     /**
-     * @param string[] $contentLength
-     */
-    private static function parseContentLengthForResponseBodyValues(
-        string $method,
-        int $status,
-        bool $hasTransferEncoding,
-        array $contentLength
-    ): ?string {
-        if (!self::responseCanHaveBody($method, $status) || $hasTransferEncoding) {
-            return null;
-        }
-
-        try {
-            return self::parseContentLength($contentLength);
-        } catch (\RuntimeException $e) {
-            return null;
-        }
-    }
-
-    /**
-     * Whether a response to the given request method with the given status
-     * code can carry content at all, per RFC 9110: a response to HEAD, a
+     * Whether a response uses ordinary body framing. A response to HEAD, a
      * response with a 1xx, 204, or 304 status code, or a 2xx response to
-     * CONNECT never has a body, whatever its framing headers claim.
+     * CONNECT never has a body, whatever its framing headers claim. A 205
+     * remains subject to framing even though its semantics require no content.
      */
     public static function responseCanHaveBody(string $method, int $status): bool
     {

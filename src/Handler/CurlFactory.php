@@ -1066,7 +1066,7 @@ final class CurlFactory implements CurlFactoryInterface
             ];
         }
 
-        $handlerErrorData = $easy->responseBodySizeException ?? $easy->errno;
+        $handlerErrorData = $easy->responseHeaderException ?? $easy->responseBodySizeException ?? $easy->errno;
 
         return new TransferStats(
             $easy->request,
@@ -1119,6 +1119,7 @@ final class CurlFactory implements CurlFactoryInterface
     {
         return $easy->bodyReadTimeoutException !== null
             || $easy->bodyReadException !== null
+            || $easy->responseHeaderException !== null
             || $easy->sinkWriteTimeoutException !== null
             || $easy->sinkWriteException !== null
             || $easy->sinkWriteIncomplete
@@ -1193,6 +1194,11 @@ final class CurlFactory implements CurlFactoryInterface
                     $easy->createResponseException
                 )
             );
+        }
+
+        if ($easy->responseHeaderException) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor($easy->responseHeaderException);
         }
 
         // If an exception was encountered during the onHeaders event, then
@@ -2118,23 +2124,6 @@ final class CurlFactory implements CurlFactoryInterface
         return $type !== 'ENG' && $type !== 'PROV';
     }
 
-    private static function responseContentLengthOverflows(EasyHandle $easy): bool
-    {
-        if ($easy->response === null) {
-            return false;
-        }
-
-        try {
-            HeaderProcessor::assertContentLengthWithinPlatformLimit($easy->declaredResponseBodyLength);
-        } catch (\OverflowException $e) {
-            $easy->responseBodySizeException = $e;
-
-            return true;
-        }
-
-        return false;
-    }
-
     private function applyMethod(EasyHandle $easy, array &$conf, RequestFraming $framing): void
     {
         if ($easy->request->getMethod() === 'HEAD') {
@@ -2842,6 +2831,10 @@ final class CurlFactory implements CurlFactoryInterface
 
                     return -1;
                 }
+                if ($easy->responseHeaderException !== null) {
+                    return -1;
+                }
+
                 if ($onHeaders !== null && $easy->response !== null) {
                     try {
                         $onHeaders($easy->response, $easy->request);
@@ -2852,9 +2845,6 @@ final class CurlFactory implements CurlFactoryInterface
 
                         return -1;
                     }
-                }
-                if (self::responseContentLengthOverflows($easy)) {
-                    return -1;
                 }
             } elseif ($startingResponse || $collectingTrailers) {
                 if ($easy->response !== null && !HeaderProcessor::isStatusLineCandidate($h)) {
