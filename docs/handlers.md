@@ -44,9 +44,10 @@ The `create` method adds default handlers to the `HandlerStack`. When the
 > 4.  `cookies` - Adds cookies to requests.
 > 5.  `prepare_body` - Prepares the body of an HTTP request: it infers
 >     `Content-Type` from a file-backed body, adds `Content-Length` when the
->     body size is known or `Transfer-Encoding: chunked` when it is not, and
->     applies the `Expect: 100-Continue` behavior controlled by the
->     [`expect`](request-options.md#expect) request option.
+>     body size is known or a provisional `Transfer-Encoding: chunked` marker
+>     for an unknown HTTP/1.1 body, and applies the `Expect: 100-Continue`
+>     behavior controlled by the [`expect`](request-options.md#expect) request
+>     option. The built-in handler finalizes framing before I/O.
 > 6.  <send request with handler>
 
 2.  Processing response:

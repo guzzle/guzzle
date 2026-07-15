@@ -276,10 +276,8 @@ final class CurlFactory implements CurlFactoryInterface
         self::rejectUnsupportedCurlOptions($options);
         self::rejectConflictingCurlOptions($options);
 
-        $contentLength = self::requestContentLength($request);
-        if ($contentLength !== null) {
-            $request = $request->withHeader('Content-Length', $contentLength);
-        }
+        $framing = RequestFraming::analyze($request, $request->getMethod() !== 'HEAD');
+        $request = $framing->request;
 
         $managedProxyAuthorization = self::managedProxyAuthorizationHeaderLines($request);
 
@@ -287,7 +285,7 @@ final class CurlFactory implements CurlFactoryInterface
         $easy->request = $request;
         $easy->options = $options;
         $conf = $this->getDefaultConf($easy);
-        $this->applyMethod($easy, $conf, $contentLength);
+        $this->applyMethod($easy, $conf, $framing);
         $this->applyHandlerOptions($easy, $conf);
         $this->applyHeaders($easy, $conf);
         unset($conf['_headers']);
@@ -2137,7 +2135,7 @@ final class CurlFactory implements CurlFactoryInterface
         return false;
     }
 
-    private function applyMethod(EasyHandle $easy, array &$conf, ?string $contentLength): void
+    private function applyMethod(EasyHandle $easy, array &$conf, RequestFraming $framing): void
     {
         if ($easy->request->getMethod() === 'HEAD') {
             // libcurl stops at HEAD response headers only when CURLOPT_NOBODY
@@ -2163,90 +2161,34 @@ final class CurlFactory implements CurlFactoryInterface
             return;
         }
 
-        $body = $easy->request->getBody();
-        try {
-            $size = $body->getSize();
-        } catch (\Exception $e) {
-            $message = $e instanceof TimeoutException
-                ? 'Timed out while determining the request body size'
-                : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to determine the request body size');
-
-            throw new RequestException($message, $easy->request, 0, $e);
-        }
-
-        if ($size === null || $size > 0) {
-            $this->applyBody($easy, $conf, $contentLength);
-
-            return;
-        }
-
-        $method = $easy->request->getMethod();
-        if ($method === 'PUT' || $method === 'POST') {
-            // See https://datatracker.ietf.org/doc/html/rfc7230#section-3.3.2
-            if (!$easy->request->hasHeader('Content-Length')) {
-                $conf[\CURLOPT_HTTPHEADER][] = 'Content-Length: 0';
-            }
+        if ($framing->bodySize !== 0 && $framing->contentLength !== 0) {
+            $this->applyBody($easy, $conf, $framing);
         }
     }
 
-    private static function requestContentLength(RequestInterface $request): ?string
-    {
-        try {
-            $length = HeaderProcessor::parseContentLength($request->getHeader('Content-Length'));
-        } catch (\RuntimeException $e) {
-            throw new RequestException(
-                'Invalid Content-Length request header: '.$e->getMessage(),
-                $request,
-                0,
-                $e
-            );
-        }
-
-        try {
-            HeaderProcessor::assertContentLengthWithinPlatformLimit($length);
-        } catch (\OverflowException $e) {
-            throw new RequestException(
-                $e->getMessage(),
-                $request,
-                0,
-                $e
-            );
-        }
-
-        return $length;
-    }
-
-    private function applyBody(EasyHandle $easy, array &$conf, ?string $contentLengthHeader): void
+    private function applyBody(EasyHandle $easy, array &$conf, RequestFraming $framing): void
     {
         $request = $easy->request;
         $options = $easy->options;
-        $contentLength = HeaderProcessor::contentLengthToInt($contentLengthHeader);
+        $contentLength = $framing->contentLength;
 
         // Send the body as a string if the size is less than 1MB OR if the
         // [curl][body_as_string] request value is set.
-        if (($contentLength !== null && $contentLength < 1000000) || !empty($options['_body_as_string'])) {
-            try {
-                $conf[\CURLOPT_POSTFIELDS] = (string) $request->getBody();
-            } catch (\Exception $e) {
-                $message = $e instanceof TimeoutException
-                    ? 'Timed out while reading the request body'
-                    : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to read the request body');
-
-                throw new RequestException($message, $request, 0, $e);
-            }
+        if (($framing->bodySize !== null && $framing->bodySize < 1000000) || !empty($options['_body_as_string'])) {
+            $conf[\CURLOPT_POSTFIELDS] = $framing->materialize();
             // Don't duplicate the Content-Length header
             $this->removeHeader('Content-Length', $conf);
             $this->removeHeader('Transfer-Encoding', $conf);
         } else {
             $conf[\CURLOPT_UPLOAD] = true;
 
-            if ($contentLengthHeader !== null) {
-                // Never let cURL emit our header; it sizes the upload via CURLOPT_INFILESIZE.
+            if ($contentLength !== null) {
+                // Never let cURL emit our header; it sizes the upload via a cURL input-size option.
                 $this->removeHeader('Content-Length', $conf);
             }
 
             if ($contentLength !== null) {
-                $conf[\CURLOPT_INFILESIZE] = $contentLength;
+                $conf[self::curlInputSizeOption($request, $contentLength)] = $contentLength;
             }
 
             $body = $request->getBody();
@@ -2264,9 +2206,16 @@ final class CurlFactory implements CurlFactoryInterface
             /**
              * @return int|string
              */
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, int $length) use ($easy, $body) {
+            $remaining = $contentLength;
+            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, int $length) use ($easy, $body, &$remaining) {
+                if ($remaining === 0) {
+                    return '';
+                }
+
+                $limit = $remaining === null ? $length : \min($length, $remaining);
+
                 try {
-                    return $body->read($length);
+                    $data = $body->read($limit);
                 } catch (TimeoutException $e) {
                     $easy->bodyReadTimeoutException = $e;
 
@@ -2276,6 +2225,24 @@ final class CurlFactory implements CurlFactoryInterface
 
                     return self::CURL_READFUNC_ABORT;
                 }
+
+                if ($remaining !== null) {
+                    if ($data === '') {
+                        $easy->bodyReadException = new \RuntimeException('Request body ended before the declared Content-Length was reached');
+
+                        return self::CURL_READFUNC_ABORT;
+                    }
+
+                    if (\strlen($data) > $limit) {
+                        $easy->bodyReadException = new \RuntimeException('Request body stream returned more bytes than requested');
+
+                        return self::CURL_READFUNC_ABORT;
+                    }
+
+                    $remaining -= \strlen($data);
+                }
+
+                return $data;
             };
         }
 
@@ -2288,6 +2255,20 @@ final class CurlFactory implements CurlFactoryInterface
         if (!$request->hasHeader('Content-Type')) {
             $conf[\CURLOPT_HTTPHEADER][] = 'Content-Type:';
         }
+    }
+
+    private static function curlInputSizeOption(RequestInterface $request, int $contentLength): int
+    {
+        $option = \defined('CURLOPT_INFILESIZE_LARGE')
+            ? (int) \constant('CURLOPT_INFILESIZE_LARGE')
+            : \CURLOPT_INFILESIZE;
+
+        // cURL's long remains 32-bit on 64-bit Windows.
+        if (\PHP_OS_FAMILY === 'Windows' && $option === \CURLOPT_INFILESIZE && $contentLength > 2147483647) {
+            throw new RequestException('Content-Length exceeds the maximum cURL upload size supported by this PHP build', $request);
+        }
+
+        return $option;
     }
 
     private function applyHeaders(EasyHandle $easy, array &$conf): void

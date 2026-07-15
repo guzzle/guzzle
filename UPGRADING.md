@@ -82,16 +82,24 @@ $client->request('GET', 'https://example.com');
 The convenience methods such as `$client->get()`, `$client->post()`, and their
 async variants continue to use uppercase standard methods.
 
-The built-in cURL and stream handlers now reject request `Content-Length` values
-that are malformed or conflicting before starting a transfer. Requests that
-previously succeeded after passing an invalid `Content-Length` header may now
-fail with `RequestException`. Duplicate `Content-Length` values are accepted
-only when every member has the same decimal value, including values with leading
-zeros. Valid lengths larger than `PHP_INT_MAX` now fail before the request is
-sent because built-in handlers cannot safely size such transfers on the current
-platform.
-Applications that set this header manually should send one valid non-negative
-decimal length or omit it and let Guzzle prepare the body headers.
+Before sending a body, the built-in cURL and stream handlers now finalize the
+request framing. Each `Content-Length` value must be a non-negative decimal
+integer that the selected transport can represent. Multiple values are allowed
+only when they agree. Guzzle emits a single canonical value, and it must match
+the available body size when that size is known. A request cannot include both
+`Content-Length` and `Transfer-Encoding`. The only request transfer coding
+Guzzle supports is a single `chunked` value on HTTP/1.1. Guzzle removes that
+marker and adds an exact length when one is available. Otherwise, it lets the
+transport choose valid wire framing. Other codings, coding chains, repeated
+`chunked` values, unknown-length HTTP/1.0 bodies, and `chunked` on other HTTP
+versions are rejected.
+
+For an unknown-size body with an explicit `Content-Length`, that length is the
+body boundary. Guzzle does not read beyond it and rejects premature EOF. The
+stream handler captures an otherwise unknown body once and sends it with its
+exact length. Violations raise `RequestException` before a response, or plain
+`ResponseException` if a cURL request-body read fails after response headers.
+Applications should normally omit both framing headers and let Guzzle choose.
 
 #### Auth Request Option Changes
 

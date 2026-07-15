@@ -193,13 +193,20 @@ final class StreamHandler
         $this->rejectStreamingWithConnectionCaps($options);
         $this->assertTransportSharingSupported();
 
-        $request = self::prepareRequest($request);
+        $framing = RequestFraming::analyze($request->withoutHeader('Expect'));
+        $request = $framing->request;
 
         try {
+            self::assertRequestUriSupported($request, $options);
+            $body = $framing->materialize();
+            if ($framing->contentLength === null && ($body !== '' || \in_array($request->getMethod(), ['PUT', 'POST'], true))) {
+                $request = $request->withHeader('Content-Length', (string) \strlen($body));
+            }
+
             return $this->createResponse(
                 $request,
                 $options,
-                $this->createStream($request, $options),
+                $this->createStream($request, $options, $body),
                 $startTime
             );
         } catch (\InvalidArgumentException $e) {
@@ -230,35 +237,6 @@ final class StreamHandler
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor($e);
         }
-    }
-
-    private static function prepareRequest(RequestInterface $request): RequestInterface
-    {
-        $contentLength = self::requestContentLength($request);
-        if ($contentLength !== null) {
-            $request = $request->withHeader('Content-Length', $contentLength);
-        }
-
-        // Does not support the expect header.
-        $request = $request->withoutHeader('Expect');
-
-        // Append a content-length header if body size is zero to match
-        // the behavior of `CurlHandler`
-        try {
-            $bodySize = $request->getBody()->getSize();
-        } catch (\Exception $e) {
-            $message = $e instanceof TimeoutException
-                ? 'Timed out while determining the request body size'
-                : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to determine the request body size');
-
-            throw new RequestException($message, $request, 0, $e);
-        }
-
-        if (($request->getMethod() === 'PUT' || $request->getMethod() === 'POST') && 0 === $bodySize) {
-            $request = $request->withHeader('Content-Length', '0');
-        }
-
-        return $request;
     }
 
     private function isOnStatsException(\Throwable $e): bool
@@ -686,33 +664,6 @@ final class StreamHandler
         return $length !== null && $length > 0 ? $length : null;
     }
 
-    private static function requestContentLength(RequestInterface $request): ?string
-    {
-        try {
-            $length = HeaderProcessor::parseContentLength($request->getHeader('Content-Length'));
-        } catch (\RuntimeException $e) {
-            throw new RequestException(
-                'Invalid Content-Length request header: '.$e->getMessage(),
-                $request,
-                0,
-                $e
-            );
-        }
-
-        try {
-            HeaderProcessor::assertContentLengthWithinPlatformLimit($length);
-        } catch (\OverflowException $e) {
-            throw new RequestException(
-                $e->getMessage(),
-                $request,
-                0,
-                $e
-            );
-        }
-
-        return $length;
-    }
-
     private function createResponseSink(
         RequestInterface $request,
         ResponseInterface $response,
@@ -825,27 +776,8 @@ final class StreamHandler
     /**
      * @return resource
      */
-    private function createStream(RequestInterface $request, array $options)
+    private function createStream(RequestInterface $request, array $options, string $body)
     {
-        $uri = $request->getUri();
-        $scheme = $uri->getScheme();
-        if ($scheme === '') {
-            throw new RequestException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.', $request);
-        }
-
-        if (!\in_array($scheme, ['http', 'https'], true)) {
-            throw new RequestException(\sprintf("The scheme '%s' is not supported.", $scheme), $request);
-        }
-
-        $protocols = Utils::normalizeProtocols($options['protocols'] ?? ['http', 'https']);
-        if (!\in_array($scheme, $protocols, true)) {
-            throw new RequestException(\sprintf('The scheme "%s" is not allowed by the protocols request option.', $scheme), $request);
-        }
-
-        if ($uri->getHost() === '') {
-            throw new RequestException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.', $request);
-        }
-
         // HTTP/1.1 streams using the PHP stream wrapper require a
         // Connection: close header
         if ($request->getProtocolVersion() === '1.1'
@@ -860,7 +792,7 @@ final class StreamHandler
         }
 
         $params = [];
-        $context = $this->getDefaultContext($request);
+        $context = $this->getDefaultContext($request, $body);
 
         if (isset($options['on_headers']) && !\is_callable($options['on_headers'])) {
             throw new InvalidArgumentException('on_headers must be callable');
@@ -955,6 +887,37 @@ final class StreamHandler
         );
     }
 
+    private static function assertRequestUriSupported(RequestInterface $request, array $options): void
+    {
+        $uri = $request->getUri();
+        $scheme = $uri->getScheme();
+        if ($scheme === '') {
+            throw new RequestException(
+                'URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.',
+                $request
+            );
+        }
+
+        if (!\in_array($scheme, ['http', 'https'], true)) {
+            throw new RequestException(\sprintf("The scheme '%s' is not supported.", $scheme), $request);
+        }
+
+        $protocols = Utils::normalizeProtocols($options['protocols'] ?? ['http', 'https']);
+        if (!\in_array($scheme, $protocols, true)) {
+            throw new RequestException(
+                \sprintf('The scheme "%s" is not allowed by the protocols request option.', $scheme),
+                $request
+            );
+        }
+
+        if ($uri->getHost() === '') {
+            throw new RequestException(
+                'URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.',
+                $request
+            );
+        }
+    }
+
     private function applyHandlerOptions(RequestInterface $request, array &$context, array $options, array &$params): void
     {
         foreach ($options as $key => $value) {
@@ -1026,7 +989,7 @@ final class StreamHandler
         $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_2;
     }
 
-    private function getDefaultContext(RequestInterface $request): array
+    private function getDefaultContext(RequestInterface $request, string $body): array
     {
         $headers = '';
         foreach ($request->getHeaders() as $name => $value) {
@@ -1061,16 +1024,6 @@ final class StreamHandler
         // request without the header sends none, like the cURL handlers.
         if (!$request->hasHeader('User-Agent')) {
             $context['http']['user_agent'] = '';
-        }
-
-        try {
-            $body = (string) $request->getBody();
-        } catch (\Exception $e) {
-            $message = $e instanceof TimeoutException
-                ? 'Timed out while reading the request body'
-                : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to read the request body');
-
-            throw new RequestException($message, $request, 0, $e);
         }
 
         if ('' !== $body) {

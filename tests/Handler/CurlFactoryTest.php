@@ -5717,6 +5717,9 @@ class CurlFactoryTest extends TestCase
         };
 
         $bd = Psr7\FnStream::decorate(Psr7\Utils::streamFor('test'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
             'tell' => static function (): int {
                 return 1;
             },
@@ -5746,7 +5749,12 @@ class CurlFactoryTest extends TestCase
             return CurlFactory::finish($mock, $easy, $factory);
         };
         $mock = new Handler\MockHandler([$fn, $fn, $fn]);
-        $p = $mock(new Psr7\Request('PUT', Server::$url, [], 'test'), []);
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('test'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $p = $mock(new Psr7\Request('PUT', Server::$url, [], $body), []);
         $p->wait(false);
         self::assertEquals(3, $call);
 
@@ -5790,6 +5798,9 @@ class CurlFactoryTest extends TestCase
         };
 
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('test'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
             'tell' => static function (): int {
                 return 1;
             },
@@ -5837,7 +5848,12 @@ class CurlFactoryTest extends TestCase
             return CurlFactory::finish($mock, $easy, $factory);
         };
         $mock = new Handler\MockHandler([$handler, $handler, $handler]);
-        $promise = $mock(new Psr7\Request('PUT', Server::$url, [], 'test'), []);
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('test'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $promise = $mock(new Psr7\Request('PUT', Server::$url, [], $body), []);
         $promise->wait(false);
         self::assertSame(3, $calls);
 
@@ -6621,13 +6637,28 @@ class CurlFactoryTest extends TestCase
         ];
     }
 
-    public function testAddsStreamingBody(): void
+    /**
+     * @dataProvider knownBodySizeProvider
+     */
+    public function testSelectsCurlBodyModeFromKnownBodySize(int $size, bool $streaming): void
     {
         $f = new CurlFactory(3);
-        $request = new Psr7\Request('PUT', Server::$url, ['Content-Length' => '1000000'], 'foo');
+        $request = new Psr7\Request('PUT', Server::$url, [], \str_repeat('x', $size));
         $f->create($request, []);
-        self::assertEquals(1, $_SERVER['_curl'][\CURLOPT_UPLOAD]);
-        self::assertIsCallable($_SERVER['_curl'][\CURLOPT_READFUNCTION]);
+
+        self::assertSame($streaming, isset($_SERVER['_curl'][\CURLOPT_UPLOAD]));
+        self::assertSame($streaming, isset($_SERVER['_curl'][\CURLOPT_READFUNCTION]));
+        self::assertSame(!$streaming, isset($_SERVER['_curl'][\CURLOPT_POSTFIELDS]));
+        if ($streaming) {
+            self::assertSame($size, $_SERVER['_curl'][self::curlInputSizeOption()]);
+        }
+    }
+
+    public static function knownBodySizeProvider(): iterable
+    {
+        yield 'below threshold' => [999999, false];
+        yield 'at threshold' => [1000000, true];
+        yield 'above threshold' => [1000001, true];
     }
 
     /**
@@ -6640,12 +6671,17 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3);
         $request = new Psr7\Request('PUT', Server::$url, [
             'Content-Length' => $contentLength,
-        ], 'foo');
+        ], Psr7\FnStream::decorate(Psr7\Utils::streamFor('foo'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]));
 
         $factory->create($request, []);
 
         self::assertTrue((bool) $_SERVER['_curl'][\CURLOPT_UPLOAD]);
-        self::assertSame(1000000, $_SERVER['_curl'][\CURLOPT_INFILESIZE]);
+        self::assertSame(1000000, $_SERVER['_curl'][self::curlInputSizeOption()]);
+        self::assertArrayNotHasKey(\CURLOPT_POSTFIELDS, $_SERVER['_curl']);
     }
 
     public static function validCurlRequestContentLengthProvider(): iterable
@@ -6658,17 +6694,82 @@ class CurlFactoryTest extends TestCase
         ];
     }
 
+    public function testUnknownBodyWithSmallContentLengthUsesStreamingCallback(): void
+    {
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('foo'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $factory = new CurlFactory(3);
+
+        $factory->create(new Psr7\Request('PUT', Server::$url, ['Content-Length' => '3'], $body), []);
+
+        self::assertTrue((bool) $_SERVER['_curl'][\CURLOPT_UPLOAD]);
+        self::assertSame(3, $_SERVER['_curl'][self::curlInputSizeOption()]);
+        self::assertIsCallable($_SERVER['_curl'][\CURLOPT_READFUNCTION]);
+        self::assertArrayNotHasKey(\CURLOPT_POSTFIELDS, $_SERVER['_curl']);
+    }
+
+    public function testUnknownBodyWithZeroContentLengthIsNotRead(): void
+    {
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('payload'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'isSeekable' => static function (): bool {
+                self::fail('The zero-length body must not be inspected');
+            },
+            'read' => static function (): string {
+                self::fail('The zero-length body must not be read');
+            },
+        ]);
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Content-Length' => '0'],
+            $body
+        ), []);
+
+        try {
+            self::assertArrayNotHasKey(\CURLOPT_UPLOAD, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_READFUNCTION, $_SERVER['_curl']);
+            self::assertArrayNotHasKey(\CURLOPT_POSTFIELDS, $_SERVER['_curl']);
+            self::assertContains('Content-Length: 0', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     public function testNormalizesEquivalentRequestContentLengthForCurlHeaders(): void
     {
         $factory = new CurlFactory(3);
         $request = new Psr7\Request('GET', Server::$url, [
-            'Content-Length' => ['0003', '3'],
+            'Content-Length' => ['0000', '0'],
         ]);
 
         $factory->create($request, []);
 
-        self::assertContains('Content-Length: 3', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
-        self::assertNotContains('Content-Length: 0003', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        self::assertContains('Content-Length: 0', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+        self::assertNotContains('Content-Length: 0000', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+    }
+
+    public function testRemovesProvisionalChunkedHeaderBeforeCurlSerialization(): void
+    {
+        $factory = new CurlFactory(3);
+
+        $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Transfer-Encoding' => 'ChUnKeD'],
+            'foo'
+        ), []);
+
+        self::assertSame('foo', $_SERVER['_curl'][\CURLOPT_POSTFIELDS]);
+        foreach ($_SERVER['_curl'][\CURLOPT_HTTPHEADER] as $line) {
+            self::assertFalse(Psr7\Utils::caselessContains($line, 'Transfer-Encoding:'));
+        }
     }
 
     /**
@@ -6719,6 +6820,32 @@ class CurlFactoryTest extends TestCase
             self::assertSame($request, $e->getRequest());
             self::assertInstanceOf(\OverflowException::class, $e->getPrevious());
         }
+    }
+
+    public function testRejectsRequestContentLengthLargerThanCurlLongOnWindows(): void
+    {
+        if (\PHP_OS_FAMILY !== 'Windows' || \PHP_INT_SIZE !== 8 || \defined('CURLOPT_INFILESIZE_LARGE')) {
+            self::markTestSkipped('Requires 64-bit Windows without CURLOPT_INFILESIZE_LARGE.');
+        }
+
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor(''), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $factory = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage(
+            'Content-Length exceeds the maximum cURL upload size supported by this PHP build'
+        );
+
+        $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Content-Length' => '2147483648'],
+            $body
+        ), []);
     }
 
     public function testRejectsInvalidCurlRequestContentLengthWithEmptyBody(): void
@@ -7867,6 +7994,112 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testStreamingRequestBodyStopsAtContentLengthBoundary(): void
+    {
+        $factory = new CurlFactory(3);
+        $source = Psr7\Utils::streamFor('abcdef');
+        $reads = 0;
+        $body = Psr7\FnStream::decorate($source, [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'read' => static function (int $length) use ($source, &$reads): string {
+                ++$reads;
+
+                return $source->read($length);
+            },
+        ]);
+        $easy = $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Content-Length' => '3'],
+            $body
+        ), []);
+
+        try {
+            $callback = $_SERVER['_curl'][\CURLOPT_READFUNCTION];
+
+            self::assertSame('ab', $callback($easy->handle, null, 2));
+            self::assertSame('c', $callback($easy->handle, null, 8192));
+            self::assertSame('', $callback($easy->handle, null, 8192));
+            self::assertSame(2, $reads);
+            self::assertSame('def', $source->getContents());
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testStreamingRequestBodyRejectsPrematureEndAndAbortsProgress(): void
+    {
+        $factory = new CurlFactory(3);
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('ab'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $easy = $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Content-Length' => '3'],
+            $body
+        ), []);
+
+        try {
+            $callback = $_SERVER['_curl'][\CURLOPT_READFUNCTION];
+            self::assertSame('ab', $callback($easy->handle, null, 8192));
+            self::assertSame(0x10000000, $callback($easy->handle, null, 8192));
+            self::assertInstanceOf(\RuntimeException::class, $easy->bodyReadException);
+            self::assertSame(
+                'Request body ended before the declared Content-Length was reached',
+                $easy->bodyReadException->getMessage()
+            );
+
+            $progress = $_SERVER['_curl'][self::progressCallbackOption()];
+            self::assertSame(1, $progress($easy->handle, 0, 0, 0, 0));
+            self::assertFalse($easy->progressAborted);
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testStreamingRequestBodyRejectsMoreBytesThanRequested(): void
+    {
+        $factory = new CurlFactory(3);
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'read' => static function (): string {
+                return 'abcd';
+            },
+        ]);
+        $easy = $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Content-Length' => '3'],
+            $body
+        ), []);
+
+        try {
+            $callback = $_SERVER['_curl'][\CURLOPT_READFUNCTION];
+
+            self::assertSame(0x10000000, $callback($easy->handle, null, 8192));
+            self::assertInstanceOf(\RuntimeException::class, $easy->bodyReadException);
+            self::assertSame(
+                'Request body stream returned more bytes than requested',
+                $easy->bodyReadException->getMessage()
+            );
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
     public function testStreamingUploadInstallsProgressAbortForBodyReadTimeout(): void
     {
         $factory = new CurlFactory(3);
@@ -7987,6 +8220,65 @@ class CurlFactoryTest extends TestCase
         self::assertTrue($readCalled);
     }
 
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testShortStreamingRequestBodyFailsThroughCurlHandlers(callable $handlerFactory): void
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200)]);
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('ab'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, ['Content-Length' => '3'], $body);
+        $handler = $handlerFactory();
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Expected the short upload to fail');
+        } catch (RequestException $e) {
+            self::assertSame('Request body ended before the declared Content-Length was reached', $e->getMessage());
+            self::assertNotInstanceOf(ResponseTransferException::class, $e);
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
+    }
+
+    public function testShortStreamingRequestBodyDoesNotPoisonNextCurlTransfer(): void
+    {
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200)]);
+        $handler = new Handler\CurlHandler();
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('ab'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+
+        try {
+            $handler(new Psr7\Request('PUT', Server::$url, ['Content-Length' => '3'], $body), [])->wait();
+            self::fail('Expected the short upload to fail');
+        } catch (RequestException $e) {
+            self::assertSame('Request body ended before the declared Content-Length was reached', $e->getMessage());
+        }
+
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200, [], 'next')]);
+
+        try {
+            $response = $handler(new Psr7\Request('GET', Server::$url), [])->wait();
+            self::assertSame('next', (string) $response->getBody());
+        } finally {
+            $handler->close();
+        }
+    }
+
     public function testStreamingRequestBodyReadPsr7TimeoutRejectsAsRequestExceptionWithoutResponse(): void
     {
         $factory = new CurlFactory(3);
@@ -7998,6 +8290,7 @@ class CurlFactoryTest extends TestCase
                 $stats = $transferStats;
             },
         ]);
+        $framedRequest = $easy->request;
         $easy->bodyReadTimeoutException = $previous;
         $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
         $handler = static function (RequestInterface $request, array $options) {
@@ -8011,7 +8304,7 @@ class CurlFactoryTest extends TestCase
 
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
-            self::assertSame($request, $e->getRequest());
+            self::assertSame($framedRequest, $e->getRequest());
             self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
@@ -8022,7 +8315,7 @@ class CurlFactoryTest extends TestCase
         self::assertInstanceOf(TransferStats::class, $stats);
         self::assertFalse($stats->hasResponse());
         self::assertNull($stats->getResponse());
-        self::assertSame($request, $stats->getRequest());
+        self::assertSame($framedRequest, $stats->getRequest());
         self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $stats->getHandlerErrorData());
     }
 
@@ -8084,6 +8377,7 @@ class CurlFactoryTest extends TestCase
                 $stats = $transferStats;
             },
         ]);
+        $framedRequest = $easy->request;
         $easy->bodyReadException = $previous;
         $easy->errno = 0;
         $retried = false;
@@ -8098,7 +8392,7 @@ class CurlFactoryTest extends TestCase
 
             self::fail('Expected RequestException');
         } catch (RequestException $e) {
-            self::assertSame($request, $e->getRequest());
+            self::assertSame($framedRequest, $e->getRequest());
             self::assertSame('boom while reading', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertInstanceOf(RequestExceptionInterface::class, $e);
@@ -8110,7 +8404,7 @@ class CurlFactoryTest extends TestCase
         self::assertInstanceOf(TransferStats::class, $stats);
         self::assertFalse($stats->hasResponse());
         self::assertNull($stats->getResponse());
-        self::assertSame($request, $stats->getRequest());
+        self::assertSame($framedRequest, $stats->getRequest());
         self::assertSame(0, $stats->getHandlerErrorData());
     }
 
@@ -8126,6 +8420,7 @@ class CurlFactoryTest extends TestCase
                 $stats = $transferStats;
             },
         ]);
+        $framedRequest = $easy->request;
         $easy->response = $response;
         $easy->bodyReadTimeoutException = $previous;
         $easy->errno = \CURLE_ABORTED_BY_CALLBACK;
@@ -8140,7 +8435,7 @@ class CurlFactoryTest extends TestCase
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
-            self::assertSame($request, $e->getRequest());
+            self::assertSame($framedRequest, $e->getRequest());
             self::assertSame($response, $e->getResponse());
             self::assertSame('Timed out while reading the request body', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
@@ -8153,7 +8448,7 @@ class CurlFactoryTest extends TestCase
         self::assertInstanceOf(TransferStats::class, $stats);
         self::assertTrue($stats->hasResponse());
         self::assertSame($response, $stats->getResponse());
-        self::assertSame($request, $stats->getRequest());
+        self::assertSame($framedRequest, $stats->getRequest());
         self::assertSame(\CURLE_ABORTED_BY_CALLBACK, $stats->getHandlerErrorData());
     }
 
@@ -8169,6 +8464,7 @@ class CurlFactoryTest extends TestCase
                 $stats = $transferStats;
             },
         ]);
+        $framedRequest = $easy->request;
         $easy->response = $response;
         $easy->bodyReadException = $previous;
         $easy->errno = 0;
@@ -8184,7 +8480,7 @@ class CurlFactoryTest extends TestCase
 
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
-            self::assertSame($request, $e->getRequest());
+            self::assertSame($framedRequest, $e->getRequest());
             self::assertSame($response, $e->getResponse());
             self::assertSame('boom while reading', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
@@ -8197,7 +8493,7 @@ class CurlFactoryTest extends TestCase
         self::assertInstanceOf(TransferStats::class, $stats);
         self::assertTrue($stats->hasResponse());
         self::assertSame($response, $stats->getResponse());
-        self::assertSame($request, $stats->getRequest());
+        self::assertSame($framedRequest, $stats->getRequest());
         self::assertSame(0, $stats->getHandlerErrorData());
     }
 
@@ -8209,6 +8505,9 @@ class CurlFactoryTest extends TestCase
         $previous = new Psr7\Exception\TimeoutException('Unable to read from stream: timed out');
         $castCalled = false;
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
             '__toString' => static function () use (&$castCalled, $previous): string {
                 $castCalled = true;
 
@@ -8240,11 +8539,32 @@ class CurlFactoryTest extends TestCase
         self::assertTrue($castCalled);
     }
 
+    public function testBodyAsStringHonorsExplicitContentLengthBoundary(): void
+    {
+        $source = Psr7\Utils::streamFor('abcdef');
+        $body = Psr7\FnStream::decorate($source, [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $factory = new CurlFactory(3);
+
+        $factory->create(new Psr7\Request('PUT', Server::$url, ['Content-Length' => '3'], $body), [
+            'curl' => ['body_as_string' => true],
+        ]);
+
+        self::assertSame('abc', $_SERVER['_curl'][\CURLOPT_POSTFIELDS]);
+        self::assertSame('def', $source->getContents());
+    }
+
     public function testBodyAsStringRequestBodyReadFailureUsesFallbackMessageWhenMessageEmpty(): void
     {
         $factory = new CurlFactory(3);
         $previous = new \RuntimeException('');
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
             '__toString' => static function () use ($previous): string {
                 throw $previous;
             },
@@ -8270,6 +8590,9 @@ class CurlFactoryTest extends TestCase
         $previous = new \Exception('boom while reading');
         $castCalled = false;
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
             '__toString' => static function () use (&$castCalled, $previous): string {
                 $castCalled = true;
 
@@ -8301,6 +8624,9 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3);
         $previous = new \Error('boom while reading');
         $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('abc'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
             '__toString' => static function () use ($previous): string {
                 throw $previous;
             },
@@ -9543,6 +9869,13 @@ class CurlFactoryTest extends TestCase
                 return $new;
             }
         };
+    }
+
+    private static function curlInputSizeOption(): int
+    {
+        return \defined('CURLOPT_INFILESIZE_LARGE')
+            ? (int) \constant('CURLOPT_INFILESIZE_LARGE')
+            : \CURLOPT_INFILESIZE;
     }
 
     private static function skipIfCurlShareIsUnavailable(): void

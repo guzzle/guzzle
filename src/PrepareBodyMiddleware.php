@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace GuzzleHttp;
 
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Handler\RequestFraming;
 use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7\Exception\TimeoutException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -39,7 +38,7 @@ class PrepareBodyMiddleware
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
     {
         $fn = $this->nextHandler;
-        $bodySize = self::bodySize($request);
+        $bodySize = RequestFraming::bodySize($request);
 
         // Don't do anything if the request has no body.
         if ($bodySize === 0) {
@@ -63,7 +62,7 @@ class PrepareBodyMiddleware
         ) {
             if ($bodySize !== null) {
                 $modify['set_headers']['Content-Length'] = (string) $bodySize;
-            } else {
+            } elseif ($request->getProtocolVersion() === '1.1') {
                 $modify['set_headers']['Transfer-Encoding'] = 'chunked';
             }
         }
@@ -113,19 +112,6 @@ class PrepareBodyMiddleware
 
         if ($bodySize === null || $bodySize >= (int) $expect || !$body->isSeekable()) {
             $modify['set_headers']['Expect'] = '100-Continue';
-        }
-    }
-
-    private static function bodySize(RequestInterface $request): ?int
-    {
-        try {
-            return $request->getBody()->getSize();
-        } catch (\Exception $e) {
-            $message = $e instanceof TimeoutException
-                ? 'Timed out while determining the request body size'
-                : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to determine the request body size');
-
-            throw new RequestException($message, $request, 0, $e);
         }
     }
 }
