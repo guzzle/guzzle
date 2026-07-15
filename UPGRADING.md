@@ -461,6 +461,11 @@ transport choose valid wire framing. Other codings, coding chains, repeated
 `chunked` values, unknown-length HTTP/1.0 bodies, and `chunked` on other HTTP
 versions are rejected.
 
+A `Transfer-Encoding: chunked` header is only a provisional framing marker:
+Guzzle treats the request body as content, never as pre-encoded chunks. Callers
+that pre-encoded bodies for Guzzle 7's stream handler must remove the chunk
+framing before upgrading, or the server receives it as literal content.
+
 For an unknown-size body with an explicit `Content-Length`, the stream handler
 treats that length as the body boundary and does not read beyond it. Both
 handlers reject premature EOF and request-body streams that return more bytes
