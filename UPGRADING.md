@@ -461,12 +461,13 @@ transport choose valid wire framing. Other codings, coding chains, repeated
 `chunked` values, unknown-length HTTP/1.0 bodies, and `chunked` on other HTTP
 versions are rejected.
 
-For an unknown-size body with an explicit `Content-Length`, that length is the
-body boundary. Guzzle does not read beyond it and rejects premature EOF. The
-stream handler captures an otherwise unknown body once and sends it with its
-exact length. Violations raise `RequestException` before a response, or plain
-`ResponseException` if a cURL request-body read fails after response headers.
-Applications should normally omit both framing headers and let Guzzle choose.
+For an unknown-size body with an explicit `Content-Length`, the stream handler
+treats that length as the body boundary and does not read beyond it. Both
+handlers reject premature EOF and request-body streams that return more bytes
+than requested. The stream handler captures an otherwise unknown body once and
+sends it with its exact length. Violations raise `RequestException` before a
+response, or plain `ResponseException` if a cURL request-body read fails after
+response headers. Omit both framing headers and let Guzzle choose.
 
 `PrepareBodyMiddleware` now adds a provisional `Transfer-Encoding: chunked`
 marker only to unknown-size HTTP/1.1 bodies. For other protocol versions, custom
@@ -1063,10 +1064,6 @@ and 306, are returned to the caller unchanged even when they carry a Location
 header, in line with RFC 9110 section 15.4. Code that relied on Guzzle following
 one of those responses should handle it directly or inspect it with an
 on_redirect callback.
-
-When redirect processing replaces a request body with an empty stream, Guzzle
-now removes `Content-Length` and `Transfer-Encoding` from the redirected
-request. Redirects that reuse the body preserve its framing headers.
 
 #### Host-Only Cookies
 
