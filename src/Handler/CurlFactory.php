@@ -2185,9 +2185,6 @@ final class CurlFactory implements CurlFactoryInterface
             if ($contentLength !== null) {
                 // Never let cURL emit our header; it sizes the upload via a cURL input-size option.
                 $this->removeHeader('Content-Length', $conf);
-            }
-
-            if ($contentLength !== null) {
                 $conf[self::curlInputSizeOption($request, $contentLength)] = $contentLength;
             }
 
@@ -2226,6 +2223,13 @@ final class CurlFactory implements CurlFactoryInterface
                     return self::CURL_READFUNC_ABORT;
                 }
 
+                $dataLength = \strlen($data);
+                if ($dataLength > $limit) {
+                    $easy->bodyReadException = new \RuntimeException('Request body stream returned more bytes than requested');
+
+                    return self::CURL_READFUNC_ABORT;
+                }
+
                 if ($remaining !== null) {
                     if ($data === '') {
                         $easy->bodyReadException = new \RuntimeException('Request body ended before the declared Content-Length was reached');
@@ -2233,13 +2237,7 @@ final class CurlFactory implements CurlFactoryInterface
                         return self::CURL_READFUNC_ABORT;
                     }
 
-                    if (\strlen($data) > $limit) {
-                        $easy->bodyReadException = new \RuntimeException('Request body stream returned more bytes than requested');
-
-                        return self::CURL_READFUNC_ABORT;
-                    }
-
-                    $remaining -= \strlen($data);
+                    $remaining -= $dataLength;
                 }
 
                 return $data;

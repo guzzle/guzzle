@@ -6772,6 +6772,39 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testLetsCurlFrameUnknownHttp11Body(): void
+    {
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor('foo'), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+        ]);
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Transfer-Encoding' => 'chunked'],
+            $body
+        ), []);
+
+        try {
+            self::assertTrue((bool) $_SERVER['_curl'][\CURLOPT_UPLOAD]);
+            self::assertIsCallable($_SERVER['_curl'][\CURLOPT_READFUNCTION]);
+            self::assertArrayNotHasKey(\CURLOPT_INFILESIZE, $_SERVER['_curl']);
+            if (\defined('CURLOPT_INFILESIZE_LARGE')) {
+                self::assertArrayNotHasKey((int) \constant('CURLOPT_INFILESIZE_LARGE'), $_SERVER['_curl']);
+            }
+            self::assertArrayNotHasKey(\CURLOPT_POSTFIELDS, $_SERVER['_curl']);
+
+            foreach ($_SERVER['_curl'][\CURLOPT_HTTPHEADER] as $header) {
+                self::assertFalse(Psr7\Utils::caselessContains($header, 'Content-Length:'));
+                self::assertFalse(Psr7\Utils::caselessContains($header, 'Transfer-Encoding:'));
+            }
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     /**
      * @dataProvider invalidCurlRequestContentLengthProvider
      *
@@ -8088,6 +8121,35 @@ class CurlFactoryTest extends TestCase
             $callback = $_SERVER['_curl'][\CURLOPT_READFUNCTION];
 
             self::assertSame(0x10000000, $callback($easy->handle, null, 8192));
+            self::assertInstanceOf(\RuntimeException::class, $easy->bodyReadException);
+            self::assertSame(
+                'Request body stream returned more bytes than requested',
+                $easy->bodyReadException->getMessage()
+            );
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testStreamingUnknownRequestBodyRejectsMoreBytesThanRequested(): void
+    {
+        $factory = new CurlFactory(3);
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
+            'getSize' => static function (): ?int {
+                return null;
+            },
+            'read' => static function (int $length): string {
+                return \str_repeat('x', $length + 1);
+            },
+        ]);
+        $easy = $factory->create(new Psr7\Request('PUT', Server::$url, [], $body), []);
+
+        try {
+            $callback = $_SERVER['_curl'][\CURLOPT_READFUNCTION];
+
+            self::assertSame(0x10000000, $callback($easy->handle, null, 3));
             self::assertInstanceOf(\RuntimeException::class, $easy->bodyReadException);
             self::assertSame(
                 'Request body stream returned more bytes than requested',

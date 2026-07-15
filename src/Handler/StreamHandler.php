@@ -193,6 +193,8 @@ final class StreamHandler
         $this->rejectStreamingWithConnectionCaps($options);
         $this->assertTransportSharingSupported();
 
+        // The stream wrapper sends HEAD request bodies, unlike cURL's NOBODY
+        // path, so validate their framing normally.
         $framing = RequestFraming::analyze($request->withoutHeader('Expect'));
         $request = $framing->request;
 

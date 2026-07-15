@@ -16,18 +16,21 @@ class RequestFramingTest extends TestCase
 {
     public static function acceptedFramingProvider(): iterable
     {
-        yield 'known body' => [[], '1.1', '3'];
+        yield 'known GET body' => ['GET', [], '1.1', '3'];
         yield 'equivalent content lengths' => [
+            'PUT',
             ['Content-Length' => ['0003', '3']],
             '1.1',
             '3',
         ];
         yield 'equivalent comma content lengths' => [
+            'PUT',
             ['Content-Length' => '0003, 3'],
             '1.1',
             '3',
         ];
         yield 'known body with provisional chunked' => [
+            'PUT',
             ['Transfer-Encoding' => 'ChUnKeD'],
             '1.1',
             '3',
@@ -39,9 +42,9 @@ class RequestFramingTest extends TestCase
      *
      * @param array<string, string|string[]> $headers
      */
-    public function testAnalyzesAcceptedFraming(array $headers, string $protocol, string $expectedLength): void
+    public function testAnalyzesAcceptedFraming(string $method, array $headers, string $protocol, string $expectedLength): void
     {
-        $framing = RequestFraming::analyze(new Psr7\Request('PUT', 'https://example.com', $headers, 'abc', $protocol));
+        $framing = RequestFraming::analyze(new Psr7\Request($method, 'https://example.com', $headers, 'abc', $protocol));
 
         self::assertSame(3, $framing->bodySize);
         self::assertSame(3, $framing->contentLength);

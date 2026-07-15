@@ -2997,6 +2997,23 @@ class StreamHandlerTest extends TestCase
         self::assertSame([], Server::received());
     }
 
+    public function testRejectsMismatchedHeadRequestBodyBeforeOpeningStreamTransport(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $request = new Request('HEAD', Server::$url, ['Content-Length' => '1'], 'abc');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertEquals($request, $e->getRequest());
+            self::assertSame('Content-Length does not match the request body size', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
     public function testRejectsUnknownHttp10BodyWithoutOpeningStreamTransport(): void
     {
         Server::flush();

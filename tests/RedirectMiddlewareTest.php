@@ -265,12 +265,15 @@ class RedirectMiddlewareTest extends TestCase
         self::assertTrue($called);
     }
 
-    public function testRedirectBodyResetUsesConfiguredStreamFactory(): void
+    /**
+     * @dataProvider discardedBodyFramingHeaderProvider
+     */
+    public function testRedirectBodyResetUsesConfiguredStreamFactory(string $headerName, string $headerValue): void
     {
         $redirectMiddleware = new RedirectMiddleware(static function (): void {
         });
         $factory = new RedirectTestStreamFactory();
-        $request = new Request('POST', 'http://example.com/', [], 'payload');
+        $request = new Request('POST', 'http://example.com/', [$headerName => $headerValue], 'payload');
 
         $modifiedRequest = $redirectMiddleware->modifyRequest($request, [
             'allow_redirects' => [
@@ -284,7 +287,15 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame('GET', $modifiedRequest->getMethod());
         self::assertInstanceOf(RedirectTestStream::class, $modifiedRequest->getBody());
         self::assertSame('', (string) $modifiedRequest->getBody());
+        self::assertFalse($modifiedRequest->hasHeader('Content-Length'));
+        self::assertFalse($modifiedRequest->hasHeader('Transfer-Encoding'));
         self::assertSame([''], $factory->streamCalls());
+    }
+
+    public static function discardedBodyFramingHeaderProvider(): iterable
+    {
+        yield 'Content-Length' => ['Content-Length', '7'];
+        yield 'Transfer-Encoding' => ['Transfer-Encoding', 'chunked'];
     }
 
     public function testInvalidStreamFactoryOptionForRedirectBodyResetIsRejected(): void
@@ -1077,6 +1088,7 @@ class RedirectMiddlewareTest extends TestCase
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
         $request = new Request('QUERY', 'http://example.com', [
+            'Content-Length' => '11',
             'Content-Type' => 'application/json',
         ], '{"q":"foo"}');
 
@@ -1087,6 +1099,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame('QUERY', $lastRequest->getMethod());
         self::assertSame('http://example.com/foo', (string) $lastRequest->getUri());
         self::assertSame('{"q":"foo"}', (string) $lastRequest->getBody());
+        self::assertSame('11', $lastRequest->getHeaderLine('Content-Length'));
         self::assertSame('application/json', $lastRequest->getHeaderLine('Content-Type'));
     }
 
@@ -1112,7 +1125,7 @@ class RedirectMiddlewareTest extends TestCase
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
-        $request = new Request('QUERY', 'http://example.com', [], 'a=b');
+        $request = new Request('QUERY', 'http://example.com', ['Content-Length' => '3'], 'a=b');
 
         $response = $handler($request, [
             'allow_redirects' => ['max' => 2, 'strict' => true],
@@ -1121,6 +1134,7 @@ class RedirectMiddlewareTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('QUERY', $mock->getLastRequest()->getMethod());
         self::assertSame('a=b', (string) $mock->getLastRequest()->getBody());
+        self::assertSame('3', $mock->getLastRequest()->getHeaderLine('Content-Length'));
     }
 
     public static function queryMovedRedirectStatusProvider(): array
