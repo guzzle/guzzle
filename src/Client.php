@@ -1134,7 +1134,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 throw new InvalidArgumentException('json_encode error: '.\json_last_error_msg());
             }
 
-            /** @var string $json */
+            /** @var non-empty-string $json */
             $options['body'] = $json;
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.

@@ -69,7 +69,7 @@ class FileCookieJar extends CookieJar
             throw new InvalidArgumentException('json_encode error: '.\json_last_error_msg());
         }
 
-        /** @var string $jsonStr */
+        /** @var non-empty-string $jsonStr */
         if (false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
