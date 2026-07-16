@@ -39,6 +39,19 @@ class FileCookieJarTest extends TestCase
         new FileCookieJar($this->file);
     }
 
+    public function testRejectsMalformedCookieFileWithJsonException(): void
+    {
+        \file_put_contents($this->file, '[');
+
+        try {
+            new FileCookieJar($this->file);
+            self::fail('Expected RuntimeException was not thrown');
+        } catch (\RuntimeException $e) {
+            self::assertSame("Invalid cookie file: {$this->file}", $e->getMessage());
+            self::assertInstanceOf(\JsonException::class, $e->getPrevious());
+        }
+    }
+
     public function testLoadsEmptyFile(): void
     {
         $jar = new FileCookieJar($this->file);
@@ -96,6 +109,26 @@ class FileCookieJarTest extends TestCase
             if (\file_exists($source)) {
                 \unlink($source);
             }
+        }
+    }
+
+    public function testRejectsCookieDataThatCannotBeEncoded(): void
+    {
+        $jar = new FileCookieJar($this->file, true);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => "\x99",
+            'Domain' => 'foo.com',
+        ]));
+
+        try {
+            $jar->save($this->file);
+            self::fail('Expected RuntimeException was not thrown');
+        } catch (\RuntimeException $e) {
+            self::assertSame('Unable to encode cookie data', $e->getMessage());
+            self::assertInstanceOf(\JsonException::class, $e->getPrevious());
+        } finally {
+            $jar->clear();
         }
     }
 
@@ -334,7 +367,6 @@ class FileCookieJarTest extends TestCase
     public static function invalidCookieJarContent(): array
     {
         return [
-            'malformed JSON' => ['['],
             'non-list root' => ['null'],
             'numeric-keyed object root' => ['{"0":{"Name":"foo","Value":"bar"}}'],
             'non-array record' => ['[1]'],

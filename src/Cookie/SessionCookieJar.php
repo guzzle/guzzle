@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\NonSerializableTrait;
-use GuzzleHttp\Utils;
 
 /**
  * Persists cookies in the client session
@@ -78,7 +77,9 @@ class SessionCookieJar extends CookieJar
     }
 
     /**
-     * Save cookies to the client session
+     * Save cookies to the client session.
+     *
+     * @throws \RuntimeException if the cookie data cannot be encoded
      */
     public function save(): void
     {
@@ -90,9 +91,10 @@ class SessionCookieJar extends CookieJar
             }
         }
 
-        $json = \json_encode($json);
-        if (false === $json) {
-            throw new \RuntimeException('Unable to encode cookie data');
+        try {
+            $json = \json_encode($json, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \RuntimeException('Unable to encode cookie data', 0, $e);
         }
 
         $_SESSION[$this->sessionKey] = $json;
@@ -116,8 +118,8 @@ class SessionCookieJar extends CookieJar
         }
 
         try {
-            $data = Utils::jsonDecode($json, true);
-        } catch (\InvalidArgumentException $e) {
+            $data = \json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
             throw new \RuntimeException($message, 0, $e);
         }
 

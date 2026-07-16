@@ -45,6 +45,21 @@ class SessionCookieJarTest extends TestCase
         self::assertSame($sessionData, $_SESSION[$this->sessionVar]);
     }
 
+    public function testRejectsMalformedCookieSessionWithJsonException(): void
+    {
+        $_SESSION[$this->sessionVar] = '[';
+
+        try {
+            new SessionCookieJar($this->sessionVar);
+            self::fail('Expected RuntimeException was not thrown');
+        } catch (\RuntimeException $e) {
+            self::assertSame('Invalid cookie data', $e->getMessage());
+            self::assertInstanceOf(\JsonException::class, $e->getPrevious());
+        }
+
+        self::assertSame('[', $_SESSION[$this->sessionVar]);
+    }
+
     public function testValidatesCookieSessionJsonEncoding(): void
     {
         $jar = new SessionCookieJar($this->sessionVar, true);
@@ -60,6 +75,7 @@ class SessionCookieJarTest extends TestCase
             self::fail('Expected RuntimeException was not thrown');
         } catch (\RuntimeException $e) {
             self::assertSame('Unable to encode cookie data', $e->getMessage());
+            self::assertInstanceOf(\JsonException::class, $e->getPrevious());
         } finally {
             $jar->clear();
             unset($jar, $_SESSION[$this->sessionVar]);
@@ -246,7 +262,6 @@ class SessionCookieJarTest extends TestCase
         return [
             'native non-string data' => [[]],
             'empty string' => [''],
-            'malformed JSON' => ['['],
             'non-list JSON' => ['null'],
             'numeric-keyed object root' => ['{"0":{"Name":"foo","Value":"bar"}}'],
             'non-array record' => ['[1]'],

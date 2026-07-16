@@ -1227,9 +1227,11 @@ wrong type causes a `RuntimeException`. Cookie records are constructed before
 any are passed to `setCookie()`, so such failures leave the jar unchanged.
 Numeric or string-keyed JSON objects must be converted to lists.
 
-Malformed JSON in a cookie file previously threw
-`GuzzleHttp\Exception\InvalidArgumentException`. It now throws a
-`RuntimeException`, consistently with other invalid persisted cookie data.
+In Guzzle 7, malformed JSON in a cookie file and `FileCookieJar` encoding
+failures threw `GuzzleHttp\Exception\InvalidArgumentException`. Now they throw
+`RuntimeException`, consistently with other persistent cookie failures. Both
+jars expose the native `JsonException` through `getPrevious()` when JSON
+encoding or decoding fails.
 
 An empty cookie file remains a no-op. A missing or `null` session value still
 means no stored cookie data. Any other session value must be a string containing

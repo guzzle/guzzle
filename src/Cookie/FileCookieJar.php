@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\NonSerializableTrait;
-use GuzzleHttp\Utils;
 
 /**
  * Persists non-session cookies using a JSON formatted file
@@ -85,7 +84,8 @@ class FileCookieJar extends CookieJar
      *
      * @param string $filename File to save
      *
-     * @throws \RuntimeException if the file cannot be found or created
+     * @throws \RuntimeException if the cookie data cannot be encoded or the
+     *                            file cannot be written
      */
     public function save(string $filename): void
     {
@@ -97,7 +97,12 @@ class FileCookieJar extends CookieJar
             }
         }
 
-        $jsonStr = Utils::jsonEncode($json, \JSON_HEX_TAG);
+        try {
+            $jsonStr = \json_encode($json, \JSON_HEX_TAG | \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \RuntimeException('Unable to encode cookie data', 0, $e);
+        }
+
         if (false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
@@ -130,8 +135,8 @@ class FileCookieJar extends CookieJar
         $message = "Invalid cookie file: {$filename}";
 
         try {
-            $data = Utils::jsonDecode($json, true);
-        } catch (\InvalidArgumentException $e) {
+            $data = \json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
             throw new \RuntimeException($message, 0, $e);
         }
 

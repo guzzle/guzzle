@@ -31,6 +31,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject native PHP serialization of runtime objects
 - Restrict persisted `FileCookieJar` cookie files to owner-only permissions
 - Require persisted cookie data to use JSON lists and construct all records before changing the jar
+- Normalize persistent cookie JSON failures as `RuntimeException`
 - Adjusted `guzzlehttp/promises` version constraint to `^3.0`
 - Adjusted `guzzlehttp/psr7` version constraint to `^3.0`
 - Quote multipart `Content-Type` boundary parameters when required
