@@ -494,7 +494,7 @@ final class CurlFactory implements CurlFactoryInterface
             throw new RequestException('Required multiplexing needs libcurl 8.14.0 or newer built with HTTP/2 support.', $easy->request);
         }
 
-        $proxy = ProxyEnvironment::resolveProxySelection($easy->request->getUri(), $easy->options['proxy'] ?? null);
+        $proxy = ProxyEnv::resolveProxySelection($easy->request->getUri(), $easy->options['proxy'] ?? null);
         self::assertSelectedProxySupported($proxy->getProxy(), $easy->request);
 
         if ('https' !== $easy->request->getUri()->getScheme() && $proxy->hasProxy()) {
@@ -2032,7 +2032,7 @@ final class CurlFactory implements CurlFactoryInterface
                 throw new RequestException('HTTP/3 is not supported by this cURL installation.', $easy->request);
             }
 
-            $proxy = ProxyEnvironment::resolveProxySelection($easy->request->getUri(), $easy->options['proxy'] ?? null);
+            $proxy = ProxyEnv::resolveProxySelection($easy->request->getUri(), $easy->options['proxy'] ?? null);
 
             if (\in_array($multiplex, [Multiplexing::REQUIRE_EAGER, Multiplexing::REQUIRE_WAIT], true)) {
                 self::assertSelectedProxySupported($proxy->getProxy(), $easy->request);
@@ -2472,7 +2472,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         // Always pin CURLOPT_PROXY and CURLOPT_NOPROXY so that libcurl never
         // falls back to reading proxy environment variables itself.
-        $proxy = ProxyEnvironment::resolveProxySelection($easy->request->getUri(), $options['proxy'] ?? null);
+        $proxy = ProxyEnv::resolveProxySelection($easy->request->getUri(), $options['proxy'] ?? null);
         $selectedProxy = $proxy->getProxy();
         if ($selectedProxy !== null) {
             // Validate the whole proxy URL up front (ProxyOptions leans on

@@ -1343,7 +1343,7 @@ final class StreamHandler
      */
     private function applyProxy(RequestInterface $request, array &$context, $value): void
     {
-        $proxy = ProxyEnvironment::resolveProxySelection($request->getUri(), $value);
+        $proxy = ProxyEnv::resolveProxySelection($request->getUri(), $value);
         $proxyUri = $proxy->getProxy();
         if ($proxyUri === null) {
             return;

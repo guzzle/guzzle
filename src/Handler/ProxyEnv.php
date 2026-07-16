@@ -17,7 +17,7 @@ use Psr\Http\Message\UriInterface;
  *
  * @internal
  */
-final class ProxyEnvironment
+final class ProxyEnv
 {
     private function __construct()
     {

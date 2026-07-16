@@ -7,12 +7,12 @@ namespace GuzzleHttp;
 /**
  * Reads configuration from the process environment.
  *
- * Intentionally separate from Handler\ProxyEnvironment, which has different
+ * Intentionally separate from Handler\ProxyEnv, which has different
  * lookup semantics.
  *
  * @internal
  */
-final class Environment
+final class Env
 {
     private function __construct()
     {

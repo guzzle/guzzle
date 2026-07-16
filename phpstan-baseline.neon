@@ -22,13 +22,13 @@ parameters:
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 1
-			path: src/Environment.php
+			path: src/Env.php
 
 		-
 			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
 			count: 1
-			path: src/Environment.php
+			path: src/Env.php
 
 		-
 			message: '#^Parameter \#1 \$ch of function curl_error expects resource, CurlHandle\|resource given\.$#'
