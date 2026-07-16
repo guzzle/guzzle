@@ -441,75 +441,11 @@ class SetCookie
             return false;
         }
 
-        // Canonicalize both sides so equivalent IPv6 spellings, including
-        // legacy persisted cookie domains, compare as one identity.
-        $cookieDomain = HostIdentity::canonicalCookieDomain($cookieDomain);
-        $domain = HostIdentity::canonicalCookieDomain($domain);
-
         if ($this->getHostOnly()) {
-            return $domain === $cookieDomain;
+            return HostIdentity::canonicalCookieDomain($domain) === HostIdentity::canonicalCookieDomain($cookieDomain);
         }
 
-        if ($domain === $cookieDomain) {
-            return true;
-        }
-
-        // Matching the subdomain according to RFC 6265 applies to host names
-        // only; every other identity is exact-match-only, on both sides.
-        // https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.3
-        if (!self::isDnsSuffixEligible($cookieDomain) || !self::isDnsSuffixEligible($domain)) {
-            return false;
-        }
-
-        return \preg_match('/\.'.\preg_quote($cookieDomain, '/').'$/D', $domain) === 1;
-    }
-
-    /**
-     * Whether the host may participate in RFC 6265 DNS suffix matching. IP
-     * literals, IP addresses, numeric hosts, literal-like text containing a
-     * raw bracket or colon, and invalid host text are exact-match-only.
-     */
-    private static function isDnsSuffixEligible(string $host): bool
-    {
-        if (\strpbrk($host, '[]:') !== false) {
-            return false;
-        }
-
-        if (!Psr7\Rfc3986::isValidHost($host)) {
-            return false;
-        }
-
-        return !self::isIpAddressOrNumericHost($host);
-    }
-
-    private static function isIpAddressOrNumericHost(string $host): bool
-    {
-        // Strip one root dot before detection so trailing-dot numeric hosts
-        // still cannot be matched by subdomains.
-        if ($host !== '' && \str_ends_with($host, '.')) {
-            $host = \substr($host, 0, -1);
-        }
-
-        if (\str_starts_with($host, '[') && \str_ends_with($host, ']')) {
-            $host = \substr($host, 1, -1);
-        }
-
-        if (\filter_var($host, \FILTER_VALIDATE_IP) !== false) {
-            return true;
-        }
-
-        // Public DNS names do not have an all-numeric rightmost label; treat
-        // those private/internal hosts as exact-match-only too.
-        $labels = \explode('.', $host);
-        $last = (string) \end($labels);
-
-        if ($last !== '' && \ctype_digit($last)) {
-            return true;
-        }
-
-        // libcurl also parses a 0x-prefixed hexadecimal rightmost label as a
-        // numerical IPv4 address, such as 0x7f000001 for 127.0.0.1.
-        return \str_starts_with($last, '0x') && \strlen($last) > 2 && \ctype_xdigit(\substr($last, 2));
+        return HostIdentity::cookieDomainMatches($domain, $cookieDomain);
     }
 
     /**

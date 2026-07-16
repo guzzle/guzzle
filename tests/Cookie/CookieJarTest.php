@@ -686,6 +686,103 @@ class CookieJarTest extends TestCase
         self::assertTrue($cookie->getHostOnly());
     }
 
+    /**
+     * @dataProvider secureCookieReceiptProvider
+     */
+    public function testAcceptsSecureCookiesOnlyFromSecureResponses(string $url, bool $strict, int $expectedCount): void
+    {
+        $jar = new CookieJar($strict);
+        $jar->extractCookies(
+            new Request('GET', $url),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Secure; Path=/'])
+        );
+
+        self::assertCount($expectedCount, $jar);
+        if ($expectedCount === 1) {
+            $cookie = $jar->getCookieByName('sid');
+            self::assertInstanceOf(SetCookie::class, $cookie);
+            self::assertTrue($cookie->getSecure());
+        }
+    }
+
+    public static function secureCookieReceiptProvider(): array
+    {
+        return [
+            'HTTP' => ['http://example.com/', false, 0],
+            'strict HTTP' => ['http://example.com/', true, 0],
+            'HTTPS' => ['https://example.com/', false, 1],
+        ];
+    }
+
+    /**
+     * @dataProvider secureCookieOverlayProvider
+     */
+    public function testProtectsSecureCookiesFromInsecureOverlays(array $stored, string $url, string $header, array $expectedValues): void
+    {
+        $jar = new CookieJar(false, [$stored]);
+
+        $jar->extractCookies(
+            new Request('GET', $url),
+            new Response(200, ['Set-Cookie' => $header])
+        );
+
+        self::assertSame($expectedValues, \array_column($jar->toArray(), 'Value'));
+    }
+
+    public static function secureCookieOverlayProvider(): array
+    {
+        return [
+            'exact insecure replacement' => [
+                ['Name' => 'sid', 'Value' => 'secure', 'Domain' => 'example.com', 'Path' => '/', 'Secure' => true],
+                'http://example.com/',
+                'sid=insecure; Domain=example.com; Path=/',
+                ['secure'],
+            ],
+            'overlapping insecure deletion' => [
+                ['Name' => 'sid', 'Value' => 'secure', 'Domain' => 'example.com', 'Path' => '/login', 'Secure' => true],
+                'http://example.com/login/en',
+                'sid=deleted; Domain=example.com; Path=/login/en; Max-Age=0',
+                ['secure'],
+            ],
+            'stored parent domain and new child host' => [
+                ['Name' => 'sid', 'Value' => 'secure', 'Domain' => 'example.com', 'Path' => '/', 'Secure' => true],
+                'http://child.example.com/',
+                'sid=insecure; Path=/',
+                ['secure'],
+            ],
+            'stored child host and new parent domain' => [
+                ['Name' => 'sid', 'Value' => 'secure', 'Domain' => 'child.example.com', 'HostOnly' => true, 'Path' => '/', 'Secure' => true],
+                'http://child.example.com/',
+                'sid=insecure; Domain=example.com; Path=/',
+                ['secure'],
+            ],
+            'new parent path' => [
+                ['Name' => 'sid', 'Value' => 'secure', 'Domain' => 'example.com', 'Path' => '/login', 'Secure' => true],
+                'http://example.com/',
+                'sid=insecure; Domain=example.com; Path=/',
+                ['secure', 'insecure'],
+            ],
+            'new sibling path' => [
+                ['Name' => 'sid', 'Value' => 'secure', 'Domain' => 'example.com', 'Path' => '/login', 'Secure' => true],
+                'http://example.com/foo',
+                'sid=insecure; Domain=example.com; Path=/foo',
+                ['secure', 'insecure'],
+            ],
+            'secure response replacement' => [
+                ['Name' => 'sid', 'Value' => 'secure', 'Domain' => 'example.com', 'Path' => '/', 'Secure' => true],
+                'https://example.com/',
+                'sid=replacement; Domain=example.com; Path=/',
+                ['replacement'],
+            ],
+            'expired secure cookie' => [
+                ['Name' => 'sid', 'Value' => 'expired', 'Domain' => 'example.com', 'Path' => '/', 'Secure' => true, 'Expires' => 1],
+                'http://example.com/',
+                'sid=replacement; Domain=example.com; Path=/',
+                ['replacement'],
+            ],
+        ];
+    }
+
     public function testExtractsCookieWithHugeMaxAge(): void
     {
         $this->jar->extractCookies(
