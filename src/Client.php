@@ -1129,7 +1129,13 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (isset($options['json'])) {
-            $options['body'] = Utils::jsonEncode($options['json']);
+            $json = \json_encode($options['json']);
+            if (\JSON_ERROR_NONE !== \json_last_error()) {
+                throw new InvalidArgumentException('json_encode error: '.\json_last_error_msg());
+            }
+
+            /** @var string $json */
+            $options['body'] = $json;
             unset($options['json']);
             // Ensure that we don't have the header in different case and set the new value.
             $options['_conditional'] = Psr7\Utils::caselessRemove(['Content-Type'], $options['_conditional']);

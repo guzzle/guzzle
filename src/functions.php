@@ -142,11 +142,20 @@ function is_host_in_noproxy(string $host, array $noProxyArray): bool
  * @throws Exception\InvalidArgumentException if the JSON cannot be decoded.
  *
  * @see https://www.php.net/manual/en/function.json-decode.php
- * @deprecated json_decode will be removed in guzzlehttp/guzzle:8.0. Use Utils::jsonDecode instead.
+ * @deprecated json_decode will be removed in guzzlehttp/guzzle:8.0. Use PHP's json_decode() instead.
  */
 function json_decode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
 {
-    return Utils::jsonDecode($json, $assoc, $depth, $options);
+    if ($depth < 1) {
+        throw new Exception\InvalidArgumentException('json_decode error: Maximum stack depth exceeded');
+    }
+
+    $data = \json_decode($json, $assoc, $depth, $options);
+    if (\JSON_ERROR_NONE !== \json_last_error()) {
+        throw new Exception\InvalidArgumentException('json_decode error: '.\json_last_error_msg());
+    }
+
+    return $data;
 }
 
 /**
@@ -159,9 +168,15 @@ function json_decode(string $json, bool $assoc = false, int $depth = 512, int $o
  * @throws Exception\InvalidArgumentException if the JSON cannot be encoded.
  *
  * @see https://www.php.net/manual/en/function.json-encode.php
- * @deprecated json_encode will be removed in guzzlehttp/guzzle:8.0. Use Utils::jsonEncode instead.
+ * @deprecated json_encode will be removed in guzzlehttp/guzzle:8.0. Use PHP's json_encode() instead.
  */
 function json_encode($value, int $options = 0, int $depth = 512): string
 {
-    return Utils::jsonEncode($value, $options, $depth);
+    $json = \json_encode($value, $options, $depth);
+    if (\JSON_ERROR_NONE !== \json_last_error()) {
+        throw new Exception\InvalidArgumentException('json_encode error: '.\json_last_error_msg());
+    }
+
+    /** @var string */
+    return $json;
 }

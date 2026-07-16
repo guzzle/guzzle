@@ -782,9 +782,12 @@ EOT
      * @throws InvalidArgumentException if the JSON cannot be decoded.
      *
      * @see https://www.php.net/manual/en/function.json-decode.php
+     * @deprecated Utils::jsonDecode() will be removed in guzzlehttp/guzzle:8.0. Use PHP's json_decode() instead.
      */
     public static function jsonDecode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
     {
+        \trigger_deprecation('guzzlehttp/guzzle', '7.15', '%s() is deprecated and will be removed in 8.0. Use PHP\'s json_decode() instead.', __METHOD__);
+
         if ($depth < 1) {
             throw new InvalidArgumentException('json_decode error: Maximum stack depth exceeded');
         }
@@ -807,9 +810,12 @@ EOT
      * @throws InvalidArgumentException if the JSON cannot be encoded.
      *
      * @see https://www.php.net/manual/en/function.json-encode.php
+     * @deprecated Utils::jsonEncode() will be removed in guzzlehttp/guzzle:8.0. Use PHP's json_encode() instead.
      */
     public static function jsonEncode($value, int $options = 0, int $depth = 512): string
     {
+        \trigger_deprecation('guzzlehttp/guzzle', '7.15', '%s() is deprecated and will be removed in 8.0. Use PHP\'s json_encode() instead.', __METHOD__);
+
         $json = \json_encode($value, $options, $depth);
         if (\JSON_ERROR_NONE !== \json_last_error()) {
             throw new InvalidArgumentException('json_encode error: '.\json_last_error_msg());
