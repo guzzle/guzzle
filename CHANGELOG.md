@@ -193,6 +193,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject the request-level `CURLOPT_SHARE` cURL option when named connection caps are configured
 - Strengthen old-libcurl SOCKS isolation for raw `CURLOPT_PRE_PROXY` and opaque share handles
 - Isolate HTTP proxy tunnels from opaque shared connection caches
+- Trigger runtime deprecations for previously deprecated functionality in 7.1.0
 
 ### Deprecated
 
