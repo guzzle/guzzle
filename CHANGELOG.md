@@ -60,7 +60,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject non-finite floats in the `query` and `form_params` options
 - Reject non-string scalar values in the `body` option
 - Apply automatic `Expect: 100-Continue` injection to HTTP/1.1 requests only
-- Wrap native `JsonException` from `Utils::jsonDecode()` and `Utils::jsonEncode()` in `GuzzleHttp\Exception\InvalidArgumentException`
 - Reject invalid `SetCookie` constructor field types instead of coercing them
 - Validate and normalize request framing across the built-in cURL and stream handlers
 - Reject raw cURL request options outside the built-in cURL handlers' allow-list
@@ -163,7 +162,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed the deprecated `RetryMiddleware::exponentialDelay()` method
 - Removed the deprecated `RequestException::wrapException()` method
 - Removed the deprecated `Utils::describeType()` method
-- Removed the deprecated `GuzzleHttp` namespace functions such as `GuzzleHttp\json_decode()`; use the `Utils` equivalents
+- Removed `Utils::jsonDecode()` and `Utils::jsonEncode()` in favor of native JSON functions
+- Removed deprecated `GuzzleHttp` namespace functions in favor of native or class equivalents
 - Removed `Utils::defaultCaBundle()`; rely on the system trust store or pass a bundle path via the `verify` option
 - Removed `HandlerStack::__toString()`
 - Removed `RequestException::getHandlerContext()` and `ConnectException::getHandlerContext()`

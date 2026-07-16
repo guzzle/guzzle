@@ -268,59 +268,6 @@ class UtilsTest extends TestCase
         Utils::normalizeProtocols(['HTTPS']);
     }
 
-    public function testEncodesJson(): void
-    {
-        self::assertSame('true', Utils::jsonEncode(true));
-    }
-
-    public function testEncodesJsonAndThrowsOnError(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        Utils::jsonEncode("\x99");
-    }
-
-    public function testEncodesJsonAndThrowsOnErrorWithNativeOption(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        Utils::jsonEncode("\x99", \JSON_THROW_ON_ERROR);
-    }
-
-    public function testDecodesJson(): void
-    {
-        self::assertTrue(Utils::jsonDecode('true'));
-    }
-
-    public function testDecodesJsonAndThrowsOnError(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        Utils::jsonDecode('{{]]');
-    }
-
-    public function testDecodesJsonAndThrowsOnErrorWithNativeOption(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        Utils::jsonDecode('{{]]', false, 512, \JSON_THROW_ON_ERROR);
-    }
-
-    /**
-     * @dataProvider invalidJsonDepthProvider
-     */
-    public function testDecodesJsonAndThrowsOnInvalidDepth(int $depth): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        Utils::jsonDecode('{}', true, $depth);
-    }
-
-    public static function invalidJsonDepthProvider(): array
-    {
-        return [[0], [-1]];
-    }
-
     private static function skipIfDefaultCurlHandlerIsUnavailable(): void
     {
         if (

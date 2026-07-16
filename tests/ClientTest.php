@@ -916,6 +916,23 @@ class ClientTest extends TestCase
         self::assertSame(['{"foo":"bar"}'], $factory->streamCalls());
     }
 
+    public function testInvalidJsonThrowsGuzzleExceptionWithNativeCause(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+        ]);
+
+        try {
+            $client->request('POST', 'http://example.com/path', [
+                RequestOptions::JSON => "\x99",
+            ]);
+            self::fail('Expected InvalidArgumentException was not thrown');
+        } catch (InvalidArgumentException $e) {
+            self::assertStringStartsWith('json_encode error: ', $e->getMessage());
+            self::assertInstanceOf(\JsonException::class, $e->getPrevious());
+        }
+    }
+
     public function testFormParamsUseConfiguredStreamFactory(): void
     {
         $mock = new MockHandler([new Response()]);
