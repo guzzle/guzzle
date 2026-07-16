@@ -7,6 +7,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\AuthMiddleware;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Handler\MockHandler;
@@ -27,23 +28,49 @@ class AuthMiddlewareTest extends TestCase
     /**
      * @dataProvider basicAuthProvider
      */
-    public function testAppliesBasicAuth(array $auth): void
+    public function testAppliesBasicAuth(array $auth, string $expectedAuthorization): void
     {
         $mock = new MockHandler([new Response()]);
         $client = new Client(['handler' => HandlerStack::create($mock)]);
 
         $client->get('http://example.com', ['auth' => $auth]);
 
-        self::assertSame('Basic YTpi', $mock->getLastRequest()->getHeaderLine('Authorization'));
+        self::assertSame($expectedAuthorization, $mock->getLastRequest()->getHeaderLine('Authorization'));
         self::assertArrayNotHasKey('auth', $mock->getLastOptions());
     }
 
     public static function basicAuthProvider(): iterable
     {
-        yield 'implicit' => [['a', 'b']];
-        yield 'explicit' => [['a', 'b', 'basic']];
-        yield 'mixed case' => [['a', 'b', 'BaSiC']];
-        yield 'null type' => [['a', 'b', null]];
+        yield 'implicit' => [['a', 'b'], 'Basic YTpi'];
+        yield 'explicit' => [['a', 'b', 'basic'], 'Basic YTpi'];
+        yield 'mixed case' => [['a', 'b', 'BaSiC'], 'Basic YTpi'];
+        yield 'null type' => [['a', 'b', null], 'Basic YTpi'];
+        yield 'password colon' => [['user', 'pass:word'], 'Basic dXNlcjpwYXNzOndvcmQ='];
+        yield 'empty components' => [['', ''], 'Basic Og=='];
+        yield 'username space' => [['a b', 'c'], 'Basic YSBiOmM='];
+        yield 'non-ASCII password' => [['user', '£'], 'Basic dXNlcjrCow=='];
+    }
+
+    /**
+     * @dataProvider invalidBasicAuthProvider
+     */
+    public function testRejectsInvalidBasicAuth(array $auth, string $message): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => HandlerStack::create($mock)]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+
+        $client->get('http://example.com', ['auth' => $auth]);
+    }
+
+    public static function invalidBasicAuthProvider(): iterable
+    {
+        yield 'username colon' => [['bad:user', 'password'], 'Basic authentication username must not contain a colon'];
+        yield 'username NUL' => [["bad\0user", 'password'], 'Basic authentication credentials must not contain ASCII control characters'];
+        yield 'password unit separator' => [['user', "bad\x1Fpassword"], 'Basic authentication credentials must not contain ASCII control characters'];
+        yield 'password delete' => [['user', "bad\x7Fpassword"], 'Basic authentication credentials must not contain ASCII control characters'];
     }
 
     public function testBasicAuthReplacesExistingAuthorizationHeader(): void

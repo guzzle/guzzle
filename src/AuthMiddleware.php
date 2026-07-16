@@ -146,6 +146,14 @@ final class AuthMiddleware
      */
     private function sendBasic(RequestInterface $request, array $options, string $username, string $password): PromiseInterface
     {
+        if (\strpos($username, ':') !== false) {
+            throw new InvalidArgumentException('Basic authentication username must not contain a colon');
+        }
+
+        if (\preg_match('/[\x00-\x1F\x7F]/', $username.$password) !== 0) {
+            throw new InvalidArgumentException('Basic authentication credentials must not contain ASCII control characters');
+        }
+
         unset($options['auth']);
 
         return ($this->nextHandler)(
