@@ -1107,6 +1107,20 @@ header, in line with RFC 9110 section 15.4. Code that relied on Guzzle following
 one of those responses should handle it directly or inspect it with an
 on_redirect callback.
 
+#### Secure Cookie Integrity
+
+Guzzle 8 ignores `Secure` cookies received over non-HTTPS requests. It also
+ignores an insecure cookie received over a non-HTTPS request when its name and
+domain overlap an existing `Secure` cookie and its path falls within the
+existing cookie's protected path. This includes deletions sent with
+`Max-Age=0`.
+
+Guzzle 7 accepted these cookies. Applications using plain HTTP development
+servers that send `Secure` cookies must use HTTPS or remove the attribute.
+Cookies inserted directly through `CookieJar::setCookie()` or restored from
+persistence are not rejected because they have no response origin. Existing
+`Secure` records still protect against later cookies received over HTTP.
+
 #### Host-Only Cookies
 
 Cookies extracted from responses without a `Domain` attribute are now stored as

@@ -238,7 +238,9 @@ class CookieJar implements CookieJarInterface
     public function extractCookies(RequestInterface $request, ResponseInterface $response): void
     {
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
-            $requestHost = HostIdentity::canonicalHost($request->getUri()->getHost());
+            $uri = $request->getUri();
+            $requestHost = HostIdentity::canonicalHost($uri->getHost());
+            $secure = $uri->getScheme() === 'https';
 
             foreach ($cookieHeader as $cookie) {
                 $sc = SetCookie::fromString($cookie);
@@ -255,11 +257,44 @@ class CookieJar implements CookieJarInterface
                 if (!$sc->matchesDomain($requestHost)) {
                     continue;
                 }
+                if (!$secure && ($sc->getSecure() || $this->overlaysSecureCookie($sc))) {
+                    continue;
+                }
                 // Note: At this point `$sc->getDomain()` being a public suffix should
                 // be rejected, but we don't want to pull in the full PSL dependency.
                 $this->setCookie($sc);
             }
         }
+    }
+
+    private function overlaysSecureCookie(SetCookie $cookie): bool
+    {
+        foreach ($this->cookies as $stored) {
+            if (self::isSecureCookieOverlay($cookie, $stored)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function isSecureCookieOverlay(SetCookie $cookie, SetCookie $stored): bool
+    {
+        if ($stored->getName() !== $cookie->getName() || !$stored->getSecure() || $stored->isExpired()) {
+            return false;
+        }
+
+        $domain = $cookie->getDomain();
+        $storedDomain = $stored->getDomain();
+        if ($domain === null || $storedDomain === null) {
+            return false;
+        }
+
+        if (!HostIdentity::cookieDomainMatches($storedDomain, $domain) && !HostIdentity::cookieDomainMatches($domain, $storedDomain)) {
+            return false;
+        }
+
+        return $stored->matchesPath($cookie->getPath());
     }
 
     /**
