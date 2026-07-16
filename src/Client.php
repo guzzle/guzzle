@@ -133,6 +133,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      */
     public function __call($method, $args)
     {
+        \trigger_deprecation('guzzlehttp/guzzle', '7.1', '%s::%s() is deprecated and will be removed in 8.0.', __CLASS__, __FUNCTION__);
+
         if (\count($args) < 1) {
             throw new InvalidArgumentException('Magic request methods require a URI and optional options array');
         }
