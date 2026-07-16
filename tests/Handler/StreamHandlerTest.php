@@ -4091,7 +4091,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler(
             new Request('GET', Server::$url.'guzzle-server/read-timeout'),
             [
-                RequestOptions::READ_TIMEOUT => 1,
+                RequestOptions::READ_TIMEOUT => 1.5,
                 RequestOptions::STREAM => true,
             ]
         )->wait();
@@ -4118,7 +4118,7 @@ class StreamHandlerTest extends TestCase
             $handler(
                 $request,
                 [
-                    RequestOptions::READ_TIMEOUT => 1.0,
+                    RequestOptions::READ_TIMEOUT => 1.5,
                     'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
                         $stats = $transferStats;
                     },
@@ -4153,7 +4153,7 @@ class StreamHandlerTest extends TestCase
                 $request,
                 [
                     'decode_content' => true,
-                    RequestOptions::READ_TIMEOUT => 1.0,
+                    RequestOptions::READ_TIMEOUT => 1.5,
                     'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
                         $stats = $transferStats;
                     },
@@ -4187,7 +4187,7 @@ class StreamHandlerTest extends TestCase
             $handler(
                 $request,
                 [
-                    RequestOptions::TIMEOUT => 1.0,
+                    RequestOptions::TIMEOUT => 1.5,
                     'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
                         $stats = $transferStats;
                     },
@@ -4219,7 +4219,7 @@ class StreamHandlerTest extends TestCase
             $handler(
                 $request,
                 [
-                    RequestOptions::TIMEOUT => 1.0,
+                    RequestOptions::TIMEOUT => 1.5,
                     RequestOptions::READ_TIMEOUT => 10,
                 ]
             )->wait();
@@ -4345,7 +4345,7 @@ class StreamHandlerTest extends TestCase
                 $request,
                 [
                     'decode_content' => true,
-                    RequestOptions::TIMEOUT => 1.0,
+                    RequestOptions::TIMEOUT => 1.5,
                 ]
             )->wait();
             self::fail('Expected ResponseTimeoutException');
@@ -4364,7 +4364,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler(
             new Request('GET', Server::$url.'guzzle-server/drip-timeout'),
             [
-                RequestOptions::TIMEOUT => 1.0,
+                RequestOptions::TIMEOUT => 1.5,
                 RequestOptions::STREAM => true,
             ]
         )->wait();
