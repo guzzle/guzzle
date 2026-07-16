@@ -11,7 +11,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Require `guzzlehttp/psr7` ^2.13
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.13`
 - Use locale-independent ASCII folding for all case normalization and comparison
 - Bound cURL upload reads to the declared `Content-Length`
 - Sanitize the cURL error text exposed through exception handler context
