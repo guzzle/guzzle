@@ -6301,6 +6301,8 @@ class CurlFactoryTest extends TestCase
             $exception = $e;
             self::assertSame($easy->responseHeaderException, $e);
             self::assertSame(200, $e->getResponse()->getStatusCode());
+            self::assertTrue($e->getResponse()->getBody()->isReadable());
+            self::assertSame('', $e->getResponse()->getBody()->getContents());
         }
 
         self::assertFalse($onHeadersCalled);
@@ -6314,11 +6316,11 @@ class CurlFactoryTest extends TestCase
     {
         yield 'malformed content length' => [
             ["HTTP/1.1 200 OK\r\n", "Content-Length: three\r\n"],
-            'Invalid response Content-Length header: value is not a non-negative decimal integer',
+            'Invalid Content-Length response header: value is not a non-negative decimal integer',
         ];
         yield 'conflicting mixed-case content length' => [
             ["HTTP/1.1 200 OK\r\n", "Content-Length: 3\r\n", "content-length: 5\r\n"],
-            'Invalid response Content-Length header: values conflict',
+            'Invalid Content-Length response header: values conflict',
         ];
         yield 'content length and transfer encoding' => [
             [
@@ -6327,7 +6329,7 @@ class CurlFactoryTest extends TestCase
                 "Content-Length: 0\r\n",
                 "Transfer-Encoding: chunked\r\n",
             ],
-            'Response contains both Transfer-Encoding and Content-Length',
+            'A response must not contain both Content-Length and Transfer-Encoding',
         ];
     }
 

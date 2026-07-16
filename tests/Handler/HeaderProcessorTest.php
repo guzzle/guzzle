@@ -195,34 +195,33 @@ class HeaderProcessorTest extends TestCase
             'GET',
             200,
             ['Content-Length' => ['three']],
-            'Invalid response Content-Length header: value is not a non-negative decimal integer',
+            'Invalid Content-Length response header: value is not a non-negative decimal integer',
         ];
         yield 'conflicting mixed-case duplicates' => [
             'GET',
             200,
             ['Content-Length' => ['3'], 'content-length' => ['5']],
-            'Invalid response Content-Length header: values conflict',
+            'Invalid Content-Length response header: values conflict',
         ];
         yield 'content length and transfer encoding' => [
             'GET',
             200,
             ['Content-Length' => ['0'], 'tRaNsFeR-EnCoDiNg' => ['chunked']],
-            'Response contains both Transfer-Encoding and Content-Length',
+            'A response must not contain both Content-Length and Transfer-Encoding',
         ];
         yield 'reset content remains framing-validated' => [
             'GET',
             205,
             ['Content-Length' => ['0'], 'Transfer-Encoding' => ['chunked']],
-            'Response contains both Transfer-Encoding and Content-Length',
+            'A response must not contain both Content-Length and Transfer-Encoding',
         ];
     }
 
-    public function testRejectsUnrepresentableResponseContentLength(): void
+    public function testReturnsUnrepresentableResponseContentLengthForCallerPolicy(): void
     {
-        $this->expectException(\OverflowException::class);
-        $this->expectExceptionMessage('Content-Length exceeds the maximum integer size supported on this platform');
+        $overflow = ((string) \PHP_INT_MAX).'0';
 
-        HeaderProcessor::validateResponseFraming('GET', 200, ['Content-Length' => [((string) \PHP_INT_MAX).'0']]);
+        self::assertSame($overflow, HeaderProcessor::validateResponseFraming('GET', 200, ['Content-Length' => [$overflow]]));
     }
 
     /**

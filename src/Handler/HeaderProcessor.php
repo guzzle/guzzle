@@ -158,16 +158,13 @@ final class HeaderProcessor
     }
 
     /**
-     * Validates applicable response framing and returns its applicable
-     * Content-Length.
+     * Validates response framing and returns its normalized Content-Length.
+     * Returns null when absent or when ordinary body framing does not apply.
      *
      * @param array<string, string[]> $headers
      *
-     * @throws \RuntimeException  when Content-Length is malformed or
-     *                            conflicting, or is combined with
-     *                            Transfer-Encoding
-     * @throws \OverflowException when Content-Length cannot fit in a PHP
-     *                            integer
+     * @throws \RuntimeException when Content-Length is malformed, conflicting,
+     *                           or combined with Transfer-Encoding
      */
     public static function validateResponseFraming(
         string $method,
@@ -184,14 +181,12 @@ final class HeaderProcessor
         try {
             $length = self::parseContentLength($contentLength);
         } catch (\RuntimeException $e) {
-            throw new \RuntimeException('Invalid response Content-Length header: '.$e->getMessage(), 0, $e);
+            throw new \RuntimeException('Invalid Content-Length response header: '.$e->getMessage(), 0, $e);
         }
 
         if ($length !== null && isset($normalizedKeys['transfer-encoding'])) {
-            throw new \RuntimeException('Response contains both Transfer-Encoding and Content-Length');
+            throw new \RuntimeException('A response must not contain both Content-Length and Transfer-Encoding');
         }
-
-        self::assertContentLengthWithinPlatformLimit($length);
 
         return $length;
     }

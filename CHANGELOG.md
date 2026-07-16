@@ -100,7 +100,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - The stream handler no longer writes to the `sink` option or reads trailing bytes for responses that cannot carry a body
 - Reject short buffered stream-handler bodies against `Content-Length`, including decoded gzip/deflate
 - Normalize duplicate `Content-Length` casings and preserve encoded values on decoded responses
-- Reject unrepresentable built-in handler response sizes and byte counts as `ResponseException`
+- Reject unrepresentable byte counts and response sizes requiring integer bounds as `ResponseException`
 - Ignore cURL informational responses other than `101 Switching Protocols` before the final response
 - Treat response sink rewind failures as `ResponseException` and skip non-seekable sink rewinds
 - Classify redirect request-body rewind failures as `ResponseException`

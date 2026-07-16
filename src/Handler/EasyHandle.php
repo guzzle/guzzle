@@ -161,11 +161,8 @@ final class EasyHandle
 
         $framingFailure = null;
         try {
-            HeaderProcessor::validateResponseFraming(
-                $this->request->getMethod(),
-                $status,
-                $headers
-            );
+            $declaredLength = HeaderProcessor::validateResponseFraming($this->request->getMethod(), $status, $headers);
+            HeaderProcessor::assertContentLengthWithinPlatformLimit($declaredLength);
         } catch (\RuntimeException $e) {
             $framingFailure = $e;
         }

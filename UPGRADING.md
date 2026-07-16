@@ -408,19 +408,23 @@ surfaced as a response.
 The built-in cURL and stream handlers now reject a response subject to body
 framing when its `Content-Length` is malformed, conflicting, or present with
 `Transfer-Encoding`. Equivalent decimal duplicates remain valid, including
-leading zeroes. Framing failures detected from a complete header block occur
+leading zeros. Framing failures detected from a complete header block occur
 before `on_headers` sees that response or any of its body bytes are delivered,
 and raise `ResponseTransferException`. A transport that rejects the block first
-can instead report its existing transfer failure. A valid length above
-`PHP_INT_MAX` raises plain `ResponseException`. These checks do not apply to
-responses to `HEAD`, any `1xx`, `204`, `304`, or successful `CONNECT`.
-`205 Reset Content` remains subject to framing validation.
+can instead report its existing transfer failure. When a handler needs the
+length as a PHP integer, a valid value above `PHP_INT_MAX` raises plain
+`ResponseException` with the underlying `OverflowException` available through
+`getPrevious()`. The stream handler does not impose this platform limit on
+`stream => true` responses. Framing validation does not apply to responses to
+`HEAD`, any `1xx`, `204`, `304`, or successful `CONNECT`. `205 Reset Content`
+remains subject to framing validation.
 
-The stream handler also rejects a drained, non-streamed response when a valid,
-positive `Content-Length` declares more bytes than it receives. For decoded gzip
-and deflate, the length applies to encoded bytes before decompression, and the
-original values remain in `x-encoded-content-length`. Valid `stream => true`
-responses remain lazy after header validation.
+The stream handler also raises `ResponseTransferException` after draining a
+non-streamed response when a valid, positive `Content-Length` declares more
+bytes than it receives. For decoded gzip and deflate, the length applies to
+encoded bytes before decompression, and the original values remain in
+`x-encoded-content-length`. Valid `stream => true` responses remain lazy after
+header validation.
 
 For chunked responses through the stream handler, the transport resource's
 `wrapper_data` can now retain the original `Transfer-Encoding`. This is visible

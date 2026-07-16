@@ -2822,7 +2822,9 @@ final class CurlFactory implements CurlFactoryInterface
                     // already been created.
                     return \strlen($h);
                 }
+
                 $startingResponse = true;
+
                 try {
                     $easy->createResponse();
                 } catch (\Throwable $e) {
@@ -2831,6 +2833,7 @@ final class CurlFactory implements CurlFactoryInterface
 
                     return -1;
                 }
+
                 if ($easy->responseHeaderException !== null) {
                     return -1;
                 }
@@ -2861,6 +2864,7 @@ final class CurlFactory implements CurlFactoryInterface
                     $easy->trailers = [];
                     $easy->headers = [$value];
                 }
+
                 $startingResponse = false;
             } else {
                 $easy->headers[] = $value;

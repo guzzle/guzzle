@@ -1046,7 +1046,7 @@ class StreamHandlerTest extends TestCase
             $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
-            self::assertSame('Invalid response Content-Length header: values conflict', $e->getMessage());
+            self::assertSame('Invalid Content-Length response header: values conflict', $e->getMessage());
             self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
             self::assertSame(['3', '5'], $e->getResponse()->getHeader('Content-Length'));
         }
@@ -1073,7 +1073,7 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testContentLengthAbovePhpIntMaxRejectsStreamedResponse(): void
+    public function testContentLengthAbovePhpIntMaxAllowsStreamedResponse(): void
     {
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
@@ -1084,13 +1084,10 @@ class StreamHandlerTest extends TestCase
             "Content-Length: {$overflow}",
         ]);
 
-        try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, ['stream' => true], Psr7\Utils::streamFor('ab'))->wait();
-            self::fail('Expected ResponseException');
-        } catch (ResponseException $e) {
-            self::assertResponseContentLengthPlatformException($e);
-            self::assertSame($overflow, $e->getResponse()->getHeaderLine('Content-Length'));
-        }
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['stream' => true], Psr7\Utils::streamFor('ab'))->wait();
+
+        self::assertSame($overflow, $response->getHeaderLine('Content-Length'));
+        self::assertSame('ab', (string) $response->getBody());
     }
 
     public function testAttemptsSourceCloseWhenContentLengthOverflows(): void
@@ -1197,7 +1194,7 @@ class StreamHandlerTest extends TestCase
             ], $source)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
-            self::assertSame('Response contains both Transfer-Encoding and Content-Length', $e->getMessage());
+            self::assertSame('A response must not contain both Content-Length and Transfer-Encoding', $e->getMessage());
             self::assertSame('gzip', $e->getResponse()->getHeaderLine('Content-Encoding'));
             self::assertSame('chunked', $e->getResponse()->getHeaderLine('Transfer-Encoding'));
             self::assertSame('7', $e->getResponse()->getHeaderLine('Content-Length'));
@@ -1205,6 +1202,9 @@ class StreamHandlerTest extends TestCase
             self::assertInstanceOf(TransferStats::class, $stats);
             self::assertSame($e, $stats->getHandlerErrorData());
             self::assertSame($e->getResponse(), $stats->getResponse());
+            self::assertNotSame($sink, $e->getResponse()->getBody());
+            self::assertTrue($e->getResponse()->getBody()->isReadable());
+            self::assertSame('', $e->getResponse()->getBody()->getContents());
         }
 
         self::assertFalse($read);
@@ -1258,21 +1258,26 @@ class StreamHandlerTest extends TestCase
     /**
      * @dataProvider phpChunkedTransferEncodingCompatibilityProvider
      */
-    public function testPreservesPhpChunkedTransferEncodingCompatibility(string $transferEncoding, string $expectedBody, bool $exposesHeader): void
+    public function testPreservesPhpChunkedTransferEncodingCompatibility(string $transferEncodingHeaders, string $wireBody, string $expectedBody, string $expectedHeader): void
     {
         Server::flush();
-        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nTransfer-Encoding: {$transferEncoding}\r\n\r\n3\r\nabc\r\n0\r\n\r\n");
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\n{$transferEncodingHeaders}\r\n\r\n{$wireBody}");
         $handler = new StreamHandler();
         $response = $handler(new Request('GET', Server::$url), [])->wait();
 
-        self::assertSame($exposesHeader, $response->hasHeader('Transfer-Encoding'));
+        self::assertSame($expectedHeader, $response->getHeaderLine('Transfer-Encoding'));
         self::assertSame($expectedBody, (string) $response->getBody());
     }
 
     public static function phpChunkedTransferEncodingCompatibilityProvider(): iterable
     {
-        yield 'chunked prefix' => ['chunkedx', 'abc', false];
-        yield 'chunked after another coding' => ['gzip, chunked', "3\r\nabc\r\n0\r\n\r\n", true];
+        $chunked = "3\r\nabc\r\n0\r\n\r\n";
+        yield 'chunked prefix' => ['Transfer-Encoding: chunkedx', $chunked, 'abc', ''];
+        yield 'chunked after another coding' => ['Transfer-Encoding: gzip, chunked', $chunked, $chunked, 'gzip, chunked'];
+
+        $gzip = (string) \gzencode('abc');
+        $chunkedGzip = \dechex(\strlen($gzip))."\r\n{$gzip}\r\n0\r\n\r\n";
+        yield 'split transfer codings' => ["Transfer-Encoding: gzip\r\nTransfer-Encoding: chunked", $chunkedGzip, $gzip, 'gzip'];
     }
 
     public function testRejectsChunkedResponseWithContentLengthOverTheWire(): void
@@ -1285,7 +1290,7 @@ class StreamHandlerTest extends TestCase
             $handler(new Request('GET', Server::$url), [])->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
-            self::assertSame('Response contains both Transfer-Encoding and Content-Length', $e->getMessage());
+            self::assertSame('A response must not contain both Content-Length and Transfer-Encoding', $e->getMessage());
             self::assertSame('3', $e->getResponse()->getHeaderLine('Content-Length'));
             self::assertSame('chunked', $e->getResponse()->getHeaderLine('Transfer-Encoding'));
         }
@@ -1470,6 +1475,7 @@ class StreamHandlerTest extends TestCase
 
         self::assertSame($status, $response->getStatusCode());
         self::assertSame($contentLength, $response->getHeaderLine('Content-Length'));
+        self::assertFalse($response->hasHeader('Transfer-Encoding'));
         self::assertSame('', (string) $response->getBody());
         self::assertFalse($read);
         self::assertTrue($closed);
@@ -1716,7 +1722,7 @@ class StreamHandlerTest extends TestCase
             )->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
-            self::assertSame('Invalid response Content-Length header: values conflict', $e->getMessage());
+            self::assertSame('Invalid Content-Length response header: values conflict', $e->getMessage());
             self::assertSame('gzip', $e->getResponse()->getHeaderLine('Content-Encoding'));
             self::assertSame(
                 [$encodedLength, (string) (\strlen($gzip) + 1)],

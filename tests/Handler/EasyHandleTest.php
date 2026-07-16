@@ -93,7 +93,7 @@ class EasyHandleTest extends TestCase
         self::assertNotNull($easy->response);
         self::assertInstanceOf(ResponseTransferException::class, $easy->responseHeaderException);
         self::assertSame($easy->response, $easy->responseHeaderException->getResponse());
-        self::assertSame('Response contains both Transfer-Encoding and Content-Length', $easy->responseHeaderException->getMessage());
+        self::assertSame('A response must not contain both Content-Length and Transfer-Encoding', $easy->responseHeaderException->getMessage());
         self::assertInstanceOf(\RuntimeException::class, $easy->responseHeaderException->getPrevious());
         self::assertSame('gzip', $easy->response->getHeaderLine('Content-Encoding'));
         self::assertSame('7', $easy->response->getHeaderLine('Content-Length'));

@@ -333,6 +333,9 @@ final class StreamHandler
         $declaredLength = null;
         try {
             $declaredLength = HeaderProcessor::validateResponseFraming($request->getMethod(), $status, $headers);
+            if (empty($options['stream'])) {
+                HeaderProcessor::assertContentLengthWithinPlatformLimit($declaredLength);
+            }
         } catch (\RuntimeException $e) {
             $framingFailure = $e;
         }
@@ -363,13 +366,9 @@ final class StreamHandler
             [$stream, $headers, $encodedBody] = self::checkDecode($options, $headers, $stream, $declaredLength);
         }
 
-        if ($framingFailure !== null) {
-            $sink = $stream;
-        } else {
-            $sink = $canHaveBody
-                ? $this->createSink($stream, $options)
-                : $streamFactory->createStream('');
-        }
+        $sink = $framingFailure !== null || !$canHaveBody
+            ? $streamFactory->createStream('')
+            : $this->createSink($stream, $options);
 
         try {
             $response = $responseFactory->createResponse($status, $reason ?? '')->withProtocolVersion($ver);
@@ -551,14 +550,15 @@ final class StreamHandler
     }
 
     /**
-     * Applies the HTTP wrapper's normal chunked-response handling after
-     * validating the raw framing headers that the wrapper otherwise hides.
+     * Applies the HTTP wrapper's normal chunked-response handling.
      *
      * @param array<string, string[]> $headers
      * @param resource                $stream
-     * @param bool                    $decodeBody Whether to attach the decoder
+     * @param bool                    $decodeBody Whether to attach the dechunk filter
      *
      * @return array<string, string[]>
+     *
+     * @throws \RuntimeException when the dechunk filter cannot be attached
      */
     private function decodeChunkedResponse(array $headers, $stream, bool $decodeBody): array
     {
@@ -573,7 +573,7 @@ final class StreamHandler
             $remaining = [];
             foreach ($values as $value) {
                 // Match PHP's legacy auto_decode prefix check so moving the
-                // filter does not also change transfer-decoding behavior.
+                // filter does not change which responses are dechunked.
                 if (Psr7\Utils::caselessEquals(\substr($value, 0, 7), 'chunked')) {
                     $decode = true;
                 } else {
@@ -657,6 +657,7 @@ final class StreamHandler
         ?EncodedBodyStream $encodedBody = null
     ): StreamInterface {
         try {
+            // Buffered paths reject unrepresentable lengths before draining.
             $declaredLength = HeaderProcessor::contentLengthToInt($declaredResponseBodyLength);
             $declaredLength = $declaredLength !== null && $declaredLength > 0 ? $declaredLength : null;
             $copyLimit = $encodedBody === null ? $declaredLength ?? -1 : -1;
