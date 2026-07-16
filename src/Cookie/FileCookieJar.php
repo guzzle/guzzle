@@ -40,7 +40,7 @@ class FileCookieJar extends CookieJar
      * @param bool   $storeSessionCookies Set to true to store session cookies
      *                                    in the cookie jar.
      *
-     * @throws \RuntimeException if the file cannot be found or created
+     * @throws \RuntimeException if the file cannot be loaded or is invalid
      */
     public function __construct(string $cookieFile, bool $storeSessionCookies = false)
     {
@@ -111,10 +111,11 @@ class FileCookieJar extends CookieJar
      * Load cookies from a JSON formatted file.
      *
      * Old cookies are kept unless overwritten by newly loaded ones.
+     * Cookie records are constructed before any are passed to setCookie().
      *
      * @param string $filename Cookie file to load.
      *
-     * @throws \RuntimeException if the file cannot be loaded.
+     * @throws \RuntimeException if the file cannot be loaded or is invalid
      */
     public function load(string $filename): void
     {
@@ -126,21 +127,33 @@ class FileCookieJar extends CookieJar
             return;
         }
 
-        $data = Utils::jsonDecode($json, true);
-        if (\is_array($data)) {
-            foreach ($data as $cookie) {
-                if (!\is_array($cookie)) {
-                    throw new \RuntimeException("Invalid cookie file: {$filename}");
-                }
+        $message = "Invalid cookie file: {$filename}";
 
-                try {
-                    $this->setCookie(new SetCookie($cookie));
-                } catch (\InvalidArgumentException $e) {
-                    throw new \RuntimeException("Invalid cookie file: {$filename}", 0, $e);
-                }
+        try {
+            $data = Utils::jsonDecode($json, true);
+        } catch (\InvalidArgumentException $e) {
+            throw new \RuntimeException($message, 0, $e);
+        }
+
+        if (!\is_array($data) || \substr($json, \strspn($json, " \t\n\r"), 1) !== '[') {
+            throw new \RuntimeException($message);
+        }
+
+        $cookies = [];
+        foreach ($data as $cookie) {
+            if (!\is_array($cookie)) {
+                throw new \RuntimeException($message);
             }
-        } elseif (\is_scalar($data) && !empty($data)) {
-            throw new \RuntimeException("Invalid cookie file: {$filename}");
+
+            try {
+                $cookies[] = new SetCookie($cookie);
+            } catch (\InvalidArgumentException $e) {
+                throw new \RuntimeException($message, 0, $e);
+            }
+        }
+
+        foreach ($cookies as $cookie) {
+            $this->setCookie($cookie);
         }
     }
 }

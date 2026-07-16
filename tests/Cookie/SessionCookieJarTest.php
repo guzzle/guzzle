@@ -26,25 +26,23 @@ class SessionCookieJarTest extends TestCase
         unset($_SESSION[$this->sessionVar]);
     }
 
-    public function testValidatesCookieSession(): void
-    {
-        $_SESSION[$this->sessionVar] = 'true';
-
-        $this->expectException(\RuntimeException::class);
-        new SessionCookieJar($this->sessionVar);
-    }
-
     /**
      * @dataProvider invalidCookieSessionProvider
      *
      * @param mixed $sessionData
      */
-    public function testValidatesMalformedCookieSession($sessionData): void
+    public function testRejectsInvalidCookieSession($sessionData): void
     {
         $_SESSION[$this->sessionVar] = $sessionData;
 
-        $this->expectException(\RuntimeException::class);
-        new SessionCookieJar($this->sessionVar);
+        try {
+            new SessionCookieJar($this->sessionVar);
+            self::fail('Expected RuntimeException was not thrown');
+        } catch (\RuntimeException $e) {
+            self::assertSame('Invalid cookie data', $e->getMessage());
+        }
+
+        self::assertSame($sessionData, $_SESSION[$this->sessionVar]);
     }
 
     public function testValidatesCookieSessionJsonEncoding(): void
@@ -68,11 +66,43 @@ class SessionCookieJarTest extends TestCase
         }
     }
 
-    public function testLoadsFromSession(): void
+    public function testLoadsWithoutSessionData(): void
     {
         $jar = new SessionCookieJar($this->sessionVar);
         self::assertSame([], $jar->getIterator()->getArrayCopy());
+        unset($jar, $_SESSION[$this->sessionVar]);
+    }
+
+    public function testLoadsNullSessionDataAsEmpty(): void
+    {
+        $_SESSION[$this->sessionVar] = null;
+
+        $jar = new SessionCookieJar($this->sessionVar);
+        self::assertSame([], $jar->getIterator()->getArrayCopy());
+        unset($jar, $_SESSION[$this->sessionVar]);
+    }
+
+    public function testLoadsEmptyJsonList(): void
+    {
+        $_SESSION[$this->sessionVar] = '[]';
+
+        $jar = new SessionCookieJar($this->sessionVar);
+        self::assertSame([], $jar->getIterator()->getArrayCopy());
+        unset($jar);
+
+        self::assertSame('[]', $_SESSION[$this->sessionVar]);
         unset($_SESSION[$this->sessionVar]);
+    }
+
+    public function testLoadsCookieRecordsUsingExistingValidation(): void
+    {
+        $_SESSION[$this->sessionVar] = '[{},{"Name":"loaded","Value":"cookie","Domain":"example.com"}]';
+
+        $jar = new SessionCookieJar($this->sessionVar);
+
+        self::assertCount(1, $jar);
+        self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('loaded'));
+        unset($jar, $_SESSION[$this->sessionVar]);
     }
 
     /**
@@ -214,10 +244,13 @@ class SessionCookieJarTest extends TestCase
     public static function invalidCookieSessionProvider(): array
     {
         return [
-            [[]],
-            [new \stdClass()],
-            ['[1]'],
-            ['[{"Name":false,"Value":"bar"}]'],
+            'native non-string data' => [[]],
+            'empty string' => [''],
+            'malformed JSON' => ['['],
+            'non-list JSON' => ['null'],
+            'numeric-keyed object root' => ['{"0":{"Name":"foo","Value":"bar"}}'],
+            'non-array record' => ['[1]'],
+            'invalid field type' => ['[{"Name":false,"Value":"bar"}]'],
         ];
     }
 

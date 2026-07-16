@@ -1220,6 +1220,18 @@ user or process must read the file, adjust its permissions after saving. Saved
 cookie files also JSON-escape tag characters, and existing cookie files remain
 readable with unchanged cookie values.
 
+Persisted cookie data must now be a JSON list. Each list entry must decode to an
+array, and recognized `SetCookie` fields must use their documented constructor
+types. Malformed JSON, an invalid stored shape, or a recognized field with the
+wrong type causes a `RuntimeException`. Cookie records are constructed before
+any are passed to `setCookie()`, so such failures leave the jar unchanged.
+Numeric or string-keyed JSON objects must be converted to lists.
+
+An empty cookie file remains a no-op. A missing or `null` session value still
+means no stored cookie data. Any other session value must be a string containing
+a JSON list; malformed JSON and an empty string are rejected. `SessionCookieJar`
+does not replace the stored value when construction fails.
+
 #### Logging Middleware Formatter Types
 
 `GuzzleHttp\MessageFormatter` is now final. Applications that extended

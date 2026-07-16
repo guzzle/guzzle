@@ -29,21 +29,73 @@ class FileCookieJarTest extends TestCase
 
     /**
      * @dataProvider invalidCookieJarContent
-     *
-     * @param mixed $invalidCookieJarContent
      */
-    public function testValidatesCookieFile($invalidCookieJarContent): void
+    public function testRejectsInvalidCookieFile(string $contents): void
     {
-        \file_put_contents($this->file, json_encode($invalidCookieJarContent));
+        \file_put_contents($this->file, $contents);
 
         $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("Invalid cookie file: {$this->file}");
         new FileCookieJar($this->file);
     }
 
-    public function testLoadsFromFile(): void
+    public function testLoadsEmptyFile(): void
     {
         $jar = new FileCookieJar($this->file);
         self::assertSame([], $jar->getIterator()->getArrayCopy());
+    }
+
+    public function testLoadsEmptyJsonList(): void
+    {
+        \file_put_contents($this->file, " \n[]");
+
+        $jar = new FileCookieJar($this->file);
+        self::assertSame([], $jar->getIterator()->getArrayCopy());
+    }
+
+    public function testLoadMergesCookiesUsingExistingValidation(): void
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'existing',
+            'Value' => 'cookie',
+            'Domain' => 'example.com',
+        ]));
+        \file_put_contents($this->file, '[{},{"Name":"loaded","Value":"cookie","Domain":"example.com"}]');
+
+        $jar->load($this->file);
+
+        self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('existing'));
+        self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('loaded'));
+    }
+
+    public function testLoadDoesNotChangeJarWhenLaterRecordIsInvalid(): void
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'existing',
+            'Value' => 'cookie',
+            'Domain' => 'example.com',
+        ]));
+        $cookies = $jar->toArray();
+        $source = $this->file.'.load';
+
+        try {
+            \file_put_contents($source, '[{"Name":"loaded","Value":"cookie","Domain":"example.com"},{"Name":false,"Value":"invalid"}]');
+
+            try {
+                $jar->load($source);
+                self::fail('Expected RuntimeException was not thrown');
+            } catch (\RuntimeException $e) {
+                self::assertSame("Invalid cookie file: {$source}", $e->getMessage());
+            }
+
+            self::assertSame($cookies, $jar->toArray());
+        } finally {
+            if (\file_exists($source)) {
+                \unlink($source);
+            }
+        }
     }
 
     /**
@@ -281,10 +333,11 @@ class FileCookieJarTest extends TestCase
     public static function invalidCookieJarContent(): array
     {
         return [
-            [true],
-            ['invalid-data'],
-            [[1]],
-            [[['Name' => false, 'Value' => 'bar']]],
+            'malformed JSON' => ['['],
+            'non-list root' => ['null'],
+            'numeric-keyed object root' => ['{"0":{"Name":"foo","Value":"bar"}}'],
+            'non-array record' => ['[1]'],
+            'invalid field type' => ['[{"Name":false,"Value":"bar"}]'],
         ];
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\NonSerializableTrait;
+use GuzzleHttp\Utils;
 
 /**
  * Persists cookies in the client session
@@ -39,6 +40,8 @@ class SessionCookieJar extends CookieJar
      *                                    data in session
      * @param bool   $storeSessionCookies Set to true to store session cookies
      *                                    in the cookie jar.
+     *
+     * @throws \RuntimeException if the session contains invalid cookie data
      */
     public function __construct(string $sessionKey, bool $storeSessionCookies = false)
     {
@@ -96,7 +99,9 @@ class SessionCookieJar extends CookieJar
     }
 
     /**
-     * Load the contents of the client session into the data array
+     * Load cookies from the client session.
+     *
+     * @throws \RuntimeException if the session contains invalid cookie data
      */
     protected function load(): void
     {
@@ -109,21 +114,33 @@ class SessionCookieJar extends CookieJar
             throw new \RuntimeException('Invalid cookie data');
         }
 
-        $data = \json_decode($json, true);
-        if (\is_array($data)) {
-            foreach ($data as $cookie) {
-                if (!\is_array($cookie)) {
-                    throw new \RuntimeException('Invalid cookie data');
-                }
+        $message = 'Invalid cookie data';
 
-                try {
-                    $this->setCookie(new SetCookie($cookie));
-                } catch (\InvalidArgumentException $e) {
-                    throw new \RuntimeException('Invalid cookie data', 0, $e);
-                }
+        try {
+            $data = Utils::jsonDecode($json, true);
+        } catch (\InvalidArgumentException $e) {
+            throw new \RuntimeException($message, 0, $e);
+        }
+
+        if (!\is_array($data) || \substr($json, \strspn($json, " \t\n\r"), 1) !== '[') {
+            throw new \RuntimeException($message);
+        }
+
+        $cookies = [];
+        foreach ($data as $cookie) {
+            if (!\is_array($cookie)) {
+                throw new \RuntimeException($message);
             }
-        } elseif (\is_scalar($data) && \strlen((string) $data)) {
-            throw new \RuntimeException('Invalid cookie data');
+
+            try {
+                $cookies[] = new SetCookie($cookie);
+            } catch (\InvalidArgumentException $e) {
+                throw new \RuntimeException($message, 0, $e);
+            }
+        }
+
+        foreach ($cookies as $cookie) {
+            $this->setCookie($cookie);
         }
     }
 }

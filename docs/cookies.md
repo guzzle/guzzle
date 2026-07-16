@@ -97,6 +97,17 @@ The `storeSessionCookies` flag controls which cookies are persisted. When it is
 `false` (the default), only cookies with an expiry are saved; set it to `true`
 to also persist session cookies that have no expiry.
 
+Both persistent jars expect stored cookie data to be a JSON list. Each list
+entry must decode to an array, and recognized `SetCookie` fields must use their
+documented constructor types. Malformed JSON or a different stored shape throws
+a `RuntimeException`. Cookie records are constructed before any are passed to
+`setCookie()`, so invalid stored shapes and recognized fields with the wrong
+types leave existing cookies unchanged.
+
+Loading an empty cookie file is a no-op. `SessionCookieJar` treats a missing or
+`null` session value as no stored data; any other value must be a string
+containing a JSON list.
+
 > [!NOTE]
 > `FileCookieJar` writes the cookie file with owner-only permissions (`0600`)
 > where the filesystem supports them. Persisted cookies can include credentials,
