@@ -14,13 +14,10 @@ final class Clock
     }
 
     /**
-     * Wrapper for the hrtime() or microtime() functions
-     * (depending on the PHP version, one of the two is used)
-     *
-     * @return float UNIX timestamp
+     * Returns the current monotonic clock reading in seconds.
      */
     public static function now(): float
     {
-        return (float) \function_exists('hrtime') ? \hrtime(true) / 1e9 : \microtime(true);
+        return \hrtime(true) / 1e9;
     }
 }
