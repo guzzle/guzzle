@@ -193,8 +193,32 @@ parameters:
 			path: src/Handler/EasyHandle.php
 
 		-
+			message: '#^Access to constant Error on an unknown class StreamErrorMode\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: '#^Access to constant None on an unknown class StreamErrorStore\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: '#^Comparison operation "\>\=" between int\<70400, 80599\> and 80600 is always false\.$#'
+			identifier: greaterOrEqual.alwaysFalse
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
 			message: '#^Offset ''max_host_connections''\|''max_total…''\|''transport_sharing'' on array\{max_host_connections\: true, max_total_connections\: true, transport_sharing\: true\} in isset\(\) always exists and is not nullable\.$#'
 			identifier: isset.offset
+			count: 1
+			path: src/Handler/StreamHandler.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
 			count: 1
 			path: src/Handler/StreamHandler.php
 
