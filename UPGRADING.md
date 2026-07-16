@@ -37,6 +37,38 @@ Guzzle 8 now requires `psr/http-factory:^1.0` directly.
 [psr7-upgrade-guide]: https://github.com/guzzle/psr7/blob/3.0/UPGRADING.md
 [promises-upgrade-guide]: https://github.com/guzzle/promises/blob/3.0/UPGRADING.md
 
+#### IPv6 Origin Canonicalization
+
+Guzzle PSR-7 3.x serializes IPv6 hosts in native URIs in their RFC 5952
+canonical form, and its `UriComparator::isCrossOrigin()` canonicalizes
+bracketed IPv6 literals from any PSR-7 implementation before comparing
+origins. Redirects between equivalent spellings of one IPv6 address are
+therefore same-origin in Guzzle 8: `Authorization` and `Cookie` headers, the
+`auth` option, cURL authentication options, and the full same-scheme `Referer`
+value may be retained where Guzzle 7 stripped or reduced them, and absolute
+Digest `domain` protection spaces can cover an equivalent spelling of the same
+address.
+
+Guzzle 8 also keys its own host-scoped state, the Digest challenge cache and
+the cookie jar, on the canonical IPv6 form, so equivalent spellings share one
+entry instead of fragmenting state. A cached Digest challenge may be reused
+preemptively across spellings instead of causing another 401 probe. Host-only
+cookies extracted from one spelling match requests using another, persisted
+cookie domain text is canonical, and equivalent cookie entries coalesce. Bare
+IPv6 cookie domains, which the cookie API permissively accepts, canonicalize
+without gaining brackets, and bare and bracketed forms remain distinct
+identities. Cookie-domain matching remains exact-only for IP literals and IP
+addresses, and DNS suffix matching now requires both the cookie domain and the
+request host to be valid non-literal, nonnumeric host names, so curl-style
+hexadecimal IPv4 forms such as `0x7f000001` stay exact-only.
+
+Configured proxy endpoints are not canonicalized, no-proxy matching was
+already representation-independent, and the URI text sent to the transport is
+not rewritten: a foreign `UriInterface` that reports a noncanonical IPv6
+spelling is serialized as supplied. IPvFuture literals, zone-bearing values,
+and invalid bracketed text keep their ASCII-case-folded textual identity in
+these Digest and cookie comparisons.
+
 #### PSR-7 Header Values
 
 Guzzle 8 uses Guzzle PSR-7 3.x, and several of its behavior changes surface

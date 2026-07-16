@@ -12,6 +12,8 @@ use GuzzleHttp\Cookie\SetCookie;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * @covers \GuzzleHttp\Cookie\CookieJar
@@ -32,6 +34,89 @@ class CookieJarTest extends TestCase
             new SetCookie(['Name' => 'test', 'Value' => '123', 'Domain' => 'baz.com', 'Path' => '/foo', 'Expires' => 2]),
             new SetCookie(['Name' => 'you',  'Value' => '123', 'Domain' => 'bar.com', 'Path' => '/boo', 'Expires' => \time() + 1000]),
         ];
+    }
+
+    public function testCanonicalizesIpv6HostIdentitiesAcrossSpellings(): void
+    {
+        $uri = $this->createMock(UriInterface::class);
+        $uri->method('getHost')->willReturn('[2001:0DB8:0:0:0:0:0:1]');
+        $uri->method('getPath')->willReturn('/');
+        $request = $this->createMock(RequestInterface::class);
+        $request->method('getUri')->willReturn($uri);
+
+        $jar = new CookieJar();
+        $jar->extractCookies($request, new Response(200, ['Set-Cookie' => 'a=b']));
+
+        $cookies = $jar->toArray();
+        self::assertCount(1, $cookies);
+        self::assertSame('[2001:db8::1]', $cookies[0]['Domain']);
+
+        $send = new Request('GET', 'http://[2001:db8::1]/');
+        self::assertSame('a=b', $jar->withCookieHeader($send)->getHeaderLine('Cookie'));
+    }
+
+    public function testCoalescesEquivalentBareIpv6CookieDomains(): void
+    {
+        $jar = new CookieJar(false, [
+            [
+                'Name' => 'foo',
+                'Value' => 'bar',
+                'Domain' => '2001:0DB8:0:0:0:0:0:1',
+            ],
+            [
+                'Name' => 'foo',
+                'Value' => 'baz',
+                'Domain' => '2001:db8::1',
+            ],
+        ]);
+
+        $cookies = $jar->toArray();
+        self::assertCount(1, $cookies);
+        self::assertSame('2001:db8::1', $cookies[0]['Domain']);
+        self::assertSame('baz', $cookies[0]['Value']);
+    }
+
+    public function testDoesNotEmitOrClearCookiesForLiteralLikeSuffixHosts(): void
+    {
+        $jar = new CookieJar(false, [
+            [
+                'Name' => 'foo',
+                'Value' => 'bar',
+                'Domain' => '[v1.ab]',
+            ],
+        ]);
+
+        $uri = $this->createMock(UriInterface::class);
+        $uri->method('getScheme')->willReturn('http');
+        $uri->method('getHost')->willReturn('x.[v1.ab]');
+        $uri->method('getPath')->willReturn('/');
+        $request = $this->createMock(RequestInterface::class);
+        $request->method('getUri')->willReturn($uri);
+        $request->expects(self::never())->method('withHeader');
+
+        self::assertSame($request, $jar->withCookieHeader($request));
+
+        $jar->clear('x.[v1.ab]');
+        self::assertCount(1, $jar);
+        $jar->clear('[v1.AB]');
+        self::assertCount(0, $jar);
+    }
+
+    public function testDoesNotEmitCookiesToHexadecimalNumericSuffixHosts(): void
+    {
+        $jar = new CookieJar(false, [
+            [
+                'Name' => 'foo',
+                'Value' => 'bar',
+                'Domain' => '0x7f000001',
+            ],
+        ]);
+
+        $same = new Request('GET', 'http://0x7f000001/');
+        self::assertSame('foo=bar', $jar->withCookieHeader($same)->getHeaderLine('Cookie'));
+
+        $prefixed = new Request('GET', 'http://evil.0x7f000001/');
+        self::assertSame('', $jar->withCookieHeader($prefixed)->getHeaderLine('Cookie'));
     }
 
     public function testCreatesFromArray(): void

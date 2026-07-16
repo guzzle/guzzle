@@ -20,6 +20,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UriInterface;
 
 class AuthMiddlewareTest extends TestCase
 {
@@ -2018,6 +2019,27 @@ class AuthMiddlewareTest extends TestCase
         self::assertCount(3, $requests);
         self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
         self::assertStringContainsString('uri="/api?tenant=abc"', $requests[2]->getHeaderLine('Authorization'));
+    }
+
+    public function testDigestCacheKeyCanonicalizesIpv6HostAndHostHeader(): void
+    {
+        $method = new \ReflectionMethod(AuthMiddleware::class, 'digestCacheKey');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $canonical = $method->invoke(null, new Request('GET', 'http://[2001:db8::1]:8080/'));
+
+        $uri = $this->createMock(UriInterface::class);
+        $uri->method('getScheme')->willReturn('http');
+        $uri->method('getHost')->willReturn('[2001:0DB8:0:0:0:0:0:1]');
+        $uri->method('getPort')->willReturn(8080);
+        $request = $this->createMock(RequestInterface::class);
+        $request->method('getUri')->willReturn($uri);
+        $request->method('getHeaderLine')->with('Host')->willReturn('[2001:0DB8:0:0:0:0:0:1]:8080');
+
+        self::assertSame($canonical, $method->invoke(null, $request));
+        self::assertNotSame($canonical, $method->invoke(null, new Request('GET', 'http://[2001:db8::2]:8080/')));
     }
 
     public function testDigestCacheHonorsAbsoluteDomainWithPreservedHostHeader(): void
