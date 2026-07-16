@@ -187,7 +187,7 @@ final class StreamHandler
             throw new InvalidArgumentException('on_stats must be callable');
         }
 
-        $startTime = isset($options['on_stats']) ? Utils::currentTime() : null;
+        $startTime = isset($options['on_stats']) ? Clock::now() : null;
 
         self::rejectUnsupportedRequestOptions($request, $options);
         $this->rejectStreamingWithConnectionCaps($options);
@@ -299,7 +299,7 @@ final class StreamHandler
         ?\Throwable $error = null
     ): void {
         if (isset($options['on_stats'])) {
-            $stats = new TransferStats($request, $response, Utils::currentTime() - $startTime, $error, []);
+            $stats = new TransferStats($request, $response, Clock::now() - $startTime, $error, []);
             try {
                 ($options['on_stats'])($stats);
             } catch (\Throwable $e) {
@@ -402,7 +402,7 @@ final class StreamHandler
         // rejected here, once it is complete. The transport is closed so a
         // streamed response cannot hold the connection open through the
         // rejection.
-        if ($deadline !== null && Utils::currentTime() >= $deadline) {
+        if ($deadline !== null && Clock::now() >= $deadline) {
             try {
                 $stream->close();
             } catch (\Exception $e) {
@@ -783,7 +783,7 @@ final class StreamHandler
     private static function createDeadlineSource(StreamInterface $stream, $resource, float $deadline, array $options): StreamInterface
     {
         $idleTimeout = isset($options['read_timeout'])
-            ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout')
+            ? Timeout::toMilliseconds($options['read_timeout'], 'read_timeout')
             : self::DEFAULT_IDLE_TIMEOUT_MS;
 
         \stream_set_blocking($resource, false);
@@ -858,11 +858,11 @@ final class StreamHandler
         }
 
         $idleTimeout = isset($options['read_timeout'])
-            ? Utils::timeoutToMilliseconds($options['read_timeout'], 'read_timeout')
+            ? Timeout::toMilliseconds($options['read_timeout'], 'read_timeout')
             : self::DEFAULT_IDLE_TIMEOUT_MS;
 
         $timeout = isset($options['timeout'])
-            ? Utils::timeoutToMilliseconds($options['timeout'], 'timeout')
+            ? Timeout::toMilliseconds($options['timeout'], 'timeout')
             : 0;
 
         self::assertTlsVersionRangeForOptions($request, $options);
@@ -906,7 +906,7 @@ final class StreamHandler
 
         return $this->createResource(
             function () use ($uri, $contextResource, $idleTimeout, $timeout) {
-                $this->lastDeadline = $timeout > 0 ? Utils::currentTime() + $timeout / 1000 : null;
+                $this->lastDeadline = $timeout > 0 ? Clock::now() + $timeout / 1000 : null;
 
                 // Blank the from ini setting for the transfer so ambient
                 // configuration cannot leak into a From header; the wrapper
@@ -1343,7 +1343,7 @@ final class StreamHandler
      */
     private function applyProxy(RequestInterface $request, array &$context, $value): void
     {
-        $proxy = ProxyEnvironment::resolveProxySelection($request->getUri(), $value);
+        $proxy = ProxyEnv::resolveProxySelection($request->getUri(), $value);
         $proxyUri = $proxy->getProxy();
         if ($proxyUri === null) {
             return;

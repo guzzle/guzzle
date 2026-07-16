@@ -32,6 +32,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Restrict persisted `FileCookieJar` cookie files to owner-only permissions
 - Require persisted cookie data to use JSON lists and construct all records before changing the jar
 - Normalize persistent cookie JSON failures as `RuntimeException`
+- Moved the internal `Utils` time, timeout, IDN, and environment helpers to dedicated internal classes
 - Adjusted `guzzlehttp/promises` version constraint to `^3.0`
 - Adjusted `guzzlehttp/psr7` version constraint to `^3.0`
 - Quote multipart `Content-Type` boundary parameters when required

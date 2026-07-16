@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests\Handler;
 
-use GuzzleHttp\Handler\ProxyEnvironment;
+use GuzzleHttp\Handler\ProxyEnv;
 use GuzzleHttp\Psr7\Uri;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \GuzzleHttp\Handler\ProxyEnvironment
+ * @covers \GuzzleHttp\Handler\ProxyEnv
  */
-class ProxyEnvironmentTest extends TestCase
+class ProxyEnvTest extends TestCase
 {
     public function testReturnsNullWhenNothingIsSet(): void
     {
         self::withProxyEnvironment([], static function (): void {
-            self::assertNull(ProxyEnvironment::getProxyForScheme('http'));
-            self::assertNull(ProxyEnvironment::getProxyForScheme('https'));
-            self::assertNull(ProxyEnvironment::getNoProxy());
+            self::assertNull(ProxyEnv::getProxyForScheme('http'));
+            self::assertNull(ProxyEnv::getProxyForScheme('https'));
+            self::assertNull(ProxyEnv::getNoProxy());
         });
     }
 
@@ -28,15 +28,15 @@ class ProxyEnvironmentTest extends TestCase
             'http_proxy' => 'http://http-proxy.example.com:8125',
             'https_proxy' => 'http://https-proxy.example.com:8125',
         ], static function (): void {
-            self::assertSame('http://http-proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('http'));
-            self::assertSame('http://https-proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('https'));
+            self::assertSame('http://http-proxy.example.com:8125', ProxyEnv::getProxyForScheme('http'));
+            self::assertSame('http://https-proxy.example.com:8125', ProxyEnv::getProxyForScheme('https'));
         });
     }
 
     public function testReadsUppercaseSchemeProxyForHttps(): void
     {
         self::withProxyEnvironment(['HTTPS_PROXY' => 'http://proxy.example.com:8125'], static function (): void {
-            self::assertSame('http://proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('https'));
+            self::assertSame('http://proxy.example.com:8125', ProxyEnv::getProxyForScheme('https'));
         });
     }
 
@@ -45,7 +45,7 @@ class ProxyEnvironmentTest extends TestCase
         self::skipIfWindows();
 
         self::withProxyEnvironment(['HTTP_PROXY' => 'http://proxy.example.com:8125'], static function (): void {
-            self::assertNull(ProxyEnvironment::getProxyForScheme('http'));
+            self::assertNull(ProxyEnv::getProxyForScheme('http'));
         });
     }
 
@@ -57,20 +57,20 @@ class ProxyEnvironmentTest extends TestCase
             'https_proxy' => 'http://lower.example.com:8125',
             'HTTPS_PROXY' => 'http://upper.example.com:8125',
         ], static function (): void {
-            self::assertSame('http://lower.example.com:8125', ProxyEnvironment::getProxyForScheme('https'));
+            self::assertSame('http://lower.example.com:8125', ProxyEnv::getProxyForScheme('https'));
         });
     }
 
     public function testFallsBackToAllProxy(): void
     {
         self::withProxyEnvironment(['all_proxy' => 'http://proxy.example.com:8125'], static function (): void {
-            self::assertSame('http://proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('http'));
-            self::assertSame('http://proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('https'));
+            self::assertSame('http://proxy.example.com:8125', ProxyEnv::getProxyForScheme('http'));
+            self::assertSame('http://proxy.example.com:8125', ProxyEnv::getProxyForScheme('https'));
         });
 
         self::withProxyEnvironment(['ALL_PROXY' => 'http://proxy.example.com:8125'], static function (): void {
-            self::assertSame('http://proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('http'));
-            self::assertSame('http://proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('https'));
+            self::assertSame('http://proxy.example.com:8125', ProxyEnv::getProxyForScheme('http'));
+            self::assertSame('http://proxy.example.com:8125', ProxyEnv::getProxyForScheme('https'));
         });
     }
 
@@ -80,8 +80,8 @@ class ProxyEnvironmentTest extends TestCase
             'https_proxy' => 'http://scheme.example.com:8125',
             'ALL_PROXY' => 'http://all.example.com:8125',
         ], static function (): void {
-            self::assertSame('http://scheme.example.com:8125', ProxyEnvironment::getProxyForScheme('https'));
-            self::assertSame('http://all.example.com:8125', ProxyEnvironment::getProxyForScheme('http'));
+            self::assertSame('http://scheme.example.com:8125', ProxyEnv::getProxyForScheme('https'));
+            self::assertSame('http://all.example.com:8125', ProxyEnv::getProxyForScheme('http'));
         });
     }
 
@@ -91,30 +91,30 @@ class ProxyEnvironmentTest extends TestCase
             'https_proxy' => '',
             'ALL_PROXY' => 'http://proxy.example.com:8125',
         ], static function (): void {
-            self::assertSame('http://proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('https'));
-            self::assertSame('http://proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('http'));
+            self::assertSame('http://proxy.example.com:8125', ProxyEnv::getProxyForScheme('https'));
+            self::assertSame('http://proxy.example.com:8125', ProxyEnv::getProxyForScheme('http'));
         });
 
         self::withProxyEnvironment(['https_proxy' => ''], static function (): void {
-            self::assertNull(ProxyEnvironment::getProxyForScheme('https'));
+            self::assertNull(ProxyEnv::getProxyForScheme('https'));
         });
     }
 
     public function testSchemeIsNormalizedToLowercase(): void
     {
         self::withProxyEnvironment(['https_proxy' => 'http://proxy.example.com:8125'], static function (): void {
-            self::assertSame('http://proxy.example.com:8125', ProxyEnvironment::getProxyForScheme('HTTPS'));
+            self::assertSame('http://proxy.example.com:8125', ProxyEnv::getProxyForScheme('HTTPS'));
         });
     }
 
     public function testReadsNoProxy(): void
     {
         self::withProxyEnvironment(['no_proxy' => '10.0.0.0/8,example.com'], static function (): void {
-            self::assertSame('10.0.0.0/8,example.com', ProxyEnvironment::getNoProxy());
+            self::assertSame('10.0.0.0/8,example.com', ProxyEnv::getNoProxy());
         });
 
         self::withProxyEnvironment(['NO_PROXY' => 'example.com'], static function (): void {
-            self::assertSame('example.com', ProxyEnvironment::getNoProxy());
+            self::assertSame('example.com', ProxyEnv::getNoProxy());
         });
     }
 
@@ -126,7 +126,7 @@ class ProxyEnvironmentTest extends TestCase
             'no_proxy' => 'lower.example.com',
             'NO_PROXY' => 'upper.example.com',
         ], static function (): void {
-            self::assertSame('lower.example.com', ProxyEnvironment::getNoProxy());
+            self::assertSame('lower.example.com', ProxyEnv::getNoProxy());
         });
     }
 
@@ -136,11 +136,11 @@ class ProxyEnvironmentTest extends TestCase
             'no_proxy' => '',
             'NO_PROXY' => 'example.com',
         ], static function (): void {
-            self::assertSame('example.com', ProxyEnvironment::getNoProxy());
+            self::assertSame('example.com', ProxyEnv::getNoProxy());
         });
 
         self::withProxyEnvironment(['no_proxy' => ''], static function (): void {
-            self::assertNull(ProxyEnvironment::getNoProxy());
+            self::assertNull(ProxyEnv::getNoProxy());
         });
     }
 
@@ -148,7 +148,7 @@ class ProxyEnvironmentTest extends TestCase
     {
         self::assertSame(
             ['host1.test', 'host2.test', 'host3.test', 'host4.test'],
-            ProxyEnvironment::splitNoProxy("host1.test host2.test,host3.test ,\thost4.test")
+            ProxyEnv::splitNoProxy("host1.test host2.test,host3.test ,\thost4.test")
         );
     }
 
@@ -156,14 +156,14 @@ class ProxyEnvironmentTest extends TestCase
     {
         self::assertSame(
             ['.example.com', '..foo.com'],
-            ProxyEnvironment::splitNoProxy('.example.com,..foo.com')
+            ProxyEnv::splitNoProxy('.example.com,..foo.com')
         );
     }
 
     public function testDropsEmptyNoProxyEntries(): void
     {
-        self::assertSame(['.'], ProxyEnvironment::splitNoProxy(' ,, . '));
-        self::assertSame([], ProxyEnvironment::splitNoProxy(' ,, '));
+        self::assertSame(['.'], ProxyEnv::splitNoProxy(' ,, . '));
+        self::assertSame([], ProxyEnv::splitNoProxy(' ,, '));
     }
 
     public function testResolveProxySelectionPrefersOptionThenEnvironment(): void
@@ -179,18 +179,18 @@ class ProxyEnvironmentTest extends TestCase
             // An explicit option decision wins over the environment.
             self::assertSame(
                 'http://option.example.com:8125',
-                ProxyEnvironment::resolveProxySelection($uri, 'http://option.example.com:8125')->getProxy()
+                ProxyEnv::resolveProxySelection($uri, 'http://option.example.com:8125')->getProxy()
             );
 
             // No option decision falls back to the environment proxy.
             self::assertSame(
                 'http://env.example.com:8125',
-                ProxyEnvironment::resolveProxySelection($uri, null)->getProxy()
+                ProxyEnv::resolveProxySelection($uri, null)->getProxy()
             );
 
             // An environment no_proxy match bypasses the environment proxy.
             self::assertNull(
-                ProxyEnvironment::resolveProxySelection(new Uri('http://blocked.example.com'), null)->getProxy()
+                ProxyEnv::resolveProxySelection(new Uri('http://blocked.example.com'), null)->getProxy()
             );
         });
     }

@@ -4,24 +4,19 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests;
 
+use GuzzleHttp\Idn;
 use GuzzleHttp\Psr7;
-use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 
-class InternalUtilsTest extends TestCase
+class IdnTest extends TestCase
 {
-    public function testCurrentTime(): void
-    {
-        self::assertGreaterThan(0, Utils::currentTime());
-    }
-
     /**
      * @requires extension idn
      */
-    public function testIdnConvert(): void
+    public function testConvertUri(): void
     {
         $uri = Psr7\Utils::uriFor('https://яндекс.рф/images');
-        $uri = Utils::idnUriConvert($uri);
+        $uri = Idn::convertUri($uri);
         self::assertSame('xn--d1acpjx3f.xn--p1ai', $uri->getHost());
     }
 }

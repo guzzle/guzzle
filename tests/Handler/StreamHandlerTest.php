@@ -10,6 +10,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
+use GuzzleHttp\Handler\Clock;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Handler\TransferByteCounter;
 use GuzzleHttp\Multiplexing;
@@ -26,7 +27,6 @@ use GuzzleHttp\Tests\SpyStream;
 use GuzzleHttp\Tests\StrictReadableResourceStreamFactory;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
-use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Client\RequestExceptionInterface;
@@ -3211,9 +3211,9 @@ class StreamHandlerTest extends TestCase
         Server::enqueue([$response]);
         $a = new StreamHandler();
         $request = new Request('GET', Server::$url);
-        $s = Utils::currentTime();
+        $s = Clock::now();
         $a($request, ['delay' => 0.1])->wait();
-        self::assertGreaterThan(0.0001, Utils::currentTime() - $s);
+        self::assertGreaterThan(0.0001, Clock::now() - $s);
     }
 
     public function testEnsuresOnHeadersIsCallable(): void
@@ -4869,7 +4869,7 @@ class StreamHandlerTest extends TestCase
             $method->setAccessible(true);
         }
 
-        return $method->invoke($handler, $request, $options, $stream, Utils::currentTime());
+        return $method->invoke($handler, $request, $options, $stream, Clock::now());
     }
 
     public function testProtocolsOptionRejectsDisallowedStreamScheme(): void

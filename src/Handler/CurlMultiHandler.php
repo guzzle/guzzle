@@ -16,7 +16,6 @@ use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\TransportSharing;
-use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -201,7 +200,7 @@ final class CurlMultiHandler
         $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
 
         $selectTimeout = $options['select_timeout'] ?? 1.0;
-        Utils::timeoutToMilliseconds($selectTimeout, 'select_timeout');
+        Timeout::toMilliseconds($selectTimeout, 'select_timeout');
         $this->selectTimeout = (float) $selectTimeout;
 
         $multiOptions = $options['options'] ?? [];
@@ -721,7 +720,7 @@ final class CurlMultiHandler
         // callback has native execution busy; the outer frame attaches due
         // transfers once it unwinds.
         if ($this->delays && 0 === $this->multiExecDepth) {
-            $currentTime = Utils::currentTime();
+            $currentTime = Clock::now();
             foreach ($this->delays as $id => $delay) {
                 if ($currentTime >= $delay) {
                     $entry = $this->handles[$id];
@@ -1304,7 +1303,7 @@ final class CurlMultiHandler
         $this->handles[$id] = $entry;
 
         if (!empty($easy->options['delay'])) {
-            $this->delays[$id] = Utils::currentTime() + ($easy->options['delay'] / 1000);
+            $this->delays[$id] = Clock::now() + ($easy->options['delay'] / 1000);
         } elseif ($this->multiExecDepth > 0) {
             // A request created from inside a cURL callback cannot be added
             // natively while curl_multi_exec() is running; libcurl 7.59+
@@ -1471,7 +1470,7 @@ final class CurlMultiHandler
      */
     private function secondsToNext(): float
     {
-        $currentTime = Utils::currentTime();
+        $currentTime = Clock::now();
         $nextTime = \PHP_FLOAT_MAX;
         foreach ($this->delays as $time) {
             if ($time < $nextTime) {
