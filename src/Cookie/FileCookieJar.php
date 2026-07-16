@@ -85,7 +85,7 @@ class FileCookieJar extends CookieJar
      * @param string $filename File to save
      *
      * @throws \RuntimeException if the cookie data cannot be encoded or the
-     *                            file cannot be written
+     *                           file cannot be written
      */
     public function save(string $filename): void
     {
