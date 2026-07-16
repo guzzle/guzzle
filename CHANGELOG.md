@@ -72,6 +72,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject selected request options ignored by incompatible built-in handlers
 - Treat only `null` as an omitted path or name when clearing cookies
 - Validate malformed `auth` request option arrays
+- Reject colons in built-in Basic usernames and ASCII control characters in Basic credentials
 - Move built-in Basic and Digest authentication handling to the default auth middleware
 - Reject unchallenged Digest probes for body-bearing requests instead of replaying the request unauthenticated
 - Reject malformed Digest challenge parameter lists that libcurl's Digest parser may have tolerated

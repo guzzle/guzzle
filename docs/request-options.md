@@ -221,6 +221,10 @@ basic
 Use [basic HTTP authentication](http://www.ietf.org/rfc/rfc7617.txt) in the
 `Authorization` header (the default setting used if none is specified).
 
+Built-in Basic usernames must not contain a colon, and neither Basic usernames
+nor passwords may contain ASCII control characters. Basic passwords may contain
+colons.
+
 ```php
 $client->request('GET', '/get', ['auth' => ['username', 'password']]);
 ```

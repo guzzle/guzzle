@@ -253,6 +253,11 @@ $client->request('GET', '/', [
 ]);
 ```
 
+Guzzle 8's built-in authentication middleware rejects Basic `auth` credentials
+when the username contains a colon or either the username or password contains
+an ASCII control character. Guzzle 7 encoded and sent these values. Colons
+remain valid in passwords.
+
 Guzzle 8 also no longer forwards the generic `auth` request option when
 automatic redirects cross origin. Guzzle already removed the `Authorization` and
 `Cookie` headers and cURL HTTP authentication options on cross-origin redirects;

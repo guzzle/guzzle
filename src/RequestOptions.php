@@ -61,7 +61,9 @@ final class RequestOptions
      * index [2]. Pass false or null to disable authentication for a request.
      * Built-in Basic and Digest authentication are applied by the auth
      * middleware, normally from HandlerStack::create(). String values are
-     * passed through for custom handlers.
+     * passed through for custom handlers. Built-in Basic usernames must not
+     * contain a colon, and neither Basic usernames nor passwords may contain
+     * ASCII control characters. Basic passwords may contain colons.
      */
     public const AUTH = 'auth';
 
