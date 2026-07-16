@@ -23,8 +23,6 @@ final class EncodedBodyStream implements StreamInterface
 
     private StreamInterface $stream;
 
-    private string $declaredLength;
-
     private ?int $limit;
 
     private int $bytesRead = 0;
@@ -32,7 +30,6 @@ final class EncodedBodyStream implements StreamInterface
     public function __construct(StreamInterface $stream, string $declaredLength)
     {
         $this->stream = $stream;
-        $this->declaredLength = $declaredLength;
 
         $limit = HeaderProcessor::contentLengthToInt($declaredLength);
         $this->limit = $limit !== null && $limit > 0 ? $limit : null;
@@ -77,11 +74,6 @@ final class EncodedBodyStream implements StreamInterface
         );
 
         return $data;
-    }
-
-    public function getDeclaredLength(): string
-    {
-        return $this->declaredLength;
     }
 
     public function getBytesRead(): int

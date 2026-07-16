@@ -328,6 +328,26 @@ final class StreamHandler
             return $this->rejectResponseCreation($options, $request, $startTime, $e);
         }
 
+        $canHaveBody = HeaderProcessor::responseCanHaveBody($request->getMethod(), $status);
+        $framingFailure = null;
+        $declaredLength = null;
+        try {
+            $declaredLength = HeaderProcessor::validateResponseFraming($request->getMethod(), $status, $headers);
+            if (empty($options['stream'])) {
+                HeaderProcessor::assertContentLengthWithinPlatformLimit($declaredLength);
+            }
+        } catch (\RuntimeException $e) {
+            $framingFailure = $e;
+        }
+
+        if ($framingFailure === null) {
+            try {
+                $headers = $this->decodeChunkedResponse($headers, $stream, $canHaveBody);
+            } catch (\RuntimeException $e) {
+                $framingFailure = $e;
+            }
+        }
+
         $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new Psr7\HttpFactory());
         $responseFactory = self::requireResponseFactory($options[RequestOptions::RESPONSE_FACTORY] ?? new Psr7\HttpFactory());
 
@@ -337,21 +357,18 @@ final class StreamHandler
         // pulls from the transport observes the deadline.
         $resource = $stream;
         $stream = $streamFactory->createStreamFromResource($stream);
-        if ($deadline !== null && empty($options['stream'])) {
+        if ($framingFailure === null && $deadline !== null && empty($options['stream'])) {
             $stream = self::createDeadlineSource($stream, $resource, $deadline, $options);
         }
-        [$stream, $headers, $encodedBody] = self::checkDecode(
-            $options,
-            $headers,
-            $stream,
-            $request->getMethod(),
-            $status
-        );
 
-        $canHaveBody = HeaderProcessor::responseCanHaveBody($request->getMethod(), $status);
-        $sink = $canHaveBody
-            ? $this->createSink($stream, $options)
-            : $streamFactory->createStream('');
+        $encodedBody = null;
+        if ($framingFailure === null) {
+            [$stream, $headers, $encodedBody] = self::checkDecode($options, $headers, $stream, $declaredLength);
+        }
+
+        $sink = $framingFailure !== null || !$canHaveBody
+            ? $streamFactory->createStream('')
+            : $this->createSink($stream, $options);
 
         try {
             $response = $responseFactory->createResponse($status, $reason ?? '')->withProtocolVersion($ver);
@@ -361,6 +378,23 @@ final class StreamHandler
             $response = $response->withBody($sink);
         } catch (\Throwable $e) {
             return $this->rejectResponseCreation($options, $request, $startTime, $e);
+        }
+
+        if ($framingFailure !== null) {
+            try {
+                $stream->close();
+            } catch (\Exception $e) {
+                // Best-effort release; a failing transport close must not
+                // mask the framing rejection.
+            }
+
+            $reason = $framingFailure instanceof \OverflowException
+                ? new ResponseException($framingFailure->getMessage(), $request, $response, $framingFailure)
+                : new ResponseTransferException($framingFailure->getMessage(), $request, $response, $framingFailure);
+            $this->invokeStats($options, $request, $startTime, $response, $reason);
+
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor($reason);
         }
 
         // The header phase inside fopen() can only bound the time between
@@ -408,7 +442,7 @@ final class StreamHandler
             }
         } elseif ($sink !== $stream) {
             try {
-                $this->drain($request, $response, $stream, $sink, $encodedBody);
+                $this->drain($request, $response, $stream, $sink, $declaredLength, $encodedBody);
             } catch (ResponseException $e) {
                 $this->invokeStats($options, $request, $startTime, $response, $e);
 
@@ -516,14 +550,65 @@ final class StreamHandler
     }
 
     /**
+     * Applies the HTTP wrapper's normal chunked-response handling.
+     *
+     * @param array<string, string[]> $headers
+     * @param resource                $stream
+     * @param bool                    $decodeBody Whether to attach the dechunk filter
+     *
+     * @return array<string, string[]>
+     *
+     * @throws \RuntimeException when the dechunk filter cannot be attached
+     */
+    private function decodeChunkedResponse(array $headers, $stream, bool $decodeBody): array
+    {
+        $decodedHeaders = $headers;
+        $decode = false;
+
+        foreach ($headers as $name => $values) {
+            if (!Psr7\Utils::caselessEquals((string) $name, 'Transfer-Encoding')) {
+                continue;
+            }
+
+            $remaining = [];
+            foreach ($values as $value) {
+                // Match PHP's legacy auto_decode prefix check so moving the
+                // filter does not change which responses are dechunked.
+                if (Psr7\Utils::caselessEquals(\substr($value, 0, 7), 'chunked')) {
+                    $decode = true;
+                } else {
+                    $remaining[] = $value;
+                }
+            }
+
+            if ($remaining === []) {
+                unset($decodedHeaders[$name]);
+            } else {
+                $decodedHeaders[$name] = $remaining;
+            }
+        }
+
+        if (!$decode) {
+            return $headers;
+        }
+
+        if ($decodeBody) {
+            $this->createResource(static function () use ($stream) {
+                return \stream_filter_append($stream, 'dechunk', \STREAM_FILTER_READ);
+            });
+        }
+
+        return $decodedHeaders;
+    }
+
+    /**
      * @return array{0: StreamInterface, 1: array, 2: ?EncodedBodyStream}
      */
     private static function checkDecode(
         array $options,
         array $headers,
         StreamInterface $stream,
-        string $method,
-        int $status
+        ?string $declaredLength
     ): array {
         $encodedBody = null;
 
@@ -533,13 +618,8 @@ final class StreamHandler
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
-                    $encodedLength = HeaderProcessor::parseContentLengthForResponseBodyHeaders(
-                        $method,
-                        $status,
-                        $headers
-                    );
-                    if (empty($options['stream']) && $encodedLength !== null && $encodedLength !== '0') {
-                        $encodedBody = new EncodedBodyStream($stream, $encodedLength);
+                    if (empty($options['stream']) && $declaredLength !== null && $declaredLength !== '0') {
+                        $encodedBody = new EncodedBodyStream($stream, $declaredLength);
                         $stream = $encodedBody;
                     }
 
@@ -573,14 +653,13 @@ final class StreamHandler
         ResponseInterface $response,
         StreamInterface $source,
         StreamInterface $sink,
+        ?string $declaredResponseBodyLength,
         ?EncodedBodyStream $encodedBody = null
     ): StreamInterface {
         try {
-            $declaredLength = self::declaredResponseBodyLength(
-                $request,
-                $response,
-                $encodedBody !== null ? $encodedBody->getDeclaredLength() : null
-            );
+            // Buffered paths reject unrepresentable lengths before draining.
+            $declaredLength = HeaderProcessor::contentLengthToInt($declaredResponseBodyLength);
+            $declaredLength = $declaredLength !== null && $declaredLength > 0 ? $declaredLength : null;
             $copyLimit = $encodedBody === null ? $declaredLength ?? -1 : -1;
 
             try {
@@ -642,28 +721,6 @@ final class StreamHandler
                 // Best-effort cleanup after the response body has been received.
             }
         }
-    }
-
-    private static function declaredResponseBodyLength(
-        RequestInterface $request,
-        ResponseInterface $response,
-        ?string $encodedLength = null
-    ): ?int {
-        $parsed = $encodedLength ?? HeaderProcessor::parseContentLengthForResponseBody($request, $response);
-        try {
-            HeaderProcessor::assertContentLengthWithinPlatformLimit($parsed);
-        } catch (\OverflowException $e) {
-            throw new ResponseException(
-                $e->getMessage(),
-                $request,
-                $response,
-                $e
-            );
-        }
-
-        $length = HeaderProcessor::contentLengthToInt($parsed);
-
-        return $length !== null && $length > 0 ? $length : null;
     }
 
     private function createResponseSink(
@@ -1010,6 +1067,7 @@ final class StreamHandler
 
         $context = [
             'http' => [
+                'auto_decode' => false,
                 'method' => $request->getMethod(),
                 'header' => $headers,
                 'protocol_version' => $request->getProtocolVersion(),
@@ -1186,6 +1244,7 @@ final class StreamHandler
     {
         return [
             'http' => [
+                'auto_decode' => 'Guzzle response framing and decoding',
                 'content' => 'the request body',
                 'follow_location' => 'the "allow_redirects" request option',
                 'header' => 'the request headers',

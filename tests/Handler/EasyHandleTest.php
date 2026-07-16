@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests\Handler;
 
+use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Handler\EasyHandle;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\RequestOptions;
@@ -74,6 +76,70 @@ class EasyHandleTest extends TestCase
         self::assertSame(101, $easy->response->getStatusCode());
     }
 
+    public function testInvalidResponseFramingSkipsDecodedHeaderRewrites(): void
+    {
+        $easy = self::createEasyHandle();
+        $easy->sink = Psr7\Utils::streamFor('encoded');
+        $easy->headers = [
+            'HTTP/1.1 200 OK',
+            'Content-Encoding: gzip',
+            'Content-Length: 7',
+            'Transfer-Encoding: chunked',
+        ];
+        $easy->options = ['decode_content' => true];
+
+        $easy->createResponse();
+
+        self::assertNotNull($easy->response);
+        self::assertInstanceOf(ResponseTransferException::class, $easy->responseHeaderException);
+        self::assertSame($easy->response, $easy->responseHeaderException->getResponse());
+        self::assertSame('A response must not contain both Content-Length and Transfer-Encoding', $easy->responseHeaderException->getMessage());
+        self::assertInstanceOf(\RuntimeException::class, $easy->responseHeaderException->getPrevious());
+        self::assertSame('gzip', $easy->response->getHeaderLine('Content-Encoding'));
+        self::assertSame('7', $easy->response->getHeaderLine('Content-Length'));
+        self::assertSame('chunked', $easy->response->getHeaderLine('Transfer-Encoding'));
+        self::assertFalse($easy->response->hasHeader('x-encoded-content-encoding'));
+        self::assertFalse($easy->response->hasHeader('x-encoded-content-length'));
+    }
+
+    public function testCreateResponseStoresOverflowAsPlainResponseException(): void
+    {
+        $overflow = ((string) \PHP_INT_MAX).'0';
+        $easy = self::createEasyHandle();
+        $easy->sink = Psr7\Utils::streamFor('');
+        $easy->headers = ['HTTP/1.1 200 OK', 'Content-Length: '.$overflow];
+
+        $easy->createResponse();
+
+        self::assertNotNull($easy->response);
+        self::assertInstanceOf(ResponseException::class, $easy->responseHeaderException);
+        self::assertNotInstanceOf(ResponseTransferException::class, $easy->responseHeaderException);
+        self::assertInstanceOf(\OverflowException::class, $easy->responseHeaderException->getPrevious());
+        self::assertSame($overflow, $easy->response->getHeaderLine('Content-Length'));
+    }
+
+    public function testBodilessResponseIgnoresInvalidFramingAndClearsEarlierFailure(): void
+    {
+        $easy = self::createEasyHandle();
+        $easy->sink = Psr7\Utils::streamFor('');
+        $easy->headers = ['HTTP/1.1 200 OK', 'Content-Length: bad'];
+        $easy->createResponse();
+        self::assertInstanceOf(ResponseTransferException::class, $easy->responseHeaderException);
+
+        $easy->request = new Psr7\Request('HEAD', 'http://example.com');
+        $easy->headers = [
+            'HTTP/1.1 200 OK',
+            'Content-Length: bad',
+            'Transfer-Encoding: chunked',
+        ];
+        $easy->createResponse();
+
+        self::assertNotNull($easy->response);
+        self::assertNull($easy->responseHeaderException);
+        self::assertSame('bad', $easy->response->getHeaderLine('Content-Length'));
+        self::assertSame('chunked', $easy->response->getHeaderLine('Transfer-Encoding'));
+    }
+
     public function testDecodedContentLengthIsOmittedWhenSinkSizeOverflows(): void
     {
         $easy = self::createEasyHandle();
@@ -115,7 +181,6 @@ class EasyHandleTest extends TestCase
         self::assertNotNull($easy->response);
         self::assertSame('7', $easy->response->getHeaderLine('Content-Length'));
         self::assertSame(['3', '3'], $easy->response->getHeader('x-encoded-content-length'));
-        self::assertSame('3', $easy->declaredResponseBodyLength);
     }
 
     public function testZeroStringDecodeContentPreservesEncodedHeaders(): void
