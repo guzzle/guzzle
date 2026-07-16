@@ -192,6 +192,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Deprecated
 
+- Deprecated `Utils::jsonDecode()` and `Utils::jsonEncode()` in favor of native JSON functions
 - Deprecated passing `CURLMOPT_PIPELINING` in the cURL multi handler `options` array
 - Deprecated passing `CURLOPT_PROXYHEADER` without cURL proxy header separation support
 
