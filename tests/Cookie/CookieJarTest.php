@@ -715,6 +715,56 @@ class CookieJarTest extends TestCase
     }
 
     /**
+     * @dataProvider cookieNamePrefixProvider
+     */
+    public function testEnforcesCookieNamePrefixes(string $url, string $header, bool $strict, array $expectedNames, ?bool $expectedHostOnly = null): void
+    {
+        $jar = new CookieJar($strict);
+        $jar->extractCookies(
+            new Request('GET', $url),
+            new Response(200, ['Set-Cookie' => $header])
+        );
+
+        $cookies = $jar->toArray();
+        self::assertSame($expectedNames, \array_column($cookies, 'Name'));
+        if ($expectedHostOnly !== null) {
+            self::assertSame($expectedHostOnly, $cookies[0]['HostOnly']);
+        }
+    }
+
+    public static function cookieNamePrefixProvider(): array
+    {
+        return [
+            'Secure prefix' => ['https://example.com/', '__Secure-SID=value; Secure', false, ['__Secure-SID']],
+            'mixed-case Secure prefix' => ['https://example.com/', '__SeCuRe-SID=value; Secure', false, ['__SeCuRe-SID']],
+            'Host prefix' => ['https://example.com/', '__Host-SID=value; Secure; Path=/', false, ['__Host-SID'], true],
+            'mixed-case Host prefix' => ['https://example.com/', '__HoSt-SID=value; Secure; Path=/', false, ['__HoSt-SID'], true],
+            'Host prefix with an empty Domain' => ['https://example.com/', '__Host-SID=value; Secure; Domain=; Path=/', false, ['__Host-SID'], true],
+            'Host prefix with an empty Path' => ['https://example.com/', '__Host-SID=value; Secure; Path=', false, ['__Host-SID'], true],
+            'near-miss name' => ['https://example.com/', 'x__Host-SID=value', false, ['x__Host-SID']],
+            'Secure prefix without Secure' => ['https://example.com/', '__Secure-SID=value', false, []],
+            'mixed-case Secure prefix without Secure in a strict jar' => ['https://example.com/', '__SeCuRe-SID=value', true, []],
+            'Host prefix without Secure' => ['https://example.com/', '__Host-SID=value; Path=/', false, []],
+            'Host prefix without Path' => ['https://example.com/', '__Host-SID=value; Secure', false, []],
+            'Host prefix with a bare Path' => ['https://example.com/', '__Host-SID=value; Secure; Path', false, []],
+            'Host prefix with a non-root Path' => ['https://example.com/', '__Host-SID=value; Secure; Path=/account', false, []],
+            'Host prefix with a Domain' => ['https://example.com/', '__Host-SID=value; Secure; Domain=example.com; Path=/', false, []],
+        ];
+    }
+
+    public function testInvalidPrefixedExpiryCookieDoesNotDeleteValidCookie(): void
+    {
+        $jar = new CookieJar();
+        $request = new Request('GET', 'https://example.com/');
+
+        $jar->extractCookies($request, new Response(200, ['Set-Cookie' => '__Host-SID=secure; Secure; Path=/']));
+        $jar->extractCookies($request, new Response(200, ['Set-Cookie' => '__Host-SID=deleted; Path=/; Max-Age=0']));
+
+        self::assertCount(1, $jar);
+        self::assertSame('secure', $jar->getCookieByName('__Host-SID')->getValue());
+    }
+
+    /**
      * @dataProvider secureCookieOverlayProvider
      */
     public function testProtectsSecureCookiesFromInsecureOverlays(array $stored, string $url, string $header, array $expectedValues): void

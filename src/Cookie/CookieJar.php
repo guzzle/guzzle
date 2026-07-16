@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\HostIdentity;
+use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -260,6 +261,13 @@ class CookieJar implements CookieJarInterface
                 if (!$secure && ($sc->getSecure() || $this->overlaysSecureCookie($sc))) {
                     continue;
                 }
+                $prefixName = Psr7\Utils::asciiToLower((string) $sc->getName());
+                if (\str_starts_with($prefixName, '__secure-') && !$sc->getSecure()) {
+                    continue;
+                }
+                if (\str_starts_with($prefixName, '__host-') && (!$sc->getSecure() || !$sc->getHostOnly() || $sc->getPath() !== '/' || !self::hasPathAttribute($cookie))) {
+                    continue;
+                }
                 // Note: At this point `$sc->getDomain()` being a public suffix should
                 // be rejected, but we don't want to pull in the full PSL dependency.
                 $this->setCookie($sc);
@@ -295,6 +303,25 @@ class CookieJar implements CookieJarInterface
         }
 
         return $stored->matchesPath($cookie->getPath());
+    }
+
+    /**
+     * Mirrors SetCookie::fromString()'s splitting because parsed cookies cannot
+     * distinguish an absent Path attribute from a defaulted path.
+     */
+    private static function hasPathAttribute(string $header): bool
+    {
+        $parts = \explode(';', $header);
+        \array_shift($parts);
+
+        foreach ($parts as $part) {
+            $separator = \strpos($part, '=');
+            if ($separator !== false && Psr7\Utils::caselessEquals(\trim(\substr($part, 0, $separator), " \t"), 'Path')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
