@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\NonSerializableTrait;
-use GuzzleHttp\Utils;
 
 /**
  * Persists non-session cookies using a JSON formatted file
@@ -40,7 +39,7 @@ class FileCookieJar extends CookieJar
      * @param bool   $storeSessionCookies Set to true to store session cookies
      *                                    in the cookie jar.
      *
-     * @throws \RuntimeException if the file cannot be found or created
+     * @throws \RuntimeException if the file cannot be loaded or is invalid
      */
     public function __construct(string $cookieFile, bool $storeSessionCookies = false)
     {
@@ -85,7 +84,8 @@ class FileCookieJar extends CookieJar
      *
      * @param string $filename File to save
      *
-     * @throws \RuntimeException if the file cannot be found or created
+     * @throws \RuntimeException if the cookie data cannot be encoded or the
+     *                           file cannot be written
      */
     public function save(string $filename): void
     {
@@ -97,7 +97,12 @@ class FileCookieJar extends CookieJar
             }
         }
 
-        $jsonStr = Utils::jsonEncode($json, \JSON_HEX_TAG);
+        try {
+            $jsonStr = \json_encode($json, \JSON_HEX_TAG | \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \RuntimeException('Unable to encode cookie data', 0, $e);
+        }
+
         if (false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
             throw new \RuntimeException("Unable to save file {$filename}");
         }
@@ -111,10 +116,11 @@ class FileCookieJar extends CookieJar
      * Load cookies from a JSON formatted file.
      *
      * Old cookies are kept unless overwritten by newly loaded ones.
+     * Cookie records are constructed before any are passed to setCookie().
      *
      * @param string $filename Cookie file to load.
      *
-     * @throws \RuntimeException if the file cannot be loaded.
+     * @throws \RuntimeException if the file cannot be loaded or is invalid
      */
     public function load(string $filename): void
     {
@@ -126,21 +132,34 @@ class FileCookieJar extends CookieJar
             return;
         }
 
-        $data = Utils::jsonDecode($json, true);
-        if (\is_array($data)) {
-            foreach ($data as $cookie) {
-                if (!\is_array($cookie)) {
-                    throw new \RuntimeException("Invalid cookie file: {$filename}");
-                }
+        $message = "Invalid cookie file: {$filename}";
 
-                try {
-                    $this->setCookie(new SetCookie($cookie));
-                } catch (\InvalidArgumentException $e) {
-                    throw new \RuntimeException("Invalid cookie file: {$filename}", 0, $e);
-                }
+        try {
+            $data = \json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \RuntimeException($message, 0, $e);
+        }
+
+        // Associative decoding turns JSON objects into arrays, so inspect the root syntax too.
+        if (!\is_array($data) || \substr($json, \strspn($json, " \t\n\r"), 1) !== '[') {
+            throw new \RuntimeException($message);
+        }
+
+        $cookies = [];
+        foreach ($data as $cookie) {
+            if (!\is_array($cookie)) {
+                throw new \RuntimeException($message);
             }
-        } elseif (\is_scalar($data) && !empty($data)) {
-            throw new \RuntimeException("Invalid cookie file: {$filename}");
+
+            try {
+                $cookies[] = new SetCookie($cookie);
+            } catch (\InvalidArgumentException $e) {
+                throw new \RuntimeException($message, 0, $e);
+            }
+        }
+
+        foreach ($cookies as $cookie) {
+            $this->setCookie($cookie);
         }
     }
 }

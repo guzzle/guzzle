@@ -29,21 +29,107 @@ class FileCookieJarTest extends TestCase
 
     /**
      * @dataProvider invalidCookieJarContent
-     *
-     * @param mixed $invalidCookieJarContent
      */
-    public function testValidatesCookieFile($invalidCookieJarContent): void
+    public function testRejectsInvalidCookieFile(string $contents): void
     {
-        \file_put_contents($this->file, json_encode($invalidCookieJarContent));
+        \file_put_contents($this->file, $contents);
 
         $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("Invalid cookie file: {$this->file}");
         new FileCookieJar($this->file);
     }
 
-    public function testLoadsFromFile(): void
+    public function testRejectsMalformedCookieFileWithJsonException(): void
+    {
+        \file_put_contents($this->file, '[');
+
+        try {
+            new FileCookieJar($this->file);
+            self::fail('Expected RuntimeException was not thrown');
+        } catch (\RuntimeException $e) {
+            self::assertSame("Invalid cookie file: {$this->file}", $e->getMessage());
+            self::assertInstanceOf(\JsonException::class, $e->getPrevious());
+        }
+    }
+
+    public function testLoadsEmptyFile(): void
     {
         $jar = new FileCookieJar($this->file);
         self::assertSame([], $jar->getIterator()->getArrayCopy());
+    }
+
+    public function testLoadsEmptyJsonList(): void
+    {
+        \file_put_contents($this->file, " \n[]");
+
+        $jar = new FileCookieJar($this->file);
+        self::assertSame([], $jar->getIterator()->getArrayCopy());
+    }
+
+    public function testLoadMergesCookiesUsingExistingValidation(): void
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'existing',
+            'Value' => 'cookie',
+            'Domain' => 'example.com',
+        ]));
+        \file_put_contents($this->file, '[{},{"Name":"loaded","Value":"cookie","Domain":"example.com"}]');
+
+        $jar->load($this->file);
+
+        self::assertCount(2, $jar);
+        self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('existing'));
+        self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('loaded'));
+    }
+
+    public function testLoadDoesNotChangeJarWhenLaterRecordIsInvalid(): void
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'existing',
+            'Value' => 'cookie',
+            'Domain' => 'example.com',
+        ]));
+        $cookies = $jar->toArray();
+        $source = $this->file.'.load';
+
+        try {
+            \file_put_contents($source, '[{"Name":"loaded","Value":"cookie","Domain":"example.com"},{"Name":false,"Value":"invalid"}]');
+
+            try {
+                $jar->load($source);
+                self::fail('Expected RuntimeException was not thrown');
+            } catch (\RuntimeException $e) {
+                self::assertSame("Invalid cookie file: {$source}", $e->getMessage());
+            }
+
+            self::assertSame($cookies, $jar->toArray());
+        } finally {
+            if (\file_exists($source)) {
+                \unlink($source);
+            }
+        }
+    }
+
+    public function testRejectsCookieDataThatCannotBeEncoded(): void
+    {
+        $jar = new FileCookieJar($this->file, true);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => "\x99",
+            'Domain' => 'foo.com',
+        ]));
+
+        try {
+            $jar->save($this->file);
+            self::fail('Expected RuntimeException was not thrown');
+        } catch (\RuntimeException $e) {
+            self::assertSame('Unable to encode cookie data', $e->getMessage());
+            self::assertInstanceOf(\JsonException::class, $e->getPrevious());
+        } finally {
+            $jar->clear();
+        }
     }
 
     /**
@@ -281,10 +367,10 @@ class FileCookieJarTest extends TestCase
     public static function invalidCookieJarContent(): array
     {
         return [
-            [true],
-            ['invalid-data'],
-            [[1]],
-            [[['Name' => false, 'Value' => 'bar']]],
+            'non-list root' => ['null'],
+            'numeric-keyed object root' => ['{"0":{"Name":"foo","Value":"bar"}}'],
+            'non-array record' => ['[1]'],
+            'invalid field type' => ['[{"Name":false,"Value":"bar"}]'],
         ];
     }
 

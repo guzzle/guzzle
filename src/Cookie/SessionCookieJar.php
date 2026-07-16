@@ -39,6 +39,8 @@ class SessionCookieJar extends CookieJar
      *                                    data in session
      * @param bool   $storeSessionCookies Set to true to store session cookies
      *                                    in the cookie jar.
+     *
+     * @throws \RuntimeException if the session contains invalid cookie data
      */
     public function __construct(string $sessionKey, bool $storeSessionCookies = false)
     {
@@ -75,7 +77,9 @@ class SessionCookieJar extends CookieJar
     }
 
     /**
-     * Save cookies to the client session
+     * Save cookies to the client session.
+     *
+     * @throws \RuntimeException if the cookie data cannot be encoded
      */
     public function save(): void
     {
@@ -87,16 +91,19 @@ class SessionCookieJar extends CookieJar
             }
         }
 
-        $json = \json_encode($json);
-        if (false === $json) {
-            throw new \RuntimeException('Unable to encode cookie data');
+        try {
+            $json = \json_encode($json, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \RuntimeException('Unable to encode cookie data', 0, $e);
         }
 
         $_SESSION[$this->sessionKey] = $json;
     }
 
     /**
-     * Load the contents of the client session into the data array
+     * Load cookies from the client session.
+     *
+     * @throws \RuntimeException if the session contains invalid cookie data
      */
     protected function load(): void
     {
@@ -104,26 +111,38 @@ class SessionCookieJar extends CookieJar
             return;
         }
 
+        $message = 'Invalid cookie data';
         $json = $_SESSION[$this->sessionKey];
         if (!\is_string($json)) {
-            throw new \RuntimeException('Invalid cookie data');
+            throw new \RuntimeException($message);
         }
 
-        $data = \json_decode($json, true);
-        if (\is_array($data)) {
-            foreach ($data as $cookie) {
-                if (!\is_array($cookie)) {
-                    throw new \RuntimeException('Invalid cookie data');
-                }
+        try {
+            $data = \json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \RuntimeException($message, 0, $e);
+        }
 
-                try {
-                    $this->setCookie(new SetCookie($cookie));
-                } catch (\InvalidArgumentException $e) {
-                    throw new \RuntimeException('Invalid cookie data', 0, $e);
-                }
+        // Associative decoding turns JSON objects into arrays, so inspect the root syntax too.
+        if (!\is_array($data) || \substr($json, \strspn($json, " \t\n\r"), 1) !== '[') {
+            throw new \RuntimeException($message);
+        }
+
+        $cookies = [];
+        foreach ($data as $cookie) {
+            if (!\is_array($cookie)) {
+                throw new \RuntimeException($message);
             }
-        } elseif (\is_scalar($data) && \strlen((string) $data)) {
-            throw new \RuntimeException('Invalid cookie data');
+
+            try {
+                $cookies[] = new SetCookie($cookie);
+            } catch (\InvalidArgumentException $e) {
+                throw new \RuntimeException($message, 0, $e);
+            }
+        }
+
+        foreach ($cookies as $cookie) {
+            $this->setCookie($cookie);
         }
     }
 }

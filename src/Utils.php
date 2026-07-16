@@ -275,54 +275,6 @@ final class Utils
     }
 
     /**
-     * Wrapper for json_decode that throws when an error occurs.
-     *
-     * @param string $json    JSON data to parse
-     * @param bool   $assoc   When true, returned objects will be converted
-     *                        into associative arrays.
-     * @param int    $depth   User specified recursion depth.
-     * @param int    $options Bitmask of JSON decode options.
-     *
-     * @return object|array|string|int|float|bool|null
-     *
-     * @throws InvalidArgumentException if the JSON cannot be decoded.
-     *
-     * @see https://www.php.net/manual/en/function.json-decode.php
-     */
-    public static function jsonDecode(string $json, bool $assoc = false, int $depth = 512, int $options = 0)
-    {
-        if ($depth < 1) {
-            throw new InvalidArgumentException('json_decode error: Maximum stack depth exceeded');
-        }
-
-        try {
-            return \json_decode($json, $assoc, $depth, $options | \JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
-            throw new InvalidArgumentException('json_decode error: '.$e->getMessage(), 0, $e);
-        }
-    }
-
-    /**
-     * Wrapper for JSON encoding that throws when an error occurs.
-     *
-     * @param mixed $value   The value being encoded
-     * @param int   $options JSON encode option bitmask
-     * @param int   $depth   Set the maximum depth. Must be greater than zero.
-     *
-     * @throws InvalidArgumentException if the JSON cannot be encoded.
-     *
-     * @see https://www.php.net/manual/en/function.json-encode.php
-     */
-    public static function jsonEncode($value, int $options = 0, int $depth = 512): string
-    {
-        try {
-            return \json_encode($value, $options | \JSON_THROW_ON_ERROR, $depth);
-        } catch (\JsonException $e) {
-            throw new InvalidArgumentException('json_encode error: '.$e->getMessage(), 0, $e);
-        }
-    }
-
-    /**
      * Wrapper for the hrtime() or microtime() functions
      * (depending on the PHP version, one of the two is used)
      *

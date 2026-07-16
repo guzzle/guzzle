@@ -581,13 +581,6 @@ on every build (such as `udp://` or `ftp://` for a proxy) still throws
 `InvalidArgumentException`. Only code catching the specific exception type for
 these build-misses needs to change.
 
-#### JSON Helper Exceptions
-
-`Utils::jsonDecode()` and `Utils::jsonEncode()` now wrap native `JsonException`
-failures in `GuzzleHttp\Exception\InvalidArgumentException`, including when
-callers pass `JSON_THROW_ON_ERROR`. Catch the Guzzle exception or inspect
-`getPrevious()` for the native `JsonException`.
-
 #### Per-request Handler Option
 
 Guzzle 7 deprecated the `handler` request option with a warning that Guzzle 8
@@ -1220,6 +1213,24 @@ user or process must read the file, adjust its permissions after saving. Saved
 cookie files also JSON-escape tag characters, and existing cookie files remain
 readable with unchanged cookie values.
 
+Persisted cookie data must now be a JSON list. Each list entry must decode to an
+array, and recognized `SetCookie` fields must use their documented constructor
+types. Malformed JSON, an invalid stored shape, or a recognized field with the
+wrong type causes a `RuntimeException`. Cookie records are constructed before
+any are passed to `setCookie()`, so such failures leave the jar unchanged.
+Numeric or string-keyed JSON objects must be converted to lists.
+
+In Guzzle 7, malformed JSON in a cookie file and `FileCookieJar` encoding
+failures threw `GuzzleHttp\Exception\InvalidArgumentException`. Now they throw
+`RuntimeException`, consistently with other persistent cookie failures. Both
+jars expose the native `JsonException` through `getPrevious()` when JSON
+encoding or decoding fails.
+
+An empty cookie file remains a no-op. A missing or `null` session value still
+means no stored cookie data. Any other session value must be a string containing
+a JSON list; malformed JSON and an empty string are rejected. `SessionCookieJar`
+does not replace the stored value when construction fails.
+
 #### Logging Middleware Formatter Types
 
 `GuzzleHttp\MessageFormatter` is now final. Applications that extended
@@ -1368,13 +1379,13 @@ value must type against `Client` instead, and custom `ClientInterface`
 implementations no longer need to provide `getConfig()`, although keeping the
 method still satisfies the interface.
 
-#### Removed Function API
+#### Removed Function and JSON Helper APIs
 
 The deprecated `GuzzleHttp` namespace functions were removed, along with the
 `functions.php` and `functions_include.php` files and the Composer `files`
 autoload entry that loaded them on every request.
 
-Replace namespaced function calls with the corresponding static methods:
+Replace namespaced function calls with their native or class equivalents:
 
 ```php
 // Before:
@@ -1383,13 +1394,11 @@ use function GuzzleHttp\json_decode;
 $data = json_decode($json);
 
 // After:
-use GuzzleHttp\Utils;
-
-$data = Utils::jsonDecode($json);
+$data = \json_decode($json, false, 512, \JSON_THROW_ON_ERROR);
 ```
 
-| Original Function | Replacement Method |
-|-------------------|--------------------|
+| Original Function | Replacement |
+|-------------------|-------------|
 | `describe_type` | PHP's `get_debug_type` |
 | `headers_from_lines` | `Utils::headersFromLines` |
 | `debug_resource` | `Utils::debugResource` |
@@ -1398,8 +1407,12 @@ $data = Utils::jsonDecode($json);
 | `default_ca_bundle` | none; use the system trust store or `verify` |
 | `normalize_header_keys` | `Utils::normalizeHeaderKeys` |
 | `is_host_in_noproxy` | `ProxyOptions::isHostInNoProxy` |
-| `json_decode` | `Utils::jsonDecode` |
-| `json_encode` | `Utils::jsonEncode` |
+| `json_decode` | PHP's `json_decode` with `JSON_THROW_ON_ERROR` |
+| `json_encode` | PHP's `json_encode` with `JSON_THROW_ON_ERROR` |
+
+The deprecated `Utils::jsonDecode()` and `Utils::jsonEncode()` methods have
+also been removed. Use PHP's native JSON functions with
+`JSON_THROW_ON_ERROR`. Failures throw `JsonException` directly.
 
 See the "Removed Proxy Helper API" section below for `is_host_in_noproxy()`
 behavior differences. The deprecated `Utils::defaultCaBundle()` and the
@@ -1690,7 +1703,7 @@ from the following classes:
 Removed "functions.php", so that Guzzle is truly PSR-4 compliant. The following
 functions can be used as replacements.
 
-- `GuzzleHttp\json_decode` -> `GuzzleHttp\Utils::jsonDecode`
+- `GuzzleHttp\json_decode` -> PHP's `json_decode`
 - `GuzzleHttp\get_path` -> `GuzzleHttp\Utils::getPath`
 - `GuzzleHttp\Utils::setPath` -> `GuzzleHttp\set_path`
 - `GuzzleHttp\Pool::batch` -> `GuzzleHttp\batch`. This function is, however,
