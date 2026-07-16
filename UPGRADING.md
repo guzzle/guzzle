@@ -1121,6 +1121,19 @@ Cookies inserted directly through `CookieJar::setCookie()` or restored from
 persistence are not rejected because they have no response origin. Existing
 `Secure` records still protect against later cookies received over HTTP.
 
+#### Cookie Name Prefixes
+
+`CookieJar::extractCookies()` now recognizes the `__Secure-` and `__Host-`
+prefixes case-insensitively. `__Secure-` response cookies must be `Secure`.
+`__Host-` response cookies must also be host-only, include a `Path` attribute,
+and use the root path. A bare `Path` without `=` remains ignored. Invalid
+prefixed response cookies are ignored.
+
+Cookie names remain case-sensitive, so differently cased names remain distinct.
+Correct the attributes or rename a legacy response cookie that used a reserved
+prefix without satisfying its requirements. Cookies inserted directly through
+`CookieJar::setCookie()` and restored persisted records are unchanged.
+
 #### Host-Only Cookies
 
 Cookies extracted from responses without a `Domain` attribute are now stored as

@@ -58,6 +58,10 @@ Cookie names are case-sensitive. `getCookieByName($name)` matches the exact
 cookie name, so a jar can hold distinct `SID` and `sid` cookies and each must be
 retrieved with its exact case.
 
+When response cookies are extracted, the security prefixes `__Secure-` and
+`__Host-` are recognized case-insensitively even though cookie names remain
+case-sensitive. Invalid prefixed response cookies are ignored.
+
 ```php
 $cookie = $jar->getCookieByName('some_cookie');
 
