@@ -268,6 +268,8 @@ final class Utils
      */
     public static function defaultCaBundle(): string
     {
+        \trigger_deprecation('guzzlehttp/guzzle', '7.1', '%s() is deprecated and will be removed in 8.0. This method is not needed in PHP 5.6+.', __METHOD__);
+
         static $cached = null;
         static $cafiles = [
             // Red Hat, CentOS, Fedora (provided by the ca-certificates package)
