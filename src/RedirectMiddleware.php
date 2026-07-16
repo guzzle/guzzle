@@ -196,9 +196,9 @@ class RedirectMiddleware
         }
 
         $uri = self::redirectUri($uriFactory, $request, $response, $protocols);
-        $idnOptions = Utils::normalizeIdnConversionOption($options['idn_conversion'] ?? null);
+        $idnOptions = Idn::normalizeConversionOption($options['idn_conversion'] ?? null);
         if ($idnOptions !== null) {
-            $uri = Utils::idnUriConvert($uri, $idnOptions);
+            $uri = Idn::convertUri($uri, $idnOptions);
         }
 
         $modify['uri'] = $uri;

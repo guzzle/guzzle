@@ -2442,7 +2442,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         $timeoutRequiresNoSignal = false;
         if (isset($options['timeout'])) {
-            $timeout = Utils::timeoutToMilliseconds($options['timeout'], 'timeout');
+            $timeout = Timeout::toMilliseconds($options['timeout'], 'timeout');
             $timeoutRequiresNoSignal |= $timeout > 0 && $timeout < 1000;
             $conf[\CURLOPT_TIMEOUT_MS] = $timeout;
         }
@@ -2457,7 +2457,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if (isset($options['connect_timeout'])) {
-            $connectTimeout = Utils::timeoutToMilliseconds($options['connect_timeout'], 'connect_timeout');
+            $connectTimeout = Timeout::toMilliseconds($options['connect_timeout'], 'connect_timeout');
             if ($connectTimeout > 0) {
                 $timeoutRequiresNoSignal |= $connectTimeout < 1000;
                 $conf[\CURLOPT_CONNECTTIMEOUT_MS] = $connectTimeout;

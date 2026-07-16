@@ -1419,6 +1419,11 @@ behavior differences. The deprecated `Utils::defaultCaBundle()` and the
 internal `Utils::isUriInNoProxy()` helpers have also been removed; use the
 `verify` option and `ProxyOptions::isUriInNoProxy()` respectively.
 
+The internal `Utils::currentTime()`, `Utils::normalizeIdnConversionOption()`,
+`Utils::idnUriConvert()`, and `Utils::getenv()` helpers have moved to the
+internal `Handler\Clock::now()`, `Idn::normalizeConversionOption()`,
+`Idn::convertUri()`, and `Environment::get()` methods, with unchanged behavior.
+
 #### Removed Middleware Helper APIs
 
 `RetryMiddleware::exponentialDelay()` has been removed. The retry middleware

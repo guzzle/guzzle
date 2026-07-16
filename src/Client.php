@@ -660,9 +660,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $uri = Psr7\UriResolver::resolve(self::createUri($config['base_uri'], $uriFactory), $uri);
         }
 
-        $idnOptions = Utils::normalizeIdnConversionOption($config['idn_conversion'] ?? null);
+        $idnOptions = Idn::normalizeConversionOption($config['idn_conversion'] ?? null);
         if ($idnOptions !== null) {
-            $uri = Utils::idnUriConvert($uri, $idnOptions);
+            $uri = Idn::convertUri($uri, $idnOptions);
         }
 
         if ($uri->getScheme() === '' && $uri->getHost() !== '') {
@@ -811,15 +811,15 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         // We can only trust the HTTP_PROXY environment variable in a CLI
         // process due to the fact that PHP has no reliable mechanism to
         // get environment variables that start with "HTTP_".
-        if (\PHP_SAPI === 'cli' && ($proxy = Utils::getenv('HTTP_PROXY'))) {
+        if (\PHP_SAPI === 'cli' && ($proxy = Environment::get('HTTP_PROXY'))) {
             $defaults['proxy']['http'] = $proxy;
         }
 
-        if ($proxy = Utils::getenv('HTTPS_PROXY')) {
+        if ($proxy = Environment::get('HTTPS_PROXY')) {
             $defaults['proxy']['https'] = $proxy;
         }
 
-        $noProxy = Utils::getenv('NO_PROXY');
+        $noProxy = Environment::get('NO_PROXY');
         if ($noProxy !== null) {
             $noProxy = ProxyOptions::normalizeNoProxy($noProxy);
             if ($noProxy !== []) {

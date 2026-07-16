@@ -19,6 +19,18 @@ parameters:
 			path: src/Cookie/SetCookie.php
 
 		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: src/Environment.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/Environment.php
+
+		-
 			message: '#^Parameter \#1 \$ch of function curl_error expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1
@@ -241,19 +253,7 @@ parameters:
 			path: src/Pool.php
 
 		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
-			count: 1
-			path: src/Utils.php
-
-		-
 			message: '#^Parameter \#1 \$options of class GuzzleHttp\\Handler\\CurlHandler constructor expects array\{handle_factory\?\: GuzzleHttp\\Handler\\CurlFactoryInterface\|null, transport_sharing\?\: mixed\}, array\<string, mixed\> given\.$#'
 			identifier: argument.type
 			count: 2
-			path: src/Utils.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
 			path: src/Utils.php

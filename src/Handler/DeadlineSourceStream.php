@@ -7,7 +7,6 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\StreamDecoratorTrait;
-use GuzzleHttp\Utils;
 use Psr\Http\Message\StreamInterface;
 
 /**
@@ -42,7 +41,7 @@ final class DeadlineSourceStream implements StreamInterface
 
     /**
      * @param StreamInterface $stream      Transport stream in non-blocking mode.
-     * @param float           $deadline    Deadline based on Utils::currentTime().
+     * @param float           $deadline    Deadline based on Clock::now().
      * @param float|null      $readTimeout Optional idle timeout per read, in seconds.
      */
     public function __construct(StreamInterface $stream, float $deadline, ?float $readTimeout)
@@ -57,7 +56,7 @@ final class DeadlineSourceStream implements StreamInterface
         $idleStart = null;
 
         while (true) {
-            $remaining = $this->deadline - Utils::currentTime();
+            $remaining = $this->deadline - Clock::now();
             if ($remaining <= 0) {
                 $this->timedOut = true;
 
@@ -72,7 +71,7 @@ final class DeadlineSourceStream implements StreamInterface
                 return '';
             }
 
-            $now = Utils::currentTime();
+            $now = Clock::now();
             if ($idleStart === null) {
                 $idleStart = $now;
             }

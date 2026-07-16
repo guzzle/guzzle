@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Handler\Clock;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlHandler;
@@ -24,7 +25,6 @@ use GuzzleHttp\Tests\SpyResponse;
 use GuzzleHttp\Tests\SpyStream;
 use GuzzleHttp\Tests\StrictReadableResourceStreamFactory;
 use GuzzleHttp\TransportSharing;
-use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
@@ -235,9 +235,9 @@ class CurlHandlerTest extends TestCase
         Server::enqueue([$response]);
         $a = new CurlHandler();
         $request = new Request('GET', Server::$url);
-        $s = Utils::currentTime();
+        $s = Clock::now();
         $a($request, ['delay' => 0.1])->wait();
-        self::assertGreaterThan(0.0001, Utils::currentTime() - $s);
+        self::assertGreaterThan(0.0001, Clock::now() - $s);
     }
 
     public function testTransportSharingOptionAppliesCurlShare(): void

@@ -10,6 +10,7 @@ use GuzzleHttp\Exception\HandlerClosedException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Handler\Clock;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlMultiHandler;
@@ -24,7 +25,6 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\TransportSharing;
-use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
@@ -94,7 +94,7 @@ class CurlMultiHandlerTest extends TestCase
         if (\PHP_VERSION_ID < 80100) {
             $delays->setAccessible(true);
         }
-        $delays->setValue($handler, [1 => Utils::currentTime() + 0.5]);
+        $delays->setValue($handler, [1 => Clock::now() + 0.5]);
 
         $timeToNext = new \ReflectionMethod(CurlMultiHandler::class, 'timeToNext');
         if (\PHP_VERSION_ID < 80100) {
@@ -112,7 +112,7 @@ class CurlMultiHandlerTest extends TestCase
         if (\PHP_VERSION_ID < 80100) {
             $delays->setAccessible(true);
         }
-        $delays->setValue($handler, [1 => Utils::currentTime() + 1.0e15]);
+        $delays->setValue($handler, [1 => Clock::now() + 1.0e15]);
 
         $timeToNext = new \ReflectionMethod(CurlMultiHandler::class, 'timeToNext');
         if (\PHP_VERSION_ID < 80100) {
@@ -693,7 +693,7 @@ class CurlMultiHandlerTest extends TestCase
         $id = \array_key_first($handles);
         self::assertIsInt($id);
 
-        self::setMultiProperty($handler, 'delays', [$id => Utils::currentTime() - 1]);
+        self::setMultiProperty($handler, 'delays', [$id => Clock::now() - 1]);
         $handler->tick();
 
         self::assertSame([], self::readMultiProperty($handler, 'handles'));
@@ -2415,10 +2415,10 @@ class CurlMultiHandlerTest extends TestCase
         Server::flush();
         Server::enqueue([new Response()]);
         $a = new CurlMultiHandler();
-        $expected = Utils::currentTime() + (100 / 1000);
+        $expected = Clock::now() + (100 / 1000);
         $response = $a(new Request('GET', Server::$url), ['delay' => 100]);
         $response->wait();
-        self::assertGreaterThanOrEqual($expected, Utils::currentTime());
+        self::assertGreaterThanOrEqual($expected, Clock::now());
     }
 
     public function testManualTickRejectsPromiseWhenFinishThrows(): void
@@ -3131,7 +3131,7 @@ class CurlMultiHandlerTest extends TestCase
             $id = \array_key_first($handles);
 
             $_SERVER['curl_multi_add_handle_result'] = \CURLM_INTERNAL_ERROR;
-            self::setMultiProperty($handler, 'delays', [$id => Utils::currentTime() - 1]);
+            self::setMultiProperty($handler, 'delays', [$id => Clock::now() - 1]);
 
             $handler->tick();
 
