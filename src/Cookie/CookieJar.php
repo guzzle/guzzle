@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Cookie;
 
-use GuzzleHttp\Psr7;
+use GuzzleHttp\HostIdentity;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -238,7 +238,7 @@ class CookieJar implements CookieJarInterface
     public function extractCookies(RequestInterface $request, ResponseInterface $response): void
     {
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
-            $requestHost = Psr7\Utils::asciiToLower($request->getUri()->getHost());
+            $requestHost = HostIdentity::canonicalHost($request->getUri()->getHost());
 
             foreach ($cookieHeader as $cookie) {
                 $sc = SetCookie::fromString($cookie);
@@ -292,7 +292,7 @@ class CookieJar implements CookieJarInterface
         $values = [];
         $uri = $request->getUri();
         $scheme = $uri->getScheme();
-        $host = $uri->getHost();
+        $host = HostIdentity::canonicalHost($uri->getHost());
         $path = $uri->getPath() ?: '/';
 
         foreach ($this->cookies as $cookie) {

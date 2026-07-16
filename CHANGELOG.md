@@ -24,6 +24,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
+- Canonicalize IPv6 hosts in Digest challenge cache keys
+- Canonicalize IPv6 hosts in cookie domains, host-only identities, and domain matching
+- Restrict cookie domain suffix matching to valid non-literal, nonnumeric host names
 - Hardened `FileCookieJar` and `SessionCookieJar` persistence against unsafe unserialization
 - Reject native PHP serialization of runtime objects
 - Restrict persisted `FileCookieJar` cookie files to owner-only permissions

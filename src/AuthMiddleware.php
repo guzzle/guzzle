@@ -506,7 +506,7 @@ final class AuthMiddleware
     {
         $uri = $request->getUri();
         $scheme = Psr7\Utils::asciiToLower($uri->getScheme());
-        $host = Psr7\Utils::asciiToLower($uri->getHost());
+        $host = HostIdentity::canonicalHost($uri->getHost());
 
         if (($scheme !== 'http' && $scheme !== 'https') || $host === '') {
             return null;
@@ -514,7 +514,7 @@ final class AuthMiddleware
 
         $port = $uri->getPort() ?? ($scheme === 'https' ? 443 : 80);
 
-        return $scheme.'://'.$host.':'.$port.'|'.Psr7\Utils::asciiToLower($request->getHeaderLine('Host'));
+        return $scheme.'://'.$host.':'.$port.'|'.HostIdentity::canonicalHostHeader($request->getHeaderLine('Host'));
     }
 
     private function digestCredentialKey(string $username, string $password): string

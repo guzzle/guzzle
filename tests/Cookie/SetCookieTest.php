@@ -297,6 +297,59 @@ class SetCookieTest extends TestCase
         self::assertFalse($c->isExpired());
     }
 
+    public function testMatchesIpv6DomainsAcrossSpellings(): void
+    {
+        $cookie = new SetCookie(['Domain' => '[2001:0DB8:0:0:0:0:0:1]']);
+        self::assertSame('[2001:db8::1]', $cookie->getDomain());
+        self::assertTrue($cookie->matchesDomain('[2001:0db8::1]'));
+        self::assertTrue($cookie->matchesDomain('[2001:db8::1]'));
+        self::assertFalse($cookie->matchesDomain('[2001:db8::2]'));
+    }
+
+    public function testMatchesBareIpv6DomainsAcrossSpellings(): void
+    {
+        $cookie = new SetCookie(['Domain' => '2001:0DB8:0:0:0:0:0:1']);
+        self::assertSame('2001:db8::1', $cookie->getDomain());
+        self::assertTrue($cookie->matchesDomain('2001:0db8::1'));
+        self::assertFalse($cookie->matchesDomain('[2001:db8::1]'));
+        self::assertFalse($cookie->matchesDomain('2001:db8::2'));
+
+        $cookie->setDomain('2001:0DB8::2');
+        self::assertSame('2001:db8::2', $cookie->getDomain());
+    }
+
+    public function testZoneBearingIpv6DomainsMatchExactTextOnly(): void
+    {
+        $cookie = new SetCookie(['Domain' => '[fe80::1%25eth0]']);
+        self::assertTrue($cookie->matchesDomain('[fe80::1%25ETH0]'));
+        self::assertFalse($cookie->matchesDomain('[fe80::1]'));
+        self::assertFalse($cookie->matchesDomain('x.[fe80::1%25eth0]'));
+    }
+
+    public function testLiteralLikeDomainsDoNotSuffixMatch(): void
+    {
+        $ipvFuture = new SetCookie(['Domain' => '[v1.AB]']);
+        self::assertTrue($ipvFuture->matchesDomain('[v1.ab]'));
+        self::assertFalse($ipvFuture->matchesDomain('x.[v1.ab]'));
+
+        $malformed = new SetCookie(['Domain' => '[::1']);
+        self::assertTrue($malformed->matchesDomain('[::1'));
+        self::assertFalse($malformed->matchesDomain('x.[::1'));
+
+        $bareZoned = new SetCookie(['Domain' => 'fe80::1%eth0']);
+        self::assertTrue($bareZoned->matchesDomain('FE80::1%ETH0'));
+        self::assertFalse($bareZoned->matchesDomain('x.fe80::1%eth0'));
+    }
+
+    public function testInvalidRequestHostsDoNotSuffixMatch(): void
+    {
+        $cookie = new SetCookie(['Domain' => 'example.com']);
+        self::assertTrue($cookie->matchesDomain('www.example.com'));
+        self::assertFalse($cookie->matchesDomain('[v1.ab].example.com'));
+        self::assertFalse($cookie->matchesDomain('fe80::1.example.com'));
+        self::assertFalse($cookie->matchesDomain("evil\t.example.com"));
+    }
+
     public function testMatchesDomain(): void
     {
         $cookie = new SetCookie();
@@ -349,6 +402,26 @@ class SetCookieTest extends TestCase
 
         self::assertTrue($cookie->matchesDomain('1'));
         self::assertFalse($cookie->matchesDomain('evil.1'));
+    }
+
+    public function testHexadecimalNumericDomainsAreExactMatchOnly(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '0x7f000001', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('0x7f000001'));
+        self::assertFalse($cookie->matchesDomain('evil.0x7f000001'));
+
+        $dotted = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '0177.0.0.0x1', 'Path' => '/']);
+
+        self::assertTrue($dotted->matchesDomain('0177.0.0.0x1'));
+        self::assertFalse($dotted->matchesDomain('evil.0177.0.0.0x1'));
+    }
+
+    public function testNonNumericHexPrefixedDomainsKeepSuffixMatching(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '0xname', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('sub.0xname'));
     }
 
     public function testBareUnbracketedIpv6DomainIsExactMatchOnly(): void
