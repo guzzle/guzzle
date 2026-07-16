@@ -49,6 +49,12 @@ parameters:
 			path: src/Cookie/CookieJar.php
 
 		-
+			message: '#^Parameter \#1 \$data of class GuzzleHttp\\Cookie\\SetCookie constructor expects array, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Cookie/FileCookieJar.php
+
+		-
 			message: '#^Call to function is_bool\(\) with bool will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 3

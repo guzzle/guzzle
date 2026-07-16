@@ -404,6 +404,33 @@ class UtilsTest extends TestCase
         self::assertSame('true', \GuzzleHttp\json_encode(true));
     }
 
+    public function testDeprecatesJsonHelpers()
+    {
+        $deprecations = [];
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecations): bool {
+            if ($severity === \E_USER_DEPRECATED) {
+                $deprecations[] = $message;
+
+                return true;
+            }
+
+            return false;
+        });
+
+        try {
+            Utils::jsonEncode(true);
+            Utils::jsonDecode('true');
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertCount(2, $deprecations);
+        self::assertStringContainsString('GuzzleHttp\\Utils::jsonEncode() is deprecated', $deprecations[0]);
+        self::assertStringContainsString('Use PHP\'s json_encode() instead', $deprecations[0]);
+        self::assertStringContainsString('GuzzleHttp\\Utils::jsonDecode() is deprecated', $deprecations[1]);
+        self::assertStringContainsString('Use PHP\'s json_decode() instead', $deprecations[1]);
+    }
+
     public function testEncodesJsonAndThrowsOnError()
     {
         $this->expectException(\InvalidArgumentException::class);
