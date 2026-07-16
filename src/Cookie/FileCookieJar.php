@@ -135,6 +135,7 @@ class FileCookieJar extends CookieJar
             throw new \RuntimeException($message, 0, $e);
         }
 
+        // Associative decoding turns JSON objects into arrays, so inspect the root syntax too.
         if (!\is_array($data) || \substr($json, \strspn($json, " \t\n\r"), 1) !== '[') {
             throw new \RuntimeException($message);
         }

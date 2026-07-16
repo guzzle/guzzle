@@ -65,6 +65,7 @@ class FileCookieJarTest extends TestCase
 
         $jar->load($this->file);
 
+        self::assertCount(2, $jar);
         self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('existing'));
         self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('loaded'));
     }

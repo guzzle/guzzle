@@ -1227,6 +1227,10 @@ wrong type causes a `RuntimeException`. Cookie records are constructed before
 any are passed to `setCookie()`, so such failures leave the jar unchanged.
 Numeric or string-keyed JSON objects must be converted to lists.
 
+Malformed JSON in a cookie file previously threw
+`GuzzleHttp\Exception\InvalidArgumentException`. It now throws a
+`RuntimeException`, consistently with other invalid persisted cookie data.
+
 An empty cookie file remains a no-op. A missing or `null` session value still
 means no stored cookie data. Any other session value must be a string containing
 a JSON list; malformed JSON and an empty string are rejected. `SessionCookieJar`

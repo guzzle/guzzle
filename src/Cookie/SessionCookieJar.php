@@ -109,12 +109,11 @@ class SessionCookieJar extends CookieJar
             return;
         }
 
+        $message = 'Invalid cookie data';
         $json = $_SESSION[$this->sessionKey];
         if (!\is_string($json)) {
-            throw new \RuntimeException('Invalid cookie data');
+            throw new \RuntimeException($message);
         }
-
-        $message = 'Invalid cookie data';
 
         try {
             $data = Utils::jsonDecode($json, true);
@@ -122,6 +121,7 @@ class SessionCookieJar extends CookieJar
             throw new \RuntimeException($message, 0, $e);
         }
 
+        // Associative decoding turns JSON objects into arrays, so inspect the root syntax too.
         if (!\is_array($data) || \substr($json, \strspn($json, " \t\n\r"), 1) !== '[') {
             throw new \RuntimeException($message);
         }

@@ -84,7 +84,7 @@ class SessionCookieJarTest extends TestCase
 
     public function testLoadsEmptyJsonList(): void
     {
-        $_SESSION[$this->sessionVar] = '[]';
+        $_SESSION[$this->sessionVar] = " \n[]";
 
         $jar = new SessionCookieJar($this->sessionVar);
         self::assertSame([], $jar->getIterator()->getArrayCopy());
