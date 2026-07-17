@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests\Exception;
 
+use GuzzleHttp\BodySummarizerInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Psr7\DiagnosticValue;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Client\RequestExceptionInterface;
+use Psr\Http\Message\MessageInterface;
 
 /**
  * @covers \GuzzleHttp\Exception\RequestException
@@ -66,6 +69,25 @@ class RequestExceptionTest extends TestCase
         self::assertInstanceOf(ServerException::class, $e);
     }
 
+    public function testEscapesUnsafeGeneratedResponseDiagnosticsWithoutChangingTheResponse(): void
+    {
+        $reason = "Internal \u{009B}Error";
+        $response = new Response(500, [], 'raw body', '1.1', $reason);
+        $summarizer = new class implements BodySummarizerInterface {
+            public function summarize(MessageInterface $message): ?string
+            {
+                return "summary\x1B\xFF";
+            }
+        };
+
+        $e = RequestException::create(new Request('GET', '/'), $response, null, $summarizer);
+
+        self::assertSame("Server error: `GET /` resulted in a `500 Internal \\x9BError` response:\nsummary\\x1B\\xFF\n", $e->getMessage());
+        self::assertSame($response, $e->getResponse());
+        self::assertSame($reason, $e->getResponse()->getReasonPhrase());
+        self::assertSame('raw body', (string) $e->getResponse()->getBody());
+    }
+
     public function testCreatesGenericErrorResponseException(): void
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(300));
@@ -112,7 +134,7 @@ class RequestExceptionTest extends TestCase
         );
         $e = RequestException::create(new Request('GET', '/'), $response);
         self::assertStringContainsString(
-            $content,
+            DiagnosticValue::escape($content),
             $e->getMessage()
         );
         self::assertInstanceOf(RequestException::class, $e);

@@ -677,7 +677,7 @@ final class AuthMiddleware
             return $response->withBody($target);
         } catch (\Exception $e) {
             throw new ResponseException(
-                $e->getMessage() !== '' ? $e->getMessage() : 'Failed to write the response body',
+                $e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed to write the response body',
                 $request,
                 $response,
                 $e

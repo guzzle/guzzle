@@ -2009,6 +2009,27 @@ class CurlFactoryTest extends TestCase
         self::assertSame('Failed to connect via http://***@proxy.example.com:8125', $redacted);
     }
 
+    public function testEscapesCurlErrorsAfterRedactionWithoutChangingTimeoutClassification(): void
+    {
+        $proxy = "http://user:se\x01cr\x7Fet@proxy.example.com:8125";
+        $easy = new EasyHandle();
+        $easy->request = new Psr7\Request('GET', 'http://example.com');
+        $easy->errno = \CURLE_OPERATION_TIMEOUTED;
+        $easy->effectiveProxy = $proxy;
+        $promise = $this->createCurlRejection($easy, [
+            'errno' => \CURLE_OPERATION_TIMEOUTED,
+            'error' => "Connection timeout via {$proxy}: transport \x1B\xFF",
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected ConnectTimeoutException');
+        } catch (ConnectTimeoutException $e) {
+            self::assertSame('cURL error 28: Connection timeout via http://***@proxy.example.com:8125: transport \\x1B\\xFF (see https://curl.se/libcurl/c/libcurl-errors.html) for http://example.com', $e->getMessage());
+            self::assertStringNotContainsString('se\\x01cr\\x7Fet', $e->getMessage());
+        }
+    }
+
     public function testRedactsUnparsableProxyCredentialsIndependentlyOfCurlErrorText(): void
     {
         $proxy = 'http://user:secret@127.0.0.1:99999999';
@@ -8955,7 +8976,7 @@ class CurlFactoryTest extends TestCase
         ]);
         $request = new Psr7\Request('GET', Server::$url);
         $handler = $handlerFactory();
-        $previous = new \RuntimeException('sink failed');
+        $previous = new \RuntimeException("sink \x1B\xFF failed");
         $stats = null;
         $writeCalled = false;
         $sink = Psr7\FnStream::decorate(Psr7\Utils::streamFor(), [
@@ -8978,7 +8999,7 @@ class CurlFactoryTest extends TestCase
         } catch (ResponseException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertSame(200, $e->getResponse()->getStatusCode());
-            self::assertSame('sink failed', $e->getMessage());
+            self::assertSame('sink \\x1B\\xFF failed', $e->getMessage());
             self::assertSame($previous, $e->getPrevious());
             self::assertNotInstanceOf(ResponseTimeoutException::class, $e);
             self::assertNotInstanceOf(ResponseTransferException::class, $e);

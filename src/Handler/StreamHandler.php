@@ -114,7 +114,7 @@ final class StreamHandler
     {
         foreach ($options as $name => $_) {
             if (!isset(self::KNOWN_CONSTRUCTOR_OPTIONS[$name])) {
-                throw new InvalidArgumentException(\sprintf('Invalid StreamHandler constructor option "%s".', (string) $name));
+                throw new InvalidArgumentException(\sprintf('Invalid StreamHandler constructor option "%s".', Psr7\DiagnosticValue::escape((string) $name)));
             }
         }
 
@@ -219,16 +219,17 @@ final class StreamHandler
             }
 
             if (!$e instanceof TransferException) {
-                $message = $e->getMessage();
-                if (self::isSendError($message)) {
-                    $e = self::isConnectTimeoutError($message)
+                $rawMessage = $e->getMessage();
+                $message = Psr7\DiagnosticValue::escape($rawMessage);
+                if (self::isSendError($rawMessage)) {
+                    $e = self::isConnectTimeoutError($rawMessage)
                         ? new NetworkTimeoutException($message, $request, $e)
                         : new NetworkException($message, $request, $e);
-                } elseif (self::isConnectTimeoutError($message)) {
+                } elseif (self::isConnectTimeoutError($rawMessage)) {
                     $e = new ConnectTimeoutException($message, $request, $e);
-                } elseif (self::isConnectionError($message)) {
+                } elseif (self::isConnectionError($rawMessage)) {
                     $e = new ConnectException($message, $request, $e);
-                } elseif (self::isNetworkError($message)) {
+                } elseif (self::isNetworkError($rawMessage)) {
                     $e = new NetworkException($message, $request, $e);
                 } else {
                     $e = new RequestException($message, $request, 0, $e);
@@ -390,7 +391,7 @@ final class StreamHandler
 
             $reason = $framingFailure instanceof \OverflowException
                 ? new ResponseException($framingFailure->getMessage(), $request, $response, $framingFailure)
-                : new ResponseTransferException($framingFailure->getMessage(), $request, $response, $framingFailure);
+                : new ResponseTransferException(Psr7\DiagnosticValue::escape($framingFailure->getMessage()), $request, $response, $framingFailure);
             $this->invokeStats($options, $request, $startTime, $response, $reason);
 
             /** @var PromiseInterface<ResponseInterface, mixed> */
@@ -679,12 +680,12 @@ final class StreamHandler
                     $e
                 );
             } catch (\OverflowException $e) {
-                throw new ResponseException($e->getMessage(), $request, $response, $e);
+                throw new ResponseException(Psr7\DiagnosticValue::escape($e->getMessage()), $request, $response, $e);
             } catch (\Exception $e) {
                 // Any other response-body transfer failure surfaces as a
                 // ResponseTransferException carrying the response.
                 throw new ResponseTransferException(
-                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed while transferring the response body',
+                    $e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed while transferring the response body',
                     $request,
                     $response,
                     $e
@@ -706,7 +707,7 @@ final class StreamHandler
                 }
             } catch (\Exception $e) {
                 throw new ResponseException(
-                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the response body',
+                    $e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed to rewind the response body',
                     $request,
                     $response,
                     $e
@@ -743,7 +744,7 @@ final class StreamHandler
                     );
                 } catch (\Exception $e) {
                     throw new ResponseException(
-                        $e->getMessage() !== '' ? $e->getMessage() : 'Failed to write the response body',
+                        $e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed to write the response body',
                         $request,
                         $response,
                         $e
@@ -958,15 +959,12 @@ final class StreamHandler
         }
 
         if (!\in_array($scheme, ['http', 'https'], true)) {
-            throw new RequestException(\sprintf("The scheme '%s' is not supported.", $scheme), $request);
+            throw new RequestException(\sprintf("The scheme '%s' is not supported.", Psr7\DiagnosticValue::escape($scheme)), $request);
         }
 
         $protocols = Utils::normalizeProtocols($options['protocols'] ?? ['http', 'https']);
         if (!\in_array($scheme, $protocols, true)) {
-            throw new RequestException(
-                \sprintf('The scheme "%s" is not allowed by the protocols request option.', $scheme),
-                $request
-            );
+            throw new RequestException(\sprintf('The scheme "%s" is not allowed by the protocols request option.', Psr7\DiagnosticValue::escape($scheme)), $request);
         }
 
         if ($uri->getHost() === '') {
@@ -1014,7 +1012,7 @@ final class StreamHandler
             if ('v4' === $options['force_ip_resolve']) {
                 $records = \dns_get_record($uri->getHost(), \DNS_A);
                 if (false === $records || !isset($records[0]['ip'])) {
-                    throw new ConnectException(\sprintf("Could not resolve IPv4 address for host '%s'", $uri->getHost()), $request);
+                    throw new ConnectException(\sprintf("Could not resolve IPv4 address for host '%s'", Psr7\DiagnosticValue::escape($uri->getHost())), $request);
                 }
 
                 return $uri->withHost($records[0]['ip']);
@@ -1022,7 +1020,7 @@ final class StreamHandler
             if ('v6' === $options['force_ip_resolve']) {
                 $records = \dns_get_record($uri->getHost(), \DNS_AAAA);
                 if (false === $records || !isset($records[0]['ipv6'])) {
-                    throw new ConnectException(\sprintf("Could not resolve IPv6 address for host '%s'", $uri->getHost()), $request);
+                    throw new ConnectException(\sprintf("Could not resolve IPv6 address for host '%s'", Psr7\DiagnosticValue::escape($uri->getHost())), $request);
                 }
 
                 return $uri->withHost('['.$records[0]['ipv6'].']');
@@ -1142,8 +1140,8 @@ final class StreamHandler
                 $replacement = $conflictingOptions[$wrapper][$option];
                 throw new InvalidArgumentException(\sprintf(
                     'Passing stream_context.%s.%s in the "stream_context" request option is not supported because it conflicts with Guzzle-managed request handling. Use %s instead.',
-                    $wrapper,
-                    $option,
+                    Psr7\DiagnosticValue::escape($wrapper),
+                    Psr7\DiagnosticValue::escape($option),
                     $replacement
                 ));
             }
@@ -1181,17 +1179,17 @@ final class StreamHandler
                             continue;
                         }
 
-                        $unsupportedOptions[] = \sprintf('stream_context.%s.%s', (string) $wrapper, (string) $option);
+                        $unsupportedOptions[] = \sprintf('stream_context.%s.%s', Psr7\DiagnosticValue::escape((string) $wrapper), Psr7\DiagnosticValue::escape((string) $option));
                     }
                 } else {
-                    $unsupportedOptions[] = \sprintf('stream_context.%s', (string) $wrapper);
+                    $unsupportedOptions[] = \sprintf('stream_context.%s', Psr7\DiagnosticValue::escape((string) $wrapper));
                 }
 
                 continue;
             }
 
             if (!\is_array($contextOptions)) {
-                $unsupportedOptions[] = \sprintf('stream_context.%s', $wrapper);
+                $unsupportedOptions[] = \sprintf('stream_context.%s', Psr7\DiagnosticValue::escape($wrapper));
 
                 continue;
             }
@@ -1202,7 +1200,7 @@ final class StreamHandler
                 }
 
                 if (!\is_string($option) || !\array_key_exists($option, $supportedOptions[$wrapper])) {
-                    $unsupportedOptions[] = \sprintf('stream_context.%s.%s', $wrapper, (string) $option);
+                    $unsupportedOptions[] = \sprintf('stream_context.%s.%s', Psr7\DiagnosticValue::escape($wrapper), Psr7\DiagnosticValue::escape((string) $option));
                 }
             }
         }
@@ -1371,7 +1369,7 @@ final class StreamHandler
         // cannot on any build, so reject them as a caller error rather than
         // install an unusable proxy.
         if ($scheme !== 'http' && !self::isRawTransportName($scheme)) {
-            throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the stream handler.', $scheme));
+            throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the stream handler.', Psr7\DiagnosticValue::escape($scheme)));
         }
 
         // A recognized SSL/TLS transport may still be absent from this build
@@ -1380,7 +1378,7 @@ final class StreamHandler
         // error above. http maps to tcp and tcp is always registered, so only
         // the SSL/TLS family reaches the stream_get_transports() lookup.
         if (!\in_array($scheme, ['http', 'tcp'], true) && !\in_array($scheme, \stream_get_transports(), true)) {
-            throw new RequestException(\sprintf('The "%s" proxy transport is not available in this PHP build.', $scheme), $request);
+            throw new RequestException(\sprintf('The "%s" proxy transport is not available in this PHP build.', Psr7\DiagnosticValue::escape($scheme)), $request);
         }
 
         $parsed = $this->parseProxy($proxyUri, $scheme);
@@ -1494,7 +1492,7 @@ final class StreamHandler
         if (\is_string($value)) {
             $context['ssl']['cafile'] = $value;
             if (!\file_exists($value)) {
-                throw new \RuntimeException("SSL CA bundle not found: $value");
+                throw new \RuntimeException(\sprintf('SSL CA bundle not found: %s', Psr7\DiagnosticValue::escape($value)));
             }
         } elseif ($value !== true) {
             throw new InvalidArgumentException('Invalid verify request option');
@@ -1513,7 +1511,7 @@ final class StreamHandler
         [$value, $passphrase] = self::normalizeTlsFileOption('cert', $value);
 
         if (!\file_exists($value)) {
-            throw new \RuntimeException("SSL certificate not found: {$value}");
+            throw new \RuntimeException(\sprintf('SSL certificate not found: %s', Psr7\DiagnosticValue::escape($value)));
         }
 
         self::setTlsPassphrase($context, $passphrase, 'cert');
@@ -1536,7 +1534,7 @@ final class StreamHandler
         [$value, $passphrase] = self::normalizeTlsFileOption('ssl_key', $value);
 
         if (!\file_exists($value)) {
-            throw new \RuntimeException("SSL private key not found: {$value}");
+            throw new \RuntimeException(\sprintf('SSL private key not found: %s', Psr7\DiagnosticValue::escape($value)));
         }
 
         self::setTlsPassphrase($context, $passphrase, 'ssl_key');

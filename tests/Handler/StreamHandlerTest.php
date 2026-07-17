@@ -3020,6 +3020,7 @@ class StreamHandlerTest extends TestCase
         $this->expectExceptionMessage('stream_context.http.ignore_errors');
         $this->expectExceptionMessage('stream_context.ssl.SNI_server_name');
         $this->expectExceptionMessage('stream_context.custom.foo');
+        $this->expectExceptionMessage('stream_context.cus\\x00tom.f\\xFFoo');
 
         $this->getSendResult([
             'stream_context' => [
@@ -3032,6 +3033,9 @@ class StreamHandlerTest extends TestCase
                 ],
                 'custom' => [
                     'foo' => true,
+                ],
+                "cus\x00tom" => [
+                    "f\xFFoo" => true,
                 ],
             ],
         ]);
@@ -3408,7 +3412,7 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $stats = null;
         $exception = null;
-        $previous = new \Exception('sink failed');
+        $previous = new \Exception("sink \x1B\xFF failed");
         $sink = FnStream::decorate(Psr7\Utils::streamFor(), [
             'write' => static function (string $data) use ($previous): int {
                 throw $previous;
@@ -3429,6 +3433,7 @@ class StreamHandlerTest extends TestCase
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
             $exception = $e;
+            self::assertSame('sink \\x1B\\xFF failed', $e->getMessage());
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());

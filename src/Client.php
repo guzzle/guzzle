@@ -12,6 +12,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\DiagnosticValue;
 use GuzzleHttp\Psr7\HttpFactory;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
@@ -1053,7 +1054,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             } elseif (\is_float($value) && !\is_finite($value)) {
                 throw new InvalidArgumentException(\sprintf(
                     'Passing a non-finite float to request option "%s" is invalid; non-finite floats are not supported.',
-                    $option.'.'.(string) $key
+                    DiagnosticValue::escape($option.'.'.(string) $key)
                 ));
             }
         }
@@ -1367,7 +1368,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         throw new InvalidArgumentException(\sprintf(
             'Passing %s to request option "%s" is invalid; expected %s.',
             \get_debug_type($value),
-            $option,
+            DiagnosticValue::escape($option),
             $expected
         ));
     }

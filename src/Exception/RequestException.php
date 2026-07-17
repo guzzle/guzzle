@@ -6,6 +6,7 @@ namespace GuzzleHttp\Exception;
 
 use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\BodySummarizerInterface;
+use GuzzleHttp\Psr7\DiagnosticValue;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -63,16 +64,16 @@ class RequestException extends TransferException implements RequestExceptionInte
         $message = \sprintf(
             '%s: `%s %s` resulted in a `%s %s` response',
             $label,
-            $request->getMethod(),
-            $uri->__toString(),
+            DiagnosticValue::escape($request->getMethod()),
+            DiagnosticValue::escape($uri->__toString()),
             $response->getStatusCode(),
-            $response->getReasonPhrase()
+            DiagnosticValue::escape($response->getReasonPhrase())
         );
 
         $summary = ($bodySummarizer ?? new BodySummarizer())->summarize($response);
 
         if ($summary !== null) {
-            $message .= ":\n{$summary}\n";
+            $message .= \sprintf(":\n%s\n", DiagnosticValue::escape($summary));
         }
 
         if ($level === 4) {

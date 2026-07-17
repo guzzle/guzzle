@@ -384,7 +384,7 @@ final class CurlFactory implements CurlFactoryInterface
                     \sprintf(
                         'Unable to set cURL option %s: %s',
                         self::formatCurlOption($option),
-                        $e->getMessage()
+                        Psr7\DiagnosticValue::escape($e->getMessage())
                     ),
                     0,
                     $e
@@ -424,7 +424,7 @@ final class CurlFactory implements CurlFactoryInterface
                     \sprintf(
                         'Unable to set cURL option %s: %s',
                         self::formatCurlOption($option),
-                        $e->getMessage()
+                        Psr7\DiagnosticValue::escape($e->getMessage())
                     ),
                     0,
                     $e
@@ -544,7 +544,7 @@ final class CurlFactory implements CurlFactoryInterface
         $scheme = ProxyOptions::proxyScheme($selectedProxy);
 
         if (!\in_array($scheme, ['http', 'https', 'socks4', 'socks4a', 'socks5', 'socks5h'], true)) {
-            throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the cURL handler.', $scheme));
+            throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the cURL handler.', Psr7\DiagnosticValue::escape($scheme)));
         }
 
         if ($scheme === 'https' && !CurlVersion::supportsHttpsProxy()) {
@@ -558,7 +558,7 @@ final class CurlFactory implements CurlFactoryInterface
     private static function formatCurlOption($option): string
     {
         if (!\is_int($option)) {
-            return \sprintf('"%s"', $option);
+            return \sprintf('"%s"', Psr7\DiagnosticValue::escape((string) $option));
         }
 
         static $names = null;
@@ -826,7 +826,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if (!\in_array($scheme, ['http', 'https'], true)) {
-            throw new RequestException(\sprintf("The scheme '%s' is not supported.", $scheme), $request);
+            throw new RequestException(\sprintf("The scheme '%s' is not supported.", Psr7\DiagnosticValue::escape($scheme)), $request);
         }
     }
 
@@ -993,7 +993,7 @@ final class CurlFactory implements CurlFactoryInterface
             }
         } catch (\Exception $e) {
             $reason = new ResponseException(
-                $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the response body',
+                $e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed to rewind the response body',
                 $easy->request,
                 $response,
                 $e
@@ -1230,7 +1230,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ($easy->bodyReadException) {
             $message = $easy->bodyReadException->getMessage() !== ''
-                ? $easy->bodyReadException->getMessage()
+                ? Psr7\DiagnosticValue::escape($easy->bodyReadException->getMessage())
                 : 'Failed to read the request body';
 
             return self::createRequestOrResponseRejection($easy, $message, $easy->bodyReadException);
@@ -1248,7 +1248,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ($easy->sinkWriteException) {
             $message = $easy->sinkWriteException->getMessage() !== ''
-                ? $easy->sinkWriteException->getMessage()
+                ? Psr7\DiagnosticValue::escape($easy->sinkWriteException->getMessage())
                 : 'Failed to write the response body';
 
             return self::createRequestOrResponseRejection($easy, $message, $easy->sinkWriteException);
@@ -1275,26 +1275,28 @@ final class CurlFactory implements CurlFactoryInterface
 
         $uri = $easy->request->getUri();
 
-        $sanitizedError = self::sanitizeCurlError($ctx['error'] ?? '', $uri, $easy->effectiveProxy);
+        $nativeError = $ctx['error'] ?? '';
+        $sanitizedError = self::sanitizeCurlError($nativeError, $uri, $easy->effectiveProxy);
+        $diagnosticError = Psr7\DiagnosticValue::escape($sanitizedError);
 
         $message = \sprintf(
             'cURL error %s: %s (%s)',
             $ctx['errno'],
-            $sanitizedError,
+            $diagnosticError,
             'see https://curl.se/libcurl/c/libcurl-errors.html'
         );
 
         if ('' !== $sanitizedError) {
             $redactedUriString = Psr7\Utils::redactUserInfo($uri)->__toString();
             if ($redactedUriString !== '' && false === \strpos($sanitizedError, $redactedUriString)) {
-                $message .= \sprintf(' for %s', $redactedUriString);
+                $message .= \sprintf(' for %s', Psr7\DiagnosticValue::escape($redactedUriString));
             }
         }
 
         if ($easy->errno === \CURLE_OPERATION_TIMEOUTED) {
             if ($easy->response !== null) {
                 $error = new ResponseTimeoutException($message, $easy->request, $easy->response, $previous);
-            } elseif (self::isConnectTimeoutError($ctx['error'] ?? '')) {
+            } elseif (self::isConnectTimeoutError($nativeError)) {
                 $error = new ConnectTimeoutException($message, $easy->request, $previous);
             } else {
                 $error = new NetworkTimeoutException($message, $easy->request, $previous);
@@ -2002,7 +2004,7 @@ final class CurlFactory implements CurlFactoryInterface
         $protocols = Utils::normalizeProtocols($easy->options['protocols'] ?? ['http', 'https']);
         $scheme = $uri->getScheme();
         if (!\in_array($scheme, $protocols, true)) {
-            throw new RequestException(\sprintf('The scheme "%s" is not allowed by the protocols request option.', $scheme), $easy->request);
+            throw new RequestException(\sprintf('The scheme "%s" is not allowed by the protocols request option.', Psr7\DiagnosticValue::escape($scheme)), $easy->request);
         }
 
         if ($uri->getHost() === '') {
@@ -2185,7 +2187,7 @@ final class CurlFactory implements CurlFactoryInterface
             } catch (\Exception $e) {
                 $message = $e instanceof TimeoutException
                     ? 'Timed out while rewinding the request body'
-                    : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the request body');
+                    : ($e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed to rewind the request body');
 
                 throw new RequestException($message, $request, 0, $e);
             }
@@ -2346,7 +2348,7 @@ final class CurlFactory implements CurlFactoryInterface
                 if (\is_string($options['verify'])) {
                     // Throw an error if the file/folder/link path is not valid or doesn't exist.
                     if (!\file_exists($options['verify'])) {
-                        throw new InvalidArgumentException("SSL CA bundle not found: {$options['verify']}");
+                        throw new InvalidArgumentException(\sprintf('SSL CA bundle not found: %s', Psr7\DiagnosticValue::escape($options['verify'])));
                     }
                     // If it's a directory or a link to a directory use CURLOPT_CAPATH.
                     // If not, it's probably a file, or a link to a file, so use CURLOPT_CAINFO.
@@ -2397,7 +2399,7 @@ final class CurlFactory implements CurlFactoryInterface
             $sink = Psr7\Utils::streamFor($sink);
         } elseif (!\is_dir(\dirname($sink))) {
             // Ensure that the directory exists before failing in curl.
-            throw new RequestException(\sprintf('Directory %s does not exist for sink value of %s', \dirname($sink), $sink), $easy->request);
+            throw new RequestException(\sprintf('Directory %s does not exist for sink value of %s', Psr7\DiagnosticValue::escape(\dirname($sink)), Psr7\DiagnosticValue::escape($sink)), $easy->request);
         } else {
             $sink = new LazyOpenStream($sink, 'w+');
         }
@@ -2513,7 +2515,7 @@ final class CurlFactory implements CurlFactoryInterface
                 throw new InvalidArgumentException('Invalid cert request option');
             }
             if (!\file_exists($cert)) {
-                throw new InvalidArgumentException("SSL certificate not found: {$cert}");
+                throw new InvalidArgumentException(\sprintf('SSL certificate not found: %s', Psr7\DiagnosticValue::escape($cert)));
             }
             // OpenSSL (versions 0.9.3 and later) also support "P12" for PKCS#12-encoded files.
             // see https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
@@ -2551,7 +2553,7 @@ final class CurlFactory implements CurlFactoryInterface
             }
 
             if (self::shouldValidateSslKeyFile($sslKeyType) && !\file_exists($sslKey)) {
-                throw new InvalidArgumentException("SSL private key not found: {$sslKey}");
+                throw new InvalidArgumentException(\sprintf('SSL private key not found: %s', Psr7\DiagnosticValue::escape($sslKey)));
             }
             $conf[\CURLOPT_SSLKEY] = $sslKey;
         }

@@ -2080,6 +2080,11 @@ class ClientTest extends TestCase
             'Passing array to request option "headers.X-Test" is invalid; expected string|non-empty-array<array-key, string>.',
         ];
 
+        yield 'unsafe header name' => [
+            ['headers' => ["X-\u{009B}\xFF" => false]],
+            'Passing bool to request option "headers.X-\\xC2\\x9B\\xFF" is invalid; expected string|non-empty-array<array-key, string>.',
+        ];
+
         yield 'multipart contents' => [
             ['multipart' => [['name' => 'foo']]],
             'Passing array to request option "multipart.0" is invalid; expected array{name: string|int, contents: mixed, headers?: array<array-key, string>, filename?: string}.',

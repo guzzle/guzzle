@@ -7,6 +7,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\DiagnosticValue;
 use GuzzleHttp\TransportSharing;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -47,7 +48,7 @@ final class CurlHandler
     {
         foreach ($options as $name => $_) {
             if (!isset(self::KNOWN_CONSTRUCTOR_OPTIONS[$name])) {
-                throw new InvalidArgumentException(\sprintf('Invalid CurlHandler constructor option "%s".', (string) $name));
+                throw new InvalidArgumentException(\sprintf('Invalid CurlHandler constructor option "%s".', DiagnosticValue::escape((string) $name)));
             }
         }
 

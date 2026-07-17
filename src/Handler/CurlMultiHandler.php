@@ -174,7 +174,7 @@ final class CurlMultiHandler
     {
         foreach ($options as $name => $_) {
             if (!isset(self::KNOWN_CONSTRUCTOR_OPTIONS[$name])) {
-                throw new InvalidArgumentException(\sprintf('Invalid CurlMultiHandler constructor option "%s".', (string) $name));
+                throw new InvalidArgumentException(\sprintf('Invalid CurlMultiHandler constructor option "%s".', Psr7\DiagnosticValue::escape((string) $name)));
             }
         }
 
@@ -497,7 +497,7 @@ final class CurlMultiHandler
     private static function formatCurlMultiOption($option): string
     {
         if (!\is_int($option)) {
-            return \sprintf('"%s"', $option);
+            return \sprintf('"%s"', Psr7\DiagnosticValue::escape((string) $option));
         }
 
         static $names = null;
@@ -1507,7 +1507,7 @@ final class CurlMultiHandler
         try {
             foreach ($this->options as $option => $value) {
                 if (!\is_int($option)) {
-                    throw new InvalidArgumentException(\sprintf('Invalid cURL multi option "%s".', $option));
+                    throw new InvalidArgumentException(\sprintf('Invalid cURL multi option "%s".', Psr7\DiagnosticValue::escape((string) $option)));
                 }
 
                 try {
