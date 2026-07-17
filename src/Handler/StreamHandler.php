@@ -827,9 +827,9 @@ final class StreamHandler
                 }
             }
 
-            $message = 'Error creating resource:';
+            $message = 'Error creating resource';
             if ($details !== []) {
-                $message .= ' '.\implode('; ', $details);
+                $message .= ': '.\implode('; ', $details);
             }
 
             throw new \RuntimeException($message);

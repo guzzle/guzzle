@@ -236,7 +236,10 @@ final class EasyHandle
      */
     public function __get(string $name): void
     {
-        $msg = $name === 'handle' ? 'The EasyHandle has been released' : \sprintf('Invalid property: %s', DiagnosticValue::escape($name));
+        $msg = $name === 'handle'
+            ? 'The EasyHandle has been released'
+            : \sprintf('Invalid property: %s', DiagnosticValue::escape($name));
+
         throw new \BadMethodCallException($msg);
     }
 }
