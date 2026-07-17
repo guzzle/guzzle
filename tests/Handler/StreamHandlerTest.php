@@ -379,6 +379,29 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    public function testSanitizesNativeResourceErrors(): void
+    {
+        $handler = new StreamHandler();
+        $method = new \ReflectionMethod(StreamHandler::class, 'createResource');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        try {
+            $method->invoke($handler, static function () {
+                \trigger_error("native \x1B\xFF error", \E_USER_WARNING);
+
+                return false;
+            });
+
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertStringContainsString('native \\x1B\\xFF error', $e->getMessage());
+            self::assertStringNotContainsString("\x1B", $e->getMessage());
+            self::assertStringNotContainsString("\xFF", $e->getMessage());
+        }
+    }
+
     public function testClassifiesStreamTimeoutErrors(): void
     {
         self::assertTrue($this->matchesStreamHandlerError('isConnectTimeoutError', 'fopen(): SSL: Handshake timed out'));

@@ -219,17 +219,16 @@ final class StreamHandler
             }
 
             if (!$e instanceof TransferException) {
-                $rawMessage = $e->getMessage();
-                $message = Psr7\DiagnosticValue::escape($rawMessage);
-                if (self::isSendError($rawMessage)) {
-                    $e = self::isConnectTimeoutError($rawMessage)
+                $message = $e->getMessage();
+                if (self::isSendError($message)) {
+                    $e = self::isConnectTimeoutError($message)
                         ? new NetworkTimeoutException($message, $request, $e)
                         : new NetworkException($message, $request, $e);
-                } elseif (self::isConnectTimeoutError($rawMessage)) {
+                } elseif (self::isConnectTimeoutError($message)) {
                     $e = new ConnectTimeoutException($message, $request, $e);
-                } elseif (self::isConnectionError($rawMessage)) {
+                } elseif (self::isConnectionError($message)) {
                     $e = new ConnectException($message, $request, $e);
-                } elseif (self::isNetworkError($rawMessage)) {
+                } elseif (self::isNetworkError($message)) {
                     $e = new NetworkException($message, $request, $e);
                 } else {
                     $e = new RequestException($message, $request, 0, $e);
@@ -827,7 +826,7 @@ final class StreamHandler
                     $message .= "[$key] $value".\PHP_EOL;
                 }
             }
-            throw new \RuntimeException(\trim($message, " \n\r\t\0\x0B"));
+            throw new \RuntimeException(Psr7\DiagnosticValue::escape(\trim($message, " \n\r\t\0\x0B")));
         }
 
         return $resource;
