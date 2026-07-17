@@ -82,7 +82,7 @@ class RequestExceptionTest extends TestCase
 
         $e = RequestException::create(new Request('GET', '/'), $response, null, $summarizer);
 
-        self::assertSame("Server error: `GET /` resulted in a `500 Internal \\x9BError` response:\nsummary\\x1B\\xFF\n", $e->getMessage());
+        self::assertSame('Server error: `GET /` resulted in a `500 Internal \\x9BError` response: summary\\x1B\\xFF', $e->getMessage());
         self::assertSame($response, $e->getResponse());
         self::assertSame($reason, $e->getResponse()->getReasonPhrase());
         self::assertSame('raw body', (string) $e->getResponse()->getBody());

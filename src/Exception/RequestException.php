@@ -73,7 +73,7 @@ class RequestException extends TransferException implements RequestExceptionInte
         $summary = ($bodySummarizer ?? new BodySummarizer())->summarize($response);
 
         if ($summary !== null) {
-            $message .= \sprintf(":\n%s\n", DiagnosticValue::escape($summary));
+            $message .= \sprintf(': %s', DiagnosticValue::escape($summary));
         }
 
         if ($level === 4) {
