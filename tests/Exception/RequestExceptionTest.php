@@ -66,6 +66,19 @@ class RequestExceptionTest extends TestCase
         self::assertInstanceOf(ServerException::class, $e);
     }
 
+    public function testEscapesReasonPhraseControlsInExceptionMessage(): void
+    {
+        $reason = "Internal \u{009B}Error";
+        $response = new Response(500, [], '', '1.1', $reason);
+        $e = RequestException::create(new Request('GET', '/'), $response);
+
+        self::assertStringContainsString('500 Internal \\x9BError', $e->getMessage());
+        self::assertStringNotContainsString("\u{009B}", $e->getMessage());
+        self::assertInstanceOf(ServerException::class, $e);
+        self::assertSame($response, $e->getResponse());
+        self::assertSame($reason, $e->getResponse()->getReasonPhrase());
+    }
+
     public function testCreatesGenericErrorResponseException(): void
     {
         $e = RequestException::create(new Request('GET', '/'), new Response(300));

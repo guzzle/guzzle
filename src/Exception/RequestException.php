@@ -6,6 +6,7 @@ namespace GuzzleHttp\Exception;
 
 use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\BodySummarizerInterface;
+use GuzzleHttp\DiagnosticValue;
 use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -66,7 +67,7 @@ class RequestException extends TransferException implements RequestExceptionInte
             $request->getMethod(),
             $uri->__toString(),
             $response->getStatusCode(),
-            $response->getReasonPhrase()
+            DiagnosticValue::escapeControls($response->getReasonPhrase())
         );
 
         $summary = ($bodySummarizer ?? new BodySummarizer())->summarize($response);

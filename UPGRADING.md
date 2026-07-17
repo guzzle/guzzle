@@ -620,6 +620,13 @@ while relying on exception creation to leave that body rewound. If you need to
 read the body from the beginning after catching the exception, call
 `Message::rewindBody()` explicitly.
 
+#### Diagnostic Control Characters
+
+Guzzle-generated exception messages now render control characters in response
+reason phrases as visible hexadecimal escapes such as `\x1B`. The attached
+response retains its original reason phrase. Applications should still encode
+exception messages and raw `MessageFormatter` values for their output context.
+
 #### Request Protocol Versions
 
 Invalid request protocol versions are no longer treated as omitted. Passing
