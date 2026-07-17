@@ -92,6 +92,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Tighten invalid response handling and avoid exposing response-derived cURL stats
 - Reject malformed response protocol versions and reason phrases
 - Escape response reason-phrase controls in generated exception messages
+- Escape control characters in cURL errors used in exception messages
 - Reject malformed or conflicting response `Content-Length` and combinations with `Transfer-Encoding`
 - Expose raw stream-handler `Transfer-Encoding` metadata and coalesced framing in `progress` on newer PHP
 - Wrap malformed redirect `Location` values in `BadResponseException`

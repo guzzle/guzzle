@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Handler;
 
+use GuzzleHttp\DiagnosticValue;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\InvalidArgumentException;
@@ -1275,7 +1276,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         $uri = $easy->request->getUri();
 
-        $sanitizedError = self::sanitizeCurlError($ctx['error'] ?? '', $uri, $easy->effectiveProxy);
+        $sanitizedError = DiagnosticValue::escapeControls(self::sanitizeCurlError($ctx['error'] ?? '', $uri, $easy->effectiveProxy));
 
         $message = \sprintf(
             'cURL error %s: %s (%s)',

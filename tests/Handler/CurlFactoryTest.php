@@ -2009,6 +2009,26 @@ class CurlFactoryTest extends TestCase
         self::assertSame('Failed to connect via http://***@proxy.example.com:8125', $redacted);
     }
 
+    public function testEscapesControlsAfterRedactingCurlErrorCredentials(): void
+    {
+        $proxy = "http://user:se\x01cr\x7Fet@proxy.example.com:8125";
+        $easy = new EasyHandle();
+        $easy->request = new Psr7\Request('GET', '');
+        $easy->errno = 60;
+        $easy->effectiveProxy = $proxy;
+        $promise = $this->createCurlRejection($easy, [
+            'errno' => 60,
+            'error' => "Failed to connect via {$proxy}: certificate \x1B[2J\xFF",
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected ConnectException');
+        } catch (ConnectException $e) {
+            self::assertSame('cURL error 60: Failed to connect via http://***@proxy.example.com:8125: certificate \\x1B[2J\\xFF (see https://curl.se/libcurl/c/libcurl-errors.html)', $e->getMessage());
+        }
+    }
+
     public function testRedactsUnparsableProxyCredentialsIndependentlyOfCurlErrorText(): void
     {
         $proxy = 'http://user:secret@127.0.0.1:99999999';
