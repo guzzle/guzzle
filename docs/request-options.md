@@ -54,7 +54,7 @@ You can also pass an associative array containing the following key value pairs:
 
 - strict: (bool, default=false) Set to true to use strict redirects. Strict RFC compliant redirects mean that POST redirect requests are sent as POST requests vs. doing what most browsers do which is redirect POST requests with GET requests. The RFC 10008 QUERY method keeps its method and body across non-strict 301 and 302 redirects, matching the 307 and 308 behavior that already applies to every method, and a 303 redirect is followed with a body-less GET. When redirect handling clears the body, it also removes `Content-Length` and `Transfer-Encoding`.
 
-- referer: (bool, default=false) Set to true to enable adding the Referer header when redirecting.
+- referer: (bool, default=false) Set to true to enable adding the Referer header when redirecting. Generated values exclude user information and fragments, and the header is omitted when the scheme changes.
 
 - protocols: (non-empty array of strings, default=`['http', 'https']`) Specifies which protocols are allowed for redirect requests. Redirect matching is case-sensitive; use `http` and `https`.
 

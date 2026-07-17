@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.15.1 - Upcoming
+
+### Security
+
+- Exclude URI fragments from `Referer` headers generated for redirects
+
+
 ## 7.15.0 - 2026-07-17
 
 ### Added
