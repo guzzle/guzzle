@@ -44,8 +44,8 @@ canonical form, and its `UriComparator::isCrossOrigin()` canonicalizes
 bracketed IPv6 literals from any PSR-7 implementation before comparing
 origins. Redirects between equivalent spellings of one IPv6 address are
 therefore same-origin in Guzzle 8: `Authorization` and `Cookie` headers, the
-`auth` option, cURL authentication options, and the full same-scheme `Referer`
-value may be retained where Guzzle 7 stripped or reduced them, and absolute
+`auth` option, cURL authentication options, and the same-scheme `Referer` path
+and query may be retained where Guzzle 7 stripped or reduced them, and absolute
 Digest `domain` protection spaces can cover an equivalent spelling of the same
 address.
 
@@ -1091,13 +1091,13 @@ You can still pass an explicit `Content-Length` header in a multipart element's
 
 With the optional `referer` redirect setting enabled (off by default), Guzzle
 now sends only the request origin (scheme, host, and port) in the `Referer`
-header on a cross-origin redirect. It previously sent the full URL, including
-the path and query string, which could leak secrets such as reset tokens or
-signed query parameters to the new origin.
+header on a cross-origin redirect. It previously sent the referring URI,
+including the path, query string, and fragment, which could leak secrets such
+as reset tokens or signed query parameters to the new origin.
 
-Same-origin redirects still send the full URL, with any user information
-removed. The `Referer` header is omitted entirely when the scheme changes,
-including an `https` to `http` downgrade. This matches the
+Same-origin redirects still send the path and query, with any user information
+and fragment removed. The `Referer` header is omitted entirely when the scheme
+changes, including an `https` to `http` downgrade. This matches the
 `strict-origin-when-cross-origin` policy that modern browsers use by default.
 
 If you relied on the full URL crossing origins, collect it with the

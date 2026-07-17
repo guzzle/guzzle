@@ -639,7 +639,7 @@ class RedirectMiddlewareTest extends TestCase
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
-        $request = new Request('GET', 'http://example.com?a=b');
+        $request = new Request('GET', 'http://example.com?a=b#secret');
         $promise = $handler($request, [
             'allow_redirects' => ['max' => 2, 'referer' => true],
         ]);
@@ -679,7 +679,7 @@ class RedirectMiddlewareTest extends TestCase
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
         $handler = $stack->resolve();
-        $request = new Request('GET', 'http://example.com/path?a=b');
+        $request = new Request('GET', 'http://example.com/path?a=b#secret');
         $promise = $handler($request, [
             'allow_redirects' => ['max' => 2, 'referer' => true],
         ]);

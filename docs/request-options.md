@@ -68,7 +68,8 @@ You can also pass an associative array containing the following key value pairs:
 - referer: (bool, default=false) Set to true to add a `Referer` header when
   redirecting. On a cross-origin redirect only the origin (scheme, host, and
   port) is sent, and the header is omitted entirely when the scheme changes,
-  including an `https` to `http` downgrade. See
+  including an `https` to `http` downgrade. Generated values never include user
+  information or fragments. See
   [Cross-Origin Redirects](#cross-origin-redirects).
 
 - protocols: (non-empty array containing `http` and/or `https`,
@@ -168,10 +169,11 @@ are not removed automatically on cross-origin redirects.
 When the optional `referer` setting is enabled, Guzzle also limits what it
 discloses to the new origin. On a cross-origin redirect it sends only the
 request's origin (scheme, host, and port) in the `Referer` header instead of the
-full URL, and it omits the header entirely when the scheme changes, including an
-`https` to `http` downgrade. Same-origin redirects send the full URL. This
-matches the `strict-origin-when-cross-origin` policy that modern browsers use by
-default.
+path and query, and it omits the header entirely when the scheme changes,
+including an `https` to `http` downgrade. Same-origin redirects preserve the
+path and query. Generated values never include user information or fragments.
+This matches the `strict-origin-when-cross-origin` policy that modern browsers
+use by default.
 
 If TLS client credentials are only trusted for the original origin, disable
 automatic redirects and handle redirect responses manually, or use separate
