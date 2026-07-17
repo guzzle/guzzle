@@ -11,6 +11,11 @@ use Psr\Http\Message\ResponseInterface;
  */
 class CookieJar implements CookieJarInterface
 {
+    private const MAX_SET_COOKIE_FIELD_LENGTH = 8190;
+    private const MAX_SET_COOKIE_FIELDS = 50;
+    private const MAX_REQUEST_COOKIES = 150;
+    private const MAX_COOKIE_HEADER_LENGTH = 8190;
+
     /**
      * @var SetCookie[] Loaded cookie data
      */
@@ -235,7 +240,12 @@ class CookieJar implements CookieJarInterface
     public function extractCookies(RequestInterface $request, ResponseInterface $response): void
     {
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
+            $accepted = 0;
             foreach ($cookieHeader as $cookie) {
+                if (\strlen($cookie) > self::MAX_SET_COOKIE_FIELD_LENGTH) {
+                    continue;
+                }
+
                 $sc = SetCookie::fromString($cookie);
                 $domain = $sc->getDomain();
                 if ($domain === null || $domain === '') {
@@ -256,7 +266,9 @@ class CookieJar implements CookieJarInterface
                 }
                 // Note: At this point `$sc->getDomain()` being a public suffix should
                 // be rejected, but we don't want to pull in the full PSL dependency.
-                $this->setCookie($sc);
+                if ($this->setCookie($sc) && ++$accepted === self::MAX_SET_COOKIE_FIELDS) {
+                    break;
+                }
             }
         }
     }
@@ -289,6 +301,7 @@ class CookieJar implements CookieJarInterface
     public function withCookieHeader(RequestInterface $request): RequestInterface
     {
         $values = [];
+        $headerLength = 8;
         $uri = $request->getUri();
         $scheme = $uri->getScheme();
         $host = $uri->getHost();
@@ -301,8 +314,19 @@ class CookieJar implements CookieJarInterface
                 && !$cookie->isExpired()
                 && (!$cookie->getSecure() || $scheme === 'https')
             ) {
-                $values[] = $cookie->getName().'='
-                    .$cookie->getValue();
+                $name = (string) $cookie->getName();
+                $value = (string) $cookie->getValue();
+                $separatorLength = $values === [] ? 0 : 2;
+                $valueLength = \strlen($name) + 1 + \strlen($value);
+                if ($headerLength + $separatorLength + $valueLength > self::MAX_COOKIE_HEADER_LENGTH) {
+                    break;
+                }
+
+                $values[] = $name.'='.$value;
+                $headerLength += $separatorLength + $valueLength;
+                if (\count($values) === self::MAX_REQUEST_COOKIES) {
+                    break;
+                }
             }
         }
 
