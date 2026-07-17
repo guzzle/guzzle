@@ -673,6 +673,90 @@ class CookieJarTest extends TestCase
         self::assertTrue($cookie->getHostOnly());
     }
 
+    public function testLimitsResponseCookieAdmissionsToFiftyAcceptedFields(): void
+    {
+        $this->jar->setCookie(new SetCookie([
+            'Name' => 'existing',
+            'Value' => 'value',
+            'Domain' => 'example.com',
+            'Path' => '/',
+            'HostOnly' => true,
+        ]));
+        $headers = [
+            'invalid',
+            'unrelated=value; Domain=other.example; Path=/',
+            'deleted=value; Max-Age=0; Path=/',
+            'oversized='.\str_repeat('x', 8190),
+            'existing=value; Path=/',
+        ];
+        for ($i = 0; $i < 50; ++$i) {
+            $headers[] = "c{$i}=value; Path=/";
+        }
+        $headers[] = 'ignored=value; Path=/';
+
+        $this->jar->extractCookies(new Request('GET', 'https://example.com/'), new Response(200, ['Set-Cookie' => $headers]));
+
+        self::assertCount(51, $this->jar);
+        self::assertInstanceOf(SetCookie::class, $this->jar->getCookieByName('c49'));
+        self::assertNull($this->jar->getCookieByName('ignored'));
+    }
+
+    public function testLimitsSetCookieFieldLength(): void
+    {
+        $this->jar->extractCookies(new Request('GET', 'https://example.com/'), new Response(200, ['Set-Cookie' => [
+            'a='.\str_repeat('x', 8188),
+            'b='.\str_repeat('x', 8189),
+        ]]));
+
+        self::assertCount(1, $this->jar);
+        $cookie = $this->jar->getCookieByName('a');
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        $value = $cookie->getValue();
+        self::assertIsString($value);
+        self::assertSame(8188, \strlen($value));
+        self::assertNull($this->jar->getCookieByName('b'));
+    }
+
+    public function testLimitsGeneratedCookieHeaderToOneHundredAndFiftyCookies(): void
+    {
+        for ($i = 0; $i <= 150; ++$i) {
+            $this->jar->setCookie(new SetCookie(['Name' => "c{$i}", 'Value' => 'value', 'Domain' => 'example.com']));
+        }
+
+        $values = \explode('; ', $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'))->getHeaderLine('Cookie'));
+
+        self::assertCount(150, $values);
+        self::assertSame('c0=value', $values[0]);
+        self::assertSame('c149=value', $values[149]);
+        self::assertNotContains('c150=value', $values);
+    }
+
+    public function testLimitsGeneratedCookieHeaderLengthAndStopsAtFirstOverflow(): void
+    {
+        $exact = new CookieJar();
+        $exact->setCookie(new SetCookie(['Name' => 'a', 'Value' => \str_repeat('x', 8180), 'Domain' => 'example.com']));
+        self::assertSame(8190, 8 + \strlen($exact->withCookieHeader(new Request('GET', 'https://example.com/'))->getHeaderLine('Cookie')));
+
+        $this->jar->setCookie(new SetCookie(['Name' => 'a', 'Value' => 'x', 'Domain' => 'example.com']));
+        $this->jar->setCookie(new SetCookie(['Name' => 'b', 'Value' => \str_repeat('x', 8180), 'Domain' => 'example.com']));
+        $this->jar->setCookie(new SetCookie(['Name' => 'later', 'Value' => 'value', 'Domain' => 'example.com']));
+
+        self::assertSame('a=x', $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'))->getHeaderLine('Cookie'));
+    }
+
+    public function testFiltersCookiesBeforeApplyingOutputLimits(): void
+    {
+        for ($i = 0; $i < 147; ++$i) {
+            $this->jar->setCookie(new SetCookie(['Name' => "other{$i}", 'Value' => 'value', 'Domain' => 'other.example']));
+        }
+        $this->jar->setCookie(new SetCookie(['Name' => 'path', 'Value' => 'value', 'Domain' => 'example.com', 'Path' => '/other']));
+        $this->jar->setCookie(new SetCookie(['Name' => 'secure', 'Value' => 'value', 'Domain' => 'example.com', 'Secure' => true]));
+        $this->jar->setCookie(new SetCookie(['Name' => 'expired', 'Value' => 'value', 'Domain' => 'example.com', 'Expires' => \time() - 1]));
+        $this->jar->setCookie(new SetCookie(['Name' => 'matching', 'Value' => 'value', 'Domain' => 'example.com']));
+
+        self::assertSame('matching=value', $this->jar->withCookieHeader(new Request('GET', 'http://example.com/path'))->getHeaderLine('Cookie'));
+    }
+
     public function testExtractsCookieWithoutDomainAsHostOnly(): void
     {
         $this->jar->extractCookies(
