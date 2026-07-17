@@ -594,7 +594,7 @@ class RedirectMiddlewareTest extends TestCase
             self::assertSame(302, $e->getResponse()->getStatusCode());
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
             self::assertSame("Factory could not create \xFF URI.", $e->getPrevious()->getMessage());
-            self::assertSame('Redirect URI, http://test.com/\\x9Bfoo, is invalid: Factory could not create \\xFF URI.', $e->getMessage());
+            self::assertSame("Redirect URI, http://test.com/\\x9Bfoo, is invalid: Factory could not create \xFF URI.", $e->getMessage());
         }
     }
 

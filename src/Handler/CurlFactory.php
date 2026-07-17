@@ -384,7 +384,7 @@ final class CurlFactory implements CurlFactoryInterface
                     \sprintf(
                         'Unable to set cURL option %s: %s',
                         self::formatCurlOption($option),
-                        Psr7\DiagnosticValue::escape($e->getMessage())
+                        $e->getMessage()
                     ),
                     0,
                     $e
@@ -424,7 +424,7 @@ final class CurlFactory implements CurlFactoryInterface
                     \sprintf(
                         'Unable to set cURL option %s: %s',
                         self::formatCurlOption($option),
-                        Psr7\DiagnosticValue::escape($e->getMessage())
+                        $e->getMessage()
                     ),
                     0,
                     $e
@@ -993,7 +993,7 @@ final class CurlFactory implements CurlFactoryInterface
             }
         } catch (\Exception $e) {
             $reason = new ResponseException(
-                $e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed to rewind the response body',
+                $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the response body',
                 $easy->request,
                 $response,
                 $e
@@ -1230,7 +1230,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ($easy->bodyReadException) {
             $message = $easy->bodyReadException->getMessage() !== ''
-                ? Psr7\DiagnosticValue::escape($easy->bodyReadException->getMessage())
+                ? $easy->bodyReadException->getMessage()
                 : 'Failed to read the request body';
 
             return self::createRequestOrResponseRejection($easy, $message, $easy->bodyReadException);
@@ -1248,7 +1248,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         if ($easy->sinkWriteException) {
             $message = $easy->sinkWriteException->getMessage() !== ''
-                ? Psr7\DiagnosticValue::escape($easy->sinkWriteException->getMessage())
+                ? $easy->sinkWriteException->getMessage()
                 : 'Failed to write the response body';
 
             return self::createRequestOrResponseRejection($easy, $message, $easy->sinkWriteException);
@@ -1277,19 +1277,18 @@ final class CurlFactory implements CurlFactoryInterface
 
         $nativeError = $ctx['error'] ?? '';
         $sanitizedError = self::sanitizeCurlError($nativeError, $uri, $easy->effectiveProxy);
-        $diagnosticError = Psr7\DiagnosticValue::escape($sanitizedError);
 
         $message = \sprintf(
             'cURL error %s: %s (%s)',
             $ctx['errno'],
-            $diagnosticError,
+            $sanitizedError,
             'see https://curl.se/libcurl/c/libcurl-errors.html'
         );
 
         if ('' !== $sanitizedError) {
-            $redactedUriString = Psr7\Utils::redactUserInfo($uri)->__toString();
+            $redactedUriString = Psr7\DiagnosticValue::escape(Psr7\Utils::redactUserInfo($uri)->__toString());
             if ($redactedUriString !== '' && false === \strpos($sanitizedError, $redactedUriString)) {
-                $message .= \sprintf(' for %s', Psr7\DiagnosticValue::escape($redactedUriString));
+                $message .= \sprintf(' for %s', $redactedUriString);
             }
         }
 
@@ -1382,13 +1381,12 @@ final class CurlFactory implements CurlFactoryInterface
         $baseUri = $uri->withQuery('')->withFragment('');
         $baseUriString = $baseUri->__toString();
 
-        if ('' === $baseUriString) {
-            return $error;
+        if ('' !== $baseUriString) {
+            $redactedUriString = Psr7\Utils::redactUserInfo($baseUri)->__toString();
+            $error = str_replace($baseUriString, $redactedUriString, $error);
         }
 
-        $redactedUriString = Psr7\Utils::redactUserInfo($baseUri)->__toString();
-
-        return str_replace($baseUriString, $redactedUriString, $error);
+        return Psr7\DiagnosticValue::escape($error);
     }
 
     private static function redactProxyUserInfo(string $error, ?string $proxy): string
@@ -2187,7 +2185,7 @@ final class CurlFactory implements CurlFactoryInterface
             } catch (\Exception $e) {
                 $message = $e instanceof TimeoutException
                     ? 'Timed out while rewinding the request body'
-                    : ($e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed to rewind the request body');
+                    : ($e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the request body');
 
                 throw new RequestException($message, $request, 0, $e);
             }

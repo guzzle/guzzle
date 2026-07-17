@@ -242,7 +242,7 @@ final class RequestFraming
     ): RequestException {
         $message = $exception instanceof TimeoutException
             ? $timeoutMessage
-            : ($exception->getMessage() !== '' ? Psr7\DiagnosticValue::escape($exception->getMessage()) : $fallbackMessage);
+            : ($exception->getMessage() !== '' ? $exception->getMessage() : $fallbackMessage);
 
         return new RequestException($message, $request, 0, $exception);
     }

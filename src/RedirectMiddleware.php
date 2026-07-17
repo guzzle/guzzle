@@ -314,7 +314,7 @@ class RedirectMiddleware
                 $resolvedUri = $uriFactory->createUri((string) $resolvedUri);
             }
         } catch (\InvalidArgumentException $e) {
-            throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid: %s', Psr7\DiagnosticValue::escape($location), Psr7\DiagnosticValue::escape($e->getMessage())), $request, $response, $e);
+            throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid: %s', Psr7\DiagnosticValue::escape($location), $e->getMessage()), $request, $response, $e);
         }
 
         // Ensure that the redirect URI is allowed based on the protocols.

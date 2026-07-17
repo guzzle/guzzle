@@ -391,7 +391,7 @@ final class StreamHandler
 
             $reason = $framingFailure instanceof \OverflowException
                 ? new ResponseException($framingFailure->getMessage(), $request, $response, $framingFailure)
-                : new ResponseTransferException(Psr7\DiagnosticValue::escape($framingFailure->getMessage()), $request, $response, $framingFailure);
+                : new ResponseTransferException($framingFailure->getMessage(), $request, $response, $framingFailure);
             $this->invokeStats($options, $request, $startTime, $response, $reason);
 
             /** @var PromiseInterface<ResponseInterface, mixed> */
@@ -680,12 +680,12 @@ final class StreamHandler
                     $e
                 );
             } catch (\OverflowException $e) {
-                throw new ResponseException(Psr7\DiagnosticValue::escape($e->getMessage()), $request, $response, $e);
+                throw new ResponseException($e->getMessage(), $request, $response, $e);
             } catch (\Exception $e) {
                 // Any other response-body transfer failure surfaces as a
                 // ResponseTransferException carrying the response.
                 throw new ResponseTransferException(
-                    $e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed while transferring the response body',
+                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed while transferring the response body',
                     $request,
                     $response,
                     $e
@@ -707,7 +707,7 @@ final class StreamHandler
                 }
             } catch (\Exception $e) {
                 throw new ResponseException(
-                    $e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed to rewind the response body',
+                    $e->getMessage() !== '' ? $e->getMessage() : 'Failed to rewind the response body',
                     $request,
                     $response,
                     $e
@@ -744,7 +744,7 @@ final class StreamHandler
                     );
                 } catch (\Exception $e) {
                     throw new ResponseException(
-                        $e->getMessage() !== '' ? Psr7\DiagnosticValue::escape($e->getMessage()) : 'Failed to write the response body',
+                        $e->getMessage() !== '' ? $e->getMessage() : 'Failed to write the response body',
                         $request,
                         $response,
                         $e

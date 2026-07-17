@@ -3433,7 +3433,7 @@ class StreamHandlerTest extends TestCase
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
             $exception = $e;
-            self::assertSame('sink \\x1B\\xFF failed', $e->getMessage());
+            self::assertSame("sink \x1B\xFF failed", $e->getMessage());
             self::assertNotInstanceOf(ResponseTransferException::class, $e);
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
             self::assertSame($request, $e->getRequest());
