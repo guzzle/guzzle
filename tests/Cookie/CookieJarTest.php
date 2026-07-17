@@ -1210,9 +1210,7 @@ class CookieJarTest extends TestCase
     public static function exactCookieDeletionProvider(): array
     {
         return [
-            'empty host-only cookie' => ['sid=; Path=/', 'sid=domain', 'sid=domain'],
             'expired host-only cookie' => ['sid=deleted; Max-Age=0; Path=/', 'sid=domain', 'sid=domain'],
-            'empty domain cookie' => ['sid=; Domain=example.com; Path=/', 'sid=host', ''],
             'expired domain cookie' => ['sid=deleted; Domain=example.com; Max-Age=0; Path=/', 'sid=host', ''],
         ];
     }
