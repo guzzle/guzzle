@@ -820,13 +820,19 @@ final class StreamHandler
         }
 
         if (!$resource) {
-            $message = 'Error creating resource: ';
+            $details = [];
             foreach ($errors as $err) {
                 foreach ($err as $key => $value) {
-                    $message .= \sprintf('[%s] %s%s', $key, Psr7\DiagnosticValue::escape((string) $value), \PHP_EOL);
+                    $details[] = \sprintf('[%s] %s', $key, Psr7\DiagnosticValue::escape((string) $value));
                 }
             }
-            throw new \RuntimeException(\trim($message, " \n\r\t\0\x0B"));
+
+            $message = 'Error creating resource:';
+            if ($details !== []) {
+                $message .= ' '.\implode('; ', $details);
+            }
+
+            throw new \RuntimeException($message);
         }
 
         return $resource;
