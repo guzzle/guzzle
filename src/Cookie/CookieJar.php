@@ -354,9 +354,25 @@ class CookieJar implements CookieJarInterface
             static function (SetCookie $stored) use ($cookie): bool {
                 return !($stored->getName() === $cookie->getName()
                     && $stored->getPath() === $cookie->getPath()
-                    && $stored->getDomain() === $cookie->getDomain()
+                    && self::cookieDomainsEqual($stored->getDomain(), $cookie->getDomain())
                     && $stored->getHostOnly() === $cookie->getHostOnly());
             }
         );
+    }
+
+    private static function cookieDomainsEqual(?string $first, ?string $second): bool
+    {
+        if ($first === null || $second === null) {
+            return $first === $second;
+        }
+
+        if (isset($first[0]) && $first[0] === '.') {
+            $first = \substr($first, 1);
+        }
+        if (isset($second[0]) && $second[0] === '.') {
+            $second = \substr($second, 1);
+        }
+
+        return Psr7\Utils::caselessEquals($first, $second);
     }
 }

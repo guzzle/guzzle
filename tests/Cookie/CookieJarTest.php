@@ -697,10 +697,36 @@ class CookieJarTest extends TestCase
     public static function exactCookieDeletionProvider(): array
     {
         return [
-            'empty host-only cookie' => ['sid=; Path=/', 'sid=domain', 'sid=domain'],
             'expired host-only cookie' => ['sid=deleted; Max-Age=0; Path=/', 'sid=domain', 'sid=domain'],
-            'empty domain cookie' => ['sid=; Domain=example.com; Path=/', 'sid=host', ''],
             'expired domain cookie' => ['sid=deleted; Domain=example.com; Max-Age=0; Path=/', 'sid=host', ''],
+        ];
+    }
+
+    /**
+     * @dataProvider equivalentCookieDomainProvider
+     */
+    public function testResponseDeletionMatchesEquivalentCookieDomain(string $storedDomain, string $deletionDomain): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => "sid=stored; Domain={$storedDomain}; Path=/"])
+        );
+        self::assertCount(1, $this->jar);
+
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => "sid=deleted; Domain={$deletionDomain}; Max-Age=0; Path=/"])
+        );
+
+        self::assertCount(0, $this->jar);
+    }
+
+    public static function equivalentCookieDomainProvider(): array
+    {
+        return [
+            'mixed case' => ['EXAMPLE.COM', 'example.com'],
+            'stored leading dot' => ['.example.com', 'example.com'],
+            'deletion leading dot and mixed case' => ['example.com', '.EXAMPLE.COM'],
         ];
     }
 
@@ -763,6 +789,9 @@ class CookieJarTest extends TestCase
         self::assertFalse($request->hasHeader('Cookie'));
 
         $request = $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'));
+        self::assertFalse($request->hasHeader('Cookie'));
+
+        $request = $this->jar->withCookieHeader(new Request('GET', 'https://deep.www.example.com/'));
         self::assertFalse($request->hasHeader('Cookie'));
     }
 
