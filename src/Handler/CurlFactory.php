@@ -1275,8 +1275,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         $uri = $easy->request->getUri();
 
-        $nativeError = $ctx['error'] ?? '';
-        $sanitizedError = self::sanitizeCurlError($nativeError, $uri, $easy->effectiveProxy);
+        $sanitizedError = self::sanitizeCurlError($ctx['error'] ?? '', $uri, $easy->effectiveProxy);
 
         $message = \sprintf(
             'cURL error %s: %s (%s)',
@@ -1295,7 +1294,7 @@ final class CurlFactory implements CurlFactoryInterface
         if ($easy->errno === \CURLE_OPERATION_TIMEOUTED) {
             if ($easy->response !== null) {
                 $error = new ResponseTimeoutException($message, $easy->request, $easy->response, $previous);
-            } elseif (self::isConnectTimeoutError($nativeError)) {
+            } elseif (self::isConnectTimeoutError($ctx['error'] ?? '')) {
                 $error = new ConnectTimeoutException($message, $easy->request, $previous);
             } else {
                 $error = new NetworkTimeoutException($message, $easy->request, $previous);
