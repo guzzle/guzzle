@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\NonSerializableTrait;
+use GuzzleHttp\Psr7\DiagnosticValue;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\RequestOptions;
@@ -235,7 +236,10 @@ final class EasyHandle
      */
     public function __get(string $name): void
     {
-        $msg = $name === 'handle' ? 'The EasyHandle has been released' : 'Invalid property: '.$name;
+        $msg = $name === 'handle'
+            ? 'The EasyHandle has been released'
+            : \sprintf('Invalid property: %s', DiagnosticValue::escape($name));
+
         throw new \BadMethodCallException($msg);
     }
 }

@@ -577,7 +577,7 @@ class RedirectMiddlewareTest extends TestCase
     public function testWrapsUriFactoryExceptionsForRedirects(): void
     {
         $mock = new MockHandler([
-            new Response(302, ['Location' => 'http://test.com/foo']),
+            new Response(302, ['Location' => "http://test.com/\u{009B}foo"]),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
@@ -593,8 +593,8 @@ class RedirectMiddlewareTest extends TestCase
         } catch (BadResponseException $e) {
             self::assertSame(302, $e->getResponse()->getStatusCode());
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
-            self::assertSame('Factory could not create URI.', $e->getPrevious()->getMessage());
-            self::assertStringStartsWith('Redirect URI,', $e->getMessage());
+            self::assertSame("Factory could not create \xFF URI.", $e->getPrevious()->getMessage());
+            self::assertSame("Redirect URI, http://test.com/\\x9Bfoo, is invalid: Factory could not create \xFF URI.", $e->getMessage());
         }
     }
 
@@ -1479,7 +1479,7 @@ final class RedirectTestFailingUriFactory implements UriFactoryInterface
 {
     public function createUri(string $uri = ''): UriInterface
     {
-        throw new \InvalidArgumentException('Factory could not create URI.');
+        throw new \InvalidArgumentException("Factory could not create \xFF URI.");
     }
 }
 

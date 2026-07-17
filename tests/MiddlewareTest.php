@@ -56,7 +56,7 @@ class MiddlewareTest extends TestCase
         self::assertTrue(P\Is::pending($p));
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage(\sprintf("Client error: `GET http://foo.com` resulted in a `400 Bad Request` response:\n%s (truncated...)", str_repeat('a', 120)));
+        $this->expectExceptionMessage(\sprintf('Client error: `GET http://foo.com` resulted in a `400 Bad Request` response: %s (truncated...)', str_repeat('a', 120)));
         $p->wait();
     }
 
@@ -69,7 +69,7 @@ class MiddlewareTest extends TestCase
         self::assertTrue(P\Is::pending($p));
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage(\sprintf("Client error: `GET http://foo.com` resulted in a `404 Not Found` response:\n%s (truncated...)", str_repeat('b', 200)));
+        $this->expectExceptionMessage(\sprintf('Client error: `GET http://foo.com` resulted in a `404 Not Found` response: %s (truncated...)', str_repeat('b', 200)));
         $p->wait();
     }
 
@@ -82,7 +82,7 @@ class MiddlewareTest extends TestCase
         self::assertTrue(P\Is::pending($p));
 
         $this->expectException(ServerException::class);
-        $this->expectExceptionMessage("GET http://foo.com` resulted in a `500 Internal Server Error` response:\nOh no!");
+        $this->expectExceptionMessage('GET http://foo.com` resulted in a `500 Internal Server Error` response: Oh no!');
         $p->wait();
     }
 

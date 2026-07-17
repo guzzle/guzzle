@@ -9,7 +9,9 @@
 - Handle `preg_*` engine failures: when the result is used as data, test for
   `false` or `null` and throw a `\RuntimeException` including
   `preg_last_error_msg()`; boolean validation guards must compare strictly, such
-  as `=== 1`, so an engine failure can only ever fail closed.
+  as `=== 1`, so an engine failure can only ever fail closed. Diagnostic
+  escaping is the narrow exception: use a deterministic bytewise fallback rather
+  than throwing, so it cannot obscure the original exception.
 - Anchor validation patterns to the true end of input with the `D` modifier or
   `\z`; a bare `$` accepts a trailing newline.
 - Never embed raw control bytes in exception messages and other diagnostics;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp;
 
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\DiagnosticValue;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -238,7 +239,7 @@ class HandlerStack
             }
         }
 
-        throw new \InvalidArgumentException("Middleware not found: $name");
+        throw new \InvalidArgumentException(\sprintf('Middleware not found: %s', DiagnosticValue::escape($name)));
     }
 
     /**

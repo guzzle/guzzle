@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp\Cookie;
 
 use GuzzleHttp\NonSerializableTrait;
+use GuzzleHttp\Psr7\DiagnosticValue;
 
 /**
  * Persists non-session cookies using a JSON formatted file
@@ -104,7 +105,7 @@ class FileCookieJar extends CookieJar
         }
 
         if (false === \file_put_contents($filename, $jsonStr, \LOCK_EX)) {
-            throw new \RuntimeException("Unable to save file {$filename}");
+            throw new \RuntimeException(\sprintf('Unable to save file %s', DiagnosticValue::escape($filename)));
         }
 
         // Best-effort: restrict the cookie file to the owner so persisted
@@ -126,13 +127,13 @@ class FileCookieJar extends CookieJar
     {
         $json = \file_get_contents($filename);
         if (false === $json) {
-            throw new \RuntimeException("Unable to load file {$filename}");
+            throw new \RuntimeException(\sprintf('Unable to load file %s', DiagnosticValue::escape($filename)));
         }
         if ($json === '') {
             return;
         }
 
-        $message = "Invalid cookie file: {$filename}";
+        $message = \sprintf('Invalid cookie file: %s', DiagnosticValue::escape($filename));
 
         try {
             $data = \json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
