@@ -49,9 +49,14 @@ class SetCookieTest extends TestCase
 
     public function testAddsExpiresBasedOnMaxAge(): void
     {
-        $t = \time();
+        $before = \time();
         $cookie = new SetCookie(['Max-Age' => 100]);
-        self::assertEquals($t + 100, $cookie->getExpires());
+        $after = \time();
+        $expires = $cookie->getExpires();
+
+        self::assertIsInt($expires);
+        self::assertGreaterThanOrEqual($before + 100, $expires);
+        self::assertLessThanOrEqual($after + 100, $expires);
     }
 
     public function testMaxAgeZeroExpiresCookie(): void
@@ -114,13 +119,13 @@ class SetCookieTest extends TestCase
 
     public function testHoldsValues(): void
     {
-        $t = \time();
+        $before = \time();
         $data = [
             'Name' => 'foo',
             'Value' => 'baz',
             'Path' => '/bar',
             'Domain' => 'baz.com',
-            'Expires' => $t,
+            'Expires' => $before,
             'Max-Age' => 100,
             'Secure' => true,
             'Discard' => true,
@@ -130,15 +135,22 @@ class SetCookieTest extends TestCase
         ];
 
         $cookie = new SetCookie($data);
+        $after = \time();
+        $expires = $cookie->getExpires();
+
+        self::assertIsInt($expires);
+        self::assertGreaterThanOrEqual($before + 100, $expires);
+        self::assertLessThanOrEqual($after + 100, $expires);
+
         $expected = $data;
-        $expected['Expires'] = $t + 100;
+        $expected['Expires'] = $expires;
         self::assertEquals($expected, $cookie->toArray());
 
         self::assertSame('foo', $cookie->getName());
         self::assertSame('baz', $cookie->getValue());
         self::assertSame('baz.com', $cookie->getDomain());
         self::assertSame('/bar', $cookie->getPath());
-        self::assertEquals($t + 100, $cookie->getExpires());
+        self::assertSame($expires, $cookie->getExpires());
         self::assertSame(100, $cookie->getMaxAge());
         self::assertTrue($cookie->getSecure());
         self::assertTrue($cookie->getDiscard());
@@ -785,7 +797,6 @@ class SetCookieTest extends TestCase
                     'Path' => '/',
                     'Secure' => true,
                     'Discard' => null,
-                    'Expires' => \time() + 86400,
                     'Max-Age' => 86400,
                     'HttpOnly' => false,
                     'version' => '1',
@@ -827,7 +838,6 @@ class SetCookieTest extends TestCase
                     'Value' => 'Ts-5YeSyvOCMS%2CzkEb9eDfW4C4ZNFOcRYdu-3JpEAXIm58aH',
                     'Domain' => 'example.com',
                     'Path' => '/',
-                    'Expires' => \time() + 2000000,
                     'Secure' => false,
                     'Discard' => false,
                     'Max-Age' => 2000000,
@@ -862,13 +872,23 @@ class SetCookieTest extends TestCase
     public function testParseCookie($cookie, array $parsed): void
     {
         foreach ((array) $cookie as $v) {
+            $before = \time();
             $c = SetCookie::fromString($v);
+            $after = \time();
             $p = $c->toArray();
 
             if (isset($p['Expires'])) {
-                $delta = 40;
-                $parsedExpires = \is_numeric($parsed['Expires']) ? $parsed['Expires'] : \strtotime($parsed['Expires']);
-                self::assertLessThan($delta, \abs($p['Expires'] - $parsedExpires), 'Comparing Expires '.\var_export($p['Expires'], true).' : '.\var_export($parsed, true).' | '.\var_export($p, true));
+                $maxAge = $parsed['Max-Age'] ?? null;
+                $message = 'Comparing Expires '.\var_export($p['Expires'], true).' : '.\var_export($parsed, true).' | '.\var_export($p, true);
+
+                if (\is_int($maxAge)) {
+                    self::assertGreaterThanOrEqual($before + $maxAge, $p['Expires'], $message);
+                    self::assertLessThanOrEqual($after + $maxAge, $p['Expires'], $message);
+                } else {
+                    $parsedExpires = \is_numeric($parsed['Expires']) ? (int) $parsed['Expires'] : \strtotime($parsed['Expires']);
+                    self::assertSame($parsedExpires, $p['Expires'], $message);
+                }
+
                 unset($p['Expires']);
                 unset($parsed['Expires']);
             }
@@ -911,11 +931,11 @@ class SetCookieTest extends TestCase
                 true,
             ],
             [
-                'FOO=bar; expires='.\gmdate('D, d M Y H:i:s \G\M\T', \time() + 3600).';',
+                'FOO=bar; Max-Age=3600;',
                 false,
             ],
             [
-                'FOO=bar; expires='.\gmdate('D, d M Y H:i:s \G\M\T', \time() - 30).';',
+                'FOO=bar; Max-Age=0;',
                 true,
             ],
             [
