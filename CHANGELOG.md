@@ -178,7 +178,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Handler\Proxy::wrapTlsFallback()`; the default handler stack selects the cURL or stream handler by TLS support automatically
 
 
-## 7.15.0 - Upcoming
+## 7.15.0 - 2026-07-17
 
 ### Added
 
@@ -186,7 +186,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Require `guzzlehttp/psr7` ^2.13
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.13`
 - Use locale-independent ASCII folding for all case normalization and comparison
 - Bound cURL upload reads to the declared `Content-Length`
 - Sanitize the cURL error text exposed through exception handler context
