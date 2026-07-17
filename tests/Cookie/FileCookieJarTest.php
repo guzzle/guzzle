@@ -101,8 +101,60 @@ class FileCookieJarTest extends TestCase
 
         self::assertInstanceOf(SetCookie::class, $cookie);
         self::assertNull($cookie->getDomain());
+        self::assertFalse($cookie->getHostOnly());
 
         unset($jar, $reloaded);
+    }
+
+    public function testPersistsHostOnlyCookie(): void
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Domain' => 'example.com',
+            'HostOnly' => true,
+            'Expires' => \time() + 1000,
+        ]));
+        $jar->save($this->file);
+
+        $reloaded = new FileCookieJar($this->file);
+        $cookie = $reloaded->getCookieByName('foo');
+
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertTrue($cookie->getHostOnly());
+
+        unset($jar, $reloaded);
+    }
+
+    public function testLoadDoesNotChangeJarWhenLaterRecordLacksHostOnlyMarker(): void
+    {
+        $jar = new FileCookieJar($this->file);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'existing',
+            'Value' => 'cookie',
+            'Domain' => 'example.com',
+        ]));
+        $source = $this->file.'.load';
+
+        try {
+            \file_put_contents($source, '[{"Name":"loaded","Value":"cookie","Domain":"example.com","HostOnly":false},{"Name":"invalid","Value":"cookie","Domain":"example.com"}]');
+
+            try {
+                $jar->load($source);
+                self::fail('Expected RuntimeException was not thrown');
+            } catch (\RuntimeException $e) {
+                self::assertSame("Invalid cookie file: {$source}", $e->getMessage());
+            }
+
+            self::assertCount(1, $jar);
+            self::assertInstanceOf(SetCookie::class, $jar->getCookieByName('existing'));
+            self::assertNull($jar->getCookieByName('loaded'));
+        } finally {
+            if (\file_exists($source)) {
+                \unlink($source);
+            }
+        }
     }
 
     public function testRemovesCookie()
@@ -163,6 +215,8 @@ class FileCookieJarTest extends TestCase
         return [
             [true],
             ['invalid-data'],
+            [[['Name' => 'foo']]],
+            [[['HostOnly' => 'false']]],
         ];
     }
 }

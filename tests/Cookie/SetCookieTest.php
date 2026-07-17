@@ -186,6 +186,37 @@ class SetCookieTest extends TestCase
         self::assertFalse($cookie->matchesDomain('sub.example.com'));
     }
 
+    public function testHostOnlyCookieOnlyMatchesAndRendersExactDomain(): void
+    {
+        $cookie = new SetCookie([
+            'Name' => 'sid',
+            'Value' => 'abc',
+            'Domain' => 'example.com',
+            'HostOnly' => true,
+        ]);
+
+        self::assertTrue($cookie->matchesDomain('EXAMPLE.COM'));
+        self::assertFalse($cookie->matchesDomain('www.example.com'));
+        self::assertSame('sid=abc; Path=/', (string) $cookie);
+        self::assertTrue($cookie->toArray()['HostOnly']);
+    }
+
+    public function testIgnoresHostOnlySetCookieExtension(): void
+    {
+        $cookie = SetCookie::fromString('sid=abc; hOsToNlY; Domain=example.com');
+
+        self::assertFalse($cookie->getHostOnly());
+        self::assertArrayNotHasKey('HostOnly', $cookie->toArray());
+    }
+
+    public function testRejectsInvalidHostOnlyConstructorMetadata(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Cookie field "HostOnly" must be a boolean');
+
+        new SetCookie(['HostOnly' => 'true']);
+    }
+
     public function testIpLiteralDomainIsExactMatchOnly()
     {
         $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '192.168.0.1', 'Path' => '/']);

@@ -30,6 +30,11 @@ class SetCookie
     private $data;
 
     /**
+     * @var bool Whether this cookie was set without a Domain attribute
+     */
+    private $hostOnly = false;
+
+    /**
      * Create a new SetCookie object from a string.
      *
      * @param string $cookie Set-Cookie header string
@@ -76,6 +81,9 @@ class SetCookie
                         continue 2;
                     }
                 }
+                if (Psr7\Utils::caselessEquals('HostOnly', $key)) {
+                    continue;
+                }
                 $data[$key] = $value;
             }
         }
@@ -89,6 +97,14 @@ class SetCookie
     public function __construct(array $data = [])
     {
         $this->data = self::$defaults;
+
+        if (\array_key_exists('HostOnly', $data)) {
+            if (!\is_bool($data['HostOnly'])) {
+                throw new \InvalidArgumentException('Cookie field "HostOnly" must be a boolean');
+            }
+            $this->setHostOnly($data['HostOnly']);
+            unset($data['HostOnly']);
+        }
 
         if (isset($data['Name'])) {
             $this->setName($data['Name']);
@@ -157,6 +173,9 @@ class SetCookie
     {
         $str = $this->data['Name'].'='.($this->data['Value'] ?? '').'; ';
         foreach ($this->data as $k => $v) {
+            if ($k === 'Domain' && $this->getHostOnly()) {
+                continue;
+            }
             if ($k !== 'Name' && $k !== 'Value' && $v !== null && $v !== false) {
                 if ($k === 'Expires') {
                     $str .= 'Expires='.\gmdate('D, d M Y H:i:s \G\M\T', $v).'; ';
@@ -171,7 +190,12 @@ class SetCookie
 
     public function toArray(): array
     {
-        return $this->data;
+        $data = $this->data;
+        if ($this->getHostOnly()) {
+            $data['HostOnly'] = true;
+        }
+
+        return $data;
     }
 
     /**
@@ -244,6 +268,26 @@ class SetCookie
         }
 
         $this->data['Domain'] = null === $domain ? null : (string) $domain;
+    }
+
+    /**
+     * Get whether this cookie is scoped to the origin host only.
+     *
+     * @return bool
+     */
+    public function getHostOnly()
+    {
+        return $this->hostOnly;
+    }
+
+    /**
+     * Set whether this cookie is scoped to the origin host only.
+     *
+     * @param bool $hostOnly Set to true for host-only cookies
+     */
+    public function setHostOnly(bool $hostOnly): void
+    {
+        $this->hostOnly = $hostOnly;
     }
 
     /**
@@ -445,7 +489,11 @@ class SetCookie
     {
         $cookieDomain = $this->getDomain();
         if (null === $cookieDomain) {
-            return true;
+            return !$this->getHostOnly();
+        }
+
+        if ($this->getHostOnly()) {
+            return Psr7\Utils::asciiToLower($domain) === Psr7\Utils::asciiToLower($cookieDomain);
         }
 
         // Remove the leading '.' as per spec in RFC 6265.

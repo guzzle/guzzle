@@ -7,6 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Security
 
+- Preserve host-only cookie scope and require explicit markers in persisted cookie data
 - Exclude URI fragments from `Referer` headers generated for redirects
 
 
