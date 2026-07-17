@@ -1149,7 +1149,6 @@ cookie, so they could also be sent to subdomains. Applications relying on that
 behavior should use an explicit `Domain` attribute.
 
 `SetCookie::toArray()` may include `HostOnly => true` for host-only cookies.
-Existing persisted cookie files without this key load as non-host-only cookies.
 
 #### Cookie Domain Normalization
 
@@ -1242,8 +1241,7 @@ reloads the persisted cookie file when it exists, and
 `FileCookieJar` now writes its cookie file with owner-only permissions (`0600`),
 so persisted cookies are not world-readable under the default umask; if another
 user or process must read the file, adjust its permissions after saving. Saved
-cookie files also JSON-escape tag characters, and existing cookie files remain
-readable with unchanged cookie values.
+cookie files also JSON-escape tag characters without changing cookie values.
 
 Persisted cookie data must now be a JSON list. Each list entry must decode to an
 array, and recognized `SetCookie` fields must use their documented constructor
@@ -1251,6 +1249,11 @@ types. Malformed JSON, an invalid stored shape, or a recognized field with the
 wrong type causes a `RuntimeException`. Cookie records are constructed before
 any are passed to `setCookie()`, so such failures leave the jar unchanged.
 Numeric or string-keyed JSON objects must be converted to lists.
+
+Every cookie record must include an explicit boolean `HostOnly` marker. The
+built-in jars write this marker automatically. Delete or rotate older nonempty
+data without it, or annotate each record only when its original `Domain`
+semantics are known.
 
 In Guzzle 7, malformed JSON in a cookie file and `FileCookieJar` encoding
 failures threw `GuzzleHttp\Exception\InvalidArgumentException`. Now they throw

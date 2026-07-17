@@ -94,7 +94,9 @@ class FileCookieJar extends CookieJar
         /** @var SetCookie $cookie */
         foreach ($this as $cookie) {
             if (CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
-                $json[] = $cookie->toArray();
+                $data = $cookie->toArray();
+                $data['HostOnly'] = $cookie->getHostOnly();
+                $json[] = $data;
             }
         }
 
@@ -148,7 +150,7 @@ class FileCookieJar extends CookieJar
 
         $cookies = [];
         foreach ($data as $cookie) {
-            if (!\is_array($cookie)) {
+            if (!\is_array($cookie) || !\array_key_exists('HostOnly', $cookie) || !\is_bool($cookie['HostOnly'])) {
                 throw new \RuntimeException($message);
             }
 

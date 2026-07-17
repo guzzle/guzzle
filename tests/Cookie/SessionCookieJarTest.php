@@ -112,7 +112,7 @@ class SessionCookieJarTest extends TestCase
 
     public function testLoadsCookieRecordsUsingExistingValidation(): void
     {
-        $_SESSION[$this->sessionVar] = '[{},{"Name":"loaded","Value":"cookie","Domain":"example.com"}]';
+        $_SESSION[$this->sessionVar] = '[{"HostOnly":false},{"Name":"loaded","Value":"cookie","Domain":"example.com","HostOnly":false}]';
 
         $jar = new SessionCookieJar($this->sessionVar);
 
@@ -181,6 +181,7 @@ class SessionCookieJarTest extends TestCase
 
         self::assertInstanceOf(SetCookie::class, $cookie);
         self::assertNull($cookie->getDomain());
+        self::assertFalse($cookie->getHostOnly());
 
         unset($jar, $reloaded, $_SESSION[$this->sessionVar]);
     }
@@ -265,7 +266,9 @@ class SessionCookieJarTest extends TestCase
             'non-list JSON' => ['null'],
             'numeric-keyed object root' => ['{"0":{"Name":"foo","Value":"bar"}}'],
             'non-array record' => ['[1]'],
-            'invalid field type' => ['[{"Name":false,"Value":"bar"}]'],
+            'missing HostOnly marker' => ['[{"Name":"foo","Value":"bar"}]'],
+            'invalid HostOnly marker' => ['[{"Name":"foo","Value":"bar","HostOnly":"false"}]'],
+            'invalid field type' => ['[{"Name":false,"Value":"bar","HostOnly":false}]'],
         ];
     }
 

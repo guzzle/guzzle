@@ -108,6 +108,11 @@ a `RuntimeException`. Cookie records are constructed before any are passed to
 `setCookie()`, so invalid stored shapes and recognized fields with the wrong
 types leave existing cookies unchanged.
 
+Every record must include an explicit boolean `HostOnly` marker. The built-in
+jars write it automatically. Older nonempty data without the marker must be
+deleted, rotated, or annotated only when its original `Domain` semantics are
+known.
+
 Loading an empty cookie file is a no-op. `SessionCookieJar` treats a missing or
 `null` session value as no stored data; any other value must be a string
 containing a JSON list.

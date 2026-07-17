@@ -74,7 +74,7 @@ class FileCookieJarTest extends TestCase
             'Value' => 'cookie',
             'Domain' => 'example.com',
         ]));
-        \file_put_contents($this->file, '[{},{"Name":"loaded","Value":"cookie","Domain":"example.com"}]');
+        \file_put_contents($this->file, '[{"HostOnly":false},{"Name":"loaded","Value":"cookie","Domain":"example.com","HostOnly":false}]');
 
         $jar->load($this->file);
 
@@ -95,7 +95,7 @@ class FileCookieJarTest extends TestCase
         $source = $this->file.'.load';
 
         try {
-            \file_put_contents($source, '[{"Name":"loaded","Value":"cookie","Domain":"example.com"},{"Name":false,"Value":"invalid"}]');
+            \file_put_contents($source, '[{"Name":"loaded","Value":"cookie","Domain":"example.com","HostOnly":false},{"Name":"invalid","Value":"cookie","Domain":"example.com"}]');
 
             try {
                 $jar->load($source);
@@ -191,6 +191,7 @@ class FileCookieJarTest extends TestCase
 
         self::assertInstanceOf(SetCookie::class, $cookie);
         self::assertNull($cookie->getDomain());
+        self::assertFalse($cookie->getHostOnly());
 
         unset($jar, $reloaded);
     }
@@ -370,7 +371,9 @@ class FileCookieJarTest extends TestCase
             'non-list root' => ['null'],
             'numeric-keyed object root' => ['{"0":{"Name":"foo","Value":"bar"}}'],
             'non-array record' => ['[1]'],
-            'invalid field type' => ['[{"Name":false,"Value":"bar"}]'],
+            'missing HostOnly marker' => ['[{"Name":"foo","Value":"bar"}]'],
+            'invalid HostOnly marker' => ['[{"Name":"foo","Value":"bar","HostOnly":"false"}]'],
+            'invalid field type' => ['[{"Name":false,"Value":"bar","HostOnly":false}]'],
         ];
     }
 

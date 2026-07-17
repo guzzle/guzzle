@@ -1103,6 +1103,36 @@ class CookieJarTest extends TestCase
         self::assertSame('sid=domain', $subdomain->getHeaderLine('Cookie'));
     }
 
+    /**
+     * @dataProvider exactCookieDeletionProvider
+     */
+    public function testResponseDeletionPreservesTheOtherHostOnlyIdentity(string $deletion, string $sameHost, string $childHost): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => ['sid=host; Path=/', 'sid=domain; Domain=example.com; Path=/']])
+        );
+
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => $deletion])
+        );
+
+        self::assertCount(1, $this->jar);
+        self::assertSame($sameHost, $this->jar->withCookieHeader(new Request('GET', 'https://example.com/'))->getHeaderLine('Cookie'));
+        self::assertSame($childHost, $this->jar->withCookieHeader(new Request('GET', 'https://www.example.com/'))->getHeaderLine('Cookie'));
+    }
+
+    public static function exactCookieDeletionProvider(): array
+    {
+        return [
+            'empty host-only cookie' => ['sid=; Path=/', 'sid=domain', 'sid=domain'],
+            'expired host-only cookie' => ['sid=deleted; Max-Age=0; Path=/', 'sid=domain', 'sid=domain'],
+            'empty domain cookie' => ['sid=; Domain=example.com; Path=/', 'sid=host', ''],
+            'expired domain cookie' => ['sid=deleted; Domain=example.com; Max-Age=0; Path=/', 'sid=host', ''],
+        ];
+    }
+
     public function testClearingSubdomainDoesNotRemoveParentHostOnlyCookie(): void
     {
         $this->jar->setCookie(new SetCookie([
