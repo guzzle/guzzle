@@ -2742,10 +2742,7 @@ final class CurlFactory implements CurlFactoryInterface
                 $body->rewind();
             }
         } catch (\Exception $e) {
-            $ctx['error'] = 'The connection unexpectedly failed without '
-                .'providing an error. The request would have been retried, '
-                .'but attempting to rewind the request body failed. '
-                .'Exception: '.$e;
+            $ctx['error'] = 'The connection unexpectedly failed without providing an error. The request would have been retried, but attempting to rewind the request body failed.';
 
             return self::createRejection($easy, $ctx, $e);
         }

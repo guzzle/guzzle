@@ -823,10 +823,10 @@ final class StreamHandler
             $message = 'Error creating resource: ';
             foreach ($errors as $err) {
                 foreach ($err as $key => $value) {
-                    $message .= "[$key] $value".\PHP_EOL;
+                    $message .= \sprintf('[%s] %s%s', $key, Psr7\DiagnosticValue::escape((string) $value), \PHP_EOL);
                 }
             }
-            throw new \RuntimeException(Psr7\DiagnosticValue::escape(\trim($message, " \n\r\t\0\x0B")));
+            throw new \RuntimeException(\trim($message, " \n\r\t\0\x0B"));
         }
 
         return $resource;
