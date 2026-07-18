@@ -303,6 +303,7 @@ final class StreamHandler
      * @param string[] $streamErrorCodes
      */
     private static function createStreamFailureException(
+        #[\SensitiveParameter]
         string $message,
         #[\SensitiveParameter]
         RequestInterface $request,
