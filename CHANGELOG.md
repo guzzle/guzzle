@@ -7,9 +7,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Security
 
-- Preserve host-only cookie scope and require explicit markers in persisted cookie data
-- Bound response cookie admission and generated `Cookie` headers
-- Exclude URI fragments from `Referer` headers generated for redirects
+- Preserve host-only cookie scope and require explicit persistence markers (GHSA-wm3w-8rrp-j577)
+- Bound response cookie admission and generated `Cookie` headers (GHSA-f283-ghqc-fg79)
+- Exclude URI fragments from `Referer` headers generated for redirects (GHSA-h95v-h523-3mw8)
 
 
 ## 7.15.0 - 2026-07-17
