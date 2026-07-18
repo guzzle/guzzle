@@ -78,8 +78,12 @@ class HandlerStack
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function __invoke(RequestInterface $request, array $options)
-    {
+    public function __invoke(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ) {
         $handler = $this->resolve();
 
         return $handler($request, $options);

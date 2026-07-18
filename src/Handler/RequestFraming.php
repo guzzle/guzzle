@@ -49,8 +49,11 @@ final class RequestFraming
      *
      * @throws RequestException when framing or body metadata is unsafe
      */
-    public static function analyze(RequestInterface $request, bool $sendBody = true): self
-    {
+    public static function analyze(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        bool $sendBody = true
+    ): self {
         try {
             $length = HeaderProcessor::parseContentLength($request->getHeader('Content-Length'));
         } catch (\RuntimeException $e) {
@@ -119,8 +122,10 @@ final class RequestFraming
      *
      * @throws RequestException when body metadata cannot be read safely
      */
-    public static function bodySize(RequestInterface $request): ?int
-    {
+    public static function bodySize(
+        #[\SensitiveParameter]
+        RequestInterface $request
+    ): ?int {
         $body = $request->getBody();
 
         try {
@@ -235,7 +240,9 @@ final class RequestFraming
     }
 
     private static function bodyException(
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         \Exception $exception,
         string $timeoutMessage,
         string $fallbackMessage

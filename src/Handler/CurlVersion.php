@@ -326,8 +326,10 @@ final class CurlVersion
             && version_compare($version, self::PROXY_TUNNEL_VERSION, '>=');
     }
 
-    public static function ensureSupported(RequestInterface $request): void
-    {
+    public static function ensureSupported(
+        #[\SensitiveParameter]
+        RequestInterface $request
+    ): void {
         if (self::supportsCurlHandler()) {
             return;
         }

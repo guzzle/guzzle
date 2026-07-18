@@ -127,8 +127,12 @@ class Pool implements PromisorInterface
      *     rejected?: callable(mixed, int|string, PromiseInterface<mixed, mixed>): mixed
      * } $config Pool configuration.
      */
-    public function __construct(ClientInterface $client, iterable $requests, array $config = [])
-    {
+    public function __construct(
+        ClientInterface $client,
+        iterable $requests,
+        #[\SensitiveParameter]
+        array $config = []
+    ) {
         if (!isset($config['concurrency'])) {
             $config['concurrency'] = 25;
         }
@@ -261,8 +265,12 @@ class Pool implements PromisorInterface
      *
      * @throws \InvalidArgumentException if the event format is incorrect.
      */
-    public static function batch(ClientInterface $client, iterable $requests, array $options = []): array
-    {
+    public static function batch(
+        ClientInterface $client,
+        iterable $requests,
+        #[\SensitiveParameter]
+        array $options = []
+    ): array {
         $res = [];
         self::cmpCallback($options, 'fulfilled', $res);
         self::cmpCallback($options, 'rejected', $res);
@@ -279,12 +287,20 @@ class Pool implements PromisorInterface
     private static function cmpCallback(array &$options, string $name, array &$results): void
     {
         if (!isset($options[$name])) {
-            $options[$name] = static function ($v, $k) use (&$results): void {
+            $options[$name] = static function (
+                #[\SensitiveParameter]
+                $v,
+                $k
+            ) use (&$results): void {
                 $results[$k] = $v;
             };
         } else {
             $currentFn = $options[$name];
-            $options[$name] = static function ($v, $k) use (&$results, $currentFn): void {
+            $options[$name] = static function (
+                #[\SensitiveParameter]
+                $v,
+                $k
+            ) use (&$results, $currentFn): void {
                 $currentFn($v, $k);
                 $results[$k] = $v;
             };
@@ -452,14 +468,26 @@ class Pool implements PromisorInterface
             && \is_callable($options['allow_redirects']['on_redirect'] ?? null)
         ) {
             $onRedirect = $options['allow_redirects']['on_redirect'];
-            $options['allow_redirects']['on_redirect'] = static function (RequestInterface $request, ResponseInterface $response, UriInterface $uri) use ($onRedirect, $key): void {
+            $options['allow_redirects']['on_redirect'] = static function (
+                #[\SensitiveParameter]
+                RequestInterface $request,
+                #[\SensitiveParameter]
+                ResponseInterface $response,
+                #[\SensitiveParameter]
+                UriInterface $uri
+            ) use ($onRedirect, $key): void {
                 $onRedirect($request, $response, $uri, $key);
             };
         }
 
         if (\is_callable($options['on_headers'] ?? null)) {
             $onHeaders = $options['on_headers'];
-            $options['on_headers'] = static function (ResponseInterface $response, RequestInterface $request) use ($onHeaders, $key): void {
+            $options['on_headers'] = static function (
+                #[\SensitiveParameter]
+                ResponseInterface $response,
+                #[\SensitiveParameter]
+                RequestInterface $request
+            ) use ($onHeaders, $key): void {
                 $onHeaders($response, $request, $key);
             };
         }
@@ -473,7 +501,13 @@ class Pool implements PromisorInterface
 
         if (\is_callable($options['on_trailers'] ?? null)) {
             $onTrailers = $options['on_trailers'];
-            $options['on_trailers'] = static function (array $trailers, ResponseInterface $response, RequestInterface $request) use ($onTrailers, $key): void {
+            $options['on_trailers'] = static function (
+                array $trailers,
+                #[\SensitiveParameter]
+                ResponseInterface $response,
+                #[\SensitiveParameter]
+                RequestInterface $request
+            ) use ($onTrailers, $key): void {
                 $onTrailers($trailers, $response, $request, $key);
             };
         }

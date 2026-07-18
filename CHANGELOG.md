@@ -7,6 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Added
 
+- Add `SensitiveParameter` metadata to credential-bearing parameters so PHP 8.2+ redacts their values in exception traces
 - Add HTTP/3 request support to the built-in cURL handlers when PHP 8.4+ and libcurl provide HTTP/3 support
 - Add `Multiplexing::NONE` support as a client, cURL multi handler, and conditional request option
 - Add generic and structured PHPDoc annotations to client request/config option, async promise, handler, middleware, pool, and mock handler APIs

@@ -60,8 +60,12 @@ class RedirectMiddleware
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function __invoke(RequestInterface $request, array $options): PromiseInterface
-    {
+    public function __invoke(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): PromiseInterface {
         $fn = $this->nextHandler;
 
         if (empty($options['allow_redirects'])) {
@@ -82,7 +86,10 @@ class RedirectMiddleware
         }
 
         return $fn($request, $options)
-            ->then(function (ResponseInterface $response) use ($request, $options) {
+            ->then(function (
+                #[\SensitiveParameter]
+                ResponseInterface $response
+            ) use ($request, $options) {
                 return $this->checkRedirect($request, $options, $response);
             });
     }
@@ -90,8 +97,14 @@ class RedirectMiddleware
     /**
      * @return ResponseInterface|PromiseInterface<ResponseInterface, mixed>
      */
-    public function checkRedirect(RequestInterface $request, array $options, ResponseInterface $response)
-    {
+    public function checkRedirect(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options,
+        #[\SensitiveParameter]
+        ResponseInterface $response
+    ) {
         if (!self::isRedirectStatusCode($response->getStatusCode())
             || !$response->hasHeader('Location')
         ) {
@@ -146,10 +159,17 @@ class RedirectMiddleware
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private function withTracking(PromiseInterface $promise, string $uri, int $statusCode): PromiseInterface
-    {
+    private function withTracking(
+        PromiseInterface $promise,
+        #[\SensitiveParameter]
+        string $uri,
+        int $statusCode
+    ): PromiseInterface {
         return $promise->then(
-            static function (ResponseInterface $response) use ($uri, $statusCode): ResponseInterface {
+            static function (
+                #[\SensitiveParameter]
+                ResponseInterface $response
+            ) use ($uri, $statusCode): ResponseInterface {
                 // Note that we are pushing to the front of the list as this
                 // would be an earlier response than what is currently present
                 // in the history header.
@@ -169,8 +189,14 @@ class RedirectMiddleware
      *
      * @throws TooManyRedirectsException Too many redirects.
      */
-    private function guardMax(RequestInterface $request, ResponseInterface $response, array &$options): void
-    {
+    private function guardMax(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        ResponseInterface $response,
+        #[\SensitiveParameter]
+        array &$options
+    ): void {
         $current = $options['__redirect_count']
             ?? 0;
         $options['__redirect_count'] = $current + 1;
@@ -181,8 +207,14 @@ class RedirectMiddleware
         }
     }
 
-    public function modifyRequest(RequestInterface $request, array $options, ResponseInterface $response): RequestInterface
-    {
+    public function modifyRequest(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options,
+        #[\SensitiveParameter]
+        ResponseInterface $response
+    ): RequestInterface {
         $modify = self::getRedirectRequestModifiers($request, $options, $response);
         $protocols = $options['allow_redirects']['protocols'];
 
@@ -256,8 +288,11 @@ class RedirectMiddleware
      * }
      */
     private static function getRedirectRequestModifiers(
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         array $options,
+        #[\SensitiveParameter]
         ResponseInterface $response
     ): array {
         $statusCode = $response->getStatusCode();
@@ -294,7 +329,9 @@ class RedirectMiddleware
      */
     private static function redirectUri(
         UriFactoryInterface $uriFactory,
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         ResponseInterface $response,
         array $protocols
     ): UriInterface {

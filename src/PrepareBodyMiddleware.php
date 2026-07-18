@@ -35,8 +35,12 @@ class PrepareBodyMiddleware
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function __invoke(RequestInterface $request, array $options): PromiseInterface
-    {
+    public function __invoke(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): PromiseInterface {
         $fn = $this->nextHandler;
         $bodySize = RequestFraming::bodySize($request);
 
@@ -77,7 +81,9 @@ class PrepareBodyMiddleware
      * Add expect header
      */
     private function addExpectHeader(
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         array $options,
         array &$modify,
         ?int $bodySize

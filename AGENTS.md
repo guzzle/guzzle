@@ -2,8 +2,22 @@
 
 ## Code and tooling
 
-- All code must remain compatible with PHP 7.4, and PHPStan and PHP-CS-Fixer
-  must be run against PHP 7.4.
+- All code must remain compatible with PHP 7.4. Run PHPStan and PHP-CS-Fixer
+  only under a PHP 7.4.x runtime; never run either tool under any other PHP
+  major.minor version.
+- Use fully qualified `#[\SensitiveParameter]` on concrete executable
+  parameters when their established role normally carries a secret,
+  credential-bearing aggregate, or confidential Guzzle-owned container, and
+  the active frame can throw or invoke throwing code.
+- Repeat the attribute on every qualifying owned caller, callee, concrete trait
+  method, and closure parameter. Do not add it to interfaces, abstract-only
+  declarations, pure/no-realistic-throw helpers, assignment-only sites,
+  arbitrary generic payloads, or completed non-recoverable derivatives.
+- For PHP 7.4 compatibility, put `#[\SensitiveParameter]` on its own line and
+  the parameter on the following line, expand the complete parameter list, and
+  never add a comma after the final parameter. Native trace redaction starts on
+  PHP 8.2 and does not redact logs, messages, properties, wire traffic, captured
+  variables, return values, or the separate backtrace `$this`/`object`.
 - Always pass an explicit character list to `trim()`, `ltrim()`, and `rtrim()`;
   never rely on the default characters.
 - Handle `preg_*` engine failures: when the result is used as data, test for

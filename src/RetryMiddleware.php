@@ -53,8 +53,12 @@ class RetryMiddleware
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function __invoke(RequestInterface $request, array $options): PromiseInterface
-    {
+    public function __invoke(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): PromiseInterface {
         if (!isset($options['retries'])) {
             $options['retries'] = 0;
         } elseif (!\is_int($options['retries'])) {
@@ -74,7 +78,10 @@ class RetryMiddleware
      */
     private function onFulfilled(RequestInterface $request, array $options): callable
     {
-        return function ($value) use ($request, $options) {
+        return function (
+            #[\SensitiveParameter]
+            $value
+        ) use ($request, $options) {
             if (!($this->decider)(
                 $options['retries'],
                 $request,
@@ -93,7 +100,10 @@ class RetryMiddleware
      */
     private function onRejected(RequestInterface $req, array $options): callable
     {
-        return function ($reason) use ($req, $options): PromiseInterface {
+        return function (
+            #[\SensitiveParameter]
+            $reason
+        ) use ($req, $options): PromiseInterface {
             if (!($this->decider)(
                 $options['retries'],
                 $req,
@@ -111,8 +121,14 @@ class RetryMiddleware
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private function doRetry(RequestInterface $request, array $options, ?ResponseInterface $response = null): PromiseInterface
-    {
+    private function doRetry(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options,
+        #[\SensitiveParameter]
+        ?ResponseInterface $response = null
+    ): PromiseInterface {
         ++$options['retries'];
         $options['delay'] = ($this->delay)($options['retries'], $response, $request);
 

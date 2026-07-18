@@ -273,8 +273,12 @@ final class CurlMultiHandler
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function __invoke(RequestInterface $request, array $options): PromiseInterface
-    {
+    public function __invoke(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): PromiseInterface {
         $this->assertOpen();
 
         $easy = $this->factory->create($request, $options);
@@ -336,8 +340,12 @@ final class CurlMultiHandler
      * WAIT mode adapts instead of conflicting: the handler option wins and
      * nothing waits.
      */
-    private function rejectDisabledMultiplexConflict(EasyHandle $easy, array $options): void
-    {
+    private function rejectDisabledMultiplexConflict(
+        #[\SensitiveParameter]
+        EasyHandle $easy,
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         if (!$this->multiplexDisabled) {
             return;
         }
@@ -374,8 +382,12 @@ final class CurlMultiHandler
      * (below libcurl 7.77.0, and 8.11.0-8.12.1), accepted transfers force a
      * fresh connection.
      */
-    private function applyMultiplexNone(EasyHandle $easy, array $options): void
-    {
+    private function applyMultiplexNone(
+        #[\SensitiveParameter]
+        EasyHandle $easy,
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         if (Multiplexing::NONE !== ($options['multiplex'] ?? null) || $this->multiplexDisabled) {
             return;
         }
@@ -557,8 +569,10 @@ final class CurlMultiHandler
      * Isolates the connection cache when the request's proxy tunnel section
      * differs from the one the multi handle's cache may already hold.
      */
-    private function applyProxyTunnelOwnership(EasyHandle $easy): void
-    {
+    private function applyProxyTunnelOwnership(
+        #[\SensitiveParameter]
+        EasyHandle $easy
+    ): void {
         $signature = $easy->proxyTunnelSignature;
         if ($signature === null || $signature === $this->proxyTunnelOwner) {
             return;
@@ -595,8 +609,11 @@ final class CurlMultiHandler
         $this->isolateProxyTunnelTransfer($easy);
     }
 
-    private function addHandleToMulti(int $id, EasyHandle $easy): void
-    {
+    private function addHandleToMulti(
+        int $id,
+        #[\SensitiveParameter]
+        EasyHandle $easy
+    ): void {
         $this->isolateFromForeignActiveProxyTunnel($easy);
 
         $multiHandle = $this->getMultiHandle();
@@ -624,8 +641,10 @@ final class CurlMultiHandler
         }
     }
 
-    private function isolateFromForeignActiveProxyTunnel(EasyHandle $easy): void
-    {
+    private function isolateFromForeignActiveProxyTunnel(
+        #[\SensitiveParameter]
+        EasyHandle $easy
+    ): void {
         $signature = $easy->proxyTunnelSignature;
 
         if ($signature === null || $this->activeProxyTunnelSignatures === []) {
@@ -639,8 +658,10 @@ final class CurlMultiHandler
         $this->isolateProxyTunnelTransfer($easy);
     }
 
-    private function isolateProxyTunnelTransfer(EasyHandle $easy): void
-    {
+    private function isolateProxyTunnelTransfer(
+        #[\SensitiveParameter]
+        EasyHandle $easy
+    ): void {
         foreach (self::PROXY_TUNNEL_ISOLATION_OPTIONS as $name) {
             try {
                 // Unqualified curl_setopt so the test bootstrap shadow records it.
@@ -1215,8 +1236,10 @@ final class CurlMultiHandler
         $entry['deferred']->reject($failure);
     }
 
-    private function disposeEasyHandle(EasyHandle $easy): void
-    {
+    private function disposeEasyHandle(
+        #[\SensitiveParameter]
+        EasyHandle $easy
+    ): void {
         if (!self::hasEasyHandle($easy)) {
             return;
         }
@@ -1295,8 +1318,10 @@ final class CurlMultiHandler
         return \array_key_exists('handle', \get_object_vars($easy));
     }
 
-    private function addRequest(array $entry): void
-    {
+    private function addRequest(
+        #[\SensitiveParameter]
+        array $entry
+    ): void {
         $easy = $entry['easy'];
         $id = (int) $easy->handle;
         $entry['attached'] = false;

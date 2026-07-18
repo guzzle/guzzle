@@ -89,8 +89,12 @@ final class AuthMiddleware
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function __invoke(RequestInterface $request, array $options): PromiseInterface
-    {
+    public function __invoke(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): PromiseInterface {
         $auth = $options['auth'] ?? null;
         if ($auth === null || $auth === false || $auth === [] || \is_string($auth)) {
             return ($this->nextHandler)($request, $options);
@@ -115,8 +119,10 @@ final class AuthMiddleware
      *
      * @return array{0: string, 1: string, 2: 'basic'|'digest'}|null
      */
-    private static function normalizeAuth(array $auth): ?array
-    {
+    private static function normalizeAuth(
+        #[\SensitiveParameter]
+        array $auth
+    ): ?array {
         $type = 'basic';
         if (\array_key_exists(2, $auth) && $auth[2] !== null) {
             if (!\is_string($auth[2])) {
@@ -144,8 +150,15 @@ final class AuthMiddleware
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private function sendBasic(RequestInterface $request, array $options, string $username, string $password): PromiseInterface
-    {
+    private function sendBasic(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options,
+        string $username,
+        #[\SensitiveParameter]
+        string $password
+    ): PromiseInterface {
         if (\strpos($username, ':') !== false) {
             throw new InvalidArgumentException('Basic authentication username must not contain a colon');
         }
@@ -165,8 +178,15 @@ final class AuthMiddleware
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private function sendDigest(RequestInterface $request, array $options, string $username, string $password): PromiseInterface
-    {
+    private function sendDigest(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options,
+        string $username,
+        #[\SensitiveParameter]
+        string $password
+    ): PromiseInterface {
         $preemptive = $this->reuseChallenges
             ? $this->preemptiveDigestRequest($request, $username, $password)
             : null;
@@ -176,7 +196,10 @@ final class AuthMiddleware
             unset($preemptiveOptions['auth']);
 
             return ($this->nextHandler)($preemptive, $preemptiveOptions)->then(
-                function (ResponseInterface $response) use ($request, $options, $preemptiveOptions, $username, $password) {
+                function (
+                    #[\SensitiveParameter]
+                    ResponseInterface $response
+                ) use ($request, $options, $preemptiveOptions, $username, $password) {
                     // Clear on 4xx/5xx other than 401 so non-conformant stale-nonce
                     // errors cannot poison the cache indefinitely.
                     $status = $response->getStatusCode();
@@ -186,7 +209,10 @@ final class AuthMiddleware
 
                     return $this->handleDigestResponse($request, $options, $preemptiveOptions, $response, $username, $password, false);
                 },
-                function ($reason) use ($request, $preemptiveOptions) {
+                function (
+                    #[\SensitiveParameter]
+                    $reason
+                ) use ($request, $preemptiveOptions) {
                     return $this->handleDigestRejection($request, $preemptiveOptions, $reason, true);
                 }
             );
@@ -204,17 +230,28 @@ final class AuthMiddleware
         }
 
         return ($this->nextHandler)($probeRequest, $probeOptions)->then(
-            function (ResponseInterface $response) use ($request, $options, $probeOptions, $username, $password, $bodyWithheld) {
+            function (
+                #[\SensitiveParameter]
+                ResponseInterface $response
+            ) use ($request, $options, $probeOptions, $username, $password, $bodyWithheld) {
                 return $this->handleDigestResponse($request, $options, $probeOptions, $response, $username, $password, $bodyWithheld);
             },
-            function ($reason) use ($request, $probeOptions) {
+            function (
+                #[\SensitiveParameter]
+                $reason
+            ) use ($request, $probeOptions) {
                 return $this->handleDigestRejection($request, $probeOptions, $reason, false);
             }
         );
     }
 
-    private function preemptiveDigestRequest(RequestInterface $request, string $username, string $password): ?RequestInterface
-    {
+    private function preemptiveDigestRequest(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        string $username,
+        #[\SensitiveParameter]
+        string $password
+    ): ?RequestInterface {
         try {
             if ($request->getBody()->getSize() !== 0) {
                 return null;
@@ -259,8 +296,12 @@ final class AuthMiddleware
      *
      * @return array{0: RequestInterface, 1: bool}
      */
-    private static function probeRequest(RequestInterface $request, array $options): array
-    {
+    private static function probeRequest(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): array {
         $probe = $request->withoutHeader('Authorization');
 
         try {
@@ -291,11 +332,16 @@ final class AuthMiddleware
      * @return ResponseInterface|PromiseInterface<ResponseInterface, mixed>
      */
     private function handleDigestResponse(
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         array $options,
+        #[\SensitiveParameter]
         array $probeOptions,
+        #[\SensitiveParameter]
         ResponseInterface $response,
         string $username,
+        #[\SensitiveParameter]
         string $password,
         bool $bodyWithheld
     ) {
@@ -396,14 +442,20 @@ final class AuthMiddleware
         $retryRequest = $request->withHeader('Authorization', $authorization);
 
         return ($this->nextHandler)($retryRequest, $downstreamOptions)->then(
-            function (ResponseInterface $retryResponse) use ($retryRequest, $retryOptions, $downstreamOptions, $username, $password, $challenge, $nc) {
+            function (
+                #[\SensitiveParameter]
+                ResponseInterface $retryResponse
+            ) use ($retryRequest, $retryOptions, $downstreamOptions, $username, $password, $challenge, $nc) {
                 if ($this->reuseChallenges && self::isCacheableDigestSuccess($retryResponse)) {
                     $this->storeDigestChallenge($retryRequest, $challenge, $username, $password, $nc + 1);
                 }
 
                 return $this->handleDigestResponse($retryRequest, $retryOptions, $downstreamOptions, $retryResponse, $username, $password, false);
             },
-            function ($reason) use ($retryRequest, $downstreamOptions) {
+            function (
+                #[\SensitiveParameter]
+                $reason
+            ) use ($retryRequest, $downstreamOptions) {
                 return $this->handleDigestRejection($retryRequest, $downstreamOptions, $reason, false);
             }
         );
@@ -416,8 +468,15 @@ final class AuthMiddleware
         return $status >= 200 && $status < 400 && !$response->hasHeader('Authentication-Info');
     }
 
-    private function storeDigestChallenge(RequestInterface $request, DigestChallenge $challenge, string $username, string $password, int $nextNc): void
-    {
+    private function storeDigestChallenge(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        DigestChallenge $challenge,
+        string $username,
+        #[\SensitiveParameter]
+        string $password,
+        int $nextNc
+    ): void {
         $key = self::digestCacheKey($request);
         if ($key === null || $challenge->qop === null) {
             return;
@@ -494,8 +553,15 @@ final class AuthMiddleware
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private function handleDigestRejection(RequestInterface $request, array $options, $reason, bool $preemptive): PromiseInterface
-    {
+    private function handleDigestRejection(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options,
+        #[\SensitiveParameter]
+        $reason,
+        bool $preemptive
+    ): PromiseInterface {
         if ($this->reuseChallenges && $reason instanceof ResponseException) {
             $response = $reason->getResponse();
 
@@ -525,8 +591,11 @@ final class AuthMiddleware
         return $scheme.'://'.$host.':'.$port.'|'.HostIdentity::canonicalHostHeader($request->getHeaderLine('Host'));
     }
 
-    private function digestCredentialKey(string $username, string $password): string
-    {
+    private function digestCredentialKey(
+        string $username,
+        #[\SensitiveParameter]
+        string $password
+    ): string {
         if ($this->credentialHashSecret === null) {
             $this->credentialHashSecret = \random_bytes(32);
         }
@@ -607,8 +676,11 @@ final class AuthMiddleware
             && \in_array($response->getStatusCode(), [301, 302, 303, 307, 308], true);
     }
 
-    private static function rewindBodyForRetry(RequestInterface $request, bool $bodyWithheld): void
-    {
+    private static function rewindBodyForRetry(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        bool $bodyWithheld
+    ): void {
         $body = $request->getBody();
 
         if (!$bodyWithheld) {
@@ -630,8 +702,10 @@ final class AuthMiddleware
         }
     }
 
-    private static function withTemporarySink(array $options): array
-    {
+    private static function withTemporarySink(
+        #[\SensitiveParameter]
+        array $options
+    ): array {
         // The 'stream' option is deliberately not checked here: the cURL
         // handlers do not support streaming and write each leg to the sink,
         // so a configured sink always needs challenge-body protection.
@@ -652,8 +726,11 @@ final class AuthMiddleware
     }
 
     private static function restoreOriginalSink(
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         ResponseInterface $response,
+        #[\SensitiveParameter]
         array $options
     ): ResponseInterface {
         if (!\array_key_exists('__guzzle_auth_original_sink', $options)) {
@@ -690,8 +767,12 @@ final class AuthMiddleware
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private static function restoreOriginalSinkOnRejection(array $options, $reason): PromiseInterface
-    {
+    private static function restoreOriginalSinkOnRejection(
+        #[\SensitiveParameter]
+        array $options,
+        #[\SensitiveParameter]
+        $reason
+    ): PromiseInterface {
         if (!$reason instanceof ResponseException || !\array_key_exists('__guzzle_auth_original_sink', $options)) {
             /** @var PromiseInterface<ResponseInterface, mixed> */
             return P\Create::rejectionFor($reason);

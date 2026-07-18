@@ -33,8 +33,11 @@ class CookieJar implements CookieJarInterface
      *                           arrays that can be used with the SetCookie
      *                           constructor
      */
-    public function __construct(bool $strictMode = false, array $cookieArray = [])
-    {
+    public function __construct(
+        bool $strictMode = false,
+        #[\SensitiveParameter]
+        array $cookieArray = []
+    ) {
         $this->strictMode = $strictMode;
 
         foreach ($cookieArray as $cookie) {
@@ -51,8 +54,11 @@ class CookieJar implements CookieJarInterface
      * @param array  $cookies Cookies to create the jar from
      * @param string $domain  Domain to set the cookies to
      */
-    public static function fromArray(array $cookies, string $domain): self
-    {
+    public static function fromArray(
+        #[\SensitiveParameter]
+        array $cookies,
+        string $domain
+    ): self {
         $cookieJar = new self();
         foreach ($cookies as $name => $value) {
             if (!\is_scalar($value) && !(\is_object($value) && \method_exists($value, '__toString'))) {
@@ -158,8 +164,10 @@ class CookieJar implements CookieJarInterface
         );
     }
 
-    public function setCookie(SetCookie $cookie): bool
-    {
+    public function setCookie(
+        #[\SensitiveParameter]
+        SetCookie $cookie
+    ): bool {
         // If the name string is empty (but not 0), ignore the set-cookie
         // string entirely.
         $name = $cookie->getName();
@@ -241,8 +249,12 @@ class CookieJar implements CookieJarInterface
         return new \ArrayIterator(\array_values($this->cookies));
     }
 
-    public function extractCookies(RequestInterface $request, ResponseInterface $response): void
-    {
+    public function extractCookies(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        ResponseInterface $response
+    ): void {
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
             $uri = $request->getUri();
             $requestHost = HostIdentity::canonicalHost($uri->getHost());
@@ -361,8 +373,10 @@ class CookieJar implements CookieJarInterface
         return \substr($uriPath, 0, $lastSlashPos);
     }
 
-    public function withCookieHeader(RequestInterface $request): RequestInterface
-    {
+    public function withCookieHeader(
+        #[\SensitiveParameter]
+        RequestInterface $request
+    ): RequestInterface {
         $values = [];
         $headerLength = 8;
         $uri = $request->getUri();
