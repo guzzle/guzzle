@@ -178,6 +178,15 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Handler\Proxy::wrapTlsFallback()`; the default handler stack selects the cURL or stream handler by TLS support automatically
 
 
+## 7.15.1 - 2026-07-18
+
+### Security
+
+- Preserve host-only cookie scope and require explicit persistence markers (GHSA-wm3w-8rrp-j577)
+- Bound response cookie admission and generated `Cookie` headers (GHSA-f283-ghqc-fg79)
+- Exclude URI fragments from `Referer` headers generated for redirects (GHSA-h95v-h523-3mw8)
+
+
 ## 7.15.0 - 2026-07-17
 
 ### Added
