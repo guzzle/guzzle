@@ -304,7 +304,9 @@ final class StreamHandler
      */
     private static function createStreamFailureException(
         string $message,
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         \Exception $previous,
         array $streamErrorCodes
     ): TransferException {
@@ -1055,8 +1057,12 @@ final class StreamHandler
     /**
      * @param string[] $streamErrorCodes
      */
-    private function addStructuredStreamErrorHandler(array &$context, array &$streamErrorCodes, bool &$captureStreamErrors): void
-    {
+    private function addStructuredStreamErrorHandler(
+        #[\SensitiveParameter]
+        array &$context,
+        array &$streamErrorCodes,
+        bool &$captureStreamErrors
+    ): void {
         if (!self::supportsStructuredStreamErrors()) {
             return;
         }
@@ -1068,7 +1074,10 @@ final class StreamHandler
         $context['stream']['error_mode'] = \StreamErrorMode::Error;
         $context['stream']['error_store'] = \StreamErrorStore::None;
         /** @param \StreamError[] $errors */
-        $context['stream']['error_handler'] = static function (array $errors) use (&$streamErrorCodes, &$captureStreamErrors): void {
+        $context['stream']['error_handler'] = static function (
+            #[\SensitiveParameter]
+            array $errors
+        ) use (&$streamErrorCodes, &$captureStreamErrors): void {
             if (!$captureStreamErrors) {
                 return;
             }
