@@ -33,8 +33,11 @@ final class ProxyEnv
      *
      * @param mixed $proxyOption
      */
-    public static function resolveProxySelection(UriInterface $uri, $proxyOption): ProxySelection
-    {
+    public static function resolveProxySelection(
+        UriInterface $uri,
+        #[\SensitiveParameter]
+        $proxyOption
+    ): ProxySelection {
         $selection = ProxyOptions::resolve($uri, $proxyOption);
 
         // Any option decision (proxy, bypassed, or disabled) is final; only

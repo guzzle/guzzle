@@ -54,8 +54,12 @@ final class MockHandler implements \Countable
      *
      * @return HandlerStack<callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>>
      */
-    public static function createWithMiddleware(?array $queue = null, ?callable $onFulfilled = null, ?callable $onRejected = null): HandlerStack
-    {
+    public static function createWithMiddleware(
+        #[\SensitiveParameter]
+        ?array $queue = null,
+        ?callable $onFulfilled = null,
+        ?callable $onRejected = null
+    ): HandlerStack {
         return HandlerStack::create(new self($queue, $onFulfilled, $onRejected));
     }
 
@@ -67,8 +71,12 @@ final class MockHandler implements \Countable
      * @param (callable(ResponseInterface|null): mixed)|null                                                                                                                                                                                $onFulfilled Callback to invoke when the return value is fulfilled.
      * @param (callable(mixed): mixed)|null                                                                                                                                                                                                 $onRejected  Callback to invoke when the return value is rejected.
      */
-    public function __construct(?array $queue = null, ?callable $onFulfilled = null, ?callable $onRejected = null)
-    {
+    public function __construct(
+        #[\SensitiveParameter]
+        ?array $queue = null,
+        ?callable $onFulfilled = null,
+        ?callable $onRejected = null
+    ) {
         $this->onFulfilled = $onFulfilled;
         $this->onRejected = $onRejected;
 
@@ -81,8 +89,12 @@ final class MockHandler implements \Countable
     /**
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function __invoke(RequestInterface $request, array $options): PromiseInterface
-    {
+    public function __invoke(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): PromiseInterface {
         if (!$this->queue) {
             // Test-setup error (more requests made than responses queued);
             // intentionally a bare SPL exception, not a GuzzleException.
@@ -121,7 +133,10 @@ final class MockHandler implements \Countable
 
         if (\is_callable($onHeaders)) {
             $response = $response->then(
-                static function ($value) use ($onHeaders, $request, &$onHeadersResponse) {
+                static function (
+                    #[\SensitiveParameter]
+                    $value
+                ) use ($onHeaders, $request, &$onHeadersResponse) {
                     if (!$value instanceof ResponseInterface) {
                         return $value;
                     }
@@ -141,7 +156,10 @@ final class MockHandler implements \Countable
         }
 
         $promise = $response->then(
-            function ($value) use ($request, $options): ?ResponseInterface {
+            function (
+                #[\SensitiveParameter]
+                $value
+            ) use ($request, $options): ?ResponseInterface {
                 /** @var ResponseInterface|null $value */
                 $this->invokeStats($request, $options, $value);
                 if ($this->onFulfilled) {
@@ -163,7 +181,10 @@ final class MockHandler implements \Countable
 
                 return $value;
             },
-            function ($reason) use ($request, $options, &$onHeadersResponse): PromiseInterface {
+            function (
+                #[\SensitiveParameter]
+                $reason
+            ) use ($request, $options, &$onHeadersResponse): PromiseInterface {
                 $this->invokeStats($request, $options, $onHeadersResponse, $reason);
                 if ($this->onRejected) {
                     ($this->onRejected)($reason);
@@ -183,8 +204,10 @@ final class MockHandler implements \Countable
      *
      * @param mixed ...$values Responses, promises, throwables, or request-aware callables.
      */
-    public function append(...$values): void
-    {
+    public function append(
+        #[\SensitiveParameter]
+        ...$values
+    ): void {
         foreach ($values as $value) {
             if ($value instanceof ResponseInterface
                 || $value instanceof \Throwable
@@ -231,9 +254,13 @@ final class MockHandler implements \Countable
      * @param mixed $reason Promise or reason.
      */
     private function invokeStats(
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         array $options,
+        #[\SensitiveParameter]
         ?ResponseInterface $response = null,
+        #[\SensitiveParameter]
         $reason = null
     ): void {
         if (isset($options['on_stats'])) {

@@ -34,8 +34,11 @@ class RequestException extends TransferException implements RequestExceptionInte
      * @param BodySummarizerInterface|null $bodySummarizer Optional body summarizer
      */
     public static function create(
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         ?ResponseInterface $response = null,
+        #[\SensitiveParameter]
         ?\Throwable $previous = null,
         ?BodySummarizerInterface $bodySummarizer = null
     ): self {

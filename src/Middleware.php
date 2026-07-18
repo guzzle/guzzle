@@ -48,7 +48,12 @@ final class Middleware
     public static function cookies(): callable
     {
         return static function (callable $handler): callable {
-            return static function (RequestInterface $request, array $options) use ($handler): PromiseInterface {
+            return static function (
+                #[\SensitiveParameter]
+                RequestInterface $request,
+                #[\SensitiveParameter]
+                array $options
+            ) use ($handler): PromiseInterface {
                 if (empty($options['cookies'])) {
                     return $handler($request, $options);
                 } elseif (!$options['cookies'] instanceof CookieJarInterface) {
@@ -59,7 +64,10 @@ final class Middleware
 
                 return $handler($request, $options)
                     ->then(
-                        static function (ResponseInterface $response) use ($cookieJar, $request): ResponseInterface {
+                        static function (
+                            #[\SensitiveParameter]
+                            ResponseInterface $response
+                        ) use ($cookieJar, $request): ResponseInterface {
                             $cookieJar->extractCookies($request, $response);
 
                             return $response;
@@ -80,13 +88,21 @@ final class Middleware
     public static function httpErrors(?BodySummarizerInterface $bodySummarizer = null): callable
     {
         return static function (callable $handler) use ($bodySummarizer): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, $bodySummarizer): PromiseInterface {
+            return static function (
+                #[\SensitiveParameter]
+                RequestInterface $request,
+                #[\SensitiveParameter]
+                array $options
+            ) use ($handler, $bodySummarizer): PromiseInterface {
                 if (empty($options['http_errors'])) {
                     return $handler($request, $options);
                 }
 
                 return $handler($request, $options)->then(
-                    static function (ResponseInterface $response) use ($request, $bodySummarizer): ResponseInterface {
+                    static function (
+                        #[\SensitiveParameter]
+                        ResponseInterface $response
+                    ) use ($request, $bodySummarizer): ResponseInterface {
                         $code = $response->getStatusCode();
                         if ($code < 400) {
                             return $response;
@@ -114,9 +130,17 @@ final class Middleware
         }
 
         return static function (callable $handler) use (&$container): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, &$container): PromiseInterface {
+            return static function (
+                #[\SensitiveParameter]
+                RequestInterface $request,
+                #[\SensitiveParameter]
+                array $options
+            ) use ($handler, &$container): PromiseInterface {
                 return $handler($request, $options)->then(
-                    static function (ResponseInterface $value) use ($request, &$container, $options): ResponseInterface {
+                    static function (
+                        #[\SensitiveParameter]
+                        ResponseInterface $value
+                    ) use ($request, &$container, $options): ResponseInterface {
                         $container[] = [
                             'request' => $request,
                             'response' => $value,
@@ -126,7 +150,10 @@ final class Middleware
 
                         return $value;
                     },
-                    static function ($reason) use ($request, &$container, $options): PromiseInterface {
+                    static function (
+                        #[\SensitiveParameter]
+                        $reason
+                    ) use ($request, &$container, $options): PromiseInterface {
                         $container[] = [
                             'request' => $request,
                             'response' => null,
@@ -159,7 +186,12 @@ final class Middleware
     public static function tap(?callable $before = null, ?callable $after = null): callable
     {
         return static function (callable $handler) use ($before, $after): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, $before, $after): PromiseInterface {
+            return static function (
+                #[\SensitiveParameter]
+                RequestInterface $request,
+                #[\SensitiveParameter]
+                array $options
+            ) use ($handler, $before, $after): PromiseInterface {
                 if ($before) {
                     $before($request, $options);
                 }
@@ -221,9 +253,17 @@ final class Middleware
     public static function log(LoggerInterface $logger, MessageFormatterInterface $formatter, string $logLevel = 'info'): callable
     {
         return static function (callable $handler) use ($logger, $formatter, $logLevel): callable {
-            return static function (RequestInterface $request, array $options = []) use ($handler, $logger, $formatter, $logLevel): PromiseInterface {
+            return static function (
+                #[\SensitiveParameter]
+                RequestInterface $request,
+                #[\SensitiveParameter]
+                array $options = []
+            ) use ($handler, $logger, $formatter, $logLevel): PromiseInterface {
                 return $handler($request, $options)->then(
-                    static function (ResponseInterface $response) use ($logger, $request, $formatter, $logLevel): ResponseInterface {
+                    static function (
+                        #[\SensitiveParameter]
+                        ResponseInterface $response
+                    ) use ($logger, $request, $formatter, $logLevel): ResponseInterface {
                         $message = $formatter->format($request, $response);
                         $logger->log($logLevel, $message);
 
@@ -232,7 +272,10 @@ final class Middleware
                     /**
                      * @return PromiseInterface<ResponseInterface, mixed>
                      */
-                    static function ($reason) use ($logger, $request, $formatter): PromiseInterface {
+                    static function (
+                        #[\SensitiveParameter]
+                        $reason
+                    ) use ($logger, $request, $formatter): PromiseInterface {
                         $response = $reason instanceof ResponseException ? $reason->getResponse() : null;
                         $message = $formatter->format($request, $response, P\Create::exceptionFor($reason));
                         $logger->error($message);
@@ -269,7 +312,12 @@ final class Middleware
     public static function mapRequest(callable $fn): callable
     {
         return static function (callable $handler) use ($fn): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, $fn): PromiseInterface {
+            return static function (
+                #[\SensitiveParameter]
+                RequestInterface $request,
+                #[\SensitiveParameter]
+                array $options
+            ) use ($handler, $fn): PromiseInterface {
                 return $handler($fn($request), $options);
             };
         };
@@ -287,7 +335,12 @@ final class Middleware
     public static function mapResponse(callable $fn): callable
     {
         return static function (callable $handler) use ($fn): callable {
-            return static function (RequestInterface $request, array $options) use ($handler, $fn): PromiseInterface {
+            return static function (
+                #[\SensitiveParameter]
+                RequestInterface $request,
+                #[\SensitiveParameter]
+                array $options
+            ) use ($handler, $fn): PromiseInterface {
                 return $handler($request, $options)->then($fn);
             };
         };

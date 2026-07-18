@@ -1508,6 +1508,17 @@ mock handlers, cURL transport objects, and persistent cookie jars no longer
 support native PHP `serialize()` or `unserialize()`. Persist configuration or
 cookie data explicitly and rebuild runtime objects during bootstrap.
 
+#### Sensitive Stack Trace Arguments
+
+Guzzle 8 marks credential-bearing parameters with `SensitiveParameter`. On PHP
+8.2 and later, selected exception-trace arguments are represented by
+`SensitiveParameterValue` instead of exposing the original argument. PHP 7.4
+through 8.1 do not redact trace arguments. The attribute does not redact logs,
+exception messages, HTTP traffic, properties, captured variables, return
+values, custom callback frames, or the separate `$this`/`object` entry in
+explicit backtraces. PHP 8.2 also does not reliably redact named values
+collected by an attributed variadic; PHP 8.3+ does.
+
 6.0 to 7.0
 ----------
 

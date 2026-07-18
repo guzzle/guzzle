@@ -21,8 +21,11 @@ final class ProxyOptions
      *
      * @throws InvalidArgumentException
      */
-    public static function resolve(UriInterface $uri, $proxy): ProxySelection
-    {
+    public static function resolve(
+        UriInterface $uri,
+        #[\SensitiveParameter]
+        $proxy
+    ): ProxySelection {
         if ($proxy === null) {
             return ProxySelection::none();
         }
@@ -70,8 +73,10 @@ final class ProxyOptions
      *
      * @throws InvalidArgumentException on a malformed proxy URL
      */
-    public static function proxyScheme(string $proxy): string
-    {
+    public static function proxyScheme(
+        #[\SensitiveParameter]
+        string $proxy
+    ): string {
         $parts = \explode('://', $proxy, 2);
         if (\count($parts) === 1) {
             $scheme = 'http';

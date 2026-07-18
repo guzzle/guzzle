@@ -194,8 +194,11 @@ trait ClientTrait
      *
      * @throws GuzzleException
      */
-    public function get($uri, array $options = []): ResponseInterface
-    {
+    public function get(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): ResponseInterface {
         return $this->request('GET', $uri, $options);
     }
 
@@ -284,8 +287,11 @@ trait ClientTrait
      *
      * @throws GuzzleException
      */
-    public function head($uri, array $options = []): ResponseInterface
-    {
+    public function head(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): ResponseInterface {
         return $this->request('HEAD', $uri, $options);
     }
 
@@ -374,8 +380,11 @@ trait ClientTrait
      *
      * @throws GuzzleException
      */
-    public function put($uri, array $options = []): ResponseInterface
-    {
+    public function put(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): ResponseInterface {
         return $this->request('PUT', $uri, $options);
     }
 
@@ -464,8 +473,11 @@ trait ClientTrait
      *
      * @throws GuzzleException
      */
-    public function post($uri, array $options = []): ResponseInterface
-    {
+    public function post(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): ResponseInterface {
         return $this->request('POST', $uri, $options);
     }
 
@@ -554,8 +566,11 @@ trait ClientTrait
      *
      * @throws GuzzleException
      */
-    public function patch($uri, array $options = []): ResponseInterface
-    {
+    public function patch(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): ResponseInterface {
         return $this->request('PATCH', $uri, $options);
     }
 
@@ -644,8 +659,11 @@ trait ClientTrait
      *
      * @throws GuzzleException
      */
-    public function delete($uri, array $options = []): ResponseInterface
-    {
+    public function delete(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): ResponseInterface {
         return $this->request('DELETE', $uri, $options);
     }
 
@@ -822,8 +840,11 @@ trait ClientTrait
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function getAsync($uri, array $options = []): PromiseInterface
-    {
+    public function getAsync(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): PromiseInterface {
         return $this->requestAsync('GET', $uri, $options);
     }
 
@@ -912,8 +933,11 @@ trait ClientTrait
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function headAsync($uri, array $options = []): PromiseInterface
-    {
+    public function headAsync(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): PromiseInterface {
         return $this->requestAsync('HEAD', $uri, $options);
     }
 
@@ -1002,8 +1026,11 @@ trait ClientTrait
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function putAsync($uri, array $options = []): PromiseInterface
-    {
+    public function putAsync(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): PromiseInterface {
         return $this->requestAsync('PUT', $uri, $options);
     }
 
@@ -1092,8 +1119,11 @@ trait ClientTrait
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function postAsync($uri, array $options = []): PromiseInterface
-    {
+    public function postAsync(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): PromiseInterface {
         return $this->requestAsync('POST', $uri, $options);
     }
 
@@ -1182,8 +1212,11 @@ trait ClientTrait
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function patchAsync($uri, array $options = []): PromiseInterface
-    {
+    public function patchAsync(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): PromiseInterface {
         return $this->requestAsync('PATCH', $uri, $options);
     }
 
@@ -1272,8 +1305,11 @@ trait ClientTrait
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function deleteAsync($uri, array $options = []): PromiseInterface
-    {
+    public function deleteAsync(
+        $uri,
+        #[\SensitiveParameter]
+        array $options = []
+    ): PromiseInterface {
         return $this->requestAsync('DELETE', $uri, $options);
     }
 }

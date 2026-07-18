@@ -160,8 +160,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @see RequestOptions for a list of available request options.
      */
-    public function __construct(array $config = [])
-    {
+    public function __construct(
+        #[\SensitiveParameter]
+        array $config = []
+    ) {
         $handlerOptions = [];
         foreach (['max_host_connections', 'max_total_connections'] as $capOption) {
             if (\array_key_exists($capOption, $config)) {
@@ -312,8 +314,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface
-    {
+    public function sendAsync(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options = []
+    ): PromiseInterface {
         // Merge the base URI into the request URI if needed.
         $options = $this->prepareDefaults($options);
 
@@ -403,8 +409,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @throws GuzzleException
      */
-    public function send(RequestInterface $request, array $options = []): ResponseInterface
-    {
+    public function send(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options = []
+    ): ResponseInterface {
         $options[RequestOptions::SYNCHRONOUS] = true;
 
         return $this->sendAsync($request, $options)->wait();
@@ -415,8 +425,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * {@inheritDoc}
      */
-    public function sendRequest(RequestInterface $request): ResponseInterface
-    {
+    public function sendRequest(
+        #[\SensitiveParameter]
+        RequestInterface $request
+    ): ResponseInterface {
         $options[RequestOptions::SYNCHRONOUS] = true;
         $options[RequestOptions::ALLOW_REDIRECTS] = false;
         $options[RequestOptions::HTTP_ERRORS] = false;
@@ -510,8 +522,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function requestAsync(string $method, $uri = '', array $options = []): PromiseInterface
-    {
+    public function requestAsync(
+        string $method,
+        $uri = '',
+        #[\SensitiveParameter]
+        array $options = []
+    ): PromiseInterface {
         $options = $this->prepareDefaults($options);
 
         $version = self::normalizeProtocolVersion($options['version'] ?? '1.1');
@@ -629,8 +645,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @throws GuzzleException
      */
-    public function request(string $method, $uri = '', array $options = []): ResponseInterface
-    {
+    public function request(
+        string $method,
+        $uri = '',
+        #[\SensitiveParameter]
+        array $options = []
+    ): ResponseInterface {
         $options[RequestOptions::SYNCHRONOUS] = true;
 
         return $this->requestAsync($method, $uri, $options)->wait();
@@ -654,8 +674,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             : ($this->config[$option] ?? null);
     }
 
-    private function buildUri(UriInterface $uri, array $config): UriInterface
-    {
+    private function buildUri(
+        UriInterface $uri,
+        #[\SensitiveParameter]
+        array $config
+    ): UriInterface {
         if (isset($config['base_uri'])) {
             $uriFactory = self::requireUriFactory($config[RequestOptions::URI_FACTORY] ?? new HttpFactory());
             $uri = Psr7\UriResolver::resolve(self::createUri($config['base_uri'], $uriFactory), $uri);
@@ -795,8 +818,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Configures the default options for a client.
      */
-    private function configureDefaults(array $config): void
-    {
+    private function configureDefaults(
+        #[\SensitiveParameter]
+        array $config
+    ): void {
         $defaults = [
             'allow_redirects' => RedirectMiddleware::DEFAULT_SETTINGS,
             'http_errors' => true,
@@ -860,8 +885,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @param array $options Options to modify by reference
      */
-    private function prepareDefaults(array $options): array
-    {
+    private function prepareDefaults(
+        #[\SensitiveParameter]
+        array $options
+    ): array {
         if (isset($options['handler'])) {
             throw new InvalidArgumentException('The "handler" request option is not supported; configure the handler when creating the client, or use a separate client instance for requests that need a different handler.');
         }
@@ -901,8 +928,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $result;
     }
 
-    private static function assertRequestOptionTypes(array $options): void
-    {
+    private static function assertRequestOptionTypes(
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         if (isset($options['allow_redirects'])) {
             if (!\is_bool($options['allow_redirects']) && !\is_array($options['allow_redirects'])) {
                 self::invalidRequestOptionType('allow_redirects', 'bool|array', $options['allow_redirects']);
@@ -994,8 +1023,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * @param array<array-key, mixed> $auth
      */
-    private static function assertAuthOptionTypes(array $auth): void
-    {
+    private static function assertAuthOptionTypes(
+        #[\SensitiveParameter]
+        array $auth
+    ): void {
         if (!\array_key_exists(0, $auth) || !\is_string($auth[0])) {
             self::invalidRequestOptionType('auth.0', 'string', $auth[0] ?? null);
         }
@@ -1063,8 +1094,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * @param mixed $headers
      */
-    private static function assertHeaderOptionTypes($headers): void
-    {
+    private static function assertHeaderOptionTypes(
+        #[\SensitiveParameter]
+        $headers
+    ): void {
         if (!\is_array($headers)) {
             self::invalidRequestOptionType('headers', 'array<array-key, string|non-empty-array<array-key, string>>|null', $headers);
 
@@ -1136,8 +1169,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertProxyOptionTypes(array $options): void
-    {
+    private static function assertProxyOptionTypes(
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         if (!isset($options['proxy'])) {
             return;
         }
@@ -1179,8 +1214,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertTlsFileOptionTypes(array $options, string $option): void
-    {
+    private static function assertTlsFileOptionTypes(
+        #[\SensitiveParameter]
+        array $options,
+        string $option
+    ): void {
         if (!isset($options[$option])) {
             return;
         }
@@ -1204,22 +1242,32 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertIfPresentAndNotArray(array $options, string $option, string $expected): void
-    {
+    private static function assertIfPresentAndNotArray(
+        #[\SensitiveParameter]
+        array $options,
+        string $option,
+        string $expected
+    ): void {
         if (\array_key_exists($option, $options) && !\is_array($options[$option])) {
             self::invalidRequestOptionType($option, $expected, $options[$option]);
         }
     }
 
-    private static function assertIfPresentAndNotBool(array $options, string $option, ?string $path = null): void
-    {
+    private static function assertIfPresentAndNotBool(
+        #[\SensitiveParameter]
+        array $options,
+        string $option,
+        ?string $path = null
+    ): void {
         if (\array_key_exists($option, $options) && !\is_bool($options[$option])) {
             self::invalidRequestOptionType($path ?? $option, 'bool', $options[$option]);
         }
     }
 
-    private static function assertValidMultiplex(array $options): void
-    {
+    private static function assertValidMultiplex(
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         if (!\array_key_exists('multiplex', $options) || $options['multiplex'] === null) {
             return;
         }
@@ -1232,43 +1280,63 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertIfPresentAndNotBoolOrInt(array $options, string $option): void
-    {
+    private static function assertIfPresentAndNotBoolOrInt(
+        #[\SensitiveParameter]
+        array $options,
+        string $option
+    ): void {
         if (\array_key_exists($option, $options) && !\is_bool($options[$option]) && !\is_int($options[$option])) {
             self::invalidRequestOptionType($option, 'bool|int', $options[$option]);
         }
     }
 
-    private static function assertIfPresentAndNotBoolOrResource(array $options, string $option): void
-    {
+    private static function assertIfPresentAndNotBoolOrResource(
+        #[\SensitiveParameter]
+        array $options,
+        string $option
+    ): void {
         if (\array_key_exists($option, $options) && !\is_bool($options[$option]) && !\is_resource($options[$option])) {
             self::invalidRequestOptionType($option, 'bool|resource', $options[$option]);
         }
     }
 
-    private static function assertIfPresentAndNotBoolOrString(array $options, string $option): void
-    {
+    private static function assertIfPresentAndNotBoolOrString(
+        #[\SensitiveParameter]
+        array $options,
+        string $option
+    ): void {
         if (\array_key_exists($option, $options) && !\is_bool($options[$option]) && !\is_string($options[$option])) {
             self::invalidRequestOptionType($option, 'bool|string', $options[$option]);
         }
     }
 
-    private static function assertIfPresentAndNotCallable(array $options, string $option, ?string $path = null): void
-    {
+    private static function assertIfPresentAndNotCallable(
+        #[\SensitiveParameter]
+        array $options,
+        string $option,
+        ?string $path = null
+    ): void {
         if (\array_key_exists($option, $options) && !\is_callable($options[$option])) {
             self::invalidRequestOptionType($path ?? $option, 'callable', $options[$option]);
         }
     }
 
-    private static function assertIfPresentAndNotInt(array $options, string $option, ?string $path = null): void
-    {
+    private static function assertIfPresentAndNotInt(
+        #[\SensitiveParameter]
+        array $options,
+        string $option,
+        ?string $path = null
+    ): void {
         if (\array_key_exists($option, $options) && !\is_int($options[$option])) {
             self::invalidRequestOptionType($path ?? $option, 'int', $options[$option]);
         }
     }
 
-    private static function assertIfPresentAndNotNumber(array $options, string $option): void
-    {
+    private static function assertIfPresentAndNotNumber(
+        #[\SensitiveParameter]
+        array $options,
+        string $option
+    ): void {
         if (\array_key_exists($option, $options) && !\is_int($options[$option]) && !\is_float($options[$option])) {
             self::invalidRequestOptionType($option, 'int|float', $options[$option]);
         }
@@ -1277,8 +1345,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * @param array<array-key, mixed> $options
      */
-    private static function assertIfPresentAndNotFiniteNonNegativeNumber(array $options, string $option): void
-    {
+    private static function assertIfPresentAndNotFiniteNonNegativeNumber(
+        #[\SensitiveParameter]
+        array $options,
+        string $option
+    ): void {
         if (!\array_key_exists($option, $options)) {
             return;
         }
@@ -1297,8 +1368,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * @param array<array-key, mixed> $options
      */
-    private static function assertIfPresentAndNotForceIpResolve(array $options): void
-    {
+    private static function assertIfPresentAndNotForceIpResolve(
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         if (!\array_key_exists('force_ip_resolve', $options)) {
             return;
         }
@@ -1311,8 +1384,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertIfPresentAndNotString(array $options, string $option): void
-    {
+    private static function assertIfPresentAndNotString(
+        #[\SensitiveParameter]
+        array $options,
+        string $option
+    ): void {
         if (\array_key_exists($option, $options) && !\is_string($options[$option])) {
             self::invalidRequestOptionType($option, 'string', $options[$option]);
         }
@@ -1321,8 +1397,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * @param array<array-key, mixed> $options
      */
-    private static function assertIfPresentAndNotProtocolArray(array $options, string $option, ?string $path = null): void
-    {
+    private static function assertIfPresentAndNotProtocolArray(
+        #[\SensitiveParameter]
+        array $options,
+        string $option,
+        ?string $path = null
+    ): void {
         if (!\array_key_exists($option, $options)) {
             return;
         }
@@ -1348,8 +1428,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertIfPresentAndNotStringOrNumber(array $options, string $option): void
-    {
+    private static function assertIfPresentAndNotStringOrNumber(
+        #[\SensitiveParameter]
+        array $options,
+        string $option
+    ): void {
         if (
             \array_key_exists($option, $options)
             && !\is_string($options[$option])
@@ -1363,8 +1446,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * @param mixed $value
      */
-    private static function invalidRequestOptionType(string $option, string $expected, $value): void
-    {
+    private static function invalidRequestOptionType(
+        string $option,
+        string $expected,
+        #[\SensitiveParameter]
+        $value
+    ): void {
         throw new InvalidArgumentException(\sprintf(
             'Passing %s to request option "%s" is invalid; expected %s.',
             \get_debug_type($value),
@@ -1383,8 +1470,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private function transfer(RequestInterface $request, array $options): PromiseInterface
-    {
+    private function transfer(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): PromiseInterface {
         $request = $this->applyOptions($request, $options);
 
         /** @var callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> $handler */
@@ -1404,8 +1495,12 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     /**
      * Applies the array of request options to a request.
      */
-    private function applyOptions(RequestInterface $request, array &$options): RequestInterface
-    {
+    private function applyOptions(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array &$options
+    ): RequestInterface {
         $modify = [
             'set_headers' => [],
         ];
@@ -1538,8 +1633,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    private static function assertRequestProtocolVersion(RequestInterface $request): void
-    {
+    private static function assertRequestProtocolVersion(
+        #[\SensitiveParameter]
+        RequestInterface $request
+    ): void {
         $version = $request->getProtocolVersion();
 
         if ('' === $version) {

@@ -57,7 +57,8 @@
         "guzzlehttp/psr7": "^3.0@dev",
         "psr/http-client": "^1.0",
         "psr/http-factory": "^1.0",
-        "symfony/polyfill-php80": "^1.25"
+        "symfony/polyfill-php80": "^1.25",
+        "symfony/polyfill-php82": "^1.27"
     },
     "require-dev": {
         "ext-curl": "*",

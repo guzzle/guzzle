@@ -145,8 +145,12 @@ final class StreamHandler
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    public function __invoke(RequestInterface $request, array $options): PromiseInterface
-    {
+    public function __invoke(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): PromiseInterface {
         $this->onStatsException = null;
 
         // Sleep if there is a delay specified.
@@ -292,10 +296,14 @@ final class StreamHandler
     }
 
     private function invokeStats(
+        #[\SensitiveParameter]
         array $options,
+        #[\SensitiveParameter]
         RequestInterface $request,
         ?float $startTime,
+        #[\SensitiveParameter]
         ?ResponseInterface $response = null,
+        #[\SensitiveParameter]
         ?\Throwable $error = null
     ): void {
         if (isset($options['on_stats'])) {
@@ -315,8 +323,14 @@ final class StreamHandler
      *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
-    private function createResponse(RequestInterface $request, array $options, $stream, ?float $startTime): PromiseInterface
-    {
+    private function createResponse(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options,
+        $stream,
+        ?float $startTime
+    ): PromiseInterface {
         $hdrs = $this->lastHeaders;
         $this->lastHeaders = [];
         $deadline = $this->lastDeadline;
@@ -461,9 +475,12 @@ final class StreamHandler
      * @return PromiseInterface<ResponseInterface, mixed>
      */
     private function rejectResponseCreation(
+        #[\SensitiveParameter]
         array $options,
+        #[\SensitiveParameter]
         RequestInterface $request,
         ?float $startTime,
+        #[\SensitiveParameter]
         \Throwable $previous
     ): PromiseInterface {
         $reason = new RequestException(
@@ -479,8 +496,11 @@ final class StreamHandler
         return P\Create::rejectionFor($reason);
     }
 
-    private function createSink(StreamInterface $stream, array $options): StreamInterface
-    {
+    private function createSink(
+        StreamInterface $stream,
+        #[\SensitiveParameter]
+        array $options
+    ): StreamInterface {
         if (!empty($options['stream'])) {
             return $stream;
         }
@@ -605,6 +625,7 @@ final class StreamHandler
      * @return array{0: StreamInterface, 1: array, 2: ?EncodedBodyStream}
      */
     private static function checkDecode(
+        #[\SensitiveParameter]
         array $options,
         array $headers,
         StreamInterface $stream,
@@ -649,7 +670,9 @@ final class StreamHandler
      * @throws \RuntimeException when the sink option is invalid.
      */
     private function drain(
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         ResponseInterface $response,
         StreamInterface $source,
         StreamInterface $sink,
@@ -780,8 +803,13 @@ final class StreamHandler
      *
      * @param resource $resource
      */
-    private static function createDeadlineSource(StreamInterface $stream, $resource, float $deadline, array $options): StreamInterface
-    {
+    private static function createDeadlineSource(
+        StreamInterface $stream,
+        $resource,
+        float $deadline,
+        #[\SensitiveParameter]
+        array $options
+    ): StreamInterface {
         $idleTimeout = isset($options['read_timeout'])
             ? Timeout::toMilliseconds($options['read_timeout'], 'read_timeout')
             : self::DEFAULT_IDLE_TIMEOUT_MS;
@@ -841,8 +869,13 @@ final class StreamHandler
     /**
      * @return resource
      */
-    private function createStream(RequestInterface $request, array $options, string $body)
-    {
+    private function createStream(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options,
+        string $body
+    ) {
         // HTTP/1.1 streams using the PHP stream wrapper require a
         // Connection: close header
         if ($request->getProtocolVersion() === '1.1'
@@ -952,8 +985,12 @@ final class StreamHandler
         );
     }
 
-    private static function assertRequestUriSupported(RequestInterface $request, array $options): void
-    {
+    private static function assertRequestUriSupported(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         $uri = $request->getUri();
         $scheme = $uri->getScheme();
         if ($scheme === '') {
@@ -980,8 +1017,15 @@ final class StreamHandler
         }
     }
 
-    private function applyHandlerOptions(RequestInterface $request, array &$context, array $options, array &$params): void
-    {
+    private function applyHandlerOptions(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array &$context,
+        #[\SensitiveParameter]
+        array $options,
+        array &$params
+    ): void {
         foreach ($options as $key => $value) {
             if ($key === 'crypto_method') {
                 $this->applyCryptoMethodOption($context, $value);
@@ -1005,8 +1049,12 @@ final class StreamHandler
         }
     }
 
-    private function resolveHost(RequestInterface $request, array $options): UriInterface
-    {
+    private function resolveHost(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): UriInterface {
         $uri = $request->getUri();
 
         $host = $uri->getHost();
@@ -1051,8 +1099,11 @@ final class StreamHandler
         $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_2;
     }
 
-    private function getDefaultContext(RequestInterface $request, string $body): array
-    {
+    private function getDefaultContext(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        string $body
+    ): array {
         $headers = '';
         foreach ($request->getHeaders() as $name => $value) {
             // The first-class Proxy-Authorization field never enters the
@@ -1102,8 +1153,12 @@ final class StreamHandler
         return $context;
     }
 
-    private static function rejectUnsupportedRequestOptions(RequestInterface $request, array $options): void
-    {
+    private static function rejectUnsupportedRequestOptions(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         if (
             \array_key_exists('curl', $options)
             && $options['curl'] !== null
@@ -1121,15 +1176,19 @@ final class StreamHandler
         }
     }
 
-    private function rejectStreamingWithConnectionCaps(array $options): void
-    {
+    private function rejectStreamingWithConnectionCaps(
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         if ($this->connectionCapsConfigured && !empty($options['stream'])) {
             throw new InvalidArgumentException('Enabling the "stream" request option on a stream handler configured with the "max_host_connections" or "max_total_connections" option is not supported because streamed connections cannot be capped.');
         }
     }
 
-    private static function rejectConflictingStreamContextOptions(array $streamContext): void
-    {
+    private static function rejectConflictingStreamContextOptions(
+        #[\SensitiveParameter]
+        array $streamContext
+    ): void {
         $conflictingOptions = self::conflictingStreamContextOptions();
 
         foreach ($streamContext as $wrapper => $contextOptions) {
@@ -1153,8 +1212,10 @@ final class StreamHandler
         }
     }
 
-    private static function rejectUnsupportedStreamContextOptions(array $streamContext): void
-    {
+    private static function rejectUnsupportedStreamContextOptions(
+        #[\SensitiveParameter]
+        array $streamContext
+    ): void {
         $unsupportedOptions = self::unsupportedStreamContextOptions($streamContext);
         if ($unsupportedOptions === []) {
             return;
@@ -1290,8 +1351,11 @@ final class StreamHandler
      *
      * @return array{0: string, 1: string|null}
      */
-    private static function normalizeTlsFileOption(string $option, $value): array
-    {
+    private static function normalizeTlsFileOption(
+        string $option,
+        #[\SensitiveParameter]
+        $value
+    ): array {
         $passphrase = null;
 
         if (\is_array($value)) {
@@ -1314,8 +1378,13 @@ final class StreamHandler
         return [$value, $passphrase];
     }
 
-    private static function setTlsPassphrase(array &$options, ?string $passphrase, string $option): void
-    {
+    private static function setTlsPassphrase(
+        #[\SensitiveParameter]
+        array &$options,
+        #[\SensitiveParameter]
+        ?string $passphrase,
+        string $option
+    ): void {
         if ($passphrase === null) {
             return;
         }
@@ -1344,8 +1413,14 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applyProxy(RequestInterface $request, array &$context, $value): void
-    {
+    private function applyProxy(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array &$context,
+        #[\SensitiveParameter]
+        $value
+    ): void {
         $proxy = ProxyEnv::resolveProxySelection($request->getUri(), $value);
         $proxyUri = $proxy->getProxy();
         if ($proxyUri === null) {
@@ -1455,21 +1530,31 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applyCryptoMethodOption(array &$context, $value): void
-    {
+    private function applyCryptoMethodOption(
+        #[\SensitiveParameter]
+        array &$context,
+        $value
+    ): void {
         $context['ssl']['min_proto_version'] = TlsVersion::streamProtocolVersion('crypto_method', $value);
     }
 
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applyCryptoMethodMaxOption(array &$context, $value): void
-    {
+    private function applyCryptoMethodMaxOption(
+        #[\SensitiveParameter]
+        array &$context,
+        $value
+    ): void {
         $context['ssl']['max_proto_version'] = TlsVersion::streamProtocolVersion('crypto_method_max', $value);
     }
 
-    private static function assertTlsVersionRangeForOptions(RequestInterface $request, array $options): void
-    {
+    private static function assertTlsVersionRangeForOptions(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): void {
         if (!isset($options['crypto_method_max'])) {
             return;
         }
@@ -1485,8 +1570,11 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applyVerifyOption(array &$context, $value): void
-    {
+    private function applyVerifyOption(
+        #[\SensitiveParameter]
+        array &$context,
+        $value
+    ): void {
         if ($value === false) {
             $context['ssl']['verify_peer'] = false;
             $context['ssl']['verify_peer_name'] = false;
@@ -1511,8 +1599,12 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applyCertOption(array &$context, $value): void
-    {
+    private function applyCertOption(
+        #[\SensitiveParameter]
+        array &$context,
+        #[\SensitiveParameter]
+        $value
+    ): void {
         [$value, $passphrase] = self::normalizeTlsFileOption('cert', $value);
 
         if (!\file_exists($value)) {
@@ -1534,8 +1626,12 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applySslKeyOption(array &$context, $value): void
-    {
+    private function applySslKeyOption(
+        #[\SensitiveParameter]
+        array &$context,
+        #[\SensitiveParameter]
+        $value
+    ): void {
         [$value, $passphrase] = self::normalizeTlsFileOption('ssl_key', $value);
 
         if (!\file_exists($value)) {
@@ -1583,8 +1679,12 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applyDebugOption(RequestInterface $request, $value, array &$params): void
-    {
+    private function applyDebugOption(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        $value,
+        array &$params
+    ): void {
         if ($value === false) {
             return;
         }

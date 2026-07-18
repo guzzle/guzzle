@@ -44,8 +44,10 @@ final class DigestAuth
     {
     }
 
-    public static function selectChallenge(ResponseInterface $response): ?DigestChallenge
-    {
+    public static function selectChallenge(
+        #[\SensitiveParameter]
+        ResponseInterface $response
+    ): ?DigestChallenge {
         $selected = null;
 
         foreach ($response->getHeader('WWW-Authenticate') as $header) {
@@ -69,9 +71,11 @@ final class DigestAuth
     }
 
     public static function authorizationHeader(
+        #[\SensitiveParameter]
         RequestInterface $request,
         DigestChallenge $challenge,
         string $username,
+        #[\SensitiveParameter]
         string $password,
         string $cnonce,
         string $nc = '00000001'

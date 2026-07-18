@@ -16,8 +16,11 @@ class ResponseException extends RequestException
 
     final public function __construct(
         string $message,
+        #[\SensitiveParameter]
         RequestInterface $request,
+        #[\SensitiveParameter]
         ResponseInterface $response,
+        #[\SensitiveParameter]
         ?\Throwable $previous = null
     ) {
         parent::__construct($message, $request, $response->getStatusCode(), $previous);
@@ -32,8 +35,12 @@ class ResponseException extends RequestException
      *
      * @return static
      */
-    public function withResponse(ResponseInterface $response, ?\Throwable $previous = null): self
-    {
+    public function withResponse(
+        #[\SensitiveParameter]
+        ResponseInterface $response,
+        #[\SensitiveParameter]
+        ?\Throwable $previous = null
+    ): self {
         if ($response->getStatusCode() !== $this->response->getStatusCode()) {
             throw new InvalidArgumentException('Cannot replace response with a different status code.');
         }

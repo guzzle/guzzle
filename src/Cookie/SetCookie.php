@@ -42,8 +42,10 @@ class SetCookie
      *
      * @param string $cookie Set-Cookie header string
      */
-    public static function fromString(string $cookie): self
-    {
+    public static function fromString(
+        #[\SensitiveParameter]
+        string $cookie
+    ): self {
         // Create the default return array
         $data = self::DEFAULTS;
         // Explode the cookie string using a series of semicolons
@@ -100,8 +102,10 @@ class SetCookie
     /**
      * @param array $data Array of cookie data provided by a Cookie parser
      */
-    public function __construct(array $data = [])
-    {
+    public function __construct(
+        #[\SensitiveParameter]
+        array $data = []
+    ) {
         $this->data = self::DEFAULTS;
         self::validateFieldTypes($data);
 
@@ -561,8 +565,10 @@ class SetCookie
     /**
      * @param mixed[] $data
      */
-    private static function validateFieldTypes(array $data): void
-    {
+    private static function validateFieldTypes(
+        #[\SensitiveParameter]
+        array $data
+    ): void {
         foreach (['Name', 'Value', 'Domain', 'Path'] as $field) {
             if (isset($data[$field]) && !\is_string($data[$field])) {
                 throw new \InvalidArgumentException(\sprintf('Cookie field "%s" must be a string', $field));
