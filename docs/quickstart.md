@@ -404,6 +404,10 @@ Different implementations exist for the `GuzzleHttp\Cookie\CookieJarInterface` :
 - The `GuzzleHttp\Cookie\FileCookieJar` class persists non-session cookies using a JSON formatted file.
 - The `GuzzleHttp\Cookie\SessionCookieJar` class persists cookies in the client session.
 
+The built-in persistent jars store an explicit boolean `HostOnly` marker for every cookie record. Nonempty data created by older versions without this marker is rejected and should be deleted, rotated, or annotated only when the cookie's original `Domain` semantics are known.
+
+The built-in `CookieJar` admits at most 50 cookies from one response and ignores any `Set-Cookie` field value longer than 8,190 bytes. A generated `Cookie` header contains at most 150 stored cookies, and its canonical line including `Cookie: ` is limited to 8,190 bytes. Later cookies are omitted after either output limit is reached.
+
 You can manually set cookies into a cookie jar with the named constructor `fromArray(array $cookies, $domain)`.
 
 ```php

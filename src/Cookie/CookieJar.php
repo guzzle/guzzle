@@ -11,6 +11,11 @@ use Psr\Http\Message\ResponseInterface;
  */
 class CookieJar implements CookieJarInterface
 {
+    private const MAX_SET_COOKIE_FIELD_LENGTH = 8190;
+    private const MAX_SET_COOKIE_FIELDS = 50;
+    private const MAX_REQUEST_COOKIES = 150;
+    private const MAX_COOKIE_HEADER_LENGTH = 8190;
+
     /**
      * @var SetCookie[] Loaded cookie data
      */
@@ -172,7 +177,7 @@ class CookieJar implements CookieJarInterface
         $maxAge = $cookie->getMaxAge();
         if ($maxAge !== null && $maxAge <= 0) {
             if ($cookie->getDomain() !== null) {
-                $this->clear($cookie->getDomain(), $cookie->getPath(), $cookie->getName());
+                $this->removeCookie($cookie);
             }
 
             return false;
@@ -184,6 +189,7 @@ class CookieJar implements CookieJarInterface
             // identical.
             if ($c->getPath() !== $cookie->getPath()
                 || $c->getDomain() !== $cookie->getDomain()
+                || $c->getHostOnly() !== $cookie->getHostOnly()
                 || $c->getName() !== $cookie->getName()
             ) {
                 continue;
@@ -234,14 +240,23 @@ class CookieJar implements CookieJarInterface
     public function extractCookies(RequestInterface $request, ResponseInterface $response): void
     {
         if ($cookieHeader = $response->getHeader('Set-Cookie')) {
+            $accepted = 0;
             foreach ($cookieHeader as $cookie) {
+                if (\strlen($cookie) > self::MAX_SET_COOKIE_FIELD_LENGTH) {
+                    continue;
+                }
+
                 $sc = SetCookie::fromString($cookie);
                 $domain = $sc->getDomain();
                 if ($domain === null || $domain === '') {
                     $sc->setDomain($request->getUri()->getHost());
+                    $sc->setHostOnly(true);
                 } elseif (\substr($domain, -1) === '.' && '' !== \trim($domain, '.')) {
                     // Keep pure-dot domains rejected by the dot-only fix.
                     $sc->setDomain($request->getUri()->getHost());
+                    $sc->setHostOnly(true);
+                } else {
+                    $sc->setHostOnly(false);
                 }
                 if (0 !== \strpos($sc->getPath(), '/')) {
                     $sc->setPath($this->getCookiePathFromRequest($request));
@@ -251,7 +266,9 @@ class CookieJar implements CookieJarInterface
                 }
                 // Note: At this point `$sc->getDomain()` being a public suffix should
                 // be rejected, but we don't want to pull in the full PSL dependency.
-                $this->setCookie($sc);
+                if ($this->setCookie($sc) && ++$accepted === self::MAX_SET_COOKIE_FIELDS) {
+                    break;
+                }
             }
         }
     }
@@ -284,6 +301,7 @@ class CookieJar implements CookieJarInterface
     public function withCookieHeader(RequestInterface $request): RequestInterface
     {
         $values = [];
+        $headerLength = 8;
         $uri = $request->getUri();
         $scheme = $uri->getScheme();
         $host = $uri->getHost();
@@ -296,8 +314,19 @@ class CookieJar implements CookieJarInterface
                 && !$cookie->isExpired()
                 && (!$cookie->getSecure() || $scheme === 'https')
             ) {
-                $values[] = $cookie->getName().'='
-                    .$cookie->getValue();
+                $name = (string) $cookie->getName();
+                $value = (string) $cookie->getValue();
+                $separatorLength = $values === [] ? 0 : 2;
+                $valueLength = \strlen($name) + 1 + \strlen($value);
+                if ($headerLength + $separatorLength + $valueLength > self::MAX_COOKIE_HEADER_LENGTH) {
+                    break;
+                }
+
+                $values[] = $name.'='.$value;
+                $headerLength += $separatorLength + $valueLength;
+                if (\count($values) === self::MAX_REQUEST_COOKIES) {
+                    break;
+                }
             }
         }
 
@@ -314,11 +343,36 @@ class CookieJar implements CookieJarInterface
     {
         $cookieValue = $cookie->getValue();
         if (($cookieValue === null || $cookieValue === '') && $cookie->getDomain() !== null) {
-            $this->clear(
-                $cookie->getDomain(),
-                $cookie->getPath(),
-                $cookie->getName()
-            );
+            $this->removeCookie($cookie);
         }
+    }
+
+    private function removeCookie(SetCookie $cookie): void
+    {
+        $this->cookies = \array_filter(
+            $this->cookies,
+            static function (SetCookie $stored) use ($cookie): bool {
+                return !($stored->getName() === $cookie->getName()
+                    && $stored->getPath() === $cookie->getPath()
+                    && self::cookieDomainsEqual($stored->getDomain(), $cookie->getDomain())
+                    && $stored->getHostOnly() === $cookie->getHostOnly());
+            }
+        );
+    }
+
+    private static function cookieDomainsEqual(?string $first, ?string $second): bool
+    {
+        if ($first === null || $second === null) {
+            return $first === $second;
+        }
+
+        if (isset($first[0]) && $first[0] === '.') {
+            $first = \substr($first, 1);
+        }
+        if (isset($second[0]) && $second[0] === '.') {
+            $second = \substr($second, 1);
+        }
+
+        return Psr7\Utils::caselessEquals($first, $second);
     }
 }

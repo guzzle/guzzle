@@ -133,6 +133,28 @@ class SessionCookieJarTest extends TestCase
 
         self::assertInstanceOf(SetCookie::class, $cookie);
         self::assertNull($cookie->getDomain());
+        self::assertFalse($cookie->getHostOnly());
+
+        unset($jar, $reloaded, $_SESSION[$this->sessionVar]);
+    }
+
+    public function testPersistsHostOnlyCookie(): void
+    {
+        $jar = new SessionCookieJar($this->sessionVar);
+        $jar->setCookie(new SetCookie([
+            'Name' => 'foo',
+            'Value' => 'bar',
+            'Domain' => 'example.com',
+            'HostOnly' => true,
+            'Expires' => \time() + 1000,
+        ]));
+        $jar->save();
+
+        $reloaded = new SessionCookieJar($this->sessionVar);
+        $cookie = $reloaded->getCookieByName('foo');
+
+        self::assertInstanceOf(SetCookie::class, $cookie);
+        self::assertTrue($cookie->getHostOnly());
 
         unset($jar, $reloaded, $_SESSION[$this->sessionVar]);
     }
@@ -151,6 +173,8 @@ class SessionCookieJarTest extends TestCase
             [[]],
             [new \stdClass()],
             ['[1]'],
+            ['[{"Name":"foo"}]'],
+            ['[{"HostOnly":"false"}]'],
         ];
     }
 }

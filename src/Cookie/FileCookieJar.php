@@ -60,7 +60,9 @@ class FileCookieJar extends CookieJar
         /** @var SetCookie $cookie */
         foreach ($this as $cookie) {
             if (CookieJar::shouldPersist($cookie, $this->storeSessionCookies)) {
-                $json[] = $cookie->toArray();
+                $data = $cookie->toArray();
+                $data['HostOnly'] = $cookie->getHostOnly();
+                $json[] = $data;
             }
         }
 
@@ -100,8 +102,17 @@ class FileCookieJar extends CookieJar
         }
 
         if (\is_array($data)) {
+            $cookies = [];
             foreach ($data as $cookie) {
-                $this->setCookie(new SetCookie($cookie));
+                if (!\is_array($cookie) || !\array_key_exists('HostOnly', $cookie) || !\is_bool($cookie['HostOnly'])) {
+                    throw new \RuntimeException("Invalid cookie file: {$filename}");
+                }
+
+                $cookies[] = new SetCookie($cookie);
+            }
+
+            foreach ($cookies as $cookie) {
+                $this->setCookie($cookie);
             }
         } elseif (\is_scalar($data) && !empty($data)) {
             throw new \RuntimeException("Invalid cookie file: {$filename}");
