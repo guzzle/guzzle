@@ -28,11 +28,11 @@ composer require guzzlehttp/guzzle
 
 ## Version Guidance
 
-| Version | Status       | Documentation | PHP Version  |
-|---------|--------------|---------------|--------------|
-| 8.x     | Experimental | [8.x docs](docs/quick-start.md) | >=7.4,<8.6   |
-| 7.x     | Latest       | [7.x docs](https://github.com/guzzle/guzzle/blob/7.14/docs/quickstart.md) | >=7.2.5,<8.6 |
-| 6.x     | End of Life  | [6.x docs](https://github.com/guzzle/guzzle/blob/6.5/docs/index.rst) | >=5.5,<8.0   |
+| Version | Status       | PHP Version  |
+|---------|--------------|--------------|
+| 8.0     | Latest       | >=7.4,<8.6   |
+| 7.15    | Maintenance  | >=7.2.5,<8.6 |
+| 6.5     | End of Life  | >=5.5,<8.0   |
 
 ## Quick Start
 

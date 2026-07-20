@@ -3,7 +3,7 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
-## 8.0.0 - Upcoming
+## 8.0.0 - 2026-07-20
 
 ### Added
 

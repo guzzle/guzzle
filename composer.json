@@ -53,8 +53,8 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-json": "*",
-        "guzzlehttp/promises": "^3.0@dev",
-        "guzzlehttp/psr7": "^3.0@dev",
+        "guzzlehttp/promises": "^3.0",
+        "guzzlehttp/psr7": "^3.0",
         "psr/http-client": "^1.0",
         "psr/http-factory": "^1.0",
         "symfony/polyfill-php80": "^1.25",
