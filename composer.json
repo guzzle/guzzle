@@ -64,7 +64,7 @@
         "ext-curl": "*",
         "bamarni/composer-bin-plugin": "^1.8.2",
         "guzzle/client-integration-tests": "4.0.1",
-        "guzzlehttp/test-server": "^1.0@dev",
+        "guzzlehttp/test-server": "^1.0",
         "php-http/message-factory": "^1.1",
         "phpunit/phpunit": "^9.6.34",
         "psr/log": "^1.1 || ^2.0 || ^3.0"
