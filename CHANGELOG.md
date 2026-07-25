@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.15.3 - Upcoming
+
+### Fixed
+
+- Fail a cURL multi handler wait with an attributable error when the transfer is no longer tracked
+
+
 ## 7.15.2 - 2026-07-26
 
 ### Security
