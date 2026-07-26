@@ -25,6 +25,8 @@ use GuzzleHttp\Tests\Psr17SpyFactory;
 use GuzzleHttp\Tests\SpyResponse;
 use GuzzleHttp\Tests\SpyStream;
 use GuzzleHttp\Tests\StrictReadableResourceStreamFactory;
+use GuzzleHttp\Tests\UnvalidatedUri;
+use GuzzleHttp\Tests\UnvalidatedUriRequest;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
@@ -4993,5 +4995,93 @@ class StreamHandlerTest extends TestCase
             'Proxy-Authorization: Basic '.\base64_encode('user:pass'),
             $context['http']['header']
         );
+    }
+
+    public function testRejectsANonPrintableAsciiUriHostBeforeOpeningAStream(): void
+    {
+        $handler = new StreamHandler();
+
+        try {
+            $handler(new Request('GET', "http://local\u{200B}host:1/"), [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+            self::assertStringContainsString('must contain only printable ASCII characters', $e->getMessage());
+        }
+    }
+
+    public function testRejectsAPercentEncodedUriHostBeforeOpeningAStream(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must not contain a percent escape');
+
+        $handler(new Request('GET', 'http://%65vil.test:1/'), [])->wait();
+    }
+
+    public function testRejectsANoncanonicalHostHeaderBeforeOpeningAStream(): void
+    {
+        $handler = new StreamHandler();
+        $request = (new Request('GET', 'http://example.com:1/'))->withHeader('Host', "e\u{200B}vil.test");
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('The request Host header');
+
+        $handler($request, [])->wait();
+    }
+
+    public function testDoesNotTransferAForeignUriHostWithAnAuthorityDelimiter(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $request = new UnvalidatedUriRequest(
+            new Request('GET', Server::$url),
+            new UnvalidatedUri('http', 'blocked.example.com@127.0.0.1', Server::$port)
+        );
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must be a valid RFC 3986 host', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public function testRejectsNonHttpSchemesBeforeANoncanonicalHost(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage("The scheme 'file' is not supported.");
+
+        $handler(new Request('GET', "file://e\u{200B}vil.test/x"), [])->wait();
+    }
+
+    public function testRejectsAMissingHostBeforeANoncanonicalHostHeader(): void
+    {
+        $handler = new StreamHandler();
+        $request = (new Request('GET', 'http:/generate_204'))->withHeader('Host', "e\u{200B}vil.test");
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('URI must include a scheme and host');
+
+        $handler($request, [])->wait();
+    }
+
+    public function testStillTransfersANoncanonicalNumericHost(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', 'http://127.1:'.Server::$port.'/'), [])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('127.1:'.Server::$port, Server::received()[0]->getHeaderLine('Host'));
     }
 }

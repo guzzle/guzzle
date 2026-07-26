@@ -3,6 +3,18 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.0.1 - Upcoming
+
+### Security
+
+- Reject request URI hosts and `Host` header values that are not printable ASCII (GHSA-v5mv-p594-2x33)
+- Reject request URI hosts that contain a percent escape, are not valid RFC 3986 hosts, or are one to four decimal, octal or hexadecimal parts followed by one or more trailing dots, which a handler can read as an IPv4 address (GHSA-v5mv-p594-2x33)
+
+### Changed
+
+- Regenerate an automatically derived `Host` header when the client rewrites the request URI
+
+
 ## 8.0.0 - 2026-07-20
 
 ### Added
