@@ -602,7 +602,7 @@ class StreamHandler
      * and later, because a host spelled that way is rejected before it reaches
      * a transport.
      *
-     * @see \GuzzleHttp\Handler\HostValidator::assertRequestHost()
+     * @see HostValidator::assertRequestHost()
      */
     private static function numericIpv4ToBinary(string $host): ?string
     {
