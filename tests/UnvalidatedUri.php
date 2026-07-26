@@ -7,13 +7,7 @@ namespace GuzzleHttp\Tests;
 use Psr\Http\Message\UriInterface;
 
 /**
- * A URI that stores whatever it is given.
- *
- * GuzzleHttp\Psr7\Uri rejects an authority delimiter, a bare port colon and a
- * bracketed value that is not an IP literal, so a request carrying one of those
- * hosts cannot be built from it at all. Guzzle accepts any UriInterface, and a
- * third-party implementation is free to perform no validation, which is the
- * class of input the handler host guard exists for.
+ * Stores hosts without validation for third-party UriInterface tests.
  */
 final class UnvalidatedUri implements UriInterface
 {

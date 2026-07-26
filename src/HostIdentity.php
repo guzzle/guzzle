@@ -65,13 +65,9 @@ final class HostIdentity
             return true;
         }
 
-        // A transport percent-decodes a host before it reads it, so a cookie
-        // domain carrying a percent escape can name a host its own text does
-        // not spell, such as 192.168.0.%31 for the address 192.168.0.1.
-        // Matching a subdomain of that text would scope a cookie set for one
-        // host to an unrelated one. Only the cookie domain is tested, because
-        // a request host ending in the cookie domain's text still ends in it
-        // after decoding.
+        // A percent-escaped cookie domain can decode to another host spelling.
+        // Keep it exact-match-only; decoding a request host cannot create a
+        // suffix match that its original text lacked.
         if (\strpos($cookieDomain, '%') !== false) {
             return false;
         }

@@ -134,10 +134,7 @@ class HostValidatorTest extends TestCase
         yield 'mixed base' => ['0x7f.1.'];
         yield 'zero padded' => ['127.000.000.001.'];
         yield 'zero padded octet' => ['127.0.0.01.'];
-        // The last three pin the deliberate over-approximations: libcurl 8.21.0
-        // refuses the first in hostname_check() and keeps the other two as
-        // names, so adding its two-trailing-dot guard, its per-part range check
-        // or its overflow check has to change a test on purpose.
+        // Pin fail-closed cases that libcurl rejects or reads as names.
         yield 'two root dots' => ['127.0.0.1..'];
         yield 'out of range' => ['127.0.0.256.'];
         yield 'overflowing part' => ['0x100000000.'];

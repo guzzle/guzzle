@@ -697,13 +697,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     }
 
     /**
-     * Whether an existing Host header must survive a change of request URI.
+     * Whether to preserve an existing Host header when the URI changes.
      *
-     * A header whose value is byte-identical to the one the request's own URI
-     * generates carries no caller intent to send a different authority, so it
-     * is regenerated from the new URI instead of pinning a spelling that
-     * predates base URI resolution or IDN conversion. Any other value is a
-     * deliberate override and is preserved, as PSR-7 requires.
+     * A header matching the current URI carries no explicit override and is
+     * regenerated after base URI resolution or IDN conversion. Other values
+     * are preserved as deliberate overrides, as PSR-7 requires.
      */
     private static function shouldPreserveHost(RequestInterface $request): bool
     {

@@ -5076,12 +5076,8 @@ class StreamHandlerTest extends TestCase
 
     public function testStillAcceptsANoncanonicalNumericHost(): void
     {
-        // The plain inet_aton shorthand stays accepted, and only the
-        // trailing-dot forms are rejected. Whether the stream wrapper can then
-        // reach a listener by that spelling belongs to the platform resolver,
-        // which folds it on glibc, musl and Darwin and refuses it on Windows,
-        // so the assertion is that this handler did not reject the host rather
-        // than that the transfer completed.
+        // Numeric shorthand remains valid even where the platform resolver
+        // cannot reach it, so assert only that validation did not reject it.
         Server::flush();
         Server::enqueue([new Response(200)]);
 
@@ -5091,9 +5087,7 @@ class StreamHandlerTest extends TestCase
         try {
             $handler(new Request('GET', 'http://127.1:'.Server::$port.'/'), [])->wait();
         } catch (TransferException $e) {
-            // ConnectException is a NetworkException here, a sibling of
-            // RequestException rather than a subclass, so the common base is
-            // what catches a resolver failure as well as a host rejection.
+            // Resolver failure and host rejection use sibling exception types.
             $message = $e->getMessage();
         }
 

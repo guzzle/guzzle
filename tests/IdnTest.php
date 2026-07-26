@@ -52,8 +52,7 @@ class IdnTest extends TestCase
             self::assertStringContainsString('must not be written as one to four decimal, octal or hexadecimal parts', $e->getMessage());
         }
 
-        // The documented limitation: idn_conversion is a spelling conversion
-        // and not an SSRF control, so the shorthand it produces is accepted.
+        // idn_conversion is not an SSRF control; numeric shorthand stays valid.
         $shorthand = Idn::convertUri((new Psr7\Uri('http://placeholder.test/'))->withHost("\u{FF11}\u{FF12}\u{FF17}\u{3002}\u{FF11}"), \IDNA_DEFAULT);
 
         HostValidator::assertRequestHost(new Psr7\Request('GET', $shorthand));

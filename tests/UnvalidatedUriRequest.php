@@ -9,10 +9,7 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
- * Wraps a real request so that it reports an {@see UnvalidatedUri}.
- *
- * GuzzleHttp\Psr7\Request validates the host it is given, so the URI has to be
- * substituted rather than set.
+ * Wraps a request with an {@see UnvalidatedUri} without invoking validation.
  */
 final class UnvalidatedUriRequest implements RequestInterface
 {
