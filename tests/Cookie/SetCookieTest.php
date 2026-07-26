@@ -234,6 +234,51 @@ class SetCookieTest extends TestCase
         self::assertFalse($cookie->matchesDomain('evil.1'));
     }
 
+    public function testNumericDomainInAnyBaseIsExactMatchOnly()
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '0x7f000001', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('0x7f000001'));
+        self::assertFalse($cookie->matchesDomain('evil.0x7f000001'));
+
+        $mixed = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '0177.0.0.0x1', 'Path' => '/']);
+
+        self::assertTrue($mixed->matchesDomain('0177.0.0.0x1'));
+        self::assertFalse($mixed->matchesDomain('evil.0177.0.0.0x1'));
+    }
+
+    public function testOutOfRangeNumericDomainIsExactMatchOnly()
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '0x100000000', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('0x100000000'));
+        self::assertFalse($cookie->matchesDomain('evil.0x100000000'));
+    }
+
+    public function testPercentEscapedDomainIsExactMatchOnly()
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '192.168.0.%31', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('192.168.0.%31'));
+        self::assertFalse($cookie->matchesDomain('evil.192.168.0.%31'));
+
+        $whole = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '%30x7f000001', 'Path' => '/']);
+
+        self::assertTrue($whole->matchesDomain('%30x7f000001'));
+        self::assertFalse($whole->matchesDomain('evil.%30x7f000001'));
+    }
+
+    public function testDomainWithANonNumericLabelStillMatchesSubdomains()
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => 'svc.0xdeadbeef', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('a.svc.0xdeadbeef'));
+
+        $prefixed = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '0xname', 'Path' => '/']);
+
+        self::assertTrue($prefixed->matchesDomain('sub.0xname'));
+    }
+
     public function testBareUnbracketedIpv6DomainIsExactMatchOnly()
     {
         $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '::1', 'Path' => '/']);

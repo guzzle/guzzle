@@ -163,7 +163,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $options = $this->prepareDefaults($options);
 
         return $this->transfer(
-            $request->withUri($this->buildUri($request->getUri(), $options), $request->hasHeader('Host')),
+            $request->withUri($this->buildUri($request->getUri(), $options), self::shouldPreserveHost($request)),
             $options
         );
     }
@@ -307,6 +307,30 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         return $uri;
+    }
+
+    /**
+     * Whether to preserve an existing Host header when the URI changes.
+     *
+     * A header matching the current URI carries no explicit override and is
+     * regenerated after base URI resolution or IDN conversion. Other values
+     * are preserved as deliberate overrides, as PSR-7 requires.
+     */
+    private static function shouldPreserveHost(RequestInterface $request): bool
+    {
+        if (!$request->hasHeader('Host')) {
+            return false;
+        }
+
+        $uri = $request->getUri();
+        $host = $uri->getHost();
+        $port = $uri->getPort();
+
+        if ($port !== null) {
+            $host .= ':'.$port;
+        }
+
+        return $host !== $request->getHeaderLine('Host');
     }
 
     /**

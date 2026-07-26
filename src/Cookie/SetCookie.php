@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Cookie;
 
+use GuzzleHttp\Handler\HostValidator;
 use GuzzleHttp\Psr7;
 
 /**
@@ -512,6 +513,12 @@ class SetCookie
             return true;
         }
 
+        // A percent-escaped cookie domain can decode to another host spelling.
+        // Keep it exact-match-only to avoid extending that host's cookie scope.
+        if (\strpos($cookieDomain, '%') !== false) {
+            return false;
+        }
+
         // IP literals and numeric hosts are exact-match-only per RFC 6265.
         // Only the exact match above may succeed for those cookie domains.
         if (self::isIpAddressOrNumericHost($cookieDomain)) {
@@ -548,7 +555,14 @@ class SetCookie
         $labels = \explode('.', $host);
         $last = (string) \end($labels);
 
-        return $last !== '' && \ctype_digit($last);
+        if ($last !== '' && \ctype_digit($last)) {
+            return true;
+        }
+
+        // Apply the transport's decimal, octal and hexadecimal inet_aton-style
+        // grammar. Omitting range checks conservatively holds some names to an
+        // exact match.
+        return HostValidator::isNumericIpv4Host(\rtrim($host, '.'));
     }
 
     /**

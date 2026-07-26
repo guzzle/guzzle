@@ -3,7 +3,9 @@
 namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlFactoryInterface;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Multiplexing;
@@ -241,6 +243,127 @@ class CurlHandlerTest extends TestCase
         $received = Server::received()[0];
         self::assertEquals(1000000, $received->getHeaderLine('Content-Length'));
         self::assertFalse($received->hasHeader('Transfer-Encoding'));
+    }
+
+    public function testRejectsANonAsciiUriHostWithoutConnecting(): void
+    {
+        $handler = new CurlHandler();
+        $request = new Request('GET', "http://e\u{200B}vil.test:1/");
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must contain only printable ASCII characters');
+
+        $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001]);
+    }
+
+    public function testRejectsANonAsciiHostHeaderWithoutConnecting(): void
+    {
+        $handler = new CurlHandler();
+        $request = (new Request('GET', 'http://example.com:1/'))->withHeader('Host', "e\u{200B}vil.test");
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('The request Host header');
+
+        $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001]);
+    }
+
+    public function testRejectsANoncanonicalUriHostWithACustomHandleFactory(): void
+    {
+        $factory = $this->createMock(CurlFactoryInterface::class);
+        $factory->expects(self::never())->method('create');
+
+        $handler = new CurlHandler(['handle_factory' => $factory]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must not contain a percent escape');
+
+        $handler(new Request('GET', 'http://%65vil.test:1/'), []);
+    }
+
+    public function testRejectsANoncanonicalHostBeforeAnUnsupportedScheme(): void
+    {
+        $handler = new CurlHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must contain only printable ASCII characters');
+
+        $handler(new Request('GET', "file://e\u{200B}vil.test/etc/passwd"), []);
+    }
+
+    public function testDoesNotTransferAPercentEncodedHost(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlHandler();
+        $request = new Request('GET', 'http://127.0.0.%31:'.Server::$port.'/');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must not contain a percent escape', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    /**
+     * @dataProvider foldedTrailingDotHostProvider
+     */
+    public function testDoesNotTransferANumericHostWithARootDot(string $host): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlHandler();
+        $request = new Request('GET', 'http://'.$host.':'.Server::$port.'/');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must not be written as one to four decimal, octal or hexadecimal parts', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public static function foldedTrailingDotHostProvider(): iterable
+    {
+        yield 'loopback' => ['127.0.0.1.'];
+        yield 'shortened decimal' => ['127.1.'];
+        yield 'whole integer' => ['2130706433.'];
+        yield 'hexadecimal' => ['0x7f000001.'];
+        yield 'octal' => ['0177.0.0.1.'];
+        yield 'zero padded octets' => ['127.000.000.001.'];
+        yield 'zero padded final octet' => ['127.0.0.01.'];
+    }
+
+    public function testStillSendsANoncanonicalNumericHost(): void
+    {
+        self::skipIfCurlDoesNotFoldNumericHosts();
+
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlHandler();
+        $handler(new Request('GET', 'http://127.1:'.Server::$port.'/'), [])->wait();
+
+        self::assertSame('127.1:'.Server::$port, Server::received()[0]->getHeaderLine('Host'));
+    }
+
+    /**
+     * Older libcurl delegates numeric shorthand to the platform resolver,
+     * which rejects it on Windows. Validation is covered separately.
+     */
+    private static function skipIfCurlDoesNotFoldNumericHosts(): void
+    {
+        $version = \curl_version();
+
+        if (!\is_array($version) || $version['version_number'] < 0x074D00) {
+            self::markTestSkipped('libcurl does not fold numeric IPv4 hosts before 7.77.0.');
+        }
     }
 
     private static function skipIfCurlShareIsUnavailable(): void

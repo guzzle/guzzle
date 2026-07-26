@@ -18,6 +18,7 @@ use GuzzleHttp\Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\StreamHandler
@@ -2010,6 +2011,95 @@ class StreamHandlerTest extends TestCase
             'Proxy-Authorization: Basic '.\base64_encode('user:pass'),
             $context['http']['header']
         );
+    }
+
+    public function testRejectsANonAsciiUriHostBeforeOpeningAStream(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must contain only printable ASCII characters');
+
+        $handler(new Request('GET', "http://local\u{200B}host:1/"), [])->wait();
+    }
+
+    public function testRejectsAPercentEncodedUriHostBeforeOpeningAStream(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must not contain a percent escape');
+
+        $handler(new Request('GET', 'http://%65vil.test:1/'), [])->wait();
+    }
+
+    public function testRejectsANonAsciiHostHeaderBeforeOpeningAStream(): void
+    {
+        $handler = new StreamHandler();
+        $request = (new Request('GET', 'http://example.com:1/'))->withHeader('Host', "e\u{200B}vil.test");
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('The request Host header');
+
+        $handler($request, [])->wait();
+    }
+
+    public function testRejectsNonHttpSchemesBeforeANoncanonicalHost(): void
+    {
+        $handler = new StreamHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage("The scheme 'file' is not supported.");
+
+        $handler(new Request('GET', "file://e\u{200B}vil.test/etc/passwd"), [])->wait();
+    }
+
+    public function testRejectsAMissingHostBeforeANoncanonicalHostHeader(): void
+    {
+        $handler = new StreamHandler();
+        $request = (new Request('GET', 'http:/generate_204'))->withHeader('Host', "e\u{200B}vil.test");
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('URI must include a scheme and host');
+
+        $handler($request, [])->wait();
+    }
+
+    public function testDoesNotReclassifyAHostRejectionAsAConnectionError(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://getaddrinfo%2e.test:1/');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertNotInstanceOf(ConnectException::class, $e);
+            self::assertStringContainsString('must not contain a percent escape', $e->getMessage());
+        }
+    }
+
+    public function testDoesNotTransferAForeignUriHostWithAnAuthorityDelimiter(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $uri = $this->createMock(UriInterface::class);
+        $uri->method('getScheme')->willReturn('http');
+        $uri->method('getHost')->willReturn('blocked.example.com@127.0.0.1');
+        $uri->method('__toString')->willReturn('http://blocked.example.com@127.0.0.1:'.Server::$port.'/');
+
+        $handler = new StreamHandler();
+        $request = (new Request('GET', Server::$url))->withUri($uri, true);
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must not contain a URI authority delimiter', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
     }
 
     private static function captureDeprecation(callable $callback): ?string

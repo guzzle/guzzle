@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\FulfilledPromise;
@@ -187,11 +188,10 @@ class StreamHandler
         } catch (\InvalidArgumentException $e) {
             throw $e;
         } catch (\Exception $e) {
-            // Determine if the error was a networking error.
-            if (self::isConnectionError($e->getMessage())) {
-                $e = new ConnectException($e->getMessage(), $request, $e);
-            } else {
-                $e = $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, null, $e);
+            if (!$e instanceof TransferException) {
+                $e = self::isConnectionError($e->getMessage())
+                    ? new ConnectException($e->getMessage(), $request, $e)
+                    : new RequestException($e->getMessage(), $request, null, $e);
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
 
@@ -427,6 +427,8 @@ class StreamHandler
         if ($uri->getHost() === '') {
             throw new RequestException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.', $request);
         }
+
+        HostValidator::assertRequestHost($request);
 
         // HTTP/1.1 streams using the PHP stream wrapper require a
         // Connection: close header
