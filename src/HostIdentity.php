@@ -165,7 +165,7 @@ final class HostIdentity
      * and later, because a host spelled that way is rejected before it reaches
      * a transport.
      *
-     * @see \GuzzleHttp\Handler\HostValidator::assertRequestHost()
+     * @see Handler\HostValidator::assertRequestHost()
      */
     public static function numericIpv4ToBinary(string $host): ?string
     {
