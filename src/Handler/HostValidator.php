@@ -85,7 +85,7 @@ final class HostValidator
      * reject a trailing-dot spelling the transport reads as a name, but avoids
      * missing one it resolves as an address.
      */
-    private static function isNumericIpv4Host(string $host): bool
+    public static function isNumericIpv4Host(string $host): bool
     {
         if ($host === '') {
             return false;
