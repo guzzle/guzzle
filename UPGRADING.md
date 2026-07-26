@@ -59,8 +59,10 @@ IPv6 cookie domains, which the cookie API permissively accepts, canonicalize
 without gaining brackets, and bare and bracketed forms remain distinct
 identities. Cookie-domain matching remains exact-only for IP literals and IP
 addresses, and DNS suffix matching now requires both the cookie domain and the
-request host to be valid non-literal, nonnumeric host names, so curl-style
-hexadecimal IPv4 forms such as `0x7f000001` stay exact-only.
+request host to be valid non-literal, nonnumeric host names. A host counts as
+numeric on its rightmost label alone, so a cookie domain such as
+`svc.0xdeadbeef` is exact-only in Guzzle 8 although Guzzle 7 reads it as a name
+and matches its subdomains.
 
 Configured proxy endpoints are not canonicalized, no-proxy matching was
 already representation-independent, and the URI text sent to the transport is

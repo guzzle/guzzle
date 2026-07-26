@@ -1051,6 +1051,22 @@ class CookieJarTest extends TestCase
         )->hasHeader('Cookie'));
     }
 
+    public function testPercentEscapedDomainCookieIsNotLeakedToLookAlikeHost(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'http://127.0.0.%31/'),
+            new Response(200, ['Set-Cookie' => 'sid=secret; Domain=127.0.0.%31; Path=/'])
+        );
+
+        self::assertCount(1, $this->jar);
+        self::assertFalse($this->jar->withCookieHeader(
+            new Request('GET', 'http://evil.127.0.0.%31/')
+        )->hasHeader('Cookie'));
+        self::assertSame('sid=secret', $this->jar->withCookieHeader(
+            new Request('GET', 'http://127.0.0.%31/')
+        )->getHeaderLine('Cookie'));
+    }
+
     public function testEmptyDomainAttributeCreatesHostOnlyCookie(): void
     {
         $this->jar->extractCookies(
@@ -1408,6 +1424,10 @@ class CookieJarTest extends TestCase
             ['evil.192.168.0.1', '192.168.0.1', false],
             ['evil.1', '1', false],
             ['192.168.0.1', '192.168.0.1', true],
+            ['evil.127.0.0.%31', '127.0.0.%31', false],
+            ['evil.%30x7f000001', '%30x7f000001', false],
+            ['sub.0xname', '0xname', true],
+            ['%65vil.example.com', 'example.com', true],
         ];
     }
 

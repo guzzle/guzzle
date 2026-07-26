@@ -85,6 +85,7 @@ final class CurlHandler
         array $options
     ): PromiseInterface {
         $this->assertOpen();
+        HostValidator::assertRequestHost($request);
 
         if (isset($options['delay'])) {
             \usleep((int) ($options['delay'] * 1000));

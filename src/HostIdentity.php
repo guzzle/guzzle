@@ -65,6 +65,13 @@ final class HostIdentity
             return true;
         }
 
+        // A percent-escaped cookie domain can decode to another host spelling.
+        // Keep it exact-match-only; decoding a request host cannot create a
+        // suffix match that its original text lacked.
+        if (\strpos($cookieDomain, '%') !== false) {
+            return false;
+        }
+
         if (!self::isDnsSuffixEligible($domain) || !self::isDnsSuffixEligible($cookieDomain)) {
             return false;
         }

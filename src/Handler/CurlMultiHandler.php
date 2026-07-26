@@ -280,6 +280,7 @@ final class CurlMultiHandler
         array $options
     ): PromiseInterface {
         $this->assertOpen();
+        HostValidator::assertRequestHost($request);
 
         $easy = $this->factory->create($request, $options);
 

@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\Clock;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
@@ -24,6 +25,8 @@ use GuzzleHttp\Tests\Psr17SpyFactory;
 use GuzzleHttp\Tests\SpyResponse;
 use GuzzleHttp\Tests\SpyStream;
 use GuzzleHttp\Tests\StrictReadableResourceStreamFactory;
+use GuzzleHttp\Tests\UnvalidatedUri;
+use GuzzleHttp\Tests\UnvalidatedUriRequest;
 use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -470,6 +473,143 @@ class CurlHandlerTest extends TestCase
         }
     }
 
+    public function testDoesNotTransferANoncanonicalUriHost(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = $this->getHandler();
+
+        try {
+            $handler(new Request('GET', 'http://127.0.0.%31:'.Server::$port.'/'), [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must not contain a percent escape', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public function testDoesNotTransferANonPrintableAsciiUriHost(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = $this->getHandler();
+        $host = "\u{FF11}\u{FF12}\u{FF17}\u{3002}\u{FF10}\u{3002}\u{FF10}\u{3002}\u{FF11}";
+
+        try {
+            $handler(new Request('GET', 'http://'.$host.':'.Server::$port.'/'), [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must contain only printable ASCII characters', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    /**
+     * @dataProvider foldedTrailingRootDotHostProvider
+     */
+    public function testDoesNotTransferANumericIpv4UriHostWithATrailingRootDot(string $host): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = $this->getHandler();
+
+        try {
+            $handler(new Request('GET', 'http://'.$host.':'.Server::$port.'/'), [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must not be written as one to four decimal, octal or hexadecimal parts', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public static function foldedTrailingRootDotHostProvider(): iterable
+    {
+        yield 'loopback' => ['127.0.0.1.'];
+        yield 'shortened' => ['127.1.'];
+        yield 'integer' => ['2130706433.'];
+        yield 'hexadecimal' => ['0x7f000001.'];
+        yield 'octal' => ['0177.0.0.1.'];
+        yield 'zero padded' => ['127.000.000.001.'];
+        yield 'zero padded octet' => ['127.0.0.01.'];
+    }
+
+    public function testRejectsANoncanonicalHostHeaderWithoutConnecting(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = $this->getHandler();
+        $request = (new Request('GET', Server::$url))->withHeader('Host', "e\u{200B}vil.test");
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('The request Host header', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public function testRejectsANoncanonicalUriHostWithACustomHandleFactory(): void
+    {
+        $factory = $this->createMock(CurlFactoryInterface::class);
+        $factory->expects(self::never())->method('create');
+
+        $handler = $this->getHandler(['handle_factory' => $factory]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must not contain a percent escape');
+
+        $handler(new Request('GET', 'http://%65vil.test:1/'), []);
+    }
+
+    public function testRejectsAForeignUriHostWithAnAuthorityDelimiterWithoutConnecting(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = $this->getHandler();
+        $request = new UnvalidatedUriRequest(
+            new Request('GET', Server::$url),
+            new UnvalidatedUri('http', 'blocked.example.com@127.0.0.1', Server::$port)
+        );
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must be a valid RFC 3986 host', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public function testRejectsANoncanonicalHostBeforeAnUnsupportedScheme(): void
+    {
+        $handler = $this->getHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must contain only printable ASCII characters');
+
+        $handler(new Request('GET', "file://e\u{200B}vil.test/x"), []);
+    }
+
+    public function testStillTransfersANoncanonicalNumericHost(): void
+    {
+        self::skipIfCurlDoesNotFoldNumericHosts();
+
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $handler = $this->getHandler();
+
+        $response = $handler(new Request('GET', 'http://127.1:'.Server::$port.'/'), [])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('127.1:'.Server::$port, Server::received()[0]->getHeaderLine('Host'));
+    }
+
     private static function assertHandlerShareWasCreated(): void
     {
         $locks = [\CURL_LOCK_DATA_DNS];
@@ -479,5 +619,18 @@ class CurlHandlerTest extends TestCase
 
         self::assertSame(1, $_SERVER['_curl_share_init_count']);
         self::assertSame($locks, $_SERVER['_curl_share'][\CURLSHOPT_SHARE]);
+    }
+
+    /**
+     * Older libcurl delegates numeric shorthand to the platform resolver,
+     * which rejects it on Windows. Validation is covered separately.
+     */
+    private static function skipIfCurlDoesNotFoldNumericHosts(): void
+    {
+        $version = \curl_version();
+
+        if (!\is_array($version) || $version['version_number'] < 0x074D00) {
+            self::markTestSkipped('libcurl does not fold numeric IPv4 hosts before 7.77.0.');
+        }
     }
 }

@@ -9,6 +9,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
+use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -3219,6 +3220,63 @@ class ClientTest extends TestCase
         $request = $requests[0]['request'];
         self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testRegeneratesAnAutomaticHostHeaderAfterIdnConversion(): void
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $client->send(new Request('GET', 'https://яндекс.рф/images'), ['idn_conversion' => true]);
+
+        $request = $mockHandler->getLastRequest();
+
+        self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $request->getUri());
+        self::assertSame('xn--d1acpjx3f.xn--p1ai', $request->getHeaderLine('Host'));
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testPreservesAnExplicitHostHeaderAcrossIdnConversion(): void
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $request = (new Request('GET', 'https://яндекс.рф/'))->withHeader('Host', 'other.example');
+        $client->send($request, ['idn_conversion' => true]);
+
+        $sent = $mockHandler->getLastRequest();
+
+        self::assertSame('xn--d1acpjx3f.xn--p1ai', $sent->getUri()->getHost());
+        self::assertSame('other.example', $sent->getHeaderLine('Host'));
+    }
+
+    public function testRejectsANoncanonicalHostIntroducedByMiddleware(): void
+    {
+        $stack = HandlerStack::create(new CurlHandler());
+        $stack->push(Middleware::mapRequest(static function (RequestInterface $request): RequestInterface {
+            return $request->withUri($request->getUri()->withHost("e\u{200B}vil.test"));
+        }));
+        $client = new Client(['handler' => $stack]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must contain only printable ASCII characters');
+
+        $client->request('GET', 'http://example.com:1/');
+    }
+
+    public function testMockHandlerAcceptsANoncanonicalHost(): void
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $client->request('GET', "http://e\u{200B}vil.test/", ['http_errors' => false]);
+
+        self::assertSame("e\u{200B}vil.test", $mockHandler->getLastRequest()->getUri()->getHost());
     }
 
     private static function requestWithProtocolVersion(string $protocolVersion): RequestInterface

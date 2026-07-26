@@ -1015,6 +1015,8 @@ final class StreamHandler
                 $request
             );
         }
+
+        HostValidator::assertRequestHost($request);
     }
 
     private function applyHandlerOptions(
