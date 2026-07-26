@@ -9,6 +9,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Reject request URI hosts and `Host` header values that are not printable ASCII (GHSA-v5mv-p594-2x33)
 - Reject request URI hosts that contain a percent escape, are not valid RFC 3986 hosts, or are one to four decimal, octal or hexadecimal parts followed by one or more trailing dots, which a handler can read as an IPv4 address (GHSA-v5mv-p594-2x33)
+- Treat percent-escaped cookie domains as exact-match-only (GHSA-f7vp-7xgx-4w4r)
 
 ### Changed
 

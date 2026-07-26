@@ -436,6 +436,19 @@ class SetCookieTest extends TestCase
         self::assertTrue($cookie->matchesDomain('sub.0xname'));
     }
 
+    public function testPercentEscapedDomainIsExactMatchOnly(): void
+    {
+        $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '192.168.0.%31', 'Path' => '/']);
+
+        self::assertTrue($cookie->matchesDomain('192.168.0.%31'));
+        self::assertFalse($cookie->matchesDomain('evil.192.168.0.%31'));
+
+        $whole = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '%30x7f000001', 'Path' => '/']);
+
+        self::assertTrue($whole->matchesDomain('%30x7f000001'));
+        self::assertFalse($whole->matchesDomain('evil.%30x7f000001'));
+    }
+
     public function testBareUnbracketedIpv6DomainIsExactMatchOnly(): void
     {
         $cookie = new SetCookie(['Name' => 'sid', 'Value' => 'v', 'Domain' => '::1', 'Path' => '/']);
