@@ -187,8 +187,10 @@ class StreamHandler
         } catch (\InvalidArgumentException $e) {
             throw $e;
         } catch (\Exception $e) {
-            // Determine if the error was a networking error.
-            if (self::isConnectionError($e->getMessage())) {
+            // Determine if the error was a networking error. A RequestException
+            // raised by this handler is already classified, and its message can
+            // contain caller-supplied text, so it must not be reclassified.
+            if (!$e instanceof RequestException && self::isConnectionError($e->getMessage())) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             } else {
                 $e = $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, null, $e);
@@ -427,6 +429,8 @@ class StreamHandler
         if ($uri->getHost() === '') {
             throw new RequestException('URI must include a scheme and host. Use an absolute URI, a network-path reference starting with //, or configure a base_uri.', $request);
         }
+
+        HostValidator::assertRequestHost($request);
 
         // HTTP/1.1 streams using the PHP stream wrapper require a
         // Connection: close header

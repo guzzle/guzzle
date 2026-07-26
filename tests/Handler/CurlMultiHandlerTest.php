@@ -2829,6 +2829,101 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
     }
 
+    public function testRejectsANonAsciiUriHostWithoutConnecting(): void
+    {
+        $handler = new CurlMultiHandler();
+        $request = new Request('GET', "http://e\u{200B}vil.test:1/");
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must contain only printable ASCII characters');
+
+        $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001]);
+    }
+
+    public function testRejectsANonAsciiHostHeaderWithoutConnecting(): void
+    {
+        $handler = new CurlMultiHandler();
+        $request = (new Request('GET', 'http://example.com:1/'))->withHeader('Host', "e\u{200B}vil.test");
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('The request Host header');
+
+        $handler($request, ['timeout' => 0.001, 'connect_timeout' => 0.001]);
+    }
+
+    public function testRejectsANoncanonicalUriHostWithACustomHandleFactory(): void
+    {
+        $factory = $this->createMock(CurlFactoryInterface::class);
+        $factory->expects(self::never())->method('create');
+
+        $handler = new CurlMultiHandler(['handle_factory' => $factory]);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must not contain a percent escape');
+
+        $handler(new Request('GET', 'http://%65vil.test:1/'), []);
+    }
+
+    public function testRejectsANoncanonicalHostBeforeAnUnsupportedScheme(): void
+    {
+        $handler = new CurlMultiHandler();
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must contain only printable ASCII characters');
+
+        $handler(new Request('GET', "file://e\u{200B}vil.test/etc/passwd"), []);
+    }
+
+    public function testDoesNotTransferAPercentEncodedHost(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $request = new Request('GET', 'http://127.0.0.%31:'.Server::$port.'/');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must not contain a percent escape', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    /**
+     * @dataProvider foldedTrailingDotHostProvider
+     */
+    public function testDoesNotTransferANumericHostWithARootDot(string $host): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $request = new Request('GET', 'http://'.$host.':'.Server::$port.'/');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must not be written as one to four decimal, octal or hexadecimal parts', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public static function foldedTrailingDotHostProvider(): iterable
+    {
+        yield 'loopback' => ['127.0.0.1.'];
+        yield 'shortened decimal' => ['127.1.'];
+        yield 'whole integer' => ['2130706433.'];
+        yield 'hexadecimal' => ['0x7f000001.'];
+        yield 'octal' => ['0177.0.0.1.'];
+        yield 'zero padded octets' => ['127.000.000.001.'];
+        yield 'zero padded final octet' => ['127.0.0.01.'];
+    }
+
     private static function easyWithSignature(?string $signature): EasyHandle
     {
         $easy = new EasyHandle();

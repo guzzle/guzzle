@@ -3,6 +3,20 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.15.2 - Upcoming
+
+### Security
+
+- Reject request URI hosts and `Host` header values that are not printable ASCII or that contain a percent escape (GHSA-v5mv-p594-2x33)
+- Reject request URI hosts that contain a URI authority delimiter (GHSA-v5mv-p594-2x33)
+- Reject request URI hosts that are one to four decimal, octal or hexadecimal parts followed by one or more trailing dots, which a handler can read as an IPv4 address (GHSA-v5mv-p594-2x33)
+
+### Changed
+
+- Regenerate an automatically derived `Host` header when the client rewrites the request URI
+- Preserve the exception type when a request is rejected before a stream is opened
+
+
 ## 7.15.1 - 2026-07-18
 
 ### Security

@@ -22,4 +22,27 @@ class InternalUtilsTest extends TestCase
         $uri = Utils::idnUriConvert($uri);
         self::assertSame('xn--d1acpjx3f.xn--p1ai', $uri->getHost());
     }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testIdnConversionCanProduceANoncanonicalNumericHost()
+    {
+        // Documented limitation: idn_conversion is a spelling conversion, not
+        // an SSRF control. IDNA maps fullwidth and ideographic forms onto
+        // numeric IPv4 spellings, which 7.15 still accepts.
+        $uri = (new Psr7\Uri('http://placeholder.test/'))->withHost("\u{FF11}\u{FF12}\u{FF17}\u{3002}\u{FF11}");
+
+        self::assertSame('127.1', Utils::idnUriConvert($uri, \IDNA_DEFAULT)->getHost());
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testIdnConversionCanProduceAnIpv4AddressWithARootDot()
+    {
+        $uri = (new Psr7\Uri('http://placeholder.test/'))->withHost("127.0.0.\u{FF11}\u{3002}");
+
+        self::assertSame('127.0.0.1.', Utils::idnUriConvert($uri, \IDNA_DEFAULT)->getHost());
+    }
 }
