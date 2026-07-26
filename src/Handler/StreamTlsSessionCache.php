@@ -64,6 +64,17 @@ final class StreamTlsSessionCache
     ];
 
     /**
+     * TLS 1.3 early data (0-RTT) options are deliberately never shared: an
+     * injected cached session would let PHP send the replayable early data
+     * payload ahead of the HTTP request.
+     */
+    private const USER_MANAGED_EARLY_DATA_OPTIONS = [
+        'early_data' => true,
+        'early_data_cb' => true,
+        'max_early_data' => true,
+    ];
+
+    /**
      * File/path-bearing SSL context options are deliberately not shared: their
      * contents can change outside this handler.
      */
@@ -139,6 +150,7 @@ final class StreamTlsSessionCache
                 && !isset(self::PATH_OPTIONS[$key])
                 && !isset(self::USER_MANAGED_SESSION_OPTIONS[$key])
                 && !isset(self::USER_MANAGED_PSK_OPTIONS[$key])
+                && !isset(self::USER_MANAGED_EARLY_DATA_OPTIONS[$key])
                 && !isset(self::CERT_CAPTURE_OPTIONS[$key])
                 && $key !== 'no_ticket'
                 && $key !== 'peer_fingerprint'
@@ -158,6 +170,10 @@ final class StreamTlsSessionCache
 
             if (isset(self::USER_MANAGED_PSK_OPTIONS[$key])) {
                 return \sprintf('the SSL context option "%s" is user-managed TLS PSK state.', Psr7\DiagnosticValue::escape((string) $key));
+            }
+
+            if (isset(self::USER_MANAGED_EARLY_DATA_OPTIONS[$key])) {
+                return \sprintf('the SSL context option "%s" is user-managed TLS early data state.', Psr7\DiagnosticValue::escape((string) $key));
             }
 
             if (isset(self::CERT_CAPTURE_OPTIONS[$key]) && $value) {
@@ -433,7 +449,7 @@ final class StreamTlsSessionCache
         $context = [];
 
         foreach ($ssl as $key => $value) {
-            if (isset(self::USER_MANAGED_SESSION_OPTIONS[$key]) || isset(self::USER_MANAGED_PSK_OPTIONS[$key]) || $key === 'passphrase') {
+            if (isset(self::USER_MANAGED_SESSION_OPTIONS[$key]) || isset(self::USER_MANAGED_PSK_OPTIONS[$key]) || isset(self::USER_MANAGED_EARLY_DATA_OPTIONS[$key]) || $key === 'passphrase') {
                 continue;
             }
 

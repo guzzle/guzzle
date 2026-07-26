@@ -286,6 +286,10 @@ session sharing. Preferred modes continue without sharing, and `HANDLER_REQUIRE`
 fails loudly. Unsupported or conflicting raw stream context TLS options are
 still rejected by the stream handler before sharing is applied.
 
+TLS session sharing never sends TLS 1.3 early data (0-RTT). Shared sessions only
+resume the TLS handshake, and the PHP 8.6 `early_data` stream context option is
+rejected before sharing is applied.
+
 When constructing cURL handlers manually, configure sharing with the handler
 `transport_sharing` option:
 

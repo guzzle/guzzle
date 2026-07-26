@@ -85,6 +85,8 @@ and produces a diagnostic reason for the rejection. It rejects:
   outside the handler;
 - user-managed session state (`session_*`) and PSK callbacks, whose
   lifecycle belongs to the caller;
+- TLS 1.3 early data options, which would let an injected cached session
+  send the replayable 0-RTT payload ahead of the HTTP request;
 - enabled certificate-capture options, which ask for a fresh peer
   handshake that resumption would skip;
 - an enabled `no_ticket`;
