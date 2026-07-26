@@ -10,6 +10,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
+use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Handler\Clock;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Handler\TransferByteCounter;
@@ -5089,7 +5090,10 @@ class StreamHandlerTest extends TestCase
 
         try {
             $handler(new Request('GET', 'http://127.1:'.Server::$port.'/'), [])->wait();
-        } catch (RequestException $e) {
+        } catch (TransferException $e) {
+            // ConnectException is a NetworkException here, a sibling of
+            // RequestException rather than a subclass, so the common base is
+            // what catches a resolver failure as well as a host rejection.
             $message = $e->getMessage();
         }
 
