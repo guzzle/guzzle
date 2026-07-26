@@ -342,6 +342,8 @@ class CurlHandlerTest extends TestCase
 
     public function testStillSendsANoncanonicalNumericHost(): void
     {
+        self::skipIfCurlDoesNotFoldNumericHosts();
+
         Server::flush();
         Server::enqueue([new Response(200)]);
 
@@ -349,6 +351,24 @@ class CurlHandlerTest extends TestCase
         $handler(new Request('GET', 'http://127.1:'.Server::$port.'/'), [])->wait();
 
         self::assertSame('127.1:'.Server::$port, Server::received()[0]->getHeaderLine('Host'));
+    }
+
+    /**
+     * Whether a transfer to a numeric IPv4 shorthand host succeeds is a
+     * property of the transport, not of the rule under test, which accepts
+     * such a host on every platform and is pinned doing so by
+     * HostValidatorTest::testAcceptsATransportSafeUriHost(). libcurl folds the
+     * shorthand in its own URL parser from 7.77.0 and hands the literal string
+     * to the platform resolver before that, and Windows getaddrinfo() refuses
+     * it, so an older libcurl cannot reach a listener by this spelling.
+     */
+    private static function skipIfCurlDoesNotFoldNumericHosts(): void
+    {
+        $version = \curl_version();
+
+        if (!\is_array($version) || $version['version_number'] < 0x074D00) {
+            self::markTestSkipped('libcurl does not fold numeric IPv4 hosts before 7.77.0.');
+        }
     }
 
     private static function skipIfCurlShareIsUnavailable(): void
