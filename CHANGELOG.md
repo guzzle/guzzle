@@ -11,10 +11,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject URI hosts with a percent escape or that are not valid RFC 3986 hosts (GHSA-v5mv-p594-2x33)
 - Reject numeric-looking URI hosts with trailing dots, read as IPv4 addresses (GHSA-v5mv-p594-2x33)
 - Treat percent-escaped cookie domains as exact-match-only (GHSA-f7vp-7xgx-4w4r)
-
-### Changed
-
-- Regenerate an automatically derived `Host` header when the client rewrites the request URI
+- Regenerate a derived `Host` header after client URI rewrites (GHSA-v5mv-p594-2x33)
 
 
 ## 8.0.0 - 2026-07-20
