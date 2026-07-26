@@ -215,9 +215,7 @@ final class HostValidator
 
         for ($offset = 0, $length = \strlen($value); $offset < $length; ++$offset) {
             $byte = \ord($value[$offset]);
-            $escaped .= $byte >= 0x21 && $byte <= 0x7E
-                ? $value[$offset]
-                : \sprintf('\\x%02X', $byte);
+            $escaped .= $byte >= 0x21 && $byte <= 0x7E ? $value[$offset] : \sprintf('\\x%02X', $byte);
         }
 
         return $escaped;
