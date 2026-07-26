@@ -513,11 +513,8 @@ class SetCookie
             return true;
         }
 
-        // A transport percent-decodes a host before it reads it, so a cookie
-        // domain carrying a percent escape can name a host its own text does
-        // not spell, such as 192.168.0.%31 for the address 192.168.0.1.
-        // Matching a subdomain of that text would scope a cookie set for one
-        // host to an unrelated one, so those domains are exact-match-only too.
+        // A percent-escaped cookie domain can decode to another host spelling.
+        // Keep it exact-match-only to avoid extending that host's cookie scope.
         if (\strpos($cookieDomain, '%') !== false) {
             return false;
         }
@@ -562,13 +559,9 @@ class SetCookie
             return true;
         }
 
-        // A transport's inet_aton-style parse reads one to four dot-separated
-        // parts, each written in decimal, in 0-prefixed octal, or in
-        // 0x-prefixed hexadecimal, as a numerical IPv4 address rather than as
-        // a name, such as 0x7f000001 for 127.0.0.1. This tests the spelling
-        // and not the value, so an out-of-range spelling such as 0x100000000
-        // is held to an exact match although a transport reads it as a name.
-        // That direction fails closed; the reverse would leave the split open.
+        // Apply the transport's decimal, octal and hexadecimal inet_aton-style
+        // grammar. Omitting range checks conservatively holds some names to an
+        // exact match.
         return HostValidator::isNumericIpv4Host(\rtrim($host, '.'));
     }
 

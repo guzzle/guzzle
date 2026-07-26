@@ -187,9 +187,8 @@ class StreamHandler
         } catch (\InvalidArgumentException $e) {
             throw $e;
         } catch (\Exception $e) {
-            // Determine if the error was a networking error. A RequestException
-            // raised by this handler is already classified, and its message can
-            // contain caller-supplied text, so it must not be reclassified.
+            // RequestException is already classified and may contain caller
+            // input; do not reinterpret its message as a network error.
             if (!$e instanceof RequestException && self::isConnectionError($e->getMessage())) {
                 $e = new ConnectException($e->getMessage(), $request, $e);
             } else {

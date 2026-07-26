@@ -354,13 +354,8 @@ class CurlHandlerTest extends TestCase
     }
 
     /**
-     * Whether a transfer to a numeric IPv4 shorthand host succeeds is a
-     * property of the transport, not of the rule under test, which accepts
-     * such a host on every platform and is pinned doing so by
-     * HostValidatorTest::testAcceptsATransportSafeUriHost(). libcurl folds the
-     * shorthand in its own URL parser from 7.77.0 and hands the literal string
-     * to the platform resolver before that, and Windows getaddrinfo() refuses
-     * it, so an older libcurl cannot reach a listener by this spelling.
+     * Older libcurl delegates numeric shorthand to the platform resolver,
+     * which rejects it on Windows. Validation is covered separately.
      */
     private static function skipIfCurlDoesNotFoldNumericHosts(): void
     {

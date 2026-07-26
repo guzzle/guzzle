@@ -97,14 +97,9 @@ class HostValidatorTest extends TestCase
         yield 'mixed base' => ['0x7f.1.'];
         yield 'zero padded octets' => ['127.000.000.001.'];
         yield 'zero padded final octet' => ['127.0.0.01.'];
-        // Rejected although libcurl 8.21.0 refuses it in hostname_check(), so
-        // the rule stays closed if a later release drops that guard. That
-        // guard shipped in curl-8_21_0 alongside the fold it constrains.
+        // Keep multiple dots fail-closed if libcurl relaxes its current guard.
         yield 'two root dots' => ['127.0.0.1..'];
-        // Rejected although libcurl reads these as names: the predicate omits
-        // libcurl's per-part range checks and its 32-bit overflow check, so it
-        // refuses the trailing-dot form of a name libcurl keeps. That is the
-        // fail-closed direction and a deliberate tradeoff, not a free one.
+        // Fail closed when libcurl reads out-of-range numeric shapes as names.
         yield 'octet out of range' => ['256.0.0.1.'];
         yield 'overflowing part' => ['0x100000000.'];
     }
@@ -132,10 +127,7 @@ class HostValidatorTest extends TestCase
         yield 'ipv6' => ['[::1]'];
         yield 'noncanonical ipv6' => ['[0:0:0:0:0:0:0:1]'];
         yield 'uppercase' => ['EXAMPLE.COM'];
-        // Deliberately still accepted on 7.15, and disclosed as a limitation in
-        // the advisory. These are the long-standing inet_aton shorthand, not
-        // the trailing-dot folding that libcurl 8.21.0 introduced, and every
-        // comparable client tolerates them.
+        // Long-standing inet_aton shorthand remains accepted on 7.15.
         yield 'shortened numeric' => ['127.1'];
         yield 'integer numeric' => ['2130706433'];
         yield 'octal numeric' => ['0177.0.0.1'];

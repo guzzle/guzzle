@@ -6,8 +6,8 @@ use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\RequestInterface;
 
 /**
- * Rejects request hosts that a handler could resolve to a host other than the
- * one the request names.
+ * Rejects request hosts that a handler could resolve differently from the host
+ * the request names.
  *
  * @internal
  */
@@ -20,14 +20,11 @@ final class HostValidator
     /**
      * Asserts that a request names one unambiguous network host.
      *
-     * The URI host and every Host header value must consist only of printable
-     * ASCII characters and must not contain a percent escape, and the URI host
-     * must additionally be free of URI authority delimiters and must not be one
-     * to four numeric-looking parts followed by one or more trailing dots.
-     * Handlers pass the URI to a transport that reparses it, percent-decodes
-     * the host and, when built with IDN support, applies IDNA mapping to it,
-     * while the Host header is sent exactly as given, so any other spelling can
-     * name one host on the connection and a different one in the request.
+     * The URI host and every Host header value must use printable ASCII without
+     * percent escapes. The URI host must also exclude authority delimiters and
+     * numeric-looking parts followed by trailing dots. Handlers reparse the URI
+     * but send the Host header as given, so ambiguous spellings can name
+     * different connection and request hosts.
      *
      * @throws RequestException
      */
@@ -59,9 +56,8 @@ final class HostValidator
     }
 
     /**
-     * The Host header is not reparsed for the connection, so its diagnostics
-     * name the consequence it actually has: the request as received states an
-     * authority the caller did not write.
+     * The Host header is sent rather than reparsed for the connection, so its
+     * diagnostics describe a request authority the caller did not write.
      *
      * @throws RequestException
      */
@@ -77,9 +73,7 @@ final class HostValidator
     }
 
     /**
-     * Matches the accepted shape positively, so a PCRE engine failure, which
-     * returns false rather than 1, reports "not printable ASCII" and the
-     * request is rejected.
+     * Matches the accepted shape positively so a PCRE failure rejects.
      */
     private static function isPrintableAscii(string $value): bool
     {
@@ -87,13 +81,11 @@ final class HostValidator
     }
 
     /**
-     * Rejects a URI host that carries a delimiter the transport's own URI
-     * parser would treat as the end of the host.
+     * Rejects a delimiter the transport could treat as the end of the URI host.
      *
-     * This mirrors GuzzleHttp\Psr7\Uri::assertValidHost(), so it can only ever
-     * reject a value produced by a third-party UriInterface implementation.
-     * It is not applied to the Host header, which legitimately carries a port
-     * and is sent verbatim rather than reparsed.
+     * This mirrors GuzzleHttp\Psr7\Uri::assertValidHost() and only affects
+     * third-party UriInterface values. Host headers may carry a port and are
+     * sent verbatim.
      *
      * @throws RequestException
      */
@@ -122,16 +114,11 @@ final class HostValidator
     /**
      * Rejects one to four numeric-looking parts followed by trailing dots.
      *
-     * libcurl 8.21.0 swallows a single dot that follows a numerical address, in
-     * every base its own inet_aton-style parse accepts, and then connects to
-     * that address. filter_var() rejects all of those spellings as addresses,
-     * so a caller that classifies the host before handing it to Guzzle sees an
-     * unresolvable name while the transport reaches the address. The rule is
-     * written on the shape rather than on the value, so it also refuses the
-     * trailing-dot form of a numeric-looking name a transport would keep as a
-     * name; isNumericIpv4Host() states that tradeoff. Numeric spellings without
-     * a trailing dot are the long-standing inet_aton shorthand and stay
-     * accepted; only the dot-folding class is new.
+     * libcurl 8.21.0 drops a trailing dot from inet_aton-style numeric hosts
+     * before connecting, while other validators treat the input as a name.
+     * Testing the shape also rejects some out-of-range values that transports
+     * keep as names; isNumericIpv4Host() explains that fail-closed tradeoff.
+     * Plain numeric shorthand stays accepted.
      *
      * @throws RequestException
      */
@@ -149,19 +136,12 @@ final class HostValidator
     }
 
     /**
-     * Reports whether a value is written the way a transport's inet_aton-style
-     * parse spells an IPv4 address rather than a name: one to four
-     * dot-separated parts, each written in decimal, in 0-prefixed octal, or in
-     * 0x-prefixed hexadecimal.
+     * Reports whether a value has the transport's inet_aton-style shape: one
+     * to four decimal, 0-prefixed octal, or 0x-prefixed hexadecimal parts.
      *
-     * This deliberately omits the per-part range checks and the 32-bit
-     * overflow check the transport also applies, so it can only ever classify
-     * more values as numeric than the transport does. That is a tradeoff
-     * rather than a free win: the trailing-dot form of an out-of-range spelling
-     * such as 256.0.0.1. or 0x100000000. is rejected although a transport
-     * reads it as a name. It fails closed, and the reverse would leave the
-     * split open. It uses no PCRE, so there is no engine that can fail open in
-     * it.
+     * Range and 32-bit overflow checks are deliberately omitted. This may
+     * reject a trailing-dot spelling the transport reads as a name, but avoids
+     * missing one it resolves as an address. No PCRE is used.
      */
     public static function isNumericIpv4Host(string $host): bool
     {
@@ -191,8 +171,7 @@ final class HostValidator
         }
 
         if ($part[0] === '0' && isset($part[1]) && ($part[1] === 'x' || $part[1] === 'X')) {
-            return \strlen($part) > 2
-                && \strspn($part, '0123456789abcdefABCDEF', 2) === \strlen($part) - 2;
+            return \strlen($part) > 2 && \strspn($part, '0123456789abcdefABCDEF', 2) === \strlen($part) - 2;
         }
 
         $digits = $part[0] === '0' ? '01234567' : '0123456789';
@@ -201,13 +180,9 @@ final class HostValidator
     }
 
     /**
-     * Renders a rejected host for diagnostics, escaping every byte outside
-     * printable ASCII as an uppercase \xNN sequence so an invisible or control
-     * byte cannot reach a message. The escaped range is exactly the range the
-     * printable ASCII rule rejects, so a value rejected by that rule always
-     * shows the offending byte, and a value rejected by one of the other rules
-     * shows its delimiter or its dot literally. The result is diagnostic text,
-     * not a reversible encoding.
+     * Escapes non-printable bytes as uppercase \xNN for safe diagnostics.
+     * Printable delimiters and dots stay visible. The result is not a
+     * reversible encoding.
      */
     private static function escape(string $value): string
     {
