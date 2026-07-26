@@ -4,6 +4,7 @@ namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\FulfilledPromise;
@@ -187,12 +188,10 @@ class StreamHandler
         } catch (\InvalidArgumentException $e) {
             throw $e;
         } catch (\Exception $e) {
-            // RequestException is already classified and may contain caller
-            // input; do not reinterpret its message as a network error.
-            if (!$e instanceof RequestException && self::isConnectionError($e->getMessage())) {
-                $e = new ConnectException($e->getMessage(), $request, $e);
-            } else {
-                $e = $e instanceof RequestException ? $e : new RequestException($e->getMessage(), $request, null, $e);
+            if (!$e instanceof TransferException) {
+                $e = self::isConnectionError($e->getMessage())
+                    ? new ConnectException($e->getMessage(), $request, $e)
+                    : new RequestException($e->getMessage(), $request, null, $e);
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
 
