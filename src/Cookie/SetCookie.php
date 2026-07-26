@@ -2,6 +2,7 @@
 
 namespace GuzzleHttp\Cookie;
 
+use GuzzleHttp\Handler\HostValidator;
 use GuzzleHttp\Psr7;
 
 /**
@@ -512,6 +513,15 @@ class SetCookie
             return true;
         }
 
+        // A transport percent-decodes a host before it reads it, so a cookie
+        // domain carrying a percent escape can name a host its own text does
+        // not spell, such as 192.168.0.%31 for the address 192.168.0.1.
+        // Matching a subdomain of that text would scope a cookie set for one
+        // host to an unrelated one, so those domains are exact-match-only too.
+        if (\strpos($cookieDomain, '%') !== false) {
+            return false;
+        }
+
         // IP literals and numeric hosts are exact-match-only per RFC 6265.
         // Only the exact match above may succeed for those cookie domains.
         if (self::isIpAddressOrNumericHost($cookieDomain)) {
@@ -548,7 +558,18 @@ class SetCookie
         $labels = \explode('.', $host);
         $last = (string) \end($labels);
 
-        return $last !== '' && \ctype_digit($last);
+        if ($last !== '' && \ctype_digit($last)) {
+            return true;
+        }
+
+        // A transport's inet_aton-style parse reads one to four dot-separated
+        // parts, each written in decimal, in 0-prefixed octal, or in
+        // 0x-prefixed hexadecimal, as a numerical IPv4 address rather than as
+        // a name, such as 0x7f000001 for 127.0.0.1. This tests the spelling
+        // and not the value, so an out-of-range spelling such as 0x100000000
+        // is held to an exact match although a transport reads it as a name.
+        // That direction fails closed; the reverse would leave the split open.
+        return HostValidator::isNumericIpv4Host(\rtrim($host, '.'));
     }
 
     /**

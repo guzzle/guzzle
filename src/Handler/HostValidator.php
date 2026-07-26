@@ -163,7 +163,7 @@ final class HostValidator
      * split open. It uses no PCRE, so there is no engine that can fail open in
      * it.
      */
-    private static function isNumericIpv4Host(string $host): bool
+    public static function isNumericIpv4Host(string $host): bool
     {
         if ($host === '') {
             return false;

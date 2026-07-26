@@ -632,6 +632,38 @@ class CookieJarTest extends TestCase
         )->hasHeader('Cookie'));
     }
 
+    public function testNumericDomainCookieInAnyBaseIsNotLeakedToLookAlikeHost()
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'http://0x7f000001/'),
+            new Response(200, ['Set-Cookie' => 'sid=secret; Domain=0x7f000001; Path=/'])
+        );
+
+        self::assertCount(1, $this->jar);
+        self::assertFalse($this->jar->withCookieHeader(
+            new Request('GET', 'http://evil.0x7f000001/')
+        )->hasHeader('Cookie'));
+        self::assertSame('sid=secret', $this->jar->withCookieHeader(
+            new Request('GET', 'http://0x7f000001/')
+        )->getHeaderLine('Cookie'));
+    }
+
+    public function testPercentEscapedDomainCookieIsNotLeakedToLookAlikeHost()
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'http://127.0.0.%31/'),
+            new Response(200, ['Set-Cookie' => 'sid=secret; Domain=127.0.0.%31; Path=/'])
+        );
+
+        self::assertCount(1, $this->jar);
+        self::assertFalse($this->jar->withCookieHeader(
+            new Request('GET', 'http://evil.127.0.0.%31/')
+        )->hasHeader('Cookie'));
+        self::assertSame('sid=secret', $this->jar->withCookieHeader(
+            new Request('GET', 'http://127.0.0.%31/')
+        )->getHeaderLine('Cookie'));
+    }
+
     public function testDoesNotStoreMaxAgeZeroCookieFromResponse()
     {
         $this->jar->extractCookies(
@@ -987,6 +1019,12 @@ class CookieJarTest extends TestCase
             ['evil.192.168.0.1', '192.168.0.1', false],
             ['evil.1', '1', false],
             ['192.168.0.1', '192.168.0.1', true],
+            ['evil.0x7f000001', '0x7f000001', false],
+            ['evil.0177.0.0.0x1', '0177.0.0.0x1', false],
+            ['evil.127.0.0.%31', '127.0.0.%31', false],
+            ['evil.%30x7f000001', '%30x7f000001', false],
+            ['a.svc.0xdeadbeef', 'svc.0xdeadbeef', true],
+            ['%65vil.example.com', 'example.com', true],
         ];
     }
 

@@ -10,6 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject request URI hosts and `Host` header values that are not printable ASCII or that contain a percent escape (GHSA-v5mv-p594-2x33)
 - Reject request URI hosts that contain a URI authority delimiter (GHSA-v5mv-p594-2x33)
 - Reject request URI hosts that are one to four decimal, octal or hexadecimal parts followed by one or more trailing dots, which a handler can read as an IPv4 address (GHSA-v5mv-p594-2x33)
+- Treat numeric-in-any-base and percent-escaped cookie domains as exact-match-only (GHSA-f7vp-7xgx-4w4r)
 
 ### Changed
 
