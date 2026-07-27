@@ -383,11 +383,12 @@ final class RequestOptions
      * as a comma- or whitespace-delimited string, array of strings, or null to
      * specify hosts, host-and-port pairs, IP literals, IP CIDR rules, or
      * wildcard rules that should not be proxied. Domain rules are matched
-     * case-insensitively. Exact IP literals are normalized before matching.
-     * CIDR rules match IP literals only and are not port-specific. Custom
-     * handlers can use ProxyOptions::resolve() to apply Guzzle-compatible proxy
-     * selection; the built-in handlers' environment-variable fallback is not
-     * part of that helper.
+     * case-insensitively. Exact IP literals are normalized before matching,
+     * including the inet_aton() shorthand spellings a transport reads as an
+     * address. CIDR rules match IP literals only and are not port-specific.
+     * Custom handlers can use ProxyOptions::resolve() to apply
+     * Guzzle-compatible proxy selection; the built-in handlers'
+     * environment-variable fallback is not part of that helper.
      */
     public const PROXY = 'proxy';
 
