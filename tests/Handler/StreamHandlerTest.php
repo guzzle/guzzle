@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests\Handler;
 
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Exception\NetworkTimeoutException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
@@ -510,6 +513,89 @@ class StreamHandlerTest extends TestCase
         self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'fopen(): Failed to open stream: Connection reset by peer'));
         self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'fopen(): Failed to open stream: Connection refused'));
         self::assertFalse($this->matchesStreamHandlerError('isNetworkError', 'HTTP request failed!'));
+    }
+
+    public function testClassifiesDirectStructuredSslUnsupportedError(): void
+    {
+        $e = $this->createStreamFailureException('stream failed', ['SslNotSupported']);
+
+        self::assertInstanceOf(ConnectException::class, $e);
+        self::assertNotInstanceOf(ConnectTimeoutException::class, $e);
+    }
+
+    public function testTimeoutMessageTakesPrecedenceOverDirectSslUnsupportedCode(): void
+    {
+        $e = $this->createStreamFailureException('Operation timed out', ['SslNotSupported']);
+
+        self::assertInstanceOf(ConnectTimeoutException::class, $e);
+    }
+
+    public function testClassifiesStructuredStreamNetworkErrorBeforeTimeoutMessage(): void
+    {
+        $e = $this->createStreamFailureException('Operation timed out', ['NetworkSendFailed']);
+
+        self::assertInstanceOf(NetworkTimeoutException::class, $e);
+        self::assertNotInstanceOf(ConnectTimeoutException::class, $e);
+    }
+
+    public function testClassifiesStructuredStreamSendErrorAsNetworkError(): void
+    {
+        $e = $this->createStreamFailureException('stream failed', ['NetworkSendFailed']);
+
+        self::assertInstanceOf(NetworkException::class, $e);
+        self::assertNotInstanceOf(NetworkTimeoutException::class, $e);
+    }
+
+    public function testClassifiesStructuredStreamCertificatePolicyErrorAsConnectionError(): void
+    {
+        $e = $this->createStreamFailureException(
+            'Could not get peer certificate; Failed to enable crypto',
+            ['NetworkRecvFailed', 'ProtocolError']
+        );
+
+        self::assertInstanceOf(ConnectException::class, $e);
+        self::assertNotInstanceOf(ConnectTimeoutException::class, $e);
+    }
+
+    public function testIgnoresGenericStructuredStreamOpenError(): void
+    {
+        $e = $this->createStreamFailureException('HTTP request failed!', ['OpenFailed']);
+
+        self::assertInstanceOf(RequestException::class, $e);
+        self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
+    }
+
+    public function testClassifiesCollapsedProxyTlsFailureByMessage(): void
+    {
+        $e = $this->createStreamFailureException('Failed to open stream: Cannot connect to HTTPS server through proxy', ['OpenFailed']);
+
+        self::assertInstanceOf(ConnectException::class, $e);
+        self::assertNotInstanceOf(ConnectTimeoutException::class, $e);
+    }
+
+    public function testStructuredStreamErrorHandlerStopsCapturingAndDeduplicates(): void
+    {
+        if (\PHP_VERSION_ID < 80600 || !\class_exists(\StreamError::class, false)) {
+            self::markTestSkipped('PHP 8.6 structured stream errors are required.');
+        }
+
+        $handler = new StreamHandler();
+        $context = [];
+        $streamErrorCodes = [];
+        $captureStreamErrors = true;
+        $method = new \ReflectionMethod($handler, 'addStructuredStreamErrorHandler');
+        $method->invokeArgs($handler, [&$context, &$streamErrorCodes, &$captureStreamErrors]);
+
+        $errorHandler = $context['stream']['error_handler'];
+        $networkSendFailed = (object) ['code' => (object) ['name' => 'NetworkSendFailed']];
+        $errorHandler([$networkSendFailed, $networkSendFailed]);
+
+        self::assertSame(['NetworkSendFailed'], $streamErrorCodes);
+
+        $captureStreamErrors = false;
+        $errorHandler([(object) ['code' => (object) ['name' => 'OpenFailed']]]);
+
+        self::assertSame(['NetworkSendFailed'], $streamErrorCodes);
     }
 
     public function testRejectsRequestExceptionWhenRequestBodyReadTimesOut(): void
@@ -2157,6 +2243,22 @@ class StreamHandlerTest extends TestCase
         return $reflection->invoke(null, $message) === true;
     }
 
+    private function createStreamFailureException(string $message, array $streamErrorCodes)
+    {
+        $reflection = new \ReflectionMethod(StreamHandler::class, 'createStreamFailureException');
+        if (\PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
+
+        return $reflection->invoke(
+            null,
+            $message,
+            new Request('GET', 'http://example.com'),
+            new \RuntimeException($message),
+            $streamErrorCodes
+        );
+    }
+
     public function testAddsProxy(): void
     {
         try {
@@ -2165,6 +2267,58 @@ class StreamHandlerTest extends TestCase
         } catch (ConnectException $e) {
             self::assertMatchesRegularExpression('/refused/i', $e->getMessage());
         }
+    }
+
+    public function testClassifiesCollapsedHttpsProxyFailureByMessageFallback(): void
+    {
+        $handler = new StreamHandler();
+
+        try {
+            // The HTTP wrapper normally collapses the semantic proxy error to
+            // OpenFailed. Its message fallback must retain the classification.
+            $handler(new Request('GET', 'https://example.com/'), [
+                'proxy' => '127.0.0.1:8126',
+                'timeout' => 5,
+            ])->wait();
+            self::fail('Expected ConnectException');
+        } catch (ConnectException $e) {
+            self::assertStringContainsString('Cannot connect to HTTPS server through proxy', $e->getMessage());
+            self::assertNotInstanceOf(ConnectTimeoutException::class, $e);
+        }
+    }
+
+    public function testCapturesCollapsedHttpsProxyErrorCode(): void
+    {
+        if (\PHP_VERSION_ID < 80600 || !\class_exists(\StreamError::class, false)) {
+            self::markTestSkipped('PHP 8.6 structured stream errors are required.');
+        }
+        if (!\extension_loaded('openssl')) {
+            self::markTestSkipped('OpenSSL is required.');
+        }
+
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'https://example.com/');
+        $context = $this->buildContextWithProxy($request, '127.0.0.1:8126');
+        $context['http']['timeout'] = 5;
+        $streamErrorCodes = [];
+        $captureStreamErrors = true;
+        $method = new \ReflectionMethod($handler, 'addStructuredStreamErrorHandler');
+        $method->invokeArgs($handler, [&$context, &$streamErrorCodes, &$captureStreamErrors]);
+        $contextResource = \stream_context_create($context);
+
+        try {
+            $resource = @\fopen((string) $request->getUri(), 'r', false, $contextResource);
+        } finally {
+            $captureStreamErrors = false;
+        }
+
+        if (\is_resource($resource)) {
+            \fclose($resource);
+        }
+
+        self::assertFalse($resource);
+        self::assertContains('OpenFailed', $streamErrorCodes);
+        self::assertNotContains('SslNotSupported', $streamErrorCodes);
     }
 
     public function testAddsProxyByProtocol(): void
@@ -2820,6 +2974,9 @@ class StreamHandlerTest extends TestCase
         yield 'ssl peer name' => ['ssl', 'peer_name', 'example.com', 'request URI'];
         yield 'ssl verify peer' => ['ssl', 'verify_peer', false, 'verify'];
         yield 'ssl verify peer name' => ['ssl', 'verify_peer_name', false, 'verify'];
+        yield 'stream error handler' => ['stream', 'error_handler', 'callback', 'stream error handling'];
+        yield 'stream error mode' => ['stream', 'error_mode', 'error', 'stream error handling'];
+        yield 'stream error store' => ['stream', 'error_store', 'none', 'stream error handling'];
     }
 
     public function testCanSetPasswordWhenSettingCert(): void
@@ -3047,6 +3204,24 @@ class StreamHandlerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('hi there', (string) $response->getBody());
+    }
+
+    public function testPreservesTransferExceptionThrownByProgressCallback(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $nested = new ConnectException('Aborted by the progress callback', new Request('GET', 'http://nested.example'));
+
+        try {
+            $handler(new Request('GET', Server::$url), [
+                'progress' => static function () use ($nested): void {
+                    throw $nested;
+                },
+            ])->wait();
+            self::fail('Expected ConnectException');
+        } catch (ConnectException $e) {
+            self::assertSame($nested, $e);
+        }
     }
 
     public function testProgressOverflowValueThrows(): void

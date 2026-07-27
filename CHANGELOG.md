@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.1.0 - Upcoming
+
+### Changed
+
+- Classify stream handler transport failures using PHP 8.6+ structured stream error codes
+
+
 ## 8.0.2 - Upcoming
 
 ### Fixed

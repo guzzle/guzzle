@@ -76,6 +76,21 @@ final class StreamHandler
         'unexpected eof while reading',
     ];
 
+    // PHP's HTTP wrapper can collapse wrapper-level errors to OpenFailed.
+    // These codes classify only errors delivered directly to the context
+    // handler. NetworkRecvFailed is omitted because PHP currently emits it for
+    // handshake-time certificate policy failures.
+    private const STRUCTURED_NETWORK_ERROR_CODES = [
+        'NetworkSendFailed',
+    ];
+
+    // SslNotSupported can be emitted directly by a transport that cannot
+    // enable crypto. Standard ext-openssl proxy failures are normally
+    // collapsed to OpenFailed and continue to use message classification.
+    private const STRUCTURED_CONNECTION_ERROR_CODES = [
+        'SslNotSupported',
+    ];
+
     /**
      * Default idle timeout in milliseconds when the "read_timeout" option is
      * not set. Matches PHP's default_socket_timeout default, which the
@@ -225,19 +240,7 @@ final class StreamHandler
 
             if (!$e instanceof TransferException) {
                 $message = $e->getMessage();
-                if (self::isSendError($message)) {
-                    $e = self::isConnectTimeoutError($message)
-                        ? new NetworkTimeoutException($message, $request, $e)
-                        : new NetworkException($message, $request, $e);
-                } elseif (self::isConnectTimeoutError($message)) {
-                    $e = new ConnectTimeoutException($message, $request, $e);
-                } elseif (self::isConnectionError($message)) {
-                    $e = new ConnectException($message, $request, $e);
-                } elseif (self::isNetworkError($message)) {
-                    $e = new NetworkException($message, $request, $e);
-                } else {
-                    $e = new RequestException($message, $request, 0, $e);
-                }
+                $e = self::createStreamFailureException($message, $request, $e, []);
             }
             $this->invokeStats($options, $request, $startTime, null, $e);
 
@@ -290,6 +293,56 @@ final class StreamHandler
         foreach (self::NETWORK_ERRORS as $networkError) {
             if (Psr7\Utils::caselessContains($message, $networkError)) {
                 return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string[] $streamErrorCodes
+     */
+    private static function createStreamFailureException(
+        #[\SensitiveParameter]
+        string $message,
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        \Exception $previous,
+        array $streamErrorCodes
+    ): TransferException {
+        if (self::isSendError($message) || self::hasStreamErrorCode($streamErrorCodes, self::STRUCTURED_NETWORK_ERROR_CODES)) {
+            return self::isConnectTimeoutError($message)
+                ? new NetworkTimeoutException($message, $request, $previous)
+                : new NetworkException($message, $request, $previous);
+        }
+
+        if (self::isConnectTimeoutError($message)) {
+            return new ConnectTimeoutException($message, $request, $previous);
+        }
+
+        if (self::hasStreamErrorCode($streamErrorCodes, self::STRUCTURED_CONNECTION_ERROR_CODES) || self::isConnectionError($message)) {
+            return new ConnectException($message, $request, $previous);
+        }
+
+        if (self::isNetworkError($message)) {
+            return new NetworkException($message, $request, $previous);
+        }
+
+        return new RequestException($message, $request, 0, $previous);
+    }
+
+    /**
+     * @param string[] $streamErrorCodes
+     * @param string[] $codes
+     */
+    private static function hasStreamErrorCode(array $streamErrorCodes, array $codes): bool
+    {
+        foreach ($streamErrorCodes as $streamErrorCode) {
+            foreach ($codes as $code) {
+                if ($streamErrorCode === $code) {
+                    return true;
+                }
             }
         }
 
@@ -936,6 +989,10 @@ final class StreamHandler
             $context['http']['timeout'] = -1;
         }
 
+        $streamErrorCodes = [];
+        $captureStreamErrors = true;
+        $this->addStructuredStreamErrorHandler($context, $streamErrorCodes, $captureStreamErrors);
+
         $uri = $this->resolveHost($request, $options);
 
         $contextResource = $this->createResource(
@@ -944,8 +1001,8 @@ final class StreamHandler
             }
         );
 
-        return $this->createResource(
-            function () use ($uri, $contextResource, $idleTimeout, $timeout) {
+        try {
+            $resource = $this->createResource(function () use ($uri, $contextResource, $idleTimeout, $timeout) {
                 $this->lastDeadline = $timeout > 0 ? Clock::now() + $timeout / 1000 : null;
 
                 // Blank the from ini setting for the transfer so ambient
@@ -982,8 +1039,65 @@ final class StreamHandler
                 }
 
                 return $resource;
+            });
+        } catch (TransferException $e) {
+            // Notification callbacks run during fopen(); an exception a
+            // callback throws is already a fully-formed transfer failure for
+            // its own request, so it passes through unchanged instead of
+            // being reclassified against this request.
+            throw $e;
+        } catch (\RuntimeException $e) {
+            throw self::createStreamFailureException($e->getMessage(), $request, $e, $streamErrorCodes);
+        } finally {
+            $captureStreamErrors = false;
+        }
+
+        return $resource;
+    }
+
+    /**
+     * @param string[] $streamErrorCodes
+     */
+    private function addStructuredStreamErrorHandler(
+        #[\SensitiveParameter]
+        array &$context,
+        array &$streamErrorCodes,
+        bool &$captureStreamErrors
+    ): void {
+        if (!self::supportsStructuredStreamErrors()) {
+            return;
+        }
+
+        if (!isset($context['stream']) || !\is_array($context['stream'])) {
+            $context['stream'] = [];
+        }
+
+        $context['stream']['error_mode'] = \StreamErrorMode::Error;
+        $context['stream']['error_store'] = \StreamErrorStore::None;
+        /** @param \StreamError[] $errors */
+        $context['stream']['error_handler'] = static function (
+            #[\SensitiveParameter]
+            array $errors
+        ) use (&$streamErrorCodes, &$captureStreamErrors): void {
+            if (!$captureStreamErrors) {
+                return;
             }
-        );
+
+            foreach ($errors as $error) {
+                $name = $error->code->name;
+                if (!\in_array($name, $streamErrorCodes, true)) {
+                    $streamErrorCodes[] = $name;
+                }
+            }
+        };
+    }
+
+    private static function supportsStructuredStreamErrors(): bool
+    {
+        // Any PHP 8.6 build qualifies, including pre-release and nightly
+        // builds; the class check keeps unstable builds that do not carry
+        // the final API fail-closed.
+        return \PHP_VERSION_ID >= 80600 && \class_exists(\StreamError::class, false);
     }
 
     private static function assertRequestUriSupported(
@@ -1360,6 +1474,11 @@ final class StreamHandler
                 'peer_name' => 'the request URI',
                 'verify_peer' => 'the "verify" request option',
                 'verify_peer_name' => 'the "verify" request option',
+            ],
+            'stream' => [
+                'error_handler' => 'Guzzle stream error handling',
+                'error_mode' => 'Guzzle stream error handling',
+                'error_store' => 'Guzzle stream error handling',
             ],
         ];
     }
