@@ -413,6 +413,17 @@ class StreamTlsSessionCacheTest extends TestCase
         );
     }
 
+    public function testUnsupportedContextReasonRejectsUserManagedEarlyDataOptions(): void
+    {
+        self::assertSame(
+            'the SSL context option "early_data" is user-managed TLS early data state.',
+            StreamTlsSessionCache::unsupportedContextReason(
+                ['early_data' => 'ping'],
+                ['early_data' => 'ping']
+            )
+        );
+    }
+
     /**
      * @dataProvider pathSslOptionProvider
      */
