@@ -1176,12 +1176,19 @@ final class CurlFactory implements CurlFactoryInterface
             return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
-        if (self::isChallengeRewindFailure($easy)) {
-            $ctx['error'] = 'The server issued an authentication challenge '
-                .'after the request body had already been sent, and the body '
-                .'could not be rewound to resend it. The request was not '
-                .'retried because a retry replays the same challenge. See '
-                .'https://bugs.php.net/bug.php?id=47204 for more information.';
+        if (self::isResponseRewindFailure($easy)) {
+            $status = $easy->response !== null ? $easy->response->getStatusCode() : 0;
+            $ctx['error'] = $status === 401 || $status === 407
+                ? 'The server issued an authentication challenge '
+                    .'after the request body had already been sent, and the body '
+                    .'could not be rewound to resend it. The request was not '
+                    .'retried because a retry replays the same challenge. See '
+                    .'https://bugs.php.net/bug.php?id=47204 for more information.'
+                : 'The server responded after the request body had already '
+                    .'been sent, and the body could not be rewound for '
+                    .'libcurl\'s automatic retry. The request was not retried '
+                    .'because a retry replays the same response. See '
+                    .'https://bugs.php.net/bug.php?id=47204 for more information.';
         }
 
         return self::createRejection($easy, $ctx);
@@ -1198,6 +1205,7 @@ final class CurlFactory implements CurlFactoryInterface
     {
         return $easy->bodyReadTimeoutException !== null
             || $easy->bodyRewindTimeoutException !== null
+            || $easy->bodyRewindException !== null
             || $easy->bodyReadException !== null
             || $easy->responseHeaderException !== null
             || $easy->sinkWriteTimeoutException !== null
@@ -1212,10 +1220,10 @@ final class CurlFactory implements CurlFactoryInterface
             return false;
         }
 
-        if (self::isChallengeRewindFailure($easy)) {
-            // Re-issuing the identical request replays the same challenge and
+        if (self::isResponseRewindFailure($easy)) {
+            // Re-issuing the identical request replays the same response and
             // the same in-transfer rewind, so retrying is futile and the
-            // challenge response is surfaced instead.
+            // received response is surfaced instead.
             return false;
         }
 
@@ -1239,13 +1247,15 @@ final class CurlFactory implements CurlFactoryInterface
 
     /**
      * Whether the transfer failed because libcurl could not rewind the
-     * request body to resend it in reply to a challenge response, such as a
-     * 401 or 407 during multi-pass authentication. libcurl's only other
-     * rewind triggers are followed redirects, which the built-in handlers
-     * never enable, and reused connections that died, which cannot have
-     * produced a response.
+     * request body to resend it in reply to a response, such as a 401 or
+     * 407 during multi-pass authentication, or a 417 that makes libcurl
+     * retry an Expect: 100-continue upload without the expectation. Rewinds
+     * for replays that follow no response, such as a reused connection that
+     * died or a refused HTTP/2 stream, retry through
+     * shouldRetryFailedRewind() instead. Followed redirects also rewind,
+     * but the built-in handlers never enable them.
      */
-    private static function isChallengeRewindFailure(EasyHandle $easy): bool
+    private static function isResponseRewindFailure(EasyHandle $easy): bool
     {
         return $easy->errno === self::CURLE_SEND_FAIL_REWIND
             && $easy->response !== null
@@ -1322,6 +1332,14 @@ final class CurlFactory implements CurlFactoryInterface
                 'Timed out while rewinding the request body',
                 $easy->bodyRewindTimeoutException
             );
+        }
+
+        if ($easy->bodyRewindException) {
+            $message = $easy->bodyRewindException->getMessage() !== ''
+                ? $easy->bodyRewindException->getMessage()
+                : 'Failed to rewind the request body';
+
+            return self::createRequestOrResponseRejection($easy, $message, $easy->bodyRewindException);
         }
 
         if ($easy->bodyReadException) {
@@ -2428,7 +2446,7 @@ final class CurlFactory implements CurlFactoryInterface
 
                         return self::CURL_SEEKFUNC_FAIL;
                     } catch (\Throwable $e) {
-                        $easy->bodyReadException = $e;
+                        $easy->bodyRewindException = $e;
 
                         return self::CURL_SEEKFUNC_FAIL;
                     }
@@ -2797,7 +2815,7 @@ final class CurlFactory implements CurlFactoryInterface
                 // ignores the read callback's return). progressAborted is left
                 // unset so the failure is classified from the stored
                 // request-body exception.
-                if ($easy->bodyReadTimeoutException !== null || $easy->bodyRewindTimeoutException !== null || $easy->bodyReadException !== null) {
+                if ($easy->bodyReadTimeoutException !== null || $easy->bodyRewindTimeoutException !== null || $easy->bodyRewindException !== null || $easy->bodyReadException !== null) {
                     return 1;
                 }
 
