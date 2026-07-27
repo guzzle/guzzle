@@ -8,8 +8,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fail a cURL multi handler wait with an attributable error when the transfer is no longer tracked
-- Fix `StreamHandler` on macOS connecting to a different address than the cURL handlers for a zero-padded IPv4 host
-- Fix the `StreamHandler` TLS peer name and proxy authority for a numeric IPv4 host such as `127.1`, on every platform
+- Fix `StreamHandler` resolving numeric IPv4 hosts differently from cURL handlers on macOS and Windows
+- Fix `StreamHandler` TLS peer names and proxy authorities for numeric IPv4 hosts on all platforms
 
 
 ## 8.0.1 - 2026-07-26
