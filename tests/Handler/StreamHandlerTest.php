@@ -315,6 +315,85 @@ class StreamHandlerTest extends TestCase
         ];
     }
 
+    /**
+     * @dataProvider numericIpv4HostProvider
+     */
+    public function testResolveHostFoldsNumericIpv4Hosts(string $host, string $expected): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://'.$host.'/');
+
+        $method = new \ReflectionMethod(StreamHandler::class, 'resolveHost');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $uri = $method->invoke($handler, $request, []);
+
+        self::assertSame($expected, $uri->getHost());
+    }
+
+    public static function numericIpv4HostProvider(): array
+    {
+        return [
+            'dotted quad' => ['127.0.0.1', '127.0.0.1'],
+            'two parts' => ['127.1', '127.0.0.1'],
+            'one part' => ['2130706433', '127.0.0.1'],
+            'hexadecimal' => ['0x7f000001', '127.0.0.1'],
+            'octal' => ['0177.0.0.1', '127.0.0.1'],
+            'zero-padded, reads as octal' => ['0127.0.0.1', '87.0.0.1'],
+            'leading zeros' => ['127.000.000.001', '127.0.0.1'],
+            'widest single part' => ['4294967295', '255.255.255.255'],
+            'zero' => ['0', '0.0.0.0'],
+            'name' => ['example.com', 'example.com'],
+            'numeric label' => ['foo.1', 'foo.1'],
+            'octet out of range' => ['127.0.0.256', '127.0.0.256'],
+            'part out of range' => ['4294967296', '4294967296'],
+            'five parts' => ['1.2.3.4.5', '1.2.3.4.5'],
+            'invalid octal digit' => ['08', '08'],
+            'bare hexadecimal prefix' => ['0x', '0x'],
+            'trailing root dot' => ['0177.0.0.1.', '0177.0.0.1.'],
+            'ipv6 literal' => ['[::1]', '[::1]'],
+        ];
+    }
+
+    public function testResolveHostDoesNotLookUpFoldedNumericIpv4Hosts(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://127.1/');
+
+        $method = new \ReflectionMethod(StreamHandler::class, 'resolveHost');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        $uri = $method->invoke($handler, $request, ['force_ip_resolve' => 'v4']);
+
+        self::assertSame('127.0.0.1', $uri->getHost());
+    }
+
+    /**
+     * @dataProvider numericIpv4PeerNameProvider
+     */
+    public function testDefaultContextFoldsNumericIpv4PeerName(string $host, string $expected): void
+    {
+        $context = $this->getDefaultContext(new Request('GET', 'https://'.$host.'/'));
+
+        self::assertSame($expected, $context['ssl']['peer_name']);
+    }
+
+    public static function numericIpv4PeerNameProvider(): array
+    {
+        return [
+            'dotted quad' => ['127.0.0.1', '127.0.0.1'],
+            'numeric shorthand' => ['0177.0.0.1', '127.0.0.1'],
+            'two parts' => ['127.1', '127.0.0.1'],
+            'one part' => ['2130706433', '127.0.0.1'],
+            'name' => ['example.com', 'example.com'],
+            'ipv6 literal' => ['[::1]', '[::1]'],
+        ];
+    }
+
     public function testStreamAttributeKeepsStreamOpen()
     {
         $this->queueRes();
