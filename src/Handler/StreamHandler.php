@@ -930,8 +930,8 @@ final class StreamHandler
         array $options,
         string $body
     ) {
-        // A failure below is reported against the request the caller passed,
-        // not against the Connection: close clone built for the wire.
+        // Report a stream-open failure against the request passed here, not the
+        // Connection: close clone built for the wire.
         $callerRequest = $request;
 
         // HTTP/1.1 streams using the PHP stream wrapper require a
