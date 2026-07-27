@@ -1516,18 +1516,23 @@ The `no` list supports the following entry forms:
 | `127.0.0.1`, `::1`, `[::1]` | requests whose host is that IP literal |
 | `[::1]:8080` | that IP literal on port `8080` |
 | `10.0.0.0/8`, `fd00::/8` | IP-literal hosts inside the range |
+| `127.1`, `0x7f000001` | the address that shorthand names, `127.0.0.1` |
 
 Domain entries are matched case-insensitively, and one final DNS root dot is
 ignored on each side before matching; repeated trailing dots are not collapsed,
 and only a single leading dot is ignored — entries with repeated leading dots
 match nothing. IP literals are normalized before matching, so equivalent IPv6
-spellings such as `::1` and `0:0:0:0:0:0:0:1` match; trailing-dot normalization
-does not apply to IP literals or CIDR rules. IP and CIDR entries match only
-requests whose host is itself an IP literal: host names are never resolved to
-addresses when deciding whether to proxy. Ports are matched against the
-request's effective port — an explicit port in the URI, otherwise the scheme
-default (`80` for "http", `443` for "https") — and CIDR entries are not
-port-specific.
+spellings such as `::1` and `0:0:0:0:0:0:0:1` match, and so do the inet_aton()
+shorthand IPv4 spellings a transport reads as an address, such as `127.1`,
+`0x7f000001` and `0177.0.0.1`. A bare entry denotes a host identity, while a
+CIDR entry uses network configuration syntax, so a network must be written as
+a dotted quad or an IPv6 address: a shorthand network such as `127/8` matches
+nothing. Trailing-dot normalization does not apply to IP literals or CIDR
+rules. IP and CIDR entries match only requests whose host is itself an IP
+literal: host names are never resolved to addresses when deciding whether to
+proxy. Ports are matched against the request's effective port — an explicit
+port in the URI, otherwise the scheme default (`80` for "http", `443` for
+"https") — and CIDR entries are not port-specific.
 
 > [!NOTE]
 > Guzzle will automatically populate this value with your environment's
