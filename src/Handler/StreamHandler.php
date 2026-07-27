@@ -930,6 +930,10 @@ final class StreamHandler
         array $options,
         string $body
     ) {
+        // Report a stream-open failure against the request passed here, not the
+        // Connection: close clone built for the wire.
+        $callerRequest = $request;
+
         // HTTP/1.1 streams using the PHP stream wrapper require a
         // Connection: close header
         if ($request->getProtocolVersion() === '1.1'
@@ -1047,7 +1051,7 @@ final class StreamHandler
             // being reclassified against this request.
             throw $e;
         } catch (\RuntimeException $e) {
-            throw self::createStreamFailureException($e->getMessage(), $request, $e, $streamErrorCodes);
+            throw self::createStreamFailureException($e->getMessage(), $callerRequest, $e, $streamErrorCodes);
         } finally {
             $captureStreamErrors = false;
         }

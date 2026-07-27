@@ -2269,8 +2269,25 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    public function testStreamOpenFailureKeepsTheCallerRequestInstance(): void
+    {
+        $handler = new StreamHandler();
+        $request = new Request('GET', 'http://127.0.0.1:8125/');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Expected ConnectException');
+        } catch (ConnectException $e) {
+            self::assertSame($request, $e->getRequest());
+        }
+    }
+
     public function testClassifiesCollapsedHttpsProxyFailureByMessageFallback(): void
     {
+        if (\PHP_OS_FAMILY === 'Windows') {
+            self::markTestSkipped('Windows can reset the proxy connection before the wrapper reads a response.');
+        }
+
         $handler = new StreamHandler();
 
         try {
