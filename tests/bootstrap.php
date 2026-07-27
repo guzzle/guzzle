@@ -20,19 +20,29 @@ namespace GuzzleHttp\Test {
 // Override curl_setopt(), curl_setopt_array(), curl_multi_setopt(), curl_multi_add_handle(), and curl_share_*() to get the last set curl options
 
 namespace GuzzleHttp\Handler {
+    function curl_capture_id($handle): int
+    {
+        return \is_object($handle) ? \spl_object_id($handle) : (int) $handle;
+    }
+
     function curl_setopt($handle, int $option, $value): bool
     {
         if (!empty($_SERVER['curl_test'])) {
             if ($option === \CURLOPT_CUSTOMREQUEST) {
                 $_SERVER['_curl'] = [];
+                $_SERVER['_curl_owner'] = curl_capture_id($handle);
             }
             if ($value === null) {
-                unset($_SERVER['_curl'][$option]);
+                // Only the capture's owner may remove options: late cleanup
+                // of another handle must not touch the capture under test.
+                if (($_SERVER['_curl_owner'] ?? null) === curl_capture_id($handle)) {
+                    unset($_SERVER['_curl'][$option]);
+                }
             } else {
                 $_SERVER['_curl'][$option] = $value;
             }
         } else {
-            unset($_SERVER['_curl']);
+            unset($_SERVER['_curl'], $_SERVER['_curl_owner']);
         }
 
         if (isset($_SERVER['curl_setopt_fail']) && (int) $_SERVER['curl_setopt_fail'] === $option) {
@@ -46,8 +56,9 @@ namespace GuzzleHttp\Handler {
     {
         if (!empty($_SERVER['curl_test'])) {
             $_SERVER['_curl'] = $options;
+            $_SERVER['_curl_owner'] = curl_capture_id($handle);
         } else {
-            unset($_SERVER['_curl']);
+            unset($_SERVER['_curl'], $_SERVER['_curl_owner']);
         }
 
         return \curl_setopt_array($handle, $options);

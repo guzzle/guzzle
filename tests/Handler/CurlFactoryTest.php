@@ -199,6 +199,28 @@ class CurlFactoryTest extends TestCase
         self::assertSame([], self::readIdleHandles($factory));
     }
 
+    public function testStaleHandleCleanupDoesNotDropCapturedOptions(): void
+    {
+        $staleFactory = new CurlFactory(1);
+        $stale = $staleFactory->create(new Psr7\Request('GET', Server::$url), []);
+        $staleFactory->release($stale);
+
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+
+        try {
+            self::assertArrayHasKey(\CURLOPT_HEADERFUNCTION, $_SERVER['_curl']);
+
+            // Destroying the stale factory clears the callbacks on its pooled
+            // handle. The capture for the newer handle must survive that.
+            unset($staleFactory);
+
+            self::assertArrayHasKey(\CURLOPT_HEADERFUNCTION, $_SERVER['_curl']);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
     public function testCloseIsIdempotent(): void
     {
         $factory = new CurlFactory(3);
