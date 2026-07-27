@@ -199,8 +199,10 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             throw new InvalidArgumentException('handler must be a callable');
         } elseif ($handlerOptions !== []) {
             throw new InvalidArgumentException('The "max_host_connections" and "max_total_connections" client options require Guzzle to create the default handler. Configure the options on the CurlMultiHandler constructor for numeric enforcement, or on the StreamHandler constructor to reject enabled response streaming, when providing a custom handler.');
-        } elseif (\in_array($transportSharingMode, [TransportSharing::HANDLER_REQUIRE, TransportSharing::PERSISTENT_REQUIRE], true)) {
-            throw new InvalidArgumentException('The "transport_sharing" client option can only require sharing when Guzzle creates the default handler. Configure the "transport_sharing" option on CurlHandler or CurlMultiHandler when providing a custom cURL handler.');
+        } elseif ($transportSharingMode === TransportSharing::HANDLER_REQUIRE) {
+            throw new InvalidArgumentException('The "transport_sharing" client option can only require sharing when Guzzle creates the default handler. Configure the "transport_sharing" option on CurlHandler, CurlMultiHandler, or StreamHandler when providing a custom handler.');
+        } elseif ($transportSharingMode === TransportSharing::PERSISTENT_REQUIRE) {
+            throw new InvalidArgumentException('The "transport_sharing" client option can only require sharing when Guzzle creates the default handler. Configure the "transport_sharing" option on CurlHandler or CurlMultiHandler when providing a custom handler.');
         }
 
         $factory = new HttpFactory();

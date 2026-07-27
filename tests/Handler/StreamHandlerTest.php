@@ -16,13 +16,16 @@ use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\Handler\Clock;
 use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Handler\StreamTlsSessionCache;
 use GuzzleHttp\Handler\TransferByteCounter;
 use GuzzleHttp\Multiplexing;
+use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\ProxyOptions;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\RedirectMiddleware;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Server\Server;
 use GuzzleHttp\Tests\Psr17SpyFactory;
@@ -4259,12 +4262,9 @@ class StreamHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    /**
-     * @dataProvider requiredTransportSharingModeProvider
-     */
-    public function testStreamRejectsRequiredTransportSharingConstructorOption(string $transportSharing): void
+    public function testStreamRejectsPersistentRequiredTransportSharingOption(): void
     {
-        $handler = new StreamHandler(['transport_sharing' => $transportSharing]);
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::PERSISTENT_REQUIRE]);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('transport_sharing');
@@ -4272,10 +4272,677 @@ class StreamHandlerTest extends TestCase
         $handler(new Request('GET', Server::$url), []);
     }
 
-    public static function requiredTransportSharingModeProvider(): iterable
+    public function testStreamHandlerRequiredTransportSharingDependsOnSessionSupport(): void
     {
-        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
-        yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE];
+        if (StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('The OpenSSL session API is available.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+
+        // Without the OpenSSL session API the stream handler shares nothing, so
+        // a hard requirement cannot be satisfied.
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('transport_sharing');
+
+        $handler(new Request('GET', Server::$url), []);
+    }
+
+    public function testStreamHandlerRequiredTransportSharingRequiresHttps(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+        $request = new Request('GET', Server::$url);
+        $stats = null;
+        $statsCalls = 0;
+        $exception = null;
+        $exceptionRequest = null;
+
+        try {
+            $handler($request, [
+                'on_stats' => static function (TransferStats $transferStats) use (&$stats, &$statsCalls): void {
+                    $stats = $transferStats;
+                    ++$statsCalls;
+                },
+            ])->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            $exception = $e;
+            $exceptionRequest = $e->getRequest();
+            self::assertStringContainsString('HTTPS', $e->getMessage());
+            self::assertSame($request->getMethod(), $exceptionRequest->getMethod());
+            self::assertSame((string) $request->getUri(), (string) $exceptionRequest->getUri());
+        }
+
+        self::assertInstanceOf(TransferStats::class, $stats);
+        self::assertSame(1, $statsCalls);
+        self::assertFalse($stats->hasResponse());
+        self::assertSame($exceptionRequest->getMethod(), $stats->getRequest()->getMethod());
+        self::assertSame((string) $exceptionRequest->getUri(), (string) $stats->getRequest()->getUri());
+        self::assertSame($exception, $stats->getHandlerErrorData());
+    }
+
+    public function testStreamHandlerRequiredTransportSharingRejectsHttpRedirect(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+
+        $middleware = new RedirectMiddleware(new StreamHandler([
+            'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
+        ]));
+        $result = $middleware->checkRedirect(
+            new Request('GET', 'https://example.com/start'),
+            ['allow_redirects' => RedirectMiddleware::DEFAULT_SETTINGS],
+            new Response(302, ['Location' => 'http://example.com/redirected'])
+        );
+        self::assertInstanceOf(PromiseInterface::class, $result);
+
+        try {
+            $result->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('HTTPS', $e->getMessage());
+            self::assertSame('GET', $e->getRequest()->getMethod());
+            self::assertSame('http://example.com/redirected', (string) $e->getRequest()->getUri());
+        }
+    }
+
+    /**
+     * @dataProvider freshHandshakeSslContextProvider
+     */
+    public function testStreamHandlerRequiredTransportSharingRejectsFreshHandshakeSslContext(string $expectedContextOption, array $sslContext): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('SSL context option "%s"', $expectedContextOption));
+
+        $handler(new Request('GET', 'https://example.com/'), [
+            'stream_context' => [
+                'ssl' => $sslContext,
+            ],
+        ]);
+    }
+
+    public static function freshHandshakeSslContextProvider(): iterable
+    {
+        yield 'capture peer cert' => ['capture_peer_cert', ['capture_peer_cert' => true]];
+        yield 'capture peer cert chain' => ['capture_peer_cert_chain', ['capture_peer_cert_chain' => true]];
+        yield 'no ticket' => ['no_ticket', ['no_ticket' => true]];
+    }
+
+    /**
+     * @dataProvider pathTlsRequestOptionProvider
+     */
+    public function testStreamHandlerRequiredTransportSharingRejectsPathTlsRequestOptions(string $expectedContextOption, array $options): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('SSL context option "%s"', $expectedContextOption));
+
+        $handler(new Request('GET', 'https://example.com/'), $options);
+    }
+
+    public static function pathTlsRequestOptionProvider(): iterable
+    {
+        yield 'verify path' => ['cafile', ['verify' => __FILE__]];
+        yield 'cert path' => ['local_cert', ['cert' => __FILE__]];
+        yield 'ssl key path' => ['local_pk', ['ssl_key' => __FILE__]];
+    }
+
+    public function testStreamHandlerRequiredTransportSharingAcceptsDefaultHttpsContext(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+
+        // A connection failure, rather than an InvalidArgumentException, proves
+        // the default SSL context passed the TLS session sharing safety checks.
+        $this->expectException(ConnectException::class);
+
+        $handler(new Request('GET', 'https://127.0.0.1:1/'), ['timeout' => 5])->wait();
+    }
+
+    public function testStreamHandlerRequiredTransportSharingRejectsTlsProxyTransports(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+        $request = new Request('GET', 'https://example.com/');
+
+        try {
+            $handler($request, ['proxy' => 'ssl://127.0.0.1:1'])->wait();
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('the proxy uses a TLS stream transport', $e->getMessage());
+            self::assertSame($request->getMethod(), $e->getRequest()->getMethod());
+            self::assertSame((string) $request->getUri(), (string) $e->getRequest()->getUri());
+        }
+    }
+
+    public function testStreamHandlerRequiredTransportSharingRejectsTlsProxyFromEnvironment(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+
+        self::withProxyEnvironment(['HTTPS_PROXY' => 'ssl://127.0.0.1:1'], static function (): void {
+            $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+            $request = new Request('GET', 'https://example.com/');
+
+            try {
+                $handler($request, [])->wait();
+                self::fail('Expected RequestException');
+            } catch (RequestException $e) {
+                self::assertStringContainsString('the proxy uses a TLS stream transport', $e->getMessage());
+                self::assertSame($request->getMethod(), $e->getRequest()->getMethod());
+                self::assertSame((string) $request->getUri(), (string) $e->getRequest()->getUri());
+            }
+        });
+    }
+
+    public function testStreamHandlerPreferredTransportSharingSkipsInvalidPeerFingerprint(): void
+    {
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+        $fingerprint = ['sha256' => ['nested']];
+        $context = [
+            'http' => [],
+            'ssl' => [
+                'peer_name' => 'example.com',
+                'peer_fingerprint' => $fingerprint,
+            ],
+        ];
+
+        $commit = $this->invokeTlsSessionResumption(
+            $handler,
+            new Request('GET', 'https://example.com/'),
+            $context,
+            ['peer_fingerprint' => $fingerprint]
+        );
+
+        self::assertNull($commit);
+        self::assertSame($fingerprint, $context['ssl']['peer_fingerprint']);
+        self::assertArrayNotHasKey('session_data', $context['ssl']);
+        self::assertArrayNotHasKey('session_new_cb', $context['ssl']);
+    }
+
+    public function testStreamHandlerRequiredTransportSharingRejectsInvalidPeerFingerprint(): void
+    {
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+        $fingerprint = ['sha256' => ['nested']];
+        $context = [
+            'http' => [],
+            'ssl' => [
+                'peer_name' => 'example.com',
+                'peer_fingerprint' => $fingerprint,
+            ],
+        ];
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "transport_sharing" option requires stream handler TLS session sharing, but the SSL context option "peer_fingerprint" must be a string or a non-empty, flat array with string algorithm names and string fingerprints.');
+
+        $this->invokeTlsSessionResumption(
+            $handler,
+            new Request('GET', 'https://example.com/'),
+            $context,
+            ['peer_fingerprint' => $fingerprint]
+        );
+    }
+
+    public function testStreamHandlerPreferredTransportSharingSkipsTlsProxyTransports(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+        $context = [
+            'http' => ['proxy' => 'ssl://127.0.0.1:1'],
+            'ssl' => ['verify_peer' => true, 'verify_peer_name' => true, 'allow_self_signed' => false],
+        ];
+
+        $commit = $this->invokeTlsSessionResumption($handler, new Request('GET', 'https://example.com/'), $context);
+
+        self::assertNull($commit);
+        self::assertArrayNotHasKey('session_data', $context['ssl']);
+        self::assertArrayNotHasKey('session_new_cb', $context['ssl']);
+    }
+
+    public function testStreamHandlerTransportSharingAllowsTcpProxyTransports(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+        $context = [
+            'http' => ['proxy' => 'TcP://127.0.0.1:1'],
+            'ssl' => ['verify_peer' => true, 'verify_peer_name' => true, 'allow_self_signed' => false],
+        ];
+
+        $commit = $this->invokeTlsSessionResumption($handler, new Request('GET', 'https://example.com/'), $context);
+
+        self::assertInstanceOf(\Closure::class, $commit);
+        self::assertArrayHasKey('session_new_cb', $context['ssl']);
+    }
+
+    public function testStreamHandlerTlsSessionResumptionInjectsAndStagesSessions(): void
+    {
+        $session = LoopbackTlsSession::capture(\STREAM_CRYPTO_METHOD_TLS_CLIENT, \STREAM_CRYPTO_METHOD_TLS_SERVER);
+        if ($session->getProtocol() !== 'TLSv1.3') {
+            self::markTestSkipped('This test requires a TLS 1.3 session.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+        $context = [
+            'http' => [],
+            'ssl' => ['verify_peer' => true, 'verify_peer_name' => true, 'allow_self_signed' => false],
+        ];
+
+        $cacheMethod = new \ReflectionMethod(StreamHandler::class, 'sessionCache');
+        if (\PHP_VERSION_ID < 80100) {
+            $cacheMethod->setAccessible(true);
+        }
+        $cache = $cacheMethod->invoke($handler);
+        self::assertInstanceOf(StreamTlsSessionCache::class, $cache);
+
+        $key = StreamTlsSessionCache::peerKey('example.com', 443, $context['ssl']);
+        $credentials = StreamTlsSessionCache::credentialFingerprint($context['ssl']);
+        $cache->store($key, $credentials, $session);
+
+        $commit = $this->invokeTlsSessionResumption($handler, new Request('GET', 'https://example.com/'), $context);
+        self::assertInstanceOf(\Closure::class, $commit);
+
+        // The cached session is injected for resumption and consumed on take.
+        self::assertSame($session, $context['ssl']['session_data'] ?? null);
+        self::assertNull($cache->find($key, $credentials));
+
+        // Sessions captured before the stream opens are staged, not stored.
+        $context['ssl']['session_new_cb'](null, $session);
+        self::assertNull($cache->find($key, $credentials));
+
+        // Committing after a successful open stores the staged session.
+        $commit();
+        self::assertSame($session, $cache->find($key, $credentials));
+    }
+
+    public function testStreamHandlerTlsSessionStagingIsBounded(): void
+    {
+        $session = LoopbackTlsSession::capture(\STREAM_CRYPTO_METHOD_TLS_CLIENT, \STREAM_CRYPTO_METHOD_TLS_SERVER);
+        if ($session->getProtocol() !== 'TLSv1.3') {
+            self::markTestSkipped('This test requires a TLS 1.3 session.');
+        }
+
+        $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+        $context = [
+            'http' => [],
+            'ssl' => ['verify_peer' => true, 'verify_peer_name' => true, 'allow_self_signed' => false],
+        ];
+
+        $cacheMethod = new \ReflectionMethod(StreamHandler::class, 'sessionCache');
+        if (\PHP_VERSION_ID < 80100) {
+            $cacheMethod->setAccessible(true);
+        }
+        $cache = $cacheMethod->invoke($handler);
+        self::assertInstanceOf(StreamTlsSessionCache::class, $cache);
+
+        $key = StreamTlsSessionCache::peerKey('example.com', 443, $context['ssl']);
+        $credentials = StreamTlsSessionCache::credentialFingerprint($context['ssl']);
+
+        $commit = $this->invokeTlsSessionResumption($handler, new Request('GET', 'https://example.com/'), $context);
+        self::assertInstanceOf(\Closure::class, $commit);
+
+        // A server can stream tickets while withholding response headers; only
+        // as many staged sessions as the cache retains per peer are kept.
+        for ($i = 0; $i < 5; ++$i) {
+            $context['ssl']['session_new_cb'](null, $session);
+        }
+
+        $commit();
+
+        // TLS 1.3 sessions are consumed on take, so exactly two were stored.
+        self::assertNotNull($cache->find($key, $credentials));
+        self::assertNotNull($cache->find($key, $credentials));
+        self::assertNull($cache->find($key, $credentials));
+    }
+
+    public function testStreamHandlerTlsSessionSharingCapturesAndCommitsRealSession(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+        $this->skipIfTlsHttpServerIsUnavailable();
+
+        LoopbackTlsSession::capture(
+            \STREAM_CRYPTO_METHOD_TLS_CLIENT,
+            \STREAM_CRYPTO_METHOD_TLS_SERVER
+        );
+
+        [$address, $certificate, $process, $pipes] = $this->startTlsHttpServer();
+
+        try {
+            $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+            $cacheMethod = new \ReflectionMethod(StreamHandler::class, 'sessionCache');
+            if (\PHP_VERSION_ID < 80100) {
+                $cacheMethod->setAccessible(true);
+            }
+            $cache = $cacheMethod->invoke($handler);
+            self::assertInstanceOf(StreamTlsSessionCache::class, $cache);
+
+            $sessionsProperty = new \ReflectionProperty(StreamTlsSessionCache::class, 'sessions');
+            if (\PHP_VERSION_ID < 80100) {
+                $sessionsProperty->setAccessible(true);
+            }
+
+            $options = ['verify' => false, 'timeout' => 10];
+            $response = $handler(new Request('GET', "https://$address/"), $options)->wait();
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame('ok', (string) $response->getBody());
+
+            // The handshake driven by the real transfer path captured and
+            // committed sessions for exactly the peer key derived from this
+            // request's host, port, and assembled TLS identity.
+            [$host, $port] = \explode(':', $address);
+            $expectedKey = StreamTlsSessionCache::peerKey($host, (int) $port, [
+                'peer_name' => $host,
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'min_proto_version' => \STREAM_CRYPTO_PROTO_TLSv1_2,
+            ]);
+
+            $stored = $sessionsProperty->getValue($cache);
+            self::assertSame([$expectedKey], \array_keys($stored));
+
+            self::assertNotEmpty(\reset($stored));
+        } finally {
+            $this->stopTlsHttpServer($process, $pipes, $certificate);
+        }
+    }
+
+    public function testStreamHandlerTlsSessionSharingResumesTls12SessionsAcrossConnections(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+        $this->skipIfTlsHttpServerIsUnavailable();
+
+        $probe = LoopbackTlsSession::capture(
+            \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            \STREAM_CRYPTO_METHOD_TLSv1_2_SERVER
+        );
+        if ($probe->getProtocol() !== 'TLSv1.2') {
+            self::markTestSkipped('This test requires a TLS 1.2 session.');
+        }
+
+        [$address, $certificate, $process, $pipes] = $this->startTlsHttpServer('tls1.2');
+
+        try {
+            $certificatePem = \file_get_contents($certificate);
+            self::assertIsString($certificatePem);
+            $fingerprint = \openssl_x509_fingerprint($certificatePem, 'sha256');
+            self::assertIsString($fingerprint);
+
+            $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+            $options = [
+                'verify' => false,
+                'timeout' => 10,
+                'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+                'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+                'stream_context' => [
+                    'ssl' => [
+                        'peer_fingerprint' => ['sha256' => $fingerprint],
+                    ],
+                ],
+            ];
+
+            $first = $handler(new Request('GET', "https://$address/"), $options)->wait();
+            self::assertSame(200, $first->getStatusCode());
+            self::assertSame('ok', (string) $first->getBody());
+            self::assertSame('0', $first->getHeaderLine('X-TLS-Session-Reused'));
+
+            // The second request opens a fresh connection (the handler sends
+            // Connection: close) and resumes the committed session.
+            $second = $handler(new Request('GET', "https://$address/"), $options)->wait();
+            self::assertSame(200, $second->getStatusCode());
+            self::assertSame('ok', (string) $second->getBody());
+            self::assertSame('1', $second->getHeaderLine('X-TLS-Session-Reused'));
+        } finally {
+            $this->stopTlsHttpServer($process, $pipes, $certificate);
+        }
+    }
+
+    public function testStreamHandlerTlsSessionSharingResumesTls13SessionsAcrossConnections(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+        $this->skipIfTlsHttpServerIsUnavailable();
+
+        $probe = LoopbackTlsSession::capture(
+            \STREAM_CRYPTO_METHOD_TLS_CLIENT,
+            \STREAM_CRYPTO_METHOD_TLS_SERVER
+        );
+        if ($probe->getProtocol() !== 'TLSv1.3') {
+            self::markTestSkipped('This test requires a TLS 1.3 session.');
+        }
+
+        [$address, $certificate, $process, $pipes] = $this->startTlsHttpServer();
+
+        try {
+            $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+            $cacheMethod = new \ReflectionMethod(StreamHandler::class, 'sessionCache');
+            if (\PHP_VERSION_ID < 80100) {
+                $cacheMethod->setAccessible(true);
+            }
+            $cache = $cacheMethod->invoke($handler);
+            self::assertInstanceOf(StreamTlsSessionCache::class, $cache);
+
+            $sessionsProperty = new \ReflectionProperty(StreamTlsSessionCache::class, 'sessions');
+            if (\PHP_VERSION_ID < 80100) {
+                $sessionsProperty->setAccessible(true);
+            }
+
+            $options = [
+                'verify' => false,
+                'timeout' => 10,
+                'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
+            ];
+
+            $first = $handler(new Request('GET', "https://$address/"), $options)->wait();
+            self::assertSame(200, $first->getStatusCode());
+            // Fully consume the response so the post-handshake ticket records
+            // that follow it have been processed before the next request.
+            self::assertSame('ok', (string) $first->getBody());
+            self::assertSame('0', $first->getHeaderLine('X-TLS-Session-Reused'));
+
+            $second = $handler(new Request('GET', "https://$address/"), $options)->wait();
+            self::assertSame(200, $second->getStatusCode());
+            self::assertSame('ok', (string) $second->getBody());
+            self::assertSame('1', $second->getHeaderLine('X-TLS-Session-Reused'));
+
+            // The single-use ticket consumed by the second handshake was
+            // replaced by tickets issued on the resumed connection.
+            self::assertNotEmpty($sessionsProperty->getValue($cache));
+        } finally {
+            $this->stopTlsHttpServer($process, $pipes, $certificate);
+        }
+    }
+
+    public function testStreamHandlerDoesNotCacheSessionFromFailedPeerFingerprintVerification(): void
+    {
+        if (!StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API.');
+        }
+        $this->skipIfTlsHttpServerIsUnavailable();
+
+        LoopbackTlsSession::capture(
+            \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            \STREAM_CRYPTO_METHOD_TLSv1_2_SERVER
+        );
+
+        [$address, $certificate, $process, $pipes] = $this->startTlsHttpServer('tls1.2');
+
+        try {
+            $handler = new StreamHandler(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+            $cacheMethod = new \ReflectionMethod(StreamHandler::class, 'sessionCache');
+            if (\PHP_VERSION_ID < 80100) {
+                $cacheMethod->setAccessible(true);
+            }
+            $cache = $cacheMethod->invoke($handler);
+            self::assertInstanceOf(StreamTlsSessionCache::class, $cache);
+
+            $sessionsProperty = new \ReflectionProperty(StreamTlsSessionCache::class, 'sessions');
+            if (\PHP_VERSION_ID < 80100) {
+                $sessionsProperty->setAccessible(true);
+            }
+
+            $options = [
+                'verify' => false,
+                'timeout' => 10,
+                'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+                'crypto_method_max' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+            ];
+            $response = $handler(new Request('GET', "https://$address/"), $options)->wait();
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame('ok', (string) $response->getBody());
+
+            $stored = $sessionsProperty->getValue($cache);
+            self::assertCount(1, $stored);
+
+            $failedRequest = new Request('GET', "https://$address/");
+            $failedOptions = $options;
+            $failedOptions['stream_context'] = [
+                'ssl' => [
+                    'peer_fingerprint' => [
+                        'sha256' => \str_repeat('0', 64),
+                    ],
+                ],
+            ];
+
+            try {
+                $handler($failedRequest, $failedOptions)->wait();
+                self::fail('Expected peer fingerprint verification to fail.');
+            } catch (ConnectException $e) {
+                self::assertSame($failedRequest, $e->getRequest());
+                self::assertStringContainsString('peer_fingerprint match failure', $e->getMessage());
+            }
+
+            self::assertSame($stored, $sessionsProperty->getValue($cache));
+        } finally {
+            $this->stopTlsHttpServer($process, $pipes, $certificate);
+        }
+    }
+
+    private function skipIfTlsHttpServerIsUnavailable(): void
+    {
+        if (\DIRECTORY_SEPARATOR === '\\') {
+            self::markTestSkipped('The TLS server fixture requires a POSIX environment.');
+        }
+        if (!\function_exists('proc_open')) {
+            self::markTestSkipped('The TLS server fixture requires proc_open().');
+        }
+        if (!\filter_var(\ini_get('allow_url_fopen'), \FILTER_VALIDATE_BOOLEAN)) {
+            self::markTestSkipped('The TLS server fixture requires allow_url_fopen.');
+        }
+    }
+
+    /**
+     * @return array{0: string, 1: string, 2: resource, 3: array<int, resource>}
+     */
+    private function startTlsHttpServer(?string $mode = null): array
+    {
+        $certificate = LoopbackTlsSession::createSelfSignedCertificate();
+        $command = [\PHP_BINARY, __DIR__.'/tls-http-server.php', $certificate];
+        if ($mode !== null) {
+            $command[] = $mode;
+        }
+
+        $process = \proc_open(
+            $command,
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes
+        );
+        if (!\is_resource($process)) {
+            @\unlink($certificate);
+            self::fail('Unable to start the TLS server fixture.');
+        }
+
+        \stream_set_blocking($pipes[1], false);
+        \stream_set_blocking($pipes[2], false);
+        $output = '';
+        $lineEnd = false;
+        $deadline = \microtime(true) + 10;
+        while (\microtime(true) < $deadline) {
+            $chunk = \fread($pipes[1], 8192);
+            if ($chunk !== false) {
+                $output .= $chunk;
+                $lineEnd = \strpos($output, "\n");
+                if ($lineEnd !== false) {
+                    break;
+                }
+            }
+
+            $status = \proc_get_status($process);
+            if (!$status['running']) {
+                break;
+            }
+
+            \usleep(1000);
+        }
+
+        $address = $lineEnd === false
+            ? ''
+            : \trim(\substr($output, 0, $lineEnd), " \r\n");
+        if ($address === '') {
+            $error = \trim((string) \stream_get_contents($pipes[2]), " \r\n");
+            $this->stopTlsHttpServer($process, $pipes, $certificate);
+
+            self::fail('The TLS server fixture did not report an address'.($error !== '' ? ': '.\json_encode($error) : '.'));
+        }
+
+        return [$address, $certificate, $process, $pipes];
+    }
+
+    /**
+     * @param resource             $process
+     * @param array<int, resource> $pipes
+     */
+    private function stopTlsHttpServer($process, array $pipes, string $certificate): void
+    {
+        \proc_terminate($process);
+        foreach ($pipes as $pipe) {
+            \fclose($pipe);
+        }
+        \proc_close($process);
+        @\unlink($certificate);
+    }
+
+    private function invokeTlsSessionResumption(StreamHandler $handler, RequestInterface $request, array &$context, array $customSslContext = []): ?\Closure
+    {
+        $method = new \ReflectionMethod(StreamHandler::class, 'applyTlsSessionResumption');
+        if (\PHP_VERSION_ID < 80100) {
+            $method->setAccessible(true);
+        }
+
+        return $method->invokeArgs($handler, [$request, &$context, $customSslContext]);
     }
 
     /**

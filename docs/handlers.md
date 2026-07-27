@@ -177,8 +177,10 @@ $client = new Client([
 
 `TransportSharing::HANDLER_PREFER` asks the selected handler to share transport
 state for the lifetime of that handler when it can. Guzzle's cURL handlers use
-cURL share handles to share DNS and SSL session cache state. If sharing cannot
-be configured, or if the selected handler does not support sharing, Guzzle
+cURL share handles to share DNS and SSL session cache state. When PHP 8.6+
+provides the OpenSSL session API, the stream handler can share HTTPS TLS
+sessions for the lifetime of that stream handler. If sharing cannot be
+configured, or if the selected handler does not support sharing, Guzzle
 continues without sharing.
 
 Guzzle only enables cURL transport sharing for libcurl versions that support the
@@ -190,16 +192,21 @@ cache state without sharing SSL session cache state.
 
 `TransportSharing::HANDLER_REQUIRE` requires handler-lifetime transport
 sharing. Guzzle fails when it cannot select a cURL handler with cURL share
-support, when sharing cannot be configured, or when a request is routed to a
-handler that does not support sharing. Guzzle also fails when the installed
-libcurl version cannot safely share both DNS and SSL session cache state.
+support or a PHP 8.6+ stream handler with the OpenSSL session API that can apply
+TLS session resumption for the request, when sharing cannot be configured, or
+when a request is routed to a handler that does not support sharing. When the
+installed libcurl version cannot safely share both DNS and SSL session cache
+state, Guzzle does not select the cURL handlers, so required sharing must be
+satisfied by a PHP 8.6+ stream handler with the OpenSSL session API instead.
 
 `TransportSharing::PERSISTENT_PREFER` asks Guzzle to use the strongest sharing
 available in the current environment. Guzzle first tries persistent cURL share
 handles, which can share DNS, connection, and SSL session cache state across
 handler lifetimes. If persistent sharing is unavailable or cannot be created,
 Guzzle falls back to `TransportSharing::HANDLER_PREFER`. If handler-lifetime
-sharing is also unavailable, Guzzle continues without sharing.
+sharing is also unavailable, Guzzle continues without sharing. Preferred
+sharing does not override normal handler selection: stream TLS session
+sharing is used when a request is routed to the stream handler.
 
 Persistent cURL sharing requires PHP persistent cURL share handle support and
 libcurl 8.12.0 or newer because persistent sharing includes libcurl connection
@@ -252,6 +259,33 @@ tunnels onto fresh, non-reusable connections instead.
 Transport sharing does not share cookies. Cookies are managed by Guzzle
 middleware.
 
+The stream handler's sharing support is narrower than cURL's. It only shares TLS
+session state for HTTPS requests, scoped to one stream handler instance. It does
+not share DNS entries, live connections, or persistent process-wide state.
+Persistent sharing remains a cURL-only feature: `PERSISTENT_PREFER` may fall
+back to stream handler TLS session sharing, but `PERSISTENT_REQUIRE` cannot be
+satisfied by the stream handler.
+
+> [!WARNING]
+> TLS resumption reuses the original certificate-chain verification result
+> instead of building and verifying the chain again. Guzzle includes ambient
+> trust configuration paths in the cache identity, but cannot detect
+> trust-store contents rewritten at an unchanged path. Recreate the handler
+> or disable transport sharing when trust changes must take effect
+> immediately.
+
+New sessions are held temporarily and committed only after the HTTPS stream
+opens successfully. If PHP rejects peer verification or another stream-open
+step fails, any session reported during that attempt is discarded.
+
+When the stream handler sees requests or TLS settings that cannot safely share
+automatic session state, such as plain `http://` requests, proxies that use TLS
+stream transports, certificate-capture stream context options, `no_ticket`,
+`verify` with a path, `cert`, or `ssl_key`, it will not apply automatic TLS
+session sharing. Preferred modes continue without sharing, and `HANDLER_REQUIRE`
+fails loudly. Unsupported or conflicting raw stream context TLS options are
+still rejected by the stream handler before sharing is applied.
+
 When constructing cURL handlers manually, configure sharing with the handler
 `transport_sharing` option:
 
@@ -260,6 +294,19 @@ use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\TransportSharing;
 
 $handler = new CurlHandler([
+    'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
+]);
+```
+
+The stream handler accepts the same option for handler-lifetime HTTPS TLS
+session sharing on PHP 8.6+ with the OpenSSL session API, subject to the
+narrower scope described above:
+
+```php
+use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\TransportSharing;
+
+$handler = new StreamHandler([
     'transport_sharing' => TransportSharing::HANDLER_REQUIRE,
 ]);
 ```
