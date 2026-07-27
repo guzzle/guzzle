@@ -358,6 +358,147 @@ class CurlMultiHandlerTest extends TestCase
         self::assertArrayHasKey($id, self::readMultiProperty($handler, 'handles'));
     }
 
+    public function testSynchronousWaitOnRekeyedTransferRejectsWithAnAttributableError(): void
+    {
+        Server::flush();
+
+        $handler = new CurlMultiHandler(['select_timeout' => 2]);
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, ['delay' => 2000]);
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertCount(1, $handles);
+        $id = (int) \key($handles);
+
+        // Simulate the native handle ID having been reused by a replacement
+        // request created after this promise's transfer left the handler.
+        $handles[$id]['wait_token'] = new \stdClass();
+        $handles[$id]['deferred'] = new P\Promise();
+        self::setMultiProperty($handler, 'handles', $handles);
+
+        try {
+            $promise->wait();
+            self::fail('Expected waiting on the untracked transfer to reject.');
+        } catch (RequestException $e) {
+            self::assertSame(\sprintf('Waiting on cURL multi handler transfer %d cannot make progress (its native cURL handle ID was reused by another request).', $id), $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+        }
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertArrayHasKey($id, $handles);
+        self::assertTrue(P\Is::pending($handles[$id]['deferred']));
+    }
+
+    public function testSynchronousWaitOnRemovedTransferRejectsWithAnAttributableError(): void
+    {
+        Server::flush();
+
+        $handler = new CurlMultiHandler(['select_timeout' => 2]);
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, ['delay' => 2000]);
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertCount(1, $handles);
+        $id = (int) \key($handles);
+
+        // Simulate the entry having been dropped from the handler without the
+        // promise it belongs to having been settled.
+        self::setMultiProperty($handler, 'handles', []);
+        self::setMultiProperty($handler, 'delays', []);
+
+        try {
+            $promise->wait();
+            self::fail('Expected waiting on the untracked transfer to reject.');
+        } catch (RequestException $e) {
+            self::assertSame(\sprintf('Waiting on cURL multi handler transfer %d cannot make progress (its entry was removed without settling).', $id), $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+        }
+    }
+
+    public function testNestedSynchronousWaitOnRemovedTransferRejectsWithAnAttributableError(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 2]);
+        $request = new Request('GET', Server::$url);
+        $delayed = $handler($request, ['delay' => 2000]);
+        $nestedFailure = null;
+        $delayedId = null;
+
+        try {
+            $response = $handler(new Request('GET', Server::$url), [
+                'on_headers' => static function () use ($handler, $delayed, &$nestedFailure, &$delayedId): void {
+                    // Drop the delayed transfer while a cURL callback owns the
+                    // multi handle, so the nested wait has nothing to fail.
+                    $handles = self::readMultiProperty($handler, 'handles');
+                    foreach ($handles as $id => $entry) {
+                        if ($entry['deferred'] === $delayed) {
+                            $delayedId = $id;
+                            unset($handles[$id]);
+                        }
+                    }
+                    self::setMultiProperty($handler, 'handles', $handles);
+                    self::setMultiProperty($handler, 'delays', []);
+
+                    try {
+                        $delayed->wait();
+                    } catch (\Throwable $e) {
+                        $nestedFailure = $e;
+                    }
+                },
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertIsInt($delayedId);
+            self::assertInstanceOf(RequestException::class, $nestedFailure);
+            self::assertSame(\sprintf('Waiting on cURL multi handler transfer %d cannot make progress (its entry was removed without settling).', $delayedId), $nestedFailure->getMessage());
+            self::assertSame($request, $nestedFailure->getRequest());
+        } finally {
+            Server::flush();
+        }
+    }
+
+    public function testNestedSynchronousWaitKeepsATransferTheReadyQueueStillSettles(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler(['select_timeout' => 2]);
+        $delayed = $handler(new Request('GET', Server::$url), ['delay' => 2000]);
+        $nested = null;
+
+        try {
+            $response = $handler(new Request('GET', Server::$url), [
+                'on_headers' => static function () use ($handler, $delayed, &$nested): void {
+                    $handles = self::readMultiProperty($handler, 'handles');
+                    foreach ($handles as $id => $entry) {
+                        if ($entry['deferred'] === $delayed) {
+                            unset($handles[$id]);
+                        }
+                    }
+                    self::setMultiProperty($handler, 'handles', $handles);
+                    self::setMultiProperty($handler, 'delays', []);
+
+                    // The transfer is settled by ready queue work rather than
+                    // by the handler, so a wait that gives up before draining
+                    // the queue would report it as lost.
+                    P\Utils::queue()->add(static function () use ($delayed): void {
+                        $delayed->resolve(new Response(204));
+                    });
+
+                    $nested = $delayed->wait();
+                },
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertInstanceOf(Response::class, $nested);
+            self::assertSame(204, $nested->getStatusCode());
+        } finally {
+            Server::flush();
+        }
+    }
+
     public function testSynchronousWaitStopsAfterCancellationFromSiblingCompletion(): void
     {
         Server::flush();
