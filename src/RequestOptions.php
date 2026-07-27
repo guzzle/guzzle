@@ -12,7 +12,7 @@ use Psr\Http\Message\UriInterface;
 /**
  * This class contains a list of built-in Guzzle request options.
  *
- * @see https://github.com/guzzle/guzzle/blob/8.0/docs/request-options.md
+ * @see https://github.com/guzzle/guzzle/blob/8.1/docs/request-options.md
  */
 final class RequestOptions
 {
