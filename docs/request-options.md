@@ -627,6 +627,13 @@ $client->request('GET', '/', [
 ]);
 ```
 
+Raw cURL authentication options can make libcurl resend a streamed request body
+within one handler invocation. When PHP exposes `CURLOPT_SEEKFUNCTION`, Guzzle
+allows a seekable body to be repositioned for at most three native replays; a
+non-seekable body or a fourth replay fails the transfer. The body stream can
+therefore be read and transmitted more than once even though `on_stats` fires
+only once for the native transfer.
+
 `CURLOPT_HEADEROPT` is intentionally absent from the allow-list above. Guzzle
 sets it internally to `CURLHEADER_SEPARATE` whenever it configures
 `CURLOPT_PROXYHEADER`, and also for an HTTP(S) proxy CONNECT tunnel even when no

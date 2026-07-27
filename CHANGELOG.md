@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Added
 
 - Add PHP 8.6+ stream TLS session sharing, while persistent sharing remains cURL-only
+- Add seamless in-transfer resends of streamed uploads on PHP builds with `CURLOPT_SEEKFUNCTION`
 
 ### Changed
 
