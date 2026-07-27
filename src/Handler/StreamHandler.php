@@ -1062,15 +1062,11 @@ final class StreamHandler
 
         $host = $uri->getHost();
 
-        // A transport that parses the host as a numeric IPv4 address connects
-        // to that address, which is what the cURL handlers do because libcurl
-        // runs ipv4_normalize() over every URL it is given. Platform resolvers
-        // do not agree on that grammar: macOS getaddrinfo() reads the
-        // zero-padded 0177 as decimal 177 where glibc, musl and FreeBSD read
-        // it as octal 127. Fold the spelling here rather than leaving it to
-        // the resolver. The Host header is unaffected, because it is
-        // serialized from the request; the TLS peer name follows this same
-        // fold, in getDefaultContext().
+        // Fold a numeric IPv4 spelling to the dotted quad libcurl connects
+        // to, rather than leaving it to the platform resolver: macOS reads
+        // the zero-padded 0177 as decimal 177 where glibc, musl and FreeBSD
+        // read octal 127. The Host header is serialized from the request and
+        // stays as written; the TLS peer name follows the same fold.
         $canonicalHost = self::canonicalConnectionHost($host);
         if ($canonicalHost !== $host) {
             $uri = $uri->withHost($canonicalHost);
@@ -1103,9 +1099,8 @@ final class StreamHandler
     }
 
     /**
-     * Returns the host a transport connects to for a URI host: a numeric IPv4
-     * spelling folded to the dotted-quad form libcurl's ipv4_normalize()
-     * produces for it, and every other host unchanged.
+     * Returns a numeric IPv4 spelling folded to the dotted quad libcurl's
+     * ipv4_normalize() produces, and every other host unchanged.
      */
     private static function canonicalConnectionHost(string $host): string
     {

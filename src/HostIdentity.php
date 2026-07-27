@@ -153,19 +153,11 @@ final class HostIdentity
      * Returns the four-byte binary form of a host that a transport reads as a
      * numeric IPv4 address, or null when it reads it as a name.
      *
-     * The shape test is Handler\HostValidator::isNumericIpv4Host(), so this
-     * branch carries exactly one copy of the inet_aton() shorthand grammar
-     * libcurl implements in ipv4_normalize(). This method adds the two checks
-     * that predicate omits, because it only has to decide whether a spelling
-     * is numeric while this one has to say which address it names: every part
-     * but the last must fit one octet, and the last must fit the octets the
-     * earlier parts left.
-     *
-     * A trailing root dot is deliberately not swallowed, unlike libcurl 8.21.0
-     * and later, because a host spelled that way is rejected before it reaches
-     * a transport.
-     *
-     * @see Handler\HostValidator::assertRequestHost()
+     * The shape test is Handler\HostValidator::isNumericIpv4Host(); this
+     * method adds the range checks that predicate omits: every part but the
+     * last must fit one octet, and the last must fit the octets the earlier
+     * parts left. A trailing root dot is not swallowed, unlike libcurl 8.21.0
+     * and later, because assertRequestHost() rejects that spelling first.
      */
     public static function numericIpv4ToBinary(string $host): ?string
     {
@@ -205,9 +197,8 @@ final class HostIdentity
     }
 
     /**
-     * Returns the value of one part isNumericIpv4Part() has already accepted,
-     * as a float, so that a part filling all four octets such as 2130706433
-     * stays exact on every integer width.
+     * Returns the value of one accepted part as a float, so a part filling
+     * all four octets such as 2130706433 stays exact on every integer width.
      */
     private static function numericIpv4PartValue(string $part): float
     {
