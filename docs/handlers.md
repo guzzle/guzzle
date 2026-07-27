@@ -204,7 +204,9 @@ available in the current environment. Guzzle first tries persistent cURL share
 handles, which can share DNS, connection, and SSL session cache state across
 handler lifetimes. If persistent sharing is unavailable or cannot be created,
 Guzzle falls back to `TransportSharing::HANDLER_PREFER`. If handler-lifetime
-sharing is also unavailable, Guzzle continues without sharing.
+sharing is also unavailable, Guzzle continues without sharing. Preferred
+sharing does not override normal handler selection: stream TLS session
+sharing is used when a request is routed to the stream handler.
 
 Persistent cURL sharing requires PHP persistent cURL share handle support and
 libcurl 8.12.0 or newer because persistent sharing includes libcurl connection

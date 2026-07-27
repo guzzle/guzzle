@@ -307,10 +307,10 @@ class ClientTest extends TestCase
     /**
      * @dataProvider strictTransportSharingModeProvider
      */
-    public function testRequiredTransportSharingCannotBeUsedWithCustomHandler(string $transportSharing): void
+    public function testRequiredTransportSharingCannotBeUsedWithCustomHandler(string $transportSharing, string $expectedAdvice): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('transport_sharing');
+        $this->expectExceptionMessage($expectedAdvice);
 
         new Client([
             'handler' => new MockHandler(),
@@ -590,8 +590,8 @@ class ClientTest extends TestCase
 
     public static function strictTransportSharingModeProvider(): iterable
     {
-        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE];
-        yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE];
+        yield 'handler require' => [TransportSharing::HANDLER_REQUIRE, 'Configure the "transport_sharing" option on CurlHandler, CurlMultiHandler, or StreamHandler when providing a custom handler.'];
+        yield 'persistent require' => [TransportSharing::PERSISTENT_REQUIRE, 'Configure the "transport_sharing" option on CurlHandler or CurlMultiHandler when providing a custom handler.'];
     }
 
     public function testTransportSharingNullCanBeUsedWithCustomHandler(): void

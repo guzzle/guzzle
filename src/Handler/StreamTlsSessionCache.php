@@ -403,6 +403,7 @@ final class StreamTlsSessionCache
                 'openssl.capath' => (string) \ini_get('openssl.capath'),
                 'SSL_CERT_FILE' => (string) \getenv('SSL_CERT_FILE'),
                 'SSL_CERT_DIR' => (string) \getenv('SSL_CERT_DIR'),
+                'cwd' => \getcwd(),
             ],
         ];
     }

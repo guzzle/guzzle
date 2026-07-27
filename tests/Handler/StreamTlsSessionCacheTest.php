@@ -21,6 +21,10 @@ class StreamTlsSessionCacheTest extends TestCase
             self::markTestSkipped('This test requires PHP 8.6+.');
         }
 
+        if (!\extension_loaded('openssl')) {
+            self::markTestSkipped('This test requires ext-openssl.');
+        }
+
         self::assertTrue(
             \class_exists(\Openssl\Session::class, false),
             'PHP 8.6 with ext-openssl must expose Openssl\\Session.'
@@ -165,6 +169,38 @@ class StreamTlsSessionCacheTest extends TestCase
         $b = StreamTlsSessionCache::peerKey('example.com', 443, ['verify_peer' => true, 'cafile' => '/etc/ssl/b.pem']);
 
         self::assertNotSame($a, $b);
+    }
+
+    public function testPeerKeyDiffersByWorkingDirectoryForRelativeTrustPaths(): void
+    {
+        $cwd = \getcwd();
+        self::assertNotFalse($cwd);
+        $certFile = \getenv('SSL_CERT_FILE');
+        $dirA = \sys_get_temp_dir().'/'.\uniqid('guzzle-trust-a', true);
+        $dirB = \sys_get_temp_dir().'/'.\uniqid('guzzle-trust-b', true);
+
+        try {
+            foreach ([$dirA, $dirB] as $dir) {
+                self::assertTrue(\mkdir($dir, 0700));
+                self::assertNotFalse(\file_put_contents($dir.'/ca.pem', ''));
+            }
+
+            \putenv('SSL_CERT_FILE=ca.pem');
+
+            \chdir($dirA);
+            $a = StreamTlsSessionCache::peerKey('example.com', 443, ['verify_peer' => true]);
+            \chdir($dirB);
+            $b = StreamTlsSessionCache::peerKey('example.com', 443, ['verify_peer' => true]);
+
+            self::assertNotSame($a, $b);
+        } finally {
+            \chdir($cwd);
+            \putenv($certFile === false ? 'SSL_CERT_FILE' : 'SSL_CERT_FILE='.$certFile);
+            foreach ([$dirA, $dirB] as $dir) {
+                @\unlink($dir.'/ca.pem');
+                @\rmdir($dir);
+            }
+        }
     }
 
     public function testPeerKeyDiffersByProtocolRangeAndCiphers(): void
