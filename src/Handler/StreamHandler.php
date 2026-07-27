@@ -14,6 +14,7 @@ use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Exception\TransferException;
+use GuzzleHttp\HostIdentity;
 use GuzzleHttp\Multiplexing;
 use GuzzleHttp\NonSerializableTrait;
 use GuzzleHttp\Promise as P;
@@ -1060,6 +1061,18 @@ final class StreamHandler
         $uri = $request->getUri();
 
         $host = $uri->getHost();
+
+        // Fold a numeric IPv4 spelling to the dotted quad libcurl connects
+        // to, rather than leaving it to the platform resolver: macOS reads
+        // the zero-padded 0177 as decimal 177 where glibc, musl and FreeBSD
+        // read octal 127. The Host header is serialized from the request and
+        // stays as written; the TLS peer name follows the same fold.
+        $canonicalHost = self::canonicalConnectionHost($host);
+        if ($canonicalHost !== $host) {
+            $uri = $uri->withHost($canonicalHost);
+            $host = $canonicalHost;
+        }
+
         $hostForIpCheck = \str_starts_with($host, '[') && \str_ends_with($host, ']')
             ? \substr($host, 1, -1)
             : $host;
@@ -1083,6 +1096,20 @@ final class StreamHandler
         }
 
         return $uri;
+    }
+
+    /**
+     * Returns a numeric IPv4 spelling folded to the dotted quad libcurl's
+     * ipv4_normalize() produces, and every other host unchanged.
+     */
+    private static function canonicalConnectionHost(string $host): string
+    {
+        $binary = HostIdentity::numericIpv4ToBinary($host);
+        if ($binary === null) {
+            return $host;
+        }
+
+        return (string) \inet_ntop($binary);
     }
 
     private function addDefaultTlsMinimum(RequestInterface $request, array &$context): void
@@ -1131,7 +1158,7 @@ final class StreamHandler
                 'follow_location' => 0,
             ],
             'ssl' => [
-                'peer_name' => $request->getUri()->getHost(),
+                'peer_name' => self::canonicalConnectionHost($request->getUri()->getHost()),
             ],
         ];
 
