@@ -182,10 +182,17 @@ class CurlFactoryTest extends TestCase
     public function testReleaseClearsCallbacksBeforeDiscardingHandle(): void
     {
         $factory = new CurlFactory(0);
-        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+        $request = \defined('CURLOPT_SEEKFUNCTION')
+            ? new Psr7\Request('PUT', Server::$url, ['Content-Length' => '1000000'], \str_repeat('x', 1000000))
+            : new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($request, [
             'progress' => static function (): void {
             },
         ]);
+
+        if (\defined('CURLOPT_SEEKFUNCTION')) {
+            self::assertArrayHasKey((int) \constant('CURLOPT_SEEKFUNCTION'), $_SERVER['_curl']);
+        }
 
         $factory->release($easy);
 
@@ -195,6 +202,9 @@ class CurlFactoryTest extends TestCase
         self::assertArrayNotHasKey(\CURLOPT_PROGRESSFUNCTION, $_SERVER['_curl']);
         if (\defined('CURLOPT_XFERINFOFUNCTION')) {
             self::assertArrayNotHasKey((int) \constant('CURLOPT_XFERINFOFUNCTION'), $_SERVER['_curl']);
+        }
+        if (\defined('CURLOPT_SEEKFUNCTION')) {
+            self::assertArrayNotHasKey((int) \constant('CURLOPT_SEEKFUNCTION'), $_SERVER['_curl']);
         }
         self::assertSame([], self::readIdleHandles($factory));
     }
@@ -1042,6 +1052,9 @@ class CurlFactoryTest extends TestCase
         $cases = [
             'cookie header' => ['CURLOPT_COOKIE', 'name=value', 'the "Cookie" request header or Guzzle cookie middleware'],
             'pipewait' => ['CURLOPT_PIPEWAIT', true, 'the "multiplex" request option'],
+            'seek function' => ['CURLOPT_SEEKFUNCTION', static function (): int {
+                return 0;
+            }, 'the request body'],
         ];
 
         $available = [];
@@ -5810,24 +5823,21 @@ class CurlFactoryTest extends TestCase
      * Regression coverage for the CURLE_SEND_FAIL_REWIND (errno 65) arm of
      * shouldRetryFailedRewind()/retryFailedRewind(). libcurl returns errno 65
      * when it must rewind an already-partially-sent upload body (after a
-     * redirect, multi-pass auth, or a dead reused connection) but cannot,
-     * because PHP exposes no seek callback for a streamed request body
-     * (https://bugs.php.net/bug.php?id=47204). Guzzle works around this by
-     * rewinding the PSR-7 body itself and re-issuing the request when the
-     * transfer died without a response; a challenge-response rewind failure
-     * fails fast instead (see
-     * testDoesNotRetryFailedRewindWhenChallengeResponseWasReceived).
-     *
-     * Until this commit the errno === 0 arm was covered
-     * (testRetriesWhenBodyCanBeRewound, testFailsWhenRetryMoreThanThreeTimes)
-     * but the errno === 65 arm had none, so a regression in it would have
-     * passed CI unnoticed.
+     * redirect, multi-pass auth, or a dead reused connection) but cannot.
+     * PHP builds without CURLOPT_SEEKFUNCTION expose no seek callback for a
+     * streamed request body (https://bugs.php.net/bug.php?id=47204), and
+     * Guzzle works around this by rewinding the PSR-7 body itself and
+     * re-issuing the request when the transfer died without a response; a
+     * challenge-response rewind failure fails fast instead (see
+     * testDoesNotRetryFailedRewindWhenChallengeResponseWasReceived). On
+     * builds with CURLOPT_SEEKFUNCTION, applyBody() registers a seek
+     * callback so libcurl rewinds a seekable body natively and this retry
+     * remains the fallback for non-seekable bodies.
      *
      * This test and testFailsAfterThreeRetriesOnFailedRewindErrno may be
-     * removed once Guzzle registers a CURLOPT_SEEKFUNCTION for streamed bodies
-     * so libcurl can rewind natively and never surfaces errno 65 for a seekable
-     * body. That requires PHP to expose CURLOPT_SEEKFUNCTION (it does not as of
-     * PHP 8.4) and a minimum PHP/libcurl version that includes it.
+     * removed once the minimum supported PHP exposes CURLOPT_SEEKFUNCTION (no
+     * released PHP does as of PHP 8.5) and the minimum supported libcurl
+     * always rewinds through the seek callback.
      */
     public function testRetriesWhenCurlReportsFailedRewindErrno(): void
     {
@@ -5941,6 +5951,42 @@ class CurlFactoryTest extends TestCase
     }
 
     /**
+     * A response-bearing failed rewind is not always an authentication
+     * challenge: libcurl reports the same errno 65 shape when an
+     * Expect: 100-continue upload receives 417 and the body cannot be
+     * rewound for the automatic retry without the expectation.
+     */
+    public function testDoesNotRetryFailedRewindWhenExpectationFailedResponseWasReceived(): void
+    {
+        $factory = new CurlFactory(1);
+        $handlerCalled = false;
+        $handler = static function () use (&$handlerCalled): P\PromiseInterface {
+            $handlerCalled = true;
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+        $response = new Psr7\Response(417);
+        $easy = $factory->create(new Psr7\Request('PUT', Server::$url, [], 'test'), []);
+        // Simulate libcurl failing to rewind (errno 65) after receiving a
+        // 417 response to an Expect: 100-continue upload.
+        $easy->errno = 65;
+        $easy->response = $response;
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame($response, $e->getResponse());
+            self::assertStringContainsString('cURL error 65', $e->getMessage());
+            self::assertStringContainsString('The request was not retried because a retry replays the same response', $e->getMessage());
+            self::assertStringNotContainsString('authentication challenge', $e->getMessage());
+        }
+
+        self::assertFalse($handlerCalled, 'The request must not be retried when the response that triggered the rewind was received');
+    }
+
+    /**
      * End-to-end companion to
      * testDoesNotRetryFailedRewindWhenChallengeResponseWasReceived: a real
      * transfer whose streamed body must be rewound to answer an
@@ -5948,9 +5994,16 @@ class CurlFactoryTest extends TestCase
      * response attached, because libcurl has no way to rewind a streamed
      * request body. The node server's digest firewall drains the body before
      * challenging, then rejects the request until libcurl authenticates.
+     * Skipped on PHP builds exposing CURLOPT_SEEKFUNCTION, where the
+     * registered seek callback rewinds the body and the transfer succeeds
+     * (see testStreamedUploadAuthResendSucceedsThroughNativeSeek).
      */
     public function testStreamedUploadFailsFastOnChallengeRewind(): void
     {
+        if (\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION lets libcurl rewind this body natively.');
+        }
+
         Server::flush();
         Server::enqueue([]);
 
@@ -5979,6 +6032,199 @@ class CurlFactoryTest extends TestCase
 
         self::assertSame(1, $statsCalls, 'The transfer should have failed on the first attempt');
         self::assertSame([], Server::received(), 'No request should have passed the digest firewall');
+    }
+
+    /**
+     * When PHP exposes CURLOPT_SEEKFUNCTION, a streamed upload that libcurl
+     * must resend after a negotiated auth challenge is rewound through the
+     * registered seek callback and completes within a single transfer, so
+     * the failed-rewind retry never fires and on_stats sees one transfer.
+     * Without the seek callback this request cannot complete at all and
+     * fails on the first attempt, because a failed-rewind retry would
+     * re-encounter the same in-transfer rewind
+     * (https://bugs.php.net/bug.php?id=80518).
+     */
+    public function testStreamedUploadAuthResendSucceedsThroughNativeSeek(): void
+    {
+        if (!\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION is not available.');
+        }
+
+        Server::flush();
+        Server::enqueue([new Psr7\Response(200, [], 'ok')]);
+
+        $handler = new Handler\CurlHandler();
+
+        $payload = \str_repeat('0123456789abcdef', 62500);
+        $seeks = [];
+        $inner = Psr7\Utils::streamFor($payload);
+        $body = Psr7\FnStream::decorate($inner, [
+            'seek' => static function (int $offset, int $whence = \SEEK_SET) use ($inner, &$seeks): void {
+                $seeks[] = $offset;
+                $inner->seek($offset, $whence);
+            },
+        ]);
+
+        $statsCalls = 0;
+        $request = new Psr7\Request('PUT', Server::$url.'secure/by-digest/qop-auth/echo', ['Content-Length' => (string) \strlen($payload)], $body);
+        $response = $handler($request, [
+            'curl' => [
+                \CURLOPT_HTTPAUTH => \CURLAUTH_ANY,
+                \CURLOPT_USERPWD => 'me:test',
+            ],
+            'on_stats' => static function () use (&$statsCalls): void {
+                ++$statsCalls;
+            },
+        ])->wait();
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertContains(0, $seeks, 'libcurl should have rewound the body through the seek callback');
+        self::assertSame(1, $statsCalls, 'The transfer should not have been retried in userland');
+
+        $received = Server::received();
+        self::assertCount(1, $received, 'Only the authenticated resend passes the digest firewall');
+        self::assertStringStartsWith('Digest ', $received[0]->getHeaderLine('Authorization'));
+        self::assertSame($payload, (string) $received[0]->getBody(), 'The exact body should have been resent');
+    }
+
+    /**
+     * A seek callback failure is recorded on the easy handle, so the
+     * rejection carries the caller's exception instead of a bare cURL error
+     * 65 and the failed-rewind retry does not fire.
+     */
+    public function testStreamedUploadSeekFailureRejectsWithTheSeekException(): void
+    {
+        if (!\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION is not available.');
+        }
+
+        Server::flush();
+        Server::enqueue([]);
+
+        $handler = new Handler\CurlHandler();
+
+        $payload = \str_repeat('a', 1000000);
+        $previous = new \RuntimeException('boom while seeking');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor($payload), [
+            'seek' => static function (int $offset, int $whence = \SEEK_SET) use ($previous): void {
+                throw $previous;
+            },
+        ]);
+
+        $statsCalls = 0;
+        $request = new Psr7\Request('PUT', Server::$url.'secure/by-digest/qop-auth/echo', ['Content-Length' => (string) \strlen($payload)], $body);
+
+        try {
+            $handler($request, [
+                'curl' => [
+                    \CURLOPT_HTTPAUTH => \CURLAUTH_ANY,
+                    \CURLOPT_USERPWD => 'me:test',
+                ],
+                'on_stats' => static function () use (&$statsCalls): void {
+                    ++$statsCalls;
+                },
+            ])->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame('boom while seeking', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(401, $e->getResponse()->getStatusCode());
+        }
+
+        self::assertSame(1, $statsCalls, 'The transfer should not have been retried in userland');
+    }
+
+    public function testStreamedUploadSeekTimeoutRejectsWithARewindMessage(): void
+    {
+        if (!\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION is not available.');
+        }
+
+        Server::flush();
+        Server::enqueue([]);
+
+        $handler = new Handler\CurlHandler();
+
+        $payload = \str_repeat('a', 1000000);
+        $previous = new Psr7\Exception\TimeoutException('timed out while seeking');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor($payload), [
+            'seek' => static function (int $offset, int $whence = \SEEK_SET) use ($previous): void {
+                throw $previous;
+            },
+        ]);
+
+        $request = new Psr7\Request('PUT', Server::$url.'secure/by-digest/qop-auth/echo', ['Content-Length' => (string) \strlen($payload)], $body);
+
+        try {
+            $handler($request, [
+                'curl' => [
+                    \CURLOPT_HTTPAUTH => \CURLAUTH_ANY,
+                    \CURLOPT_USERPWD => 'me:test',
+                ],
+            ])->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame('Timed out while rewinding the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+            self::assertSame(401, $e->getResponse()->getStatusCode());
+        }
+    }
+
+    /**
+     * A non-seekable streamed body makes the seek callback report
+     * CURL_SEEKFUNC_CANTSEEK, so libcurl cannot satisfy a challenge resend
+     * and surfaces CURLE_SEND_FAIL_REWIND; the transfer fails on the first
+     * attempt with the challenge response attached instead of replaying the
+     * same challenge, matching PHP builds without CURLOPT_SEEKFUNCTION.
+     */
+    public function testStreamedUploadNonSeekableBodyFailsFastOnChallengeRewind(): void
+    {
+        if (!\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION is not available.');
+        }
+
+        Server::flush();
+        Server::enqueue([]);
+
+        $handler = new Handler\CurlHandler();
+
+        $payload = \str_repeat('a', 1000000);
+        $inner = Psr7\Utils::streamFor($payload);
+        $rewinds = 0;
+        $body = Psr7\FnStream::decorate($inner, [
+            'isSeekable' => static function (): bool {
+                return false;
+            },
+            'rewind' => static function () use ($inner, &$rewinds): void {
+                ++$rewinds;
+                $inner->seek(0);
+            },
+        ]);
+
+        $statsCalls = 0;
+        $request = new Psr7\Request('PUT', Server::$url.'secure/by-digest/qop-auth/echo', ['Content-Length' => (string) \strlen($payload)], $body);
+
+        try {
+            $handler($request, [
+                'curl' => [
+                    \CURLOPT_HTTPAUTH => \CURLAUTH_ANY,
+                    \CURLOPT_USERPWD => 'me:test',
+                ],
+                'on_stats' => static function () use (&$statsCalls): void {
+                    ++$statsCalls;
+                },
+            ])->wait();
+
+            self::fail('Expected ResponseException');
+        } catch (ResponseException $e) {
+            self::assertSame(401, $e->getResponse()->getStatusCode());
+            self::assertStringContainsString('The request was not retried because a retry replays the same challenge', $e->getMessage());
+        }
+
+        self::assertSame(0, $rewinds, 'The failed-rewind retry should not have fired');
+        self::assertSame(1, $statsCalls, 'The transfer should have failed on the first attempt');
     }
 
     public function testHandles100Continue(): void
@@ -8171,6 +8417,189 @@ class CurlFactoryTest extends TestCase
             self::assertSame('', $callback($easy->handle, null, 8192));
             self::assertSame(2, $reads);
             self::assertSame('def', $source->getContents());
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testStreamingRequestBodySeekRestoresContentLengthBoundary(): void
+    {
+        if (!\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION is not available.');
+        }
+
+        $payload = \str_repeat('0123456789abcdef', 62500);
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Content-Length' => (string) \strlen($payload)],
+            $payload
+        ), []);
+
+        try {
+            $read = $_SERVER['_curl'][\CURLOPT_READFUNCTION];
+            $seek = $_SERVER['_curl'][(int) \constant('CURLOPT_SEEKFUNCTION')];
+
+            self::assertSame(\substr($payload, 0, 400000), $read($easy->handle, null, 400000));
+            self::assertSame(0, $seek($easy->handle, 250000, \SEEK_SET));
+            self::assertSame(\substr($payload, 250000), $read($easy->handle, null, \strlen($payload)));
+            self::assertSame('', $read($easy->handle, null, 1));
+
+            self::assertSame(0, $seek($easy->handle, 0, \SEEK_SET));
+            self::assertSame($payload, $read($easy->handle, null, \strlen($payload)));
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testStreamingRequestBodySeekRejectsInvalidOffsets(): void
+    {
+        if (!\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION is not available.');
+        }
+
+        $payload = \str_repeat('x', 1000000);
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Content-Length' => (string) \strlen($payload)],
+            $payload
+        ), []);
+
+        try {
+            $seek = $_SERVER['_curl'][(int) \constant('CURLOPT_SEEKFUNCTION')];
+
+            self::assertSame(2, $seek($easy->handle, 0, \SEEK_CUR));
+            self::assertNull($easy->bodyRewindException);
+
+            self::assertSame(1, $seek($easy->handle, -1, \SEEK_SET));
+            self::assertInstanceOf(\RuntimeException::class, $easy->bodyRewindException);
+            self::assertSame('Request body seek offset is outside the declared Content-Length', $easy->bodyRewindException->getMessage());
+
+            $easy->bodyRewindException = null;
+            self::assertSame(1, $seek($easy->handle, \strlen($payload) + 1, \SEEK_SET));
+            self::assertInstanceOf(\RuntimeException::class, $easy->bodyRewindException);
+            self::assertSame('Request body seek offset is outside the declared Content-Length', $easy->bodyRewindException->getMessage());
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testStreamingRequestBodySeekRecordsSeekabilityFailure(): void
+    {
+        if (!\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION is not available.');
+        }
+
+        $inner = Psr7\Utils::streamFor(\str_repeat('x', 1000000));
+        $failNextSeekabilityCheck = false;
+        $previous = new \Error('boom while checking seekability');
+        $body = Psr7\FnStream::decorate($inner, [
+            'isSeekable' => static function () use (&$failNextSeekabilityCheck, $previous): bool {
+                if ($failNextSeekabilityCheck) {
+                    $failNextSeekabilityCheck = false;
+
+                    throw $previous;
+                }
+
+                return true;
+            },
+        ]);
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Content-Length' => '1000000'],
+            $body
+        ), []);
+
+        try {
+            $seek = $_SERVER['_curl'][(int) \constant('CURLOPT_SEEKFUNCTION')];
+            $failNextSeekabilityCheck = true;
+
+            self::assertSame(1, $seek($easy->handle, 0, \SEEK_SET));
+            self::assertSame($previous, $easy->bodyRewindException);
+            self::assertNull($easy->bodyRewindTimeoutException);
+        } finally {
+            if (\array_key_exists('handle', \get_object_vars($easy))) {
+                $factory->release($easy);
+            }
+        }
+    }
+
+    public function testStreamingRequestBodySeekFailureUsesRewindFallbackMessageWhenMessageEmpty(): void
+    {
+        if (!\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION is not available.');
+        }
+
+        $factory = new CurlFactory(1);
+        $handlerCalled = false;
+        $handler = static function () use (&$handlerCalled): P\PromiseInterface {
+            $handlerCalled = true;
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+        $previous = new \RuntimeException('');
+        $body = Psr7\FnStream::decorate(Psr7\Utils::streamFor(\str_repeat('x', 1000000)), [
+            'seek' => static function () use ($previous): void {
+                throw $previous;
+            },
+        ]);
+        $request = new Psr7\Request('PUT', Server::$url, ['Content-Length' => '1000000'], $body);
+        $easy = $factory->create($request, []);
+
+        $seek = $_SERVER['_curl'][(int) \constant('CURLOPT_SEEKFUNCTION')];
+        self::assertSame(1, $seek($easy->handle, 0, \SEEK_SET));
+        self::assertSame($previous, $easy->bodyRewindException);
+        // Simulate libcurl surfacing the failed rewind (errno 65).
+        $easy->errno = 65;
+
+        try {
+            CurlFactory::finish($handler, $easy, $factory)->wait();
+
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertSame($easy->request, $e->getRequest());
+            self::assertSame('Failed to rewind the request body', $e->getMessage());
+            self::assertSame($previous, $e->getPrevious());
+        }
+
+        self::assertFalse($handlerCalled, 'The failed local rewind must not be retried');
+    }
+
+    public function testStreamingRequestBodySeekBoundsNativeReplays(): void
+    {
+        if (!\defined('CURLOPT_SEEKFUNCTION')) {
+            self::markTestSkipped('CURLOPT_SEEKFUNCTION is not available.');
+        }
+
+        $payload = \str_repeat('x', 1000000);
+        $factory = new CurlFactory(3);
+        $easy = $factory->create(new Psr7\Request(
+            'PUT',
+            Server::$url,
+            ['Content-Length' => (string) \strlen($payload)],
+            $payload
+        ), []);
+
+        try {
+            $seek = $_SERVER['_curl'][(int) \constant('CURLOPT_SEEKFUNCTION')];
+
+            self::assertSame(0, $seek($easy->handle, 0, \SEEK_SET));
+            self::assertSame(0, $seek($easy->handle, 0, \SEEK_SET));
+            self::assertSame(0, $seek($easy->handle, 0, \SEEK_SET));
+            self::assertSame(1, $seek($easy->handle, 0, \SEEK_SET));
+            self::assertInstanceOf(\RuntimeException::class, $easy->bodyRewindException);
+            self::assertSame('Request body cannot be replayed more than 3 times', $easy->bodyRewindException->getMessage());
         } finally {
             if (\array_key_exists('handle', \get_object_vars($easy))) {
                 $factory->release($easy);

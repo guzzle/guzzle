@@ -1328,8 +1328,10 @@ final class CurlMultiHandler
     /**
      * @param resource|\CurlHandle $handle
      */
-    private function clearEasyHandleCallbacks($handle): void
-    {
+    private function clearEasyHandleCallbacks(
+        #[\SensitiveParameter]
+        $handle
+    ): void {
         curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
         curl_setopt($handle, \CURLOPT_READFUNCTION, null);
         curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
@@ -1337,6 +1339,10 @@ final class CurlMultiHandler
 
         if (\defined('CURLOPT_PREREQFUNCTION')) {
             curl_setopt($handle, (int) \constant('CURLOPT_PREREQFUNCTION'), null);
+        }
+
+        if (\defined('CURLOPT_SEEKFUNCTION')) {
+            curl_setopt($handle, (int) \constant('CURLOPT_SEEKFUNCTION'), null);
         }
 
         if (\defined('CURLOPT_XFERINFOFUNCTION')) {
@@ -1347,8 +1353,11 @@ final class CurlMultiHandler
     /**
      * @param resource|\CurlHandle $handle
      */
-    private function removeHandleFromMulti(int $id, $handle): void
-    {
+    private function removeHandleFromMulti(
+        int $id,
+        #[\SensitiveParameter]
+        $handle
+    ): void {
         // Removing a still-running transfer performs a final progress update
         // that can run a user progress callback, so removal is guarded like
         // native execution.

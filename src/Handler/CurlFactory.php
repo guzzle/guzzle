@@ -111,6 +111,26 @@ final class CurlFactory implements CurlFactoryInterface
     private const CURL_READFUNC_ABORT = 0x10000000;
 
     /**
+     * libcurl's CURL_SEEKFUNC_OK value.
+     */
+    private const CURL_SEEKFUNC_OK = 0;
+
+    /**
+     * libcurl's CURL_SEEKFUNC_FAIL value.
+     */
+    private const CURL_SEEKFUNC_FAIL = 1;
+
+    /**
+     * libcurl's CURL_SEEKFUNC_CANTSEEK value.
+     */
+    private const CURL_SEEKFUNC_CANTSEEK = 2;
+
+    /**
+     * Maximum number of times libcurl may replay a streamed request body.
+     */
+    private const CURL_SEEK_MAX_REPLAYS = 3;
+
+    /**
      * libcurl's CURLE_SEND_FAIL_REWIND value.
      */
     private const CURLE_SEND_FAIL_REWIND = 65;
@@ -372,6 +392,7 @@ final class CurlFactory implements CurlFactoryInterface
      * @param array<int|string, mixed> $conf
      */
     private function applyCurlOptions(
+        #[\SensitiveParameter]
         $handle,
         #[\SensitiveParameter]
         array $conf
@@ -712,6 +733,7 @@ final class CurlFactory implements CurlFactoryInterface
         self::addConflictingCurlOption($options, 'CURLOPT_UPLOAD', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_POSTFIELDS', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_READFUNCTION', 'the request body');
+        self::addConflictingCurlOption($options, 'CURLOPT_SEEKFUNCTION', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_READDATA', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_INFILE', 'the request body');
         self::addConflictingCurlOption($options, 'CURLOPT_INFILESIZE', 'the request body');
@@ -952,8 +974,10 @@ final class CurlFactory implements CurlFactoryInterface
     /**
      * @param resource|\CurlHandle $handle
      */
-    private function discardHandle($handle): void
-    {
+    private function discardHandle(
+        #[\SensitiveParameter]
+        $handle
+    ): void {
         $failure = null;
 
         try {
@@ -980,8 +1004,10 @@ final class CurlFactory implements CurlFactoryInterface
     /**
      * @param resource|\CurlHandle $handle
      */
-    private function clearEasyHandleCallbacks($handle): void
-    {
+    private function clearEasyHandleCallbacks(
+        #[\SensitiveParameter]
+        $handle
+    ): void {
         curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
         curl_setopt($handle, \CURLOPT_READFUNCTION, null);
         curl_setopt($handle, \CURLOPT_WRITEFUNCTION, null);
@@ -989,6 +1015,10 @@ final class CurlFactory implements CurlFactoryInterface
 
         if (\defined('CURLOPT_PREREQFUNCTION')) {
             curl_setopt($handle, (int) \constant('CURLOPT_PREREQFUNCTION'), null);
+        }
+
+        if (\defined('CURLOPT_SEEKFUNCTION')) {
+            curl_setopt($handle, (int) \constant('CURLOPT_SEEKFUNCTION'), null);
         }
 
         if (\defined('CURLOPT_XFERINFOFUNCTION')) {
@@ -1146,12 +1176,19 @@ final class CurlFactory implements CurlFactoryInterface
             return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
-        if (self::isChallengeRewindFailure($easy)) {
-            $ctx['error'] = 'The server issued an authentication challenge '
-                .'after the request body had already been sent, and the body '
-                .'could not be rewound to resend it. The request was not '
-                .'retried because a retry replays the same challenge. See '
-                .'https://bugs.php.net/bug.php?id=47204 for more information.';
+        if (self::isResponseRewindFailure($easy)) {
+            $status = $easy->response !== null ? $easy->response->getStatusCode() : 0;
+            $ctx['error'] = $status === 401 || $status === 407
+                ? 'The server issued an authentication challenge '
+                    .'after the request body had already been sent, and the body '
+                    .'could not be rewound to resend it. The request was not '
+                    .'retried because a retry replays the same challenge. See '
+                    .'https://bugs.php.net/bug.php?id=47204 for more information.'
+                : 'The server responded after the request body had already '
+                    .'been sent, and the body could not be rewound for '
+                    .'libcurl\'s automatic retry. The request was not retried '
+                    .'because a retry replays the same response. See '
+                    .'https://bugs.php.net/bug.php?id=47204 for more information.';
         }
 
         return self::createRejection($easy, $ctx);
@@ -1167,6 +1204,8 @@ final class CurlFactory implements CurlFactoryInterface
     private static function hasLocalFailure(EasyHandle $easy): bool
     {
         return $easy->bodyReadTimeoutException !== null
+            || $easy->bodyRewindTimeoutException !== null
+            || $easy->bodyRewindException !== null
             || $easy->bodyReadException !== null
             || $easy->responseHeaderException !== null
             || $easy->sinkWriteTimeoutException !== null
@@ -1181,10 +1220,10 @@ final class CurlFactory implements CurlFactoryInterface
             return false;
         }
 
-        if (self::isChallengeRewindFailure($easy)) {
-            // Re-issuing the identical request replays the same challenge and
+        if (self::isResponseRewindFailure($easy)) {
+            // Re-issuing the identical request replays the same response and
             // the same in-transfer rewind, so retrying is futile and the
-            // challenge response is surfaced instead.
+            // received response is surfaced instead.
             return false;
         }
 
@@ -1192,9 +1231,10 @@ final class CurlFactory implements CurlFactoryInterface
         //
         // - errno === CURLE_SEND_FAIL_REWIND (65): libcurl needed to rewind an
         //   already-partially-sent upload to resend it on a reused connection
-        //   that died before any response arrived, but could not, because PHP
-        //   registers no seek callback for a streamed request body. See
-        //   https://bugs.php.net/bug.php?id=47204.
+        //   that died before any response arrived, but could not. PHP builds
+        //   without CURLOPT_SEEKFUNCTION register no seek callback for a
+        //   streamed request body (https://bugs.php.net/bug.php?id=47204);
+        //   builds with it can still report 65 when the body is not seekable.
         //
         // - errno === 0: libcurl reported success yet no usable response
         //   reached us. This is the legacy curl_multi silent-failure variant of
@@ -1207,13 +1247,15 @@ final class CurlFactory implements CurlFactoryInterface
 
     /**
      * Whether the transfer failed because libcurl could not rewind the
-     * request body to resend it in reply to a challenge response, such as a
-     * 401 or 407 during multi-pass authentication. libcurl's only other
-     * rewind triggers are followed redirects, which the built-in handlers
-     * never enable, and reused connections that died, which cannot have
-     * produced a response.
+     * request body to resend it in reply to a response, such as a 401 or
+     * 407 during multi-pass authentication, or a 417 that makes libcurl
+     * retry an Expect: 100-continue upload without the expectation. Rewinds
+     * for replays that follow no response, such as a reused connection that
+     * died or a refused HTTP/2 stream, retry through
+     * shouldRetryFailedRewind() instead. Followed redirects also rewind,
+     * but the built-in handlers never enable them.
      */
-    private static function isChallengeRewindFailure(EasyHandle $easy): bool
+    private static function isResponseRewindFailure(EasyHandle $easy): bool
     {
         return $easy->errno === self::CURLE_SEND_FAIL_REWIND
             && $easy->response !== null
@@ -1281,6 +1323,23 @@ final class CurlFactory implements CurlFactoryInterface
                 'Timed out while reading the request body',
                 $easy->bodyReadTimeoutException
             );
+        }
+
+        if ($easy->bodyRewindTimeoutException) {
+            // Rewinding the request body stalled, which is a caller-stream failure.
+            return self::createRequestOrResponseRejection(
+                $easy,
+                'Timed out while rewinding the request body',
+                $easy->bodyRewindTimeoutException
+            );
+        }
+
+        if ($easy->bodyRewindException) {
+            $message = $easy->bodyRewindException->getMessage() !== ''
+                ? $easy->bodyRewindException->getMessage()
+                : 'Failed to rewind the request body';
+
+            return self::createRequestOrResponseRejection($easy, $message, $easy->bodyRewindException);
         }
 
         if ($easy->bodyReadException) {
@@ -2242,6 +2301,9 @@ final class CurlFactory implements CurlFactoryInterface
                 $conf[\CURLOPT_FILE],
                 $conf[\CURLOPT_INFILE]
             );
+            if (\defined('CURLOPT_SEEKFUNCTION')) {
+                unset($conf[(int) \constant('CURLOPT_SEEKFUNCTION')]);
+            }
             if (\trim($easy->request->getHeaderLine('Content-Length'), " \n\r\t\0\x0B") !== '0') {
                 $this->removeHeader('Content-Length', $conf);
             }
@@ -2301,7 +2363,13 @@ final class CurlFactory implements CurlFactoryInterface
              * @return int|string
              */
             $remaining = $contentLength;
-            $conf[\CURLOPT_READFUNCTION] = static function ($ch, $fd, int $length) use ($easy, $body, &$remaining) {
+            $conf[\CURLOPT_READFUNCTION] = static function (
+                #[\SensitiveParameter]
+                $ch,
+                #[\SensitiveParameter]
+                $fd,
+                int $length
+            ) use ($easy, $body, &$remaining) {
                 if ($remaining === 0) {
                     return '';
                 }
@@ -2339,6 +2407,56 @@ final class CurlFactory implements CurlFactoryInterface
 
                 return $data;
             };
+            if (\defined('CURLOPT_SEEKFUNCTION')) {
+                // Give libcurl a seek callback so it can reposition the
+                // streamed upload itself when a transfer must resend the body
+                // (multi-pass auth such as NTLM/Negotiate, or a reused
+                // connection that died) instead of failing with
+                // CURLE_SEND_FAIL_REWIND. See
+                // https://bugs.php.net/bug.php?id=47204. A failed seek is
+                // recorded so the rejection carries the caller's exception
+                // and the failed-rewind retry does not fire.
+                $successfulSeeks = 0;
+                $conf[(int) \constant('CURLOPT_SEEKFUNCTION')] = static function (
+                    #[\SensitiveParameter]
+                    $ch,
+                    int $offset,
+                    int $origin
+                ) use ($easy, $body, $contentLength, &$remaining, &$successfulSeeks): int {
+                    if ($origin !== \SEEK_SET) {
+                        return self::CURL_SEEKFUNC_CANTSEEK;
+                    }
+
+                    try {
+                        if (!$body->isSeekable()) {
+                            return self::CURL_SEEKFUNC_CANTSEEK;
+                        }
+
+                        if ($offset < 0 || ($contentLength !== null && $offset > $contentLength)) {
+                            throw new \RuntimeException('Request body seek offset is outside the declared Content-Length');
+                        }
+
+                        if ($successfulSeeks >= self::CURL_SEEK_MAX_REPLAYS) {
+                            throw new \RuntimeException(\sprintf('Request body cannot be replayed more than %d times', self::CURL_SEEK_MAX_REPLAYS));
+                        }
+
+                        $body->seek($offset, \SEEK_SET);
+                    } catch (TimeoutException $e) {
+                        $easy->bodyRewindTimeoutException = $e;
+
+                        return self::CURL_SEEKFUNC_FAIL;
+                    } catch (\Throwable $e) {
+                        $easy->bodyRewindException = $e;
+
+                        return self::CURL_SEEKFUNC_FAIL;
+                    }
+
+                    $remaining = $contentLength === null ? null : $contentLength - $offset;
+                    ++$successfulSeeks;
+
+                    return self::CURL_SEEKFUNC_OK;
+                };
+            }
         }
 
         // If the Expect header is not present, prevent curl from adding it
@@ -2692,11 +2810,12 @@ final class CurlFactory implements CurlFactoryInterface
             /** @var (callable(int, int, int, int): mixed)|null $progress */
             $conf[\CURLOPT_NOPROGRESS] = false;
             $progressCallback = static function ($resource, $downloadSize, $downloaded, $uploadSize, $uploaded) use ($easy, $progress): int {
-                // Abort the transfer when the request body read failed (the
-                // cross-version abort path, since older PHP ignores the read
-                // callback's return). progressAborted is left unset so the
-                // failure is classified from the stored request-body exception.
-                if ($easy->bodyReadTimeoutException !== null || $easy->bodyReadException !== null) {
+                // Abort the transfer when the request body read or rewind
+                // failed (the cross-version abort path, since older PHP
+                // ignores the read callback's return). progressAborted is left
+                // unset so the failure is classified from the stored
+                // request-body exception.
+                if ($easy->bodyReadTimeoutException !== null || $easy->bodyRewindTimeoutException !== null || $easy->bodyRewindException !== null || $easy->bodyReadException !== null) {
                     return 1;
                 }
 

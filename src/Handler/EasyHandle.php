@@ -109,6 +109,16 @@ final class EasyHandle
     public ?TimeoutException $bodyReadTimeoutException = null;
 
     /**
+     * @var TimeoutException|null Exception during request body rewind timeout.
+     */
+    public ?TimeoutException $bodyRewindTimeoutException = null;
+
+    /**
+     * @var \Throwable|null Exception during request body rewind.
+     */
+    public ?\Throwable $bodyRewindException = null;
+
+    /**
      * @var \Throwable|null Exception during request body read.
      */
     public ?\Throwable $bodyReadException = null;
