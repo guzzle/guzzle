@@ -302,19 +302,40 @@ final class CurlMultiHandler
 
         $waitToken = new \stdClass();
 
+        $promise = null;
         /** @var Promise<ResponseInterface, mixed> $promise */
         $promise = new Promise(
-            function () use ($id, $waitToken): void {
-                if ($this->multiExecDepth > 0) {
-                    // Waiting cannot drive native cURL while a callback has
-                    // the multi handle busy; fail the wait promptly instead
-                    // of self-deadlocking.
-                    $this->failNestedWait($id, $waitToken);
+            function () use ($id, $waitToken, $easy, &$promise): void {
+                // Waiting cannot drive native cURL while a callback has the
+                // multi handle busy; fail the wait promptly instead of
+                // self-deadlocking.
+                $stalled = $this->multiExecDepth > 0
+                    ? $this->failNestedWait($id, $waitToken)
+                    : $this->executeUntil($id, $waitToken);
 
+                // Settling can be queued, and guzzlehttp/promises drains the
+                // queue before deciding a wait function achieved nothing.
+                P\Utils::queue()->run();
+
+                // Never null: assigned below before any wait can invoke this.
+                /** @var Promise<ResponseInterface, mixed> $promise */
+                if (!P\Is::pending($promise)) {
                     return;
                 }
 
-                $this->executeUntil($id, $waitToken);
+                // Neither path guarantees the transfer settled, and returning
+                // while pending makes guzzlehttp/promises reject with a bare
+                // string naming nothing.
+                $message = \sprintf('Waiting on cURL multi handler transfer %d cannot make progress (%s).', $id, $stalled);
+
+                // The entry is gone, so the easy handle is the only route to
+                // a response that already arrived.
+                $response = $easy->response;
+                $failure = $response !== null
+                    ? new ResponseException($message, $easy->request, $response)
+                    : new RequestException($message, $easy->request);
+
+                $promise->reject($failure);
             },
             function () use ($id, $waitToken): void {
                 $this->cancel($id, $waitToken);
@@ -873,8 +894,11 @@ final class CurlMultiHandler
      * The native cURL handle ID can be reused by a request created from a
      * completion callback, so the wait token guards against waiting on an
      * unrelated transfer that inherited the ID.
+     *
+     * @return string Why waiting stopped, for the caller to report when the
+     *                transfer did not settle
      */
-    private function executeUntil(int $id, object $waitToken): void
+    private function executeUntil(int $id, object $waitToken): string
     {
         $this->assertOpen();
 
@@ -893,9 +917,32 @@ final class CurlMultiHandler
             $this->tickFor($id, $waitToken);
         }
 
+        // Sample before the drain below, which can add or remove an entry
+        // under this ID and so rewrite the answer.
+        $stalled = $this->describeStalledWait($id, $waitToken);
+
         if (!$this->closed && !$this->closing && !$queue->isEmpty()) {
             $queue->run();
         }
+
+        return $stalled;
+    }
+
+    /**
+     * Describes the state that stopped a wait, for the fallback rejection in
+     * __invoke(). Only meaningful when the transfer did not settle.
+     */
+    private function describeStalledWait(int $id, object $waitToken): string
+    {
+        if ($this->hasRequest($id, $waitToken)) {
+            // Reached when waiting stopped for another reason, such as the
+            // handler being closed underneath it.
+            return 'the handler stopped driving it while it was still tracked';
+        }
+
+        return isset($this->handles[$id])
+            ? 'its native cURL handle ID was reused by another request'
+            : 'its entry was removed without settling';
     }
 
     /**
@@ -1212,11 +1259,16 @@ final class CurlMultiHandler
     /**
      * Fails a synchronous wait attempted from inside a cURL callback, where
      * native execution cannot progress until the callback returns.
+     *
+     * @return string Why waiting stopped, for the caller to report when this
+     *                method left the transfer unsettled
      */
-    private function failNestedWait(int $id, object $token): void
+    private function failNestedWait(int $id, object $token): string
     {
+        $stalled = $this->describeStalledWait($id, $token);
+
         if (!$this->hasRequest($id, $token)) {
-            return;
+            return $stalled;
         }
 
         $entry = $this->handles[$id];
@@ -1235,6 +1287,8 @@ final class CurlMultiHandler
         }
 
         $entry['deferred']->reject($failure);
+
+        return $stalled;
     }
 
     private function disposeEasyHandle(
