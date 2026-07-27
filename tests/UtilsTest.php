@@ -6,6 +6,8 @@ namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\CurlVersion;
+use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Handler\StreamTlsSessionCache;
 use GuzzleHttp\Multiplexing;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\TransportSharing;
@@ -99,6 +101,49 @@ class UtilsTest extends TestCase
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
             unset($_SERVER['curl_test'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+        }
+    }
+
+    public function testChooseHandlerFallsBackToStreamTlsSharingWhenCurlCannotShareSslSessions(): void
+    {
+        self::skipIfDefaultCurlHandlerIsUnavailable();
+
+        if (!(bool) \ini_get('allow_url_fopen') || !StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires PHP 8.6+ with the OpenSSL session API and allow_url_fopen.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.5.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            self::assertInstanceOf(StreamHandler::class, Utils::chooseHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]));
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testChooseHandlerRejectsRequiredTransportSharingWhenCurlCannotShareSslSessionsWithoutStreamFallback(): void
+    {
+        self::skipIfDefaultCurlHandlerIsUnavailable();
+
+        if ((bool) \ini_get('allow_url_fopen') && StreamTlsSessionCache::isSupported()) {
+            self::markTestSkipped('This test requires an environment without stream TLS session sharing support.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.5.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage('Required transport sharing requires');
+
+            Utils::chooseHandler(['transport_sharing' => TransportSharing::HANDLER_REQUIRE]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
         }
     }
 

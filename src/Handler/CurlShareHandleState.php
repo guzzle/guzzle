@@ -106,6 +106,24 @@ final class CurlShareHandleState
         ));
     }
 
+    /**
+     * Whether cURL can share both the DNS and SSL session cache state that
+     * required handler-lifetime sharing needs, checked without configuring a
+     * share handle so default handler selection can fall back to the stream
+     * handler instead.
+     */
+    public static function supportsHandlerRequireShare(): bool
+    {
+        return CurlVersion::supportsHandlerSharing()
+            && CurlVersion::supportsSslSessionSharing()
+            && \function_exists('curl_share_init')
+            && \function_exists('curl_share_setopt')
+            && \defined('CURLOPT_SHARE')
+            && \defined('CURLSHOPT_SHARE')
+            && \defined('CURL_LOCK_DATA_DNS')
+            && \defined('CURL_LOCK_DATA_SSL_SESSION');
+    }
+
     private static function createHandlerShareOrNull(string $mode): ?self
     {
         try {

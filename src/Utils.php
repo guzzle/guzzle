@@ -11,6 +11,7 @@ use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
+use GuzzleHttp\Handler\StreamTlsSessionCache;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -88,8 +89,19 @@ final class Utils
 
         $handler = self::createCurlHandler($sharingMode, $handlerOptions);
 
+        // Handler-scoped required sharing can also be satisfied by the stream
+        // handler's TLS session resumption (PHP 8.6+); persistent required
+        // sharing is cURL-only.
+        $streamCanShareSessions = (bool) \ini_get('allow_url_fopen') && StreamTlsSessionCache::isSupported();
+
         if ($sharingRequired && $handler === null) {
-            throw new \RuntimeException('Required transport sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and a supported libcurl version with SSL support.');
+            if ($sharingMode === TransportSharing::PERSISTENT_REQUIRE) {
+                throw new \RuntimeException('Required persistent transport sharing requires the PHP cURL extension, curl_exec() or curl_multi_exec(), and a supported libcurl version with SSL support.');
+            }
+
+            if (!$streamCanShareSessions) {
+                throw new \RuntimeException('Required transport sharing requires the PHP cURL extension (curl_exec()/curl_multi_exec()) with a supported libcurl version and SSL support, or PHP 8.6+ with the OpenSSL TLS session API and the allow_url_fopen ini setting.');
+            }
         }
 
         if (\ini_get('allow_url_fopen')) {
@@ -128,6 +140,13 @@ final class Utils
     private static function createCurlHandler(string $sharingMode, array $handlerOptions): ?callable
     {
         if (!CurlVersion::supportsCurlHandler()) {
+            return null;
+        }
+
+        if ($sharingMode === TransportSharing::HANDLER_REQUIRE && !CurlShareHandleState::supportsHandlerRequireShare()) {
+            // Required handler sharing can also be satisfied by the stream
+            // handler's TLS session resumption, so a cURL install that cannot
+            // share is skipped instead of failing handler selection.
             return null;
         }
 

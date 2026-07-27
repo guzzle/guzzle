@@ -141,13 +141,14 @@ because Guzzle cannot inspect that native handle state.
 ### How do the caps compose with connection sharing?
 
 Connection cap options compose with transport sharing as follows. Handler
-transport sharing shares only DNS and, when supported, TLS session data and
-works with the caps unchanged. Persistent transport sharing also pools
-connections in a shared cURL share handle, and libcurl does not apply the cURL
-multi connection cap options to transfers that use a shared connection pool.
-When the caps are configured, `TransportSharing::PERSISTENT_PREFER` therefore
-falls back to handler-lifetime sharing, and
-`TransportSharing::PERSISTENT_REQUIRE` is rejected.
+transport sharing shares DNS and TLS session data with the cURL handlers, and
+HTTPS TLS session data with the stream handler when PHP 8.6+ provides the
+OpenSSL session API; both work with the caps unchanged. Persistent transport
+sharing also pools connections in a shared cURL share handle, and libcurl does
+not apply the cURL multi connection cap options to transfers that use a shared
+connection pool. When the caps are configured,
+`TransportSharing::PERSISTENT_PREFER` therefore falls back to handler-lifetime
+sharing, and `TransportSharing::PERSISTENT_REQUIRE` is rejected.
 
 ### What do the caps count?
 

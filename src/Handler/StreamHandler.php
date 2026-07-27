@@ -26,6 +26,7 @@ use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
 use GuzzleHttp\Utils;
+use Openssl\Session;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -45,6 +46,12 @@ final class StreamHandler
         'max_total_connections' => true,
         'transport_sharing' => true,
     ];
+
+    /**
+     * Peers tracked by the TLS session cache, matching libcurl's share handle
+     * TLS session cache (25 peers, up to 2 sessions each).
+     */
+    private const TLS_SESSION_CACHE_MAX_KEYS = 25;
 
     private const CONNECTION_ERRORS = [
         'php_network_getaddresses:',
@@ -107,6 +114,8 @@ final class StreamHandler
     private string $transportSharingMode;
 
     private bool $connectionCapsConfigured = false;
+
+    private ?StreamTlsSessionCache $sessionCache = null;
 
     /**
      * Accepts an associative array of options:
@@ -949,6 +958,7 @@ final class StreamHandler
 
         $params = [];
         $context = $this->getDefaultContext($request, $body);
+        $customSslContext = [];
 
         if (isset($options['on_headers']) && !\is_callable($options['on_headers'])) {
             throw new InvalidArgumentException('on_headers must be callable');
@@ -978,9 +988,16 @@ final class StreamHandler
             self::rejectConflictingStreamContextOptions($streamContext);
             self::rejectUnsupportedStreamContextOptions($streamContext);
             $context = \array_replace_recursive($context, $streamContext);
+
+            $sslContext = $streamContext['ssl'] ?? null;
+            if (\is_array($sslContext)) {
+                $customSslContext = $sslContext;
+            }
         }
 
         $this->addDefaultTlsMinimum($request, $context);
+
+        $commitTlsSessions = $this->applyTlsSessionResumption($request, $context, $customSslContext);
 
         // The context timeout governs connecting and the header-phase packet
         // gaps: the idle timeout, tightened to the deadline when that is
@@ -1054,6 +1071,10 @@ final class StreamHandler
             throw self::createStreamFailureException($e->getMessage(), $callerRequest, $e, $streamErrorCodes);
         } finally {
             $captureStreamErrors = false;
+        }
+
+        if ($commitTlsSessions !== null) {
+            $commitTlsSessions();
         }
 
         return $resource;
@@ -1246,6 +1267,160 @@ final class StreamHandler
         $context['ssl']['min_proto_version'] = \STREAM_CRYPTO_PROTO_TLSv1_2;
     }
 
+    /**
+     * Wires PHP 8.6+ TLS session resumption into the SSL context. Preferred
+     * sharing modes fall back to no sharing when a request cannot safely use
+     * Guzzle-managed sessions; HANDLER_REQUIRE fails loudly instead.
+     *
+     * New sessions are held temporarily and committed only after the HTTPS
+     * stream opens successfully. If PHP rejects peer verification or another
+     * stream-open step fails, any session reported during that attempt is
+     * discarded.
+     *
+     * @param array $customSslContext User-supplied stream_context['ssl']
+     *                                values.
+     */
+    private function applyTlsSessionResumption(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array &$context,
+        #[\SensitiveParameter]
+        array $customSslContext = []
+    ): ?\Closure {
+        if (!$this->transportSharingRequested()) {
+            return null;
+        }
+
+        $uri = $request->getUri();
+
+        if ('https' !== $uri->getScheme()) {
+            $this->failRequiredTlsSharingForRequest($request, 'handler-lifetime TLS session sharing only applies to HTTPS requests.');
+
+            return null;
+        }
+
+        $host = $uri->getHost();
+
+        // PHP opens a proxy transport with the full stream context, so a TLS
+        // proxy handshake would consume origin-keyed session state; only a
+        // tcp:// proxy keeps TLS on the origin leg alone.
+        $proxy = $context['http']['proxy'] ?? null;
+        if (\is_string($proxy) && ProxyOptions::proxyScheme($proxy) !== 'tcp') {
+            $this->failRequiredTlsSharingForRequest($request, 'the proxy uses a TLS stream transport, which would mix proxy and origin TLS session state.');
+
+            return null;
+        }
+
+        if (!isset($context['ssl']) || !\is_array($context['ssl'])) {
+            $this->failRequiredTlsSharingForConfiguration('the final stream SSL context is not an array.');
+
+            return null;
+        }
+
+        $unsupported = StreamTlsSessionCache::unsupportedContextReason($context['ssl'], $customSslContext);
+        if ($unsupported !== null) {
+            $this->failRequiredTlsSharingForConfiguration($unsupported);
+
+            return null;
+        }
+
+        $cache = $this->sessionCache();
+        if ($cache === null) {
+            $this->failRequiredTlsSharingForConfiguration('PHP 8.6+ with the OpenSSL session API is required.');
+
+            return null;
+        }
+
+        $key = StreamTlsSessionCache::peerKey(self::canonicalConnectionHost($host), $uri->getPort() ?? 443, $context['ssl']);
+        $credentials = StreamTlsSessionCache::credentialFingerprint($context['ssl']);
+
+        $session = $cache->find($key, $credentials);
+        if ($session !== null) {
+            $context['ssl']['session_data'] = $session;
+        }
+
+        // Sessions captured before the stream opens are staged so handshakes
+        // that fail PHP's peer verification policy are never cached.
+        $accepted = false;
+        $staged = [];
+
+        $context['ssl']['session_new_cb'] = static function (
+            #[\SensitiveParameter]
+            $stream,
+            #[\SensitiveParameter]
+            Session $session
+        ) use ($cache, $key, $credentials, &$accepted, &$staged): void {
+            if ($accepted) {
+                $cache->store($key, $credentials, $session);
+
+                return;
+            }
+
+            // A server can stream session tickets while withholding response
+            // headers; keep only as many staged sessions as the cache retains.
+            if (\count($staged) >= StreamTlsSessionCache::MAX_SESSIONS_PER_KEY) {
+                \array_shift($staged);
+            }
+
+            $staged[] = $session;
+        };
+
+        return static function () use ($cache, $key, $credentials, &$accepted, &$staged): void {
+            $accepted = true;
+
+            foreach ($staged as $session) {
+                $cache->store($key, $credentials, $session);
+            }
+
+            $staged = [];
+        };
+    }
+
+    private function transportSharingRequested(): bool
+    {
+        return $this->transportSharingMode !== TransportSharing::NONE
+            && $this->transportSharingMode !== TransportSharing::PERSISTENT_REQUIRE;
+    }
+
+    private function transportSharingRequired(): bool
+    {
+        return $this->transportSharingMode === TransportSharing::HANDLER_REQUIRE;
+    }
+
+    private function failRequiredTlsSharingForRequest(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        string $reason
+    ): void {
+        if ($this->transportSharingRequired()) {
+            throw new RequestException('The "transport_sharing" option requires stream handler TLS session sharing, but '.$reason, $request);
+        }
+    }
+
+    private function failRequiredTlsSharingForConfiguration(string $reason): void
+    {
+        if ($this->transportSharingRequired()) {
+            throw new InvalidArgumentException('The "transport_sharing" option requires stream handler TLS session sharing, but '.$reason);
+        }
+    }
+
+    /**
+     * Returns this handler's TLS session cache, or null when the configured
+     * sharing mode shares nothing or the OpenSSL session API is unavailable.
+     * Persistent (process-wide) sharing is a cURL-only feature, so
+     * PERSISTENT_PREFER degrades to this per-handler cache while
+     * PERSISTENT_REQUIRE is rejected before sharing applies.
+     */
+    private function sessionCache(): ?StreamTlsSessionCache
+    {
+        if (!$this->transportSharingRequested() || !StreamTlsSessionCache::isSupported()) {
+            return null;
+        }
+
+        return $this->sessionCache ?? ($this->sessionCache = new StreamTlsSessionCache(self::TLS_SESSION_CACHE_MAX_KEYS));
+    }
+
     private function getDefaultContext(
         #[\SensitiveParameter]
         RequestInterface $request,
@@ -1298,6 +1473,20 @@ final class StreamHandler
         $context['http']['header'] = \rtrim($context['http']['header'], "\r\n");
 
         return $context;
+    }
+
+    private function assertTransportSharingSupported(): void
+    {
+        // The stream handler cannot pool live connections or share state across
+        // handler instances; persistent sharing is cURL-only.
+        if ($this->transportSharingMode === TransportSharing::PERSISTENT_REQUIRE) {
+            throw new InvalidArgumentException('The "transport_sharing" option requires persistent transport sharing, which is only available through cURL share handles. The stream handler can only share handler-lifetime TLS sessions.');
+        }
+
+        // Handler-scoped sharing needs the PHP 8.6+ OpenSSL session API.
+        if ($this->transportSharingMode === TransportSharing::HANDLER_REQUIRE && !StreamTlsSessionCache::isSupported()) {
+            throw new InvalidArgumentException('The "transport_sharing" option requires handler-lifetime transport sharing, but the stream handler only supports it through TLS session resumption on PHP 8.6+ with the OpenSSL session API.');
+        }
     }
 
     private static function rejectUnsupportedRequestOptions(
@@ -1485,17 +1674,6 @@ final class StreamHandler
                 'error_store' => 'Guzzle stream error handling',
             ],
         ];
-    }
-
-    private function assertTransportSharingSupported(): void
-    {
-        if ($this->transportSharingMode === TransportSharing::PERSISTENT_REQUIRE) {
-            throw new InvalidArgumentException('The "transport_sharing" option requires persistent transport sharing, which is only available through cURL share handles.');
-        }
-
-        if ($this->transportSharingMode === TransportSharing::HANDLER_REQUIRE) {
-            throw new InvalidArgumentException('The "transport_sharing" option requires transport sharing, but the stream handler does not support it.');
-        }
     }
 
     /**
