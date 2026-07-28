@@ -12,7 +12,9 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.1`
 - Classify stream handler transport failures using PHP 8.6+ structured stream error codes
+- Hide URI credentials, queries, and fragments in automatic exception messages
 - Match `no_proxy` rules against IPv4 hosts written in the shorthand a transport reads as an address
 - Hold the cURL easy handle out of the reuse pool until a silent retry has been dispatched
 

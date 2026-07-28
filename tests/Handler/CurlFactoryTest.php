@@ -2048,7 +2048,7 @@ class CurlFactoryTest extends TestCase
     {
         $proxy = "http://user:se\x01cr\x7Fet@proxy.example.com:8125";
         $easy = new EasyHandle();
-        $easy->request = new Psr7\Request('GET', 'http://example.com');
+        $easy->request = new Psr7\Request('GET', 'http://user:password@example.com/path?token=secret#private');
         $easy->errno = \CURLE_OPERATION_TIMEOUTED;
         $easy->effectiveProxy = $proxy;
         $promise = $this->createCurlRejection($easy, [
@@ -2060,8 +2060,28 @@ class CurlFactoryTest extends TestCase
             $promise->wait();
             self::fail('Expected ConnectTimeoutException');
         } catch (ConnectTimeoutException $e) {
-            self::assertSame('cURL error 28: Connection timeout via http://***@proxy.example.com:8125: transport \\x1B\\xFF (see https://curl.se/libcurl/c/libcurl-errors.html) for http://example.com', $e->getMessage());
+            self::assertSame('cURL error 28: Connection timeout via http://***@proxy.example.com:8125: transport \\x1B\\xFF (see https://curl.se/libcurl/c/libcurl-errors.html) for http://***@example.com/path', $e->getMessage());
             self::assertStringNotContainsString('se\\x01cr\\x7Fet', $e->getMessage());
+        }
+    }
+
+    public function testRedactsSensitiveRequestUriPartsFromCurlErrorText(): void
+    {
+        $request = new Psr7\Request('GET', 'https://user:password@example.com/path?token=secret#private');
+        $easy = new EasyHandle();
+        $easy->request = $request;
+        $easy->errno = \CURLE_OPERATION_TIMEOUTED;
+        $promise = $this->createCurlRejection($easy, [
+            'errno' => \CURLE_OPERATION_TIMEOUTED,
+            'error' => 'Connection timeout for '.$request->getUri(),
+        ]);
+
+        try {
+            $promise->wait();
+            self::fail('Expected ConnectTimeoutException');
+        } catch (ConnectTimeoutException $e) {
+            self::assertSame('cURL error 28: Connection timeout for https://***@example.com/path (see https://curl.se/libcurl/c/libcurl-errors.html)', $e->getMessage());
+            self::assertSame($request, $e->getRequest());
         }
     }
 

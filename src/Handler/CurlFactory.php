@@ -1410,9 +1410,9 @@ final class CurlFactory implements CurlFactoryInterface
         );
 
         if ('' !== $sanitizedError) {
-            $redactedUriString = Psr7\DiagnosticValue::escape(Psr7\Utils::redactUserInfo($uri)->__toString());
-            if ($redactedUriString !== '' && false === \strpos($sanitizedError, $redactedUriString)) {
-                $message .= \sprintf(' for %s', $redactedUriString);
+            $safeUri = Psr7\Utils::redactUriForMessage($uri);
+            if ($safeUri !== '' && false === \strpos($sanitizedError, $safeUri)) {
+                $message .= \sprintf(' for %s', $safeUri);
             }
         }
 
@@ -1510,15 +1510,7 @@ final class CurlFactory implements CurlFactoryInterface
 
         $error = self::redactProxyUserInfo($error, $proxy);
 
-        $baseUri = $uri->withQuery('')->withFragment('');
-        $baseUriString = $baseUri->__toString();
-
-        if ('' !== $baseUriString) {
-            $redactedUriString = Psr7\Utils::redactUserInfo($baseUri)->__toString();
-            $error = str_replace($baseUriString, $redactedUriString, $error);
-        }
-
-        return Psr7\DiagnosticValue::escape($error);
+        return UriDiagnostic::redactInMessage($error, $uri);
     }
 
     private static function redactProxyUserInfo(

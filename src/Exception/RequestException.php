@@ -60,14 +60,14 @@ class RequestException extends TransferException implements RequestExceptionInte
             $label = 'Unsuccessful request';
         }
 
-        $uri = \GuzzleHttp\Psr7\Utils::redactUserInfo($request->getUri());
+        $uri = \GuzzleHttp\Psr7\Utils::redactUriForMessage($request->getUri());
 
         // Client error: `GET /` resulted in a `404 Not Found` response: <html> ... (truncated)
         $message = \sprintf(
             '%s: `%s %s` resulted in a `%s %s` response',
             $label,
             DiagnosticValue::escape($request->getMethod()),
-            DiagnosticValue::escape($uri->__toString()),
+            $uri,
             $response->getStatusCode(),
             DiagnosticValue::escape($response->getReasonPhrase())
         );

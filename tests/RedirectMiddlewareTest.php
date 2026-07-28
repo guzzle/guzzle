@@ -542,7 +542,7 @@ class RedirectMiddlewareTest extends TestCase
     public function testEnsuresProtocolIsValid(): void
     {
         $mock = new MockHandler([
-            new Response(301, ['Location' => 'ftp://test.com']),
+            new Response(301, ['Location' => 'ftp://user:password@test.com/path?token=secret#private']),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
@@ -550,14 +550,14 @@ class RedirectMiddlewareTest extends TestCase
         $request = new Request('GET', 'http://example.com');
 
         $this->expectException(BadResponseException::class);
-        $this->expectExceptionMessage('Redirect URI,');
+        $this->expectExceptionMessage('Redirect URI, ftp://***@test.com/path, does not use one of the allowed redirect protocols: http, https');
         $handler($request, ['allow_redirects' => ['max' => 3]])->wait();
     }
 
     public function testRejectsMalformedRedirectUri(): void
     {
         $mock = new MockHandler([
-            new Response(302, ['Location' => 'http://example.com:99999/path']),
+            new Response(302, ['Location' => 'http://user:password@example.com:99999/path?token=secret#private']),
         ]);
         $stack = new HandlerStack($mock);
         $stack->push(Middleware::redirect());
@@ -570,7 +570,7 @@ class RedirectMiddlewareTest extends TestCase
         } catch (BadResponseException $e) {
             self::assertSame(302, $e->getResponse()->getStatusCode());
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
-            self::assertStringStartsWith('Redirect URI,', $e->getMessage());
+            self::assertSame('Redirect URI, http://***@example.com:99999/path, is invalid.', $e->getMessage());
         }
     }
 
@@ -594,7 +594,7 @@ class RedirectMiddlewareTest extends TestCase
             self::assertSame(302, $e->getResponse()->getStatusCode());
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
             self::assertSame("Factory could not create \xFF URI.", $e->getPrevious()->getMessage());
-            self::assertSame("Redirect URI, http://test.com/\\x9Bfoo, is invalid: Factory could not create \xFF URI.", $e->getMessage());
+            self::assertSame('Redirect URI, http://test.com/\\x9Bfoo, is invalid.', $e->getMessage());
         }
     }
 
