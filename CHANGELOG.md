@@ -17,7 +17,11 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Hold the cURL easy handle out of the reuse pool until a silent retry has been dispatched
 
 
-## 8.0.2 - Upcoming
+## 8.0.2 - 2026-08-05
+
+### Changed
+
+- Adjusted `guzzlehttp/promises` version constraint to `^3.0.1`
 
 ### Fixed
 
