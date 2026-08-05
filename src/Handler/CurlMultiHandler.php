@@ -1153,6 +1153,17 @@ class CurlMultiHandler
         $easy = $entry['easy'];
         $id = (int) $easy->handle;
         $entry['attached'] = false;
+
+        $displaced = $this->handles[$id] ?? null;
+        if ($displaced !== null) {
+            // Never silently discard a tracked entry; settle it first.
+            unset($this->handles[$id], $this->delays[$id], $this->deferredAdds[$id]);
+            if (P\Is::pending($displaced['deferred'])) {
+                $message = \sprintf('cURL multi handler transfer %d was displaced by another request that reused its native cURL handle ID.', $id);
+                $displaced['deferred']->reject(new RequestException($message, $displaced['easy']->request, $displaced['easy']->response));
+            }
+        }
+
         $this->handles[$id] = $entry;
 
         if (!empty($easy->options['delay'])) {
