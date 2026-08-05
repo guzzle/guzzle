@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 7.15.3 - Upcoming
 
+### Changed
+
+- Adjusted `guzzlehttp/promises` version constraint to `^2.5.2`
+
 ### Fixed
 
 - Fail a cURL multi handler wait with an attributable error when the transfer is no longer tracked
