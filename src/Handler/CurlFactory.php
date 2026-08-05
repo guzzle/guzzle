@@ -1166,14 +1166,25 @@ final class CurlFactory implements CurlFactoryInterface
     ): PromiseInterface {
         // Get error information and release the handle to the factory.
         $ctx = self::createErrorContext($easy);
+
+        if (self::shouldRetryFailedRewind($easy)) {
+            // Release after dispatching the retry so the replacement
+            // transfer cannot reuse this native handle ID.
+            try {
+                if ($onStats !== null && $stats !== null) {
+                    $onStats($stats);
+                }
+
+                return self::retryFailedRewind($handler, $easy, $ctx);
+            } finally {
+                $factory->release($easy);
+            }
+        }
+
         $factory->release($easy);
 
         if ($onStats !== null && $stats !== null) {
             $onStats($stats);
-        }
-
-        if (self::shouldRetryFailedRewind($easy)) {
-            return self::retryFailedRewind($handler, $easy, $ctx);
         }
 
         if (self::isResponseRewindFailure($easy)) {

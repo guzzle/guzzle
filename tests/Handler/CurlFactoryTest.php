@@ -5794,6 +5794,27 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('200', $res->getStatusCode());
     }
 
+    public function testHoldsTheEasyHandleOutOfThePoolUntilTheRetryIsDispatched(): void
+    {
+        $easy = null;
+        $handleHeldDuringRetry = null;
+
+        $fn = static function (RequestInterface $request, array $options) use (&$easy, &$handleHeldDuringRetry): P\PromiseInterface {
+            $handleHeldDuringRetry = isset($easy->handle);
+
+            return P\Create::promiseFor(new Psr7\Response());
+        };
+
+        $factory = new CurlFactory(1);
+        $req = new Psr7\Request('GET', Server::$url);
+        $easy = $factory->create($req, []);
+        $res = CurlFactory::finish($fn, $easy, $factory)->wait();
+
+        self::assertTrue($handleHeldDuringRetry);
+        self::assertFalse(isset($easy->handle));
+        self::assertSame(200, $res->getStatusCode());
+    }
+
     public function testFailsWhenRetryMoreThanThreeTimes(): void
     {
         $factory = new CurlFactory(1);

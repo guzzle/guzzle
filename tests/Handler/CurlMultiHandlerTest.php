@@ -4293,6 +4293,46 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame('127.1:'.Server::$port, Server::received()[0]->getHeaderLine('Host'));
     }
 
+    public function testReRegisteringATrackedHandleIdSettlesTheDisplacedTransfer(): void
+    {
+        Server::flush();
+
+        $handler = new CurlMultiHandler(['select_timeout' => 2]);
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, ['delay' => 2000]);
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertCount(1, $handles);
+        $id = (int) \key($handles);
+
+        // A replacement request whose easy handle reuses the same native ID.
+        $replacement = new EasyHandle();
+        $replacement->handle = $handles[$id]['easy']->handle;
+        $replacement->request = new Request('GET', Server::$url);
+        $replacement->options = ['delay' => 2000];
+        $entry = [
+            'easy' => $replacement,
+            'deferred' => new P\Promise(),
+            'wait_token' => new \stdClass(),
+        ];
+
+        $add = \Closure::bind(static function (CurlMultiHandler $handler, array $entry): void {
+            $handler->addRequest($entry);
+        }, null, CurlMultiHandler::class);
+        $add($handler, $entry);
+
+        try {
+            $promise->wait();
+            self::fail('Expected the displaced transfer to reject.');
+        } catch (RequestException $e) {
+            self::assertSame(\sprintf('cURL multi handler transfer %d was displaced by another request that reused its native cURL handle ID.', $id), $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+        }
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertSame($entry['wait_token'], $handles[$id]['wait_token']);
+    }
+
     /**
      * Older libcurl delegates numeric shorthand to the platform resolver,
      * which rejects it on Windows. Validation is covered separately.
