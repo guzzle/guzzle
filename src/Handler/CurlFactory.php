@@ -1067,19 +1067,12 @@ class CurlFactory implements CurlFactoryInterface
             'appconnect_time' => \curl_getinfo($easy->handle, \CURLINFO_APPCONNECT_TIME),
         ] + \curl_getinfo($easy->handle);
         $ctx[self::CURL_VERSION_STR] = CurlVersion::getVersion() ?? '';
+        $factory->release($easy);
 
         // Retry when nothing is present or when curl failed to rewind.
         if (empty($easy->options['_err_message']) && (!$easy->errno || $easy->errno == 65)) {
-            // Release after dispatching the retry so the replacement
-            // transfer cannot reuse this native handle ID.
-            try {
-                return self::retryFailedRewind($handler, $easy, $ctx);
-            } finally {
-                $factory->release($easy);
-            }
+            return self::retryFailedRewind($handler, $easy, $ctx);
         }
-
-        $factory->release($easy);
 
         return self::createRejection($easy, $ctx);
     }
