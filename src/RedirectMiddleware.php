@@ -351,12 +351,12 @@ class RedirectMiddleware
                 $resolvedUri = $uriFactory->createUri((string) $resolvedUri);
             }
         } catch (\InvalidArgumentException $e) {
-            throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid: %s', Psr7\DiagnosticValue::escape($location), $e->getMessage()), $request, $response, $e);
+            throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid.', Psr7\Utils::redactUriStringForMessage($location)), $request, $response, $e);
         }
 
         // Ensure that the redirect URI is allowed based on the protocols.
         if (!\in_array($resolvedUri->getScheme(), $protocols, true)) {
-            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', Psr7\DiagnosticValue::escape((string) $resolvedUri), \implode(', ', $protocols)), $request, $response);
+            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', Psr7\Utils::redactUriForMessage($resolvedUri), \implode(', ', $protocols)), $request, $response);
         }
 
         return $resolvedUri;

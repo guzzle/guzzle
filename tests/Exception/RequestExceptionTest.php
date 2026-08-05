@@ -176,6 +176,20 @@ class RequestExceptionTest extends TestCase
         self::assertStringContainsString('http://***@www.oo.com', $e->getMessage());
         self::assertStringNotContainsString('password', $e->getMessage());
     }
+
+    public function testRedactsSensitiveUriComponentsWithoutRemovingBodySummary(): void
+    {
+        $request = new Request('POST', 'https://user:password@example.test/token?tenant=acme&code=secret#trace');
+        $response = new Response(401, [], '{"error":"BODY_PREFIX_MARKER"}');
+
+        $e = RequestException::create($request, $response);
+
+        self::assertSame('Client error: `POST https://***@example.test/token` resulted in a `401 Unauthorized` response: {"error":"BODY_PREFIX_MARKER"}', $e->getMessage());
+        self::assertSame($request, $e->getRequest());
+        self::assertSame($response, $e->getResponse());
+        self::assertTrue($response->getBody()->isReadable());
+        self::assertSame('{"error":"BODY_PREFIX_MARKER"}', (string) $response->getBody());
+    }
 }
 
 final class ReadSeekOnlyStream extends Stream

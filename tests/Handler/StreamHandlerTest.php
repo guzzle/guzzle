@@ -456,16 +456,23 @@ class StreamHandlerTest extends TestCase
     public function testDoesNotLeakRequestUriCredentialsInConnectionErrorMessage(): void
     {
         $handler = new StreamHandler();
-        $promise = $handler(
-            new Request('GET', 'http://user:secret@localhost:123'),
-            ['timeout' => 0.01]
-        );
+        $request = new Request('GET', 'http://STREAM_USER:STREAM_PASSWORD@localhost:123/path?token=STREAM_QUERY#STREAM_FRAGMENT');
+        $promise = $handler($request, ['timeout' => 0.01]);
 
         try {
             $promise->wait();
             self::fail('Expected ConnectException');
         } catch (ConnectException $e) {
-            self::assertStringNotContainsString('secret', $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+            self::assertStringNotContainsString('STREAM_USER', $e->getMessage());
+            self::assertStringNotContainsString('STREAM_PASSWORD', $e->getMessage());
+            self::assertStringNotContainsString('STREAM_QUERY', $e->getMessage());
+            self::assertStringNotContainsString('STREAM_FRAGMENT', $e->getMessage());
+            self::assertInstanceOf(\RuntimeException::class, $e->getPrevious());
+            self::assertStringNotContainsString('STREAM_USER', $e->getPrevious()->getMessage());
+            self::assertStringNotContainsString('STREAM_PASSWORD', $e->getPrevious()->getMessage());
+            self::assertStringNotContainsString('STREAM_QUERY', $e->getPrevious()->getMessage());
+            self::assertStringNotContainsString('STREAM_FRAGMENT', $e->getPrevious()->getMessage());
         }
     }
 

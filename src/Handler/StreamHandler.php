@@ -891,8 +891,11 @@ final class StreamHandler
      *
      * @throws \RuntimeException when the callback returns false or resource creation emits an error.
      */
-    private function createResource(callable $callback)
-    {
+    private function createResource(
+        callable $callback,
+        #[\SensitiveParameter]
+        ?UriInterface $diagnosticUri = null
+    ) {
         $errors = [];
         \set_error_handler(static function (int $_, string $msg, string $file, int $line) use (&$errors): bool {
             $errors[] = [
@@ -914,7 +917,10 @@ final class StreamHandler
             $details = [];
             foreach ($errors as $err) {
                 foreach ($err as $key => $value) {
-                    $details[] = \sprintf('[%s] %s', $key, Psr7\DiagnosticValue::escape((string) $value));
+                    $rendered = $key === 'message' && $diagnosticUri !== null
+                        ? UriDiagnostic::redactInMessage((string) $value, $diagnosticUri)
+                        : Psr7\DiagnosticValue::escape((string) $value);
+                    $details[] = \sprintf('[%s] %s', $key, $rendered);
                 }
             }
 
@@ -1060,7 +1066,7 @@ final class StreamHandler
                 }
 
                 return $resource;
-            });
+            }, $uri);
         } catch (TransferException $e) {
             // Notification callbacks run during fopen(); an exception a
             // callback throws is already a fully-formed transfer failure for
