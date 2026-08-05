@@ -10,6 +10,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fail a cURL multi handler wait with an attributable error when the transfer is no longer tracked
 - Fix `StreamHandler` resolving numeric IPv4 hosts differently from cURL handlers on macOS and Windows
 - Fix `StreamHandler` TLS peer names and proxy authorities for numeric IPv4 hosts on all platforms
+- Settle a cURL multi handler transfer displaced by a request reusing its native handle ID
+- Hold the cURL easy handle out of the reuse pool until a silent retry has been dispatched
 
 
 ## 7.15.2 - 2026-07-26
