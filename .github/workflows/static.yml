@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  COMPOSER_ROOT_VERSION: 8.1.x-dev
+  COMPOSER_ROOT_VERSION: 8.2.x-dev
 
 jobs:
   phpstan:
