@@ -30,7 +30,7 @@ curl -sS https://getcomposer.org/installer | php
 You can add Guzzle as a dependency using Composer:
 
 ```bash
-composer require guzzlehttp/guzzle:^8.1
+composer require guzzlehttp/guzzle:^8.2
 ```
 
 Alternatively, you can specify Guzzle as a dependency in your project's existing
@@ -39,7 +39,7 @@ composer.json file:
 ```js
 {
   "require": {
-     "guzzlehttp/guzzle": "^8.1"
+     "guzzlehttp/guzzle": "^8.2"
   }
 }
 ```
