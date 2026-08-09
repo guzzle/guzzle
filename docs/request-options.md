@@ -1137,11 +1137,11 @@ goes:
   so TLS connections offer only `h2` via ALPN (libcurl 8.14.0+) and cleartext
   connections speak HTTP/2 directly; cleartext requests sent through a proxy are
   rejected. HTTP/3 requests are pinned to HTTP/3 with no downgrade at all
-  (libcurl 8.13.0+, PHP 8.4+); a proxy cannot carry them and is rejected. A
+  (libcurl 8.13.1+, PHP 8.4+); a proxy cannot carry them and is rejected. A
   server limited to lower protocol versions fails the connection instead of
   downgrading. The required family also rejects final `CURLOPT_HTTPAUTH` masks
   that permit NTLM, which libcurl retries over HTTP/1.1. Requires protocol
-  version `2`/`2.0` or `3`/`3.0` and a cURL handler; anything else throws. A
+  version `2`/`2.0` or `3`/`3.1` and a cURL handler; anything else throws. A
   cold burst dials connections in parallel, but libcurl still packs later
   streams onto the first established connection rather than balancing.
 - `Multiplexing::REQUIRE_WAIT` - the same guarantees as
@@ -2003,7 +2003,7 @@ response body resources where practical. Request bodies that already implement
 > gzip/deflate decoding, and should stream the resource rather than buffer it
 > entirely into memory. The full contract is described under *Creating Streams*
 > in the
-> [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.0/docs/streams-and-decorators.md#creating-streams).
+> [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.1/docs/streams-and-decorators.md#creating-streams).
 > Supply a stream implementation you trust.
 
 ## uri_factory
@@ -2409,7 +2409,7 @@ $request = $client->request('GET', '/get', ['version' => 1.0]);
 $request = $client->request('GET', 'https://example.com', ['version' => 2.0]);
 
 // Attempt HTTP/3 with the cURL handler
-$request = $client->request('GET', 'https://example.com', ['version' => 3.0]);
+$request = $client->request('GET', 'https://example.com', ['version' => 3.1]);
 ```
 
 Guzzle defaults to HTTP/1.1. Set `version` when you want a request to use or
@@ -2418,7 +2418,7 @@ HTTP/2 or HTTP/3 automatically just because the installed cURL stack supports
 them.
 
 The built-in stream handler supports only `1.0` and `1.1`. The built-in cURL
-handler supports `1.0`, `1.1`, `2.0`, and `3.0`, but HTTP/2 and HTTP/3 depend on
+handler supports `1.0`, `1.1`, `2.0`, and `3.1`, but HTTP/2 and HTTP/3 depend on
 the PHP cURL extension and the linked runtime libcurl capabilities.
 
 Empty or malformed `version` values are rejected before the request is sent. If
@@ -2451,7 +2451,7 @@ feature. A libcurl version number is not enough by itself: libcurl must also be
 built with HTTP/3 and QUIC support, commonly through an HTTP/3 backend such as
 ngtcp2 with nghttp3 or quiche.
 
-A request configured with `version => 3.0` must pass HTTP/3 support checks even
+A request configured with `version => 3.1` must pass HTTP/3 support checks even
 if it uses a proxy. If a proxy is actually selected, whether through the `proxy`
 option or resolved from the environment, Guzzle does not try HTTP/3 through the
 proxy in non-required modes; it sends the transfer as HTTP/2 when available,
