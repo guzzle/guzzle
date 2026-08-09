@@ -3,7 +3,7 @@
 This page covers how Guzzle integrates PSR-7 requests, responses, streams, and
 URIs while sending HTTP requests. Generic PSR-7 message, URI, stream, and helper
 documentation lives in
-[`guzzlehttp/psr7`](https://github.com/guzzle/psr7/blob/3.0/README.md).
+[`guzzlehttp/psr7`](https://github.com/guzzle/psr7/blob/3.1/README.md).
 
 ## Sending PSR-7 Requests
 
@@ -34,7 +34,7 @@ middleware and handlers.
 Guzzle uses PSR-7 stream objects to represent request and response bodies. For
 general stream creation, metadata, decorators, and PHP stream resource
 integration, see the
-[PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.0/docs/streams-and-decorators.md).
+[PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.1/docs/streams-and-decorators.md).
 
 For response bodies, the built-in stream handler creates or wraps the
 sink/default stream with the configured
@@ -84,4 +84,4 @@ itself is created with the
 
 - [Quick Start](quick-start.md)
 - [Request Options](request-options.md)
-- [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.0/docs/streams-and-decorators.md)
+- [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.1/docs/streams-and-decorators.md)
