@@ -1428,7 +1428,54 @@ class CookieJarTest extends TestCase
             ['evil.%30x7f000001', '%30x7f000001', false],
             ['sub.0xname', '0xname', true],
             ['%65vil.example.com', 'example.com', true],
+            ['attacker.com', 'com', false],
+            ['anything.co.uk', 'co.uk', false],
+            ['localhost', 'localhost', true],
         ];
+    }
+
+    public function testRejectsPublicSuffixCookieDomains(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://attacker.com/'),
+            new Response(200, ['Set-Cookie' => [
+                'a=1; Domain=com; Path=/',
+                'b=1; Domain=.com; Path=/',
+                'c=1; Domain=COM; Path=/',
+                'd=1; Domain=co.uk; Path=/',
+                'e=1; Domain=.CO.UK; Path=/',
+                'g=1; Domain=xn--p1ai; Path=/',
+                'f=1; Path=/',
+            ]])
+        );
+
+        self::assertCount(1, $this->jar);
+        self::assertNotNull($this->jar->getCookieByName('f'));
+    }
+
+    public function testPublicSuffixCookiesAreNotSentToUnrelatedDomains(): void
+    {
+        $jar = new CookieJar();
+        $jar->extractCookies(
+            new Request('GET', 'https://www.attacker.com/'),
+            new Response(200, ['Set-Cookie' => 'session=ATTACKER; Domain=com; Path=/'])
+        );
+
+        self::assertCount(0, $jar);
+        $request = $jar->withCookieHeader(new Request('GET', 'https://www.mybank.com/login'));
+        self::assertSame('', $request->getHeaderLine('Cookie'));
+    }
+
+    public function testAllowsExactMatchOnPublicSuffixHost(): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'http://localhost/'),
+            new Response(200, ['Set-Cookie' => 'a=1; Domain=localhost'])
+        );
+
+        self::assertCount(1, $this->jar);
+        $request = $this->jar->withCookieHeader(new Request('GET', 'http://localhost/x'));
+        self::assertSame('a=1', $request->getHeaderLine('Cookie'));
     }
 
     /**

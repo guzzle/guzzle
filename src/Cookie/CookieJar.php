@@ -20,6 +20,38 @@ class CookieJar implements CookieJarInterface
     private const MAX_COOKIE_HEADER_LENGTH = 8190;
 
     /**
+     * Well-known multi-part public suffixes that only accept registrations
+     * one label below themselves (for example "co.uk"). A complete check
+     * requires the Public Suffix List; this covers the common cases without
+     * that dependency.
+     */
+    private const MULTIPART_PUBLIC_SUFFIXES = [
+        'ac.cn', 'ac.il', 'ac.in', 'ac.jp', 'ac.kr', 'ac.nz', 'ac.th', 'ac.uk',
+        'ad.jp', 'co.at', 'co.hu', 'co.id', 'co.il', 'co.in', 'co.jp', 'co.kr',
+        'co.nz', 'co.ph', 'co.th', 'co.uk', 'co.ve', 'co.za', 'com.ar', 'com.au',
+        'com.br', 'com.cn', 'com.co', 'com.hk', 'com.mx', 'com.my', 'com.pe',
+        'com.ph', 'com.ru', 'com.sg', 'com.tr', 'com.tw', 'com.ua', 'com.ve',
+        'com.vn', 'edu.ar', 'edu.au', 'edu.cn', 'edu.co', 'edu.hk', 'edu.in',
+        'edu.mx', 'edu.my', 'edu.nz', 'edu.pe', 'edu.ph', 'edu.sg', 'edu.tr',
+        'edu.tw', 'edu.ua', 'edu.ve', 'edu.vn', 'ed.jp', 'firm.in', 'gen.in',
+        'geek.nz', 'gen.nz', 'go.id', 'go.jp', 'go.kr', 'go.th', 'gob.ar',
+        'gob.mx', 'gob.pe', 'gob.ve', 'gov.au', 'gov.cn', 'gov.co', 'gov.hk',
+        'gov.il', 'gov.in', 'gov.my', 'gov.nz', 'gov.ph', 'gov.sg', 'gov.tr',
+        'gov.tw', 'gov.ua', 'gov.vn', 'gov.za', 'govt.nz', 'gr.jp', 'id.au',
+        'idv.hk', 'idv.tw', 'i.ph', 'in.th', 'ind.in', 'int.vn', 'lg.jp',
+        'maori.nz', 'me.uk', 'mil.id', 'mil.in', 'mil.kr', 'mil.ph', 'mi.th',
+        'muni.il', 'ne.jp', 'net.ar', 'net.au', 'net.br', 'net.cn', 'net.co',
+        'net.hk', 'net.id', 'net.il', 'net.in', 'net.mx', 'net.my', 'net.nz',
+        'net.pe', 'net.ph', 'net.ru', 'net.sg', 'net.th', 'net.tr', 'net.tw',
+        'net.ua', 'net.ve', 'net.vn', 'net.uk', 'net.za', 'nom.co', 'nom.za',
+        'or.at', 'or.id', 'or.jp', 'or.kr', 'or.th', 'org.ar', 'org.au', 'org.br',
+        'org.cn', 'org.co', 'org.hk', 'org.il', 'org.in', 'org.mx', 'org.my',
+        'org.nz', 'org.pe', 'org.ph', 'org.sg', 'org.tr', 'org.tw', 'org.ua',
+        'org.ve', 'org.vn', 'org.za', 'pe.kr', 'per.sg', 're.kr', 'res.in',
+        'sch.id', 'sch.uk', 'school.nz', 'school.za', 'web.id', 'web.za',
+    ];
+
+    /**
      * @var SetCookie[] Loaded cookie data
      */
     private array $cookies = [];
@@ -272,6 +304,13 @@ class CookieJar implements CookieJarInterface
                     $sc->setDomain($requestHost);
                     $sc->setHostOnly(true);
                 } else {
+                    // RFC 6265 section 5.1.3: a domain-match against a public
+                    // suffix is only valid as an exact match.
+                    if (self::isPublicSuffixCookieDomain($domain)
+                        && HostIdentity::canonicalCookieDomain($domain) !== $requestHost
+                    ) {
+                        continue;
+                    }
                     $sc->setHostOnly(false);
                 }
                 if (0 !== \strpos($sc->getPath(), '/')) {
@@ -290,13 +329,28 @@ class CookieJar implements CookieJarInterface
                 if (\str_starts_with($prefixName, '__host-') && (!$sc->getSecure() || !$sc->getHostOnly() || $sc->getPath() !== '/' || !self::hasPathAttribute($cookie))) {
                     continue;
                 }
-                // Note: At this point `$sc->getDomain()` being a public suffix should
-                // be rejected, but we don't want to pull in the full PSL dependency.
                 if ($this->setCookie($sc) && ++$accepted === self::MAX_SET_COOKIE_FIELDS) {
                     break;
                 }
             }
         }
+    }
+
+    private static function isPublicSuffixCookieDomain(string $domain): bool
+    {
+        if ($domain !== '' && ($domain[0] === '[' || \strpos($domain, ':') !== false)) {
+            return false;
+        }
+
+        $domain = \ltrim(Psr7\Utils::asciiToLower($domain), '.');
+        if (!\str_contains($domain, '.')) {
+            // Single labels that look like top-level domains ("com", "uk",
+            // punycode TLDs) cannot be suffix-matched; other single-label
+            // names ("0xname", intranet hosts) keep the previous behavior.
+            return (bool) \preg_match('/^(?:xn--|[a-z]{2,})$/D', $domain);
+        }
+
+        return \in_array($domain, self::MULTIPART_PUBLIC_SUFFIXES, true);
     }
 
     private function overlaysSecureCookie(SetCookie $cookie): bool
