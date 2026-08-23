@@ -2152,14 +2152,13 @@ class StreamHandlerTest extends TestCase
 
     private function assertTlsVersionRangeForOptions(string $uri, array $options): void
     {
-        $handler = new StreamHandler();
         $request = new Request('GET', $uri);
         $method = new \ReflectionMethod(StreamHandler::class, 'assertTlsVersionRangeForOptions');
         if (\PHP_VERSION_ID < 80100) {
             $method->setAccessible(true);
         }
 
-        $method->invoke($handler, $request, $options);
+        $method->invoke(null, $request, $options);
     }
 
     /**
