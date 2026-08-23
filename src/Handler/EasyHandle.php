@@ -53,6 +53,12 @@ final class EasyHandle
     public bool $usesPipewait = false;
 
     /**
+     * @var bool Whether processMessages() settled the deferred promise, which
+     *           a rewind retry settles with a still-pending promise
+     */
+    public bool $deferredSettled = false;
+
+    /**
      * @var ResponseInterface|null Received response (if any)
      */
     public ?ResponseInterface $response = null;

@@ -3926,6 +3926,29 @@ class CurlMultiHandlerTest extends TestCase
     /**
      * @return mixed
      */
+    public function testWaitTreatsADeferredResolvedWithAPendingRetryPromiseAsProgress(): void
+    {
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, ['delay' => 3600000]);
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertCount(1, $handles);
+        $entry = \reset($handles);
+
+        $response = new Response(200);
+        $retry = null;
+        $retry = new P\Promise(static function () use (&$retry, $response): void {
+            $retry->resolve($response);
+        });
+
+        // simulate processMessages() settling the deferred with a rewind retry's still-pending promise
+        $entry['easy']->deferredSettled = true;
+        $entry['deferred']->resolve($retry);
+
+        self::assertSame($response, $promise->wait());
+    }
+
     private static function readMultiProperty(CurlMultiHandler $handler, string $name)
     {
         $get = \Closure::bind(static function (CurlMultiHandler $handler) use ($name) {
