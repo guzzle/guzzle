@@ -319,7 +319,7 @@ final class CurlMultiHandler
 
                 // Never null: assigned below before any wait can invoke this.
                 /** @var Promise<ResponseInterface, mixed> $promise */
-                if (!P\Is::pending($promise)) {
+                if ($easy->deferredSettled || !P\Is::pending($promise)) {
                     return;
                 }
 
@@ -1539,6 +1539,7 @@ final class CurlMultiHandler
                     $result = CurlFactory::finish($this, $entry['easy'], $this->factory);
                 } catch (\Throwable $e) {
                     if (P\Is::pending($entry['deferred'])) {
+                        $entry['easy']->deferredSettled = true;
                         $entry['deferred']->reject($e);
                     }
 
@@ -1546,6 +1547,7 @@ final class CurlMultiHandler
                 }
 
                 if (P\Is::pending($entry['deferred'])) {
+                    $entry['easy']->deferredSettled = true;
                     $entry['deferred']->resolve($result);
                 }
             }
