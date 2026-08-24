@@ -7,7 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Added
 
-- Add PHP 8.6 to the tested versions
+- Added support for PHP 8.6
 
 ### Fixed
 
