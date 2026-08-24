@@ -13,12 +13,20 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
+- Adjusted `guzzlehttp/promises` version constraint to `^3.0.2`
 - Adjusted `guzzlehttp/psr7` version constraint to `^3.1`
 - Classify stream handler transport failures using PHP 8.6+ structured stream error codes
 - Hide URI credentials, queries, and fragments in automatic exception messages
 - Match `no_proxy` rules against IPv4 hosts written in the shorthand a transport reads as an address
 - Hold the cURL easy handle out of the reuse pool until a silent retry has been dispatched
 - Treat a deferred resolved with a pending retry promise as progress when waiting on cURL transfers
+
+
+## 8.0.3 - 2026-08-24
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.0.1`
 
 
 ## 8.0.2 - 2026-08-05

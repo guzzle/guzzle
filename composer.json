@@ -53,8 +53,8 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-json": "*",
-        "guzzlehttp/promises": "^3.0.1",
-        "guzzlehttp/psr7": "^3.1@dev",
+        "guzzlehttp/promises": "^3.0.2",
+        "guzzlehttp/psr7": "^3.1",
         "psr/http-client": "^1.0",
         "psr/http-factory": "^1.0",
         "symfony/polyfill-php80": "^1.25",
@@ -64,7 +64,7 @@
         "ext-curl": "*",
         "bamarni/composer-bin-plugin": "^1.8.2",
         "guzzle/client-integration-tests": "4.0.1",
-        "guzzlehttp/test-server": "^1.0",
+        "guzzlehttp/test-server": "^1.0.1",
         "php-http/message-factory": "^1.1",
         "phpunit/phpunit": "^9.6.34",
         "psr/log": "^1.1 || ^2.0 || ^3.0"
@@ -84,7 +84,7 @@
                 "name": "guzzle/client-integration-tests",
                 "version": "v4.0.1",
                 "require": {
-                    "guzzlehttp/psr7": "^3.0@dev",
+                    "guzzlehttp/psr7": "^3.1",
                     "php": "^7.4 || ^8.0",
                     "php-http/message": "^1.0 || ^2.0",
                     "phpunit/phpunit": "^9.6.34",
