@@ -284,6 +284,6 @@ class HandlerStack
         }
 
         /** @var object $fn */
-        return 'callable('.\spl_object_hash($fn).')';
+        return 'callable('.\spl_object_id($fn).')';
     }
 }
