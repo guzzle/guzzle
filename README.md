@@ -30,8 +30,8 @@ composer require guzzlehttp/guzzle
 
 | Version | Status       | PHP Version  |
 |---------|--------------|--------------|
-| 8.2     | Latest       | >=7.4,<8.6   |
-| 7.15    | Maintenance  | >=7.2.5,<8.6 |
+| 8.2     | Latest       | >=7.4,<8.7   |
+| 7.15    | Maintenance  | >=7.2.5,<8.7 |
 | 6.5     | End of Life  | >=5.5,<8.0   |
 
 ## Quick Start
