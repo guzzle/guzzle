@@ -21,6 +21,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Treat a deferred resolved with a pending retry promise as progress when waiting on cURL transfers
 
 
+## 8.0.3 - 2026-08-24
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.0.1`
+
+
 ## 8.0.2 - 2026-08-05
 
 ### Changed
