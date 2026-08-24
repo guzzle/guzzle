@@ -3,13 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
-## 7.15.4 - Upcoming
+## 7.15.4 - 2026-08-24
 
 ### Added
 
 - Added support for PHP 8.6
 
-### Fixed
+### Changed
 
 - Replace the deprecated spl_object_hash() in handler stack debug output for PHP 8.6
 
