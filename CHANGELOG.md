@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.15.5 - 2026-08-24
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.13.1`
+- Adjusted `guzzlehttp/promises` version constraint to `^2.5.3`
+
 ## 7.15.4 - 2026-08-24
 
 ### Added
