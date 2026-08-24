@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.0.3 - UPCOMING
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.0.1`
+
+
 ## 8.0.2 - 2026-08-05
 
 ### Changed
