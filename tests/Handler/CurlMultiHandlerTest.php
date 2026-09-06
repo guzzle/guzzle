@@ -1619,6 +1619,11 @@ class CurlMultiHandlerTest extends TestCase
      */
     public function testRejectsConnectionCapOptionsWithRequiredPersistentTransportSharing(string $option, string $_constant): void
     {
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.21.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
         try {
             new CurlMultiHandler([
                 'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
@@ -1627,6 +1632,8 @@ class CurlMultiHandlerTest extends TestCase
             self::fail('Expected the connection cap option to conflict with persistent transport sharing.');
         } catch (InvalidArgumentException $e) {
             self::assertStringContainsString($option.' cannot be combined with persistent transport sharing', $e->getMessage());
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
         }
 
         self::assertArrayNotHasKey('_curl_share_init_count', $_SERVER);
@@ -1649,20 +1656,158 @@ class CurlMultiHandlerTest extends TestCase
         self::skipIfCurlShareIsUnavailable();
         self::skipIfConnectionCapCurlMultiOptionsUnavailable();
 
-        Server::flush();
-        Server::enqueue([new Response(200)]);
-
-        $handler = new CurlMultiHandler([
-            'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
-            'max_host_connections' => 2,
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.21.0',
+            'features' => self::curlSslFeature(),
         ]);
 
-        $handler(new Request('GET', Server::$url), [])->wait();
+        try {
+            Server::flush();
+            Server::enqueue([new Response(200)]);
 
-        self::assertArrayHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
-        self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
-        self::assertHandlerShareWasCreated();
-        self::assertSame(2, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+            $handler = new CurlMultiHandler([
+                'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
+                'max_host_connections' => 2,
+            ]);
+
+            $handler(new Request('GET', Server::$url), [])->wait();
+
+            self::assertArrayHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
+            self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
+            self::assertHandlerShareWasCreated();
+            self::assertSame(2, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testAllowsConnectionCapOptionsWithRequiredPersistentTransportSharingOnFixedCurl(string $option, string $constant): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::skipIfPersistentCurlShareIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.22.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response(200)]);
+
+            $handler = new CurlMultiHandler([
+                'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
+                $option => 2,
+            ]);
+
+            $handler(new Request('GET', Server::$url), [])->wait();
+
+            self::assertSame(1, $_SERVER['_curl_share_init_persistent_count']);
+            self::assertSame([
+                \CURL_LOCK_DATA_DNS,
+                \CURL_LOCK_DATA_CONNECT,
+                \CURL_LOCK_DATA_SSL_SESSION,
+            ], $_SERVER['_curl_share_persistent_options']);
+            self::assertArrayHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
+            self::assertSame(2, $_SERVER['_curl_multi'][\constant($constant)]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testKeepsPersistentPreferTransportSharingWithConnectionCapsOnFixedCurl(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::skipIfPersistentCurlShareIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.22.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response(200)]);
+
+            $handler = new CurlMultiHandler([
+                'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
+                'max_host_connections' => 2,
+            ]);
+
+            $handler(new Request('GET', Server::$url), [])->wait();
+
+            self::assertSame(1, $_SERVER['_curl_share_init_persistent_count']);
+            self::assertSame([
+                \CURL_LOCK_DATA_DNS,
+                \CURL_LOCK_DATA_CONNECT,
+                \CURL_LOCK_DATA_SSL_SESSION,
+            ], $_SERVER['_curl_share_persistent_options']);
+            self::assertArrayHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
+            self::assertSame(2, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testRejectsConnectionCapOptionsWithPreconstructedPersistentShareState(): void
+    {
+        self::skipIfPersistentCurlShareIsUnavailable();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.21.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            $state = CurlShareHandleState::fromOption(TransportSharing::PERSISTENT_PREFER);
+
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('max_host_connections cannot be combined with persistent transport sharing');
+
+            new CurlMultiHandler([
+                'transport_sharing' => $state,
+                'max_host_connections' => 1,
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testAllowsPreconstructedPersistentShareStateWithConnectionCapsOnFixedCurl(): void
+    {
+        self::skipIfCurlShareIsUnavailable();
+        self::skipIfPersistentCurlShareIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.22.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response(200)]);
+
+            $state = CurlShareHandleState::fromOption(TransportSharing::PERSISTENT_PREFER);
+
+            $handler = new CurlMultiHandler([
+                'transport_sharing' => $state,
+                'max_host_connections' => 2,
+            ]);
+
+            $handler(new Request('GET', Server::$url), [])->wait();
+
+            self::assertSame(1, $_SERVER['_curl_share_init_persistent_count']);
+            self::assertArrayHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
+            self::assertSame(2, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     /**

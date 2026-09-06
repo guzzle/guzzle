@@ -361,6 +361,32 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsProxyCredentialAwareConnectionReuse());
     }
 
+    public function testSupportsSharedPoolConnectionCapsUsesFixedVersion(): void
+    {
+        self::requiresCurlSslFeature();
+
+        self::setVersionInfo([
+            'version' => '8.21.0',
+            'features' => self::curlSslFeature(),
+        ]);
+        self::assertFalse(CurlVersion::supportsSharedPoolConnectionCaps());
+
+        self::setVersionInfo([
+            'version' => '8.21.1',
+            'features' => self::curlSslFeature(),
+        ]);
+        self::assertFalse(CurlVersion::supportsSharedPoolConnectionCaps());
+
+        self::setVersionInfo([
+            'version' => '8.22.0',
+            'features' => self::curlSslFeature(),
+        ]);
+        self::assertTrue(CurlVersion::supportsSharedPoolConnectionCaps());
+
+        self::setVersionInfo(false);
+        self::assertFalse(CurlVersion::supportsSharedPoolConnectionCaps());
+    }
+
     public function testSupportsProxyHeaderSeparationIsFalseBelowMinimumVersion(): void
     {
         self::setVersionInfo([

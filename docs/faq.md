@@ -134,9 +134,9 @@ handler. Overlapping buffered calls are not collectively limited by the
 configured numbers.
 
 Manually constructed `CurlHandler` or custom handlers are outside these caps. A
-custom `handle_factory` is likewise caller-controlled and must not attach an
-external connection-sharing `CURLOPT_SHARE` pool when the caps must hold,
-because Guzzle cannot inspect that native handle state.
+custom `handle_factory` is likewise caller-controlled: on libcurl below 8.22.0
+it must not attach an external connection-sharing `CURLOPT_SHARE` pool when the
+caps must hold, because Guzzle cannot inspect that native handle state.
 
 ### How do the caps compose with connection sharing?
 
@@ -144,11 +144,15 @@ Connection cap options compose with transport sharing as follows. Handler
 transport sharing shares DNS and TLS session data with the cURL handlers, and
 HTTPS TLS session data with the stream handler when PHP 8.6+ provides the
 OpenSSL session API; both work with the caps unchanged. Persistent transport
-sharing also pools connections in a shared cURL share handle, and libcurl does
-not apply the cURL multi connection cap options to transfers that use a shared
-connection pool. When the caps are configured,
-`TransportSharing::PERSISTENT_PREFER` therefore falls back to handler-lifetime
-sharing, and `TransportSharing::PERSISTENT_REQUIRE` is rejected.
+sharing also pools connections in a shared cURL share handle. Since libcurl
+8.22.0, each transfer applies its own multi handle's caps to the shared pool:
+connections from every sharer count toward the numbers, and a capped transfer
+can evict other sharers' idle connections or wait behind their active ones. The
+caps are not a pool-global limit: handlers without caps can still grow the
+shared pool, and each capped handler enforces only its own numbers. On previous
+libcurl versions, `TransportSharing::PERSISTENT_PREFER` falls back to
+handler-lifetime sharing when the caps are configured, and
+`TransportSharing::PERSISTENT_REQUIRE` is rejected.
 
 ### What do the caps count?
 

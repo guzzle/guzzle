@@ -76,14 +76,17 @@ final class Utils
         $sharingRequired = self::isTransportSharingRequired($sharingMode);
         $connectionCapsRequired = self::hasConnectionCapOptions($handlerOptions);
 
-        if ($connectionCapsRequired && $sharingMode === TransportSharing::PERSISTENT_REQUIRE) {
-            throw new InvalidArgumentException('The "max_host_connections" and "max_total_connections" options cannot be combined with required persistent transport sharing because libcurl does not reliably apply connection caps to shared connection pools.');
+        $sharedPoolCapsSupported = CurlVersion::supportsSharedPoolConnectionCaps();
+
+        if ($connectionCapsRequired && !$sharedPoolCapsSupported && $sharingMode === TransportSharing::PERSISTENT_REQUIRE) {
+            throw new InvalidArgumentException(\sprintf('The "max_host_connections" and "max_total_connections" options cannot be combined with required persistent transport sharing because applying connection caps to shared connection pools requires libcurl %s or higher.', CurlVersion::SHARED_POOL_CONNECTION_CAP_VERSION));
         }
 
-        if ($connectionCapsRequired && $sharingMode === TransportSharing::PERSISTENT_PREFER) {
-            // libcurl does not apply cURL multi connection caps to transfers
-            // using a shared connection pool, so the best honorable offer for
-            // preferred persistent sharing is a handler-lifetime share.
+        if ($connectionCapsRequired && !$sharedPoolCapsSupported && $sharingMode === TransportSharing::PERSISTENT_PREFER) {
+            // libcurl below 8.22.0 does not apply cURL multi connection caps to
+            // transfers using a shared connection pool (curl #22265), so the
+            // best honorable offer for preferred persistent sharing is a
+            // handler-lifetime share.
             $sharingMode = TransportSharing::HANDLER_PREFER;
         }
 

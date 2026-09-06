@@ -514,13 +514,22 @@ class ClientTest extends TestCase
      */
     public function testConnectionCapClientOptionsCannotBeUsedWithRequiredPersistentTransportSharing(string $option): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('persistent transport sharing');
-
-        new Client([
-            'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
-            $option => 1,
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.21.0',
+            'features' => self::curlSslFeature(),
         ]);
+
+        try {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('persistent transport sharing');
+
+            new Client([
+                'transport_sharing' => TransportSharing::PERSISTENT_REQUIRE,
+                $option => 1,
+            ]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     public function testConnectionCapsDegradePersistentPreferTransportSharingToHandlerSharing(): void
@@ -559,6 +568,60 @@ class ClientTest extends TestCase
             self::assertSame(1, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
             self::assertArrayNotHasKey('_curl_share_init_persistent_count', $_SERVER);
             self::assertHandlerShareWasCreated();
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+            unset(
+                $_SERVER['curl_test'],
+                $_SERVER['_curl_multi'],
+                $_SERVER['_curl_share'],
+                $_SERVER['_curl_share_init_count'],
+                $_SERVER['_curl_share_init_persistent_count'],
+                $_SERVER['_curl_share_persistent_options']
+            );
+        }
+    }
+
+    public function testConnectionCapsKeepPersistentPreferTransportSharingOnFixedCurl(): void
+    {
+        self::skipIfDefaultCurlHandlerIsUnavailable();
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
+        self::skipIfConnectionCapCurlMultiOptionsUnavailable();
+        self::skipIfPersistentCurlShareIsUnavailable();
+        $previousVersionInfo = self::setCurlVersionInfo([
+            'version' => '8.22.0',
+            'features' => self::curlSslFeature(),
+        ]);
+
+        $_SERVER['curl_test'] = true;
+        unset(
+            $_SERVER['_curl_multi'],
+            $_SERVER['_curl_share'],
+            $_SERVER['_curl_share_init_count'],
+            $_SERVER['_curl_share_init_persistent_count'],
+            $_SERVER['_curl_share_persistent_options']
+        );
+
+        try {
+            Server::flush();
+            Server::enqueue([new Response()]);
+
+            $client = new Client([
+                'transport_sharing' => TransportSharing::PERSISTENT_PREFER,
+                'max_host_connections' => 1,
+            ]);
+
+            $response = $client->getAsync(Server::$url, [
+                'multiplex' => Multiplexing::WAIT,
+            ])->wait();
+
+            self::assertSame(200, $response->getStatusCode());
+            self::assertSame(1, $_SERVER['_curl_multi'][\constant('CURLMOPT_MAX_HOST_CONNECTIONS')]);
+            self::assertSame(1, $_SERVER['_curl_share_init_persistent_count']);
+            self::assertSame([
+                \CURL_LOCK_DATA_DNS,
+                \CURL_LOCK_DATA_CONNECT,
+                \CURL_LOCK_DATA_SSL_SESSION,
+            ], $_SERVER['_curl_share_persistent_options']);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
             unset(
@@ -1558,6 +1621,19 @@ class ClientTest extends TestCase
     {
         if (!CurlVersion::supportsCurlHandler()) {
             self::markTestSkipped('cURL multi connection cap options are unavailable.');
+        }
+    }
+
+    private static function skipIfPersistentCurlShareIsUnavailable(): void
+    {
+        if (
+            !\function_exists('curl_share_init_persistent')
+            || !\class_exists('CurlSharePersistentHandle')
+            || !\defined('CURL_LOCK_DATA_DNS')
+            || !\defined('CURL_LOCK_DATA_CONNECT')
+            || !\defined('CURL_LOCK_DATA_SSL_SESSION')
+        ) {
+            self::markTestSkipped('Persistent cURL share handles are unavailable.');
         }
     }
 
