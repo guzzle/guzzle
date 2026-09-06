@@ -230,8 +230,8 @@ final class CurlMultiHandler
             if ($sharingMode === TransportSharing::PERSISTENT_PREFER) {
                 // libcurl below 8.22.0 does not apply cURL multi connection
                 // caps to transfers using a shared connection pool (curl
-                // #22265), so the best honorable offer for preferred
-                // persistent sharing is a handler-lifetime share.
+                // #22265), so the best honorable offer for preferred persistent
+                // sharing is a handler-lifetime share.
                 $transportSharing = TransportSharing::HANDLER_PREFER;
                 $sharingMode = TransportSharing::HANDLER_PREFER;
             }

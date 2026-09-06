@@ -80,9 +80,9 @@ final class CurlVersion
 
     // curl 8.22.0 applies the cURL multi connection caps from the transfer's
     // own multi handle to transfers using a share-owned connection pool, with
-    // safe eviction from such pools, and documents that contract (curl
-    // #22266); from 8.13.0 (df67269) until then, the limit check on
-    // share-owned pools always passed (curl #22265).
+    // safe eviction from such pools, and documents that contract (curl #22266);
+    // from 8.13.0 (df67269) until then, the limit check on share-owned pools
+    // always passed (curl #22265).
     public const SHARED_POOL_CONNECTION_CAP_VERSION = '8.22.0';
 
     // curl 7.83.1 added proxy TLS-SRP to the connection-reuse match

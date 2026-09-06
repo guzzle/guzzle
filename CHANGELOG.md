@@ -7,7 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Allow connection caps combined with persistent transport sharing on libcurl 8.22.0+
+- Allow connection caps to be combined with persistent transport sharing on libcurl 8.22.0+
 
 
 ## 8.1.0 - Upcoming
