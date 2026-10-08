@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.2.1 - Upcoming
+
+### Fixed
+
+- Keep stream handler request deadlines independent during overlapping calls
+
+
 ## 8.2.0 - 2026-09-06
 
 ### Changed

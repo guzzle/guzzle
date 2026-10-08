@@ -107,8 +107,6 @@ final class StreamHandler
 
     private array $lastHeaders = [];
 
-    private ?float $lastDeadline = null;
-
     private ?\Throwable $onStatsException = null;
 
     private string $transportSharingMode;
@@ -234,11 +232,15 @@ final class StreamHandler
                 $request = $request->withHeader('Content-Length', (string) \strlen($body));
             }
 
+            $deadline = null;
+            $stream = $this->createStream($request, $options, $body, $deadline);
+
             return $this->createResponse(
                 $request,
                 $options,
-                $this->createStream($request, $options, $body),
-                $startTime
+                $stream,
+                $startTime,
+                $deadline
             );
         } catch (\InvalidArgumentException $e) {
             throw $e;
@@ -392,12 +394,11 @@ final class StreamHandler
         #[\SensitiveParameter]
         array $options,
         $stream,
-        ?float $startTime
+        ?float $startTime,
+        ?float $deadline
     ): PromiseInterface {
         $hdrs = $this->lastHeaders;
         $this->lastHeaders = [];
-        $deadline = $this->lastDeadline;
-        $this->lastDeadline = null;
 
         try {
             [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($hdrs);
@@ -943,7 +944,8 @@ final class StreamHandler
         RequestInterface $request,
         #[\SensitiveParameter]
         array $options,
-        string $body
+        string $body,
+        ?float &$deadline
     ) {
         // Report a stream-open failure against the request passed here, not the
         // Connection: close clone built for the wire.
@@ -1029,8 +1031,8 @@ final class StreamHandler
         );
 
         try {
-            $resource = $this->createResource(function () use ($uri, $contextResource, $idleTimeout, $timeout) {
-                $this->lastDeadline = $timeout > 0 ? Clock::now() + $timeout / 1000 : null;
+            $resource = $this->createResource(function () use ($uri, $contextResource, $idleTimeout, $timeout, &$deadline) {
+                $deadline = $timeout > 0 ? Clock::now() + $timeout / 1000 : null;
 
                 // Blank the from ini setting for the transfer so ambient
                 // configuration cannot leak into a From header; the wrapper
