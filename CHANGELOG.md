@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.3.0 - Upcoming
+
+### Added
+
+- Add configurable idle cURL handle retention through `max_idle_handles`
+
+
 ## 8.2.0 - 2026-09-06
 
 ### Changed
