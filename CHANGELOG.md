@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.3.0 - Upcoming
+
+### Changed
+
+- Return available bytes promptly when reading chunked or compressed streamed
+  responses
+
+
 ## 8.2.0 - 2026-09-06
 
 ### Changed
