@@ -417,9 +417,21 @@ final class StreamHandler
             $framingFailure = $e;
         }
 
+        $filtered = false;
+        $decodeContent = false;
+        $streaming = !empty($options['stream']);
         if ($framingFailure === null) {
             try {
-                $headers = $this->decodeChunkedResponse($headers, $stream, $canHaveBody);
+                [$headers, $filtered] = $this->decodeChunkedResponse($headers, $stream, $canHaveBody);
+                [$headers, $decodeContent] = self::decodeContentHeaders($options, $headers);
+                if ($streaming && $canHaveBody && $decodeContent) {
+                    // Decode on the transport itself so a blocking read of one
+                    // decoded byte cannot trigger a larger blocking source read.
+                    $this->createResource(static function () use ($stream) {
+                        return \stream_filter_append($stream, 'zlib.inflate', \STREAM_FILTER_READ, ['window' => 15 + 32]);
+                    });
+                    $filtered = true;
+                }
             } catch (\RuntimeException $e) {
                 $framingFailure = $e;
             }
@@ -428,19 +440,24 @@ final class StreamHandler
         $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new Psr7\HttpFactory());
         $responseFactory = self::requireResponseFactory($options[RequestOptions::RESPONSE_FACTORY] ?? new Psr7\HttpFactory());
 
-        // Wrap the transport resource with the configured stream factory, and
-        // decorate buffered transfers with the deadline source before optional
-        // content decoding layers an InflateStream on top, so every read that
-        // pulls from the transport observes the deadline.
         $resource = $stream;
         $stream = $streamFactory->createStreamFromResource($stream);
-        if ($framingFailure === null && $deadline !== null && empty($options['stream'])) {
+        // Keep the deadline source below buffered content decoding so every
+        // transport read made by InflateStream observes the remaining budget.
+        if ($framingFailure === null && $deadline !== null && !$streaming) {
             $stream = self::createDeadlineSource($stream, $resource, $deadline, $options);
         }
 
         $encodedBody = null;
-        if ($framingFailure === null) {
-            [$stream, $headers, $encodedBody] = self::checkDecode($options, $headers, $stream, $declaredLength);
+        if ($framingFailure === null && !$streaming && $decodeContent) {
+            if ($declaredLength !== null && $declaredLength !== '0') {
+                $encodedBody = new EncodedBodyStream($stream, $declaredLength);
+                $stream = $encodedBody;
+            }
+            $stream = new Psr7\InflateStream($stream);
+        }
+        if ($framingFailure === null && $streaming && $filtered) {
+            $stream = new IncrementalStream($stream, $resource);
         }
 
         $sink = $framingFailure !== null || !$canHaveBody
@@ -639,7 +656,7 @@ final class StreamHandler
      * @param resource                $stream
      * @param bool                    $decodeBody Whether to attach the dechunk filter
      *
-     * @return array<string, string[]>
+     * @return array{0: array<string, string[]>, 1: bool}
      *
      * @throws \RuntimeException when the dechunk filter cannot be attached
      */
@@ -672,7 +689,7 @@ final class StreamHandler
         }
 
         if (!$decode) {
-            return $headers;
+            return [$headers, false];
         }
 
         if ($decodeBody) {
@@ -681,33 +698,23 @@ final class StreamHandler
             });
         }
 
-        return $decodedHeaders;
+        return [$decodedHeaders, $decodeBody];
     }
 
     /**
-     * @return array{0: StreamInterface, 1: array, 2: ?EncodedBodyStream}
+     * @return array{0: array, 1: bool}
      */
-    private static function checkDecode(
+    private static function decodeContentHeaders(
         #[\SensitiveParameter]
         array $options,
-        array $headers,
-        StreamInterface $stream,
-        ?string $declaredLength
+        array $headers
     ): array {
-        $encodedBody = null;
-
         // Automatically decode responses when instructed.
         if (isset($options['decode_content']) && $options['decode_content'] !== false) {
             $normalizedKeys = Utils::normalizeHeaderKeys($headers);
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
-                    if (empty($options['stream']) && $declaredLength !== null && $declaredLength !== '0') {
-                        $encodedBody = new EncodedBodyStream($stream, $declaredLength);
-                        $stream = $encodedBody;
-                    }
-
-                    $stream = new Psr7\InflateStream($stream);
                     $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
 
                     // Remove content-encoding header
@@ -720,11 +727,13 @@ final class StreamHandler
                     if ($encodedContentLength !== []) {
                         $headers['x-encoded-content-length'] = $encodedContentLength;
                     }
+
+                    return [$headers, true];
                 }
             }
         }
 
-        return [$stream, $headers, $encodedBody];
+        return [$headers, false];
     }
 
     /**
