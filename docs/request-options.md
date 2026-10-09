@@ -1982,10 +1982,11 @@ response body resources where practical. Request bodies that already implement
 > left untouched, string path sinks open lazily, and caller-owned resource sinks
 > keep Guzzle's own stream wrapper so write-only sink resources remain
 > supported. `MockHandler` queued responses and custom handler responses are
-> used as provided. When decoding gzip/deflate responses, the factory still
-> wraps the underlying transport resource, but Guzzle layers its own
-> `InflateStream` decorator on top because PSR-17 cannot express a decoding
-> stream.
+> used as provided. For streamed gzip/deflate responses, the factory wraps the
+> transport resource with its decoding filters already attached. Guzzle
+> decorates filtered streamed bodies to return available bytes without waiting
+> to fill the requested read length. Buffered gzip/deflate responses instead use
+> Guzzle's `InflateStream` decorator over the factory's stream.
 
 > [!WARNING]
 > Guzzle only checks that the value implements
@@ -2209,8 +2210,10 @@ handler when PHP streams are available. The [`timeout`](#timeout) deadline then
 applies to obtaining the response and does not bound reads on the streamed body:
 each read is bounded by the [`read_timeout`](#read_timeout) idle timeout, and a
 timed-out read throws `GuzzleHttp\Psr7\Exception\TimeoutException` and can be
-retried. The built-in cURL handlers download the body up-front even when
-`stream` is enabled, so the deadline covers the whole transfer.
+retried. Reads return available decoded bytes, including from chunked and
+compressed responses, and may be shorter than requested. The built-in cURL
+handlers download the body up-front even when `stream` is enabled, so the
+deadline covers the whole transfer.
 
 Handlers that do not support `stream` fall back to `sink` behavior. Digest
 authentication still protects configured sinks from intermediate challenge
