@@ -1793,7 +1793,7 @@ class StreamHandlerTest extends TestCase
             $handler,
             $request,
             ['decode_content' => true, 'stream' => true],
-            Psr7\Utils::streamFor($gzip)
+            Psr7\Utils::streamFor($gzip)->detach()
         )->wait();
 
         self::assertSame($decoded, (string) $response->getBody());
@@ -5060,6 +5060,69 @@ class StreamHandlerTest extends TestCase
         self::assertFalse(\feof($body));
     }
 
+    /**
+     * @dataProvider incrementalResponseProvider
+     */
+    public function testReadsFilteredResponsesIncrementally(string $endpoint, string $expected): void
+    {
+        $response = (new StreamHandler())(
+            new Request('GET', Server::$url.'guzzle-server/'.$endpoint),
+            ['stream' => true, 'decode_content' => true, 'read_timeout' => 10]
+        )->wait();
+        $body = $response->getBody();
+
+        try {
+            $first = $body->read(8192);
+            self::assertNotSame('', $first);
+            self::assertLessThan(\strlen($expected), \strlen($first));
+            self::assertSame($expected, $first.$body->getContents());
+        } finally {
+            $body->close();
+        }
+    }
+
+    public static function incrementalResponseProvider(): iterable
+    {
+        yield 'chunked' => ['drip-timeout', \str_repeat('.', 20)];
+        yield 'chunked gzip' => ['drip-timeout-gzip', \str_repeat("hi there ... this gzip body arrives slowly\n", 64)];
+    }
+
+    public function testReadsFilteredTlsResponseIncrementallyAfterTimeout(): void
+    {
+        $this->skipIfTlsHttpServerIsUnavailable();
+        [$address, $certificate, $process, $pipes] = $this->startTlsHttpServer('stream-timeout');
+        $body = null;
+
+        try {
+            $response = (new StreamHandler())(
+                new Request('GET', 'https://'.$address),
+                ['stream' => true, 'read_timeout' => 0.2, 'verify' => false]
+            )->wait();
+            $body = $response->getBody();
+            $chunks = [];
+            $timeouts = 0;
+            while (!$body->eof()) {
+                try {
+                    $chunk = $body->read(8192);
+                    if ($chunk !== '') {
+                        $chunks[] = $chunk;
+                    }
+                } catch (Psr7\Exception\TimeoutException $e) {
+                    ++$timeouts;
+                }
+            }
+
+            self::assertGreaterThan(0, $timeouts);
+            self::assertSame('abc', \implode('', $chunks));
+            self::assertLessThan(3, \strlen($chunks[0]));
+        } finally {
+            if ($body !== null) {
+                $body->close();
+            }
+            $this->stopTlsHttpServer($process, $pipes, $certificate);
+        }
+    }
+
     public function testThrowsResponseTimeoutExceptionWhenDrainingResponseBodyTimesOut(): void
     {
         Server::flush();
@@ -5648,8 +5711,7 @@ class StreamHandlerTest extends TestCase
         ], $resource)->wait();
 
         self::assertSame('decoded', (string) $response->getBody());
-        // The transport resource is wrapped via the stream factory once, up
-        // front; the decode path then layers an InflateStream over that stream.
+        // The factory wraps the transport once, with decoding already attached.
         self::assertSame(1, $factory->createStreamFromResourceCalls);
 
         // A non-decoded streamed body source is wrapped exactly the same way.
