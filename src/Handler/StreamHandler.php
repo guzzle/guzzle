@@ -1044,16 +1044,12 @@ final class StreamHandler
                     }
                 }
 
-                // PHP 8.5 deprecates the local $http_response_header variable.
-                if (function_exists('http_get_last_response_headers')) {
-                    $http_response_header = \http_get_last_response_headers();
-                }
-
-                $this->lastHeaders = $http_response_header ?? [];
-
                 if (false === $resource) {
                     return false;
                 }
+
+                $headers = \stream_get_meta_data($resource)['wrapper_data'];
+                $this->lastHeaders = \is_array($headers) ? $headers : [];
 
                 // Arm reads with the idle timeout, replacing the context
                 // value the deadline may have tightened; -1 disables it.
