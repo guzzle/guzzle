@@ -1030,10 +1030,10 @@ class StreamHandlerTest extends TestCase
         $stats = null;
         $exception = null;
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
-        ]);
+        ];
 
         try {
             $this->invokeStreamHandlerCreateResponse(
@@ -1044,7 +1044,8 @@ class StreamHandlerTest extends TestCase
                         $stats = $transferStats;
                     },
                 ],
-                Psr7\Utils::streamFor('ab')
+                Psr7\Utils::streamFor('ab'),
+                $headers
             )->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
@@ -1069,12 +1070,12 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
-        ]);
+        ];
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abc'))->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abc'), $headers)->wait();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('abc', (string) $response->getBody());
@@ -1085,12 +1086,12 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
-        ]);
+        ];
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abcdef'))->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abcdef'), $headers)->wait();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('abc', (string) $response->getBody());
@@ -1104,12 +1105,12 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             "HTTP/1.1 {$status} {$reason}",
             'Content-Length: 3',
-        ]);
+        ];
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''), $headers)->wait();
 
         self::assertSame($status, $response->getStatusCode());
     }
@@ -1129,13 +1130,13 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 205 Reset Content',
             'Content-Length: 3',
-        ]);
+        ];
 
         try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'), $headers)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
             self::assertSame(205, $e->getResponse()->getStatusCode());
@@ -1147,12 +1148,12 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 205 Reset Content',
             'Content-Length: 3',
-        ]);
+        ];
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abc'))->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('abc'), $headers)->wait();
 
         self::assertSame(205, $response->getStatusCode());
     }
@@ -1162,12 +1163,12 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('CONNECT', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 Connection Established',
             'Content-Length: 3',
-        ]);
+        ];
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''), $headers)->wait();
 
         self::assertSame(200, $response->getStatusCode());
     }
@@ -1177,14 +1178,14 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 0003',
-        ]);
+        ];
 
         $this->expectException(ResponseTransferException::class);
 
-        $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+        $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'), $headers)->wait();
     }
 
     public function testDuplicateIdenticalContentLengthIsEnforced(): void
@@ -1192,15 +1193,15 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
             'Content-Length: 3',
-        ]);
+        ];
 
         $this->expectException(ResponseTransferException::class);
 
-        $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+        $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'), $headers)->wait();
     }
 
     public function testRejectsConflictingContentLengthBeforeReadingBody(): void
@@ -1216,14 +1217,14 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
             'Content-Length: 5',
-        ]);
+        ];
 
         try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source, $headers)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
             self::assertSame('Invalid Content-Length response header: values conflict', $e->getMessage());
@@ -1240,13 +1241,13 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $overflow = '99999999999999999999999999';
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             "Content-Length: {$overflow}",
-        ]);
+        ];
 
         try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'))->wait();
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor('ab'), $headers)->wait();
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
             self::assertResponseContentLengthPlatformException($e);
@@ -1259,12 +1260,12 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', Server::$url);
         $overflow = '99999999999999999999999999';
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             "Content-Length: {$overflow}",
-        ]);
+        ];
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['stream' => true], Psr7\Utils::streamFor('ab'))->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['stream' => true], Psr7\Utils::streamFor('ab'), $headers)->wait();
 
         self::assertSame($overflow, $response->getHeaderLine('Content-Length'));
         self::assertSame('ab', (string) $response->getBody());
@@ -1283,13 +1284,13 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 99999999999999999999999999',
-        ]);
+        ];
 
         try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source, $headers)->wait();
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
             self::assertResponseContentLengthPlatformException($e);
@@ -1311,13 +1312,13 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
-        ]);
+        ];
 
         try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source, $headers)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
             self::assertSame('Response body ended before the declared Content-Length was reached', $e->getMessage());
@@ -1354,12 +1355,12 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
             'Transfer-Encoding: chunked',
             'Content-Length: 7',
-        ]);
+        ];
 
         try {
             $this->invokeStreamHandlerCreateResponse($handler, $request, [
@@ -1371,7 +1372,7 @@ class StreamHandlerTest extends TestCase
                 'on_stats' => static function (TransferStats $transferStats) use (&$stats): void {
                     $stats = $transferStats;
                 },
-            ], $source)->wait();
+            ], $source, $headers)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
             self::assertSame('A response must not contain both Content-Length and Transfer-Encoding', $e->getMessage());
@@ -1481,14 +1482,14 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: br',
             'Content-Length: 10',
-        ]);
+        ];
 
         try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => true], Psr7\Utils::streamFor('rawbytes'))->wait();
+            $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => true], Psr7\Utils::streamFor('rawbytes'), $headers)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
             self::assertSame(200, $e->getResponse()->getStatusCode());
@@ -1500,14 +1501,14 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
             'Content-Length: 10',
-        ]);
+        ];
 
         try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => false], Psr7\Utils::streamFor('rawbytes'))->wait();
+            $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => false], Psr7\Utils::streamFor('rawbytes'), $headers)->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
             self::assertSame(200, $e->getResponse()->getStatusCode());
@@ -1636,8 +1637,6 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request($method, Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, $headers);
-
         $read = false;
         $closed = false;
         $source = FnStream::decorate(Psr7\Utils::streamFor($sourceBytes), [
@@ -1651,7 +1650,7 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source, $headers)->wait();
 
         self::assertSame($status, $response->getStatusCode());
         self::assertSame($contentLength, $response->getHeaderLine('Content-Length'));
@@ -1679,10 +1678,10 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', Server::$url);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 204 No Content',
             'Content-Length: 8',
-        ]);
+        ];
 
         $closeCalled = false;
         $source = FnStream::decorate(Psr7\Utils::streamFor(''), [
@@ -1695,7 +1694,7 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source, $headers)->wait();
 
         self::assertSame(204, $response->getStatusCode());
         self::assertSame('', (string) $response->getBody());
@@ -1758,14 +1757,14 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', 'http://example.com');
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
             'Content-Length: '.\strlen($gzip),
-        ]);
+        ];
 
         /** @var ResponseInterface $response */
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => true], $resource)->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => true], $resource, $headers)->wait();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame($decoded, (string) $response->getBody());
@@ -1783,17 +1782,18 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $declaredLength = (string) (\strlen($gzip) + 1);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
             'Content-Length: '.$declaredLength,
-        ]);
+        ];
 
         $response = $this->invokeStreamHandlerCreateResponse(
             $handler,
             $request,
             ['decode_content' => true, 'stream' => true],
-            Psr7\Utils::streamFor($gzip)
+            Psr7\Utils::streamFor($gzip),
+            $headers
         )->wait();
 
         self::assertSame($decoded, (string) $response->getBody());
@@ -1815,17 +1815,18 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', 'http://example.com');
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
             'Content-Length: '.\strlen($gzip),
-        ]);
+        ];
 
         $response = $this->invokeStreamHandlerCreateResponse(
             $handler,
             $request,
             ['decode_content' => true],
-            $nonClosingSource
+            $nonClosingSource,
+            $headers
         )->wait();
 
         self::assertSame($decoded, (string) $response->getBody());
@@ -1843,18 +1844,19 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', 'http://example.com');
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             "Content-Encoding: {$encoding}",
             'Content-Length: '.\strlen($encoded),
-        ]);
+        ];
 
         try {
             $this->invokeStreamHandlerCreateResponse(
                 $handler,
                 $request,
                 ['decode_content' => true],
-                Psr7\Utils::streamFor(\substr($encoded, 0, -1))
+                Psr7\Utils::streamFor(\substr($encoded, 0, -1)),
+                $headers
             )->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
@@ -1886,19 +1888,20 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $encodedLength = (string) \strlen($gzip);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
             'Content-Length: '.$encodedLength,
             'content-length: '.(\strlen($gzip) + 1),
-        ]);
+        ];
 
         try {
             $this->invokeStreamHandlerCreateResponse(
                 $handler,
                 $request,
                 ['decode_content' => true],
-                Psr7\Utils::streamFor($gzip)
+                Psr7\Utils::streamFor($gzip),
+                $headers
             )->wait();
             self::fail('Expected ResponseTransferException');
         } catch (ResponseTransferException $e) {
@@ -1920,18 +1923,19 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', 'http://example.com');
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
             'Content-Length: 99999999999999999999999999',
-        ]);
+        ];
 
         try {
             $this->invokeStreamHandlerCreateResponse(
                 $handler,
                 $request,
                 ['decode_content' => true],
-                Psr7\Utils::streamFor($gzip)
+                Psr7\Utils::streamFor($gzip),
+                $headers
             )->wait();
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
@@ -1995,14 +1999,14 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', 'http://example.com');
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
             'Content-Length: '.\strlen($gzip),
-        ]);
+        ];
 
         /** @var ResponseInterface $response */
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => '0'], $resource)->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => '0'], $resource, $headers)->wait();
 
         self::assertSame($decoded, (string) $response->getBody());
         self::assertSame('gzip', $response->getHeaderLine('x-encoded-content-encoding'));
@@ -3764,10 +3768,10 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
-        ]);
+        ];
 
         $promise = $this->invokeStreamHandlerCreateResponse(
             $handler,
@@ -3777,7 +3781,8 @@ class StreamHandlerTest extends TestCase
                     $stats = $transferStats;
                 },
             ],
-            $source
+            $source,
+            $headers
         );
 
         try {
@@ -3807,13 +3812,13 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
-        ]);
+        ];
 
         try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source);
+            $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source, $headers);
             self::fail('Expected Error');
         } catch (\Error $e) {
             self::assertSame($previous, $e);
@@ -3889,12 +3894,12 @@ class StreamHandlerTest extends TestCase
             },
         ]);
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
-        ]);
+        ];
 
-        $promise = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source);
+        $promise = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source, $headers);
 
         try {
             $promise->wait();
@@ -4053,12 +4058,12 @@ class StreamHandlerTest extends TestCase
                 }
             },
         ]);
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
-        ]);
+        ];
 
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source)->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], $source, $headers)->wait();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('abc', (string) $response->getBody());
@@ -4089,13 +4094,13 @@ class StreamHandlerTest extends TestCase
                 throw $rewindFailure;
             },
         ]);
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Length: 3',
-        ]);
+        ];
 
         try {
-            $this->invokeStreamHandlerCreateResponse($handler, $request, ['sink' => $sink], $source)->wait();
+            $this->invokeStreamHandlerCreateResponse($handler, $request, ['sink' => $sink], $source, $headers)->wait();
             self::fail('Expected ResponseException');
         } catch (ResponseException $e) {
             self::assertSame($rewindFailure, $e->getPrevious());
@@ -5514,17 +5519,18 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $factory = new Psr17SpyFactory();
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 201 Created',
             'Foo: Bar',
-        ]);
+        ];
 
         /** @var ResponseInterface $response */
         $response = $this->invokeStreamHandlerCreateResponse(
             $handler,
             $request,
             [RequestOptions::RESPONSE_FACTORY => $factory],
-            Psr7\Utils::streamFor('body')
+            Psr7\Utils::streamFor('body'),
+            $headers
         )->wait();
 
         self::assertInstanceOf(SpyResponse::class, $response);
@@ -5543,14 +5549,14 @@ class StreamHandlerTest extends TestCase
 
         // Different-case duplicates are kept as separate keys by parseHeaders;
         // the response must merge them (withAddedHeader), not drop one.
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Set-Cookie: a=1',
             'set-cookie: b=2',
-        ]);
+        ];
 
         /** @var ResponseInterface $response */
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''), $headers)->wait();
 
         self::assertSame(['a=1', 'b=2'], $response->getHeader('Set-Cookie'));
         self::assertSame('a=1, b=2', $response->getHeaderLine('Set-Cookie'));
@@ -5561,15 +5567,13 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', 'http://example.com');
 
-        $this->setStreamHandlerLastHeaders($handler, ['HTTP/1.1 200']);
         /** @var ResponseInterface $ok */
-        $ok = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+        $ok = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''), ['HTTP/1.1 200'])->wait();
         self::assertSame('OK', $ok->getReasonPhrase());
 
         $unknown = new StreamHandler();
-        $this->setStreamHandlerLastHeaders($unknown, ['HTTP/1.1 599']);
         /** @var ResponseInterface $unknownResponse */
-        $unknownResponse = $this->invokeStreamHandlerCreateResponse($unknown, $request, [], Psr7\Utils::streamFor(''))->wait();
+        $unknownResponse = $this->invokeStreamHandlerCreateResponse($unknown, $request, [], Psr7\Utils::streamFor(''), ['HTTP/1.1 599'])->wait();
         self::assertSame(599, $unknownResponse->getStatusCode());
         self::assertSame('', $unknownResponse->getReasonPhrase());
     }
@@ -5579,9 +5583,8 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
         $request = new Request('GET', 'http://example.com');
 
-        $this->setStreamHandlerLastHeaders($handler, ['HTTP/1.0 200 OK']);
         /** @var ResponseInterface $response */
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''))->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [], Psr7\Utils::streamFor(''), ['HTTP/1.0 200 OK'])->wait();
 
         self::assertSame('1.0', $response->getProtocolVersion());
     }
@@ -5635,17 +5638,17 @@ class StreamHandlerTest extends TestCase
         $request = new Request('GET', 'http://example.com');
         $factory = new Psr17SpyFactory();
 
-        $this->setStreamHandlerLastHeaders($handler, [
+        $headers = [
             'HTTP/1.1 200 OK',
             'Content-Encoding: gzip',
-        ]);
+        ];
 
         /** @var ResponseInterface $response */
         $response = $this->invokeStreamHandlerCreateResponse($handler, $request, [
             RequestOptions::STREAM => true,
             RequestOptions::DECODE_CONTENT => true,
             RequestOptions::STREAM_FACTORY => $factory,
-        ], $resource)->wait();
+        ], $resource, $headers)->wait();
 
         self::assertSame('decoded', (string) $response->getBody());
         // The transport resource is wrapped via the stream factory once, up
@@ -5658,14 +5661,13 @@ class StreamHandlerTest extends TestCase
         \rewind($plainResource);
 
         $plainHandler = new StreamHandler();
-        $this->setStreamHandlerLastHeaders($plainHandler, ['HTTP/1.1 200 OK']);
         $plainFactory = new Psr17SpyFactory();
 
         /** @var ResponseInterface $plainResponse */
         $plainResponse = $this->invokeStreamHandlerCreateResponse($plainHandler, $request, [
             RequestOptions::STREAM => true,
             RequestOptions::STREAM_FACTORY => $plainFactory,
-        ], $plainResource)->wait();
+        ], $plainResource, ['HTTP/1.1 200 OK'])->wait();
 
         self::assertInstanceOf(SpyStream::class, $plainResponse->getBody());
         self::assertSame('plain', (string) $plainResponse->getBody());
@@ -5801,29 +5803,17 @@ class StreamHandlerTest extends TestCase
     }
 
     /**
-     * @param list<string> $headers
-     */
-    private function setStreamHandlerLastHeaders(StreamHandler $handler, array $headers): void
-    {
-        $property = new \ReflectionProperty(StreamHandler::class, 'lastHeaders');
-        if (\PHP_VERSION_ID < 80100) {
-            $property->setAccessible(true);
-        }
-
-        $property->setValue($handler, $headers);
-    }
-
-    /**
      * @param resource|StreamInterface $stream
+     * @param list<string>             $headers
      */
-    private function invokeStreamHandlerCreateResponse(StreamHandler $handler, RequestInterface $request, array $options, $stream)
+    private function invokeStreamHandlerCreateResponse(StreamHandler $handler, RequestInterface $request, array $options, $stream, array $headers)
     {
         $method = new \ReflectionMethod(StreamHandler::class, 'createResponse');
         if (\PHP_VERSION_ID < 80100) {
             $method->setAccessible(true);
         }
 
-        return $method->invoke($handler, $request, $options, $stream, Clock::now());
+        return $method->invoke($handler, $request, $options, $stream, $headers, Clock::now());
     }
 
     public function testProtocolsOptionRejectsDisallowedStreamScheme(): void
