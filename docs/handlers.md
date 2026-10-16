@@ -541,7 +541,9 @@ In strict mode, `CurlMultiHandler` rejects use from a different execution
 context while it has active transfers or a call in progress, including waiting
 on one of its transfers, with a `GuzzleHttp\Promise\CrossContextException`. Once
 all of its transfers finish and its calls return, any context may use it again.
-This protects handlers that you construct and share yourself.
+When the context that owns its transfers is finished, the transfers it left
+unfinished are cancelled, so that they cannot keep other contexts from using the
+handler. This protects handlers that you construct and share yourself.
 
 ## Related
 

@@ -4116,6 +4116,34 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testFinishingTheOwnerCancelsItsTransfersSoOtherContextsCanUseTheHandler(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200), new Response(200)]);
+        $handler = new CurlMultiHandler();
+        $abandoned = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
+        $contexts->end($owner);
+
+        $response = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertTrue(P\Is::rejected($abandoned));
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testFinishingAFormerOwnerDoesNotCancelTheTransfersOfTheCurrentOwner(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200), new Response(201)]);
+        $handler = new CurlMultiHandler();
+        $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        $promise = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), []));
+
+        $contexts->end($owner);
+
+        self::assertTrue(P\Is::pending($promise));
+        self::assertSame(201, $contexts->in($other, static fn () => $promise->wait())->getStatusCode());
+    }
+
     public function testIsolateExecutionContextModeDoesNotGuardTheHandler(): void
     {
         [$contexts, $owner, $other] = $this->useExecutionContexts(P\ExecutionContext::ISOLATE);

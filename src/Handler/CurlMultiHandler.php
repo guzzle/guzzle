@@ -30,8 +30,10 @@ use Psr\Http\Message\ResponseInterface;
  * context while it has active transfers or a call in progress, including
  * waiting on one of its transfers, with a
  * `GuzzleHttp\Promise\CrossContextException`. Once all of its transfers finish
- * and its calls return, any context may use it again. This protects handlers
- * that you construct and share yourself.
+ * and its calls return, any context may use it again. When the context that
+ * owns its transfers is finished, the transfers it left unfinished are
+ * cancelled, so that they cannot keep other contexts from using the handler.
+ * This protects handlers that you construct and share yourself.
  *
  * @see https://github.com/guzzle/guzzle/blob/8.2/docs/handlers.md#concurrent-execution-contexts
  */
@@ -1122,13 +1124,35 @@ final class CurlMultiHandler
             $context = P\ExecutionContext::current();
 
             if ($context !== null) {
-                $this->owner = \WeakReference::create($context);
+                $this->claimOwnership($context);
             }
         }
 
         ++$this->activeCalls;
 
         return true;
+    }
+
+    /**
+     * Makes the given context, which must be running, the owner of the handler
+     * and cancels the transfers it still owns when it finishes, so that
+     * transfers it abandons cannot keep other contexts from using the handler.
+     */
+    private function claimOwnership(object $context): void
+    {
+        $owner = \WeakReference::create($context);
+        $handler = \WeakReference::create($this);
+        $this->owner = $owner;
+
+        P\ExecutionContext::onFinish(static function () use ($handler, $owner): void {
+            $handler = $handler->get();
+
+            // Another context may have taken over the handler after it became
+            // idle, and its transfers are not this context's to cancel.
+            if ($handler !== null && $handler->owner === $owner) {
+                $handler->cancelPendingTransfers();
+            }
+        });
     }
 
     private function releaseClaim(bool $claimed): void
