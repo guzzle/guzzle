@@ -19,6 +19,12 @@ use Psr\Http\Message\ResponseInterface;
  * and its idle handler returns to a bounded pool, so later contexts can reuse
  * its connections. Requests made outside managed contexts share one handler.
  *
+ * Handlers return to the pool only when their context is finished. With a
+ * provider that does not register finalizers, such as the fiber provider, call
+ * ExecutionContext::finish() at the end of each context, or every context
+ * creates a new handler with its own connections. The default handler keeps up
+ * to 8 idle handlers.
+ *
  * @see https://github.com/guzzle/guzzle/blob/8.2/docs/handlers.md#concurrent-execution-contexts
  */
 final class ContextualCurlMultiHandler

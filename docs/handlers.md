@@ -527,6 +527,12 @@ When an execution context finishes, its unfinished transfers are cancelled and
 its idle handler returns to a bounded pool, so later contexts can reuse its
 connections. Requests made outside managed contexts share one handler.
 
+Handlers return to the pool only when their context is finished. With a provider
+that does not register finalizers, such as the fiber provider, call
+`ExecutionContext::finish()` at the end of each context, or every context
+creates a new handler with its own connections. The default handler keeps up to
+8 idle handlers.
+
 Handlers created with the `max_host_connections` or `max_total_connections`
 options are not leased per context, because connection caps apply to one shared
 multi handle. Use such clients from one context at a time.
