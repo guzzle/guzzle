@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## Unreleased
+
+### Added
+
+- Reject cross-context use of an active `CurlMultiHandler` in strict execution context mode
+
+
 ## 8.3.0 - 2026-10-18
 
 ### Changed

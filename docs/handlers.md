@@ -494,6 +494,32 @@ promises should generally be adapted by intentionally settling a Guzzle promise,
 because `then()`, `wait()`, and `cancel()` semantics often differ between
 promise implementations.
 
+## Concurrent Execution Contexts
+
+Runtimes that interleave several execution contexts in one process, such as
+native PHP fibers or coroutine extensions, must keep each context's HTTP work
+in that context. Otherwise, a context that drives a shared cURL multi handler
+also completes transfers owned by another context, and their callbacks run in
+the wrong context. With coroutine extensions that hook cURL, overlapping use of
+one multi handler can also abort the process.
+
+Configure an execution context provider from `guzzlehttp/promises` while
+bootstrapping the process, before creating clients. See the
+[Execution Contexts](https://github.com/guzzle/promises/blob/3.0/docs/execution-contexts.md)
+guide for providers, modes, and finishing contexts.
+
+```php
+use GuzzleHttp\Promise\ExecutionContext;
+
+ExecutionContext::setProvider($provider, ExecutionContext::STRICT);
+```
+
+In strict mode, `CurlMultiHandler` rejects use from a different execution
+context while it has active transfers or a call in progress, including waiting
+on one of its transfers, with a `GuzzleHttp\Promise\CrossContextException`. Once
+all of its transfers finish and its calls return, any context may use it again.
+This protects handlers that you construct and share yourself.
+
 ## Related
 
 - [Middleware](middleware.md)
