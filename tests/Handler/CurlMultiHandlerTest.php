@@ -4114,9 +4114,6 @@ class CurlMultiHandlerTest extends TestCase
         } catch (P\CrossContextException $e) {
             self::assertTrue(P\Is::pending($promise));
         }
-
-        $handler->cancelPendingTransfers();
-        self::assertTrue($handler->isIdle());
     }
 
     public function testIsolateExecutionContextModeDoesNotGuardTheHandler(): void

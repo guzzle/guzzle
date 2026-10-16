@@ -1097,22 +1097,12 @@ final class CurlMultiHandler
      * Cancels every transfer the handler is tracking, rejecting their
      * promises with a cancellation.
      *
-     * When the owning execution context has already ended, the native
-     * transfers are released without settling their promises, because their
-     * callbacks belong to a context that can no longer run them.
-     *
      * @internal
      */
     public function cancelPendingTransfers(): void
     {
-        $orphaned = $this->owner !== null && $this->owner->get() === null;
-
-        foreach ($this->handles as $id => $entry) {
-            if ($orphaned) {
-                $this->cancel($id, $entry['wait_token']);
-            } else {
-                $entry['deferred']->cancel();
-            }
+        foreach ($this->handles as $entry) {
+            $entry['deferred']->cancel();
         }
     }
 
@@ -1169,19 +1159,13 @@ final class CurlMultiHandler
      */
     private function assertOwnedByCurrentContext(): void
     {
-        if ($this->owner === null || !P\ExecutionContext::isStrict()) {
+        if ($this->isAssignedToCurrentContext()) {
             return;
         }
 
         if ($this->isIdle()) {
             $this->owner = null;
 
-            return;
-        }
-
-        $owner = $this->owner->get();
-
-        if ($owner !== null && $owner === P\ExecutionContext::current()) {
             return;
         }
 
