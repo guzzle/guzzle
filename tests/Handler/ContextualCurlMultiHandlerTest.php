@@ -8,12 +8,14 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\ContextualCurlMultiHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\CancellationException;
 use GuzzleHttp\Promise\ExecutionContext;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Server\Server;
+use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
 
 class ContextualCurlMultiHandlerTest extends TestCase
@@ -198,6 +200,28 @@ class ContextualCurlMultiHandlerTest extends TestCase
         self::assertTrue(P\Is::pending($pending), 'Another context drove the transfer.');
         self::assertContains($response->getStatusCode(), [200, 201]);
         $this->provider->in($a, static fn () => $pending->wait());
+    }
+
+    public function testLeasedHandlersShareTheTransportStateOfTheSynchronousHandler(): void
+    {
+        if (!CurlVersion::supportsCurlHandler() || !CurlVersion::supportsHandlerSharing()) {
+            self::markTestSkipped('cURL share handles are unavailable.');
+        }
+
+        Server::enqueue([new Response(200), new Response(200), new Response(200)]);
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+
+        try {
+            $client = new Client(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+            $this->provider->in(new \stdClass(), static fn () => $client->getAsync(Server::$url)->wait());
+            $this->provider->in(new \stdClass(), static fn () => $client->getAsync(Server::$url)->wait());
+            $client->get(Server::$url);
+
+            self::assertSame(1, $_SERVER['_curl_share_init_count']);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+        }
     }
 
     public function testClientsWithConnectionCapsKeepOneSharedHandler(): void

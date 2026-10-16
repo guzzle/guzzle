@@ -177,7 +177,7 @@ final class Utils
             }
 
             return Proxy::wrapSync(
-                self::createAsyncCurlHandler($sharingMode, $curlMultiHandlerOptions),
+                self::createAsyncCurlHandler($curlMultiHandlerOptions),
                 new CurlHandler($curlHandlerOptions)
             );
         }
@@ -188,7 +188,7 @@ final class Utils
 
         if (\function_exists('curl_multi_exec')) {
             return $connectionCapOptions === []
-                ? self::createAsyncCurlHandler($sharingMode, $curlMultiHandlerOptions)
+                ? self::createAsyncCurlHandler($curlMultiHandlerOptions)
                 : new CurlMultiHandler($curlMultiHandlerOptions);
         }
 
@@ -199,25 +199,22 @@ final class Utils
      * Creates the asynchronous cURL handler, leasing a multi handler to each
      * execution context when an execution context provider is configured.
      *
-     * Connection caps need one shared multi handle, so capped handlers are
-     * never created here.
+     * Leased handlers share the transport sharing state of the synchronous
+     * handler, as a single asynchronous handler does. Connection caps need one
+     * shared multi handle, so capped handlers are never created here.
      *
      * @param array<string, mixed> $curlMultiHandlerOptions
      *
      * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
      */
-    private static function createAsyncCurlHandler(string $sharingMode, array $curlMultiHandlerOptions): callable
+    private static function createAsyncCurlHandler(array $curlMultiHandlerOptions): callable
     {
         if (P\ExecutionContext::provider() === null) {
             return new CurlMultiHandler($curlMultiHandlerOptions);
         }
 
-        // Each leased handler gets its own handler-lifetime share state, so
-        // contexts never share a share handle; persistent states are global.
-        unset($curlMultiHandlerOptions['transport_sharing']);
-
-        return new ContextualCurlMultiHandler(static function () use ($sharingMode, $curlMultiHandlerOptions): CurlMultiHandler {
-            return new CurlMultiHandler(self::createCurlHandlerOptions($sharingMode) + $curlMultiHandlerOptions);
+        return new ContextualCurlMultiHandler(static function () use ($curlMultiHandlerOptions): CurlMultiHandler {
+            return new CurlMultiHandler($curlMultiHandlerOptions);
         });
     }
 
