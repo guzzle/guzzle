@@ -32,7 +32,7 @@ class ContextualCurlMultiHandlerTest extends TestCase
         }
 
         $this->provider = new TestExecutionContextProvider();
-        ExecutionContext::setProvider($this->provider, ExecutionContext::STRICT);
+        ExecutionContext::setProvider($this->provider);
         Server::flush();
     }
 
@@ -119,7 +119,6 @@ class ContextualCurlMultiHandlerTest extends TestCase
 
     public function testPooledHandlersIgnoreTicksQueuedByTheirPreviousContext(): void
     {
-        ExecutionContext::setProvider($this->provider, ExecutionContext::ISOLATE);
         Server::enqueue([new Response(200), new Response(201)]);
         $handler = $this->handler();
         $first = new \stdClass();

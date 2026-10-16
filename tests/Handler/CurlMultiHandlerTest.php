@@ -29,7 +29,6 @@ use GuzzleHttp\Tests\UnvalidatedUriRequest;
 use GuzzleHttp\TransportSharing;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 class CurlMultiHandlerTest extends TestCase
 {
@@ -4144,22 +4143,6 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame(201, $contexts->in($other, static fn () => $promise->wait())->getStatusCode());
     }
 
-    public function testIsolateExecutionContextModeDoesNotGuardTheHandler(): void
-    {
-        [$contexts, $owner, $other] = $this->useExecutionContexts(P\ExecutionContext::ISOLATE);
-        Server::enqueue([new Response(200), new Response(201)]);
-        $handler = new CurlMultiHandler();
-
-        $first = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
-        $second = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), []));
-        $contexts->in($other, static function () use ($handler): void {
-            $handler->execute();
-        });
-
-        self::assertInstanceOf(ResponseInterface::class, $second->wait());
-        self::assertSame(P\PromiseInterface::FULFILLED, $first->getState());
-    }
-
     /**
      * @return iterable<string, array{callable(CurlMultiHandler, callable(): void): void}>
      */
@@ -4280,14 +4263,14 @@ class CurlMultiHandlerTest extends TestCase
      *
      * @return array{TestExecutionContextProvider, \stdClass, \stdClass}
      */
-    private function useExecutionContexts(int $mode = P\ExecutionContext::STRICT): array
+    private function useExecutionContexts(): array
     {
         if (\PHP_VERSION_ID < 80000) {
             self::markTestSkipped('Execution context providers require PHP 8.0 or newer.');
         }
 
         $contexts = new TestExecutionContextProvider();
-        P\ExecutionContext::setProvider($contexts, $mode);
+        P\ExecutionContext::setProvider($contexts);
         Server::flush();
 
         return [$contexts, new \stdClass(), new \stdClass()];

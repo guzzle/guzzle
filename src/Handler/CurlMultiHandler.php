@@ -26,9 +26,9 @@ use Psr\Http\Message\ResponseInterface;
  * associative array of curl option constants mapping to values in the
  * **curl** key of the provided request options.
  *
- * In strict mode, `CurlMultiHandler` rejects use from a different execution
- * context while it has active transfers or a call in progress, including
- * waiting on one of its transfers, with a
+ * With an execution context provider configured, `CurlMultiHandler` rejects use
+ * from a different execution context while it has active transfers or a call in
+ * progress, including waiting on one of its transfers, with a
  * `GuzzleHttp\Promise\CrossContextException`. Once all of its transfers finish
  * and its calls return, any context may use it again. When the context that
  * owns its transfers is finished, the transfers it left unfinished are
@@ -168,17 +168,15 @@ final class CurlMultiHandler
     /**
      * @var \WeakReference<object>|null The execution context that the handler
      *                                  is assigned to, or that owns its active
-     *                                  transfers in strict execution context
-     *                                  mode
+     *                                  transfers
      */
     private ?\WeakReference $owner = null;
 
     /**
-     * @var int Handler calls running for the owner in strict execution context
-     *          mode. A call can suspend its context while the handler tracks
-     *          no transfers, such as while request preparation reads the body
-     *          or a queued task runs, so the handler is not idle until every
-     *          call has returned.
+     * @var int Handler calls running for the owner. A call can suspend its
+     *          context while the handler tracks no transfers, such as while
+     *          request preparation reads the body or a queued task runs, so the
+     *          handler is not idle until every call has returned.
      */
     private int $activeCalls = 0;
 
@@ -1103,12 +1101,13 @@ final class CurlMultiHandler
     }
 
     /**
-     * Claims the handler for the current execution context in strict mode
-     * until the matching releaseClaim(), returning whether a claim was made.
+     * Claims the handler for the current execution context, when a provider is
+     * configured, until the matching releaseClaim(), returning whether a claim
+     * was made.
      */
     private function claimForCurrentContext(): bool
     {
-        if (!P\ExecutionContext::isStrict()) {
+        if (P\ExecutionContext::provider() === null) {
             return false;
         }
 
@@ -1184,7 +1183,7 @@ final class CurlMultiHandler
 
     /**
      * Rejects use of the handler from an execution context that does not own
-     * its active transfers in strict execution context mode.
+     * its active transfers.
      */
     private function assertOwnedByCurrentContext(): void
     {

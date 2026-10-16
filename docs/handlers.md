@@ -511,7 +511,7 @@ guide for providers, modes, and finishing contexts.
 ```php
 use GuzzleHttp\Promise\ExecutionContext;
 
-ExecutionContext::setProvider($provider, ExecutionContext::STRICT);
+ExecutionContext::setProvider($provider);
 ```
 
 With a provider configured, the default handler selected by
@@ -537,13 +537,14 @@ Handlers created with the `max_host_connections` or `max_total_connections`
 options are not leased per context, because connection caps apply to one shared
 multi handle. Use such clients from one context at a time.
 
-In strict mode, `CurlMultiHandler` rejects use from a different execution
-context while it has active transfers or a call in progress, including waiting
-on one of its transfers, with a `GuzzleHttp\Promise\CrossContextException`. Once
-all of its transfers finish and its calls return, any context may use it again.
-When the context that owns its transfers is finished, the transfers it left
-unfinished are cancelled, so that they cannot keep other contexts from using the
-handler. This protects handlers that you construct and share yourself.
+With an execution context provider configured, `CurlMultiHandler` rejects use
+from a different execution context while it has active transfers or a call in
+progress, including waiting on one of its transfers, with a
+`GuzzleHttp\Promise\CrossContextException`. Once all of its transfers finish and
+its calls return, any context may use it again. When the context that owns its
+transfers is finished, the transfers it left unfinished are cancelled, so that
+they cannot keep other contexts from using the handler. This protects handlers
+that you construct and share yourself.
 
 ## Related
 
