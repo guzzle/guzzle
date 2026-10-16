@@ -1085,27 +1085,21 @@ final class CurlMultiHandler
     }
 
     /**
-     * Assigns the handler to an execution context, so ticks queued by any
-     * other context are ignored.
+     * Assigns the handler to the running execution context, so ticks queued by
+     * any other context are ignored and the transfers the context leaves are
+     * cancelled when it is finished.
      *
      * @internal
      */
-    public function assignTo(object $context): void
+    public function assignToCurrentContext(): void
     {
-        $this->owner = \WeakReference::create($context);
-    }
+        $context = P\ExecutionContext::current();
 
-    /**
-     * Cancels every transfer the handler is tracking, rejecting their
-     * promises with a cancellation.
-     *
-     * @internal
-     */
-    public function cancelPendingTransfers(): void
-    {
-        foreach ($this->handles as $entry) {
-            $entry['deferred']->cancel();
+        if ($context === null) {
+            throw new \LogicException('A cURL multi handler can only be assigned inside a managed execution context.');
         }
+
+        $this->claimOwnership($context);
     }
 
     /**
@@ -1153,6 +1147,17 @@ final class CurlMultiHandler
                 $handler->cancelPendingTransfers();
             }
         });
+    }
+
+    /**
+     * Cancels every transfer the handler is tracking, rejecting their
+     * promises with a cancellation.
+     */
+    private function cancelPendingTransfers(): void
+    {
+        foreach ($this->handles as $entry) {
+            $entry['deferred']->cancel();
+        }
     }
 
     private function releaseClaim(bool $claimed): void

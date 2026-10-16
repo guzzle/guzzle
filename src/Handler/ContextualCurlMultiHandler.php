@@ -93,7 +93,9 @@ final class ContextualCurlMultiHandler
         }
 
         $handler = array_pop($this->idle) ?? ($this->factory)();
-        $handler->assignTo($context);
+        // The handler registers its own finalizer here, which cancels the
+        // context's transfers before the lease is released below.
+        $handler->assignToCurrentContext();
         $this->leases[$context] = $handler;
         $reference = \WeakReference::create($context);
 
@@ -105,8 +107,7 @@ final class ContextualCurlMultiHandler
     }
 
     /**
-     * Cancels a finished context's transfers and returns its handler to the
-     * pool when it is idle.
+     * Returns a finished context's handler to the pool when it is idle.
      */
     private function release(?object $context): void
     {
@@ -121,7 +122,6 @@ final class ContextualCurlMultiHandler
         }
 
         unset($this->leases[$context]);
-        $handler->cancelPendingTransfers();
 
         if ($handler->isIdle() && \count($this->idle) < $this->maxIdleHandlers) {
             $this->idle[] = $handler;
