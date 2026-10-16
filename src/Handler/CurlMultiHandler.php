@@ -164,9 +164,10 @@ final class CurlMultiHandler
     private int $messageProcessingDepth = 0;
 
     /**
-     * @var \WeakReference<object>|null The execution context that owns the
-     *                                  handler's active transfers in strict
-     *                                  execution context mode
+     * @var \WeakReference<object>|null The execution context that the handler
+     *                                  is assigned to, or that owns its active
+     *                                  transfers in strict execution context
+     *                                  mode
      */
     private ?\WeakReference $owner = null;
 
@@ -1082,6 +1083,17 @@ final class CurlMultiHandler
     }
 
     /**
+     * Assigns the handler to an execution context, so ticks queued by any
+     * other context are ignored.
+     *
+     * @internal
+     */
+    public function assignTo(object $context): void
+    {
+        $this->owner = \WeakReference::create($context);
+    }
+
+    /**
      * Cancels every transfer the handler is tracking, rejecting their
      * promises with a cancellation.
      *
@@ -1137,7 +1149,7 @@ final class CurlMultiHandler
     }
 
     /**
-     * Determines if the handler has no owner or is owned by the current
+     * Determines if the handler is unassigned or assigned to the current
      * execution context.
      */
     private function isAssignedToCurrentContext(): bool

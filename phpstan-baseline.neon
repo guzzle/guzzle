@@ -31,6 +31,24 @@ parameters:
 			path: src/Env.php
 
 		-
+			message: '#^Access to offset object on an unknown class WeakMap\.$#'
+			identifier: class.notFound
+			count: 4
+			path: src/Handler/ContextualCurlMultiHandler.php
+
+		-
+			message: '#^Instantiated class WeakMap not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/ContextualCurlMultiHandler.php
+
+		-
+			message: '#^Property GuzzleHttp\\Handler\\ContextualCurlMultiHandler\:\:\$leases has unknown class WeakMap as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/ContextualCurlMultiHandler.php
+
+		-
 			message: '#^Parameter \#1 \$ch of function curl_error expects resource, CurlHandle\|resource given\.$#'
 			identifier: argument.type
 			count: 1

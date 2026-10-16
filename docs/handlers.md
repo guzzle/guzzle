@@ -514,6 +514,23 @@ use GuzzleHttp\Promise\ExecutionContext;
 ExecutionContext::setProvider($provider, ExecutionContext::STRICT);
 ```
 
+With a provider configured, the default handler selected by
+`GuzzleHttp\Utils::chooseHandler()` sends asynchronous requests through
+`GuzzleHttp\Handler\ContextualCurlMultiHandler`. Synchronous requests keep using
+the shared `CurlHandler`, which takes a dedicated easy handle for each request.
+Clients created before the provider was configured are not isolated.
+
+`ContextualCurlMultiHandler`: Sends asynchronous requests through a cURL multi
+handler leased to the current execution context.
+
+When an execution context finishes, its unfinished transfers are cancelled and
+its idle handler returns to a bounded pool, so later contexts can reuse its
+connections. Requests made outside managed contexts share one handler.
+
+Handlers created with the `max_host_connections` or `max_total_connections`
+options are not leased per context, because connection caps apply to one shared
+multi handle. Use such clients from one context at a time.
+
 In strict mode, `CurlMultiHandler` rejects use from a different execution
 context while it has active transfers or a call in progress, including waiting
 on one of its transfers, with a `GuzzleHttp\Promise\CrossContextException`. Once
