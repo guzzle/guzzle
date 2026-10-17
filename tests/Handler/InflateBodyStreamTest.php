@@ -87,6 +87,26 @@ class InflateBodyStreamTest extends TestCase
         yield 'bad checksum' => [$badChecksum];
     }
 
+    public function testDecodingFailureIsNotReportedAsTimeout(): void
+    {
+        $source = FnStream::decorate(self::pieces(['not compressed', 'more']), [
+            'getMetadata' => static function (?string $key = null) {
+                return $key === 'timed_out' ? true : null;
+            },
+        ]);
+        $stream = new InflateBodyStream($source);
+
+        try {
+            $stream->getContents();
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertNotInstanceOf(TimeoutException::class, $e);
+            self::assertSame('Unable to decode the response body: invalid gzip or deflate data', $e->getMessage());
+        }
+
+        self::assertTrue($stream->eof());
+    }
+
     public function testPropagatesSourceTimeoutsWithoutLosingData(): void
     {
         $gzip = (string) \gzencode('decoded');

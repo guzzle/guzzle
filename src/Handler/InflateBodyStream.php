@@ -97,7 +97,11 @@ final class InflateBodyStream implements StreamInterface
 
     public function eof(): bool
     {
-        return $this->offset === \strlen($this->buffer) && $this->attached()->eof();
+        $stream = $this->attached();
+
+        // Ending the body on a decoding failure also keeps PSR-7 copy helpers
+        // from reporting it as a timeout when Windows leaves timed_out set.
+        return $this->error !== null || ($this->offset === \strlen($this->buffer) && $stream->eof());
     }
 
     public function isSeekable(): bool
