@@ -10,6 +10,12 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Decode chunked stream handler bodies as they arrive, ending at the last chunk
 - Reject truncated and malformed chunked stream handler bodies, like libcurl
 - Reject unsupported response transfer codings, like libcurl 8.14+
+- End stream handler bodies at their declared `Content-Length`, including `0`
+- Throw when a streamed body ends before its declared `Content-Length`
+
+### Fixed
+
+- Fix streamed stream handler bodies delaying bytes that arrived with the headers
 
 
 ## 8.2.1 - Upcoming

@@ -35,4 +35,13 @@ class TransportStreamTest extends TestCase
 
         self::assertSame([3, 8192], $lengths);
     }
+
+    public function testDetachingACloneLeavesTheBodyReadable(): void
+    {
+        $stream = new TransportStream(Utils::streamFor('hello'));
+
+        (clone $stream)->detach();
+
+        self::assertSame('hello', $stream->getContents());
+    }
 }
