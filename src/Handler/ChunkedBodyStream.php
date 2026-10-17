@@ -71,6 +71,8 @@ final class ChunkedBodyStream implements StreamInterface
 
     private ?\RuntimeException $failure = null;
 
+    private bool $failed = false;
+
     public function __construct(StreamInterface $stream)
     {
         $this->stream = $stream;
@@ -79,6 +81,8 @@ final class ChunkedBodyStream implements StreamInterface
     public function read(int $length): string
     {
         if ($this->failure !== null) {
+            $this->failed = true;
+
             throw $this->failure;
         }
         if ($length < 0) {
@@ -96,7 +100,9 @@ final class ChunkedBodyStream implements StreamInterface
 
     public function eof(): bool
     {
-        return $this->state === self::DONE;
+        // A failure ends the body once it has been thrown, so a stale timed_out
+        // flag cannot make callers report it as a timeout.
+        return $this->failed || $this->state === self::DONE;
     }
 
     public function tell(): int
@@ -159,16 +165,14 @@ final class ChunkedBodyStream implements StreamInterface
      */
     private function fill(): bool
     {
-        // Before PHP 8.3 (8.4 for TLS), a read that starts with bytes PHP has
-        // already buffered also waits for more from the network.
-        $unread = $this->stream->getMetadata('unread_bytes');
-        $data = $this->stream->read(\is_int($unread) && $unread > 0 ? \min($unread, self::READ_SIZE) : self::READ_SIZE);
+        $data = $this->stream->read(self::READ_SIZE);
         if ($data === '') {
             if (!$this->stream->eof()) {
                 return false;
             }
 
             $this->failure = new \RuntimeException('Response body ended before the chunked body was complete');
+            $this->failed = true;
 
             throw $this->failure;
         }
@@ -213,6 +217,8 @@ final class ChunkedBodyStream implements StreamInterface
         } catch (\RuntimeException $e) {
             $this->failure = $e;
             if ($data === '') {
+                $this->failed = true;
+
                 throw $e;
             }
         }

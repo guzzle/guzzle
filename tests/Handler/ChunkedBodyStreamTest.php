@@ -90,6 +90,29 @@ class ChunkedBodyStreamTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider failingBodyProvider
+     */
+    public function testReportsFailureRatherThanStaleTimeout(string $wire, string $message): void
+    {
+        $stream = new ChunkedBodyStream(self::transport([$wire], $reads, true));
+
+        try {
+            Utils::copyToString($stream);
+            self::fail('Expected the body failure');
+        } catch (\RuntimeException $e) {
+            self::assertNotInstanceOf(TimeoutException::class, $e);
+            self::assertSame($message, $e->getMessage());
+        }
+        self::assertTrue($stream->eof());
+    }
+
+    public static function failingBodyProvider(): iterable
+    {
+        yield 'malformed' => ["3\r\nabcX\r\n0\r\n\r\n", 'Invalid chunked response body: missing CRLF after chunk data'];
+        yield 'truncated' => ["3\r\nab", 'Response body ended before the chunked body was complete'];
+    }
+
     public function testDetachesUnreadBodyWithPhpDecoding(): void
     {
         $resource = Utils::tryFopen('php://temp', 'r+');
@@ -115,9 +138,10 @@ class ChunkedBodyStreamTest extends TestCase
     }
 
     /**
-     * @param array<string|null> $pieces Transport reads in order, null for a timeout
+     * @param array<string|null> $pieces   Transport reads in order, null for a timeout
+     * @param bool               $timedOut Whether the transport reports a stale timed_out flag
      */
-    private static function transport(array $pieces, ?int &$reads = null): FnStream
+    private static function transport(array $pieces, ?int &$reads = null, bool $timedOut = false): FnStream
     {
         $reads = 0;
 
@@ -138,8 +162,12 @@ class ChunkedBodyStreamTest extends TestCase
             'eof' => static function () use (&$pieces): bool {
                 return $pieces === [];
             },
-            'getMetadata' => static function (?string $key = null) {
-                return $key === null ? [] : null;
+            'getMetadata' => static function (?string $key = null) use ($timedOut) {
+                if ($key === null) {
+                    return ['timed_out' => $timedOut];
+                }
+
+                return $key === 'timed_out' ? $timedOut : null;
             },
         ]);
     }

@@ -438,7 +438,7 @@ final class StreamHandler
             $stream = self::createDeadlineSource($stream, $resource, $deadline, $options);
         }
         if ($chunked) {
-            $stream = new ChunkedBodyStream($stream);
+            $stream = new ChunkedBodyStream(new TransportStream($stream));
         }
 
         $encodedBody = null;
