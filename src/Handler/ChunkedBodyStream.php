@@ -65,13 +65,9 @@ final class ChunkedBodyStream implements StreamInterface
             throw new \RuntimeException('Length parameter cannot be negative');
         }
 
-        $data = '';
-        while ($length > 0 && !$this->eof()) {
+        do {
             $data = $this->decode($length);
-            if ($data !== '' || $this->eof() || !$this->fill()) {
-                break;
-            }
-        }
+        } while ($data === '' && $length > 0 && !$this->eof() && $this->fill());
 
         $this->position += \strlen($data);
 
@@ -167,7 +163,7 @@ final class ChunkedBodyStream implements StreamInterface
         $data = '';
         $available = \strlen($this->buffer) - $this->offset;
 
-        while ($available > 0) {
+        while ($available > 0 && $this->state !== self::DONE) {
             if ($this->state === self::DATA) {
                 $take = \min($this->remaining, $length - \strlen($data), $available);
                 $data .= \substr($this->buffer, $this->offset, $take);
@@ -217,9 +213,6 @@ final class ChunkedBodyStream implements StreamInterface
 
                 $available -= $end + 1 - $this->offset;
                 $this->offset = $end + 1;
-                if ($this->state === self::DONE) {
-                    break;
-                }
             }
         }
 
