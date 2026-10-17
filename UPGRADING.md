@@ -462,8 +462,10 @@ The stream handler also raises `ResponseTransferException` after draining a
 non-streamed response when a valid, positive `Content-Length` declares more
 bytes than it receives. For decoded gzip and deflate, the length applies to
 encoded bytes before decompression, and the original values remain in
-`x-encoded-content-length`. Valid `stream => true` responses remain lazy after
-header validation.
+`x-encoded-content-length`. A `stream => true` response with a valid
+`Content-Length` ends at the declared length, and a read that reaches the end of
+the connection first throws a `RuntimeException`. A `Content-Length` of `0`
+gives an empty body; Guzzle 7 read such a body until the connection closed.
 
 For chunked responses through the stream handler, the transport resource's
 `wrapper_data` can now retain the original `Transfer-Encoding`. This is visible

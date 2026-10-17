@@ -438,6 +438,13 @@ final class StreamHandler
             $stream = self::createDeadlineSource($stream, $resource, $deadline, $options);
         }
 
+        if ($framingFailure === null && $canHaveBody && !empty($options['stream'])) {
+            $length = HeaderProcessor::contentLengthToInt($declaredLength);
+            if ($length !== null) {
+                $stream = new DeclaredLengthStream($stream, $length);
+            }
+        }
+
         $encodedBody = null;
         if ($framingFailure === null) {
             [$stream, $headers, $encodedBody] = self::checkDecode($options, $headers, $stream, $declaredLength);
@@ -745,7 +752,6 @@ final class StreamHandler
         try {
             // Buffered paths reject unrepresentable lengths before draining.
             $declaredLength = HeaderProcessor::contentLengthToInt($declaredResponseBodyLength);
-            $declaredLength = $declaredLength !== null && $declaredLength > 0 ? $declaredLength : null;
             $copyLimit = $encodedBody === null ? $declaredLength ?? -1 : -1;
 
             try {

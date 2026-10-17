@@ -41,7 +41,8 @@ sink/default stream with the configured
 [`stream_factory`](request-options.md#stream_factory) where practical. When
 response content decoding is enabled, the stream handler may layer Guzzle's
 `InflateStream` over that stream because PSR-17 cannot express a decoding
-stream.
+stream. For `stream => true` responses with a `Content-Length`, it also layers a
+decorator that ends the body at the declared length.
 
 The built-in cURL handlers use libcurl for content decoding when it is enabled.
 libcurl writes the decoded bytes to the configured sink or default response body
