@@ -141,10 +141,7 @@ final class ChunkedBodyStream implements StreamInterface
      */
     private function fill(): bool
     {
-        // Before PHP 8.3 (8.4 for TLS), a read that starts with bytes PHP has
-        // already buffered also waits for more from the network.
-        $unread = $this->stream->getMetadata('unread_bytes');
-        $data = $this->stream->read(\is_int($unread) && $unread > 0 ? \min($unread, self::READ_SIZE) : self::READ_SIZE);
+        $data = $this->stream->read(self::READ_SIZE);
         if ($data === '') {
             if ($this->stream->eof()) {
                 throw new \RuntimeException('Chunked response body ended before the last chunk');
