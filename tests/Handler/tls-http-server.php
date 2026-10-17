@@ -6,8 +6,9 @@ declare(strict_types=1);
  * Minimal HTTPS server fixture for the stream handler TLS tests. Serves a
  * fixed body to each connection until it is terminated and reports whether the
  * handshake resumed a TLS session in the X-TLS-Session-Reused response header.
- * In chunked mode, each line read from stdin releases the next chunk of a
- * chunked body instead. Usage: php tls-http-server.php <certificate-pem-path>
+ * In chunked mode, each line read from stdin releases the next piece of a
+ * chunked response instead, the first carrying the headers and the first
+ * chunk. Usage: php tls-http-server.php <certificate-pem-path>
  * [tls1.2|chunked]. The bound address is printed on stdout once the server is
  * listening.
  */
@@ -52,12 +53,16 @@ if ($server === false) {
 while (($connection = @\stream_socket_accept($server, 30)) !== false) {
     @\fread($connection, 8192);
     if ($mode === 'chunked') {
-        @\fwrite($connection, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n");
-        foreach (["1\r\na\r\n", "2\r\nbc\r\n0\r\n\r\n"] as $chunk) {
+        $pieces = [
+            "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n1\r\na\r\n",
+            "1\r\nb\r\n",
+            "1\r\nc\r\n0\r\n\r\n",
+        ];
+        foreach ($pieces as $piece) {
             if (\fgets(\STDIN) === false) {
                 break;
             }
-            @\fwrite($connection, $chunk);
+            @\fwrite($connection, $piece);
         }
         @\fclose($connection);
         continue;
