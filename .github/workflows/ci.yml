@@ -85,6 +85,16 @@ jobs:
       - name: Run tests
         run: ./vendor/bin/phpunit
 
+      - name: Run decoding tests on a userland dechunk base
+        continue-on-error: true
+        env:
+          GUZZLE_EXP_BASE: userland
+        run: php vendor/bin/phpunit --filter "Gzip|gzip|Compressed|Inflate|Decode|decode"
+
+      - name: Experiment report
+        continue-on-error: true
+        run: php experiment/report.php
+
   build-windows:
     name: Build on Windows
     runs-on: windows-2025
@@ -123,3 +133,13 @@ jobs:
 
       - name: Run tests
         run: vendor/bin/phpunit.bat
+
+      - name: Run decoding tests on a userland dechunk base
+        continue-on-error: true
+        env:
+          GUZZLE_EXP_BASE: userland
+        run: php vendor/bin/phpunit --filter "Gzip|gzip|Compressed|Inflate|Decode|decode"
+
+      - name: Experiment report
+        continue-on-error: true
+        run: php experiment/report.php

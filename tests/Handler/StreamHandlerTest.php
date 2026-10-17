@@ -1801,6 +1801,87 @@ class StreamHandlerTest extends TestCase
         self::assertSame($declaredLength, $response->getHeaderLine('x-encoded-content-length'));
     }
 
+    /**
+     * @dataProvider streamedGzipProtocolVersionProvider
+     */
+    public function testReadsStreamedGzipResponseAsItArrives(string $protocolVersion): void
+    {
+        Server::flush();
+        $response = (new StreamHandler())(
+            new Request('GET', Server::$url.'guzzle-server/drip-timeout-gzip', [], null, $protocolVersion),
+            ['decode_content' => true, 'stream' => true, 'read_timeout' => 10]
+        )->wait();
+        $body = $response->getBody();
+        $expected = \str_repeat("hi there ... this gzip body arrives slowly\n", 64);
+
+        try {
+            $first = $body->read(8192);
+            self::assertNotSame('', $first);
+            self::assertLessThan(\strlen($expected), \strlen($first));
+            self::assertSame($expected, $first.$body->getContents());
+        } finally {
+            $body->close();
+        }
+    }
+
+    public static function streamedGzipProtocolVersionProvider(): iterable
+    {
+        // The test server only uses chunked transfer coding for HTTP/1.1.
+        yield 'close-delimited' => ['1.0'];
+        yield 'chunked' => ['1.1'];
+    }
+
+    /**
+     * @dataProvider invalidCompressedBodyProvider
+     */
+    public function testRejectsInvalidCompressedResponseBody(string $body): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Length: ".\strlen($body)."\r\n\r\n".$body);
+
+        try {
+            (new StreamHandler())(new Request('GET', Server::$url), ['decode_content' => true])->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame('Unable to decode the response body: invalid gzip or deflate data', $e->getMessage());
+            self::assertSame('gzip', $e->getResponse()->getHeaderLine('x-encoded-content-encoding'));
+        }
+    }
+
+    /**
+     * @dataProvider invalidCompressedBodyProvider
+     */
+    public function testFailsReadingInvalidCompressedStreamedBody(string $body): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Length: ".\strlen($body)."\r\n\r\n".$body);
+        $onHeaders = false;
+
+        $response = (new StreamHandler())(new Request('GET', Server::$url), [
+            'decode_content' => true,
+            'stream' => true,
+            'on_headers' => static function () use (&$onHeaders): void {
+                $onHeaders = true;
+            },
+        ])->wait();
+
+        self::assertTrue($onHeaders);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Unable to decode the response body: invalid gzip or deflate data');
+        $response->getBody()->getContents();
+    }
+
+    public static function invalidCompressedBodyProvider(): iterable
+    {
+        $decoded = \str_repeat('payload-', 100);
+        $gzip = (string) \gzencode($decoded);
+        $badChecksum = $gzip;
+        $badChecksum[\strlen($gzip) - 8] = \chr(\ord($gzip[\strlen($gzip) - 8]) ^ 0xFF);
+
+        yield 'not compressed' => [$decoded];
+        yield 'bad checksum' => [$badChecksum];
+    }
+
     public function testDecodedResponseStopsAtEncodedContentLength(): void
     {
         $decoded = 'decoded';
@@ -5681,7 +5762,7 @@ class StreamHandlerTest extends TestCase
 
         self::assertSame('decoded', (string) $response->getBody());
         // The transport resource is wrapped via the stream factory once, up
-        // front; the decode path then layers an InflateStream over that stream.
+        // front; the decode path then layers its decoder over that stream.
         self::assertSame(1, $factory->createStreamFromResourceCalls);
 
         // A non-decoded streamed body source is wrapped exactly the same way.
