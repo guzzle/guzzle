@@ -42,8 +42,6 @@ use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamFactoryInterface;
-use Psr\Http\Message\StreamInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\StreamHandler
@@ -1439,9 +1437,127 @@ class StreamHandlerTest extends TestCase
     }
 
     /**
-     * @dataProvider phpChunkedTransferEncodingCompatibilityProvider
+     * @dataProvider validChunkedBodyProvider
      */
-    public function testPreservesPhpChunkedTransferEncodingCompatibility(string $transferEncodingHeaders, string $wireBody, string $expectedBody, string $expectedHeader): void
+    public function testDecodesChunkedResponseBodies(string $wireBody, string $expectedBody, bool $stream): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n{$wireBody}");
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), ['stream' => $stream])->wait();
+
+        self::assertFalse($response->hasHeader('Transfer-Encoding'));
+        self::assertSame($expectedBody, (string) $response->getBody());
+    }
+
+    public static function validChunkedBodyProvider(): iterable
+    {
+        $cases = [
+            'single chunk' => ["5\r\nhello\r\n0\r\n\r\n", 'hello'],
+            'uppercase hex' => ["A\r\n0123456789\r\n0\r\n\r\n", '0123456789'],
+            'seventeen digit chunk size' => ["00000000000000005\r\nhello\r\n0\r\n\r\n", 'hello'],
+            'zero padded last chunk' => ["5\r\nhello\r\n000\r\n\r\n", 'hello'],
+            'only last chunk' => ["0\r\n\r\n", ''],
+            'chunk extensions' => ["5;a=b\r\nhello\r\n6 ; c=\"d;e\"\r\n world\r\n0;z\r\n\r\n", 'hello world'],
+            'text after chunk size' => ["5x\r\nhello\r\n0\r\n\r\n", 'hello'],
+            'long chunk extension' => ['5;'.\str_repeat('a', 20000)."\r\nhello\r\n0\r\n\r\n", 'hello'],
+            'bare LF line endings' => ["5\nhello\n6\n world\n0\n\n", 'hello world'],
+            'repeated CR after chunk data' => ["5\r\nhello\r\r\n0\r\n\r\n", 'hello'],
+            'trailer fields' => ["5\r\nhello\r\n0\r\nX-A: 1\r\nX-B: 2\r\n\r\n", 'hello'],
+            'trailer field with bare LF' => ["5\r\nhello\r\n0\r\nX-A: 1\n\n", 'hello'],
+            'longest trailer field' => ["5\r\nhello\r\n0\r\nX-A: ".\str_repeat('a', 4088)."\r\n\r\n", 'hello'],
+            'bytes after the final CRLF' => ["5\r\nhello\r\n0\r\n\r\n5\r\nworld\r\n0\r\n\r\n", 'hello'],
+        ];
+
+        foreach ($cases as $name => [$wireBody, $expectedBody]) {
+            yield "{$name}, buffered" => [$wireBody, $expectedBody, false];
+            yield "{$name}, streamed" => [$wireBody, $expectedBody, true];
+        }
+    }
+
+    /**
+     * @dataProvider invalidChunkedBodyProvider
+     */
+    public function testRejectsInvalidBufferedChunkedResponseBodies(string $wireBody, string $expectedMessage): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n{$wireBody}");
+        $handler = new StreamHandler();
+
+        try {
+            $handler(new Request('GET', Server::$url), [])->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame($expectedMessage, $e->getMessage());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+        }
+    }
+
+    /**
+     * @dataProvider invalidChunkedBodyProvider
+     */
+    public function testThrowsWhenReadingInvalidStreamedChunkedResponseBodies(string $wireBody, string $expectedMessage): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n{$wireBody}");
+        $handler = new StreamHandler();
+        $body = $handler(new Request('GET', Server::$url), ['stream' => true])->wait()->getBody();
+
+        try {
+            while (!$body->eof()) {
+                $body->read(8192);
+            }
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertNotInstanceOf(Psr7\Exception\TimeoutException::class, $e);
+            self::assertSame($expectedMessage, $e->getMessage());
+        }
+    }
+
+    public static function invalidChunkedBodyProvider(): iterable
+    {
+        $ended = 'Response body ended before the chunked body was complete';
+        $size = 'Invalid chunked response body: invalid chunk size';
+        $data = 'Invalid chunked response body: missing CRLF after chunk data';
+        $trailer = 'Invalid chunked response body: invalid trailer section';
+
+        yield 'empty body' => ['', $ended];
+        yield 'missing last chunk' => ["5\r\nhello\r\n", $ended];
+        yield 'ends in chunk data' => ["5\r\nhel", $ended];
+        yield 'ends before CRLF after chunk data' => ["5\r\nhello", $ended];
+        yield 'ends in chunk size' => ["5\r\nhello\r\n6", $ended];
+        yield 'ends in chunk extension' => ["5\r\nhello\r\n6;a\r", $ended];
+        yield 'ends after last chunk' => ["5\r\nhello\r\n0\r\n", $ended];
+        yield 'ends in final CRLF' => ["5\r\nhello\r\n0\r\n\r", $ended];
+        yield 'ends in trailer section' => ["5\r\nhello\r\n0\r\nX-A: 1\r\n", $ended];
+        yield 'bare CR ends chunk size' => ["5\rhello\r\n0\r\n\r\n", $ended];
+        yield 'largest chunk size' => ["7fffffffffffffff\r\nhello", $ended];
+        yield 'non-hex chunk size' => ["zz\r\nhello\r\n0\r\n\r\n", $size];
+        yield 'empty chunk size' => ["\r\nhello\r\n0\r\n\r\n", $size];
+        yield 'signed chunk size' => ["+5\r\nhello\r\n0\r\n\r\n", $size];
+        yield 'negative chunk size' => ["-5\r\nhello\r\n0\r\n\r\n", $size];
+        yield 'space before chunk size' => [" 5\r\nhello\r\n0\r\n\r\n", $size];
+        yield 'invalid later chunk size' => ["5\r\nhello\r\nzz\r\n world\r\n0\r\n\r\n", $size];
+        yield 'eighteen digit chunk size' => ["000000000000000005\r\nhello\r\n0\r\n\r\n", $size];
+        yield 'chunk size above the signed 64-bit range' => ["8000000000000000\r\nhello\r\n0\r\n\r\n", $size];
+        yield 'seventeen significant digits' => ["10000000000000000\r\nhello\r\n0\r\n\r\n", $size];
+        yield 'chunk data longer than its size' => ["5\r\nhello!\r\n0\r\n\r\n", $data];
+        yield 'text instead of CRLF after chunk data' => ["5\r\nhelloXX0\r\n\r\n", $data];
+        yield 'CR then text after chunk data' => ["5\r\nhello\rX\n0\r\n\r\n", $data];
+        yield 'trailer field without colon' => ["5\r\nhello\r\n0\r\nbogus\r\n\r\n", $trailer];
+        yield 'trailer field with NUL' => ["5\r\nhello\r\n0\r\nX-A: a\0b\r\n\r\n", $trailer];
+        yield 'folded trailer field' => ["5\r\nhello\r\n0\r\nX-A: a\r\n b\r\n\r\n", $trailer];
+        yield 'bare CR in trailer field' => ["5\r\nhello\r\n0\r\nX-A: a\rb\r\n\r\n", $trailer];
+        yield 'trailer field too long' => ["5\r\nhello\r\n0\r\nX-A: ".\str_repeat('a', 4089)."\r\n\r\n", $trailer];
+        yield 'text after final CR' => ["5\r\nhello\r\n0\r\n\rX", $trailer];
+        yield 'second CR in final CRLF' => ["5\r\nhello\r\n0\r\n\r\r\n", $trailer];
+        yield 'zero chunk followed by data' => ["0\r\nhello\r\n\r\n", $trailer];
+    }
+
+    /**
+     * @dataProvider acceptedTransferEncodingProvider
+     */
+    public function testAcceptsResponseTransferEncodings(string $transferEncodingHeaders, string $wireBody, string $expectedBody, string $expectedHeader): void
     {
         Server::flush();
         Server::enqueueRawBytes("HTTP/1.1 200 OK\r\n{$transferEncodingHeaders}\r\n\r\n{$wireBody}");
@@ -1452,15 +1568,64 @@ class StreamHandlerTest extends TestCase
         self::assertSame($expectedBody, (string) $response->getBody());
     }
 
-    public static function phpChunkedTransferEncodingCompatibilityProvider(): iterable
+    public static function acceptedTransferEncodingProvider(): iterable
     {
         $chunked = "3\r\nabc\r\n0\r\n\r\n";
-        yield 'chunked prefix' => ['Transfer-Encoding: chunkedx', $chunked, 'abc', ''];
-        yield 'chunked after another coding' => ['Transfer-Encoding: gzip, chunked', $chunked, $chunked, 'gzip, chunked'];
+        yield 'mixed case chunked' => ['Transfer-Encoding: ChUnKeD', $chunked, 'abc', ''];
+        yield 'empty list elements' => ['Transfer-Encoding: , chunked,', $chunked, 'abc', ''];
+        yield 'identity before chunked' => ['Transfer-Encoding: identity, chunked', $chunked, 'abc', ''];
+        yield 'repeated chunked' => ['Transfer-Encoding: chunked, chunked', $chunked, 'abc', ''];
+        yield 'split identity and chunked' => ["Transfer-Encoding: identity\r\nTransfer-Encoding: chunked", $chunked, 'abc', ''];
+        yield 'identity only' => ['Transfer-Encoding: identity', 'abc', 'abc', 'identity'];
+        yield 'empty list' => ['Transfer-Encoding: ,', 'abc', 'abc', ','];
+    }
 
+    /**
+     * @dataProvider rejectedTransferEncodingProvider
+     */
+    public function testRejectsUnsupportedResponseTransferEncodings(string $transferEncodingHeaders, string $wireBody, string $expectedMessage, bool $stream): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\n{$transferEncodingHeaders}\r\n\r\n{$wireBody}");
+        $handler = new StreamHandler();
+        $onHeadersCalled = false;
+
+        try {
+            $handler(new Request('GET', Server::$url), [
+                'stream' => $stream,
+                'on_headers' => static function () use (&$onHeadersCalled): void {
+                    $onHeadersCalled = true;
+                },
+            ])->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame($expectedMessage, $e->getMessage());
+            self::assertSame('', (string) $e->getResponse()->getBody());
+        }
+
+        self::assertFalse($onHeadersCalled);
+    }
+
+    public static function rejectedTransferEncodingProvider(): iterable
+    {
+        $chunked = "3\r\nabc\r\n0\r\n\r\n";
         $gzip = (string) \gzencode('abc');
-        $chunkedGzip = \dechex(\strlen($gzip))."\r\n{$gzip}\r\n0\r\n\r\n";
-        yield 'split transfer codings' => ["Transfer-Encoding: gzip\r\nTransfer-Encoding: chunked", $chunkedGzip, $gzip, 'gzip'];
+        $cases = [
+            'coding before chunked' => ['Transfer-Encoding: gzip, chunked', \dechex(\strlen($gzip))."\r\n{$gzip}\r\n0\r\n\r\n", 'Invalid Transfer-Encoding response header: unsupported transfer coding "gzip"'],
+            'split coding before chunked' => ["Transfer-Encoding: gzip\r\nTransfer-Encoding: chunked", \dechex(\strlen($gzip))."\r\n{$gzip}\r\n0\r\n\r\n", 'Invalid Transfer-Encoding response header: unsupported transfer coding "gzip"'],
+            'coding without chunked' => ['Transfer-Encoding: gzip', $gzip, 'Invalid Transfer-Encoding response header: unsupported transfer coding "gzip"'],
+            'chunked prefix' => ['Transfer-Encoding: chunkedx', $chunked, 'Invalid Transfer-Encoding response header: unsupported transfer coding "chunkedx"'],
+            'chunked parameter' => ['Transfer-Encoding: chunked;q=1', $chunked, 'Invalid Transfer-Encoding response header: unsupported transfer coding "chunked;q=1"'],
+            'quoted chunked' => ['Transfer-Encoding: "chunked"', $chunked, 'Invalid Transfer-Encoding response header: unsupported transfer coding ""chunked""'],
+            'coding after chunked' => ['Transfer-Encoding: chunked, gzip', (string) \gzencode($chunked), 'Invalid Transfer-Encoding response header: chunked is not the final transfer coding'],
+            'identity after chunked' => ['Transfer-Encoding: chunked, identity', $chunked, 'Invalid Transfer-Encoding response header: chunked is not the final transfer coding'],
+            'split coding after chunked' => ["Transfer-Encoding: chunked\r\nTransfer-Encoding: gzip", (string) \gzencode($chunked), 'Invalid Transfer-Encoding response header: chunked is not the final transfer coding'],
+        ];
+
+        foreach ($cases as $name => [$headers, $wireBody, $message]) {
+            yield "{$name}, buffered" => [$headers, $wireBody, $message, false];
+            yield "{$name}, streamed" => [$headers, $wireBody, $message, true];
+        }
     }
 
     public function testRejectsChunkedResponseWithContentLengthOverTheWire(): void
@@ -5083,10 +5248,7 @@ class StreamHandlerTest extends TestCase
         self::assertNotSame('', $data);
         self::assertLessThan(20, \strlen($data));
 
-        $resource = $body->detach();
-        self::assertTrue(\stream_get_meta_data($resource)['blocked']);
-        self::assertSame(\str_repeat('.', 20), $data.\stream_get_contents($resource));
-        \fclose($resource);
+        self::assertSame(\str_repeat('.', 20), $data.$body->getContents());
     }
 
     public function testReadsStreamedChunkedTlsBodyAsItArrives(): void
@@ -5128,12 +5290,33 @@ class StreamHandlerTest extends TestCase
             }
             self::assertSame('b', $data);
 
+            // The server keeps the connection open after the last chunk.
             \fwrite($pipes[0], "\n");
             self::assertSame('c', $body->getContents());
+            self::assertTrue($body->eof());
         } finally {
             if ($body !== null) {
                 $body->close();
             }
+            $this->stopTlsHttpServer($process, $pipes, $certificate);
+        }
+    }
+
+    public function testCompletesBufferedChunkedBodyWhileConnectionStaysOpen(): void
+    {
+        $this->skipIfTlsHttpServerIsUnavailable();
+        [$address, $certificate, $process, $pipes] = $this->startTlsHttpServer('chunked');
+
+        try {
+            \fwrite($pipes[0], "\n\n\n");
+            $handler = new StreamHandler();
+            $response = $handler(new Request('GET', 'https://'.$address), [
+                RequestOptions::READ_TIMEOUT => 0.2,
+                RequestOptions::VERIFY => false,
+            ])->wait();
+
+            self::assertSame('abc', (string) $response->getBody());
+        } finally {
             $this->stopTlsHttpServer($process, $pipes, $certificate);
         }
     }
@@ -5725,41 +5908,6 @@ class StreamHandlerTest extends TestCase
         // The stream option short-circuits sink creation, so only the body
         // source is wrapped by the stream factory.
         self::assertSame(1, $factory->createStreamFromResourceCalls);
-    }
-
-    public function testStreamedChunkedBodyAllowsStreamFactoryToReleaseTransport(): void
-    {
-        Server::flush();
-        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n0\r\n\r\n");
-        $factory = new class implements StreamFactoryInterface {
-            public function createStream(string $content = ''): StreamInterface
-            {
-                return Psr7\Utils::streamFor($content);
-            }
-
-            public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
-            {
-                return new Psr7\Stream(Psr7\Utils::tryFopen($filename, $mode));
-            }
-
-            public function createStreamFromResource($resource): StreamInterface
-            {
-                $buffer = Psr7\Utils::tryFopen('php://temp', 'r+');
-                \stream_copy_to_stream($resource, $buffer);
-                \fclose($resource);
-                \rewind($buffer);
-
-                return new Psr7\Stream($buffer);
-            }
-        };
-
-        $handler = new StreamHandler();
-        $response = $handler(new Request('GET', Server::$url), [
-            RequestOptions::STREAM => true,
-            RequestOptions::STREAM_FACTORY => $factory,
-        ])->wait();
-
-        self::assertSame('abc', $response->getBody()->read(8192));
     }
 
     public function testGzipDecodeRoutesBodySourceThroughStreamFactory(): void
