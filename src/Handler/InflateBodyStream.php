@@ -25,6 +25,8 @@ final class InflateBodyStream implements StreamInterface
 
     private const CHUNK_SIZE = 8192;
 
+    private const INVALID_DATA = 'Unable to decode the response body: invalid gzip or deflate data';
+
     private ?StreamInterface $stream;
 
     /** @var \InflateContext|resource|null */
@@ -40,7 +42,7 @@ final class InflateBodyStream implements StreamInterface
 
     private bool $finished = false;
 
-    private bool $failed = false;
+    private ?string $error = null;
 
     public function __construct(StreamInterface $stream)
     {
@@ -141,8 +143,8 @@ final class InflateBodyStream implements StreamInterface
         }
 
         while ($this->offset === \strlen($this->buffer)) {
-            if ($this->failed) {
-                throw self::invalidData();
+            if ($this->error !== null) {
+                throw new \RuntimeException($this->error);
             }
 
             $encoded = $stream->read(self::CHUNK_SIZE);
@@ -193,9 +195,7 @@ final class InflateBodyStream implements StreamInterface
             $this->header = '';
 
             if (!\function_exists('inflate_init')) {
-                $this->failed = true;
-
-                throw new \RuntimeException('Unable to decode the response body: the zlib extension is not loaded');
+                throw $this->fail('Unable to decode the response body: the zlib extension is not loaded');
             }
 
             // inflate_init() has no automatic header detection, so pick the
@@ -203,9 +203,7 @@ final class InflateBodyStream implements StreamInterface
             // zlib.inflate filter is given.
             $context = \inflate_init(\strncmp($encoded, "\x1f\x8b", 2) === 0 ? \ZLIB_ENCODING_GZIP : \ZLIB_ENCODING_DEFLATE);
             if ($context === false) {
-                $this->failed = true;
-
-                throw self::invalidData();
+                throw $this->fail(self::INVALID_DATA);
             }
 
             $this->context = $context;
@@ -213,9 +211,7 @@ final class InflateBodyStream implements StreamInterface
 
         $decoded = @\inflate_add($this->context, $encoded);
         if ($decoded === false) {
-            $this->failed = true;
-
-            throw self::invalidData();
+            throw $this->fail(self::INVALID_DATA);
         }
 
         $this->finished = \inflate_get_status($this->context) === \ZLIB_STREAM_END;
@@ -240,8 +236,10 @@ final class InflateBodyStream implements StreamInterface
         $this->offset = 0;
     }
 
-    private static function invalidData(): \RuntimeException
+    private function fail(string $message): \RuntimeException
     {
-        return new \RuntimeException('Unable to decode the response body: invalid gzip or deflate data');
+        $this->error = $message;
+
+        return new \RuntimeException($message);
     }
 }
