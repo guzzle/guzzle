@@ -408,8 +408,10 @@ final class StreamHandler
         $canHaveBody = HeaderProcessor::responseCanHaveBody($request->getMethod(), $status);
         $framingFailure = null;
         $declaredLength = null;
+        $chunked = false;
         try {
             $declaredLength = HeaderProcessor::validateResponseFraming($request->getMethod(), $status, $headers);
+            $chunked = $canHaveBody && HeaderProcessor::parseTransferEncoding($headers);
             if (empty($options['stream'])) {
                 HeaderProcessor::assertContentLengthWithinPlatformLimit($declaredLength);
             }
@@ -417,25 +419,26 @@ final class StreamHandler
             $framingFailure = $e;
         }
 
-        if ($framingFailure === null) {
-            try {
-                $headers = $this->decodeChunkedResponse($headers, $stream, $canHaveBody);
-            } catch (\RuntimeException $e) {
-                $framingFailure = $e;
-            }
+        if ($chunked) {
+            HeaderProcessor::removeHeader('Transfer-Encoding', $headers);
+        } elseif (!$canHaveBody) {
+            $headers = self::removeChunkedTransferCoding($headers);
         }
 
         $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new Psr7\HttpFactory());
         $responseFactory = self::requireResponseFactory($options[RequestOptions::RESPONSE_FACTORY] ?? new Psr7\HttpFactory());
 
         // Wrap the transport resource with the configured stream factory, and
-        // decorate buffered transfers with the deadline source before optional
-        // content decoding layers an InflateBodyStream on top, so every read
-        // that pulls from the transport observes the deadline.
+        // decorate buffered transfers with the deadline source before chunked
+        // and optional content decoding layer on top, so every read that pulls
+        // from the transport observes the deadline.
         $resource = $stream;
         $stream = $streamFactory->createStreamFromResource($stream);
         if ($framingFailure === null && $deadline !== null && empty($options['stream'])) {
             $stream = self::createDeadlineSource($stream, $resource, $deadline, $options);
+        }
+        if ($chunked) {
+            $stream = new ChunkedBodyStream(new TransportStream($stream));
         }
 
         $encodedBody = null;
@@ -633,21 +636,15 @@ final class StreamHandler
     }
 
     /**
-     * Applies the HTTP wrapper's normal chunked-response handling.
+     * Removes the chunked transfer coding from the headers of a response that
+     * cannot have a body, as PHP's HTTP wrapper did.
      *
      * @param array<string, string[]> $headers
-     * @param resource                $stream
-     * @param bool                    $decodeBody Whether to attach the dechunk filter
      *
      * @return array<string, string[]>
-     *
-     * @throws \RuntimeException when the dechunk filter cannot be attached
      */
-    private function decodeChunkedResponse(array $headers, $stream, bool $decodeBody): array
+    private static function removeChunkedTransferCoding(array $headers): array
     {
-        $decodedHeaders = $headers;
-        $decode = false;
-
         foreach ($headers as $name => $values) {
             if (!Psr7\Utils::caselessEquals((string) $name, 'Transfer-Encoding')) {
                 continue;
@@ -655,33 +652,19 @@ final class StreamHandler
 
             $remaining = [];
             foreach ($values as $value) {
-                // Match PHP's legacy auto_decode prefix check so moving the
-                // filter does not change which responses are dechunked.
-                if (Psr7\Utils::caselessEquals(\substr($value, 0, 7), 'chunked')) {
-                    $decode = true;
-                } else {
+                if (!Psr7\Utils::caselessEquals(\substr($value, 0, 7), 'chunked')) {
                     $remaining[] = $value;
                 }
             }
 
             if ($remaining === []) {
-                unset($decodedHeaders[$name]);
+                unset($headers[$name]);
             } else {
-                $decodedHeaders[$name] = $remaining;
+                $headers[$name] = $remaining;
             }
         }
 
-        if (!$decode) {
-            return $headers;
-        }
-
-        if ($decodeBody) {
-            $this->createResource(static function () use ($stream) {
-                return \stream_filter_append($stream, 'dechunk', \STREAM_FILTER_READ);
-            });
-        }
-
-        return $decodedHeaders;
+        return $headers;
     }
 
     /**
@@ -703,7 +686,11 @@ final class StreamHandler
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
                     if (!empty($options['stream'])) {
-                        $stream = new TransportStream($stream);
+                        // ChunkedBodyStream already reads through a
+                        // TransportStream.
+                        if (!$stream instanceof ChunkedBodyStream) {
+                            $stream = new TransportStream($stream);
+                        }
                     } elseif ($declaredLength !== null && $declaredLength !== '0') {
                         $encodedBody = new EncodedBodyStream($stream, $declaredLength);
                         $stream = $encodedBody;
@@ -861,9 +848,9 @@ final class StreamHandler
      * Decorates the transport stream so each buffered-body read observes the
      * remaining wall-clock budget of the "timeout" request option, bounded by
      * the "read_timeout" idle timeout when that is shorter. The transport is
-     * switched to non-blocking mode because filtered reads (chunked responses)
-     * otherwise block until a full buffer arrives, which would keep the
-     * deadline from being enforced between small pieces of data.
+     * switched to non-blocking mode because a blocking read waits for data up
+     * to the transport's own timeout, which would keep the deadline from being
+     * enforced while the server stalls.
      *
      * @param resource $resource
      */

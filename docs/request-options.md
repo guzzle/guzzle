@@ -1805,14 +1805,17 @@ across the built-in handlers.
 
 When a read on the streamed PSR-7 body times out, `read()` throws
 `GuzzleHttp\Psr7\Exception\TimeoutException`. A non-timeout read failure, for
-example the connection is reset mid-body, the compressed body is invalid, or the
-body stream has been detached, throws a plain `\RuntimeException`. Both types
-sit outside the `GuzzleHttp\Exception\GuzzleException` hierarchy: they are
-raised after the request has resolved and the response object has been returned,
-which is outside the `Client::sendRequest()` transfer that PSR-18 governs. Catch
-them explicitly when reading a streamed body. If you detach the body and read
-the raw PHP stream resource instead, functions such as `fgets()` return `false`
-on timeout, following PHP's stream semantics.
+example the connection is reset mid-body, the chunked or compressed body is
+invalid, or the body stream has been detached, throws a plain
+`\RuntimeException`. Both types sit outside the
+`GuzzleHttp\Exception\GuzzleException` hierarchy: they are raised after the
+request has resolved and the response object has been returned, which is outside
+the `Client::sendRequest()` transfer that PSR-18 governs. Catch them explicitly
+when reading a streamed body. If you detach the body and read the raw PHP stream
+resource instead, functions such as `fgets()` return `false` on timeout,
+following PHP's stream semantics. A chunked body cannot be detached once it has
+been partly read, unless Guzzle is also decoding its content, and one detached
+before it is read is decoded by PHP without Guzzle's framing checks.
 
 A timed-out read does not invalidate the streamed body. Catching the
 `TimeoutException` and calling `read()` again resumes waiting for data, so
@@ -1841,8 +1844,13 @@ try {
     // Check for cancellation, then call read() again to resume waiting.
 }
 
-// Returns false on timeout (raw stream resource)
-$line = fgets($body->detach());
+// Returns false on timeout (raw stream resource). Detach a chunked body before
+// reading from it.
+$resource = $client->request('GET', '/stream', [
+    'stream' => true,
+    'read_timeout' => 10,
+])->getBody()->detach();
+$line = fgets($resource);
 ```
 
 ## request_factory
@@ -1989,7 +1997,9 @@ response body resources where practical. Request bodies that already implement
 > supported. `MockHandler` queued responses and custom handler responses are
 > used as provided. When decoding gzip/deflate responses, the factory still
 > wraps the underlying transport resource, but Guzzle layers its own decoding
-> decorator on top because PSR-17 cannot express a decoding stream.
+> decorator on top because PSR-17 cannot express a decoding stream. Guzzle
+> likewise decodes chunked responses with its own decorator over the factory's
+> stream.
 
 > [!WARNING]
 > Guzzle only checks that the value implements

@@ -13,13 +13,11 @@ use Psr\Http\Message\StreamInterface;
  * Decorates the transport stream of a buffered response so every read
  * observes the wall-clock deadline of the "timeout" request option.
  *
- * The transport resource must be in non-blocking mode: PHP's filtered stream
- * reads (chunked responses) otherwise block until the full requested length
- * arrives, so a deadline check between reads never runs while a server keeps
- * sending small pieces of data. Reads return whatever bytes are available and
- * poll briefly for more, so the deadline is checked between packets rather than
- * between buffers. The wait is a bounded sleep because stream_select() cannot
- * watch a stream that carries a filter.
+ * The transport resource must be in non-blocking mode: a blocking read waits
+ * for data up to the transport's own timeout, so a deadline check between reads
+ * never runs while the server stalls. Reads return whatever bytes are available
+ * and poll briefly for more, so the deadline is checked between packets rather
+ * than between buffers.
  *
  * @internal
  */

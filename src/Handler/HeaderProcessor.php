@@ -164,7 +164,9 @@ final class HeaderProcessor
      * @param array<string, string[]> $headers
      *
      * @throws \RuntimeException when Content-Length is malformed, conflicting,
-     *                           or combined with Transfer-Encoding
+     *                           or combined with Transfer-Encoding, or when a
+     *                           transfer coding is unsupported or follows
+     *                           chunked
      */
     public static function validateResponseFraming(
         string $method,
@@ -188,7 +190,53 @@ final class HeaderProcessor
             throw new \RuntimeException('A response must not contain both Content-Length and Transfer-Encoding');
         }
 
+        self::parseTransferEncoding($headers);
+
         return $length;
+    }
+
+    /**
+     * Returns whether the response transfer codings end with chunked.
+     *
+     * Guzzle never asks for a transfer coding, so it accepts only chunked,
+     * optionally preceded by identity, like libcurl 8.14 and newer. Field lines
+     * combine into one list, and empty list elements are ignored.
+     *
+     * @param array<string, string[]> $headers
+     *
+     * @throws \RuntimeException when a coding is unsupported or follows chunked
+     */
+    public static function parseTransferEncoding(array $headers): bool
+    {
+        $chunked = false;
+
+        foreach ($headers as $name => $values) {
+            if (!Psr7\Utils::caselessEquals((string) $name, 'Transfer-Encoding')) {
+                continue;
+            }
+
+            foreach ($values as $value) {
+                foreach (\explode(',', $value) as $coding) {
+                    $coding = \trim($coding, " \t");
+                    if ($coding === '') {
+                        continue;
+                    }
+
+                    if (Psr7\Utils::caselessEquals($coding, 'chunked')) {
+                        $chunked = true;
+                    } elseif ($chunked) {
+                        throw new \RuntimeException('Invalid Transfer-Encoding response header: chunked is not the final transfer coding');
+                    } elseif (!Psr7\Utils::caselessEquals($coding, 'identity')) {
+                        throw new \RuntimeException(\sprintf(
+                            'Invalid Transfer-Encoding response header: unsupported transfer coding "%s"',
+                            Psr7\DiagnosticValue::escape($coding)
+                        ));
+                    }
+                }
+            }
+        }
+
+        return $chunked;
     }
 
     /**

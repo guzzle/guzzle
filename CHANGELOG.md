@@ -3,6 +3,16 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.3.0 - Upcoming
+
+### Changed
+
+- Decode chunked stream handler response bodies in PHP, returning bytes as they arrive and ending at the last chunk
+- Reject truncated and malformed chunked stream handler response bodies, like libcurl
+- Reject unsupported response transfer codings in the built-in handlers, like libcurl 8.14+
+- Reject detaching a partially read chunked stream handler response body
+
+
 ## 8.2.1 - Upcoming
 
 ### Fixed

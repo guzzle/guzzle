@@ -7,6 +7,7 @@ namespace GuzzleHttp\Tests\Handler;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\NetworkException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ResponseTransferException;
 use GuzzleHttp\Handler\Clock;
 use GuzzleHttp\Handler\CurlFactory;
 use GuzzleHttp\Handler\CurlFactoryInterface;
@@ -401,6 +402,32 @@ class CurlHandlerTest extends TestCase
         $received = Server::received()[0];
         self::assertEquals(1000000, $received->getHeaderLine('Content-Length'));
         self::assertFalse($received->hasHeader('Transfer-Encoding'));
+    }
+
+    /**
+     * @dataProvider unsupportedTransferEncodingProvider
+     */
+    public function testRejectsUnsupportedResponseTransferEncodings(string $transferEncoding, string $expectedMessage): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nTransfer-Encoding: {$transferEncoding}\r\n\r\n3\r\nabc\r\n0\r\n\r\n");
+        $handler = new CurlHandler();
+
+        try {
+            $handler(new Request('GET', Server::$url), [])->wait();
+            self::fail('Expected RequestException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame($expectedMessage, $e->getMessage());
+        } catch (RequestException $e) {
+            // libcurl 8.14 and newer reject the header before Guzzle sees it.
+            self::assertStringStartsWith('cURL error 61: ', $e->getMessage());
+        }
+    }
+
+    public static function unsupportedTransferEncodingProvider(): iterable
+    {
+        yield 'coding before chunked' => ['gzip, chunked', 'Invalid Transfer-Encoding response header: unsupported transfer coding "gzip"'];
+        yield 'coding after chunked' => ['chunked, gzip', 'Invalid Transfer-Encoding response header: chunked is not the final transfer coding'];
     }
 
     private static function readFactory(CurlHandler $handler): CurlFactory
