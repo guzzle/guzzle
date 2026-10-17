@@ -27,6 +27,8 @@ final class DeclaredLengthStream implements StreamInterface
 
     private int $remaining;
 
+    private ?\RuntimeException $failure = null;
+
     public function __construct(StreamInterface $stream, int $declaredLength)
     {
         $this->stream = $stream;
@@ -35,7 +37,7 @@ final class DeclaredLengthStream implements StreamInterface
 
     public function eof(): bool
     {
-        return $this->remaining === 0;
+        return $this->remaining === 0 || $this->failure !== null;
     }
 
     public function isSeekable(): bool
@@ -54,13 +56,21 @@ final class DeclaredLengthStream implements StreamInterface
             throw new \RuntimeException('Length parameter cannot be negative');
         }
 
+        if ($this->failure !== null) {
+            throw $this->failure;
+        }
+
         if ($length === 0 || $this->remaining === 0) {
             return '';
         }
 
         $data = $this->stream->read(\min($length, $this->remaining));
         if ($data === '' && $this->stream->eof()) {
-            throw new \RuntimeException('Response body ended before the declared Content-Length was reached');
+            // Ending the body keeps a stale timed_out flag from turning this
+            // failure into a timeout in callers that probe eof().
+            $this->failure = new \RuntimeException('Response body ended before the declared Content-Length was reached');
+
+            throw $this->failure;
         }
 
         $this->remaining -= \strlen($data);
