@@ -105,10 +105,6 @@ final class StreamHandler
      */
     private const DEFAULT_IDLE_TIMEOUT_MS = 60000;
 
-    private array $lastHeaders = [];
-
-    private ?float $lastDeadline = null;
-
     private ?\Throwable $onStatsException = null;
 
     private string $transportSharingMode;
@@ -180,7 +176,7 @@ final class StreamHandler
 
         // Sleep if there is a delay specified.
         if (isset($options['delay'])) {
-            \usleep((int) ($options['delay'] * 1000));
+            Clock::sleep((int) ($options['delay'] * 1000));
         }
 
         $multiplex = $options['multiplex'] ?? null;
@@ -234,11 +230,17 @@ final class StreamHandler
                 $request = $request->withHeader('Content-Length', (string) \strlen($body));
             }
 
+            $deadline = null;
+            $stream = $this->createStream($request, $options, $body, $deadline);
+            $headers = \stream_get_meta_data($stream)['wrapper_data'];
+
             return $this->createResponse(
                 $request,
                 $options,
-                $this->createStream($request, $options, $body),
-                $startTime
+                $stream,
+                \is_array($headers) ? $headers : [],
+                $startTime,
+                $deadline
             );
         } catch (\InvalidArgumentException $e) {
             throw $e;
@@ -392,13 +394,11 @@ final class StreamHandler
         #[\SensitiveParameter]
         array $options,
         $stream,
-        ?float $startTime
+        #[\SensitiveParameter]
+        array $hdrs,
+        ?float $startTime,
+        ?float $deadline
     ): PromiseInterface {
-        $hdrs = $this->lastHeaders;
-        $this->lastHeaders = [];
-        $deadline = $this->lastDeadline;
-        $this->lastDeadline = null;
-
         try {
             [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($hdrs);
         } catch (\Throwable $e) {
@@ -952,7 +952,8 @@ final class StreamHandler
         RequestInterface $request,
         #[\SensitiveParameter]
         array $options,
-        string $body
+        string $body,
+        ?float &$deadline
     ) {
         // Report a stream-open failure against the request passed here, not the
         // Connection: close clone built for the wire.
@@ -1038,8 +1039,8 @@ final class StreamHandler
         );
 
         try {
-            $resource = $this->createResource(function () use ($uri, $contextResource, $idleTimeout, $timeout) {
-                $this->lastDeadline = $timeout > 0 ? Clock::now() + $timeout / 1000 : null;
+            $resource = $this->createResource(function () use ($uri, $contextResource, $idleTimeout, $timeout, &$deadline) {
+                $deadline = $timeout > 0 ? Clock::now() + $timeout / 1000 : null;
 
                 // Blank the from ini setting for the transfer so ambient
                 // configuration cannot leak into a From header; the wrapper
@@ -1052,13 +1053,6 @@ final class StreamHandler
                         \ini_set('from', $iniFrom);
                     }
                 }
-
-                // PHP 8.5 deprecates the local $http_response_header variable.
-                if (function_exists('http_get_last_response_headers')) {
-                    $http_response_header = \http_get_last_response_headers();
-                }
-
-                $this->lastHeaders = $http_response_header ?? [];
 
                 if (false === $resource) {
                     return false;
