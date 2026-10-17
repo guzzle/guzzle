@@ -224,7 +224,18 @@ final class InflateBodyStream implements StreamInterface
             $this->context = $context;
         }
 
-        $decoded = @\inflate_add($this->context, $encoded);
+        // Application error handlers also see @-suppressed warnings, so keep
+        // the warning inflate_add() emits before returning false from them.
+        \set_error_handler(static function (): bool {
+            return true;
+        });
+
+        try {
+            $decoded = \inflate_add($this->context, $encoded);
+        } finally {
+            \restore_error_handler();
+        }
+
         if ($decoded === false) {
             throw $this->fail(self::INVALID_DATA);
         }
