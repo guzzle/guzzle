@@ -417,9 +417,10 @@ final class StreamHandler
             $framingFailure = $e;
         }
 
+        $dechunked = false;
         if ($framingFailure === null) {
             try {
-                $headers = $this->decodeChunkedResponse($headers, $stream, $canHaveBody);
+                [$headers, $dechunked] = $this->decodeChunkedResponse($headers, $stream, $canHaveBody);
             } catch (\RuntimeException $e) {
                 $framingFailure = $e;
             }
@@ -440,7 +441,15 @@ final class StreamHandler
 
         $encodedBody = null;
         if ($framingFailure === null) {
+            $source = $stream;
             [$stream, $headers, $encodedBody] = self::checkDecode($options, $headers, $stream, $declaredLength);
+
+            // Reads through the dechunk filter wait to fill the requested
+            // length, delaying the bytes of a streamed body that already
+            // arrived. Decoded content is read through its own filter.
+            if ($dechunked && $stream === $source && !empty($options['stream'])) {
+                $stream = new IncrementalStream($stream, $resource);
+            }
         }
 
         $sink = $framingFailure !== null || !$canHaveBody
@@ -639,7 +648,7 @@ final class StreamHandler
      * @param resource                $stream
      * @param bool                    $decodeBody Whether to attach the dechunk filter
      *
-     * @return array<string, string[]>
+     * @return array{0: array<string, string[]>, 1: bool} The decoded headers and whether the dechunk filter was attached
      *
      * @throws \RuntimeException when the dechunk filter cannot be attached
      */
@@ -672,7 +681,7 @@ final class StreamHandler
         }
 
         if (!$decode) {
-            return $headers;
+            return [$headers, false];
         }
 
         if ($decodeBody) {
@@ -681,7 +690,7 @@ final class StreamHandler
             });
         }
 
-        return $decodedHeaders;
+        return [$decodedHeaders, $decodeBody];
     }
 
     /**

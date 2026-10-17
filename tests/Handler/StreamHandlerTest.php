@@ -42,6 +42,8 @@ use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * @covers \GuzzleHttp\Handler\StreamHandler
@@ -4888,7 +4890,7 @@ class StreamHandlerTest extends TestCase
 
         $process = \proc_open(
             $command,
-            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes
         );
         if (!\is_resource($process)) {
@@ -5063,6 +5065,71 @@ class StreamHandlerTest extends TestCase
         self::assertFalse($line);
         self::assertTrue(\stream_get_meta_data($body)['timed_out']);
         self::assertFalse(\feof($body));
+    }
+
+    public function testReadsStreamedChunkedBodyIncrementally(): void
+    {
+        Server::flush();
+        $handler = new StreamHandler();
+        $response = $handler(
+            new Request('GET', Server::$url.'guzzle-server/drip-timeout'),
+            [RequestOptions::STREAM => true]
+        )->wait();
+        $body = $response->getBody();
+
+        // The server sends one byte every 100ms, so a read that waits to fill
+        // the requested length returns the whole body.
+        $data = $body->read(8192);
+        self::assertNotSame('', $data);
+        self::assertLessThan(20, \strlen($data));
+
+        $resource = $body->detach();
+        self::assertTrue(\stream_get_meta_data($resource)['blocked']);
+        self::assertSame(\str_repeat('.', 20), $data.\stream_get_contents($resource));
+        \fclose($resource);
+    }
+
+    public function testReadsStreamedChunkedTlsBodyAfterReadTimeout(): void
+    {
+        $this->skipIfTlsHttpServerIsUnavailable();
+        [$address, $certificate, $process, $pipes] = $this->startTlsHttpServer('chunked');
+        $body = null;
+
+        try {
+            $handler = new StreamHandler();
+            $response = $handler(new Request('GET', 'https://'.$address), [
+                RequestOptions::READ_TIMEOUT => 0.2,
+                RequestOptions::STREAM => true,
+                RequestOptions::VERIFY => false,
+            ])->wait();
+            $body = $response->getBody();
+
+            try {
+                $body->read(8192);
+                self::fail('Expected TimeoutException');
+            } catch (Psr7\Exception\TimeoutException $e) {
+            }
+
+            // PHP's TLS streams keep reporting the earlier timeout, which must
+            // not discard bytes that arrive later.
+            \fwrite($pipes[0], "\n");
+            $data = '';
+            for ($attempt = 0; $attempt < 10 && $data === ''; ++$attempt) {
+                try {
+                    $data = $body->read(8192);
+                } catch (Psr7\Exception\TimeoutException $e) {
+                }
+            }
+            self::assertSame('a', $data);
+
+            \fwrite($pipes[0], "\n");
+            self::assertSame('bc', $body->getContents());
+        } finally {
+            if ($body !== null) {
+                $body->close();
+            }
+            $this->stopTlsHttpServer($process, $pipes, $certificate);
+        }
     }
 
     public function testThrowsResponseTimeoutExceptionWhenDrainingResponseBodyTimesOut(): void
@@ -5652,6 +5719,41 @@ class StreamHandlerTest extends TestCase
         // The stream option short-circuits sink creation, so only the body
         // source is wrapped by the stream factory.
         self::assertSame(1, $factory->createStreamFromResourceCalls);
+    }
+
+    public function testStreamedChunkedBodyAllowsStreamFactoryToReleaseTransport(): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n0\r\n\r\n");
+        $factory = new class implements StreamFactoryInterface {
+            public function createStream(string $content = ''): StreamInterface
+            {
+                return Psr7\Utils::streamFor($content);
+            }
+
+            public function createStreamFromFile(string $filename, string $mode = 'r'): StreamInterface
+            {
+                return new Psr7\Stream(Psr7\Utils::tryFopen($filename, $mode));
+            }
+
+            public function createStreamFromResource($resource): StreamInterface
+            {
+                $buffer = Psr7\Utils::tryFopen('php://temp', 'r+');
+                \stream_copy_to_stream($resource, $buffer);
+                \fclose($resource);
+                \rewind($buffer);
+
+                return new Psr7\Stream($buffer);
+            }
+        };
+
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), [
+            RequestOptions::STREAM => true,
+            RequestOptions::STREAM_FACTORY => $factory,
+        ])->wait();
+
+        self::assertSame('abc', $response->getBody()->read(8192));
     }
 
     public function testGzipDecodeRoutesBodySourceThroughStreamFactory(): void

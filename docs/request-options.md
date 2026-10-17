@@ -1985,7 +1985,8 @@ response body resources where practical. Request bodies that already implement
 > used as provided. When decoding gzip/deflate responses, the factory still
 > wraps the underlying transport resource, but Guzzle layers its own
 > `InflateStream` decorator on top because PSR-17 cannot express a decoding
-> stream.
+> stream. Streamed chunked responses are also decorated, so each read returns
+> the bytes that have already arrived.
 
 > [!WARNING]
 > Guzzle only checks that the value implements

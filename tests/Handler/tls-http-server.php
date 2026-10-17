@@ -3,12 +3,13 @@
 declare(strict_types=1);
 
 /*
- * Minimal HTTPS server fixture for the stream handler TLS session sharing
- * tests. Serves a fixed body to each connection until it is terminated and
- * reports whether the handshake resumed a TLS session in the
- * X-TLS-Session-Reused response header. Usage: php tls-http-server.php
- * <certificate-pem-path> [tls1.2]. The bound address is printed on stdout
- * once the server is listening.
+ * Minimal HTTPS server fixture for the stream handler TLS tests. Serves a
+ * fixed body to each connection until it is terminated and reports whether the
+ * handshake resumed a TLS session in the X-TLS-Session-Reused response header.
+ * In chunked mode, each line read from stdin releases the next chunk of a
+ * chunked body instead. Usage: php tls-http-server.php <certificate-pem-path>
+ * [tls1.2|chunked]. The bound address is printed on stdout once the server is
+ * listening.
  */
 
 $certificate = $argv[1] ?? '';
@@ -18,8 +19,8 @@ if ($certificate === '' || !\is_file($certificate)) {
 }
 
 $mode = $argv[2] ?? null;
-if ($mode !== null && $mode !== 'tls1.2') {
-    \fwrite(\STDERR, "The optional mode must be tls1.2.\n");
+if ($mode !== null && $mode !== 'tls1.2' && $mode !== 'chunked') {
+    \fwrite(\STDERR, "The optional mode must be tls1.2 or chunked.\n");
     exit(1);
 }
 
@@ -50,6 +51,17 @@ if ($server === false) {
 
 while (($connection = @\stream_socket_accept($server, 30)) !== false) {
     @\fread($connection, 8192);
+    if ($mode === 'chunked') {
+        @\fwrite($connection, "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n");
+        foreach (["1\r\na\r\n", "2\r\nbc\r\n0\r\n\r\n"] as $chunk) {
+            if (\fgets(\STDIN) === false) {
+                break;
+            }
+            @\fwrite($connection, $chunk);
+        }
+        @\fclose($connection);
+        continue;
+    }
     // PHP 8.6 reports whether the accepted handshake resumed a TLS session;
     // older runtimes omit the flag and always report 0.
     $metadata = \stream_get_meta_data($connection);

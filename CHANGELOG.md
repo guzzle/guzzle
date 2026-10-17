@@ -12,6 +12,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix `CurlMultiHandler` delays over 71 minutes
 - Fix overlapping stream handler requests sharing a deadline
 - Fix stream handler responses in Swoole coroutines on PHP 8.4+
+- Fix streamed chunked stream handler responses waiting to fill each read
 
 
 ## 8.2.0 - 2026-09-06
