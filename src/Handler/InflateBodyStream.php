@@ -42,7 +42,7 @@ final class InflateBodyStream implements StreamInterface
 
     private bool $finished = false;
 
-    private ?string $error = null;
+    private ?\RuntimeException $error = null;
 
     public function __construct(StreamInterface $stream)
     {
@@ -99,9 +99,9 @@ final class InflateBodyStream implements StreamInterface
     {
         $stream = $this->attached();
 
-        // Ending the body on a decoding failure also keeps PSR-7 copy helpers
-        // from reporting it as a timeout when Windows leaves timed_out set.
-        return $this->error !== null || ($this->offset === \strlen($this->buffer) && $stream->eof());
+        // A failed body never ends, so resource readers see the failure
+        // instead of a clean end of the stream.
+        return $this->error === null && $this->offset === \strlen($this->buffer) && $stream->eof();
     }
 
     public function isSeekable(): bool
@@ -148,7 +148,7 @@ final class InflateBodyStream implements StreamInterface
 
         while ($this->offset === \strlen($this->buffer)) {
             if ($this->error !== null) {
-                throw new \RuntimeException($this->error);
+                throw $this->error;
             }
 
             $encoded = $stream->read(self::CHUNK_SIZE);
@@ -184,7 +184,18 @@ final class InflateBodyStream implements StreamInterface
             return $key === null ? [] : null;
         }
 
-        return $this->stream->getMetadata($key);
+        // A decoding failure is not a timeout, even when Windows leaves the
+        // transport's timed_out flag set after a read drains PHP's buffer.
+        if ($key === 'timed_out' && $this->error !== null) {
+            return false;
+        }
+
+        $metadata = $this->stream->getMetadata($key);
+        if ($key === null && $this->error !== null && \is_array($metadata)) {
+            $metadata['timed_out'] = false;
+        }
+
+        return $metadata;
     }
 
     private function inflate(string $encoded): string
@@ -242,8 +253,6 @@ final class InflateBodyStream implements StreamInterface
 
     private function fail(string $message): \RuntimeException
     {
-        $this->error = $message;
-
-        return new \RuntimeException($message);
+        return $this->error = new \RuntimeException($message);
     }
 }
