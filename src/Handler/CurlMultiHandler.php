@@ -1079,7 +1079,8 @@ final class CurlMultiHandler
 
     /**
      * Determines if the handler has no tracked, delayed, or deferred
-     * transfers, and no call running for its owner.
+     * transfers, no call running for its owner, and no native execution,
+     * message processing, or close in progress.
      *
      * @internal
      */
@@ -1089,7 +1090,10 @@ final class CurlMultiHandler
             && $this->delays === []
             && $this->deferredAdds === []
             && $this->deferredCancels === []
-            && $this->activeCalls === 0;
+            && $this->activeCalls === 0
+            && $this->multiExecDepth === 0
+            && $this->messageProcessingDepth === 0
+            && !$this->deferredClose;
     }
 
     /**
