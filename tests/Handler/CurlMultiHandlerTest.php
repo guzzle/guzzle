@@ -4115,6 +4115,44 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testAFinishedContextThatUsesTheHandlerAgainCancelsWhatItLeavesAgain(): void
+    {
+        [$contexts, $owner] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200), new Response(200)]);
+        $handler = new CurlMultiHandler();
+        $contexts->in($owner, static function () use ($handler): void {
+            $handler->tick();
+        });
+        $contexts->end($owner);
+
+        $abandoned = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
+        $contexts->end($owner);
+
+        self::assertTrue(P\Is::rejected($abandoned));
+        self::assertTrue($handler->isIdle());
+    }
+
+    public function testAContextRegistersOneFinalizerHoweverOftenItTakesTheHandlerBack(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        $handler = new CurlMultiHandler();
+
+        for ($i = 0; $i < 3; ++$i) {
+            $contexts->in($owner, static function () use ($handler): void {
+                $handler->tick();
+            });
+            $contexts->in($other, static function () use ($handler): void {
+                $handler->tick();
+            });
+        }
+
+        // Finalizers are only visible through guzzlehttp/promises' internal
+        // per-context state.
+        $state = P\ExecutionContextState::find($owner);
+        self::assertNotNull($state);
+        self::assertCount(1, $state->finalizers);
+    }
+
     public function testFinishingTheOwnerCancelsItsTransfersSoOtherContextsCanUseTheHandler(): void
     {
         [$contexts, $owner, $other] = $this->useExecutionContexts();

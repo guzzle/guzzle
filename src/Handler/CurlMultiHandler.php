@@ -181,6 +181,13 @@ final class CurlMultiHandler
     private int $activeCalls = 0;
 
     /**
+     * @var \WeakMap<object, true>|null Execution contexts that cancel the
+     *                                  transfers they leave on the handler
+     *                                  when they are finished
+     */
+    private $finalizingContexts;
+
+    /**
      * This handler accepts the following options:
      *
      * - handle_factory: An optional factory  used to create curl handles
@@ -1133,17 +1140,49 @@ final class CurlMultiHandler
      */
     private function claimOwnership(object $context): void
     {
-        $owner = \WeakReference::create($context);
-        $handler = \WeakReference::create($this);
-        $this->owner = $owner;
+        $this->owner = \WeakReference::create($context);
 
-        P\ExecutionContext::onFinish(static function () use ($handler, $owner): void {
+        if ($this->finalizingContexts === null) {
+            $this->finalizingContexts = new \WeakMap();
+        }
+
+        // A context that takes the handler back from another context already
+        // has its finalizer, and registering one per takeover would pile them
+        // up in a context that never finishes.
+        if (isset($this->finalizingContexts[$context])) {
+            return;
+        }
+
+        $this->finalizingContexts[$context] = true;
+        $handler = \WeakReference::create($this);
+        $reference = \WeakReference::create($context);
+
+        P\ExecutionContext::onFinish(static function () use ($handler, $reference): void {
             $handler = $handler->get();
+            $context = $reference->get();
+
+            if ($handler === null || $context === null) {
+                return;
+            }
+
+            // A context that uses the handler again after it was finished
+            // needs a new finalizer.
+            if ($handler->finalizingContexts !== null) {
+                unset($handler->finalizingContexts[$context]);
+            }
 
             // Another context may have taken over the handler after it became
             // idle, and its transfers are not this context's to cancel.
-            if ($handler !== null && $handler->owner === $owner) {
-                $handler->cancelPendingTransfers();
+            if ($handler->owner === null || $handler->owner->get() !== $context) {
+                return;
+            }
+
+            $handler->cancelPendingTransfers();
+
+            // Release the handler, so that this context claims it again, with
+            // a new finalizer, if it uses the handler after being finished.
+            if ($handler->isIdle()) {
+                $handler->owner = null;
             }
         });
     }
@@ -1158,6 +1197,7 @@ final class CurlMultiHandler
             $entry['deferred']->cancel();
         }
     }
+
 
     private function releaseClaim(bool $claimed): void
     {
