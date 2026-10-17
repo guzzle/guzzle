@@ -67,6 +67,7 @@ class HostIdentityTest extends TestCase
         self::assertSame('127.0.0.1', \inet_ntop((string) HostIdentity::numericIpv4ToBinary('127.1')));
         self::assertSame('127.0.0.1', \inet_ntop((string) HostIdentity::numericIpv4ToBinary('2130706433')));
         self::assertSame('127.0.0.1', \inet_ntop((string) HostIdentity::numericIpv4ToBinary('0x7f000001')));
+        self::assertSame('127.0.0.1', \inet_ntop((string) HostIdentity::numericIpv4ToBinary('0x00000000007f000001')));
         self::assertSame('127.0.0.1', \inet_ntop((string) HostIdentity::numericIpv4ToBinary('0177.0.0.1')));
         self::assertSame('87.0.0.1', \inet_ntop((string) HostIdentity::numericIpv4ToBinary('0127.0.0.1')));
         self::assertSame('255.255.255.255', \inet_ntop((string) HostIdentity::numericIpv4ToBinary('4294967295')));
@@ -82,6 +83,8 @@ class HostIdentityTest extends TestCase
         self::assertNull(HostIdentity::numericIpv4ToBinary('08'));
         self::assertNull(HostIdentity::numericIpv4ToBinary('0x'));
         self::assertNull(HostIdentity::numericIpv4ToBinary('4294967296'));
+        self::assertNull(HostIdentity::numericIpv4ToBinary('0x10000000000000000'));
+        self::assertNull(HostIdentity::numericIpv4ToBinary('01000000000000000000000'));
         self::assertNull(HostIdentity::numericIpv4ToBinary(''));
     }
 }

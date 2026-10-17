@@ -3,11 +3,19 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
-## 8.3.0 - Upcoming
+## 8.2.1 - Upcoming
 
 ### Added
 
 - Add configurable idle cURL handle retention through `max_idle_handles`
+
+### Fixed
+
+- Fix PHP 8.6 notices for oversized numeric hosts
+- Fix `delay` values over 71 minutes
+- Fix `CurlMultiHandler` delays over 71 minutes
+- Fix overlapping stream handler requests sharing a deadline
+- Fix stream handler responses in Swoole coroutines on PHP 8.4+
 
 
 ## 8.2.0 - 2026-09-06

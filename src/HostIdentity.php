@@ -203,14 +203,27 @@ final class HostIdentity
     private static function numericIpv4PartValue(string $part): float
     {
         if ($part[0] === '0' && isset($part[1]) && ($part[1] === 'x' || $part[1] === 'X')) {
-            return (float) \hexdec((string) \substr($part, 2));
+            return self::digitsValue((string) \substr($part, 2), 16);
         }
 
         if ($part[0] === '0') {
-            return (float) \octdec($part);
+            return self::digitsValue($part, 8);
         }
 
         return (float) $part;
+    }
+
+    private static function digitsValue(string $digits, int $base): float
+    {
+        $value = 0.0;
+        foreach (\str_split($digits) as $digit) {
+            $value = $value * $base + \hexdec($digit);
+            if ($value > 0xFFFFFFFF) {
+                break;
+            }
+        }
+
+        return $value;
     }
 
     private function __construct()

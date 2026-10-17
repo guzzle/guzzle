@@ -892,7 +892,7 @@ final class CurlMultiHandler
             // If there are no transfers, then sleep for the next delay,
             // unless ready queue work could change what is pending.
             if (!$this->active && $this->delays && $queue->isEmpty()) {
-                \usleep($this->timeToNext());
+                Clock::sleep($this->timeToNext());
             }
             $this->tick();
         }
@@ -924,7 +924,7 @@ final class CurlMultiHandler
             // If the transfer is delayed, then sleep until it is due, unless
             // ready queue work could cancel or replace it first.
             if (!$this->active && isset($this->delays[$id]) && $queue->isEmpty()) {
-                \usleep($this->timeToNext());
+                Clock::sleep($this->timeToNext());
             }
             $this->tickFor($id, $waitToken);
         }
