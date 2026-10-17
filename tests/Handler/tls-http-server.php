@@ -8,9 +8,9 @@ declare(strict_types=1);
  * handshake resumed a TLS session in the X-TLS-Session-Reused response header.
  * In chunked mode, each line read from stdin releases the next piece of a
  * chunked response instead, the first carrying the headers and the first
- * chunk. Usage: php tls-http-server.php <certificate-pem-path>
- * [tls1.2|chunked]. The bound address is printed on stdout once the server is
- * listening.
+ * chunk, and the connection then stays open until stdin closes. Usage: php
+ * tls-http-server.php <certificate-pem-path> [tls1.2|chunked]. The bound
+ * address is printed on stdout once the server is listening.
  */
 
 $certificate = $argv[1] ?? '';
@@ -64,6 +64,7 @@ while (($connection = @\stream_socket_accept($server, 30)) !== false) {
             }
             @\fwrite($connection, $piece);
         }
+        \fgets(\STDIN);
         @\fclose($connection);
         continue;
     }

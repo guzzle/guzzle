@@ -10,12 +10,15 @@ use Psr\Http\Message\StreamInterface;
 
 /**
  * Decodes the chunked transfer coding of a response body read from the
- * unfiltered transport stream.
+ * unfiltered transport stream, with the framing rules libcurl applies.
  *
  * Each read returns the decoded bytes that are already available, waiting on
- * the transport only when none are, so the transport's idle timeout applies
- * to every wait. A body that ends before its last chunk, or whose framing is
- * malformed, fails the read instead of yielding truncated or raw bytes.
+ * the transport only when there are none, so the transport's idle timeout
+ * governs every wait. The body ends as soon as the last chunk and trailer
+ * section have been decoded, without another transport read. A body that
+ * ends early or has malformed framing fails the read once the bytes decoded
+ * before the fault have been returned, and every later read fails the same
+ * way.
  *
  * @internal
  */
@@ -26,19 +29,27 @@ final class ChunkedBodyStream implements StreamInterface
 
     private const READ_SIZE = 8192;
 
-    private const MAX_LINE_LENGTH = 8192;
+    private const MAX_SIZE_DIGITS = 17;
 
-    private const MAX_TRAILER_LENGTH = 65536;
+    private const MAX_TRAILER_LINE_LENGTH = 4093;
+
+    private const MAX_TRAILER_SECTION_LENGTH = 307200;
 
     private const SIZE = 0;
 
-    private const DATA = 1;
+    private const SIZE_LINE = 1;
 
-    private const DATA_END = 2;
+    private const DATA = 2;
 
-    private const TRAILER = 3;
+    private const DATA_END = 3;
 
-    private const DONE = 4;
+    private const TRAILER = 4;
+
+    private const TRAILER_CR = 5;
+
+    private const FINAL_CR = 6;
+
+    private const DONE = 7;
 
     private StreamInterface $stream;
 
@@ -48,11 +59,17 @@ final class ChunkedBodyStream implements StreamInterface
 
     private int $state = self::SIZE;
 
+    private string $digits = '';
+
     private int $remaining = 0;
+
+    private string $line = '';
 
     private int $trailerLength = 0;
 
     private int $position = 0;
+
+    private ?\RuntimeException $failure = null;
 
     public function __construct(StreamInterface $stream)
     {
@@ -61,6 +78,9 @@ final class ChunkedBodyStream implements StreamInterface
 
     public function read(int $length): string
     {
+        if ($this->failure !== null) {
+            throw $this->failure;
+        }
         if ($length < 0) {
             throw new \RuntimeException('Length parameter cannot be negative');
         }
@@ -116,14 +136,16 @@ final class ChunkedBodyStream implements StreamInterface
 
     public function detach()
     {
+        if ($this->state === self::DONE) {
+            return $this->stream->detach();
+        }
+
+        if ($this->position > 0 || $this->buffer !== '' || $this->digits !== '' || $this->failure !== null) {
+            throw new \RuntimeException('Cannot detach a chunked response body after reading from it');
+        }
+
         $resource = $this->stream->detach();
-        if (\is_resource($resource) && $this->state !== self::DONE) {
-            if ($this->position > 0 || $this->buffer !== '' || $this->state !== self::SIZE) {
-                \fclose($resource);
-
-                throw new \RuntimeException('Cannot detach a partially decoded chunked response body');
-            }
-
+        if (\is_resource($resource)) {
             // Nothing has been decoded yet, so PHP's own filter can take over.
             \stream_filter_append($resource, 'dechunk', \STREAM_FILTER_READ);
         }
@@ -132,7 +154,7 @@ final class ChunkedBodyStream implements StreamInterface
     }
 
     /**
-     * Fills the buffer with what the transport has available, waiting for at
+     * Appends what the transport has available to the buffer, waiting for at
      * least one byte.
      */
     private function fill(): bool
@@ -142,104 +164,160 @@ final class ChunkedBodyStream implements StreamInterface
         $unread = $this->stream->getMetadata('unread_bytes');
         $data = $this->stream->read(\is_int($unread) && $unread > 0 ? \min($unread, self::READ_SIZE) : self::READ_SIZE);
         if ($data === '') {
-            if ($this->stream->eof()) {
-                throw new \RuntimeException('Chunked response body ended before the last chunk');
+            if (!$this->stream->eof()) {
+                return false;
             }
 
-            return false;
+            $this->failure = new \RuntimeException('Response body ended before the chunked body was complete');
+
+            throw $this->failure;
         }
 
-        if ($this->offset > 0) {
-            $this->buffer = (string) \substr($this->buffer, $this->offset);
-            $this->offset = 0;
-        }
-        $this->buffer .= $data;
+        $this->buffer = \substr($this->buffer, $this->offset).$data;
+        $this->offset = 0;
 
         return true;
     }
 
+    /**
+     * Decodes up to $length bytes from the buffer, and any framing after them,
+     * so the end of the body is noticed without another transport read.
+     */
     private function decode(int $length): string
     {
         $data = '';
-        $available = \strlen($this->buffer) - $this->offset;
 
-        while ($available > 0 && $this->state !== self::DONE) {
-            if ($this->state === self::DATA) {
-                $take = \min($this->remaining, $length - \strlen($data), $available);
-                $data .= \substr($this->buffer, $this->offset, $take);
-                $this->offset += $take;
-                $available -= $take;
-                $this->remaining -= $take;
-                if ($this->remaining === 0) {
-                    $this->state = self::DATA_END;
-                }
-                if (\strlen($data) === $length) {
-                    break;
-                }
-            } elseif ($this->state === self::DATA_END) {
-                if ($this->buffer[$this->offset] === "\n") {
-                    $consumed = 1;
-                } elseif ($available < 2) {
-                    break;
-                } elseif ($this->buffer[$this->offset + 1] === "\n" && $this->buffer[$this->offset] === "\r") {
-                    $consumed = 2;
-                } else {
-                    throw new \RuntimeException('Invalid chunk terminator in chunked response body');
-                }
-                $this->offset += $consumed;
-                $available -= $consumed;
-                $this->state = self::SIZE;
-            } else {
-                $end = \strpos($this->buffer, "\n", $this->offset);
-                if ($end === false) {
-                    if ($available > self::MAX_LINE_LENGTH) {
-                        throw new \RuntimeException('Chunked response body line is too long');
+        try {
+            while ($this->offset < \strlen($this->buffer) && $this->state !== self::DONE) {
+                if ($this->state === self::DATA) {
+                    $take = \min($this->remaining, $length - \strlen($data), \strlen($this->buffer) - $this->offset);
+                    if ($take === 0) {
+                        break;
                     }
-                    break;
+                    $data .= \substr($this->buffer, $this->offset, $take);
+                    $this->offset += $take;
+                    $this->remaining -= $take;
+                    if ($this->remaining === 0) {
+                        $this->state = self::DATA_END;
+                    }
+                } elseif ($this->state === self::SIZE) {
+                    $this->decodeSize();
+                } elseif ($this->state === self::SIZE_LINE) {
+                    $this->skipSizeLine();
+                } elseif ($this->state === self::DATA_END) {
+                    $this->decodeDataEnd();
+                } else {
+                    $this->decodeTrailer();
                 }
-
-                $lineLength = $end - $this->offset;
-                if ($lineLength > 0 && $this->buffer[$end - 1] === "\r") {
-                    --$lineLength;
-                }
-
-                if ($this->state === self::SIZE) {
-                    $this->startChunk($this->offset, $lineLength);
-                } elseif ($lineLength === 0) {
-                    $this->state = self::DONE;
-                } elseif (($this->trailerLength += $end + 1 - $this->offset) > self::MAX_TRAILER_LENGTH) {
-                    throw new \RuntimeException('Chunked response body trailers are too long');
-                }
-
-                $available -= $end + 1 - $this->offset;
-                $this->offset = $end + 1;
+            }
+        } catch (\RuntimeException $e) {
+            $this->failure = $e;
+            if ($data === '') {
+                throw $e;
             }
         }
 
         return $data;
     }
 
-    private function startChunk(int $offset, int $length): void
+    private function decodeSize(): void
     {
-        $digits = \strspn($this->buffer, '0123456789abcdefABCDEF', $offset, $length);
-        if ($digits === 0 || $digits > 15) {
-            throw new \RuntimeException('Invalid chunk size in chunked response body');
+        $count = \strspn($this->buffer, '0123456789abcdefABCDEF', $this->offset);
+        $this->digits .= \substr($this->buffer, $this->offset, $count);
+        $this->offset += $count;
+        if (\strlen($this->digits) > self::MAX_SIZE_DIGITS) {
+            throw new \RuntimeException('Invalid chunked response body: invalid chunk size');
+        }
+        if ($this->offset === \strlen($this->buffer)) {
+            return;
+        }
+        if ($this->digits === '') {
+            throw new \RuntimeException('Invalid chunked response body: invalid chunk size');
         }
 
-        if ($digits < $length && \preg_match('/^[\t ]*(?:;.*)?$/sD', \substr($this->buffer, $offset + $digits, $length - $digits)) !== 1) {
-            throw new \RuntimeException('Invalid chunk size in chunked response body');
+        $significant = \ltrim($this->digits, '0');
+        if (\strlen($significant) > 16 || (\strlen($significant) === 16 && $significant[0] > '7')) {
+            throw new \RuntimeException('Invalid chunked response body: invalid chunk size');
         }
 
-        $size = \hexdec(\substr($this->buffer, $offset, $digits));
+        $size = \hexdec($this->digits);
         if (!\is_int($size)) {
-            throw new \RuntimeException('Chunk size in chunked response body is too large');
+            throw new \OverflowException('Chunk size exceeds the maximum integer size supported on this platform');
         }
 
-        if ($size === 0) {
-            $this->state = self::TRAILER;
-        } else {
-            $this->remaining = $size;
-            $this->state = self::DATA;
+        $this->digits = '';
+        $this->remaining = $size;
+        $this->state = self::SIZE_LINE;
+    }
+
+    private function skipSizeLine(): void
+    {
+        // Chunk extensions, and anything else up to the line feed, are ignored
+        // the way libcurl ignores them.
+        $end = \strpos($this->buffer, "\n", $this->offset);
+        if ($end === false) {
+            $this->offset = \strlen($this->buffer);
+
+            return;
+        }
+
+        $this->offset = $end + 1;
+        $this->state = $this->remaining === 0 ? self::TRAILER : self::DATA;
+    }
+
+    private function decodeDataEnd(): void
+    {
+        $this->offset += \strspn($this->buffer, "\r", $this->offset);
+        if ($this->offset === \strlen($this->buffer)) {
+            return;
+        }
+        if ($this->buffer[$this->offset] !== "\n") {
+            throw new \RuntimeException('Invalid chunked response body: missing CRLF after chunk data');
+        }
+
+        ++$this->offset;
+        $this->state = self::SIZE;
+    }
+
+    private function decodeTrailer(): void
+    {
+        if ($this->state !== self::TRAILER) {
+            if ($this->buffer[$this->offset] !== "\n") {
+                throw new \RuntimeException('Invalid chunked response body: invalid trailer section');
+            }
+
+            ++$this->offset;
+            $this->state = $this->state === self::FINAL_CR ? self::DONE : self::TRAILER;
+
+            return;
+        }
+
+        $count = \strcspn($this->buffer, "\r\n", $this->offset);
+        $this->line .= \substr($this->buffer, $this->offset, $count);
+        $this->offset += $count;
+        $this->trailerLength += $count;
+        if (\strlen($this->line) > self::MAX_TRAILER_LINE_LENGTH || $this->trailerLength > self::MAX_TRAILER_SECTION_LENGTH) {
+            throw new \RuntimeException('Invalid chunked response body: invalid trailer section');
+        }
+        if ($this->offset === \strlen($this->buffer)) {
+            return;
+        }
+
+        $carriageReturn = $this->buffer[$this->offset] === "\r";
+        ++$this->offset;
+        if ($this->line === '') {
+            $this->state = $carriageReturn ? self::FINAL_CR : self::DONE;
+
+            return;
+        }
+
+        if (\strpos($this->line, "\0") !== false || \strpos($this->line, ':') === false || $this->line[0] === ' ' || $this->line[0] === "\t") {
+            throw new \RuntimeException('Invalid chunked response body: invalid trailer section');
+        }
+
+        $this->line = '';
+        if ($carriageReturn) {
+            $this->state = self::TRAILER_CR;
         }
     }
 }

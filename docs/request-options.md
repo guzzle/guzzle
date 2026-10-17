@@ -1812,7 +1812,9 @@ request has resolved and the response object has been returned, which is outside
 the `Client::sendRequest()` transfer that PSR-18 governs. Catch them explicitly
 when reading a streamed body. If you detach the body and read the raw PHP stream
 resource instead, functions such as `fgets()` return `false` on timeout,
-following PHP's stream semantics.
+following PHP's stream semantics. A chunked body can only be detached before it
+is read, and PHP then decodes the detached resource without Guzzle's framing
+checks.
 
 A timed-out read does not invalidate the streamed body. Catching the
 `TimeoutException` and calling `read()` again resumes waiting for data, so
@@ -1985,7 +1987,8 @@ response body resources where practical. Request bodies that already implement
 > used as provided. When decoding gzip/deflate responses, the factory still
 > wraps the underlying transport resource, but Guzzle layers its own
 > `InflateStream` decorator on top because PSR-17 cannot express a decoding
-> stream.
+> stream. Guzzle likewise decodes chunked responses with its own decorator over
+> the factory's stream.
 
 > [!WARNING]
 > Guzzle only checks that the value implements

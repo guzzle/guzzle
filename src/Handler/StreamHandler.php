@@ -408,8 +408,10 @@ final class StreamHandler
         $canHaveBody = HeaderProcessor::responseCanHaveBody($request->getMethod(), $status);
         $framingFailure = null;
         $declaredLength = null;
+        $chunked = false;
         try {
             $declaredLength = HeaderProcessor::validateResponseFraming($request->getMethod(), $status, $headers);
+            $chunked = $canHaveBody && HeaderProcessor::parseTransferEncoding($headers);
             if (empty($options['stream'])) {
                 HeaderProcessor::assertContentLengthWithinPlatformLimit($declaredLength);
             }
@@ -417,19 +419,19 @@ final class StreamHandler
             $framingFailure = $e;
         }
 
-        $chunked = false;
-        if ($framingFailure === null) {
-            [$headers, $chunked] = self::decodeChunkedResponse($headers);
-            $chunked = $chunked && $canHaveBody;
+        if ($chunked) {
+            HeaderProcessor::removeHeader('Transfer-Encoding', $headers);
+        } elseif (!$canHaveBody) {
+            $headers = self::removeChunkedTransferCoding($headers);
         }
 
         $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new Psr7\HttpFactory());
         $responseFactory = self::requireResponseFactory($options[RequestOptions::RESPONSE_FACTORY] ?? new Psr7\HttpFactory());
 
         // Wrap the transport resource with the configured stream factory, and
-        // decorate buffered transfers with the deadline source before optional
-        // content decoding layers an InflateStream on top, so every read that
-        // pulls from the transport observes the deadline.
+        // decorate buffered transfers with the deadline source before chunked
+        // and optional content decoding layer on top, so every read that pulls
+        // from the transport observes the deadline.
         $resource = $stream;
         $stream = $streamFactory->createStreamFromResource($stream);
         if ($framingFailure === null && $deadline !== null && empty($options['stream'])) {
@@ -634,17 +636,15 @@ final class StreamHandler
     }
 
     /**
-     * Removes the chunked transfer coding from the response headers.
+     * Removes the chunked transfer coding from the headers of a response that
+     * cannot have a body, as PHP's HTTP wrapper did.
      *
      * @param array<string, string[]> $headers
      *
-     * @return array{0: array<string, string[]>, 1: bool} The decoded headers and whether the body is chunked
+     * @return array<string, string[]>
      */
-    private static function decodeChunkedResponse(array $headers): array
+    private static function removeChunkedTransferCoding(array $headers): array
     {
-        $decodedHeaders = $headers;
-        $decode = false;
-
         foreach ($headers as $name => $values) {
             if (!Psr7\Utils::caselessEquals((string) $name, 'Transfer-Encoding')) {
                 continue;
@@ -652,23 +652,19 @@ final class StreamHandler
 
             $remaining = [];
             foreach ($values as $value) {
-                // Match PHP's legacy auto_decode prefix check so moving the
-                // filter does not change which responses are dechunked.
-                if (Psr7\Utils::caselessEquals(\substr($value, 0, 7), 'chunked')) {
-                    $decode = true;
-                } else {
+                if (!Psr7\Utils::caselessEquals(\substr($value, 0, 7), 'chunked')) {
                     $remaining[] = $value;
                 }
             }
 
             if ($remaining === []) {
-                unset($decodedHeaders[$name]);
+                unset($headers[$name]);
             } else {
-                $decodedHeaders[$name] = $remaining;
+                $headers[$name] = $remaining;
             }
         }
 
-        return $decode ? [$decodedHeaders, true] : [$headers, false];
+        return $headers;
     }
 
     /**
