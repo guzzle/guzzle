@@ -1,0 +1,51 @@
+name: Experiment
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  COMPOSER_ROOT_VERSION: 8.2.x-dev
+
+jobs:
+  probe:
+    name: Probe ${{ matrix.os }} PHP ${{ matrix.php }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            php: '8.1'
+          - os: ubuntu-24.04
+            php: '8.3'
+          - os: macos-latest
+            php: '8.4'
+          - os: windows-latest
+            php: '8.2'
+          - os: windows-latest
+            php: '8.5'
+
+    steps:
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: curl, zlib
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Download dependencies
+        run: composer update --no-interaction --no-progress --no-dev
+
+      - name: Probe
+        run: python -I .experiment/run.py tl-,ck-,te-,cut-,gz-
