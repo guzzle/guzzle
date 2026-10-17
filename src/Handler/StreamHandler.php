@@ -417,12 +417,10 @@ final class StreamHandler
             $framingFailure = $e;
         }
 
+        $chunked = false;
         if ($framingFailure === null) {
-            try {
-                $headers = $this->decodeChunkedResponse($headers, $stream, $canHaveBody);
-            } catch (\RuntimeException $e) {
-                $framingFailure = $e;
-            }
+            [$headers, $chunked] = self::decodeChunkedResponse($headers);
+            $chunked = $chunked && $canHaveBody;
         }
 
         $streamFactory = self::requireStreamFactory($options[RequestOptions::STREAM_FACTORY] ?? new Psr7\HttpFactory());
@@ -436,6 +434,9 @@ final class StreamHandler
         $stream = $streamFactory->createStreamFromResource($stream);
         if ($framingFailure === null && $deadline !== null && empty($options['stream'])) {
             $stream = self::createDeadlineSource($stream, $resource, $deadline, $options);
+        }
+        if ($chunked) {
+            $stream = new ChunkedBodyStream($stream);
         }
 
         $encodedBody = null;
@@ -633,17 +634,13 @@ final class StreamHandler
     }
 
     /**
-     * Applies the HTTP wrapper's normal chunked-response handling.
+     * Removes the chunked transfer coding from the response headers.
      *
      * @param array<string, string[]> $headers
-     * @param resource                $stream
-     * @param bool                    $decodeBody Whether to attach the dechunk filter
      *
-     * @return array<string, string[]>
-     *
-     * @throws \RuntimeException when the dechunk filter cannot be attached
+     * @return array{0: array<string, string[]>, 1: bool} The decoded headers and whether the body is chunked
      */
-    private function decodeChunkedResponse(array $headers, $stream, bool $decodeBody): array
+    private static function decodeChunkedResponse(array $headers): array
     {
         $decodedHeaders = $headers;
         $decode = false;
@@ -671,17 +668,7 @@ final class StreamHandler
             }
         }
 
-        if (!$decode) {
-            return $headers;
-        }
-
-        if ($decodeBody) {
-            $this->createResource(static function () use ($stream) {
-                return \stream_filter_append($stream, 'dechunk', \STREAM_FILTER_READ);
-            });
-        }
-
-        return $decodedHeaders;
+        return $decode ? [$decodedHeaders, true] : [$headers, false];
     }
 
     /**
