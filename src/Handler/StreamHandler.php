@@ -505,7 +505,7 @@ class StreamHandler
                 if (isset($options['read_timeout'])) {
                     $readTimeout = $options['read_timeout'];
                     $sec = (int) $readTimeout;
-                    $usec = ($readTimeout - $sec) * 100000;
+                    $usec = (int) \round(($readTimeout - $sec) * 1000000);
                     \stream_set_timeout($resource, $sec, $usec);
                 }
 
