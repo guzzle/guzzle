@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fix PHP 8.6 notices for oversized numeric hosts
+- Fix `delay` values over 71 minutes
 
 
 ## 8.2.0 - 2026-09-06

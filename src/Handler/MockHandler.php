@@ -102,7 +102,7 @@ final class MockHandler implements \Countable
         }
 
         if (isset($options['delay']) && \is_numeric($options['delay'])) {
-            \usleep((int) ($options['delay'] * 1000));
+            Clock::sleep((int) ($options['delay'] * 1000));
         }
 
         if (isset($options['on_stats']) && !\is_callable($options['on_stats'])) {
