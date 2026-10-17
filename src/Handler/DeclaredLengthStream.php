@@ -37,7 +37,7 @@ final class DeclaredLengthStream implements StreamInterface
 
     public function eof(): bool
     {
-        return $this->remaining === 0 || $this->failure !== null;
+        return $this->remaining === 0;
     }
 
     public function isSeekable(): bool
@@ -48,6 +48,30 @@ final class DeclaredLengthStream implements StreamInterface
     public function seek(int $offset, int $whence = \SEEK_SET): void
     {
         throw new \RuntimeException('Cannot seek a response body bounded by its declared Content-Length');
+    }
+
+    /**
+     * Once the body has ended early, a stale transport timed_out flag must not
+     * turn that failure into a retryable timeout for callers that probe it.
+     *
+     * @return mixed
+     */
+    public function getMetadata(?string $key = null)
+    {
+        if ($this->failure === null) {
+            return $this->stream->getMetadata($key);
+        }
+
+        if ($key === 'timed_out') {
+            return false;
+        }
+
+        $metadata = $this->stream->getMetadata($key);
+        if ($key === null && \is_array($metadata)) {
+            $metadata['timed_out'] = false;
+        }
+
+        return $metadata;
     }
 
     public function read(int $length): string
@@ -66,8 +90,6 @@ final class DeclaredLengthStream implements StreamInterface
 
         $data = $this->stream->read(\min($length, $this->remaining));
         if ($data === '' && $this->stream->eof()) {
-            // Ending the body keeps a stale timed_out flag from turning this
-            // failure into a timeout in callers that probe eof().
             $this->failure = new \RuntimeException('Response body ended before the declared Content-Length was reached');
 
             throw $this->failure;

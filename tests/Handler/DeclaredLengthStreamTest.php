@@ -54,7 +54,7 @@ class DeclaredLengthStreamTest extends TestCase
             self::assertSame('Response body ended before the declared Content-Length was reached', $e->getMessage());
         }
 
-        self::assertTrue($stream->eof());
+        self::assertFalse($stream->eof());
         $this->expectExceptionObject($e);
         $stream->read(8192);
     }
