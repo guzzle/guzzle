@@ -1874,7 +1874,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler(
             new Request('GET', Server::$url.'guzzle-server/read-timeout'),
             [
-                RequestOptions::READ_TIMEOUT => 1,
+                RequestOptions::READ_TIMEOUT => 1.5,
                 RequestOptions::STREAM => true,
             ]
         )->wait();
@@ -1883,10 +1883,28 @@ class StreamHandlerTest extends TestCase
         $body = $response->getBody()->detach();
         $line = \fgets($body);
         self::assertSame("sleeping 60 seconds ...\n", $line);
+        $s = Utils::currentTime();
         $line = \fgets($body);
+        self::assertGreaterThan(1.4, Utils::currentTime() - $s);
         self::assertFalse($line);
         self::assertTrue(\stream_get_meta_data($body)['timed_out']);
         self::assertFalse(\feof($body));
+    }
+
+    public function testAppliesFractionalReadTimeout()
+    {
+        ReadTimeoutRecordingStreamWrapper::$timeouts = [];
+        \stream_wrapper_unregister('http');
+        \stream_wrapper_register('http', ReadTimeoutRecordingStreamWrapper::class);
+
+        try {
+            $handler = new StreamHandler();
+            $handler(new Request('GET', 'http://example.com'), [RequestOptions::READ_TIMEOUT => 1.5]);
+        } finally {
+            \stream_wrapper_restore('http');
+        }
+
+        self::assertSame([[1, 500000]], ReadTimeoutRecordingStreamWrapper::$timeouts);
     }
 
     public function testHandlesGarbageHttpServerGracefully()
