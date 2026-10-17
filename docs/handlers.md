@@ -543,8 +543,10 @@ progress, including waiting on one of its transfers, with a
 `GuzzleHttp\Promise\CrossContextException`. Once all of its transfers finish and
 its calls return, any context may use it again. When the context that owns its
 transfers is finished, the transfers it left unfinished are cancelled, so that
-they cannot keep other contexts from using the handler. This protects handlers
-that you construct and share yourself.
+they cannot keep other contexts from using the handler. If that context ends
+without being finished, the next context that uses the handler releases those
+transfers and leaves their promises pending, because no context can use them any
+more. This protects handlers that you construct and share yourself.
 
 ## Related
 

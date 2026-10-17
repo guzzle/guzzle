@@ -4096,23 +4096,20 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
-    public function testRejectsEveryExecutionContextWhenTheOwnerEndedWithActiveTransfers(): void
+    public function testAnotherContextTakesOverWhenTheOwnerEndedWithoutBeingFinished(): void
     {
         [$contexts, $owner, $other] = $this->useExecutionContexts();
-        Server::enqueue([new Response(200)]);
+        Server::enqueue([new Response(200), new Response(200)]);
         $handler = new CurlMultiHandler();
-        $promise = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
+        $abandoned = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
         unset($owner);
         gc_collect_cycles();
 
-        try {
-            $contexts->in($other, static function () use ($handler): void {
-                $handler->tick();
-            });
-            self::fail('An orphaned handler was driven.');
-        } catch (P\CrossContextException $e) {
-            self::assertTrue(P\Is::pending($promise));
-        }
+        $response = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertTrue(P\Is::pending($abandoned));
+        self::assertTrue($handler->isIdle());
     }
 
     public function testAFinishedContextThatUsesTheHandlerAgainCancelsWhatItLeavesAgain(): void

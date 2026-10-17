@@ -32,8 +32,11 @@ use Psr\Http\Message\ResponseInterface;
  * `GuzzleHttp\Promise\CrossContextException`. Once all of its transfers finish
  * and its calls return, any context may use it again. When the context that
  * owns its transfers is finished, the transfers it left unfinished are
- * cancelled, so that they cannot keep other contexts from using the handler.
- * This protects handlers that you construct and share yourself.
+ * cancelled, so that they cannot keep other contexts from using the handler. If
+ * that context ends without being finished, the next context that uses the
+ * handler releases those transfers and leaves their promises pending, because
+ * no context can use them any more. This protects handlers that you construct
+ * and share yourself.
  *
  * @see https://github.com/guzzle/guzzle/blob/8.2/docs/handlers.md#concurrent-execution-contexts
  */
@@ -1198,6 +1201,18 @@ final class CurlMultiHandler
         }
     }
 
+    /**
+     * Releases the native transfers of an owner that ended without being
+     * finished, leaving their promises pending. Nothing can settle those
+     * promises any more, because every context is refused a pending promise
+     * whose context has ended.
+     */
+    private function releaseOrphanedTransfers(): void
+    {
+        foreach ($this->handles as $id => $entry) {
+            $this->cancel($id, $entry['wait_token']);
+        }
+    }
 
     private function releaseClaim(bool $claimed): void
     {
@@ -1229,6 +1244,10 @@ final class CurlMultiHandler
     {
         if ($this->isAssignedToCurrentContext()) {
             return;
+        }
+
+        if ($this->owner !== null && $this->owner->get() === null && $this->activeCalls === 0) {
+            $this->releaseOrphanedTransfers();
         }
 
         if ($this->isIdle()) {
