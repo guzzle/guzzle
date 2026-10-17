@@ -6753,8 +6753,38 @@ class CurlFactoryTest extends TestCase
 
     public static function curlResponseTransferErrorProvider(): iterable
     {
+        yield 'weird server reply' => [8];
         yield 'partial file' => [18];
+        yield 'write' => [23];
         yield 'bad content encoding' => [61];
+    }
+
+    /**
+     * @dataProvider curlHandlerProvider
+     */
+    public function testContentDecodingWriteErrorRejectsAsResponseTransferExceptionThroughCurlHandlers(callable $handlerFactory): void
+    {
+        $body = \gzencode('first').\gzencode('second');
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Length: ".\strlen($body)."\r\n\r\n".$body);
+        $request = new Psr7\Request('GET', Server::$url);
+        $handler = $handlerFactory();
+
+        try {
+            $handler($request, ['decode_content' => true])->wait();
+
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertStringStartsWith('cURL error 23: ', $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+            self::assertSame(200, $e->getResponse()->getStatusCode());
+        } finally {
+            Server::flush();
+
+            if (\method_exists($handler, 'close')) {
+                $handler->close();
+            }
+        }
     }
 
     /**
@@ -6789,7 +6819,6 @@ class CurlFactoryTest extends TestCase
 
     public static function localCurlErrorWithResponseProvider(): iterable
     {
-        yield 'write' => [23];
         yield 'file size exceeded' => [63];
     }
 
