@@ -5117,13 +5117,14 @@ class StreamHandlerTest extends TestCase
         }
     }
 
-    public function testReadsStreamedChunkedTlsBodyAfterReadTimeout(): void
+    public function testReadsStreamedChunkedTlsBodyAsItArrives(): void
     {
         $this->skipIfTlsHttpServerIsUnavailable();
         [$address, $certificate, $process, $pipes] = $this->startTlsHttpServer('chunked');
         $body = null;
 
         try {
+            \fwrite($pipes[0], "\n");
             $handler = new StreamHandler();
             $response = $handler(new Request('GET', 'https://'.$address), [
                 RequestOptions::READ_TIMEOUT => 0.2,
@@ -5131,6 +5132,11 @@ class StreamHandlerTest extends TestCase
                 RequestOptions::VERIFY => false,
             ])->wait();
             $body = $response->getBody();
+
+            // The first chunk arrived with the headers, so reading it must not
+            // wait for the idle timeout.
+            self::assertSame('a', $body->read(8192));
+            self::assertFalse($body->getMetadata('timed_out'));
 
             try {
                 $body->read(8192);
@@ -5148,10 +5154,10 @@ class StreamHandlerTest extends TestCase
                 } catch (Psr7\Exception\TimeoutException $e) {
                 }
             }
-            self::assertSame('a', $data);
+            self::assertSame('b', $data);
 
             \fwrite($pipes[0], "\n");
-            self::assertSame('bc', $body->getContents());
+            self::assertSame('c', $body->getContents());
         } finally {
             if ($body !== null) {
                 $body->close();
