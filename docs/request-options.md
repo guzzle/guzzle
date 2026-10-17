@@ -1248,12 +1248,14 @@ $response = $client->request('GET', '/stream', [
 
 $body = $response->getBody();
 
-// Returns false on timeout
+// Throws a RuntimeException on timeout (may return an empty string before PHP 8.1)
 $data = $body->read(1024);
 
 // Returns false on timeout
 $line = fgets($body->detach());
 ```
+
+On timeout, `getContents()` may return the bytes received so far without an error, so check `eof()` to tell whether the whole body was read.
 
 ## retries
 

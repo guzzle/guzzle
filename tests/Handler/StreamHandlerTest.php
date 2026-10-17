@@ -1874,7 +1874,7 @@ class StreamHandlerTest extends TestCase
         $response = $handler(
             new Request('GET', Server::$url.'guzzle-server/read-timeout'),
             [
-                RequestOptions::READ_TIMEOUT => 1,
+                RequestOptions::READ_TIMEOUT => 1.5,
                 RequestOptions::STREAM => true,
             ]
         )->wait();
@@ -1883,7 +1883,9 @@ class StreamHandlerTest extends TestCase
         $body = $response->getBody()->detach();
         $line = \fgets($body);
         self::assertSame("sleeping 60 seconds ...\n", $line);
+        $s = Utils::currentTime();
         $line = \fgets($body);
+        self::assertGreaterThan(1.4, Utils::currentTime() - $s);
         self::assertFalse($line);
         self::assertTrue(\stream_get_meta_data($body)['timed_out']);
         self::assertFalse(\feof($body));

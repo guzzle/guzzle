@@ -9,6 +9,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Fix PHP 8.6 notices for oversized numeric hosts
 - Fix `MockHandler` truncating fractional delays
+- Fix `StreamHandler` shortening fractional `read_timeout` values
 - Fix stream handler responses in Swoole coroutines on PHP 8.4+
 
 ## 7.15.5 - 2026-08-24
