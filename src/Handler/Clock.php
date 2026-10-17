@@ -20,4 +20,13 @@ final class Clock
     {
         return \hrtime(true) / 1e9;
     }
+
+    public static function sleep(int $microseconds): void
+    {
+        while ($microseconds > 0) {
+            $slice = \min($microseconds, 0xFFFFFFFF);
+            \usleep($slice);
+            $microseconds -= $slice;
+        }
+    }
 }

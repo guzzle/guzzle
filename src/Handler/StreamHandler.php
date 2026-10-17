@@ -180,7 +180,7 @@ final class StreamHandler
 
         // Sleep if there is a delay specified.
         if (isset($options['delay'])) {
-            \usleep((int) ($options['delay'] * 1000));
+            Clock::sleep((int) ($options['delay'] * 1000));
         }
 
         $multiplex = $options['multiplex'] ?? null;

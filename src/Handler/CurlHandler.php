@@ -88,7 +88,7 @@ final class CurlHandler
         HostValidator::assertRequestHost($request);
 
         if (isset($options['delay'])) {
-            \usleep((int) ($options['delay'] * 1000));
+            Clock::sleep((int) ($options['delay'] * 1000));
         }
 
         // A Multiplexing::NONE request option holds unconditionally here:
