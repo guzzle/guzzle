@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fix PHP 8.6 notices for oversized numeric hosts
+- Fix `MockHandler` truncating fractional delays
 
 ## 7.15.5 - 2026-08-24
 
