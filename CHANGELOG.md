@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.3.0 - Upcoming
+
+### Changed
+
+- Classify cURL malformed server reply and content decoding write errors with a response as `ResponseTransferException`
+
+
 ## 8.2.1 - Upcoming
 
 ### Fixed
