@@ -12,7 +12,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix `CurlMultiHandler` delays over 71 minutes
 - Fix overlapping stream handler requests sharing a deadline
 - Fix stream handler responses in Swoole coroutines on PHP 8.4+
-- Fix reads of streamed gzip and deflate responses waiting to fill 8 KiB
+- Fix reads of streamed gzip and deflate responses waiting for 8 KiB of decoded data
 - Fix stream handler accepting corrupt gzip and deflate response bodies
 
 

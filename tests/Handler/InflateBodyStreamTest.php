@@ -7,6 +7,7 @@ namespace GuzzleHttp\Tests\Handler;
 use GuzzleHttp\Handler\InflateBodyStream;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\FnStream;
+use GuzzleHttp\Psr7\StreamWrapper;
 use GuzzleHttp\Psr7\Utils;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
@@ -70,9 +71,14 @@ class InflateBodyStreamTest extends TestCase
             self::assertSame('Unable to decode the response body: invalid gzip or deflate data', $e->getMessage());
         }
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Unable to decode the response body: invalid gzip or deflate data');
-        $stream->read(1);
+        self::assertFalse($stream->eof());
+
+        try {
+            $stream->read(1);
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $again) {
+            self::assertSame($e, $again);
+        }
     }
 
     public static function invalidEncodedBodyProvider(): iterable
@@ -91,7 +97,9 @@ class InflateBodyStreamTest extends TestCase
     {
         $source = FnStream::decorate(self::pieces(['not compressed', 'more']), [
             'getMetadata' => static function (?string $key = null) {
-                return $key === 'timed_out' ? true : null;
+                $metadata = ['timed_out' => true];
+
+                return $key === null ? $metadata : $metadata[$key] ?? null;
             },
         ]);
         $stream = new InflateBodyStream($source);
@@ -104,7 +112,16 @@ class InflateBodyStreamTest extends TestCase
             self::assertSame('Unable to decode the response body: invalid gzip or deflate data', $e->getMessage());
         }
 
-        self::assertTrue($stream->eof());
+        self::assertFalse($stream->getMetadata('timed_out'));
+        self::assertFalse($stream->getMetadata()['timed_out']);
+    }
+
+    public function testResourceReportsDecodingFailureInsteadOfEndingCleanly(): void
+    {
+        $resource = StreamWrapper::getResource(new InflateBodyStream(Utils::streamFor('not compressed')));
+
+        self::assertFalse(@\fread($resource, 8192));
+        self::assertFalse(\feof($resource));
     }
 
     public function testPropagatesSourceTimeoutsWithoutLosingData(): void
