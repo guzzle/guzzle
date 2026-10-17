@@ -39,8 +39,8 @@ integration, see the
 For response bodies, the built-in stream handler creates or wraps the
 sink/default stream with the configured
 [`stream_factory`](request-options.md#stream_factory) where practical. When
-response content decoding is enabled, the stream handler may layer Guzzle's
-`InflateStream` over that stream because PSR-17 cannot express a decoding
+response content decoding is enabled, the stream handler may layer its own
+decoding stream over that stream because PSR-17 cannot express a decoding
 stream.
 
 The built-in cURL handlers use libcurl for content decoding when it is enabled.
