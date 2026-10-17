@@ -466,7 +466,8 @@ non-streamed response when a valid, positive `Content-Length` declares more
 bytes than it receives. For decoded gzip and deflate, the length applies to
 encoded bytes before decompression, and the original values remain in
 `x-encoded-content-length`. It raises the same exception when a chunked body
-ends before its last chunk or has malformed chunk framing; reading such a body
+ends before its last chunk or has malformed chunk framing, or when a decoded
+gzip or deflate body has data after the compressed stream; reading such a body
 with `stream => true` throws a `\RuntimeException` once the bytes before the
 fault have been returned. Valid `stream => true` responses remain lazy after
 header validation, but end at a valid `Content-Length` that fits in a PHP

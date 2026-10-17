@@ -16,6 +16,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - End stream handler bodies at their declared `Content-Length`, including `0`
 - Throw when a streamed body ends before its declared `Content-Length`
 - Classify cURL errors 8 and 23 with a response as `ResponseTransferException`
+- Reject stream handler gzip and deflate bodies with trailing data, like libcurl
+- Accept raw deflate stream handler bodies, like libcurl
 
 ### Fixed
 
