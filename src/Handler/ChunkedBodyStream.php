@@ -146,7 +146,7 @@ final class ChunkedBodyStream implements StreamInterface
             return $this->stream->detach();
         }
 
-        if ($this->position > 0 || $this->buffer !== '' || $this->digits !== '' || $this->failure !== null) {
+        if ($this->buffer !== '' || $this->failure !== null) {
             throw new \RuntimeException('Cannot detach a chunked response body after reading from it');
         }
 
