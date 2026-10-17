@@ -105,8 +105,6 @@ final class StreamHandler
      */
     private const DEFAULT_IDLE_TIMEOUT_MS = 60000;
 
-    private array $lastHeaders = [];
-
     private ?\Throwable $onStatsException = null;
 
     private string $transportSharingMode;
@@ -234,11 +232,13 @@ final class StreamHandler
 
             $deadline = null;
             $stream = $this->createStream($request, $options, $body, $deadline);
+            $headers = \stream_get_meta_data($stream)['wrapper_data'];
 
             return $this->createResponse(
                 $request,
                 $options,
                 $stream,
+                \is_array($headers) ? $headers : [],
                 $startTime,
                 $deadline
             );
@@ -394,12 +394,11 @@ final class StreamHandler
         #[\SensitiveParameter]
         array $options,
         $stream,
+        #[\SensitiveParameter]
+        array $hdrs,
         ?float $startTime,
         ?float $deadline
     ): PromiseInterface {
-        $hdrs = $this->lastHeaders;
-        $this->lastHeaders = [];
-
         try {
             [$ver, $status, $reason, $headers] = HeaderProcessor::parseHeaders($hdrs);
         } catch (\Throwable $e) {
@@ -1045,13 +1044,6 @@ final class StreamHandler
                         \ini_set('from', $iniFrom);
                     }
                 }
-
-                // PHP 8.5 deprecates the local $http_response_header variable.
-                if (function_exists('http_get_last_response_headers')) {
-                    $http_response_header = \http_get_last_response_headers();
-                }
-
-                $this->lastHeaders = $http_response_header ?? [];
 
                 if (false === $resource) {
                     return false;
