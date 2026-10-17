@@ -14,8 +14,9 @@ use Psr\Http\Message\StreamInterface;
  *
  * Unlike the zlib.inflate stream filter, a read returns the bytes decoded so
  * far instead of waiting to fill the requested length, and invalid compressed
- * data always fails the read. Only the first compressed stream is decoded;
- * later bytes are read and discarded, as the filter does.
+ * data always fails the read. As with libcurl, data after the compressed
+ * stream, beyond up to 4 bytes after raw deflate data, fails the read that
+ * follows the last decoded byte.
  *
  * @internal
  */
@@ -27,7 +28,11 @@ final class InflateBodyStream implements StreamInterface
 
     private const INVALID_DATA = 'Unable to decode the response body: invalid gzip or deflate data';
 
+    private const TRAILING_DATA = 'Unable to decode the response body: unexpected data after the compressed stream';
+
     private ?StreamInterface $stream;
+
+    private bool $deflate;
 
     /** @var \InflateContext|resource|null */
     private $context;
@@ -42,11 +47,18 @@ final class InflateBodyStream implements StreamInterface
 
     private bool $finished = false;
 
+    private int $trailingAllowance = 0;
+
     private ?\RuntimeException $error = null;
 
-    public function __construct(StreamInterface $stream)
+    /**
+     * @param bool $deflate Whether the body is labelled "deflate", which also
+     *                      accepts raw deflate data like libcurl does.
+     */
+    public function __construct(StreamInterface $stream, bool $deflate = false)
     {
         $this->stream = $stream;
+        $this->deflate = $deflate;
     }
 
     public function __toString(): string
@@ -156,10 +168,16 @@ final class InflateBodyStream implements StreamInterface
                 return '';
             }
 
-            if (!$this->finished) {
-                $this->buffer = $this->inflate($encoded);
-                $this->offset = 0;
+            if ($this->finished) {
+                if ($this->allowTrailing(\strlen($encoded))) {
+                    continue;
+                }
+
+                throw $this->fail(self::TRAILING_DATA);
             }
+
+            $this->buffer = $this->inflate($encoded);
+            $this->offset = 0;
         }
 
         // Slice by offset, since a single inflate_add() call can return
@@ -213,16 +231,20 @@ final class InflateBodyStream implements StreamInterface
                 throw $this->fail('Unable to decode the response body: the zlib extension is not loaded');
             }
 
-            // inflate_init() has no automatic header detection, so pick the
-            // format the way zlib does for the window bits 15 + 32 that the
-            // zlib.inflate filter is given.
-            $context = \inflate_init(\strncmp($encoded, "\x1f\x8b", 2) === 0 ? \ZLIB_ENCODING_GZIP : \ZLIB_ENCODING_DEFLATE);
+            $encoding = $this->encoding($encoded);
+            $context = \inflate_init($encoding);
             if ($context === false) {
                 throw $this->fail(self::INVALID_DATA);
             }
 
             $this->context = $context;
+
+            // Like libcurl, accept up to 4 unknown bytes after raw deflate
+            // data, such as the checksum of a zlib stream missing its header.
+            $this->trailingAllowance = $encoding === \ZLIB_ENCODING_RAW ? 4 : 0;
         }
+
+        $readBefore = \inflate_get_read_len($this->context);
 
         // Application error handlers also see @-suppressed warnings, so keep
         // the warning inflate_add() emits before returning false from them.
@@ -241,8 +263,50 @@ final class InflateBodyStream implements StreamInterface
         }
 
         $this->finished = \inflate_get_status($this->context) === \ZLIB_STREAM_END;
+        if ($this->finished) {
+            $consumed = \inflate_get_read_len($this->context) - $readBefore;
+            if ($consumed < 0) {
+                // zlib counts input in an unsigned long, which wraps at 4 GiB
+                // on Windows and 32-bit builds.
+                $consumed += 0x100000000;
+            }
+
+            if (!$this->allowTrailing(\strlen($encoded) - (int) $consumed)) {
+                // Fail on the next read, after the decoded end of the body.
+                $this->fail(self::TRAILING_DATA);
+            }
+        }
 
         return $decoded;
+    }
+
+    private function encoding(string $header): int
+    {
+        // inflate_init() has no automatic header detection, so pick the
+        // format the way zlib does for the window bits 15 + 32 that the
+        // zlib.inflate filter is given.
+        if (\strncmp($header, "\x1f\x8b", 2) === 0) {
+            return \ZLIB_ENCODING_GZIP;
+        }
+
+        // Like libcurl, treat deflate data without a valid zlib header as raw.
+        $cmf = \ord($header[0]);
+        if ($this->deflate && (($cmf & 0x0F) !== 8 || $cmf >> 4 > 7 || (($cmf << 8) | \ord($header[1])) % 31 !== 0)) {
+            return \ZLIB_ENCODING_RAW;
+        }
+
+        return \ZLIB_ENCODING_DEFLATE;
+    }
+
+    private function allowTrailing(int $length): bool
+    {
+        if ($length > $this->trailingAllowance) {
+            return false;
+        }
+
+        $this->trailingAllowance -= $length;
+
+        return true;
     }
 
     private function attached(): StreamInterface

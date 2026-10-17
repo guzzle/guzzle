@@ -1906,6 +1906,37 @@ class StreamHandlerTest extends TestCase
         yield 'bad checksum' => [$badChecksum];
     }
 
+    public function testRejectsDataAfterCompressedResponseBody(): void
+    {
+        $decoded = \str_repeat('payload-', 100);
+        $body = \gzencode($decoded).\gzencode('second');
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Length: ".\strlen($body)."\r\n\r\n".$body);
+
+        try {
+            (new StreamHandler())(new Request('GET', Server::$url), ['decode_content' => true])->wait();
+            self::fail('Expected ResponseTransferException');
+        } catch (ResponseTransferException $e) {
+            self::assertSame('Unable to decode the response body: unexpected data after the compressed stream', $e->getMessage());
+
+            $body = $e->getResponse()->getBody();
+            $body->rewind();
+            self::assertSame($decoded, (string) $body);
+        }
+    }
+
+    public function testDecodesRawDeflateResponseBodyLabelledDeflate(): void
+    {
+        $decoded = \str_repeat('payload-', 100);
+        $body = (string) \gzdeflate($decoded);
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nContent-Encoding: deflate\r\nContent-Length: ".\strlen($body)."\r\n\r\n".$body);
+
+        $response = (new StreamHandler())(new Request('GET', Server::$url), ['decode_content' => true])->wait();
+
+        self::assertSame($decoded, (string) $response->getBody());
+    }
+
     public function testDecodedResponseStopsAtEncodedContentLength(): void
     {
         $decoded = 'decoded';

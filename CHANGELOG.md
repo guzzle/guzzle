@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.3.0 - Upcoming
+
+### Changed
+
+- Reject stream handler gzip and deflate bodies with data after the compressed stream, like the cURL handlers
+- Accept raw deflate stream handler bodies labelled `deflate`, like the cURL handlers
+
+
 ## 8.2.1 - Upcoming
 
 ### Fixed

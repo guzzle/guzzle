@@ -35,7 +35,7 @@ class InflateBodyStreamTest extends TestCase
     /**
      * @dataProvider encodedBodyProvider
      */
-    public function testDecodesFirstCompressedStream(string $encoded, string $decoded): void
+    public function testDecodesCompressedStream(string $encoded, string $decoded): void
     {
         $source = Utils::streamFor($encoded);
         $stream = new InflateBodyStream($source);
@@ -52,9 +52,71 @@ class InflateBodyStreamTest extends TestCase
         yield 'gzip' => [(string) \gzencode($decoded), $decoded];
         yield 'zlib' => [(string) \gzcompress($decoded), $decoded];
         yield 'empty' => ['', ''];
-        yield 'second gzip member' => [\gzencode($decoded).\gzencode('second'), $decoded];
-        yield 'trailing bytes' => [\gzencode($decoded).'trailing', $decoded];
         yield 'truncated trailer' => [\substr((string) \gzencode($decoded), 0, -8), $decoded];
+    }
+
+    /**
+     * @dataProvider deflateBodyProvider
+     *
+     * @param list<string> $pieces
+     */
+    public function testDecodesBodyLabelledDeflate(array $pieces, string $decoded): void
+    {
+        $stream = new InflateBodyStream(self::pieces($pieces), true);
+
+        self::assertSame($decoded, (string) $stream);
+        self::assertTrue($stream->eof());
+    }
+
+    public static function deflateBodyProvider(): iterable
+    {
+        $decoded = \str_repeat('payload-', 2000);
+        $raw = (string) \gzdeflate($decoded);
+
+        yield 'raw deflate' => [[$raw], $decoded];
+        yield 'raw deflate with 4 trailing bytes' => [[$raw.'1234'], $decoded];
+        yield 'raw deflate with 4 trailing bytes in later reads' => [[$raw.'1', '23', '4'], $decoded];
+        yield 'zlib' => [[(string) \gzcompress($decoded)], $decoded];
+        yield 'gzip' => [[(string) \gzencode($decoded)], $decoded];
+    }
+
+    /**
+     * @dataProvider trailingDataProvider
+     *
+     * @param list<string> $pieces
+     */
+    public function testRejectsDataAfterCompressedStream(array $pieces, bool $deflate, string $decoded): void
+    {
+        $stream = new InflateBodyStream(self::pieces($pieces), $deflate);
+        $read = '';
+
+        try {
+            while (!$stream->eof()) {
+                $read .= $stream->read(8192);
+            }
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertSame('Unable to decode the response body: unexpected data after the compressed stream', $e->getMessage());
+        }
+
+        self::assertSame($decoded, $read);
+        self::assertFalse($stream->eof());
+    }
+
+    public static function trailingDataProvider(): iterable
+    {
+        $decoded = \str_repeat('payload-', 2000);
+        $gzip = (string) \gzencode($decoded);
+        $raw = (string) \gzdeflate($decoded);
+
+        yield 'second gzip member' => [[$gzip.\gzencode('second')], false, $decoded];
+        yield 'trailing garbage' => [[$gzip.'trailing'], false, $decoded];
+        yield 'trailing CRLF' => [[$gzip."\r\n"], false, $decoded];
+        yield 'trailing CRLF in a later read' => [[$gzip, "\r\n"], false, $decoded];
+        yield 'gzip labelled deflate with trailing CRLF' => [[$gzip."\r\n"], true, $decoded];
+        yield 'zlib labelled deflate with trailing CRLF' => [[\gzcompress($decoded)."\r\n"], true, $decoded];
+        yield 'raw deflate with 5 trailing bytes' => [[$raw.'12345'], true, $decoded];
+        yield 'raw deflate with 5 trailing bytes in a later read' => [[$raw.'1234', '5'], true, $decoded];
     }
 
     /**
