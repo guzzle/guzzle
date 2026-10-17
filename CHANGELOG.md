@@ -3,6 +3,12 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.15.6 - Upcoming
+
+### Fixed
+
+- Fix PHP 8.6 notices for oversized numeric hosts
+
 ## 7.15.5 - 2026-08-24
 
 ### Changed
