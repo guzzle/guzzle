@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.2.1 - Upcoming
+
+### Fixed
+
+- Fix PHP 8.6 notices for oversized numeric hosts
+
+
 ## 8.2.0 - 2026-09-06
 
 ### Changed
