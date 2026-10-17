@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace GuzzleHttp\Handler;
 
 use GuzzleHttp\NonSerializableTrait;
-use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\StreamDecoratorTrait;
 use Psr\Http\Message\StreamInterface;
 
@@ -69,10 +68,6 @@ final class IncrementalStream implements StreamInterface
 
         try {
             return $data.$this->stream->read($length - 1);
-        } catch (TimeoutException $e) {
-            // TLS transports keep reporting an earlier timeout, so an empty
-            // non-blocking read can look like a timeout.
-            return $data;
         } catch (\Exception $e) {
             // Return the byte already taken from the transport first.
             $this->failure = $e;
