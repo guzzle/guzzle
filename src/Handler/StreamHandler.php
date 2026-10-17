@@ -702,9 +702,7 @@ final class StreamHandler
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
-                    if (!empty($options['stream'])) {
-                        $stream = new TransportStream($stream);
-                    } elseif ($declaredLength !== null && $declaredLength !== '0') {
+                    if (empty($options['stream']) && $declaredLength !== null && $declaredLength !== '0') {
                         $encodedBody = new EncodedBodyStream($stream, $declaredLength);
                         $stream = $encodedBody;
                     }
