@@ -193,6 +193,30 @@ parameters:
 			path: src/Handler/EasyHandle.php
 
 		-
+			message: '#^Parameter \#1 \$context of function inflate_add expects resource, InflateContext\|resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Handler/InflateBodyStream.php
+
+		-
+			message: '#^Parameter \#1 \$resource of function inflate_get_status expects resource, InflateContext\|resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Handler/InflateBodyStream.php
+
+		-
+			message: '#^Property GuzzleHttp\\Handler\\InflateBodyStream\:\:\$context \(InflateContext\|resource\|null\) is never assigned InflateContext so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Handler/InflateBodyStream.php
+
+		-
+			message: '#^Property GuzzleHttp\\Handler\\InflateBodyStream\:\:\$context has unknown class InflateContext as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Handler/InflateBodyStream.php
+
+		-
 			message: '#^Access to constant Error on an unknown class StreamErrorMode\.$#'
 			identifier: class.notFound
 			count: 1
