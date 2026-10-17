@@ -42,7 +42,8 @@ sink/default stream with the configured
 response content decoding is enabled, the stream handler may layer its own
 decoding stream over that stream because PSR-17 cannot express a decoding
 stream. The stream handler likewise decodes chunked responses with its own
-decorator over that stream.
+decorator over that stream, and returns `stream => true` bodies through its own
+decorators, which end each body at its declared `Content-Length`.
 
 The built-in cURL handlers use libcurl for content decoding when it is enabled.
 libcurl writes the decoded bytes to the configured sink or default response body

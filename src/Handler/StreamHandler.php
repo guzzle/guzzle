@@ -429,7 +429,7 @@ final class StreamHandler
         $responseFactory = self::requireResponseFactory($options[RequestOptions::RESPONSE_FACTORY] ?? new Psr7\HttpFactory());
 
         // Wrap the transport resource with the configured stream factory, and
-        // decorate buffered transfers with the deadline source before chunked
+        // decorate buffered transfers with the deadline source before framing
         // and optional content decoding layer on top, so every read that pulls
         // from the transport observes the deadline.
         $resource = $stream;
@@ -437,8 +437,16 @@ final class StreamHandler
         if ($framingFailure === null && $deadline !== null && empty($options['stream'])) {
             $stream = self::createDeadlineSource($stream, $resource, $deadline, $options);
         }
+        if ($chunked || !empty($options['stream'])) {
+            $stream = new TransportStream($stream);
+        }
         if ($chunked) {
-            $stream = new ChunkedBodyStream(new TransportStream($stream));
+            $stream = new ChunkedBodyStream($stream);
+        } elseif (!empty($options['stream'])) {
+            $length = HeaderProcessor::contentLengthToInt($declaredLength);
+            if ($length !== null) {
+                $stream = new DeclaredLengthStream($stream, $length);
+            }
         }
 
         $encodedBody = null;
@@ -685,13 +693,7 @@ final class StreamHandler
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
-                    if (!empty($options['stream'])) {
-                        // ChunkedBodyStream already reads through a
-                        // TransportStream.
-                        if (!$stream instanceof ChunkedBodyStream) {
-                            $stream = new TransportStream($stream);
-                        }
-                    } elseif ($declaredLength !== null && $declaredLength !== '0') {
+                    if (empty($options['stream']) && $declaredLength !== null && $declaredLength !== '0') {
                         $encodedBody = new EncodedBodyStream($stream, $declaredLength);
                         $stream = $encodedBody;
                     }
@@ -734,7 +736,6 @@ final class StreamHandler
         try {
             // Buffered paths reject unrepresentable lengths before draining.
             $declaredLength = HeaderProcessor::contentLengthToInt($declaredResponseBodyLength);
-            $declaredLength = $declaredLength !== null && $declaredLength > 0 ? $declaredLength : null;
             $copyLimit = $encodedBody === null ? $declaredLength ?? -1 : -1;
 
             try {
