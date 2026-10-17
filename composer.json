@@ -103,6 +103,29 @@
                     "url": "https://codeload.github.com/guzzle/client-integration-tests/zip/e54cb9d94e3aa5e125dcd7d01bec22db202444ac"
                 }
             }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "guzzlehttp/test-server",
+                "version": "1.1.0",
+                "require": {
+                    "guzzlehttp/guzzle": "^8.1",
+                    "guzzlehttp/psr7": "^3.1",
+                    "php": "^7.4 || ^8.0",
+                    "symfony/polyfill-php80": "^1.25",
+                    "symfony/polyfill-php82": "^1.27"
+                },
+                "autoload": {
+                    "psr-4": {
+                        "GuzzleHttp\\Server\\": "src/"
+                    }
+                },
+                "dist": {
+                    "type": "zip",
+                    "url": "https://codeload.github.com/guzzle/test-server/zip/4cdfd483e8c7d89de6a06e621340004031824a61"
+                }
+            }
         }
     ],
     "autoload": {
