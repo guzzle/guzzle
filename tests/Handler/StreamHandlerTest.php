@@ -5398,6 +5398,35 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    public function testNestedRequestDoesNotClearResponseDeadline(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'guzzle-server/drip-timeout-headers');
+        $nestedResponse = null;
+
+        try {
+            $handler($request, [
+                RequestOptions::TIMEOUT => 0.8,
+                RequestOptions::STREAM => true,
+                'progress' => static function () use ($handler, &$nestedResponse): void {
+                    if ($nestedResponse === null) {
+                        $nestedResponse = $handler(new Request('GET', Server::$url), [
+                            RequestOptions::TIMEOUT => 0,
+                        ])->wait();
+                    }
+                },
+            ])->wait();
+            self::fail('Expected ResponseTimeoutException');
+        } catch (ResponseTimeoutException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('Timed out while receiving the response headers', $e->getMessage());
+        }
+
+        self::assertInstanceOf(ResponseInterface::class, $nestedResponse);
+        self::assertSame('hi there', (string) $nestedResponse->getBody());
+    }
+
     public function testHandlesGarbageHttpServerGracefully(): void
     {
         $handler = new StreamHandler();
@@ -5823,7 +5852,7 @@ class StreamHandlerTest extends TestCase
             $method->setAccessible(true);
         }
 
-        return $method->invoke($handler, $request, $options, $stream, Clock::now());
+        return $method->invoke($handler, $request, $options, $stream, Clock::now(), null);
     }
 
     public function testProtocolsOptionRejectsDisallowedStreamScheme(): void
