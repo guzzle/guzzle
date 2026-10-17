@@ -139,13 +139,14 @@ class HeaderProcessorTest extends TestCase
             ['Content-Length' => ['003'], 'content-length' => ['3']],
             '3',
         ];
-        yield 'transfer encoding only' => ['GET', 200, ['Transfer-Encoding' => ['gzip, chunked']], null];
+        yield 'transfer encoding only' => ['GET', 200, ['Transfer-Encoding' => ['identity, chunked']], null];
         yield 'head' => [
             'HEAD',
             200,
             ['Content-Length' => ['bad'], 'Transfer-Encoding' => ['chunked']],
             null,
         ];
+        yield 'head with unsupported transfer coding' => ['HEAD', 200, ['Transfer-Encoding' => ['gzip']], null];
         yield 'informational' => [
             'GET',
             101,
@@ -215,6 +216,40 @@ class HeaderProcessorTest extends TestCase
             ['Content-Length' => ['0'], 'Transfer-Encoding' => ['chunked']],
             'A response must not contain both Content-Length and Transfer-Encoding',
         ];
+        yield 'unsupported transfer coding' => [
+            'GET',
+            200,
+            ['Transfer-Encoding' => ['gzip, chunked']],
+            'Invalid Transfer-Encoding response header: unsupported transfer coding "gzip"',
+        ];
+        yield 'transfer coding after chunked' => [
+            'GET',
+            200,
+            ['Transfer-Encoding' => ['chunked, identity']],
+            'Invalid Transfer-Encoding response header: chunked is not the final transfer coding',
+        ];
+    }
+
+    /**
+     * @dataProvider transferEncodingProvider
+     *
+     * @param array<string, string[]> $headers
+     */
+    public function testParsesTransferEncoding(array $headers, bool $expected): void
+    {
+        self::assertSame($expected, HeaderProcessor::parseTransferEncoding($headers));
+    }
+
+    public static function transferEncodingProvider(): iterable
+    {
+        yield 'absent' => [[], false];
+        yield 'chunked' => [['Transfer-Encoding' => ['chunked']], true];
+        yield 'mixed case' => [['tRaNsFeR-EnCoDiNg' => ['ChUnKeD']], true];
+        yield 'identity before chunked' => [['Transfer-Encoding' => ['identity', ' chunked ']], true];
+        yield 'empty list elements' => [['Transfer-Encoding' => [', chunked,']], true];
+        yield 'identity on a later field line' => [['Transfer-Encoding' => ['chunked', 'identity']], true];
+        yield 'identity only' => [['Transfer-Encoding' => ['identity']], false];
+        yield 'empty list' => [['Transfer-Encoding' => [',']], false];
     }
 
     public function testReturnsUnrepresentableResponseContentLengthForCallerPolicy(): void

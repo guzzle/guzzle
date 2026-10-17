@@ -6661,6 +6661,14 @@ class CurlFactoryTest extends TestCase
             ],
             'A response must not contain both Content-Length and Transfer-Encoding',
         ];
+        yield 'unsupported transfer coding' => [
+            ["HTTP/1.1 200 OK\r\n", "Transfer-Encoding: gzip, chunked\r\n"],
+            'Invalid Transfer-Encoding response header: unsupported transfer coding "gzip"',
+        ];
+        yield 'transfer coding after chunked' => [
+            ["HTTP/1.1 200 OK\r\n", "Transfer-Encoding: chunked, identity\r\n"],
+            'Invalid Transfer-Encoding response header: chunked is not the final transfer coding',
+        ];
     }
 
     public function testResponseBodyByteCountOverflowCreatesResponseException(): void
