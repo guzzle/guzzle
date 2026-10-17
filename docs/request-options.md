@@ -1805,18 +1805,22 @@ across the built-in handlers.
 
 When a read on the streamed PSR-7 body times out, `read()` throws
 `GuzzleHttp\Psr7\Exception\TimeoutException`. A non-timeout read failure, for
-example the connection is reset mid-body or the body stream has been detached,
-throws a plain `\RuntimeException`. Both types sit outside the
-`GuzzleHttp\Exception\GuzzleException` hierarchy: they are raised after the
-request has resolved and the response object has been returned, which is outside
-the `Client::sendRequest()` transfer that PSR-18 governs. Catch them explicitly
-when reading a streamed body. If you detach the body and read the raw PHP stream
-resource instead, functions such as `fgets()` return `false` on timeout,
-following PHP's stream semantics.
+example the connection is reset mid-body, the compressed body is invalid, or the
+body stream has been detached, throws a plain `\RuntimeException`. Both types
+sit outside the `GuzzleHttp\Exception\GuzzleException` hierarchy: they are
+raised after the request has resolved and the response object has been returned,
+which is outside the `Client::sendRequest()` transfer that PSR-18 governs. Catch
+them explicitly when reading a streamed body. If you detach the body and read
+the raw PHP stream resource instead, functions such as `fgets()` return `false`
+on timeout, following PHP's stream semantics.
 
 A timed-out read does not invalidate the streamed body. Catching the
 `TimeoutException` and calling `read()` again resumes waiting for data, so
 idle timeouts can serve as poll ticks on long-lived streams.
+
+Unlike `read()`, `getContents()`, `GuzzleHttp\Psr7\Utils::copyToString()`, and
+`GuzzleHttp\Psr7\Utils::readLine()` discard the bytes they read before a
+timeout, so calling them again does not return those bytes.
 
 ```php
 $response = $client->request('GET', '/stream', [
@@ -1983,9 +1987,8 @@ response body resources where practical. Request bodies that already implement
 > keep Guzzle's own stream wrapper so write-only sink resources remain
 > supported. `MockHandler` queued responses and custom handler responses are
 > used as provided. When decoding gzip/deflate responses, the factory still
-> wraps the underlying transport resource, but Guzzle layers its own
-> `InflateStream` decorator on top because PSR-17 cannot express a decoding
-> stream.
+> wraps the underlying transport resource, but Guzzle layers its own decoding
+> decorator on top because PSR-17 cannot express a decoding stream.
 
 > [!WARNING]
 > Guzzle only checks that the value implements
