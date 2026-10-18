@@ -11,6 +11,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix `MockHandler` truncating fractional delays
 - Fix stream handler responses in Swoole coroutines on PHP 8.4+
 
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.13.2`
+
 ## 7.15.5 - 2026-08-24
 
 ### Changed
