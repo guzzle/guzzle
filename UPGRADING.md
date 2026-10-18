@@ -469,7 +469,10 @@ encoded bytes before decompression, and the original values remain in
 ends before its last chunk or has malformed chunk framing; reading such a body
 with `stream => true` throws a `\RuntimeException` once the bytes before the
 fault have been returned. Valid `stream => true` responses remain lazy after
-header validation.
+header validation, but end at a valid `Content-Length` that fits in a PHP
+integer, and a read that reaches the end of the connection first throws a
+`\RuntimeException`. A `Content-Length` of `0` gives an empty body; Guzzle 7
+read such a body until the connection closed.
 
 For chunked responses through the stream handler, the transport resource's
 `wrapper_data` can now retain the original `Transfer-Encoding`. This is visible

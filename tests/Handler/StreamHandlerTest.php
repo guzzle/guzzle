@@ -1967,7 +1967,10 @@ class StreamHandlerTest extends TestCase
         self::assertTrue(!$response->hasHeader('content-length') || $response->getHeaderLine('content-length') == $response->getBody()->getSize());
     }
 
-    public function testDecodedGzipLargerThanEncodedReturnsFullBodyAndDropsContentLength(): void
+    /**
+     * @dataProvider streamOptionProvider
+     */
+    public function testDecodedGzipLargerThanEncodedReturnsFullBodyAndDropsContentLength(bool $stream): void
     {
         $decoded = \str_repeat('A', 1000);
         $gzip = \gzencode($decoded);
@@ -1988,7 +1991,7 @@ class StreamHandlerTest extends TestCase
         ];
 
         /** @var ResponseInterface $response */
-        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => true], $resource, $headers)->wait();
+        $response = $this->invokeStreamHandlerCreateResponse($handler, $request, ['decode_content' => true, 'stream' => $stream], $resource, $headers)->wait();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame($decoded, (string) $response->getBody());
@@ -1996,7 +1999,7 @@ class StreamHandlerTest extends TestCase
         self::assertSame((string) \strlen($gzip), $response->getHeaderLine('x-encoded-content-length'));
     }
 
-    public function testStreamedDecodedResponseDoesNotEnforceEncodedContentLength(): void
+    public function testStreamedDecodedResponseRejectsShortEncodedContentLength(): void
     {
         $decoded = 'decoded';
         $gzip = \gzencode($decoded);
@@ -2020,9 +2023,13 @@ class StreamHandlerTest extends TestCase
             $headers
         )->wait();
 
-        self::assertSame($decoded, (string) $response->getBody());
         self::assertFalse($response->hasHeader('Content-Length'));
         self::assertSame($declaredLength, $response->getHeaderLine('x-encoded-content-length'));
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Response body ended before the declared Content-Length was reached');
+
+        $response->getBody()->getContents();
     }
 
     /**
@@ -5374,22 +5381,92 @@ class StreamHandlerTest extends TestCase
         ]);
     }
 
-    public function testDrainsResponseAndReadsAllContentWhenContentLengthIsZero(): void
+    /**
+     * @dataProvider streamOptionProvider
+     */
+    public function testContentLengthZeroResponseBodyIsEmpty(bool $stream): void
     {
         Server::flush();
-        Server::enqueue([
-            new Response(200, [
-                'Foo' => 'Bar',
-                'Content-Length' => '0',
-            ], 'hi there... This has a lot of data!'),
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\nhi there");
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), ['stream' => $stream])->wait();
+
+        self::assertSame('', (string) $response->getBody());
+    }
+
+    /**
+     * @dataProvider streamOptionProvider
+     */
+    public function testResponseBodyStopsAtDeclaredContentLength(bool $stream): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello there");
+        $handler = new StreamHandler();
+        $response = $handler(new Request('GET', Server::$url), ['stream' => $stream])->wait();
+
+        self::assertSame('hello', (string) $response->getBody());
+    }
+
+    public function testStreamedResponseBodyThrowsWhenShorterThanContentLength(): void
+    {
+        Server::flush();
+        Server::enqueueRawBytes("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhel");
+        $handler = new StreamHandler();
+        $body = $handler(new Request('GET', Server::$url), ['stream' => true])->wait()->getBody();
+
+        self::assertSame('hel', $body->read(5));
+        self::assertFalse($body->eof());
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Response body ended before the declared Content-Length was reached');
+
+        $body->read(5);
+    }
+
+    public function testEndsStreamedBodyAtContentLengthWhileConnectionStaysOpen(): void
+    {
+        Server::flush();
+        Server::enqueueRawByteParts([
+            "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhel",
+            200,
+            'lo',
+            5000,
         ]);
         $handler = new StreamHandler();
-        $request = new Request('GET', Server::$url);
-        $response = $handler($request, [])->wait();
-        $body = $response->getBody();
-        $stream = $body->detach();
-        self::assertSame('hi there... This has a lot of data!', \stream_get_contents($stream));
-        \fclose($stream);
+        $body = $handler(new Request('GET', Server::$url), [
+            RequestOptions::READ_TIMEOUT => 1,
+            RequestOptions::STREAM => true,
+        ])->wait()->getBody();
+
+        try {
+            self::assertSame('hello', $body->getContents());
+            self::assertTrue($body->eof());
+        } finally {
+            $body->close();
+        }
+    }
+
+    public function testReadsStreamedBodyBytesThatArrivedWithTheHeaders(): void
+    {
+        Server::flush();
+        Server::enqueueRawByteParts(["HTTP/1.1 200 OK\r\n\r\nhel", 3000, 'lo']);
+        $handler = new StreamHandler();
+        $body = $handler(new Request('GET', Server::$url), [
+            RequestOptions::READ_TIMEOUT => 10,
+            RequestOptions::STREAM => true,
+        ])->wait()->getBody();
+
+        try {
+            self::assertSame('hel', $body->read(8192));
+        } finally {
+            $body->close();
+        }
+    }
+
+    public static function streamOptionProvider(): iterable
+    {
+        yield 'buffered' => [false];
+        yield 'streamed' => [true];
     }
 
     public function testHonorsReadTimeout(): void
@@ -6124,10 +6201,9 @@ class StreamHandlerTest extends TestCase
             RequestOptions::RESPONSE_FACTORY => $factory,
         ])->wait();
 
-        self::assertInstanceOf(SpyStream::class, $response->getBody());
         self::assertSame('hi there', (string) $response->getBody());
         // The stream option short-circuits sink creation, so only the body
-        // source is wrapped by the stream factory.
+        // source is wrapped by the stream factory, beneath Guzzle's decorators.
         self::assertSame(1, $factory->createStreamFromResourceCalls);
     }
 
@@ -6175,7 +6251,6 @@ class StreamHandlerTest extends TestCase
             RequestOptions::STREAM_FACTORY => $plainFactory,
         ], $plainResource, ['HTTP/1.1 200 OK'])->wait();
 
-        self::assertInstanceOf(SpyStream::class, $plainResponse->getBody());
         self::assertSame('plain', (string) $plainResponse->getBody());
         self::assertSame(1, $plainFactory->createStreamFromResourceCalls);
     }

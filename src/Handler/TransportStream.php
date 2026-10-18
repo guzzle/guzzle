@@ -33,6 +33,12 @@ final class TransportStream implements StreamInterface
         $this->stream = $stream;
     }
 
+    public function __clone()
+    {
+        // Detaching a clone must not detach this body's transport.
+        $this->stream = clone $this->stream;
+    }
+
     public function read(int $length): string
     {
         $buffered = $this->stream->getMetadata('unread_bytes');

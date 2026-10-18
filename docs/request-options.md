@@ -1805,17 +1805,17 @@ across the built-in handlers.
 
 When a read on the streamed PSR-7 body times out, `read()` throws
 `GuzzleHttp\Psr7\Exception\TimeoutException`. A non-timeout read failure, for
-example the connection is reset mid-body, the chunked or compressed body is
-invalid, or the body stream has been detached, throws a plain
-`\RuntimeException`. Both types sit outside the
-`GuzzleHttp\Exception\GuzzleException` hierarchy: they are raised after the
+example the connection is reset mid-body or closes before the declared
+`Content-Length`, the chunked or compressed body is invalid, or the body stream
+has been detached, throws a plain `\RuntimeException`. Both types sit outside
+the `GuzzleHttp\Exception\GuzzleException` hierarchy: they are raised after the
 request has resolved and the response object has been returned, which is outside
 the `Client::sendRequest()` transfer that PSR-18 governs. Catch them explicitly
 when reading a streamed body. If you detach the body and read the PHP stream
 resource instead, functions such as `fgets()` return `false` on timeout,
-following PHP's stream semantics. Unless Guzzle is also decoding its content, a
-chunked body detached before it is read is decoded by PHP without Guzzle's
-framing checks.
+following PHP's stream semantics. Unless Guzzle is decoding its content, a
+detached body is not bounded by its `Content-Length`, and a chunked body
+detached before it is read is decoded by PHP without Guzzle's framing checks.
 
 A timed-out read does not invalidate the streamed body. Catching the
 `TimeoutException` and calling `read()` again resumes waiting for data, so
@@ -1994,7 +1994,8 @@ response body resources where practical. Request bodies that already implement
 > wraps the underlying transport resource, but Guzzle layers its own decoding
 > decorator on top because PSR-17 cannot express a decoding stream. Guzzle
 > likewise decodes chunked responses with its own decorator over the factory's
-> stream.
+> stream, and returns `stream => true` bodies through its own decorators, which
+> end each body at its declared `Content-Length`.
 
 > [!WARNING]
 > Guzzle only checks that the value implements
