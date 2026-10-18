@@ -1195,13 +1195,28 @@ final class CurlMultiHandler
     }
 
     /**
-     * Cancels every transfer the handler is tracking, rejecting their
+     * Cancels every transfer the handler is tracking, rejecting pending
      * promises with a cancellation.
      */
     private function cancelPendingTransfers(): void
     {
-        foreach ($this->handles as $entry) {
-            $entry['deferred']->cancel();
+        $failure = null;
+
+        // Removing a transfer can run callbacks that create another transfer.
+        while ($this->handles !== []) {
+            foreach ($this->handles as $id => $entry) {
+                $this->captureFailure($failure, function () use ($id, $entry): void {
+                    if (P\Is::pending($entry['deferred'])) {
+                        $entry['deferred']->cancel();
+                    } else {
+                        $this->cancel($id, $entry['wait_token']);
+                    }
+                });
+            }
+        }
+
+        if ($failure !== null) {
+            throw $failure;
         }
     }
 
@@ -1226,13 +1241,13 @@ final class CurlMultiHandler
     }
 
     /**
-     * Determines if the handler is unassigned or assigned to the current
-     * execution context.
+     * Determines if the current execution context owns the handler. A handler
+     * without an owner belongs to code running outside managed contexts.
      */
     private function isAssignedToCurrentContext(): bool
     {
         if ($this->owner === null) {
-            return true;
+            return P\ExecutionContext::current() === null;
         }
 
         $owner = $this->owner->get();
