@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.16.0 - Upcoming
+
+### Changed
+
+- Adjusted `guzzlehttp/promises` version constraint to `^2.6`
+- Replace the deprecated `Promise\Is` with `Promise\State` for PHP 8.6
+
+
 ## 7.15.6 - 2026-10-18
 
 ### Fixed

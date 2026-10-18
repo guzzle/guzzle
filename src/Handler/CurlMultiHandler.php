@@ -394,7 +394,7 @@ class CurlMultiHandler
 
                 // Never null: assigned below before any wait can invoke this.
                 /** @var Promise $promise */
-                if (!P\Is::pending($promise)) {
+                if (!P\State::isPending($promise)) {
                     return;
                 }
 
@@ -944,7 +944,7 @@ class CurlMultiHandler
                         // The promise has already escaped, so reject it
                         // rather than throw.
                         $rejection = $this->discardPendingRequest($id, $entry, $e);
-                        if (P\Is::pending($entry['deferred'])) {
+                        if (P\State::isPending($entry['deferred'])) {
                             $entry['deferred']->reject($rejection);
                         }
                     }
@@ -1158,7 +1158,7 @@ class CurlMultiHandler
         if ($displaced !== null) {
             // Never silently discard a tracked entry; settle it first.
             unset($this->handles[$id], $this->delays[$id], $this->deferredAdds[$id]);
-            if (P\Is::pending($displaced['deferred'])) {
+            if (P\State::isPending($displaced['deferred'])) {
                 $message = \sprintf('cURL multi handler transfer %d was displaced by another request that reused its native cURL handle ID.', $id);
                 $displaced['deferred']->reject(new RequestException($message, $displaced['easy']->request, $displaced['easy']->response));
             }
@@ -1256,7 +1256,7 @@ class CurlMultiHandler
                 // throw. User code may have settled it directly; a settled
                 // promise must not abort the rest of the snapshot.
                 $rejection = $this->discardPendingRequest($id, $entry, $e);
-                if (P\Is::pending($entry['deferred'])) {
+                if (P\State::isPending($entry['deferred'])) {
                     $entry['deferred']->reject($rejection);
                 }
             }
@@ -1395,14 +1395,14 @@ class CurlMultiHandler
                 try {
                     $result = CurlFactory::finish($this, $entry['easy'], $this->factory);
                 } catch (\Throwable $e) {
-                    if (P\Is::pending($entry['deferred'])) {
+                    if (P\State::isPending($entry['deferred'])) {
                         $entry['deferred']->reject($e);
                     }
 
                     continue;
                 }
 
-                if (P\Is::pending($entry['deferred'])) {
+                if (P\State::isPending($entry['deferred'])) {
                     $entry['deferred']->resolve($result);
                 }
             }
