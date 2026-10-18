@@ -3,6 +3,23 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.4.0 - Upcoming
+
+### Added
+
+- Add `Client::defaultUserAgent()`
+
+### Changed
+
+- Adjusted `guzzlehttp/promises` version constraint to `^3.2`
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.3`
+
+### Deprecated
+
+- Deprecated `Utils::defaultUserAgent()` in favor of `Client::defaultUserAgent()`
+- Deprecated `Utils::headersFromLines()`, `Utils::normalizeHeaderKeys()`, `Utils::debugResource()`, and `Utils::normalizeProtocols()` with no replacement
+
+
 ## 8.3.0 - 2026-10-18
 
 ### Changed

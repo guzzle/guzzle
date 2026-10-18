@@ -22,7 +22,7 @@ final class UriDiagnostic
         #[\SensitiveParameter]
         UriInterface $uri
     ): string {
-        $message = Psr7\Utils::redactUserInfoInString($message, (string) $uri);
+        $message = Psr7\UriRedactor::redactUserInfoInString($message, (string) $uri);
 
         $query = $uri->getQuery();
         if ($query !== '') {
