@@ -19,7 +19,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix streamed stream handler bodies delaying bytes that arrived with the headers
 
 
-## 8.2.1 - Upcoming
+## 8.2.1 - 2026-10-18
 
 ### Fixed
 
@@ -30,6 +30,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix stream handler responses in Swoole coroutines on PHP 8.4+
 - Fix reads of streamed gzip and deflate responses waiting for 8 KiB of decoded data
 - Fix stream handler accepting corrupt gzip and deflate response bodies
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.1.1`
 
 
 ## 8.2.0 - 2026-09-06
