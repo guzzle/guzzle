@@ -91,7 +91,9 @@ final class CurlFactory implements CurlFactoryInterface
     ];
 
     private const CURL_RESPONSE_TRANSFER_ERRORS = [
+        8 => true,  // CURLE_WEIRD_SERVER_REPLY
         18 => true, // CURLE_PARTIAL_FILE
+        23 => true, // CURLE_WRITE_ERROR from libcurl's content decoders
         61 => true, // CURLE_BAD_CONTENT_ENCODING
     ];
 

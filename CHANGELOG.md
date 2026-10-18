@@ -12,6 +12,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject unsupported response transfer codings, like libcurl 8.14+
 - End stream handler bodies at their declared `Content-Length`, including `0`
 - Throw when a streamed body ends before its declared `Content-Length`
+- Classify cURL errors 8 and 23 with a response as `ResponseTransferException`
 
 ### Fixed
 
