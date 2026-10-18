@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlHandler;
+use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Handler\StreamTlsSessionCache;
@@ -50,6 +53,61 @@ class UtilsTest extends TestCase
     public function testChooseHandler(): void
     {
         self::assertIsCallable(Utils::chooseHandler());
+    }
+
+    public function testChooseHandlerForwardsMaxIdleHandlesToBothCurlHandlers(): void
+    {
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
+
+        $handler = Utils::chooseHandler(['max_idle_handles' => 0]);
+        $handlers = (new \ReflectionFunction($handler))->getStaticVariables();
+        if (isset($handlers['streaming'])) {
+            $handlers = (new \ReflectionFunction($handlers['default']))->getStaticVariables();
+        }
+
+        self::assertInstanceOf(CurlHandler::class, $handlers['sync']);
+        self::assertInstanceOf(CurlMultiHandler::class, $handlers['default']);
+        foreach ($handlers as $curlHandler) {
+            $factory = \Closure::bind(static function ($handler): CurlFactory {
+                return $handler->factory;
+            }, null, \get_class($curlHandler))($curlHandler);
+            $easy = $factory->create(new Request('GET', 'http://example.com'), []);
+            $factory->release($easy);
+
+            $idleHandles = \Closure::bind(static function (CurlFactory $factory): array {
+                return $factory->handles;
+            }, null, CurlFactory::class)($factory);
+            self::assertSame([], $idleHandles);
+        }
+    }
+
+    public function testChooseHandlerRejectsInvalidMaxIdleHandlesWithoutCurl(): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.29.0', 'features' => 0]);
+
+        try {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('max_idle_handles must be a non-negative integer.');
+
+            Utils::chooseHandler(['max_idle_handles' => -1]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    public function testChooseHandlerAllowsStreamFallbackWithMaxIdleHandles(): void
+    {
+        if (!(bool) \ini_get('allow_url_fopen')) {
+            self::markTestSkipped('This test requires allow_url_fopen.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.29.0', 'features' => 0]);
+
+        try {
+            self::assertInstanceOf(StreamHandler::class, Utils::chooseHandler(['max_idle_handles' => 4]));
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
     }
 
     public function testChooseHandlerAcceptsPreferredTransportSharing(): void

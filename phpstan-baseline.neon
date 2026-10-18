@@ -79,7 +79,7 @@ parameters:
 			path: src/Handler/CurlFactory.php
 
 		-
-			message: '#^Offset ''handle_factory''\|''transport_sharing'' on array\{handle_factory\: true, transport_sharing\: true\} in isset\(\) always exists and is not nullable\.$#'
+			message: '#^Offset ''handle_factory''\|''max_idle_handles''\|''transport_sharing'' on array\{handle_factory\: true, max_idle_handles\: true, transport_sharing\: true\} in isset\(\) always exists and is not nullable\.$#'
 			identifier: isset.offset
 			count: 1
 			path: src/Handler/CurlHandler.php
@@ -319,7 +319,7 @@ parameters:
 			path: src/Pool.php
 
 		-
-			message: '#^Parameter \#1 \$options of class GuzzleHttp\\Handler\\CurlHandler constructor expects array\{handle_factory\?\: GuzzleHttp\\Handler\\CurlFactoryInterface\|null, transport_sharing\?\: mixed\}, array\<string, mixed\> given\.$#'
+			message: '#^Parameter \#1 \$options of class GuzzleHttp\\Handler\\CurlHandler constructor expects array\{handle_factory\?\: GuzzleHttp\\Handler\\CurlFactoryInterface\|null, max_idle_handles\?\: mixed, transport_sharing\?\: mixed\}, array\<string, mixed\> given\.$#'
 			identifier: argument.type
 			count: 2
 			path: src/Utils.php

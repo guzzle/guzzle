@@ -443,6 +443,29 @@ class ClientTest extends TestCase
         ]);
     }
 
+    public function testRejectsInvalidMaxIdleHandles(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('max_idle_handles must be a non-negative integer.');
+
+        new Client(['max_idle_handles' => -1]);
+    }
+
+    public function testMaxIdleHandlesCannotBeUsedWithCustomHandler(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "max_idle_handles" client option requires Guzzle to create the default handler. Configure the option on the CurlHandler or CurlMultiHandler constructor when providing a custom handler.');
+
+        new Client(['max_idle_handles' => 0, 'handler' => new MockHandler()]);
+    }
+
+    public function testNullMaxIdleHandlesCanBeUsedWithCustomHandler(): void
+    {
+        $client = new Client(['max_idle_handles' => null, 'handler' => new MockHandler()]);
+
+        self::assertArrayNotHasKey('max_idle_handles', $client->getConfig());
+    }
+
     public function testNullConnectionCapClientOptionsCanBeUsedWithCustomHandler(): void
     {
         $client = new Client([

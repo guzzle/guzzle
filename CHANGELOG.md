@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 8.2.1 - 2026-10-18
 
+### Added
+
+- Add configurable idle cURL handle retention through `max_idle_handles`
+
 ### Fixed
 
 - Fix PHP 8.6 notices for oversized numeric hosts
