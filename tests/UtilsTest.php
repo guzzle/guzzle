@@ -52,6 +52,32 @@ class UtilsTest extends TestCase
         self::assertIsCallable(Utils::chooseHandler());
     }
 
+    /**
+     * @testWith [-1]
+     *           [1.5]
+     *           ["8"]
+     *
+     * @param mixed $value
+     */
+    public function testChooseHandlerRejectsInvalidIdleHandlerPoolSize($value): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('max_idle_handlers must be a non-negative integer.');
+
+        Utils::chooseHandler(['max_idle_handlers' => $value]);
+    }
+
+    /**
+     * @dataProvider connectionCapOptionProvider
+     */
+    public function testChooseHandlerRejectsIdleHandlerPoolSizeWithConnectionCaps(string $option): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('connection caps require one shared multi handler');
+
+        Utils::chooseHandler([$option => 1, 'max_idle_handlers' => 8]);
+    }
+
     public function testChooseHandlerAcceptsPreferredTransportSharing(): void
     {
         self::skipIfDefaultCurlHandlerIsUnavailable();

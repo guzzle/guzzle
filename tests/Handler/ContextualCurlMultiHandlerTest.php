@@ -201,6 +201,71 @@ class ContextualCurlMultiHandlerTest extends TestCase
         $this->provider->in($a, static fn () => $pending->wait());
     }
 
+    public function testDefaultClientCanBeSharedByInterleavedFibers(): void
+    {
+        if (\PHP_VERSION_ID < 80100) {
+            self::markTestSkipped('Fibers require PHP 8.1 or newer.');
+        }
+
+        ExecutionContext::setProvider(new P\FiberExecutionContextProvider());
+        Server::enqueue([new Response(200), new Response(200)]);
+        $client = new Client();
+        $request = static function () use ($client): int {
+            try {
+                $promise = $client->getAsync(Server::$url);
+                \Fiber::suspend($promise);
+
+                return $promise->wait()->getStatusCode();
+            } finally {
+                ExecutionContext::finish(\Fiber::getCurrent());
+            }
+        };
+        $first = new \Fiber($request);
+        $second = new \Fiber($request);
+        $pending = $first->start();
+        $second->start();
+
+        $second->resume();
+        self::assertTrue(P\Is::pending($pending), 'Another fiber drove the transfer.');
+        $first->resume();
+
+        self::assertSame(200, $first->getReturn());
+        self::assertSame(200, $second->getReturn());
+    }
+
+    /**
+     * @testWith [0, 2]
+     *           [1, 1]
+     *           [2, 0]
+     */
+    public function testClientPoolSizeControlsConnectionReuse(int $maxIdleHandlers, int $newConnections): void
+    {
+        Server::enqueue([new Response(200), new Response(200), new Response(200), new Response(200)]);
+        $client = new Client(['max_idle_handlers' => $maxIdleHandlers]);
+        $ports = [];
+
+        for ($wave = 0; $wave < 2; ++$wave) {
+            $contexts = [new \stdClass(), new \stdClass()];
+            $promises = [];
+
+            foreach ($contexts as $context) {
+                $promises[] = $this->provider->in($context, static function () use ($client, &$ports, $wave) {
+                    return $client->getAsync(Server::$url, ['on_stats' => static function (\GuzzleHttp\TransferStats $stats) use (&$ports, $wave): void {
+                        $ports[$wave][] = $stats->getHandlerStat('local_port');
+                    }]);
+                });
+            }
+
+            foreach ($contexts as $index => $context) {
+                $this->provider->in($context, static fn () => $promises[$index]->wait());
+                $this->provider->end($context);
+            }
+        }
+
+        self::assertCount($newConnections, \array_diff($ports[1], $ports[0]));
+        self::assertNull($client->getConfig('max_idle_handlers'));
+    }
+
     public function testLeasedHandlersShareTheTransportStateOfTheSynchronousHandler(): void
     {
         if (!CurlVersion::supportsCurlHandler() || !CurlVersion::supportsHandlerSharing()) {

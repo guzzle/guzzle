@@ -66,7 +66,7 @@ final class Utils
      *
      * The returned handler is not wrapped by any default middlewares.
      *
-     * @param array{transport_sharing?: mixed, max_host_connections?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions Handler constructor options.
+     * @param array{transport_sharing?: mixed, max_host_connections?: mixed, max_total_connections?: mixed, max_idle_handlers?: mixed, multiplex?: mixed} $handlerOptions Handler constructor options.
      *
      * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> Returns the best handler for the given system.
      *
@@ -77,6 +77,15 @@ final class Utils
         $sharingMode = CurlShareHandleState::normalizeMode($handlerOptions['transport_sharing'] ?? null, 'transport_sharing');
         $sharingRequired = self::isTransportSharingRequired($sharingMode);
         $connectionCapsRequired = self::hasConnectionCapOptions($handlerOptions);
+        $maxIdleHandlers = $handlerOptions['max_idle_handlers'] ?? null;
+
+        if ($maxIdleHandlers !== null && (!\is_int($maxIdleHandlers) || $maxIdleHandlers < 0)) {
+            throw new InvalidArgumentException('max_idle_handlers must be a non-negative integer.');
+        }
+
+        if ($connectionCapsRequired && isset($handlerOptions['max_idle_handlers'])) {
+            throw new InvalidArgumentException('The "max_idle_handlers" option cannot be combined with "max_host_connections" or "max_total_connections", because connection caps require one shared multi handler.');
+        }
 
         $sharedPoolCapsSupported = CurlVersion::supportsSharedPoolConnectionCaps();
 
@@ -92,7 +101,7 @@ final class Utils
             $sharingMode = TransportSharing::HANDLER_PREFER;
         }
 
-        $handler = self::createCurlHandler($sharingMode, $handlerOptions);
+        $handler = self::createCurlHandler($sharingMode, $handlerOptions, $maxIdleHandlers);
 
         // Handler-scoped required sharing can also be satisfied by the stream
         // handler's TLS session resumption (PHP 8.6+); persistent required
@@ -142,7 +151,7 @@ final class Utils
      *
      * @return (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)|null
      */
-    private static function createCurlHandler(string $sharingMode, array $handlerOptions): ?callable
+    private static function createCurlHandler(string $sharingMode, array $handlerOptions, ?int $maxIdleHandlers): ?callable
     {
         if (!CurlVersion::supportsCurlHandler()) {
             return null;
@@ -177,7 +186,7 @@ final class Utils
             }
 
             return Proxy::wrapSync(
-                self::createAsyncCurlHandler($curlMultiHandlerOptions),
+                self::createAsyncCurlHandler($curlMultiHandlerOptions, $maxIdleHandlers),
                 new CurlHandler($curlHandlerOptions)
             );
         }
@@ -188,7 +197,7 @@ final class Utils
 
         if (\function_exists('curl_multi_exec')) {
             return $connectionCapOptions === []
-                ? self::createAsyncCurlHandler($curlMultiHandlerOptions)
+                ? self::createAsyncCurlHandler($curlMultiHandlerOptions, $maxIdleHandlers)
                 : new CurlMultiHandler($curlMultiHandlerOptions);
         }
 
@@ -207,15 +216,19 @@ final class Utils
      *
      * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
      */
-    private static function createAsyncCurlHandler(array $curlMultiHandlerOptions): callable
+    private static function createAsyncCurlHandler(array $curlMultiHandlerOptions, ?int $maxIdleHandlers): callable
     {
         if (P\ExecutionContext::provider() === null) {
             return new CurlMultiHandler($curlMultiHandlerOptions);
         }
 
-        return new ContextualCurlMultiHandler(static function () use ($curlMultiHandlerOptions): CurlMultiHandler {
+        $factory = static function () use ($curlMultiHandlerOptions): CurlMultiHandler {
             return new CurlMultiHandler($curlMultiHandlerOptions);
-        });
+        };
+
+        return $maxIdleHandlers === null
+            ? new ContextualCurlMultiHandler($factory)
+            : new ContextualCurlMultiHandler($factory, $maxIdleHandlers);
     }
 
     /**
