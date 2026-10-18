@@ -7,6 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.2`
 - Decode chunked stream handler bodies as they arrive, ending at the last chunk
 - Reject truncated and malformed chunked stream handler bodies, like libcurl
 - Reject unsupported response transfer codings, like libcurl 8.14+

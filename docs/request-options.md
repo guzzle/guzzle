@@ -2013,7 +2013,7 @@ response body resources where practical. Request bodies that already implement
 > gzip/deflate decoding, and should stream the resource rather than buffer it
 > entirely into memory. The full contract is described under *Creating Streams*
 > in the
-> [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.1/docs/streams-and-decorators.md#creating-streams).
+> [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.2/docs/streams-and-decorators.md#creating-streams).
 > Supply a stream implementation you trust.
 
 ## uri_factory
