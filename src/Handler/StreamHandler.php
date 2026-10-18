@@ -430,8 +430,8 @@ final class StreamHandler
 
         // Wrap the transport resource with the configured stream factory, and
         // decorate buffered transfers with the deadline source before optional
-        // content decoding layers an InflateStream on top, so every read that
-        // pulls from the transport observes the deadline.
+        // content decoding layers an InflateBodyStream on top, so every read
+        // that pulls from the transport observes the deadline.
         $resource = $stream;
         $stream = $streamFactory->createStreamFromResource($stream);
         if ($framingFailure === null && $deadline !== null && empty($options['stream'])) {
@@ -702,12 +702,14 @@ final class StreamHandler
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
-                    if (empty($options['stream']) && $declaredLength !== null && $declaredLength !== '0') {
+                    if (!empty($options['stream'])) {
+                        $stream = new TransportStream($stream);
+                    } elseif ($declaredLength !== null && $declaredLength !== '0') {
                         $encodedBody = new EncodedBodyStream($stream, $declaredLength);
                         $stream = $encodedBody;
                     }
 
-                    $stream = new Psr7\InflateStream($stream);
+                    $stream = new InflateBodyStream($stream);
                     $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
 
                     // Remove content-encoding header
@@ -857,12 +859,11 @@ final class StreamHandler
 
     /**
      * Decorates the transport stream so each buffered-body read observes the
-     * remaining wall-clock budget of the "timeout" request option, bounded
-     * by the "read_timeout" idle timeout when that is shorter. The transport
-     * is switched to non-blocking mode because filtered reads (chunked and
-     * compressed responses) otherwise block until a full buffer arrives,
-     * which would keep the deadline from being enforced between small pieces
-     * of data.
+     * remaining wall-clock budget of the "timeout" request option, bounded by
+     * the "read_timeout" idle timeout when that is shorter. The transport is
+     * switched to non-blocking mode because filtered reads (chunked responses)
+     * otherwise block until a full buffer arrives, which would keep the
+     * deadline from being enforced between small pieces of data.
      *
      * @param resource $resource
      */
