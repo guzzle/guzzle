@@ -521,17 +521,16 @@ the shared `CurlHandler`, which takes a dedicated easy handle for each request.
 Clients created before the provider was configured are not isolated.
 
 `ContextualCurlMultiHandler`: Sends asynchronous requests through a cURL multi
-handler leased to the current execution context.
+handler leased to the current execution context while it has work.
 
-When an execution context finishes, its unfinished transfers are cancelled and
-its idle handler returns to a bounded pool, so later contexts can reuse its
-connections. Requests made outside managed contexts share one handler.
+Idle handlers return to a bounded pool so other contexts can reuse their
+connections before the original context finishes. Requests made outside managed
+contexts share one handler. The default handler keeps up to 8 idle handlers.
 
-Handlers return to the pool only when their context is finished. With a provider
-that does not register finalizers, such as the fiber provider, call
-`ExecutionContext::finish()` at the end of each context, or every context
-creates a new handler with its own connections. The default handler keeps up to
-8 idle handlers.
+When an execution context finishes, its unfinished transfers are cancelled. With
+a provider that does not register finalizers, such as the fiber provider, call
+`ExecutionContext::finish()` at the end of each context to cancel unfinished
+transfers and drain its task queue.
 
 Set the `max_idle_multi_handlers` client option to retain more handlers for
 recurring bursts of concurrent contexts, or to `0` to disable the pool. This is a
