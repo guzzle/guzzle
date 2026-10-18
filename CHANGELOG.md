@@ -15,12 +15,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.13.2`
 
+
 ## 7.15.5 - 2026-08-24
 
 ### Changed
 
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.13.1`
 - Adjusted `guzzlehttp/promises` version constraint to `^2.5.3`
+
 
 ## 7.15.4 - 2026-08-24
 
@@ -31,6 +33,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Replace the deprecated spl_object_hash() in handler stack debug output for PHP 8.6
+
 
 ## 7.15.3 - 2026-08-05
 
