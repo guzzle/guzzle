@@ -698,7 +698,7 @@ final class StreamHandler
                         $stream = $encodedBody;
                     }
 
-                    $stream = new InflateBodyStream($stream);
+                    $stream = new InflateBodyStream($stream, $encoding[0] === 'deflate');
                     $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];
 
                     // Remove content-encoding header
