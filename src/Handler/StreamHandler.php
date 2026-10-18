@@ -25,7 +25,6 @@ use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\TransferStats;
 use GuzzleHttp\TransportSharing;
-use GuzzleHttp\Utils;
 use Openssl\Session;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -689,7 +688,7 @@ final class StreamHandler
 
         // Automatically decode responses when instructed.
         if (isset($options['decode_content']) && $options['decode_content'] !== false) {
-            $normalizedKeys = Utils::normalizeHeaderKeys($headers);
+            $normalizedKeys = HeaderProcessor::normalizeHeaderKeys($headers);
             if (isset($normalizedKeys['content-encoding'])) {
                 $encoding = $headers[$normalizedKeys['content-encoding']];
                 if ($encoding[0] === 'gzip' || $encoding[0] === 'deflate') {
@@ -1133,7 +1132,7 @@ final class StreamHandler
             throw new RequestException(\sprintf("The scheme '%s' is not supported.", Psr7\DiagnosticValue::escape($scheme)), $request);
         }
 
-        $protocols = Utils::normalizeProtocols($options['protocols'] ?? ['http', 'https']);
+        $protocols = Protocols::normalize($options['protocols'] ?? ['http', 'https']);
         if (!\in_array($scheme, $protocols, true)) {
             throw new RequestException(\sprintf('The scheme "%s" is not allowed by the protocols request option.', Psr7\DiagnosticValue::escape($scheme)), $request);
         }
@@ -2022,7 +2021,7 @@ final class StreamHandler
         ];
         static $args = ['severity', 'message', 'message_code', 'bytes_transferred', 'bytes_max'];
 
-        $value = Utils::debugResource($value);
+        $value = DebugResource::from($value);
         $ident = $request->getMethod().' '.$request->getUri()->withFragment('');
         self::addNotification(
             $params,

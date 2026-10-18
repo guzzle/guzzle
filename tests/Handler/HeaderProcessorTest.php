@@ -29,6 +29,32 @@ class HeaderProcessorTest extends TestCase
         self::assertSame(['X-Foo' => ['bar', 'baz'], 'X-Bar' => ['qux']], $headers);
     }
 
+    public function testParsesHeadersFromLines(): void
+    {
+        $lines = [
+            'Foo: bar',
+            'Foo: baz',
+            'Abc: 123',
+            'Def: a, b',
+        ];
+
+        $expected = [
+            'Foo' => ['bar', 'baz'],
+            'Abc' => ['123'],
+            'Def' => ['a, b'],
+        ];
+
+        self::assertSame($expected, HeaderProcessor::headersFromLines($lines));
+    }
+
+    public function testParsesHeadersFromLinesWithMultipleLines(): void
+    {
+        $lines = ['Foo: bar', 'Foo: baz', 'Foo: 123'];
+        $expected = ['Foo' => ['bar', 'baz', '123']];
+
+        self::assertSame($expected, HeaderProcessor::headersFromLines($lines));
+    }
+
     public static function statusLineCandidateProvider(): iterable
     {
         yield 'http/1.1' => ['HTTP/1.1 200 OK', true];
@@ -250,6 +276,22 @@ class HeaderProcessorTest extends TestCase
         yield 'identity on a later field line' => [['Transfer-Encoding' => ['chunked', 'identity']], true];
         yield 'identity only' => [['Transfer-Encoding' => ['identity']], false];
         yield 'empty list' => [['Transfer-Encoding' => [',']], false];
+    }
+
+    public function testNormalizeHeaderKeys(): void
+    {
+        $input = ['HelLo' => 'foo', 'WORld' => 'bar'];
+        $expected = ['hello' => 'HelLo', 'world' => 'WORld'];
+
+        self::assertSame($expected, HeaderProcessor::normalizeHeaderKeys($input));
+    }
+
+    public function testNormalizeHeaderKeysHandlesNumericKeys(): void
+    {
+        $input = [0 => 'zero', 'HelLo' => 'foo'];
+        $expected = [0 => 0, 'hello' => 'HelLo'];
+
+        self::assertSame($expected, HeaderProcessor::normalizeHeaderKeys($input));
     }
 
     public function testReturnsUnrepresentableResponseContentLengthForCallerPolicy(): void

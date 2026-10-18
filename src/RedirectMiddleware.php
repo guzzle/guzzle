@@ -272,7 +272,7 @@ class RedirectMiddleware
             $modify['remove_headers'][] = 'Cookie';
         }
 
-        return Psr7\Utils::modifyRequest($request, $modify);
+        return Psr7\Message::modifyRequest($request, $modify);
     }
 
     private static function isRedirectStatusCode(int $statusCode): bool
@@ -351,12 +351,12 @@ class RedirectMiddleware
                 $resolvedUri = $uriFactory->createUri((string) $resolvedUri);
             }
         } catch (\InvalidArgumentException $e) {
-            throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid.', Psr7\Utils::redactUriStringForMessage($location)), $request, $response, $e);
+            throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid.', Psr7\UriRedactor::redactUriStringForMessage($location)), $request, $response, $e);
         }
 
         // Ensure that the redirect URI is allowed based on the protocols.
         if (!\in_array($resolvedUri->getScheme(), $protocols, true)) {
-            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', Psr7\Utils::redactUriForMessage($resolvedUri), \implode(', ', $protocols)), $request, $response);
+            throw new BadResponseException(\sprintf('Redirect URI, %s, does not use one of the allowed redirect protocols: %s', Psr7\UriRedactor::redactUriForMessage($resolvedUri), \implode(', ', $protocols)), $request, $response);
         }
 
         return $resolvedUri;

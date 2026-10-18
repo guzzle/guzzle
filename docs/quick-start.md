@@ -180,14 +180,14 @@ $promises = [
 ];
 
 // Wait for the requests to complete; throws if any request is rejected.
-$responses = Promise\Utils::unwrap($promises);
+$responses = Promise\Await::unwrap($promises);
 
 // You can access each response using the key of the promise
 echo $responses['image']->getHeader('Content-Length')[0];
 echo $responses['png']->getHeader('Content-Length')[0];
 
 // Wait for the requests to complete, even if some of them fail
-$responses = Promise\Utils::settle($promises)->wait();
+$responses = Promise\Aggregate::settle($promises)->wait();
 
 // Values returned above are wrapped in an array with "state" (either fulfilled or rejected),
 // plus "value" for fulfilled responses or "reason" for rejected requests.
