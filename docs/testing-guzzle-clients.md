@@ -16,7 +16,7 @@ to assert the request method, URI, headers, body, or request options that your
 code sent.
 
 Use the separate
-[`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/README.md)
+[`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.1/README.md)
 package only when you need a local HTTP server, usually while developing or
 testing a custom handler. Unit tests and most application client tests should
 not use the test server.
@@ -168,13 +168,13 @@ internet.
 > history middleware.
 
 The test server is distributed separately as
-[`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.0/README.md).
+[`guzzlehttp/test-server`](https://github.com/guzzle/test-server/blob/1.1/README.md).
 It is not installed with Guzzle by default. The package provides a Node.js
 server that receives requests, returns responses from a queue, and records
 received requests for inspection.
 
 See the
-[Test Server Usage](https://github.com/guzzle/test-server/blob/1.0/docs/test-server-usage.md)
+[Test Server Usage](https://github.com/guzzle/test-server/blob/1.1/docs/test-server-usage.md)
 documentation for lifecycle, response queuing, request inspection, and shutdown
 details.
 
@@ -184,4 +184,4 @@ details.
 - [Request Options](request-options.md)
 - [Handlers](handlers.md)
 - [Middleware](middleware.md)
-- [Test Server Usage](https://github.com/guzzle/test-server/blob/1.0/docs/test-server-usage.md)
+- [Test Server Usage](https://github.com/guzzle/test-server/blob/1.1/docs/test-server-usage.md)

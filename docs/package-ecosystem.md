@@ -40,7 +40,7 @@ models.
 |---------|------------|---------------|
 | `guzzlehttp/uri-template` | Expanding RFC 6570 URI templates. | [URI Template docs](https://github.com/guzzle/uri-template/blob/2.0/docs/uri-template-usage.md) |
 | `guzzlehttp/oauth-subscriber` | Signing Guzzle requests with OAuth 1.0 middleware. | [OAuth Subscriber docs](https://github.com/guzzle/oauth-subscriber/blob/1.0/docs/oauth-1-0-middleware-usage.md) |
-| `guzzlehttp/test-server` | Testing HTTP clients against a local controllable server. | [Test Server docs](https://github.com/guzzle/test-server/blob/1.0/docs/test-server-usage.md) |
+| `guzzlehttp/test-server` | Testing HTTP clients against a local controllable server. | [Test Server docs](https://github.com/guzzle/test-server/blob/1.1/docs/test-server-usage.md) |
 
 Use `guzzlehttp/uri-template` when an API provides URI templates that need to be
 expanded before sending requests. Use `guzzlehttp/oauth-subscriber` only for
