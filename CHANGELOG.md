@@ -10,7 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Add `ContextualCurlMultiHandler`, which leases a cURL multi handler to each execution context
 - Lease asynchronous cURL multi handlers per execution context in default handler selection when an execution context provider is configured
 - Reject cross-context use of an active `CurlMultiHandler` when an execution context provider is configured, and cancel the transfers a context leaves on it when that context is finished, or release them when it ended without being finished
-- Add `max_idle_handlers` to configure the execution context handler pool
+- Add `max_idle_multi_handlers` to configure the execution context handler pool
 
 
 ## 8.3.0 - 2026-10-18

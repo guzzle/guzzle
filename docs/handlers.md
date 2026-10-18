@@ -533,14 +533,14 @@ that does not register finalizers, such as the fiber provider, call
 creates a new handler with its own connections. The default handler keeps up to
 8 idle handlers.
 
-Set the `max_idle_handlers` client option to retain more handlers for recurring
-bursts of concurrent contexts, or to `0` to disable the pool. This is a
+Set the `max_idle_multi_handlers` client option to retain more handlers for
+recurring bursts of concurrent contexts, or to `0` to disable the pool. This is a
 non-negative integer; `null` uses the default. It limits idle handlers retained
 for reuse, not active contexts or connections. The same option is available in
 `Utils::chooseHandler()`.
 
 ```php
-$client = new GuzzleHttp\Client(['max_idle_handlers' => 32]);
+$client = new GuzzleHttp\Client(['max_idle_multi_handlers' => 32]);
 ```
 
 The option applies only to the default asynchronous cURL handler with an
@@ -551,7 +551,7 @@ With a custom handler, configure the pool size through
 Handlers created with the `max_host_connections` or `max_total_connections`
 options are not leased per context, because connection caps apply to one shared
 multi handle. Use such clients from one context at a time. These options cannot
-be combined with `max_idle_handlers`.
+be combined with `max_idle_multi_handlers`.
 
 The fiber provider identifies the current fiber; it does not schedule fibers or
 make cURL calls nonblocking. A scheduler must drive each context's transfers
