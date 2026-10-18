@@ -62,9 +62,9 @@ class UtilsTest extends TestCase
     public function testChooseHandlerRejectsInvalidIdleHandlerPoolSize($value): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('max_idle_handlers must be a non-negative integer.');
+        $this->expectExceptionMessage('max_idle_multi_handlers must be a non-negative integer.');
 
-        Utils::chooseHandler(['max_idle_handlers' => $value]);
+        Utils::chooseHandler(['max_idle_multi_handlers' => $value]);
     }
 
     /**
@@ -75,7 +75,7 @@ class UtilsTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('connection caps require one shared multi handler');
 
-        Utils::chooseHandler([$option => 1, 'max_idle_handlers' => 8]);
+        Utils::chooseHandler([$option => 1, 'max_idle_multi_handlers' => 8]);
     }
 
     public function testChooseHandlerAcceptsPreferredTransportSharing(): void

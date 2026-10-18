@@ -92,7 +92,11 @@ final class ContextualCurlMultiHandler
             return $handler;
         }
 
-        $handler = array_pop($this->idle) ?? ($this->factory)();
+        do {
+            $handler = \array_pop($this->idle);
+        } while ($handler !== null && $handler->isClosed());
+
+        $handler = $handler ?? ($this->factory)();
         // The handler registers its own finalizer here, which cancels the
         // context's transfers before the lease is released below.
         $handler->assignToCurrentContext();
@@ -123,7 +127,7 @@ final class ContextualCurlMultiHandler
 
         unset($this->leases[$context]);
 
-        if ($handler->isIdle() && \count($this->idle) < $this->maxIdleHandlers) {
+        if (!$handler->isClosed() && $handler->isIdle() && \count($this->idle) < $this->maxIdleHandlers) {
             $this->idle[] = $handler;
         }
     }

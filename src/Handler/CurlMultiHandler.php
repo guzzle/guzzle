@@ -1078,6 +1078,14 @@ final class CurlMultiHandler
     }
 
     /**
+     * @internal
+     */
+    public function isClosed(): bool
+    {
+        return $this->closed;
+    }
+
+    /**
      * Determines if the handler has no tracked, delayed, or deferred
      * transfers, no call running for its owner, and no native execution,
      * message processing, or close in progress.

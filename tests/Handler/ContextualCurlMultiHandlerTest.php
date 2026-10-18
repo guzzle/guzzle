@@ -117,6 +117,41 @@ class ContextualCurlMultiHandlerTest extends TestCase
         self::assertCount(1, $this->created);
     }
 
+    public function testClosedHandlersAreNotPooled(): void
+    {
+        Server::enqueue([new Response(200), new Response(201), new Response(202)]);
+        $handler = $this->handler(1);
+        $first = new \stdClass();
+        $second = new \stdClass();
+
+        $this->provider->in($first, function () use ($handler): void {
+            $handler(new Request('GET', Server::$url), [])->wait();
+            $this->created[0]->close();
+        });
+        $this->provider->in($second, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        $this->provider->end($first);
+        $this->provider->end($second);
+        $response = $this->provider->in(new \stdClass(), static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertCount(2, $this->created);
+        self::assertSame(202, $response->getStatusCode());
+    }
+
+    public function testHandlersClosedWhilePooledAreDiscarded(): void
+    {
+        Server::enqueue([new Response(200), new Response(201)]);
+        $handler = $this->handler();
+        $first = new \stdClass();
+
+        $this->provider->in($first, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        $this->provider->end($first);
+        $this->created[0]->close();
+        $response = $this->provider->in(new \stdClass(), static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertCount(2, $this->created);
+        self::assertSame(201, $response->getStatusCode());
+    }
+
     public function testPooledHandlersIgnoreTicksQueuedByTheirPreviousContext(): void
     {
         Server::enqueue([new Response(200), new Response(201)]);
@@ -238,10 +273,10 @@ class ContextualCurlMultiHandlerTest extends TestCase
      *           [1, 1]
      *           [2, 0]
      */
-    public function testClientPoolSizeControlsConnectionReuse(int $maxIdleHandlers, int $newConnections): void
+    public function testClientPoolSizeControlsConnectionReuse(int $maxIdleMultiHandlers, int $newConnections): void
     {
         Server::enqueue([new Response(200), new Response(200), new Response(200), new Response(200)]);
-        $client = new Client(['max_idle_handlers' => $maxIdleHandlers]);
+        $client = new Client(['max_idle_multi_handlers' => $maxIdleMultiHandlers]);
         $ports = [];
 
         for ($wave = 0; $wave < 2; ++$wave) {
@@ -263,7 +298,7 @@ class ContextualCurlMultiHandlerTest extends TestCase
         }
 
         self::assertCount($newConnections, \array_diff($ports[1], $ports[0]));
-        self::assertNull($client->getConfig('max_idle_handlers'));
+        self::assertNull($client->getConfig('max_idle_multi_handlers'));
     }
 
     public function testLeasedHandlersShareTheTransportStateOfTheSynchronousHandler(): void

@@ -73,8 +73,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *   fallback receives the cap as a marker only: it rejects enabled
      *   response streaming ("stream" => true) and does not limit overlapping
      *   buffered calls.
-     * - max_idle_handlers: (int|null) Maximum idle cURL multi handlers kept for
-     *   reuse between execution contexts. Defaults to 8; 0 disables the pool.
+     * - max_idle_multi_handlers: (int|null) Maximum idle cURL multi handlers kept
+     *   for reuse between execution contexts. Defaults to 8; 0 disables the pool.
      *   Applies only to the default handler with an execution context provider
      *   configured. Cannot be combined with connection caps or a custom
      *   handler.
@@ -90,7 +90,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *     transport_sharing?: string|null,
      *     max_host_connections?: int|null,
      *     max_total_connections?: int|null,
-     *     max_idle_handlers?: int|null,
+     *     max_idle_multi_handlers?: int|null,
      *     allow_redirects?: bool|array{
      *         max?: int,
      *         strict?: bool,
@@ -171,7 +171,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         array $config = []
     ) {
         $handlerOptions = [];
-        foreach (['max_host_connections', 'max_total_connections', 'max_idle_handlers'] as $handlerOption) {
+        foreach (['max_host_connections', 'max_total_connections', 'max_idle_multi_handlers'] as $handlerOption) {
             if (\array_key_exists($handlerOption, $config)) {
                 if ($config[$handlerOption] !== null) {
                     $handlerOptions[$handlerOption] = $config[$handlerOption];
@@ -203,8 +203,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 : HandlerStack::create(Utils::chooseHandler($handlerOptions));
         } elseif (!\is_callable($config['handler'])) {
             throw new InvalidArgumentException('handler must be a callable');
-        } elseif (isset($handlerOptions['max_idle_handlers'])) {
-            throw new InvalidArgumentException('The "max_idle_handlers" client option requires Guzzle to create the default handler. Configure the pool size on ContextualCurlMultiHandler when providing a custom handler.');
+        } elseif (isset($handlerOptions['max_idle_multi_handlers'])) {
+            throw new InvalidArgumentException('The "max_idle_multi_handlers" client option requires Guzzle to create the default handler. Configure the pool size on ContextualCurlMultiHandler when providing a custom handler.');
         } elseif ($handlerOptions !== []) {
             throw new InvalidArgumentException('The "max_host_connections" and "max_total_connections" client options require Guzzle to create the default handler. Configure the options on the CurlMultiHandler constructor for numeric enforcement, or on the StreamHandler constructor to reject enabled response streaming, when providing a custom handler.');
         } elseif ($transportSharingMode === TransportSharing::HANDLER_REQUIRE) {
