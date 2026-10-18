@@ -15,8 +15,8 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Multiplexing;
-use GuzzleHttp\Promise\Is;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\State;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -70,7 +70,7 @@ class ClientTest extends TestCase
 
         $promise = $client->sendAsync(new Request('GET', 'http://example.com'));
 
-        self::assertTrue(Is::rejected($promise));
+        self::assertTrue(State::isRejected($promise));
 
         try {
             $promise->wait();
@@ -171,7 +171,7 @@ class ClientTest extends TestCase
 
         $promise = $client->sendAsync($request);
 
-        self::assertTrue(Is::rejected($promise));
+        self::assertTrue(State::isRejected($promise));
 
         try {
             $promise->wait();
