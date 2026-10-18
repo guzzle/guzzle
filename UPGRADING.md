@@ -447,11 +447,14 @@ surfaced as a response.
 The built-in cURL and stream handlers now reject a response subject to body
 framing when its `Content-Length` is malformed, conflicting, or present with
 `Transfer-Encoding`. Equivalent decimal duplicates remain valid, including
-leading zeros. Framing failures detected from a complete header block occur
-before `on_headers` sees that response or any of its body bytes are delivered,
-and raise `ResponseTransferException`. A transport that rejects the block first
-can instead report its existing transfer failure. When a handler needs the
-length as a PHP integer, a valid value above `PHP_INT_MAX` raises plain
+leading zeros. Like libcurl 8.14 and newer, both handlers also reject a
+`Transfer-Encoding` that names a coding other than `chunked` or `identity`, or
+names `chunked` before another coding on the same header line. Framing failures
+detected from a complete header block occur before `on_headers` sees that
+response or any of its body bytes are delivered, and raise
+`ResponseTransferException`. A transport that rejects the block first can
+instead report its existing transfer failure. When a handler needs the length as
+a PHP integer, a valid value above `PHP_INT_MAX` raises plain
 `ResponseException` with the underlying `OverflowException` available through
 `getPrevious()`. The stream handler does not impose this platform limit on
 `stream => true` responses. Framing validation does not apply to responses to
@@ -462,7 +465,10 @@ The stream handler also raises `ResponseTransferException` after draining a
 non-streamed response when a valid, positive `Content-Length` declares more
 bytes than it receives. For decoded gzip and deflate, the length applies to
 encoded bytes before decompression, and the original values remain in
-`x-encoded-content-length`. Valid `stream => true` responses remain lazy after
+`x-encoded-content-length`. It raises the same exception when a chunked body
+ends before its last chunk or has malformed chunk framing; reading such a body
+with `stream => true` throws a `\RuntimeException` once the bytes before the
+fault have been returned. Valid `stream => true` responses remain lazy after
 header validation.
 
 For chunked responses through the stream handler, the transport resource's
@@ -470,7 +476,9 @@ For chunked responses through the stream handler, the transport resource's
 on streamed bodies and to custom stream factories. On PHP 8.1.20+, 8.2.7+, and
 8.3+, `progress` also counts raw chunk framing coalesced with the response
 headers. Later socket reads were already counted before decoding. Guzzle's
-response continues to expose the decoded body without that consumed header.
+response continues to expose the decoded body without that consumed header. A
+streamed chunked body detached after it has been partly read is a Guzzle stream
+resource that keeps decoding it, rather than the transport resource.
 
 The deprecated `RequestException::wrapException()` method was removed. Create a
 `RequestException` directly for request failures where Guzzle does not expose a
