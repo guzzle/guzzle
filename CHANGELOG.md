@@ -15,6 +15,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Fix reads of streamed gzip and deflate responses waiting for 8 KiB of decoded data
 - Fix stream handler accepting corrupt gzip and deflate response bodies
 
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.1.1`
+
 
 ## 8.2.0 - 2026-09-06
 
