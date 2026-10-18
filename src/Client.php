@@ -563,7 +563,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         $uri = $builtUri;
         $request = $requestFactory->createRequest($method, $uri);
-        $request = Psr7\Utils::modifyRequest($request, ['version' => $version]);
+        $request = Psr7\Message::modifyRequest($request, ['version' => $version]);
 
         return $this->transfer($request, $options);
     }
@@ -681,6 +681,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $option === null
             ? $this->config
             : ($this->config[$option] ?? null);
+    }
+
+    /**
+     * Get the default User-Agent string to use with Guzzle.
+     */
+    public static function defaultUserAgent(): string
+    {
+        return sprintf('GuzzleHttp/%d', ClientInterface::MAJOR_VERSION);
     }
 
     private function buildUri(
@@ -894,7 +902,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         // Add the default user-agent header.
         if (!isset($this->config['headers'])) {
-            $this->config['headers'] = ['User-Agent' => Utils::defaultUserAgent()];
+            $this->config['headers'] = ['User-Agent' => self::defaultUserAgent()];
         } else {
             self::assertHeaderOptionTypes($this->config['headers']);
 
@@ -908,7 +916,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
 
             if (!$hasUserAgent) {
-                $this->config['headers']['User-Agent'] = Utils::defaultUserAgent();
+                $this->config['headers']['User-Agent'] = self::defaultUserAgent();
             }
         }
     }
@@ -1617,7 +1625,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $modify['version'] = self::normalizeProtocolVersion($options['version']);
         }
 
-        $request = Psr7\Utils::modifyRequest($request, $modify);
+        $request = Psr7\Message::modifyRequest($request, $modify);
         if ($request->getBody() instanceof Psr7\MultipartStream) {
             // Use a multipart/form-data POST if a Content-Type is not set.
             // Ensure that we don't have the header in different case and set the new value.
@@ -1635,7 +1643,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                     $modify['set_headers'][$name] = $v;
                 }
             }
-            $request = Psr7\Utils::modifyRequest($request, $modify);
+            $request = Psr7\Message::modifyRequest($request, $modify);
             // Don't pass this internal value along to middleware/handlers.
             unset($options['_conditional']);
         }

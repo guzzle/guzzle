@@ -1622,6 +1622,11 @@ class ClientTest extends TestCase
         self::assertSame([], $factory->uriCalls());
     }
 
+    public function testDefaultUserAgent(): void
+    {
+        self::assertSame('GuzzleHttp/8', Client::defaultUserAgent());
+    }
+
     public function testMergesDefaultOptionsAndDoesNotOverwriteUa(): void
     {
         $client = new Client(['headers' => ['User-agent' => 'foo']]);

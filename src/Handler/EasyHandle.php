@@ -12,7 +12,6 @@ use GuzzleHttp\Psr7\DiagnosticValue;
 use GuzzleHttp\Psr7\Exception\TimeoutException;
 use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\RequestOptions;
-use GuzzleHttp\Utils;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -184,7 +183,7 @@ final class EasyHandle
             $framingFailure = $e;
         }
 
-        $normalizedKeys = Utils::normalizeHeaderKeys($headers);
+        $normalizedKeys = HeaderProcessor::normalizeHeaderKeys($headers);
         $decodeContent = $this->options['decode_content'] ?? false;
         if ($framingFailure === null && $decodeContent !== false && isset($normalizedKeys['content-encoding'])) {
             $headers['x-encoded-content-encoding'] = $headers[$normalizedKeys['content-encoding']];

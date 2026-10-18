@@ -74,7 +74,7 @@ class PrepareBodyMiddleware
         // Add the expect header if needed.
         $this->addExpectHeader($request, $options, $modify, $bodySize);
 
-        return $fn(Psr7\Utils::modifyRequest($request, $modify), $options);
+        return $fn(Psr7\Message::modifyRequest($request, $modify), $options);
     }
 
     /**

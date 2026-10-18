@@ -28,32 +28,6 @@ class UtilsTest extends TestCase
         return [['get'], ['head'], ['delete']];
     }
 
-    public function testParsesHeadersFromLines(): void
-    {
-        $lines = [
-            'Foo: bar',
-            'Foo: baz',
-            'Abc: 123',
-            'Def: a, b',
-        ];
-
-        $expected = [
-            'Foo' => ['bar', 'baz'],
-            'Abc' => ['123'],
-            'Def' => ['a, b'],
-        ];
-
-        self::assertSame($expected, Utils::headersFromLines($lines));
-    }
-
-    public function testParsesHeadersFromLinesWithMultipleLines(): void
-    {
-        $lines = ['Foo: bar', 'Foo: baz', 'Foo: 123'];
-        $expected = ['Foo' => ['bar', 'baz', '123']];
-
-        self::assertSame($expected, Utils::headersFromLines($lines));
-    }
-
     public function testChooseHandler(): void
     {
         self::assertIsCallable(Utils::chooseHandler());
@@ -551,45 +525,6 @@ class UtilsTest extends TestCase
         } finally {
             Utils::setDefaultHandlerFactory(null);
         }
-    }
-
-    public function testDefaultUserAgent(): void
-    {
-        self::assertIsString(Utils::defaultUserAgent());
-    }
-
-    public function testReturnsDebugResource(): void
-    {
-        self::assertIsResource(Utils::debugResource());
-    }
-
-    public function testNormalizeHeaderKeys(): void
-    {
-        $input = ['HelLo' => 'foo', 'WORld' => 'bar'];
-        $expected = ['hello' => 'HelLo', 'world' => 'WORld'];
-
-        self::assertSame($expected, Utils::normalizeHeaderKeys($input));
-    }
-
-    public function testNormalizeHeaderKeysHandlesNumericKeys(): void
-    {
-        $input = [0 => 'zero', 'HelLo' => 'foo'];
-        $expected = [0 => 0, 'hello' => 'HelLo'];
-
-        self::assertSame($expected, Utils::normalizeHeaderKeys($input));
-    }
-
-    public function testNormalizeProtocolsAcceptsLowercaseProtocols(): void
-    {
-        self::assertSame(['http', 'https'], Utils::normalizeProtocols(['http', 'https', 'http']));
-    }
-
-    public function testNormalizeProtocolsRejectsUppercaseProtocols(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('protocols may only contain "http" and "https"');
-
-        Utils::normalizeProtocols(['HTTPS']);
     }
 
     private static function skipIfDefaultCurlHandlerIsUnavailable(): void
