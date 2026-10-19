@@ -76,9 +76,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * - max_idle_multi_handlers: (int|null) Maximum idle cURL multi handlers kept
      *   for reuse between execution contexts. Defaults to 8; 0 keeps each
      *   handler until its context finishes, without pooling it for later ones.
-     *   Applies only to the default handler with an execution context provider
-     *   configured. Cannot be combined with connection caps or a custom
-     *   handler.
+     *   Applies only to the default handler, and has no effect unless an
+     *   execution context provider is configured before the client is created.
+     *   Cannot be combined with connection caps or a custom handler.
      * - multiplex: (string|null) Multiplexing::NONE to disable multiplexing on
      *   the default CurlMultiHandler; the value also becomes the default
      *   "multiplex" request option. Other Multiplexing::* values act as the
