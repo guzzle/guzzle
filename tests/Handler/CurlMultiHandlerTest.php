@@ -4193,6 +4193,23 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+    public function testFinishingOutsideTheOwnerThrowsWithoutRetryingCancellation(): void
+    {
+        [$contexts, $owner] = $this->useExecutionContexts();
+        $handler = new CurlMultiHandler();
+        $pending = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000]));
+
+        try {
+            P\ExecutionContext::finish($owner);
+            self::fail('Finishing outside the owning context was accepted.');
+        } catch (P\CrossContextException $e) {
+            self::assertTrue(P\Is::pending($pending));
+            self::assertFalse($handler->isIdle());
+        } finally {
+            $contexts->in($owner, static fn () => $pending->cancel());
+        }
+    }
+
     public function testFinishingAFormerOwnerDoesNotCancelTheTransfersOfTheCurrentOwner(): void
     {
         [$contexts, $owner, $other] = $this->useExecutionContexts();

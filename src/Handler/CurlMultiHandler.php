@@ -1252,6 +1252,8 @@ final class CurlMultiHandler
 
         // Removing a transfer can run callbacks that create another transfer.
         while ($this->handles !== []) {
+            $remaining = $this->handles;
+
             foreach ($this->handles as $id => $entry) {
                 $this->captureFailure($failure, function () use ($id, $entry): void {
                     if (P\Is::pending($entry['deferred'])) {
@@ -1260,6 +1262,10 @@ final class CurlMultiHandler
                         $this->cancel($id, $entry['wait_token']);
                     }
                 });
+            }
+
+            if ($this->handles === $remaining) {
+                break;
             }
         }
 
