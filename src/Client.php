@@ -74,7 +74,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      *   response streaming ("stream" => true) and does not limit overlapping
      *   buffered calls.
      * - max_idle_multi_handlers: (int|null) Maximum idle cURL multi handlers kept
-     *   for reuse between execution contexts. Defaults to 8; 0 disables the pool.
+     *   for reuse between execution contexts. Defaults to 8; 0 keeps each
+     *   handler until its context finishes, without pooling it for later ones.
      *   Applies only to the default handler with an execution context provider
      *   configured. Cannot be combined with connection caps or a custom
      *   handler.

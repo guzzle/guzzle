@@ -148,11 +148,12 @@ class ContextualCurlMultiHandlerTest extends TestCase
 
     public function testAContextRegistersOneFinalizerAcrossDifferentHandlers(): void
     {
-        $handler = $this->handler(0);
+        $handler = $this->handler();
         $context = new \stdClass();
 
         for ($i = 0; $i < 3; ++$i) {
             $this->provider->in($context, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000])->cancel());
+            $this->created[$i]->close();
         }
 
         self::assertCount(3, $this->created);
@@ -311,17 +312,31 @@ class ContextualCurlMultiHandlerTest extends TestCase
         self::assertNotContains($first, $progressIn, 'A stale tick drove the next context\'s transfer.');
     }
 
-    public function testHandlersAreNotPooledWhenThePoolIsDisabled(): void
+    public function testDisabledPoolKeepsConnectionsOnlyUntilTheContextFinishes(): void
     {
-        Server::enqueue([new Response(200), new Response(200)]);
+        Server::enqueue([new Response(200), new Response(200), new Response(200), new Response(200)]);
         $handler = $this->handler(0);
         $first = new \stdClass();
+        $ports = [];
+        $request = static function () use ($handler, &$ports): void {
+            $handler(new Request('GET', Server::$url), ['on_stats' => static function (\GuzzleHttp\TransferStats $stats) use (&$ports): void {
+                $ports[] = $stats->getHandlerStat('local_port');
+            }])->wait();
+        };
 
-        $this->provider->in($first, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        $this->provider->in($first, $request);
+        $this->provider->in($first, $request);
+        self::assertCount(1, $this->created);
+        self::assertSame($ports[0], $ports[1]);
+
         $this->provider->end($first);
-        $this->provider->in(new \stdClass(), static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        $this->provider->in(new \stdClass(), $request);
 
         self::assertCount(2, $this->created);
+        self::assertNotSame($ports[0], $ports[2]);
+
+        $this->provider->in($first, $request);
+        self::assertCount(3, $this->created);
     }
 
     public function testLeasesDoNotKeepContextsAlive(): void

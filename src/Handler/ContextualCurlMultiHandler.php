@@ -20,6 +20,9 @@ use Psr\Http\Message\ResponseInterface;
  * managed contexts share one handler. The default handler keeps up to 8 idle
  * handlers.
  *
+ * With a pool limit of 0, each context keeps its handler until it finishes,
+ * reusing connections within that context without pooling it for later ones.
+ *
  * When an execution context finishes, its unfinished transfers are cancelled.
  * With a provider that does not register finalizers, such as the fiber
  * provider, call ExecutionContext::finish() at the end of each context to
@@ -133,7 +136,11 @@ final class ContextualCurlMultiHandler
                 $handler = $this->leases[$context] ?? null;
 
                 if ($handler !== null) {
-                    $handler->finishContext($context);
+                    try {
+                        $handler->finishContext($context);
+                    } finally {
+                        unset($this->leases[$context]);
+                    }
                 }
             });
         }
@@ -146,6 +153,10 @@ final class ContextualCurlMultiHandler
      */
     private function release(CurlMultiHandler $handler): void
     {
+        if ($this->maxIdleHandlers === 0 && !$handler->isClosed()) {
+            return;
+        }
+
         $context = P\ExecutionContext::current();
 
         if ($context === null || ($this->leases[$context] ?? null) !== $handler) {
