@@ -527,16 +527,19 @@ Idle handlers return to a bounded pool so other contexts can reuse their
 connections before the original context finishes. Requests made outside managed
 contexts share one handler. The default handler keeps up to 8 idle handlers.
 
+With a pool limit of 0, each context keeps its handler until it finishes, reusing
+connections within that context without pooling it for later ones.
+
 When an execution context finishes, its unfinished transfers are cancelled. With
 a provider that does not register finalizers, such as the fiber provider, call
 `ExecutionContext::finish()` at the end of each context to cancel unfinished
 transfers and drain its task queue.
 
 Set the `max_idle_multi_handlers` client option to retain more handlers for
-recurring bursts of concurrent contexts, or to `0` to disable the pool. This is a
-non-negative integer; `null` uses the default. It limits idle handlers retained
-for reuse, not active contexts or connections. The same option is available in
-`Utils::chooseHandler()`.
+recurring bursts of concurrent contexts, or to `0` to keep reuse within each
+context only. This is a non-negative integer; `null` uses the default. It limits
+idle handlers retained for reuse, not active contexts or connections. The same
+option is available in `Utils::chooseHandler()`.
 
 ```php
 $client = new GuzzleHttp\Client(['max_idle_multi_handlers' => 32]);
