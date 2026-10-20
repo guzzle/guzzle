@@ -110,6 +110,8 @@ class ContextualCurlMultiHandlerTest extends TestCase
 
     public function testIdleHandlersReuseConnectionsBeforeTheirContextFinishes(): void
     {
+        self::skipIfCurlHasBrokenLocalPortStats();
+
         Server::enqueue([new Response(200), new Response(201), new Response(202)]);
         $handler = $this->handler();
         $first = new \stdClass();
@@ -314,6 +316,8 @@ class ContextualCurlMultiHandlerTest extends TestCase
 
     public function testDisabledPoolKeepsConnectionsOnlyUntilTheContextFinishes(): void
     {
+        self::skipIfCurlHasBrokenLocalPortStats();
+
         Server::enqueue([new Response(200), new Response(200), new Response(200), new Response(200)]);
         $handler = $this->handler(0);
         $first = new \stdClass();
@@ -416,6 +420,8 @@ class ContextualCurlMultiHandlerTest extends TestCase
      */
     public function testClientPoolSizeControlsConnectionReuse(int $maxIdleMultiHandlers, int $newConnections): void
     {
+        self::skipIfCurlHasBrokenLocalPortStats();
+
         Server::enqueue([new Response(200), new Response(200), new Response(200), new Response(200)]);
         $client = new Client(['max_idle_multi_handlers' => $maxIdleMultiHandlers]);
         $ports = [];
@@ -479,5 +485,19 @@ class ContextualCurlMultiHandlerTest extends TestCase
 
         self::assertInstanceOf(P\CrossContextException::class, $reason);
         self::assertSame(200, $this->provider->in($a, static fn () => $pending->wait())->getStatusCode());
+    }
+
+    /**
+     * libcurl 7.75.0 to 7.78.x reports local_port as -1 on reused connections.
+     *
+     * @see https://github.com/curl/curl/issues/7660
+     */
+    private static function skipIfCurlHasBrokenLocalPortStats(): void
+    {
+        $version = \curl_version();
+
+        if (!\is_array($version) || ($version['version_number'] >= 0x074B00 && $version['version_number'] < 0x074F00)) {
+            self::markTestSkipped('Local port statistics are unreliable on libcurl 7.75.0 to 7.78.x.');
+        }
     }
 }
