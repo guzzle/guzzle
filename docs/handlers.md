@@ -505,7 +505,7 @@ one multi handler can also abort the process.
 
 Configure an execution context provider from `guzzlehttp/promises` while
 bootstrapping the process, before creating clients. See the
-[Execution Contexts](https://github.com/guzzle/promises/blob/3.0/docs/execution-contexts.md)
+[Execution Contexts](https://github.com/guzzle/promises/blob/3.2/docs/execution-contexts.md)
 guide for providers and finishing contexts.
 
 ```php
