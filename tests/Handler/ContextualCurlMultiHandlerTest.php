@@ -141,9 +141,9 @@ class ContextualCurlMultiHandlerTest extends TestCase
         $this->provider->end($first);
 
         self::assertCount(1, $this->created);
-        self::assertTrue(P\Is::pending($pending));
+        self::assertTrue(P\State::isPending($pending));
         $this->provider->end($second);
-        self::assertTrue(P\Is::rejected($pending));
+        self::assertTrue(P\State::isRejected($pending));
     }
 
     public function testAContextRegistersOneFinalizerAcrossDifferentHandlers(): void
@@ -164,7 +164,7 @@ class ContextualCurlMultiHandlerTest extends TestCase
         $this->provider->end($context);
         $pending = $this->provider->in($context, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000]));
         $this->provider->end($context);
-        self::assertTrue(P\Is::rejected($pending));
+        self::assertTrue(P\State::isRejected($pending));
     }
 
     public function testDroppedClientsStillCancelTheirPendingTransfersOnContextFinish(): void
@@ -179,7 +179,7 @@ class ContextualCurlMultiHandlerTest extends TestCase
         gc_collect_cycles();
         $this->provider->end($context);
 
-        self::assertTrue(P\Is::rejected($promise));
+        self::assertTrue(P\State::isRejected($promise));
     }
 
     public function testHostValidationFailureReturnsTheHandlerToThePool(): void
@@ -214,7 +214,7 @@ class ContextualCurlMultiHandlerTest extends TestCase
         });
 
         self::assertCount(2, $this->created);
-        self::assertTrue(P\Is::pending($pending));
+        self::assertTrue(P\State::isPending($pending));
         $this->provider->end($second);
     }
 
@@ -233,7 +233,7 @@ class ContextualCurlMultiHandlerTest extends TestCase
         $this->provider->end($context);
 
         self::assertNotNull($nested);
-        self::assertTrue(P\Is::rejected($nested));
+        self::assertTrue(P\State::isRejected($nested));
         self::assertCount(1, $this->created);
     }
 
@@ -364,7 +364,7 @@ class ContextualCurlMultiHandlerTest extends TestCase
         $pending = $this->provider->in($a, static fn () => $client->getAsync(Server::$url));
         $response = $this->provider->in($b, static fn () => $client->getAsync(Server::$url)->wait());
 
-        self::assertTrue(P\Is::pending($pending), 'Another context drove the transfer.');
+        self::assertTrue(P\State::isPending($pending), 'Another context drove the transfer.');
         self::assertContains($response->getStatusCode(), [200, 201]);
         $this->provider->in($a, static fn () => $pending->wait());
     }
@@ -394,7 +394,7 @@ class ContextualCurlMultiHandlerTest extends TestCase
         $second->start();
 
         $second->resume();
-        self::assertTrue(P\Is::pending($pending), 'Another fiber drove the transfer.');
+        self::assertTrue(P\State::isPending($pending), 'Another fiber drove the transfer.');
         $first->resume();
 
         self::assertSame(200, $first->getReturn());
@@ -402,9 +402,17 @@ class ContextualCurlMultiHandlerTest extends TestCase
     }
 
     /**
-     * @testWith [0, 2]
-     *           [1, 1]
-     *           [2, 0]
+     * @return iterable<string, array{int, int}>
+     */
+    public static function idleHandlerPoolSizeProvider(): iterable
+    {
+        yield 'disabled pool' => [0, 2];
+        yield 'one idle handler' => [1, 1];
+        yield 'two idle handlers' => [2, 0];
+    }
+
+    /**
+     * @dataProvider idleHandlerPoolSizeProvider
      */
     public function testClientPoolSizeControlsConnectionReuse(int $maxIdleMultiHandlers, int $newConnections): void
     {

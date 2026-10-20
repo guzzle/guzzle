@@ -28,7 +28,7 @@ use Psr\Http\Message\ResponseInterface;
  * provider, call ExecutionContext::finish() at the end of each context to
  * cancel unfinished transfers and drain its task queue.
  *
- * @see https://github.com/guzzle/guzzle/blob/8.2/docs/handlers.md#concurrent-execution-contexts
+ * @see https://github.com/guzzle/guzzle/blob/8.4/docs/handlers.md#concurrent-execution-contexts
  */
 final class ContextualCurlMultiHandler
 {

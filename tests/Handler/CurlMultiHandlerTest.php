@@ -4011,8 +4011,16 @@ class CurlMultiHandlerTest extends TestCase
     }
 
     /**
-     * @testWith [true]
-     *           [false]
+     * @return iterable<string, array{bool}>
+     */
+    public static function managedContextProvider(): iterable
+    {
+        yield 'managed context' => [true];
+        yield 'unmanaged' => [false];
+    }
+
+    /**
+     * @dataProvider managedContextProvider
      */
     public function testRejectsRequestsFromAnotherExecutionContextWhileTransfersAreActive(bool $managed): void
     {
@@ -4065,7 +4073,7 @@ class CurlMultiHandlerTest extends TestCase
             });
             self::fail('Another execution context drove the handler.');
         } catch (P\CrossContextException $e) {
-            self::assertTrue(P\Is::pending($promise));
+            self::assertTrue(P\State::isPending($promise));
         }
 
         $response = $contexts->in($owner, static fn () => $promise->wait());
@@ -4137,7 +4145,7 @@ class CurlMultiHandlerTest extends TestCase
         $response = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
 
         self::assertSame(200, $response->getStatusCode());
-        self::assertTrue(P\Is::pending($abandoned));
+        self::assertTrue(P\State::isPending($abandoned));
         self::assertTrue($handler->isIdle());
     }
 
@@ -4154,7 +4162,7 @@ class CurlMultiHandlerTest extends TestCase
         $abandoned = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
         $contexts->end($owner);
 
-        self::assertTrue(P\Is::rejected($abandoned));
+        self::assertTrue(P\State::isRejected($abandoned));
         self::assertTrue($handler->isIdle());
     }
 
@@ -4189,7 +4197,7 @@ class CurlMultiHandlerTest extends TestCase
 
         $response = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
 
-        self::assertTrue(P\Is::rejected($abandoned));
+        self::assertTrue(P\State::isRejected($abandoned));
         self::assertSame(200, $response->getStatusCode());
     }
 
@@ -4203,7 +4211,7 @@ class CurlMultiHandlerTest extends TestCase
             P\ExecutionContext::finish($owner);
             self::fail('Finishing outside the owning context was accepted.');
         } catch (P\CrossContextException $e) {
-            self::assertTrue(P\Is::pending($pending));
+            self::assertTrue(P\State::isPending($pending));
             self::assertFalse($handler->isIdle());
         } finally {
             $contexts->in($owner, static fn () => $pending->cancel());
@@ -4220,7 +4228,7 @@ class CurlMultiHandlerTest extends TestCase
 
         $contexts->end($owner);
 
-        self::assertTrue(P\Is::pending($promise));
+        self::assertTrue(P\State::isPending($promise));
         self::assertSame(201, $contexts->in($other, static fn () => $promise->wait())->getStatusCode());
     }
 
@@ -4279,7 +4287,7 @@ class CurlMultiHandlerTest extends TestCase
                 self::markTestSkipped('libcurl did not run a final progress update on premature removal.');
             }
 
-            self::assertTrue(P\Is::rejected($nested));
+            self::assertTrue(P\State::isRejected($nested));
             self::assertTrue($handler->isIdle());
         } finally {
             $finishing = false;
@@ -4291,8 +4299,16 @@ class CurlMultiHandlerTest extends TestCase
     }
 
     /**
-     * @testWith [true]
-     *           [false]
+     * @return iterable<string, array{bool}>
+     */
+    public static function settledTransferProvider(): iterable
+    {
+        yield 'settled transfer' => [true];
+        yield 'pending transfer' => [false];
+    }
+
+    /**
+     * @dataProvider settledTransferProvider
      */
     public function testFinishingTheOwnerCleansUpSiblingsAfterARemovalCallbackThrows(bool $settled): void
     {
@@ -4358,7 +4374,7 @@ class CurlMultiHandlerTest extends TestCase
                 self::assertNull($caught);
                 self::assertSame($failure, P\Utils::inspect($promise)['reason']);
             }
-            self::assertTrue(P\Is::rejected($sibling));
+            self::assertTrue(P\State::isRejected($sibling));
             self::assertTrue($handler->isIdle());
         } finally {
             $finishing = false;
@@ -4419,8 +4435,7 @@ class CurlMultiHandlerTest extends TestCase
     }
 
     /**
-     * @testWith [true]
-     *           [false]
+     * @dataProvider managedContextProvider
      */
     public function testStaleTicksDoNotDriveAnotherExecutionContextsTransfers(bool $managed): void
     {

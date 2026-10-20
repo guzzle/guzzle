@@ -38,7 +38,7 @@ use Psr\Http\Message\ResponseInterface;
  * no context can use them any more. This protects handlers that you construct
  * and share yourself.
  *
- * @see https://github.com/guzzle/guzzle/blob/8.2/docs/handlers.md#concurrent-execution-contexts
+ * @see https://github.com/guzzle/guzzle/blob/8.4/docs/handlers.md#concurrent-execution-contexts
  */
 final class CurlMultiHandler
 {
@@ -1256,7 +1256,7 @@ final class CurlMultiHandler
 
             foreach ($this->handles as $id => $entry) {
                 $this->captureFailure($failure, function () use ($id, $entry): void {
-                    if (P\Is::pending($entry['deferred'])) {
+                    if (P\State::isPending($entry['deferred'])) {
                         $entry['deferred']->cancel();
                     } else {
                         $this->cancel($id, $entry['wait_token']);

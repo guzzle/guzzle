@@ -53,9 +53,17 @@ class UtilsTest extends TestCase
     }
 
     /**
-     * @testWith [-1]
-     *           [1.5]
-     *           ["8"]
+     * @return iterable<string, array{mixed}>
+     */
+    public static function invalidIdleHandlerPoolSizeProvider(): iterable
+    {
+        yield 'negative' => [-1];
+        yield 'float' => [1.5];
+        yield 'numeric string' => ['8'];
+    }
+
+    /**
+     * @dataProvider invalidIdleHandlerPoolSizeProvider
      *
      * @param mixed $value
      */
