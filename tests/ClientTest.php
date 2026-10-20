@@ -455,6 +455,31 @@ class ClientTest extends TestCase
         self::assertNull($client->getConfig('max_total_connections'));
     }
 
+    public function testIdleHandlerPoolSizeCannotBeUsedWithCustomHandler(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Configure the pool size on ContextualCurlMultiHandler when providing a custom handler.');
+
+        new Client(['handler' => new MockHandler(), 'max_idle_multi_handlers' => 0]);
+    }
+
+    public function testNullIdleHandlerPoolSizeCanBeUsedWithCustomHandler(): void
+    {
+        $client = new Client(['handler' => new MockHandler(), 'max_idle_multi_handlers' => null]);
+
+        self::assertNull($client->getConfig('max_idle_multi_handlers'));
+    }
+
+    public function testIdleHandlerPoolSizeCanBeConfiguredWithoutExecutionContexts(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+        $client = new Client(['max_idle_multi_handlers' => 16]);
+
+        self::assertSame(200, $client->getAsync(Server::$url)->wait()->getStatusCode());
+        self::assertNull($client->getConfig('max_idle_multi_handlers'));
+    }
+
     /**
      * @dataProvider invalidConnectionCapClientOptionProvider
      *

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Handler\ContextualCurlMultiHandler;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlShareHandleState;
@@ -12,6 +13,7 @@ use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Handler\StreamTlsSessionCache;
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -64,7 +66,7 @@ final class Utils
      *
      * The returned handler is not wrapped by any default middlewares.
      *
-     * @param array{transport_sharing?: mixed, max_host_connections?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions Handler constructor options.
+     * @param array{transport_sharing?: mixed, max_host_connections?: mixed, max_total_connections?: mixed, max_idle_multi_handlers?: mixed, multiplex?: mixed} $handlerOptions Handler constructor options.
      *
      * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> Returns the best handler for the given system.
      *
@@ -75,6 +77,15 @@ final class Utils
         $sharingMode = CurlShareHandleState::normalizeMode($handlerOptions['transport_sharing'] ?? null, 'transport_sharing');
         $sharingRequired = self::isTransportSharingRequired($sharingMode);
         $connectionCapsRequired = self::hasConnectionCapOptions($handlerOptions);
+        $maxIdleMultiHandlers = $handlerOptions['max_idle_multi_handlers'] ?? null;
+
+        if ($maxIdleMultiHandlers !== null && (!\is_int($maxIdleMultiHandlers) || $maxIdleMultiHandlers < 0)) {
+            throw new InvalidArgumentException('max_idle_multi_handlers must be a non-negative integer.');
+        }
+
+        if ($connectionCapsRequired && isset($handlerOptions['max_idle_multi_handlers'])) {
+            throw new InvalidArgumentException('The "max_idle_multi_handlers" option cannot be combined with "max_host_connections" or "max_total_connections", because connection caps require one shared multi handler.');
+        }
 
         $sharedPoolCapsSupported = CurlVersion::supportsSharedPoolConnectionCaps();
 
@@ -90,7 +101,7 @@ final class Utils
             $sharingMode = TransportSharing::HANDLER_PREFER;
         }
 
-        $handler = self::createCurlHandler($sharingMode, $handlerOptions);
+        $handler = self::createCurlHandler($sharingMode, $handlerOptions, $maxIdleMultiHandlers);
 
         // Handler-scoped required sharing can also be satisfied by the stream
         // handler's TLS session resumption (PHP 8.6+); persistent required
@@ -140,7 +151,7 @@ final class Utils
      *
      * @return (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)|null
      */
-    private static function createCurlHandler(string $sharingMode, array $handlerOptions): ?callable
+    private static function createCurlHandler(string $sharingMode, array $handlerOptions, ?int $maxIdleMultiHandlers): ?callable
     {
         if (!CurlVersion::supportsCurlHandler()) {
             return null;
@@ -168,15 +179,16 @@ final class Utils
         }
 
         if (\function_exists('curl_multi_exec') && \function_exists('curl_exec')) {
-            $multiHandler = new CurlMultiHandler($curlMultiHandlerOptions);
-
             if ($connectionCapOptions !== []) {
                 // Connection caps only govern transfers on the multi handle, so
                 // the synchronous CurlHandler fast path would escape them.
-                return $multiHandler;
+                return new CurlMultiHandler($curlMultiHandlerOptions);
             }
 
-            return Proxy::wrapSync($multiHandler, new CurlHandler($curlHandlerOptions));
+            return Proxy::wrapSync(
+                self::createAsyncCurlHandler($curlMultiHandlerOptions, $maxIdleMultiHandlers),
+                new CurlHandler($curlHandlerOptions)
+            );
         }
 
         if ($connectionCapOptions === [] && \function_exists('curl_exec')) {
@@ -184,10 +196,39 @@ final class Utils
         }
 
         if (\function_exists('curl_multi_exec')) {
-            return new CurlMultiHandler($curlMultiHandlerOptions);
+            return $connectionCapOptions === []
+                ? self::createAsyncCurlHandler($curlMultiHandlerOptions, $maxIdleMultiHandlers)
+                : new CurlMultiHandler($curlMultiHandlerOptions);
         }
 
         return null;
+    }
+
+    /**
+     * Creates the asynchronous cURL handler, leasing a multi handler to each
+     * execution context when an execution context provider is configured.
+     *
+     * Leased handlers share the transport sharing state of the synchronous
+     * handler, as a single asynchronous handler does. Connection caps need one
+     * shared multi handle, so capped handlers are never created here.
+     *
+     * @param array<string, mixed> $curlMultiHandlerOptions
+     *
+     * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
+     */
+    private static function createAsyncCurlHandler(array $curlMultiHandlerOptions, ?int $maxIdleMultiHandlers): callable
+    {
+        if (P\ExecutionContext::provider() === null) {
+            return new CurlMultiHandler($curlMultiHandlerOptions);
+        }
+
+        $factory = static function () use ($curlMultiHandlerOptions): CurlMultiHandler {
+            return new CurlMultiHandler($curlMultiHandlerOptions);
+        };
+
+        return $maxIdleMultiHandlers === null
+            ? new ContextualCurlMultiHandler($factory)
+            : new ContextualCurlMultiHandler($factory, $maxIdleMultiHandlers);
     }
 
     /**

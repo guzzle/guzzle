@@ -1,0 +1,503 @@
+<?php
+
+declare(strict_types=1);
+
+namespace GuzzleHttp\Tests\Handler;
+
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Handler\ContextualCurlMultiHandler;
+use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\Handler\CurlVersion;
+use GuzzleHttp\Promise as P;
+use GuzzleHttp\Promise\CancellationException;
+use GuzzleHttp\Promise\ExecutionContext;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Server\Server;
+use GuzzleHttp\TransportSharing;
+use PHPUnit\Framework\TestCase;
+
+class ContextualCurlMultiHandlerTest extends TestCase
+{
+    private TestExecutionContextProvider $provider;
+
+    /** @var list<CurlMultiHandler> */
+    private array $created = [];
+
+    protected function setUp(): void
+    {
+        if (\PHP_VERSION_ID < 80000) {
+            self::markTestSkipped('Execution context providers require PHP 8.0 or newer.');
+        }
+
+        $this->provider = new TestExecutionContextProvider();
+        ExecutionContext::setProvider($this->provider);
+        Server::flush();
+    }
+
+    protected function tearDown(): void
+    {
+        ExecutionContext::setProvider(null);
+        P\Utils::queue()->run();
+    }
+
+    private function handler(int $maxIdleHandlers = 8): ContextualCurlMultiHandler
+    {
+        return new ContextualCurlMultiHandler(function (): CurlMultiHandler {
+            return $this->created[] = new CurlMultiHandler();
+        }, $maxIdleHandlers);
+    }
+
+    public function testRejectsNegativePoolSizes(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new ContextualCurlMultiHandler(static fn (): CurlMultiHandler => new CurlMultiHandler(), -1);
+    }
+
+    public function testLeasesOneHandlerPerContext(): void
+    {
+        Server::enqueue([new Response(200), new Response(200), new Response(200)]);
+        $handler = $this->handler();
+        $a = new \stdClass();
+        $b = new \stdClass();
+
+        $pending = $this->provider->in($a, static function () use ($handler): array {
+            return [
+                $handler(new Request('GET', Server::$url), []),
+                $handler(new Request('GET', Server::$url), []),
+            ];
+        });
+        $this->provider->in($b, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertCount(2, $this->created);
+        $this->provider->in($a, static fn () => P\Utils::unwrap($pending));
+    }
+
+    public function testRequestsOutsideManagedContextsShareOneHandler(): void
+    {
+        Server::enqueue([new Response(200), new Response(200)]);
+        $handler = $this->handler();
+
+        $handler(new Request('GET', Server::$url), [])->wait();
+        $handler(new Request('GET', Server::$url), [])->wait();
+
+        self::assertCount(1, $this->created);
+    }
+
+    public function testFinishingAContextCancelsItsTransfersInsideThatContext(): void
+    {
+        Server::enqueue([new Response(200)]);
+        $handler = $this->handler();
+        $context = new \stdClass();
+        $rejectedIn = null;
+
+        $promise = $this->provider->in($context, function () use ($handler, &$rejectedIn) {
+            return $handler(new Request('GET', Server::$url), [])->otherwise(function ($reason) use (&$rejectedIn) {
+                $rejectedIn = $this->provider->current;
+
+                return $reason;
+            });
+        });
+
+        $this->provider->end($context);
+
+        self::assertSame($context, $rejectedIn);
+        self::assertInstanceOf(CancellationException::class, $promise->wait());
+    }
+
+    public function testIdleHandlersReuseConnectionsBeforeTheirContextFinishes(): void
+    {
+        self::skipIfCurlHasBrokenLocalPortStats();
+
+        Server::enqueue([new Response(200), new Response(201), new Response(202)]);
+        $handler = $this->handler();
+        $first = new \stdClass();
+        $second = new \stdClass();
+        $ports = [];
+        $request = static function () use ($handler, &$ports): int {
+            return $handler(new Request('GET', Server::$url), ['on_stats' => static function (\GuzzleHttp\TransferStats $stats) use (&$ports): void {
+                $ports[] = $stats->getHandlerStat('local_port');
+            }])->wait()->getStatusCode();
+        };
+
+        self::assertSame(200, $this->provider->in($first, $request));
+        self::assertSame(201, $this->provider->in($second, $request));
+        self::assertSame(202, $this->provider->in($first, $request));
+
+        self::assertCount(1, $this->created);
+        self::assertCount(1, \array_unique($ports));
+    }
+
+    public function testFinishingAFormerOwnerDoesNotCancelTheCurrentLease(): void
+    {
+        $handler = $this->handler();
+        $first = new \stdClass();
+        $second = new \stdClass();
+
+        $this->provider->in($first, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000])->cancel());
+        $pending = $this->provider->in($second, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000]));
+
+        $this->provider->end($first);
+
+        self::assertCount(1, $this->created);
+        self::assertTrue(P\State::isPending($pending));
+        $this->provider->end($second);
+        self::assertTrue(P\State::isRejected($pending));
+    }
+
+    public function testAContextRegistersOneFinalizerAcrossDifferentHandlers(): void
+    {
+        $handler = $this->handler();
+        $context = new \stdClass();
+
+        for ($i = 0; $i < 3; ++$i) {
+            $this->provider->in($context, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000])->cancel());
+            $this->created[$i]->close();
+        }
+
+        self::assertCount(3, $this->created);
+        $state = P\ExecutionContextState::find($context);
+        self::assertNotNull($state);
+        self::assertCount(1, $state->finalizers);
+
+        $this->provider->end($context);
+        $pending = $this->provider->in($context, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000]));
+        $this->provider->end($context);
+        self::assertTrue(P\State::isRejected($pending));
+    }
+
+    public function testDroppedClientsStillCancelTheirPendingTransfersOnContextFinish(): void
+    {
+        $context = new \stdClass();
+        $promise = $this->provider->in($context, static function () {
+            $client = new Client();
+
+            return $client->getAsync(Server::$url, ['delay' => 60000]);
+        });
+
+        gc_collect_cycles();
+        $this->provider->end($context);
+
+        self::assertTrue(P\State::isRejected($promise));
+    }
+
+    public function testHostValidationFailureReturnsTheHandlerToThePool(): void
+    {
+        $handler = $this->handler();
+        $context = new \stdClass();
+
+        try {
+            $this->provider->in($context, static fn () => $handler(new Request('GET', 'http://127.0.0.1./'), []));
+            self::fail('An ambiguous numeric host was accepted.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('trailing dots', $e->getMessage());
+        }
+
+        $this->provider->in(new \stdClass(), static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000])->cancel());
+
+        self::assertCount(1, $this->created);
+    }
+
+    public function testCompletionCallbacksKeepTheirHandlerLeased(): void
+    {
+        Server::enqueue([new Response(200)]);
+        $handler = $this->handler();
+        $first = new \stdClass();
+        $second = new \stdClass();
+        $pending = null;
+
+        $this->provider->in($first, function () use ($handler, $second, &$pending): void {
+            $handler(new Request('GET', Server::$url), ['on_stats' => function () use ($handler, $second, &$pending): void {
+                $pending = $this->provider->in($second, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000]));
+            }])->wait();
+        });
+
+        self::assertCount(2, $this->created);
+        self::assertTrue(P\State::isPending($pending));
+        $this->provider->end($second);
+    }
+
+    public function testFinishingAContextCancelsTransfersCreatedByRejectionCallbacks(): void
+    {
+        $handler = $this->handler();
+        $context = new \stdClass();
+        $nested = null;
+
+        $this->provider->in($context, static function () use ($handler, &$nested): void {
+            $handler(new Request('GET', Server::$url), ['delay' => 60000])->otherwise(static function () use ($handler, &$nested): void {
+                $nested = $handler(new Request('GET', Server::$url), ['delay' => 60000]);
+            });
+        });
+
+        $this->provider->end($context);
+
+        self::assertNotNull($nested);
+        self::assertTrue(P\State::isRejected($nested));
+        self::assertCount(1, $this->created);
+    }
+
+    public function testClosedHandlersAreNotPooled(): void
+    {
+        Server::enqueue([new Response(202)]);
+        $handler = $this->handler(1);
+        $first = new \stdClass();
+        $second = new \stdClass();
+
+        $this->provider->in($first, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000]));
+        $pending = $this->provider->in($second, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000]));
+        $this->provider->in($first, function (): void {
+            $this->created[0]->close();
+        });
+        $this->provider->in($second, static fn () => $pending->cancel());
+        $response = $this->provider->in(new \stdClass(), static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertCount(2, $this->created);
+        self::assertSame(202, $response->getStatusCode());
+    }
+
+    public function testHandlersClosedWhilePooledAreDiscarded(): void
+    {
+        Server::enqueue([new Response(200), new Response(201)]);
+        $handler = $this->handler();
+        $first = new \stdClass();
+
+        $this->provider->in($first, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        $this->provider->end($first);
+        $this->created[0]->close();
+        $response = $this->provider->in(new \stdClass(), static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertCount(2, $this->created);
+        self::assertSame(201, $response->getStatusCode());
+    }
+
+    public function testPooledHandlersIgnoreTicksQueuedByTheirPreviousContext(): void
+    {
+        Server::enqueue([new Response(200), new Response(201)]);
+        $handler = $this->handler();
+        $first = new \stdClass();
+        $second = new \stdClass();
+        $progressIn = [];
+        $promise = null;
+
+        $this->provider->in($first, function () use ($handler, $second, &$progressIn, &$promise): void {
+            $handler(new Request('GET', Server::$url), [])->wait();
+
+            // Leave a tick queued in this context, then hand the pooled handler
+            // to another context before this context's queue is drained.
+            P\Utils::queue()->add(static function (): void {
+                throw new \RuntimeException('queued task failure');
+            });
+
+            try {
+                $this->created[0]->tick();
+            } catch (\RuntimeException $e) {
+                // The tick unwound with its own queued tick still pending.
+            }
+
+            ExecutionContext::onFinish(function () use ($handler, $second, &$progressIn, &$promise): void {
+                $promise = $this->provider->in($second, function () use ($handler, &$progressIn) {
+                    return $handler(new Request('GET', Server::$url), ['progress' => function () use (&$progressIn): void {
+                        $progressIn[] = $this->provider->current;
+                    }]);
+                });
+            });
+        });
+
+        $this->provider->end($first);
+        $response = $this->provider->in($second, static fn () => $promise->wait());
+
+        self::assertCount(1, $this->created);
+        self::assertSame(201, $response->getStatusCode());
+        self::assertNotContains($first, $progressIn, 'A stale tick drove the next context\'s transfer.');
+    }
+
+    public function testDisabledPoolKeepsConnectionsOnlyUntilTheContextFinishes(): void
+    {
+        self::skipIfCurlHasBrokenLocalPortStats();
+
+        Server::enqueue([new Response(200), new Response(200), new Response(200), new Response(200)]);
+        $handler = $this->handler(0);
+        $first = new \stdClass();
+        $ports = [];
+        $request = static function () use ($handler, &$ports): void {
+            $handler(new Request('GET', Server::$url), ['on_stats' => static function (\GuzzleHttp\TransferStats $stats) use (&$ports): void {
+                $ports[] = $stats->getHandlerStat('local_port');
+            }])->wait();
+        };
+
+        $this->provider->in($first, $request);
+        $this->provider->in($first, $request);
+        self::assertCount(1, $this->created);
+        self::assertSame($ports[0], $ports[1]);
+
+        $this->provider->end($first);
+        $this->provider->in(new \stdClass(), $request);
+
+        self::assertCount(2, $this->created);
+        self::assertNotSame($ports[0], $ports[2]);
+
+        $this->provider->in($first, $request);
+        self::assertCount(3, $this->created);
+    }
+
+    public function testLeasesDoNotKeepContextsAlive(): void
+    {
+        Server::enqueue([new Response(200)]);
+        $handler = $this->handler();
+        $context = new \stdClass();
+        $reference = \WeakReference::create($context);
+
+        $this->provider->in($context, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        $this->provider->finalizers = [];
+        unset($context);
+        gc_collect_cycles();
+
+        self::assertNull($reference->get());
+    }
+
+    public function testDefaultClientsIsolateAsyncTransfersPerContext(): void
+    {
+        Server::enqueue([new Response(200), new Response(201)]);
+        $client = new Client();
+        $a = new \stdClass();
+        $b = new \stdClass();
+
+        $pending = $this->provider->in($a, static fn () => $client->getAsync(Server::$url));
+        $response = $this->provider->in($b, static fn () => $client->getAsync(Server::$url)->wait());
+
+        self::assertTrue(P\State::isPending($pending), 'Another context drove the transfer.');
+        self::assertContains($response->getStatusCode(), [200, 201]);
+        $this->provider->in($a, static fn () => $pending->wait());
+    }
+
+    public function testDefaultClientCanBeSharedByInterleavedFibers(): void
+    {
+        if (\PHP_VERSION_ID < 80100) {
+            self::markTestSkipped('Fibers require PHP 8.1 or newer.');
+        }
+
+        ExecutionContext::setProvider(new P\FiberExecutionContextProvider());
+        Server::enqueue([new Response(200), new Response(200)]);
+        $client = new Client();
+        $request = static function () use ($client): int {
+            try {
+                $promise = $client->getAsync(Server::$url);
+                \Fiber::suspend($promise);
+
+                return $promise->wait()->getStatusCode();
+            } finally {
+                ExecutionContext::finish(\Fiber::getCurrent());
+            }
+        };
+        $first = new \Fiber($request);
+        $second = new \Fiber($request);
+        $pending = $first->start();
+        $second->start();
+
+        $second->resume();
+        self::assertTrue(P\State::isPending($pending), 'Another fiber drove the transfer.');
+        $first->resume();
+
+        self::assertSame(200, $first->getReturn());
+        self::assertSame(200, $second->getReturn());
+    }
+
+    /**
+     * @return iterable<string, array{int, int}>
+     */
+    public static function idleHandlerPoolSizeProvider(): iterable
+    {
+        yield 'disabled pool' => [0, 2];
+        yield 'one idle handler' => [1, 1];
+        yield 'two idle handlers' => [2, 0];
+    }
+
+    /**
+     * @dataProvider idleHandlerPoolSizeProvider
+     */
+    public function testClientPoolSizeControlsConnectionReuse(int $maxIdleMultiHandlers, int $newConnections): void
+    {
+        self::skipIfCurlHasBrokenLocalPortStats();
+
+        Server::enqueue([new Response(200), new Response(200), new Response(200), new Response(200)]);
+        $client = new Client(['max_idle_multi_handlers' => $maxIdleMultiHandlers]);
+        $ports = [];
+
+        for ($wave = 0; $wave < 2; ++$wave) {
+            $contexts = [new \stdClass(), new \stdClass()];
+            $promises = [];
+
+            foreach ($contexts as $context) {
+                $promises[] = $this->provider->in($context, static function () use ($client, &$ports, $wave) {
+                    return $client->getAsync(Server::$url, ['on_stats' => static function (\GuzzleHttp\TransferStats $stats) use (&$ports, $wave): void {
+                        $ports[$wave][] = $stats->getHandlerStat('local_port');
+                    }]);
+                });
+            }
+
+            foreach ($contexts as $index => $context) {
+                $this->provider->in($context, static fn () => $promises[$index]->wait());
+                $this->provider->end($context);
+            }
+        }
+
+        self::assertCount($newConnections, \array_diff($ports[1], $ports[0]));
+        self::assertNull($client->getConfig('max_idle_multi_handlers'));
+    }
+
+    public function testLeasedHandlersShareTheTransportStateOfTheSynchronousHandler(): void
+    {
+        if (!CurlVersion::supportsCurlHandler() || !CurlVersion::supportsHandlerSharing()) {
+            self::markTestSkipped('cURL share handles are unavailable.');
+        }
+
+        Server::enqueue([new Response(200), new Response(200), new Response(200)]);
+        $_SERVER['curl_test'] = true;
+        unset($_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+
+        try {
+            $client = new Client(['transport_sharing' => TransportSharing::HANDLER_PREFER]);
+            $this->provider->in(new \stdClass(), static fn () => $client->getAsync(Server::$url)->wait());
+            $this->provider->in(new \stdClass(), static fn () => $client->getAsync(Server::$url)->wait());
+            $client->get(Server::$url);
+
+            self::assertSame(1, $_SERVER['_curl_share_init_count']);
+        } finally {
+            unset($_SERVER['curl_test'], $_SERVER['_curl_share'], $_SERVER['_curl_share_init_count']);
+        }
+    }
+
+    public function testClientsWithConnectionCapsKeepOneSharedHandler(): void
+    {
+        Server::enqueue([new Response(200)]);
+        $client = new Client(['max_total_connections' => 1]);
+        $a = new \stdClass();
+        $b = new \stdClass();
+
+        $pending = $this->provider->in($a, static fn () => $client->getAsync(Server::$url));
+
+        // The client turns handler exceptions into rejected promises.
+        $rejected = $this->provider->in($b, static fn () => $client->getAsync(Server::$url));
+        $reason = $this->provider->in($b, static fn () => $rejected->wait(false) ?? P\Utils::inspect($rejected)['reason']);
+
+        self::assertInstanceOf(P\CrossContextException::class, $reason);
+        self::assertSame(200, $this->provider->in($a, static fn () => $pending->wait())->getStatusCode());
+    }
+
+    /**
+     * libcurl 7.75.0 to 7.78.x reports local_port as -1 on reused connections.
+     *
+     * @see https://github.com/curl/curl/issues/7660
+     */
+    private static function skipIfCurlHasBrokenLocalPortStats(): void
+    {
+        $version = \curl_version();
+
+        if (!\is_array($version) || ($version['version_number'] >= 0x074B00 && $version['version_number'] < 0x074F00)) {
+            self::markTestSkipped('Local port statistics are unreliable on libcurl 7.75.0 to 7.78.x.');
+        }
+    }
+}

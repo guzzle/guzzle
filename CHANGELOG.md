@@ -3,6 +3,22 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.4.0 - Upcoming
+
+### Added
+
+- Add `ContextualCurlMultiHandler`, which leases a cURL multi handler to each
+  execution context while it has work and pools idle handlers for reuse before the
+  context finishes
+- Lease asynchronous cURL multi handlers per execution context in default handler selection when an execution context provider is configured
+- Reject cross-context use of an active `CurlMultiHandler` when an execution context provider is configured, and cancel the transfers a context leaves on it when that context is finished, or release them when it ended without being finished
+- Add `max_idle_multi_handlers` to configure the execution context handler pool; zero keeps connection reuse within each context only
+
+### Changed
+
+- Adjusted `guzzlehttp/promises` version constraint to `^3.2`
+
+
 ## 8.3.0 - 2026-10-18
 
 ### Changed

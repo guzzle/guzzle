@@ -11,7 +11,7 @@ application needs that package's lower-level or specialized behavior.
 |---------|------------|---------------|
 | `guzzlehttp/guzzle` | Sending synchronous and asynchronous HTTP requests. | [Quick Start](quick-start.md) |
 | `guzzlehttp/psr7` | Creating and manipulating PSR-7 requests, responses, streams, and URIs. | [PSR-7 docs](https://github.com/guzzle/psr7/blob/3.2/docs/psr-7-messages.md) |
-| `guzzlehttp/promises` | Working directly with promises returned by asynchronous operations. | [Promises docs](https://github.com/guzzle/promises/blob/3.1/docs/promise-quick-start.md) |
+| `guzzlehttp/promises` | Working directly with promises returned by asynchronous operations. | [Promises docs](https://github.com/guzzle/promises/blob/3.2/docs/promise-quick-start.md) |
 
 Install `guzzlehttp/guzzle` for normal application HTTP work. It already depends
 on `guzzlehttp/psr7` and `guzzlehttp/promises`, so you do not need to install

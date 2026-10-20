@@ -25,6 +25,20 @@ use Psr\Http\Message\ResponseInterface;
  * When using the CurlMultiHandler, custom curl options can be specified as an
  * associative array of curl option constants mapping to values in the
  * **curl** key of the provided request options.
+ *
+ * With an execution context provider configured, `CurlMultiHandler` rejects use
+ * from a different execution context while it has active transfers or a call in
+ * progress, including waiting on one of its transfers, with a
+ * `GuzzleHttp\Promise\CrossContextException`. Once all of its transfers finish
+ * and its calls return, any context may use it again. When the context that
+ * owns its transfers is finished, the transfers it left unfinished are
+ * cancelled, so that they cannot keep other contexts from using the handler. If
+ * that context ends without being finished, the next context that uses the
+ * handler releases those transfers and leaves their promises pending, because
+ * no context can use them any more. This protects handlers that you construct
+ * and share yourself.
+ *
+ * @see https://github.com/guzzle/guzzle/blob/8.4/docs/handlers.md#concurrent-execution-contexts
  */
 final class CurlMultiHandler
 {
@@ -155,6 +169,31 @@ final class CurlMultiHandler
     private int $messageProcessingDepth = 0;
 
     /**
+     * @var \WeakReference<object>|null The execution context that the handler
+     *                                  is assigned to, or that owns its active
+     *                                  transfers
+     */
+    private ?\WeakReference $owner = null;
+
+    /**
+     * @var int Handler calls running for the owner. A call can suspend its
+     *          context while the handler tracks no transfers, such as while
+     *          request preparation reads the body or a queued task runs, so the
+     *          handler is not idle until every call has returned.
+     */
+    private int $activeCalls = 0;
+
+    /**
+     * @var \WeakMap<object, true>|null Execution contexts that cancel the
+     *                                  transfers they leave on the handler
+     *                                  when they are finished
+     */
+    private $finalizingContexts;
+
+    /** @var (callable(self): void)|null */
+    private $idleCallback;
+
+    /**
      * This handler accepts the following options:
      *
      * - handle_factory: An optional factory  used to create curl handles
@@ -280,8 +319,29 @@ final class CurlMultiHandler
         array $options
     ): PromiseInterface {
         $this->assertOpen();
-        HostValidator::assertRequestHost($request);
 
+        // Preparing the request can read the request body, which can suspend
+        // the current execution context, so ownership is claimed first.
+        $claimed = $this->claimForCurrentContext();
+
+        try {
+            HostValidator::assertRequestHost($request);
+
+            return $this->createTransfer($request, $options);
+        } finally {
+            $this->releaseClaim($claimed);
+        }
+    }
+
+    /**
+     * @return PromiseInterface<ResponseInterface, mixed>
+     */
+    private function createTransfer(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $options
+    ): PromiseInterface {
         $easy = $this->factory->create($request, $options);
 
         try {
@@ -306,39 +366,24 @@ final class CurlMultiHandler
         /** @var Promise<ResponseInterface, mixed> $promise */
         $promise = new Promise(
             function () use ($id, $waitToken, $easy, &$promise): void {
-                // Waiting cannot drive native cURL while a callback has the
-                // multi handle busy; fail the wait promptly instead of
-                // self-deadlocking.
-                $stalled = $this->multiExecDepth > 0
-                    ? $this->failNestedWait($id, $waitToken)
-                    : $this->executeUntil($id, $waitToken);
-
-                // Settling can be queued, and guzzlehttp/promises drains the
-                // queue before deciding a wait function achieved nothing.
-                P\Utils::queue()->run();
-
                 // Never null: assigned below before any wait can invoke this.
                 /** @var Promise<ResponseInterface, mixed> $promise */
-                if ($easy->deferredSettled || !P\State::isPending($promise)) {
-                    return;
+                $claimed = $this->claimForCurrentContext();
+
+                try {
+                    $this->waitForTransfer($id, $waitToken, $easy, $promise);
+                } finally {
+                    $this->releaseClaim($claimed);
                 }
-
-                // Neither path guarantees the transfer settled, and returning
-                // while pending makes guzzlehttp/promises reject with a bare
-                // string naming nothing.
-                $message = \sprintf('Waiting on cURL multi handler transfer %d cannot make progress (%s).', $id, $stalled);
-
-                // The entry is gone, so the easy handle is the only route to
-                // a response that already arrived.
-                $response = $easy->response;
-                $failure = $response !== null
-                    ? new ResponseException($message, $easy->request, $response)
-                    : new RequestException($message, $easy->request);
-
-                $promise->reject($failure);
             },
             function () use ($id, $waitToken): void {
-                $this->cancel($id, $waitToken);
+                $claimed = $this->claimForCurrentContext();
+
+                try {
+                    $this->cancel($id, $waitToken);
+                } finally {
+                    $this->releaseClaim($claimed);
+                }
             }
         );
 
@@ -350,6 +395,43 @@ final class CurlMultiHandler
         }
 
         return $promise;
+    }
+
+    /**
+     * Drives the handler until the given transfer settles, rejecting its
+     * promise when waiting cannot make progress.
+     *
+     * @param Promise<ResponseInterface, mixed> $promise
+     */
+    private function waitForTransfer(int $id, object $waitToken, EasyHandle $easy, Promise $promise): void
+    {
+        // Waiting cannot drive native cURL while a callback has the multi
+        // handle busy; fail the wait promptly instead of self-deadlocking.
+        $stalled = $this->multiExecDepth > 0
+            ? $this->failNestedWait($id, $waitToken)
+            : $this->executeUntil($id, $waitToken);
+
+        // Settling can be queued, and guzzlehttp/promises drains the queue
+        // before deciding a wait function achieved nothing.
+        P\Utils::queue()->run();
+
+        if ($easy->deferredSettled || !P\State::isPending($promise)) {
+            return;
+        }
+
+        // Neither path guarantees the transfer settled, and returning while
+        // pending makes guzzlehttp/promises reject with a bare string naming
+        // nothing.
+        $message = \sprintf('Waiting on cURL multi handler transfer %d cannot make progress (%s).', $id, $stalled);
+
+        // The entry is gone, so the easy handle is the only route to a
+        // response that already arrived.
+        $response = $easy->response;
+        $failure = $response !== null
+            ? new ResponseException($message, $easy->request, $response)
+            : new RequestException($message, $easy->request);
+
+        $promise->reject($failure);
     }
 
     /**
@@ -747,7 +829,13 @@ final class CurlMultiHandler
      */
     public function tick(): void
     {
-        $this->tickFor(null, null);
+        $claimed = $this->claimForCurrentContext();
+
+        try {
+            $this->tickFor(null, null);
+        } finally {
+            $this->releaseClaim($claimed);
+        }
     }
 
     /**
@@ -839,6 +927,24 @@ final class CurlMultiHandler
      */
     private function tickInQueue(): void
     {
+        if (!$this->isAssignedToCurrentContext()) {
+            // The tick is stale: a throwing queued task can unwind its
+            // context's tick() before this runs, and another context can then
+            // take over the idle handler.
+            return;
+        }
+
+        $claimed = $this->claimForCurrentContext();
+
+        try {
+            $this->tickAssignedHandler();
+        } finally {
+            $this->releaseClaim($claimed);
+        }
+    }
+
+    private function tickAssignedHandler(): void
+    {
         if ($this->multiExecDepth > 0) {
             // A cURL callback re-entered the handler while native execution
             // is running; the outer frame drives native cURL once it unwinds.
@@ -867,7 +973,17 @@ final class CurlMultiHandler
     public function execute(): void
     {
         $this->assertOpen();
+        $claimed = $this->claimForCurrentContext();
 
+        try {
+            $this->executeAll();
+        } finally {
+            $this->releaseClaim($claimed);
+        }
+    }
+
+    private function executeAll(): void
+    {
         if ($this->multiExecDepth > 0) {
             // Native cURL cannot be driven while a callback has it busy, so
             // the loop would spin without ever progressing.
@@ -967,7 +1083,261 @@ final class CurlMultiHandler
      */
     public function close(): void
     {
-        $this->doClose(true);
+        $claimed = $this->claimForCurrentContext();
+
+        try {
+            $this->doClose(true);
+        } finally {
+            $this->releaseClaim($claimed);
+        }
+    }
+
+    /**
+     * @internal
+     */
+    public function isClosed(): bool
+    {
+        return $this->closed;
+    }
+
+    /**
+     * Determines if the handler has no tracked, delayed, or deferred
+     * transfers, no call running for its owner, and no native execution,
+     * message processing, or close in progress.
+     *
+     * @internal
+     */
+    public function isIdle(): bool
+    {
+        return $this->handles === []
+            && $this->delays === []
+            && $this->deferredAdds === []
+            && $this->deferredCancels === []
+            && $this->activeCalls === 0
+            && $this->multiExecDepth === 0
+            && $this->messageProcessingDepth === 0
+            && !$this->deferredClose;
+    }
+
+    /**
+     * Assigns the handler to the running execution context, so ticks queued by
+     * any other context are ignored. The pool must call finishContext() for
+     * transfers the context leaves behind.
+     *
+     * @internal
+     */
+    public function assignToCurrentContext(): void
+    {
+        $context = P\ExecutionContext::current();
+
+        if ($context === null) {
+            throw new \LogicException('A cURL multi handler can only be assigned inside a managed execution context.');
+        }
+
+        $this->owner = \WeakReference::create($context);
+    }
+
+    /**
+     * @internal
+     *
+     * @param callable(self): void $callback
+     */
+    public function onIdle(callable $callback): void
+    {
+        $this->idleCallback = $callback;
+    }
+
+    /**
+     * Cancels transfers still owned by the finished context.
+     *
+     * @internal
+     */
+    public function finishContext(object $context): void
+    {
+        if ($this->owner === null || $this->owner->get() !== $context) {
+            return;
+        }
+
+        // Cancellation can re-enter the handler. Keep its lease until the
+        // entire sweep has finished, including transfers created by callbacks.
+        ++$this->activeCalls;
+
+        try {
+            $this->cancelPendingTransfers();
+        } finally {
+            --$this->activeCalls;
+
+            if ($this->isIdle()) {
+                $this->owner = null;
+                $this->notifyIdle();
+            }
+        }
+    }
+
+    /**
+     * Claims the handler for the current execution context, when a provider is
+     * configured, until the matching releaseClaim(), returning whether a claim
+     * was made.
+     */
+    private function claimForCurrentContext(): bool
+    {
+        if (P\ExecutionContext::provider() === null) {
+            return false;
+        }
+
+        $this->assertOwnedByCurrentContext();
+
+        if ($this->owner === null) {
+            $context = P\ExecutionContext::current();
+
+            if ($context !== null) {
+                $this->claimOwnership($context);
+            }
+        }
+
+        ++$this->activeCalls;
+
+        return true;
+    }
+
+    /**
+     * Makes the given context, which must be running, the owner of the handler
+     * and cancels the transfers it still owns when it finishes, so that
+     * transfers it abandons cannot keep other contexts from using the handler.
+     */
+    private function claimOwnership(object $context): void
+    {
+        $this->owner = \WeakReference::create($context);
+
+        if ($this->finalizingContexts === null) {
+            $this->finalizingContexts = new \WeakMap();
+        }
+
+        // A context that takes the handler back from another context already
+        // has its finalizer, and registering one per takeover would pile them
+        // up in a context that never finishes.
+        if (isset($this->finalizingContexts[$context])) {
+            return;
+        }
+
+        $this->finalizingContexts[$context] = true;
+        $handler = \WeakReference::create($this);
+        $reference = \WeakReference::create($context);
+
+        P\ExecutionContext::onFinish(static function () use ($handler, $reference): void {
+            $handler = $handler->get();
+            $context = $reference->get();
+
+            if ($handler === null || $context === null) {
+                return;
+            }
+
+            // A context that uses the handler again after it was finished
+            // needs a new finalizer.
+            if ($handler->finalizingContexts !== null) {
+                unset($handler->finalizingContexts[$context]);
+            }
+
+            $handler->finishContext($context);
+        });
+    }
+
+    /**
+     * Cancels every transfer the handler is tracking, rejecting pending
+     * promises with a cancellation.
+     */
+    private function cancelPendingTransfers(): void
+    {
+        $failure = null;
+
+        // Removing a transfer can run callbacks that create another transfer.
+        while ($this->handles !== []) {
+            $remaining = $this->handles;
+
+            foreach ($this->handles as $id => $entry) {
+                $this->captureFailure($failure, function () use ($id, $entry): void {
+                    if (P\State::isPending($entry['deferred'])) {
+                        $entry['deferred']->cancel();
+                    } else {
+                        $this->cancel($id, $entry['wait_token']);
+                    }
+                });
+            }
+
+            if ($this->handles === $remaining) {
+                break;
+            }
+        }
+
+        if ($failure !== null) {
+            throw $failure;
+        }
+    }
+
+    /**
+     * Releases the native transfers of an owner that ended without being
+     * finished, leaving their promises pending. Nothing can settle those
+     * promises any more, because every context is refused a pending promise
+     * whose context has ended.
+     */
+    private function releaseOrphanedTransfers(): void
+    {
+        foreach ($this->handles as $id => $entry) {
+            $this->cancel($id, $entry['wait_token']);
+        }
+    }
+
+    private function releaseClaim(bool $claimed): void
+    {
+        if ($claimed) {
+            --$this->activeCalls;
+            $this->notifyIdle();
+        }
+    }
+
+    private function notifyIdle(): void
+    {
+        if ($this->idleCallback !== null && $this->isIdle()) {
+            ($this->idleCallback)($this);
+        }
+    }
+
+    /**
+     * Determines if the current execution context owns the handler. A handler
+     * without an owner belongs to code running outside managed contexts.
+     */
+    private function isAssignedToCurrentContext(): bool
+    {
+        if ($this->owner === null) {
+            return P\ExecutionContext::current() === null;
+        }
+
+        $owner = $this->owner->get();
+
+        return $owner !== null && $owner === P\ExecutionContext::current();
+    }
+
+    /**
+     * Rejects use of the handler from an execution context that does not own
+     * its active transfers.
+     */
+    private function assertOwnedByCurrentContext(): void
+    {
+        if ($this->isAssignedToCurrentContext()) {
+            return;
+        }
+
+        if ($this->owner !== null && $this->owner->get() === null && $this->activeCalls === 0) {
+            $this->releaseOrphanedTransfers();
+        }
+
+        if ($this->isIdle()) {
+            $this->owner = null;
+
+            return;
+        }
+
+        throw new P\CrossContextException('Cannot use the cURL multi handler from a different execution context while it has transfers owned by another context; create and finish transfers in one context, or use one handler per context.');
     }
 
     private function assertOpen(): void

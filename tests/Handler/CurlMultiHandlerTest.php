@@ -64,6 +64,7 @@ class CurlMultiHandlerTest extends TestCase
             $_SERVER['curl_multi_add_handle_result'],
             $_SERVER['curl_test']
         );
+        P\ExecutionContext::setProvider(null);
     }
 
     public function testCanAddCustomCurlOptions(): void
@@ -4009,6 +4010,471 @@ class CurlMultiHandlerTest extends TestCase
         self::assertSame([], self::readMultiProperty($handler, 'activeProxyTunnelHandles'));
     }
 
+    /**
+     * @return iterable<string, array{bool}>
+     */
+    public static function managedContextProvider(): iterable
+    {
+        yield 'managed context' => [true];
+        yield 'unmanaged' => [false];
+    }
+
+    /**
+     * @dataProvider managedContextProvider
+     */
+    public function testRejectsRequestsFromAnotherExecutionContextWhileTransfersAreActive(bool $managed): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        $owner = $managed ? $owner : null;
+        Server::enqueue([new Response(200), new Response(201)]);
+        $handler = new CurlMultiHandler();
+        $promise = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
+
+        try {
+            $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), []));
+            self::fail('A request from another execution context was admitted.');
+        } catch (P\CrossContextException $e) {
+            self::assertStringContainsString('different execution context', $e->getMessage());
+        }
+
+        $response = $contexts->in($owner, static fn () => $promise->wait());
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * @return iterable<string, array{callable(CurlMultiHandler): void, bool}>
+     */
+    public static function executionContextDrivingOperationProvider(): iterable
+    {
+        foreach (['tick', 'execute', 'close'] as $method) {
+            $operation = static function (CurlMultiHandler $handler) use ($method): void {
+                $handler->{$method}();
+            };
+
+            yield $method.' managed' => [$operation, true];
+            yield $method.' unmanaged' => [$operation, false];
+        }
+    }
+
+    /**
+     * @dataProvider executionContextDrivingOperationProvider
+     */
+    public function testRejectsDrivingFromAnotherExecutionContextWhileTransfersAreActive(callable $operation, bool $managed): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        $owner = $managed ? $owner : null;
+        Server::enqueue([new Response(200)]);
+        $handler = new CurlMultiHandler();
+        $promise = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
+
+        try {
+            $contexts->in($other, static function () use ($operation, $handler): void {
+                $operation($handler);
+            });
+            self::fail('Another execution context drove the handler.');
+        } catch (P\CrossContextException $e) {
+            self::assertTrue(P\State::isPending($promise));
+        }
+
+        $response = $contexts->in($owner, static fn () => $promise->wait());
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testIdleHandlersCanBeReusedByAnotherExecutionContext(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200), new Response(201)]);
+        $handler = new CurlMultiHandler();
+
+        $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        $response = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertSame(201, $response->getStatusCode());
+    }
+
+    public function testExecutionContextClaimIsReleasedWhenPreparationFails(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200)]);
+        $handler = new CurlMultiHandler();
+
+        try {
+            $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), ['curl' => [-1 => true]]));
+            self::fail('The invalid request option was accepted.');
+        } catch (InvalidArgumentException $e) {
+            self::assertTrue($handler->isIdle());
+        }
+
+        $response = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testManagedContextCannotTakeOverDuringUnmanagedRequestPreparation(): void
+    {
+        [$contexts, $other] = $this->useExecutionContexts();
+        $handler = new CurlMultiHandler();
+        $attempted = false;
+        $body = \GuzzleHttp\Psr7\FnStream::decorate(\GuzzleHttp\Psr7\Utils::streamFor('body'), [
+            'read' => static function () use ($contexts, $other, $handler, &$attempted): string {
+                $attempted = true;
+                try {
+                    $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), []));
+                    self::fail('Another context took over during request preparation.');
+                } catch (P\CrossContextException $e) {
+                    self::assertFalse($handler->isIdle());
+                }
+
+                return 'body';
+            },
+        ]);
+        Server::enqueue([new Response(200)]);
+
+        self::assertSame(200, $handler(new Request('POST', Server::$url, [], $body), [])->wait()->getStatusCode());
+        self::assertTrue($attempted);
+    }
+
+    public function testAnotherContextTakesOverWhenTheOwnerEndedWithoutBeingFinished(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200), new Response(200)]);
+        $handler = new CurlMultiHandler();
+        $abandoned = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
+        unset($owner);
+        gc_collect_cycles();
+
+        $response = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertTrue(P\State::isPending($abandoned));
+        self::assertTrue($handler->isIdle());
+    }
+
+    public function testAFinishedContextThatUsesTheHandlerAgainCancelsWhatItLeavesAgain(): void
+    {
+        [$contexts, $owner] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200), new Response(200)]);
+        $handler = new CurlMultiHandler();
+        $contexts->in($owner, static function () use ($handler): void {
+            $handler->tick();
+        });
+        $contexts->end($owner);
+
+        $abandoned = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
+        $contexts->end($owner);
+
+        self::assertTrue(P\State::isRejected($abandoned));
+        self::assertTrue($handler->isIdle());
+    }
+
+    public function testAContextRegistersOneFinalizerHoweverOftenItTakesTheHandlerBack(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        $handler = new CurlMultiHandler();
+
+        for ($i = 0; $i < 3; ++$i) {
+            $contexts->in($owner, static function () use ($handler): void {
+                $handler->tick();
+            });
+            $contexts->in($other, static function () use ($handler): void {
+                $handler->tick();
+            });
+        }
+
+        // Finalizers are only visible through guzzlehttp/promises' internal
+        // per-context state.
+        $state = P\ExecutionContextState::find($owner);
+        self::assertNotNull($state);
+        self::assertCount(1, $state->finalizers);
+    }
+
+    public function testFinishingTheOwnerCancelsItsTransfersSoOtherContextsCanUseTheHandler(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200), new Response(200)]);
+        $handler = new CurlMultiHandler();
+        $abandoned = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), []));
+        $contexts->end($owner);
+
+        $response = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+
+        self::assertTrue(P\State::isRejected($abandoned));
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    public function testFinishingOutsideTheOwnerThrowsWithoutRetryingCancellation(): void
+    {
+        [$contexts, $owner] = $this->useExecutionContexts();
+        $handler = new CurlMultiHandler();
+        $pending = $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), ['delay' => 60000]));
+
+        try {
+            P\ExecutionContext::finish($owner);
+            self::fail('Finishing outside the owning context was accepted.');
+        } catch (P\CrossContextException $e) {
+            self::assertTrue(P\State::isPending($pending));
+            self::assertFalse($handler->isIdle());
+        } finally {
+            $contexts->in($owner, static fn () => $pending->cancel());
+        }
+    }
+
+    public function testFinishingAFormerOwnerDoesNotCancelTheTransfersOfTheCurrentOwner(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200), new Response(201)]);
+        $handler = new CurlMultiHandler();
+        $contexts->in($owner, static fn () => $handler(new Request('GET', Server::$url), [])->wait());
+        $promise = $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), []));
+
+        $contexts->end($owner);
+
+        self::assertTrue(P\State::isPending($promise));
+        self::assertSame(201, $contexts->in($other, static fn () => $promise->wait())->getStatusCode());
+    }
+
+    public function testFinishingTheOwnerReleasesTransfersWhosePromisesWereSettledDirectly(): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        $handler = new CurlMultiHandler();
+        $promise = $contexts->in($owner, static function () use ($handler) {
+            $promise = $handler(new Request('GET', Server::$url), ['delay' => 60000]);
+            $promise->resolve(new Response(204));
+
+            return $promise;
+        });
+
+        $contexts->end($owner);
+
+        self::assertTrue($handler->isIdle());
+        self::assertSame(204, $promise->wait()->getStatusCode());
+        Server::enqueue([new Response(200)]);
+        self::assertSame(200, $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), [])->wait())->getStatusCode());
+    }
+
+    public function testFinishingTheOwnerCancelsTransfersCreatedDuringRemoval(): void
+    {
+        [$contexts, $owner] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576))]);
+        $handler = new CurlMultiHandler(['select_timeout' => 0]);
+        $finishing = false;
+        $nested = null;
+
+        try {
+            $contexts->in($owner, static function () use ($handler, &$finishing, &$nested): void {
+                $handler(new Request('GET', Server::$url), [
+                    'timeout' => 5,
+                    'progress' => static function () use ($handler, &$finishing, &$nested): void {
+                        if ($finishing && $nested === null) {
+                            $nested = $handler(new Request('GET', Server::$url), ['delay' => 60000]);
+                        }
+                    },
+                ]);
+
+                $deadline = \microtime(true) + 5;
+                while (self::readMultiProperty($handler, 'active') === 0) {
+                    if (\microtime(true) >= $deadline) {
+                        self::fail('Timed out waiting for the transfer to start.');
+                    }
+
+                    $handler->tick();
+                }
+            });
+
+            $finishing = true;
+            $contexts->end($owner);
+
+            if ($nested === null) {
+                self::markTestSkipped('libcurl did not run a final progress update on premature removal.');
+            }
+
+            self::assertTrue(P\State::isRejected($nested));
+            self::assertTrue($handler->isIdle());
+        } finally {
+            $finishing = false;
+            $contexts->in($owner, static function () use ($handler): void {
+                $handler->close();
+            });
+            Server::flush();
+        }
+    }
+
+    /**
+     * @return iterable<string, array{bool}>
+     */
+    public static function settledTransferProvider(): iterable
+    {
+        yield 'settled transfer' => [true];
+        yield 'pending transfer' => [false];
+    }
+
+    /**
+     * @dataProvider settledTransferProvider
+     */
+    public function testFinishingTheOwnerCleansUpSiblingsAfterARemovalCallbackThrows(bool $settled): void
+    {
+        [$contexts, $owner] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200, ['Content-Length' => '1048576'], \str_repeat('x', 1048576))]);
+        $finishing = false;
+        $called = false;
+        $failure = new \RuntimeException('removal callback failed');
+        $promise = null;
+        $sibling = null;
+        // A custom factory can install native callbacks that throw directly.
+        $factory = $this->createMock(CurlFactoryInterface::class);
+        $factory->method('create')->willReturnCallback(static function (RequestInterface $request, array $options) use (&$finishing, &$called, $failure): EasyHandle {
+            $easy = (new CurlFactory(0))->create($request, $options);
+            \curl_setopt($easy->handle, \CURLOPT_NOPROGRESS, false);
+            \curl_setopt($easy->handle, \CURLOPT_PROGRESSFUNCTION, static function () use (&$finishing, &$called, $failure): int {
+                if ($finishing) {
+                    $called = true;
+                    throw $failure;
+                }
+
+                return 0;
+            });
+
+            return $easy;
+        });
+        $handler = new CurlMultiHandler(['select_timeout' => 0, 'handle_factory' => $factory]);
+
+        try {
+            $contexts->in($owner, static function () use ($handler, &$promise, &$sibling, $settled): void {
+                $promise = $handler(new Request('GET', Server::$url), ['timeout' => 5]);
+                $sibling = $handler(new Request('GET', Server::$url), ['delay' => 60000]);
+
+                $deadline = \microtime(true) + 5;
+                while (self::readMultiProperty($handler, 'active') === 0) {
+                    if (\microtime(true) >= $deadline) {
+                        self::fail('Timed out waiting for the transfer to start.');
+                    }
+
+                    $handler->tick();
+                }
+
+                if ($settled) {
+                    $promise->resolve(new Response(204));
+                }
+            });
+
+            $finishing = true;
+            $caught = null;
+            try {
+                $contexts->end($owner);
+            } catch (\RuntimeException $e) {
+                $caught = $e;
+            }
+
+            if (!$called) {
+                self::markTestSkipped('libcurl did not run a final progress update on premature removal.');
+            }
+
+            if ($settled) {
+                self::assertSame($failure, $caught);
+            } else {
+                self::assertNull($caught);
+                self::assertSame($failure, P\Utils::inspect($promise)['reason']);
+            }
+            self::assertTrue(P\State::isRejected($sibling));
+            self::assertTrue($handler->isIdle());
+        } finally {
+            $finishing = false;
+            $contexts->in($owner, static function () use ($handler): void {
+                $handler->close();
+            });
+            Server::flush();
+        }
+    }
+
+    /**
+     * @return iterable<string, array{callable(CurlMultiHandler, callable(): void): void}>
+     */
+    public static function executionContextSuspendingCallProvider(): iterable
+    {
+        yield 'tick' => [static function (CurlMultiHandler $handler, callable $attempt): void {
+            P\Utils::queue()->add($attempt);
+            $handler->tick();
+        }];
+        yield 'execute' => [static function (CurlMultiHandler $handler, callable $attempt): void {
+            P\Utils::queue()->add($attempt);
+            $handler->execute();
+        }];
+        yield 'wait' => [static function (CurlMultiHandler $handler, callable $attempt): void {
+            $handler(new Request('GET', Server::$url), [])->then(static function () use ($attempt): void {
+                $attempt();
+            })->wait();
+        }];
+    }
+
+    /**
+     * @dataProvider executionContextSuspendingCallProvider
+     */
+    public function testAnotherExecutionContextCannotTakeOverWhileTheOwnerIsInsideACall(callable $call): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        Server::enqueue([new Response(200), new Response(201)]);
+        $handler = new CurlMultiHandler();
+        $outcome = null;
+
+        // Runs while the owner is inside the call and the handler tracks no
+        // transfer, where a coroutine runtime could suspend the owner.
+        $attempt = static function () use ($contexts, $other, $handler, &$outcome): void {
+            try {
+                $contexts->in($other, static fn () => $handler(new Request('GET', Server::$url), []));
+                $outcome = 'admitted';
+            } catch (P\CrossContextException $e) {
+                $outcome = 'rejected';
+            }
+        };
+
+        $contexts->in($owner, static function () use ($call, $handler, $attempt): void {
+            $call($handler, $attempt);
+        });
+
+        self::assertSame('rejected', $outcome);
+        self::assertTrue($handler->isIdle());
+    }
+
+    /**
+     * @dataProvider managedContextProvider
+     */
+    public function testStaleTicksDoNotDriveAnotherExecutionContextsTransfers(bool $managed): void
+    {
+        [$contexts, $owner, $other] = $this->useExecutionContexts();
+        $other = $managed ? $other : null;
+        Server::enqueue([new Response(200), new Response(201)]);
+        $handler = new CurlMultiHandler();
+        $progressIn = [];
+
+        $contexts->in($owner, static function () use ($handler): void {
+            // A reusable connection lets the stale tick make visible progress.
+            $handler(new Request('GET', Server::$url), [])->wait();
+            P\Utils::queue()->add(static function (): void {
+                throw new \RuntimeException('queued task failure');
+            });
+
+            try {
+                $handler->tick();
+                self::fail('The queued task failure did not unwind the tick.');
+            } catch (\RuntimeException $e) {
+                // The tick unwound with its own queued tick still pending.
+            }
+        });
+
+        $promise = $contexts->in($other, static function () use ($contexts, $handler, &$progressIn) {
+            return $handler(new Request('GET', Server::$url), ['progress' => static function () use ($contexts, &$progressIn): void {
+                $progressIn[] = $contexts->current;
+            }]);
+        });
+
+        $contexts->in($owner, static function (): void {
+            P\Utils::queue()->run();
+        });
+        $response = $contexts->in($other, static fn () => $promise->wait());
+
+        self::assertSame(201, $response->getStatusCode());
+        self::assertNotContains($owner, $progressIn, 'A stale tick drove another execution context\'s transfer.');
+    }
+
     private static function easyWithSignature(?string $signature): EasyHandle
     {
         $easy = new EasyHandle();
@@ -4035,6 +4501,25 @@ class CurlMultiHandlerTest extends TestCase
         }, null, CurlMultiHandler::class);
 
         $init($handler);
+    }
+
+    /**
+     * Configures execution contexts for the current test, returning the
+     * provider, an owning context, and another context.
+     *
+     * @return array{TestExecutionContextProvider, \stdClass, \stdClass}
+     */
+    private function useExecutionContexts(): array
+    {
+        if (\PHP_VERSION_ID < 80000) {
+            self::markTestSkipped('Execution context providers require PHP 8.0 or newer.');
+        }
+
+        $contexts = new TestExecutionContextProvider();
+        P\ExecutionContext::setProvider($contexts);
+        Server::flush();
+
+        return [$contexts, new \stdClass(), new \stdClass()];
     }
 
     private static function skipIfConnectionCapCurlMultiOptionsUnavailable(): void
