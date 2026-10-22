@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.3.1 - Upcoming
+
+### Fixed
+
+- Fix `CookieJar` ignoring a same-value cookie that shortens or ends its lifetime
+- Fix `CookieJar` moving a replaced cookie after other cookies with the same name
+
+
 ## 8.3.0 - 2026-10-18
 
 ### Changed

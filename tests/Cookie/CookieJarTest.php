@@ -970,6 +970,86 @@ class CookieJarTest extends TestCase
         ];
     }
 
+    public function testPastExpiresCookieFromResponseRemovesExistingCookieWithSameValue(): void
+    {
+        $request = new Request('GET', 'https://example.com/');
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => 'sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Path=/']));
+        self::assertSame('sid=abc', $this->jar->withCookieHeader($request)->getHeaderLine('Cookie'));
+
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => 'sid=abc; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/']));
+
+        self::assertFalse($this->jar->withCookieHeader($request)->hasHeader('Cookie'));
+    }
+
+    /**
+     * @dataProvider replacementProvider
+     */
+    public function testReplacementKeepsCookiePosition(string $stored, string $header, string $value, ?int $expires): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/app/login'),
+            new Response(200, ['Set-Cookie' => $stored])
+        );
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=root; Path=/'])
+        );
+        $request = new Request('GET', 'https://example.com/app/check');
+        self::assertSame('sid=specific; sid=root', $this->jar->withCookieHeader($request)->getHeaderLine('Cookie'));
+
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/app/login'),
+            new Response(200, ['Set-Cookie' => $header])
+        );
+
+        self::assertCount(2, $this->jar);
+        self::assertSame("sid={$value}; sid=root", $this->jar->withCookieHeader($request)->getHeaderLine('Cookie'));
+        self::assertSame($expires, $this->jar->toArray()[0]['Expires']);
+    }
+
+    public static function replacementProvider(): array
+    {
+        $stored = 'sid=specific; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Path=/app';
+
+        return [
+            'earlier expiry' => [$stored, 'sid=specific; Expires=Tue, 21 Oct 2036 07:28:00 GMT; Path=/app', 'specific', 2108186880],
+            'later expiry' => [$stored, 'sid=specific; Expires=Fri, 01 Jan 2038 00:00:00 GMT; Path=/app', 'specific', 2145916800],
+            'session cookie' => [$stored, 'sid=specific; Path=/app', 'specific', null],
+            'changed value' => [$stored, 'sid=rotated; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Path=/app', 'rotated', 2139722880],
+            'no longer discarded' => [$stored.'; Discard', $stored, 'specific', 2139722880],
+        ];
+    }
+
+    /**
+     * @dataProvider duplicateReplacementProvider
+     */
+    public function testReplacementRemovesStoredCookieChangedIntoDuplicate(string $header, string $sent): void
+    {
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/app/login'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Path=/app'])
+        );
+        $this->jar->extractCookies(
+            new Request('GET', 'https://example.com/'),
+            new Response(200, ['Set-Cookie' => 'sid=abc; Path=/'])
+        );
+        $this->jar->getCookieByName('sid')->setPath('/');
+
+        $request = new Request('GET', 'https://example.com/');
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => $header]));
+
+        self::assertCount(1, $this->jar);
+        self::assertSame($sent, $this->jar->withCookieHeader($request)->getHeaderLine('Cookie'));
+    }
+
+    public static function duplicateReplacementProvider(): array
+    {
+        return [
+            'changed value' => ['sid=rotated; Path=/', 'sid=rotated'],
+            'past expires' => ['sid=deleted; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Path=/', ''],
+        ];
+    }
+
     public function testMaxAgeZeroCookieFromResponseOverridesFutureExpires(): void
     {
         $this->jar->extractCookies(

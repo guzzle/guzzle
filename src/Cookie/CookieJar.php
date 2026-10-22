@@ -195,7 +195,10 @@ class CookieJar implements CookieJarInterface
             return false;
         }
 
-        // Resolve conflicts with previously set cookies
+        // Resolve conflicts with previously set cookies. A replacement keeps
+        // the old cookie's position, so the order of same-name cookies in the
+        // Cookie header does not change.
+        $replaced = false;
         foreach ($this->cookies as $i => $c) {
             // Two cookies are identical, when their path, and domain are
             // identical.
@@ -207,23 +210,33 @@ class CookieJar implements CookieJarInterface
                 continue;
             }
 
-            // The previously set cookie is a discard cookie and this one is
-            // not so allow the new cookie to be set
-            if (!$cookie->getDiscard() && $c->getDiscard()) {
+            // A stored cookie can be changed into a duplicate of another one,
+            // so remove any further match once the cookie has been replaced
+            if ($replaced) {
                 unset($this->cookies[$i]);
                 continue;
             }
 
-            // If the new cookie's expiration is further into the future, then
-            // replace the old cookie
-            if ($cookie->getExpires() > $c->getExpires()) {
-                unset($this->cookies[$i]);
+            // The previously set cookie is a discard cookie and this one is
+            // not so allow the new cookie to be set
+            if (!$cookie->getDiscard() && $c->getDiscard()) {
+                $this->cookies[$i] = $cookie;
+                $replaced = true;
+                continue;
+            }
+
+            // If the new cookie's expiration has changed, then replace the old
+            // cookie, so the server can extend, shorten, or end its lifetime
+            if ($cookie->getExpires() !== $c->getExpires()) {
+                $this->cookies[$i] = $cookie;
+                $replaced = true;
                 continue;
             }
 
             // If the value has changed, we better change it
             if ($cookie->getValue() !== $c->getValue()) {
-                unset($this->cookies[$i]);
+                $this->cookies[$i] = $cookie;
+                $replaced = true;
                 continue;
             }
 
@@ -231,7 +244,9 @@ class CookieJar implements CookieJarInterface
             return false;
         }
 
-        $this->cookies[] = $cookie;
+        if (!$replaced) {
+            $this->cookies[] = $cookie;
+        }
 
         return true;
     }
