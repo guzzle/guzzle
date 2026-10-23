@@ -108,6 +108,7 @@ trait ClientTrait
      * @throws GuzzleException
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     abstract public function request(string $method, $uri, array $options = []): ResponseInterface;
@@ -198,6 +199,7 @@ trait ClientTrait
      * @throws GuzzleException
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function get(
@@ -294,6 +296,7 @@ trait ClientTrait
      * @throws GuzzleException
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function head(
@@ -390,6 +393,7 @@ trait ClientTrait
      * @throws GuzzleException
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function put(
@@ -486,6 +490,7 @@ trait ClientTrait
      * @throws GuzzleException
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function post(
@@ -582,6 +587,7 @@ trait ClientTrait
      * @throws GuzzleException
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function patch(
@@ -678,6 +684,7 @@ trait ClientTrait
      * @throws GuzzleException
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function delete(
@@ -775,6 +782,7 @@ trait ClientTrait
      * @return PromiseInterface<ResponseInterface, mixed>
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     abstract public function requestAsync(string $method, $uri, array $options = []): PromiseInterface;
@@ -865,6 +873,7 @@ trait ClientTrait
      * @return PromiseInterface<ResponseInterface, mixed>
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function getAsync(
@@ -961,6 +970,7 @@ trait ClientTrait
      * @return PromiseInterface<ResponseInterface, mixed>
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function headAsync(
@@ -1057,6 +1067,7 @@ trait ClientTrait
      * @return PromiseInterface<ResponseInterface, mixed>
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function putAsync(
@@ -1153,6 +1164,7 @@ trait ClientTrait
      * @return PromiseInterface<ResponseInterface, mixed>
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function postAsync(
@@ -1249,6 +1261,7 @@ trait ClientTrait
      * @return PromiseInterface<ResponseInterface, mixed>
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function patchAsync(
@@ -1345,6 +1358,7 @@ trait ClientTrait
      * @return PromiseInterface<ResponseInterface, mixed>
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function deleteAsync(

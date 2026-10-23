@@ -283,6 +283,7 @@ interface ClientInterface
      * @throws GuzzleException
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function request(string $method, $uri, array $options = []): ResponseInterface;
@@ -374,6 +375,7 @@ interface ClientInterface
      * @return PromiseInterface<ResponseInterface, mixed>
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function requestAsync(string $method, $uri, array $options = []): PromiseInterface;

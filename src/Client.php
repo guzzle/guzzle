@@ -531,6 +531,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @return PromiseInterface<ResponseInterface, mixed>
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function requestAsync(
@@ -657,6 +658,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * @throws GuzzleException
      *
      * @psalm-taint-sink ssrf $uri
+     *
      * @psalm-taint-source input
      */
     public function request(
