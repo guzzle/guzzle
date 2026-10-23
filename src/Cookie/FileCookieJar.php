@@ -41,6 +41,8 @@ class FileCookieJar extends CookieJar
      *                                    in the cookie jar.
      *
      * @throws \RuntimeException if the file cannot be loaded or is invalid
+     *
+     * @psalm-taint-sink file $cookieFile
      */
     public function __construct(string $cookieFile, bool $storeSessionCookies = false)
     {

@@ -315,6 +315,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * } $options Request options to apply to the given request and to the transfer. See {@see RequestOptions}.
      *
      * @return PromiseInterface<ResponseInterface, mixed>
+     *
+     * @psalm-taint-source input
      */
     public function sendAsync(
         #[\SensitiveParameter]
@@ -410,6 +412,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * } $options Request options to apply to the given request and to the transfer. See {@see RequestOptions}.
      *
      * @throws GuzzleException
+     *
+     * @psalm-taint-source input
      */
     public function send(
         #[\SensitiveParameter]
@@ -426,6 +430,8 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * The HttpClient PSR (PSR-18) specifies this method.
      *
      * {@inheritDoc}
+     *
+     * @psalm-taint-source input
      */
     public function sendRequest(
         #[\SensitiveParameter]
@@ -523,6 +529,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * } $options Request options to apply. See {@see RequestOptions}.
      *
      * @return PromiseInterface<ResponseInterface, mixed>
+     *
+     * @psalm-taint-sink ssrf $uri
+     * @psalm-taint-source input
      */
     public function requestAsync(
         string $method,
@@ -646,6 +655,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
      * } $options Request options to apply. See {@see RequestOptions}.
      *
      * @throws GuzzleException
+     *
+     * @psalm-taint-sink ssrf $uri
+     * @psalm-taint-source input
      */
     public function request(
         string $method,

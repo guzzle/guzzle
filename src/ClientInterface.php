@@ -106,6 +106,8 @@ interface ClientInterface
      * } $options Request options to apply to the given request and to the transfer.
      *
      * @throws GuzzleException
+     *
+     * @psalm-taint-source input
      */
     public function send(RequestInterface $request, array $options = []): ResponseInterface;
 
@@ -189,6 +191,8 @@ interface ClientInterface
      * } $options Request options to apply to the given request and to the transfer.
      *
      * @return PromiseInterface<ResponseInterface, mixed>
+     *
+     * @psalm-taint-source input
      */
     public function sendAsync(RequestInterface $request, array $options = []): PromiseInterface;
 
@@ -277,6 +281,9 @@ interface ClientInterface
      * } $options Request options to apply.
      *
      * @throws GuzzleException
+     *
+     * @psalm-taint-sink ssrf $uri
+     * @psalm-taint-source input
      */
     public function request(string $method, $uri, array $options = []): ResponseInterface;
 
@@ -365,6 +372,9 @@ interface ClientInterface
      * } $options Request options to apply.
      *
      * @return PromiseInterface<ResponseInterface, mixed>
+     *
+     * @psalm-taint-sink ssrf $uri
+     * @psalm-taint-source input
      */
     public function requestAsync(string $method, $uri, array $options = []): PromiseInterface;
 }
