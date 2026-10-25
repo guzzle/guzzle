@@ -9,6 +9,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Fix `CookieJar` storing already expired cookies instead of removing the stored cookie
 - Fix `CookieJar` ignoring a same-value cookie that changes its expiry or its `Discard`, `Secure`, or `HttpOnly` flag
+- Fix `SetCookie` renewing the lifetime of `Max-Age` cookies rebuilt from an array, so persisted cookies never expired
 
 
 ## 8.3.0 - 2026-10-18
