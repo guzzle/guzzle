@@ -1205,10 +1205,12 @@ Cookies parsed from normal `Set-Cookie` headers continue to be normalized by
 
 #### SetCookie Max-Age Precedence
 
-`SetCookie` now follows RFC cookie precedence when both `Max-Age` and `Expires`
-are present. A valid `Max-Age` value controls the effective expiration time,
-including `Max-Age=0` expiring the cookie immediately, even when `Expires` is a
-future date.
+`SetCookie::fromString()` now follows RFC cookie precedence when a `Set-Cookie`
+header carries both `Max-Age` and `Expires`. A valid `Max-Age` value controls
+the effective expiration time, including `Max-Age=0` expiring the cookie
+immediately, even when `Expires` is a future date. Cookies built from an array
+keep a supplied `Expires`, as in Guzzle 7, so persisted cookies do not restart
+their lifetime when a jar is loaded.
 
 #### Cookie Max-Age Parsing
 
