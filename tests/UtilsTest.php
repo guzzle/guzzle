@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace GuzzleHttp\Tests;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
+use GuzzleHttp\Handler\CurlFactory;
+use GuzzleHttp\Handler\CurlHandler;
+use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlVersion;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Handler\StreamTlsSessionCache;
@@ -308,6 +311,46 @@ class UtilsTest extends TestCase
             $handler(new Request('GET', 'https://example.com', [], null, '2.0'), ['multiplex' => Multiplexing::REQUIRE_EAGER]);
         } finally {
             self::setCurlVersionInfo($previous);
+        }
+    }
+
+    public function testChooseHandlerForwardsMaxIdleHandlesToBothCurlHandlers(): void
+    {
+        self::skipIfDefaultCurlMultiHandlerIsUnavailable();
+
+        $handler = Utils::chooseHandler(['max_idle_handles' => 0]);
+        $handlers = (new \ReflectionFunction($handler))->getStaticVariables();
+        if (isset($handlers['streaming'])) {
+            $handlers = (new \ReflectionFunction($handlers['default']))->getStaticVariables();
+        }
+
+        self::assertInstanceOf(CurlHandler::class, $handlers['sync']);
+        self::assertInstanceOf(CurlMultiHandler::class, $handlers['default']);
+        foreach ([$handlers['sync'], $handlers['default']] as $curlHandler) {
+            $factory = \Closure::bind(static function ($curlHandler): CurlFactory {
+                return $curlHandler->factory;
+            }, null, \get_class($curlHandler))($curlHandler);
+            $factory->release($factory->create(new Request('GET', 'http://example.com'), []));
+
+            $idleHandles = \Closure::bind(static function (CurlFactory $factory): array {
+                return $factory->handles;
+            }, null, CurlFactory::class)($factory);
+            self::assertSame([], $idleHandles);
+        }
+    }
+
+    public function testChooseHandlerFallsBackToTheStreamHandlerWithMaxIdleHandles(): void
+    {
+        if (!\ini_get('allow_url_fopen')) {
+            self::markTestSkipped('The allow_url_fopen ini setting is required.');
+        }
+
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.29.0', 'features' => 0]);
+
+        try {
+            self::assertInstanceOf(StreamHandler::class, Utils::chooseHandler(['max_idle_handles' => 4]));
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
         }
     }
 

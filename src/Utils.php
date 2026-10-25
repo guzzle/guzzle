@@ -64,7 +64,7 @@ final class Utils
      *
      * The returned handler is not wrapped by any default middlewares.
      *
-     * @param array{transport_sharing?: mixed, max_host_connections?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions Handler constructor options.
+     * @param array{transport_sharing?: mixed, max_host_connections?: mixed, max_idle_handles?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions Handler constructor options.
      *
      * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed> Returns the best handler for the given system.
      *
@@ -75,6 +75,11 @@ final class Utils
         $sharingMode = CurlShareHandleState::normalizeMode($handlerOptions['transport_sharing'] ?? null, 'transport_sharing');
         $sharingRequired = self::isTransportSharingRequired($sharingMode);
         $connectionCapsRequired = self::hasConnectionCapOptions($handlerOptions);
+
+        $maxIdleHandles = $handlerOptions['max_idle_handles'] ?? null;
+        if ($maxIdleHandles !== null && (!\is_int($maxIdleHandles) || $maxIdleHandles < 0)) {
+            throw new InvalidArgumentException('max_idle_handles must be a non-negative integer.');
+        }
 
         $sharedPoolCapsSupported = CurlVersion::supportsSharedPoolConnectionCaps();
 
@@ -136,7 +141,7 @@ final class Utils
     }
 
     /**
-     * @param array{max_host_connections?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions
+     * @param array{max_host_connections?: mixed, max_idle_handles?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions
      *
      * @return (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)|null
      */
@@ -159,6 +164,9 @@ final class Utils
         }
 
         $curlHandlerOptions = self::createCurlHandlerOptions($sharingMode);
+        if (isset($handlerOptions['max_idle_handles'])) {
+            $curlHandlerOptions['max_idle_handles'] = $handlerOptions['max_idle_handles'];
+        }
         $curlMultiHandlerOptions = $curlHandlerOptions + $connectionCapOptions;
         if (($handlerOptions['multiplex'] ?? null) === Multiplexing::NONE) {
             // Forwarded to the CurlMultiHandler only: CurlHandler and

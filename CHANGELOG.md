@@ -5,6 +5,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ## 8.4.0 - Upcoming
 
+### Added
+
+- Add `max_idle_handles` client and cURL handler option to limit idle handles
+
 ### Changed
 
 - Send longer-path cookies first in the `Cookie` header, like browsers and libcurl
