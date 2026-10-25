@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.3.1 - Upcoming
+
+### Fixed
+
+- Fix `CookieJar` storing already expired cookies instead of removing the stored cookie
+- Fix `CookieJar` ignoring a same-value cookie that changes its expiry or its `Discard`, `Secure`, or `HttpOnly` flag
+
+
 ## 8.3.0 - 2026-10-18
 
 ### Changed
