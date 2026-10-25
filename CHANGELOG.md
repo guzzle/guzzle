@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.4.0 - Upcoming
+
+### Changed
+
+- Send longer-path cookies first in the `Cookie` header, like browsers and libcurl
+- Replace stored cookies in place so a refreshed cookie keeps its position in the `Cookie` header
+
+
 ## 8.3.1 - Upcoming
 
 ### Fixed

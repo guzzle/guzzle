@@ -619,6 +619,42 @@ class CookieJarTest extends TestCase
         ];
     }
 
+    public function testReplacementKeepsCookiePosition(): void
+    {
+        $request = new Request('GET', 'https://example.com/');
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => ['a=1; Path=/', 'b=1; Path=/', 'c=1; Path=/']]));
+        self::assertSame('a=1; b=1; c=1', $this->jar->withCookieHeader($request)->getHeaderLine('Cookie'));
+
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => 'b=2; Path=/']));
+
+        self::assertSame('a=1; b=2; c=1', $this->jar->withCookieHeader($request)->getHeaderLine('Cookie'));
+    }
+
+    public function testReplacementOfExpiredCookieDoesNotKeepPosition(): void
+    {
+        $request = new Request('GET', 'https://example.com/');
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => ['a=1; Path=/', 'b=1; Path=/', 'c=1; Path=/']]));
+        $this->jar->getCookieByName('b')->setExpires(1);
+
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => 'b=2; Path=/']));
+
+        self::assertCount(3, $this->jar);
+        self::assertSame('a=1; c=1; b=2', $this->jar->withCookieHeader($request)->getHeaderLine('Cookie'));
+    }
+
+    public function testReplacementRemovesStoredCookieChangedIntoDuplicate(): void
+    {
+        $request = new Request('GET', 'https://example.com/');
+        $this->jar->extractCookies(new Request('GET', 'https://example.com/app/login'), new Response(200, ['Set-Cookie' => 'sid=abc; Path=/app']));
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => 'sid=abc; Path=/']));
+        $this->jar->getCookieByName('sid')->setPath('/');
+
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => 'sid=rotated; Path=/']));
+
+        self::assertCount(1, $this->jar);
+        self::assertSame('sid=rotated', $this->jar->withCookieHeader($request)->getHeaderLine('Cookie'));
+    }
+
     public function testDistinctNumericStringCookieNamesCoexist(): void
     {
         $this->jar->setCookie(new SetCookie([
@@ -756,6 +792,21 @@ class CookieJarTest extends TestCase
         self::assertSame('c0=value', $values[0]);
         self::assertSame('c149=value', $values[149]);
         self::assertNotContains('c150=value', $values);
+    }
+
+    public function testAppliesOutputLimitsBeforeSortingByPath(): void
+    {
+        $this->jar->setCookie(new SetCookie(['Name' => 'root', 'Value' => 'value', 'Domain' => 'example.com']));
+        for ($i = 0; $i < 150; ++$i) {
+            $this->jar->setCookie(new SetCookie(['Name' => "c{$i}", 'Value' => 'value', 'Domain' => 'example.com', 'Path' => '/app']));
+        }
+
+        $values = \explode('; ', $this->jar->withCookieHeader(new Request('GET', 'https://example.com/app/check'))->getHeaderLine('Cookie'));
+
+        self::assertCount(150, $values);
+        self::assertSame('c0=value', $values[0]);
+        self::assertSame('root=value', $values[149]);
+        self::assertNotContains('c149=value', $values);
     }
 
     public function testLimitsGeneratedCookieHeaderLengthAndStopsAtFirstOverflow(): void
@@ -1059,6 +1110,24 @@ class CookieJarTest extends TestCase
         ]);
 
         self::assertCount(0, $jar);
+    }
+
+    public function testSendsLongerPathCookiesFirst(): void
+    {
+        $this->jar->extractCookies(new Request('GET', 'https://example.com/'), new Response(200, ['Set-Cookie' => 'sid=root; Path=/']));
+        $this->jar->extractCookies(new Request('GET', 'https://example.com/app/login'), new Response(200, ['Set-Cookie' => 'sid=specific; Path=/app']));
+
+        $request = $this->jar->withCookieHeader(new Request('GET', 'https://example.com/app/check'));
+
+        self::assertSame('sid=specific; sid=root', $request->getHeaderLine('Cookie'));
+    }
+
+    public function testKeepsInsertionOrderForEqualPaths(): void
+    {
+        $request = new Request('GET', 'https://example.com/');
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => ['a=1; Path=/', 'b=1; Path=/', 'c=1; Path=/']]));
+
+        self::assertSame('a=1; b=1; c=1', $this->jar->withCookieHeader($request)->getHeaderLine('Cookie'));
     }
 
     public function testDoesNotSendHostOnlyCookieToSubdomain(): void
