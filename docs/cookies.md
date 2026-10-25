@@ -35,8 +35,8 @@ Different implementations exist for the `GuzzleHttp\Cookie\CookieJarInterface` :
 The built-in `CookieJar` admits at most 50 cookies from one response. It ignores
 any `Set-Cookie` field value longer than 8,190 bytes. A generated `Cookie`
 header contains at most 150 stored cookies, and its canonical line including
-`Cookie: ` is limited to 8,190 bytes. Later cookies are omitted after either
-output limit is reached.
+`Cookie: ` is limited to 8,190 bytes. Cookies stored later are omitted after
+either output limit is reached.
 
 You can manually set cookies into a cookie jar with the named constructor
 `fromArray(array $cookies, $domain)`.
