@@ -479,6 +479,33 @@ class CookieJarTest extends TestCase
         self::assertSame('zoo', $c[0]->getValue());
     }
 
+    /**
+     * @dataProvider changedAttributeProvider
+     *
+     * @param int|bool|null $expected
+     */
+    public function testReplacesCookieWhenAttributeChanges(string $header, string $attribute, $expected): void
+    {
+        $request = new Request('GET', 'https://example.com/');
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => 'sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Path=/']));
+
+        $this->jar->extractCookies($request, new Response(200, ['Set-Cookie' => $header]));
+
+        self::assertCount(1, $this->jar);
+        self::assertSame($expected, $this->jar->toArray()[0][$attribute]);
+    }
+
+    public static function changedAttributeProvider(): array
+    {
+        return [
+            'earlier expiry' => ['sid=abc; Expires=Tue, 21 Oct 2036 07:28:00 GMT; Path=/', 'Expires', 2108186880],
+            'session cookie' => ['sid=abc; Path=/', 'Expires', null],
+            'discard' => ['sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Path=/; Discard', 'Discard', true],
+            'secure' => ['sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Path=/; Secure', 'Secure', true],
+            'http only' => ['sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Path=/; HttpOnly', 'HttpOnly', true],
+        ];
+    }
+
     public function testStoresDistinctNumericStringCookieNames(): void
     {
         $this->jar->setCookie(new SetCookie([
