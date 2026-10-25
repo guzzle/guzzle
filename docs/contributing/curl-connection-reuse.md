@@ -25,11 +25,13 @@ connections alive in a **connection cache** and reuses them for later transfers
 on the same handle — or across handles, if you share them (§3).
 
 `CurlFactory` pools easy handles: on `release()` it calls `curl_reset()` (which
-clears per-request options) and returns the handle to a small pool; `create()`
-pops a pooled handle and re-applies the next request's options. The key fact:
-**`curl_reset()` does not close the underlying connection** — reuse is the
-whole point — so a pooled handle can carry a live connection from one request
-into the next.
+clears per-request options) and returns the handle to a pool of at most
+`max_idle_handles` idle handles (by default 3 for `CurlHandler` and 50 for
+`CurlMultiHandler`), closing it instead when the pool is full; `create()` pops a
+pooled handle and re-applies the next request's options. The key fact:
+**`curl_reset()` does not close the underlying connection** — reuse is the whole
+point — so a pooled handle can carry a live connection from one request into the
+next.
 
 The option pipeline is: Guzzle request options (`proxy`, `cert`, …) → an
 internal `$conf` array of `CURLOPT_* => value` → `curl_setopt_array()`.

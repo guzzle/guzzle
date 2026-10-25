@@ -7,6 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Added
 
+- Add `max_idle_handles` client and cURL handler option to limit idle handles
 - Add `ContextualCurlMultiHandler`, which leases a cURL multi handler to each
   execution context while it has work and pools idle handlers for reuse before the
   context finishes
@@ -17,6 +18,17 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Adjusted `guzzlehttp/promises` version constraint to `^3.2`
+- Send longer-path cookies first in the `Cookie` header, like browsers and libcurl
+- Replace stored cookies in place so a refreshed cookie keeps its position in the `Cookie` header
+
+
+## 8.3.1 - Upcoming
+
+### Fixed
+
+- Fix `CookieJar` storing already expired cookies instead of removing the stored cookie
+- Fix `CookieJar` ignoring a same-value cookie that changes its expiry or its `Discard`, `Secure`, or `HttpOnly` flag
+- Fix `SetCookie` renewing the lifetime of `Max-Age` cookies rebuilt from an array, so persisted cookies never expired
 
 
 ## 8.3.0 - 2026-10-18

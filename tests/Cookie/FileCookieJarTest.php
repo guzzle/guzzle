@@ -6,6 +6,7 @@ namespace GuzzleHttp\Tests\Cookie;
 
 use GuzzleHttp\Cookie\FileCookieJar;
 use GuzzleHttp\Cookie\SetCookie;
+use GuzzleHttp\Psr7\Request;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -110,6 +111,26 @@ class FileCookieJarTest extends TestCase
                 \unlink($source);
             }
         }
+    }
+
+    public function testLoadDoesNotExtendMaxAgeCookies(): void
+    {
+        \file_put_contents($this->file, \json_encode([[
+            'Name' => 'sid',
+            'Value' => 'abc',
+            'Domain' => 'example.com',
+            'Path' => '/',
+            'Max-Age' => 3600,
+            'Expires' => 1,
+            'Secure' => false,
+            'Discard' => false,
+            'HttpOnly' => false,
+            'HostOnly' => true,
+        ]]));
+
+        $jar = new FileCookieJar($this->file);
+
+        self::assertFalse($jar->withCookieHeader(new Request('GET', 'https://example.com/'))->hasHeader('Cookie'));
     }
 
     public function testRejectsCookieDataThatCannotBeEncoded(): void

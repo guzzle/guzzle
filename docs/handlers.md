@@ -99,6 +99,43 @@ custom handlers are responsible for honoring these options themselves.
 > stripping that protects against credential leaks on redirects. See the
 > per-option notes under [Request Options](request-options.md) for specifics.
 
+### Idle cURL Handles
+
+`max_idle_handles` (int|null): Maximum number of idle cURL easy handles retained
+by each default cURL handler. Zero disables retention; null or omission keeps
+the defaults of 3 for `CurlHandler` and 50 for `CurlMultiHandler`. This setting
+does not affect the stream handler.
+
+Pass this option to the client constructor when Guzzle creates the default
+handler:
+
+```php
+use GuzzleHttp\Client;
+
+$client = new Client([
+    'max_idle_handles' => 64,
+]);
+```
+
+In this example, the synchronous and asynchronous handlers each retain at most
+64 idle easy handles. Handles are created as requests need them, not allocated
+in advance.
+
+Retaining more idle handles can improve connection reuse when synchronous
+requests overlap, such as under a coroutine runtime, at the cost of more native
+resources. It does not limit active requests or network connections: a
+synchronous easy handle can cache connections to several origins, and
+`CurlMultiHandler` has its own connection cache separate from its idle easy
+handles. A handle released into a full pool is closed with the connections it
+holds, so zero makes every synchronous request open a new connection unless
+persistent transport sharing pools connections, while `CurlMultiHandler` keeps
+reusing them through its multi handle.
+
+The option is also accepted by `GuzzleHttp\Utils::chooseHandler()` and the
+`CurlHandler` and `CurlMultiHandler` constructors. A non-null value cannot be
+combined with a custom client handler or a custom `handle_factory`; configure
+the cURL handler or the factory instead.
+
 ### Closing cURL Handlers
 
 The cURL handlers own native cURL resources. These resources are normally

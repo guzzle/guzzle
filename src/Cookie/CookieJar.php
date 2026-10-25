@@ -187,7 +187,7 @@ class CookieJar implements CookieJarInterface
         }
 
         $maxAge = $cookie->getMaxAge();
-        if ($maxAge !== null && $maxAge <= 0) {
+        if (($maxAge !== null && $maxAge <= 0) || $cookie->isExpired()) {
             if ($cookie->getDomain() !== null) {
                 $this->removeCookie($cookie);
             }
@@ -196,6 +196,7 @@ class CookieJar implements CookieJarInterface
         }
 
         // Resolve conflicts with previously set cookies
+        $replaced = false;
         foreach ($this->cookies as $i => $c) {
             // Two cookies are identical, when their path, and domain are
             // identical.
@@ -207,23 +208,28 @@ class CookieJar implements CookieJarInterface
                 continue;
             }
 
-            // The previously set cookie is a discard cookie and this one is
-            // not so allow the new cookie to be set
-            if (!$cookie->getDiscard() && $c->getDiscard()) {
+            // An expired cookie is gone, so it must not lend its position
+            if ($c->isExpired()) {
                 unset($this->cookies[$i]);
                 continue;
             }
 
-            // If the new cookie's expiration is further into the future, then
-            // replace the old cookie
-            if ($cookie->getExpires() > $c->getExpires()) {
+            // A stored cookie can be mutated into a duplicate, so drop later matches
+            if ($replaced) {
                 unset($this->cookies[$i]);
                 continue;
             }
 
-            // If the value has changed, we better change it
-            if ($cookie->getValue() !== $c->getValue()) {
-                unset($this->cookies[$i]);
+            // Replace the old cookie in place when its value, expiry or flags
+            // changed, so it keeps its position among the other cookies
+            if ($cookie->getValue() !== $c->getValue()
+                || $cookie->getExpires() !== $c->getExpires()
+                || $cookie->getDiscard() !== $c->getDiscard()
+                || $cookie->getSecure() !== $c->getSecure()
+                || $cookie->getHttpOnly() !== $c->getHttpOnly()
+            ) {
+                $this->cookies[$i] = $cookie;
+                $replaced = true;
                 continue;
             }
 
@@ -231,7 +237,9 @@ class CookieJar implements CookieJarInterface
             return false;
         }
 
-        $this->cookies[] = $cookie;
+        if (!$replaced) {
+            $this->cookies[] = $cookie;
+        }
 
         return true;
     }
@@ -378,6 +386,7 @@ class CookieJar implements CookieJarInterface
         RequestInterface $request
     ): RequestInterface {
         $values = [];
+        $count = 0;
         $headerLength = 8;
         $uri = $request->getUri();
         $scheme = $uri->getScheme();
@@ -399,16 +408,20 @@ class CookieJar implements CookieJarInterface
                     break;
                 }
 
-                $values[] = $name.'='.$value;
+                $values[\strlen($cookie->getPath())][] = $name.'='.$value;
                 $headerLength += $separatorLength + $valueLength;
-                if (\count($values) === self::MAX_REQUEST_COOKIES) {
+                if (++$count === self::MAX_REQUEST_COOKIES) {
                     break;
                 }
             }
         }
 
+        // Longer paths first, then creation order, as in RFC 6265 section 5.4,
+        // sorted after the limits so later cookies cannot crowd out older ones
+        \krsort($values);
+
         return $values
-            ? $request->withHeader('Cookie', \implode('; ', $values))
+            ? $request->withHeader('Cookie', \implode('; ', \array_merge(...$values)))
             : $request;
     }
 

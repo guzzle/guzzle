@@ -59,6 +59,24 @@ class SetCookieTest extends TestCase
         self::assertLessThanOrEqual($after + 100, $expires);
     }
 
+    public function testKeepsExpiresFromDataWithMaxAge(): void
+    {
+        $cookie = new SetCookie(['Max-Age' => 60, 'Expires' => 1]);
+
+        self::assertSame(1, $cookie->getExpires());
+        self::assertTrue($cookie->isExpired());
+    }
+
+    public function testMaxAgeOverridesExpiresInSetCookieString(): void
+    {
+        $before = \time();
+        $cookie = SetCookie::fromString('sid=abc; Expires=Wed, 21 Oct 2037 07:28:00 GMT; Max-Age=60');
+        $after = \time();
+
+        self::assertGreaterThanOrEqual($before + 60, $cookie->getExpires());
+        self::assertLessThanOrEqual($after + 60, $cookie->getExpires());
+    }
+
     public function testMaxAgeZeroExpiresCookie(): void
     {
         $cookie = SetCookie::fromString('sid=abc; Max-Age=0');
@@ -119,13 +137,13 @@ class SetCookieTest extends TestCase
 
     public function testHoldsValues(): void
     {
-        $before = \time();
+        $t = \time();
         $data = [
             'Name' => 'foo',
             'Value' => 'baz',
             'Path' => '/bar',
             'Domain' => 'baz.com',
-            'Expires' => $before,
+            'Expires' => $t,
             'Max-Age' => 100,
             'Secure' => true,
             'Discard' => true,
@@ -135,22 +153,13 @@ class SetCookieTest extends TestCase
         ];
 
         $cookie = new SetCookie($data);
-        $after = \time();
-        $expires = $cookie->getExpires();
-
-        self::assertIsInt($expires);
-        self::assertGreaterThanOrEqual($before + 100, $expires);
-        self::assertLessThanOrEqual($after + 100, $expires);
-
-        $expected = $data;
-        $expected['Expires'] = $expires;
-        self::assertEquals($expected, $cookie->toArray());
+        self::assertEquals($data, $cookie->toArray());
 
         self::assertSame('foo', $cookie->getName());
         self::assertSame('baz', $cookie->getValue());
         self::assertSame('baz.com', $cookie->getDomain());
         self::assertSame('/bar', $cookie->getPath());
-        self::assertSame($expires, $cookie->getExpires());
+        self::assertSame($t, $cookie->getExpires());
         self::assertSame(100, $cookie->getMaxAge());
         self::assertTrue($cookie->getSecure());
         self::assertTrue($cookie->getDiscard());
