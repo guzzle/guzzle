@@ -175,7 +175,7 @@ class CookieJar implements CookieJarInterface
         }
 
         $maxAge = $cookie->getMaxAge();
-        if ($maxAge !== null && $maxAge <= 0) {
+        if (($maxAge !== null && $maxAge <= 0) || $cookie->isExpired()) {
             if ($cookie->getDomain() !== null) {
                 $this->removeCookie($cookie);
             }
