@@ -443,6 +443,17 @@ class ClientTest extends TestCase
         ]);
     }
 
+    public function testMaxIdleHandlesClientOptionCannotBeUsedWithCustomHandler(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "max_idle_handles" client option requires Guzzle to create the default handler. Configure the option on the CurlHandler or CurlMultiHandler constructor when providing a custom handler.');
+
+        new Client([
+            'handler' => new MockHandler(),
+            'max_idle_handles' => 4,
+        ]);
+    }
+
     public function testNullConnectionCapClientOptionsCanBeUsedWithCustomHandler(): void
     {
         $client = new Client([
@@ -453,6 +464,16 @@ class ClientTest extends TestCase
 
         self::assertNull($client->getConfig('max_host_connections'));
         self::assertNull($client->getConfig('max_total_connections'));
+    }
+
+    public function testNullMaxIdleHandlesClientOptionCanBeUsedWithCustomHandler(): void
+    {
+        $client = new Client([
+            'handler' => new MockHandler(),
+            'max_idle_handles' => null,
+        ]);
+
+        self::assertArrayNotHasKey('max_idle_handles', $client->getConfig());
     }
 
     /**
@@ -469,6 +490,25 @@ class ClientTest extends TestCase
             $this->expectExceptionMessage($option.' must be a positive integer.');
 
             new Client([$option => $value]);
+        } finally {
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+    }
+
+    /**
+     * @dataProvider invalidMaxIdleHandlesClientOptionProvider
+     *
+     * @param mixed $value
+     */
+    public function testRejectsInvalidMaxIdleHandlesClientOptionWhenCurlIsUnavailable($value): void
+    {
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.29.0', 'features' => 0]);
+
+        try {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('max_idle_handles must be a non-negative integer.');
+
+            new Client(['max_idle_handles' => $value]);
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
@@ -649,6 +689,13 @@ class ClientTest extends TestCase
             yield $option.' float' => [$option, 1.0];
             yield $option.' string' => [$option, '1'];
         }
+    }
+
+    public static function invalidMaxIdleHandlesClientOptionProvider(): iterable
+    {
+        yield 'negative' => [-1];
+        yield 'float' => [1.0];
+        yield 'string' => ['1'];
     }
 
     public static function strictTransportSharingModeProvider(): iterable
