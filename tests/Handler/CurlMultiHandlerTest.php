@@ -323,16 +323,18 @@ class CurlMultiHandlerTest extends TestCase
 
             $delayed = $handler(new Request('GET', Server::$url), ['delay' => 100]);
 
+            // Stop at the attach: the tick that completes the delayed transfer may
+            // still select for the sibling's full timeout.
             $start = \microtime(true);
             $deadline = $start + 10;
-            while (P\State::isPending($delayed) && \microtime(true) < $deadline) {
+            while (self::readMultiProperty($handler, 'delays') !== [] && \microtime(true) < $deadline) {
                 $handler->tick();
             }
             $elapsed = \microtime(true) - $start;
 
-            self::assertTrue(P\State::isFulfilled($delayed));
-            self::assertSame(200, $delayed->wait()->getStatusCode());
+            self::assertSame([], self::readMultiProperty($handler, 'delays'), 'Timed out waiting for the delayed request to attach.');
             self::assertLessThan(2.5, $elapsed, 'The delayed request waited for an unrelated transfer before attaching.');
+            self::assertSame(200, $delayed->wait()->getStatusCode());
             self::assertTrue(P\State::isPending($sibling));
         } finally {
             $sibling->cancel();
