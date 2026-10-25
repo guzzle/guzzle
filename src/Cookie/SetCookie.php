@@ -96,6 +96,11 @@ class SetCookie
             }
         }
 
+        // Max-Age takes precedence over Expires, RFC 6265 section 5.3
+        if ($data['Max-Age'] !== null) {
+            $data['Expires'] = null;
+        }
+
         return new self($data);
     }
 
@@ -155,9 +160,9 @@ class SetCookie
             $this->data[$key] = $data[$key];
         }
 
-        // Extract the Expires value and turn it into a UNIX timestamp if needed
+        // Derive Expires from Max-Age unless the data already carries one
         $maxAge = $this->getMaxAge();
-        if ($maxAge !== null) {
+        if ($maxAge !== null && $this->getExpires() === null) {
             $this->setExpires(self::maxAgeToExpires($maxAge, \time()));
         }
     }
