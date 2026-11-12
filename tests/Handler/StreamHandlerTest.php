@@ -2462,6 +2462,32 @@ class StreamHandlerTest extends TestCase
         self::assertSame('', Server::received()[0]->getHeaderLine('From'));
     }
 
+    public function testDoesNotSendAFromHeaderWhenTheIniIsNotSet(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $previous = \ini_get_all(null, false)['from'];
+        \ini_restore('from');
+
+        try {
+            if (\ini_get_all(null, false)['from'] !== null) {
+                self::markTestSkipped('The from ini setting is configured.');
+            }
+
+            $handler(new Request('GET', Server::$url), [])->wait();
+            $after = \ini_get_all(null, false)['from'];
+        } finally {
+            \ini_restore('from');
+            if ($previous !== null) {
+                \ini_set('from', $previous);
+            }
+        }
+
+        self::assertFalse(Server::received()[0]->hasHeader('From'));
+        // ini_get() reports an unset setting and an empty one alike.
+        self::assertNull($after);
+    }
+
     public function testSendsExplicitFromHeaderWhenTheIniIsSet(): void
     {
         $this->queueRes();
@@ -2509,6 +2535,61 @@ class StreamHandlerTest extends TestCase
         // The nested transfer started inside the outer open.
         self::assertSame('', $outerFrom);
         self::assertSame('', Server::received()[1]->getHeaderLine('From'));
+    }
+
+    public function testDoesNotSendAFromIniValueSetWhileAnotherTransferConnects(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+        ]);
+        $handler = new StreamHandler();
+        $wrapper = new class {
+            /** @var resource */
+            public $context;
+
+            public function stream_open(): bool
+            {
+                return true;
+            }
+
+            public function stream_write(string $data): int
+            {
+                \stream_context_get_options($this->context)['guzzle-test']['write']($data);
+
+                return \strlen($data);
+            }
+        };
+        \stream_wrapper_register('guzzle-test', \get_class($wrapper));
+        $nested = false;
+        $debug = \fopen('guzzle-test://debug', 'w', false, \stream_context_create(['guzzle-test' => [
+            'write' => static function (string $data) use ($handler, &$nested): void {
+                if (!$nested && \strpos($data, '[CONNECT]') !== false) {
+                    $nested = true;
+                    \ini_set('from', 'other@example.com');
+                    $handler(new Request('GET', Server::$url.'b'), [])->wait();
+                }
+            },
+        ]]));
+        $previous = \ini_set('from', '');
+
+        try {
+            $handler(new Request('GET', Server::$url.'a'), ['debug' => $debug])->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('from', $previous);
+            }
+            \fclose($debug);
+            \stream_wrapper_unregister('guzzle-test');
+        }
+
+        // The nested transfer completed before the outer request was built.
+        $received = Server::received();
+        self::assertSame('/b', $received[0]->getUri()->getPath());
+        self::assertSame('', $received[0]->getHeaderLine('From'));
+        self::assertSame('/a', $received[1]->getUri()->getPath());
+        self::assertSame('', $received[1]->getHeaderLine('From'));
     }
 
     public function testRestoresTheFromIniAfterOverlappingTransfers(): void
