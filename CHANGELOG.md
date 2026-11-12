@@ -18,6 +18,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Fix overlapping stream handler transfers swallowing and mixing up PHP errors
+- Fix the stream handler sending an empty `From` header with no `from` ini set
 
 
 ## 8.3.2 - 2026-11-12

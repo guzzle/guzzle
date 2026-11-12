@@ -2462,6 +2462,32 @@ class StreamHandlerTest extends TestCase
         self::assertSame('', Server::received()[0]->getHeaderLine('From'));
     }
 
+    public function testDoesNotSendAFromHeaderWhenTheIniIsNotSet(): void
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $previous = \ini_get_all(null, false)['from'];
+        \ini_restore('from');
+
+        try {
+            if (\ini_get_all(null, false)['from'] !== null) {
+                self::markTestSkipped('The from ini setting is configured.');
+            }
+
+            $handler(new Request('GET', Server::$url), [])->wait();
+            $after = \ini_get_all(null, false)['from'];
+        } finally {
+            \ini_restore('from');
+            if ($previous !== null) {
+                \ini_set('from', $previous);
+            }
+        }
+
+        self::assertFalse(Server::received()[0]->hasHeader('From'));
+        // ini_get() reports an unset setting and an empty one alike.
+        self::assertNull($after);
+    }
+
     public function testSendsExplicitFromHeaderWhenTheIniIsSet(): void
     {
         $this->queueRes();
