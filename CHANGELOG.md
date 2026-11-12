@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.3.2 - Upcoming
+
+### Fixed
+
+- Fix overlapping stream handler transfers leaving the `from` ini setting blank
+
+
 ## 8.3.1 - 2026-10-25
 
 ### Fixed

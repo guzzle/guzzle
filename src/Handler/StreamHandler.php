@@ -105,6 +105,16 @@ final class StreamHandler
      */
     private const DEFAULT_IDLE_TIMEOUT_MS = 60000;
 
+    /**
+     * Number of transfers currently holding the from ini setting blank.
+     */
+    private static int $fromBlankDepth = 0;
+
+    /**
+     * @var string|false
+     */
+    private static $fromToRestore = false;
+
     private ?\Throwable $onStatsException = null;
 
     private string $transportSharingMode;
@@ -1025,12 +1035,17 @@ final class StreamHandler
                 // Blank the from ini setting for the transfer so ambient
                 // configuration cannot leak into a From header; the wrapper
                 // cannot omit the header, so a configured ini sends it empty.
-                $iniFrom = \function_exists('ini_set') ? \ini_set('from', '') : false;
+                // Overlapping transfers share the setting, so the first one
+                // blanks it and the last one restores it.
+                $blankFrom = \function_exists('ini_set');
+                if ($blankFrom && self::$fromBlankDepth++ === 0) {
+                    self::$fromToRestore = \ini_set('from', '');
+                }
                 try {
                     $resource = @\fopen((string) $uri, 'r', false, $contextResource);
                 } finally {
-                    if ($iniFrom !== false) {
-                        \ini_set('from', $iniFrom);
+                    if ($blankFrom && --self::$fromBlankDepth === 0 && self::$fromToRestore !== false) {
+                        \ini_set('from', self::$fromToRestore);
                     }
                 }
 
