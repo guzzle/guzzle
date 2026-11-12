@@ -1035,11 +1035,14 @@ final class StreamHandler
                 // Blank the from ini setting for the transfer so ambient
                 // configuration cannot leak into a From header; the wrapper
                 // cannot omit the header, so a configured ini sends it empty.
-                // Overlapping transfers share the setting, so the first one
-                // blanks it and the last one restores it.
+                // Overlapping transfers share the setting, so only the first
+                // one saves it and only the last one restores it.
                 $blankFrom = \function_exists('ini_set');
-                if ($blankFrom && self::$fromBlankDepth++ === 0) {
-                    self::$fromToRestore = \ini_set('from', '');
+                if ($blankFrom) {
+                    $iniFrom = \ini_set('from', '');
+                    if (self::$fromBlankDepth++ === 0) {
+                        self::$fromToRestore = $iniFrom;
+                    }
                 }
                 try {
                     $resource = @\fopen((string) $uri, 'r', false, $contextResource);
