@@ -15,7 +15,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Replace stored cookies in place so a refreshed cookie keeps its position in the `Cookie` header
 
 
-## 8.3.1 - Upcoming
+## 8.3.2 - 2026-11-12
+
+### Fixed
+
+- Fix overlapping stream handler transfers leaving the `from` ini setting blank
+
+
+## 8.3.1 - 2026-10-25
 
 ### Fixed
 

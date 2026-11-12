@@ -2479,6 +2479,82 @@ class StreamHandlerTest extends TestCase
         self::assertSame(['request@example.com'], Server::received()[0]->getHeader('From'));
     }
 
+    public function testDoesNotSendAFromIniValueSetDuringAnotherTransfer(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+        ]);
+        $handler = new StreamHandler();
+        $outerFrom = null;
+        $previous = \ini_set('from', 'ini@example.com');
+
+        try {
+            $handler(new Request('GET', Server::$url), [
+                'progress' => static function () use ($handler, &$outerFrom): void {
+                    if ($outerFrom === null) {
+                        $outerFrom = \ini_get('from');
+                        \ini_set('from', 'other@example.com');
+                        $handler(new Request('GET', Server::$url), [])->wait();
+                    }
+                },
+            ])->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('from', $previous);
+            }
+        }
+
+        // The nested transfer started inside the outer open.
+        self::assertSame('', $outerFrom);
+        self::assertSame('', Server::received()[1]->getHeaderLine('From'));
+    }
+
+    public function testRestoresTheFromIniAfterOverlappingTransfers(): void
+    {
+        if (\PHP_VERSION_ID < 80100) {
+            self::markTestSkipped('Fibers are unavailable.');
+        }
+
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+        ]);
+        $handler = new StreamHandler();
+        $transfer = static function () use ($handler): void {
+            $suspended = false;
+            $handler(new Request('GET', Server::$url), [
+                'progress' => static function () use (&$suspended): void {
+                    if (!$suspended) {
+                        $suspended = true;
+                        \Fiber::suspend(\ini_get('from'));
+                    }
+                },
+            ])->wait();
+        };
+        $previous = \ini_set('from', 'ini@example.com');
+
+        try {
+            $first = new \Fiber($transfer);
+            $second = new \Fiber($transfer);
+
+            // Both transfers are parked inside the open with the setting blanked.
+            self::assertSame('', $first->start());
+            self::assertSame('', $second->start());
+
+            $first->resume();
+            $second->resume();
+
+            self::assertSame('ini@example.com', \ini_get('from'));
+        } finally {
+            if ($previous !== false) {
+                \ini_set('from', $previous);
+            }
+        }
+    }
+
     protected function getSendResult(array $opts): ResponseInterface
     {
         $this->queueRes();
