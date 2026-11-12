@@ -895,26 +895,12 @@ final class StreamHandler
         #[\SensitiveParameter]
         ?UriInterface $diagnosticUri = null
     ) {
-        $errors = [];
-        \set_error_handler(static function (int $_, string $msg, string $file, int $line) use (&$errors): bool {
-            $errors[] = [
-                'message' => $msg,
-                'file' => $file,
-                'line' => $line,
-            ];
-
-            return true;
-        });
-
-        try {
-            $resource = $callback();
-        } finally {
-            \restore_error_handler();
-        }
+        $scope = new Psr7\ErrorScope();
+        $resource = $scope->run($callback);
 
         if (!$resource) {
             $details = [];
-            foreach ($errors as $err) {
+            foreach ($scope->getErrors() as $err) {
                 foreach ($err as $key => $value) {
                     $rendered = $key === 'message' && $diagnosticUri !== null
                         ? UriDiagnostic::redactInMessage((string) $value, $diagnosticUri)

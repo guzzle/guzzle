@@ -3699,6 +3699,46 @@ class StreamHandlerTest extends TestCase
         }
     }
 
+    public function testDoesNotCaptureUnrelatedErrorsWhileSuspendedInProgressCallback(): void
+    {
+        if (\PHP_VERSION_ID < 80100) {
+            self::markTestSkipped('Fibers are unavailable.');
+        }
+
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $fiber = new \Fiber(static function () use ($handler): void {
+            $suspended = false;
+            $handler(new Request('GET', Server::$url), [
+                'progress' => static function () use (&$suspended): void {
+                    if (!$suspended) {
+                        $suspended = true;
+                        \Fiber::suspend();
+                    }
+                },
+            ])->wait();
+        });
+        $errors = [];
+        \set_error_handler(static function (int $level, string $message) use (&$errors): bool {
+            $errors[] = $message;
+
+            return true;
+        });
+
+        try {
+            $fiber->start();
+            self::assertTrue($fiber->isSuspended());
+
+            \trigger_error('Unrelated warning', \E_USER_WARNING);
+
+            $fiber->resume();
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertSame(['Unrelated warning'], $errors);
+    }
+
     public function testProgressOverflowValueThrows(): void
     {
         $this->expectException(\OverflowException::class);
