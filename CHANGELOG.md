@@ -15,6 +15,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Send longer-path cookies first in the `Cookie` header, like browsers and libcurl
 - Replace stored cookies in place so a refreshed cookie keeps its position in the `Cookie` header
 
+### Fixed
+
+- Fix overlapping stream handler transfers swallowing and mixing up PHP errors
+
 
 ## 8.3.2 - 2026-11-12
 
