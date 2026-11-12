@@ -106,11 +106,11 @@ The factory must return a handler; a return value that is not callable fails
 with a `TypeError`. A factory that returns a handler of its own is responsible
 for honoring the handler options.
 
-Guzzle validates the handler options before calling the factory, so an invalid
-option fails with the same exception whether or not a factory is set. Selection
-that depends on the environment, such as cURL availability, runs only when the
-callable is called, so a factory that defers the call also defers any failure to
-find a suitable handler.
+Guzzle rejects handler options with an invalid type or value before calling the
+factory. Everything that depends on the environment, including whether the
+installed libcurl supports the requested options, runs only when the callable is
+called, so a factory that defers or skips the call also defers or skips those
+failures.
 
 > [!WARNING]
 > The factory is process-wide. It is meant to be set by the application's own
