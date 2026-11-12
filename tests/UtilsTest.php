@@ -527,6 +527,11 @@ class UtilsTest extends TestCase
         }
     }
 
+    public function testDefaultUserAgent(): void
+    {
+        self::assertIsString(Utils::defaultUserAgent());
+    }
+
     private static function skipIfDefaultCurlHandlerIsUnavailable(): void
     {
         if (

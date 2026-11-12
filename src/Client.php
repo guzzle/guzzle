@@ -683,10 +683,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             : ($this->config[$option] ?? null);
     }
 
-    /**
-     * Get the default User-Agent string to use with Guzzle.
-     */
-    public static function defaultUserAgent(): string
+    private static function defaultUserAgent(): string
     {
         return sprintf('GuzzleHttp/%d', ClientInterface::MAJOR_VERSION);
     }

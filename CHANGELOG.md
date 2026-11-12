@@ -7,7 +7,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Added
 
-- Add `Client::defaultUserAgent()`
 - Add `Utils::setDefaultHandlerFactory()` to replace the default handler
 
 ### Changed
@@ -17,8 +16,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Deprecated
 
-- Deprecated `Utils::defaultUserAgent()` in favor of `Client::defaultUserAgent()`
-- Deprecated `Utils::headersFromLines()`, `Utils::normalizeHeaderKeys()`, `Utils::debugResource()`, and `Utils::normalizeProtocols()` with no replacement
+- Deprecated `Utils::defaultUserAgent()`, `Utils::headersFromLines()`, `Utils::normalizeHeaderKeys()`, `Utils::debugResource()`, and `Utils::normalizeProtocols()` with no replacement
 
 
 ## 8.4.0 - 2026-11-12
