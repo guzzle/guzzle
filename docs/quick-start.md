@@ -136,7 +136,7 @@ $promise = $client->requestAsync('OPTIONS', 'http://httpbin.org/get');
 The promise returned by these methods is a
 `GuzzleHttp\Promise\PromiseInterface<Psr\Http\Message\ResponseInterface, mixed>`
 provided by the
-[Guzzle Promises library](https://github.com/guzzle/promises/blob/3.2/README.md).
+[Guzzle Promises library](https://github.com/guzzle/promises/blob/3.1/README.md).
 This means that you can chain `then()` calls off of the promise. These then
 calls are either fulfilled with a successful
 `Psr\Http\Message\ResponseInterface` or rejected with a reason. The reason is
@@ -180,14 +180,14 @@ $promises = [
 ];
 
 // Wait for the requests to complete; throws if any request is rejected.
-$responses = Promise\Await::unwrap($promises);
+$responses = Promise\Utils::unwrap($promises);
 
 // You can access each response using the key of the promise
 echo $responses['image']->getHeader('Content-Length')[0];
 echo $responses['png']->getHeader('Content-Length')[0];
 
 // Wait for the requests to complete, even if some of them fail
-$responses = Promise\Aggregate::settle($promises)->wait();
+$responses = Promise\Utils::settle($promises)->wait();
 
 // Values returned above are wrapped in an array with "state" (either fulfilled or rejected),
 // plus "value" for fulfilled responses or "reason" for rejected requests.
