@@ -2537,6 +2537,61 @@ class StreamHandlerTest extends TestCase
         self::assertSame('', Server::received()[1]->getHeaderLine('From'));
     }
 
+    public function testDoesNotSendAFromIniValueSetWhileAnotherTransferConnects(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+        ]);
+        $handler = new StreamHandler();
+        $wrapper = new class {
+            /** @var resource */
+            public $context;
+
+            public function stream_open(): bool
+            {
+                return true;
+            }
+
+            public function stream_write(string $data): int
+            {
+                \stream_context_get_options($this->context)['guzzle-test']['write']($data);
+
+                return \strlen($data);
+            }
+        };
+        \stream_wrapper_register('guzzle-test', \get_class($wrapper));
+        $nested = false;
+        $debug = \fopen('guzzle-test://debug', 'w', false, \stream_context_create(['guzzle-test' => [
+            'write' => static function (string $data) use ($handler, &$nested): void {
+                if (!$nested && \strpos($data, '[CONNECT]') !== false) {
+                    $nested = true;
+                    \ini_set('from', 'other@example.com');
+                    $handler(new Request('GET', Server::$url.'b'), [])->wait();
+                }
+            },
+        ]]));
+        $previous = \ini_set('from', '');
+
+        try {
+            $handler(new Request('GET', Server::$url.'a'), ['debug' => $debug])->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('from', $previous);
+            }
+            \fclose($debug);
+            \stream_wrapper_unregister('guzzle-test');
+        }
+
+        // The nested transfer completed before the outer request was built.
+        $received = Server::received();
+        self::assertSame('/b', $received[0]->getUri()->getPath());
+        self::assertSame('', $received[0]->getHeaderLine('From'));
+        self::assertSame('/a', $received[1]->getUri()->getPath());
+        self::assertSame('', $received[1]->getHeaderLine('From'));
+    }
+
     public function testRestoresTheFromIniAfterOverlappingTransfers(): void
     {
         if (\PHP_VERSION_ID < 80100) {

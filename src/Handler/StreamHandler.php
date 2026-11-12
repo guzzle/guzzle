@@ -106,7 +106,7 @@ final class StreamHandler
     private const DEFAULT_IDLE_TIMEOUT_MS = 60000;
 
     /**
-     * Number of transfers currently holding the from ini setting blank.
+     * Number of transfers currently opening, which share the from ini setting.
      */
     private static int $fromBlankDepth = 0;
 
@@ -1024,9 +1024,9 @@ final class StreamHandler
                 // An empty setting is left alone, as blanking an unset one adds
                 // the header. Overlapping transfers share the setting, so only
                 // the first one saves it and only the last one restores it.
-                $blankFrom = \function_exists('ini_set') && (self::$fromBlankDepth > 0 || \ini_get('from') !== '');
+                $blankFrom = \function_exists('ini_set');
                 if ($blankFrom) {
-                    $iniFrom = \ini_set('from', '');
+                    $iniFrom = \ini_get('from') !== '' ? \ini_set('from', '') : false;
                     if (self::$fromBlankDepth++ === 0) {
                         self::$fromToRestore = $iniFrom;
                     }
