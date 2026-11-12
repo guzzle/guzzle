@@ -2479,6 +2479,38 @@ class StreamHandlerTest extends TestCase
         self::assertSame(['request@example.com'], Server::received()[0]->getHeader('From'));
     }
 
+    public function testDoesNotSendAFromIniValueSetDuringAnotherTransfer(): void
+    {
+        Server::flush();
+        Server::enqueue([
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+            new Response(200, ['Content-Length' => '8'], 'hi there'),
+        ]);
+        $handler = new StreamHandler();
+        $outerFrom = null;
+        $previous = \ini_set('from', 'ini@example.com');
+
+        try {
+            $handler(new Request('GET', Server::$url), [
+                'progress' => static function () use ($handler, &$outerFrom): void {
+                    if ($outerFrom === null) {
+                        $outerFrom = \ini_get('from');
+                        \ini_set('from', 'other@example.com');
+                        $handler(new Request('GET', Server::$url), [])->wait();
+                    }
+                },
+            ])->wait();
+        } finally {
+            if ($previous !== false) {
+                \ini_set('from', $previous);
+            }
+        }
+
+        // The nested transfer started inside the outer open.
+        self::assertSame('', $outerFrom);
+        self::assertSame('', Server::received()[1]->getHeaderLine('From'));
+    }
+
     public function testRestoresTheFromIniAfterOverlappingTransfers(): void
     {
         if (\PHP_VERSION_ID < 80100) {
