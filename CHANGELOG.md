@@ -11,6 +11,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.3`
 - Send longer-path cookies first in the `Cookie` header, like browsers and libcurl
 - Replace stored cookies in place so a refreshed cookie keeps its position in the `Cookie` header
 
