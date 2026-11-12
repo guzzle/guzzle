@@ -18,6 +18,11 @@ use Psr\Http\Message\ResponseInterface;
 
 final class Utils
 {
+    /**
+     * @var (callable(array<string, mixed>, callable(): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>))|null
+     */
+    private static $defaultHandlerFactory;
+
     private function __construct()
     {
     }
@@ -60,9 +65,49 @@ final class Utils
     }
 
     /**
+     * Sets a factory that creates the default handler in place of the built-in
+     * selection.
+     *
+     * The factory is called each time a default handler is chosen: when a
+     * client or HandlerStack::create() is given no handler, and when
+     * Utils::chooseHandler() is called directly. Clients created before the
+     * factory was set keep their handler, and a handler that is provided
+     * explicitly never reaches the factory. Passing null restores the built-in
+     * selection.
+     *
+     * The factory receives the handler options passed to
+     * Utils::chooseHandler(), such as transport_sharing and max_idle_handles,
+     * and a callable that returns the handler Guzzle would have chosen for
+     * those options, a new one on each call. The factory must return a handler;
+     * a return value that is not callable fails with a TypeError. A factory
+     * that returns a handler of its own is responsible for honoring the handler
+     * options.
+     *
+     * Guzzle validates the handler options before calling the factory, so an
+     * invalid option fails with the same exception whether or not a factory is
+     * set. Selection that depends on the environment, such as cURL
+     * availability, runs only when the callable is called, so a factory that
+     * defers the call also defers any failure to find a suitable handler.
+     *
+     * The factory is process-wide. It is meant to be set by the application's
+     * own bootstrap code, not by libraries. It is a low-level seam, not
+     * coroutine support: Guzzle is not tested against coroutine runtimes, and a
+     * pending promise must not be passed between coroutines or fibers.
+     *
+     * @param (callable(array<string, mixed>, callable(): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>)): (callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>))|null $factory Default handler factory.
+     */
+    public static function setDefaultHandlerFactory(?callable $factory): void
+    {
+        self::$defaultHandlerFactory = $factory;
+    }
+
+    /**
      * Chooses and creates a default handler to use based on the environment.
      *
      * The returned handler is not wrapped by any default middlewares.
+     *
+     * A factory set with setDefaultHandlerFactory() creates the handler in
+     * place of the built-in selection.
      *
      * @param array{transport_sharing?: mixed, max_host_connections?: mixed, max_idle_handles?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions Handler constructor options.
      *
@@ -81,6 +126,22 @@ final class Utils
             throw new InvalidArgumentException('max_idle_handles must be a non-negative integer.');
         }
 
+        if (self::$defaultHandlerFactory === null) {
+            return self::chooseBuiltInHandler($sharingMode, $sharingRequired, $connectionCapsRequired, $handlerOptions);
+        }
+
+        return (self::$defaultHandlerFactory)($handlerOptions, static function () use ($sharingMode, $sharingRequired, $connectionCapsRequired, $handlerOptions): callable {
+            return self::chooseBuiltInHandler($sharingMode, $sharingRequired, $connectionCapsRequired, $handlerOptions);
+        });
+    }
+
+    /**
+     * @param array{max_host_connections?: mixed, max_idle_handles?: mixed, max_total_connections?: mixed, multiplex?: mixed} $handlerOptions
+     *
+     * @return callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>
+     */
+    private static function chooseBuiltInHandler(string $sharingMode, bool $sharingRequired, bool $connectionCapsRequired, array $handlerOptions): callable
+    {
         $sharedPoolCapsSupported = CurlVersion::supportsSharedPoolConnectionCaps();
 
         if ($connectionCapsRequired && !$sharedPoolCapsSupported && $sharingMode === TransportSharing::PERSISTENT_REQUIRE) {

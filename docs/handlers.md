@@ -69,6 +69,55 @@ system.
 > have a cookie middleware associated with a client, then setting the `cookies`
 > request option will have no effect on the request.
 
+### Default Handler Factory
+
+`GuzzleHttp\Utils::setDefaultHandlerFactory()` sets a factory that creates the
+default handler in place of the built-in selection. Applications can use it to
+decorate or replace the handler of every client that is not given one, including
+clients constructed by code they do not control. This example adds a header to
+every request sent through a default handler:
+
+```php
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Utils;
+use Psr\Http\Message\RequestInterface;
+
+$factory = function (array $handlerOptions, callable $default): callable {
+    $addHeader = Middleware::mapRequest(function (RequestInterface $request) {
+        return $request->withHeader('X-Foo', 'bar');
+    });
+
+    return $addHeader($default());
+};
+
+Utils::setDefaultHandlerFactory($factory);
+```
+
+The factory is called each time a default handler is chosen: when a client or
+`HandlerStack::create()` is given no handler, and when `Utils::chooseHandler()`
+is called directly. Clients created before the factory was set keep their
+handler, and a handler that is provided explicitly never reaches the factory.
+Passing null restores the built-in selection.
+
+The factory receives the handler options passed to `Utils::chooseHandler()`,
+such as `transport_sharing` and `max_idle_handles`, and a callable that returns
+the handler Guzzle would have chosen for those options, a new one on each call.
+The factory must return a handler; a return value that is not callable fails
+with a `TypeError`. A factory that returns a handler of its own is responsible
+for honoring the handler options.
+
+Guzzle validates the handler options before calling the factory, so an invalid
+option fails with the same exception whether or not a factory is set. Selection
+that depends on the environment, such as cURL availability, runs only when the
+callable is called, so a factory that defers the call also defers any failure to
+find a suitable handler.
+
+> [!WARNING]
+> The factory is process-wide. It is meant to be set by the application's own
+> bootstrap code, not by libraries. It is a low-level seam, not coroutine
+> support: Guzzle is not tested against coroutine runtimes, and a pending
+> promise must not be passed between coroutines or fibers.
+
 ### PSR-17 Factories
 
 The PSR-17 factory request options are owned by different layers:

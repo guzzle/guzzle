@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.5.0 - Upcoming
+
+### Added
+
+- Add `Utils::setDefaultHandlerFactory()` to replace the default handler
+
+
 ## 8.4.0 - 2026-11-12
 
 ### Added
