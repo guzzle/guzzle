@@ -272,7 +272,7 @@ class RedirectMiddleware
             $modify['remove_headers'][] = 'Cookie';
         }
 
-        return Psr7\Message::modifyRequest($request, $modify);
+        return Psr7\Utils::modifyRequest($request, $modify);
     }
 
     private static function isRedirectStatusCode(int $statusCode): bool
