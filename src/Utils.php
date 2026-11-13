@@ -41,6 +41,13 @@ final class Utils
      */
     public static function headersFromLines(iterable $lines): array
     {
+        \trigger_deprecation(
+            'guzzlehttp/guzzle',
+            '8.5',
+            '%s() is deprecated and will be removed in 9.0.',
+            __METHOD__
+        );
+
         return HeaderProcessor::headersFromLines($lines);
     }
 
@@ -56,6 +63,13 @@ final class Utils
      */
     public static function debugResource($value = null)
     {
+        \trigger_deprecation(
+            'guzzlehttp/guzzle',
+            '8.5',
+            '%s() is deprecated and will be removed in 9.0.',
+            __METHOD__
+        );
+
         return DebugResource::from($value);
     }
 
@@ -298,6 +312,14 @@ final class Utils
      */
     public static function defaultUserAgent(): string
     {
+        \trigger_deprecation(
+            'guzzlehttp/guzzle',
+            '8.5',
+            '%s() is deprecated and will be removed in 9.0. Use %s::MAJOR_VERSION to build the string instead.',
+            __METHOD__,
+            ClientInterface::class
+        );
+
         return sprintf('GuzzleHttp/%d', ClientInterface::MAJOR_VERSION);
     }
 
@@ -310,6 +332,13 @@ final class Utils
      */
     public static function normalizeHeaderKeys(array $headers): array
     {
+        \trigger_deprecation(
+            'guzzlehttp/guzzle',
+            '8.5',
+            '%s() is deprecated and will be removed in 9.0.',
+            __METHOD__
+        );
+
         return HeaderProcessor::normalizeHeaderKeys($headers);
     }
 
@@ -325,6 +354,13 @@ final class Utils
      */
     public static function normalizeProtocols($protocols): array
     {
+        \trigger_deprecation(
+            'guzzlehttp/guzzle',
+            '8.5',
+            '%s() is deprecated and will be removed in 9.0.',
+            __METHOD__
+        );
+
         return Protocols::normalize($protocols);
     }
 }
