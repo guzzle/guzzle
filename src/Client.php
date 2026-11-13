@@ -683,6 +683,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             : ($this->config[$option] ?? null);
     }
 
+    private static function defaultUserAgent(): string
+    {
+        return sprintf('GuzzleHttp/%d', ClientInterface::MAJOR_VERSION);
+    }
+
     private function buildUri(
         UriInterface $uri,
         #[\SensitiveParameter]
@@ -894,7 +899,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         // Add the default user-agent header.
         if (!isset($this->config['headers'])) {
-            $this->config['headers'] = ['User-Agent' => Utils::defaultUserAgent()];
+            $this->config['headers'] = ['User-Agent' => self::defaultUserAgent()];
         } else {
             self::assertHeaderOptionTypes($this->config['headers']);
 
@@ -908,7 +913,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             }
 
             if (!$hasUserAgent) {
-                $this->config['headers']['User-Agent'] = Utils::defaultUserAgent();
+                $this->config['headers']['User-Agent'] = self::defaultUserAgent();
             }
         }
     }

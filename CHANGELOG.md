@@ -9,6 +9,15 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Add `Utils::setDefaultHandlerFactory()` to replace the default handler
 
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.4`
+
+### Deprecated
+
+- Deprecated `Utils::defaultUserAgent()` in favor of `ClientInterface::MAJOR_VERSION`
+- Deprecated `Utils::headersFromLines()`, `Utils::normalizeHeaderKeys()`, `Utils::debugResource()`, and `Utils::normalizeProtocols()`
+
 
 ## 8.4.0 - 2026-11-12
 
