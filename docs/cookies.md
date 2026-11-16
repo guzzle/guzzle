@@ -38,6 +38,18 @@ header contains at most 150 stored cookies, and its canonical line including
 `Cookie: ` is limited to 8,190 bytes. Cookies stored later are omitted after
 either output limit is reached.
 
+> [!WARNING]
+> The built-in jars do not consult the
+> [Public Suffix List](https://publicsuffix.org/). A server can therefore set a
+> cookie for a public suffix it sits under, such as `Domain=com` or
+> `Domain=co.uk`, and Guzzle will send that cookie to every other host under
+> that suffix that shares the jar. Guzzle does not bundle the list, because it
+> is published under the Mozilla Public License 2.0 rather than Guzzle's MIT
+> license, and because a copy shipped inside an installed library goes out of
+> date. Use a separate jar for each origin or trust boundary, or extend
+> `CookieJar` and reject such domains in `setCookie()` using a list you keep
+> current.
+
 You can manually set cookies into a cookie jar with the named constructor
 `fromArray(array $cookies, $domain)`.
 
