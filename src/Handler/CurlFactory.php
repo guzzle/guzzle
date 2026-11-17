@@ -2511,6 +2511,10 @@ final class CurlFactory implements CurlFactoryInterface
 
             foreach ($values as $value) {
                 $value = (string) $value;
+                if (\strpos("$name$value", "\0") !== false) {
+                    throw new RequestException('Request header fields must not contain a NUL byte.', $easy->request);
+                }
+
                 if ($value === '') {
                     // cURL requires a special format for empty headers.
                     // See https://github.com/guzzle/guzzle/issues/1882 for more details.
