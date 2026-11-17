@@ -512,6 +512,25 @@ class CurlFactoryTest extends TestCase
         self::assertSame(['Accept: application/json'], $conf[\CURLOPT_HTTPHEADER]);
     }
 
+    /**
+     * @dataProvider headerFieldWithNulProvider
+     */
+    public function testRejectsAHeaderFieldWithANulByteFromACustomRequest(string $name, string $value): void
+    {
+        $factory = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Request header fields must not contain a NUL byte.');
+
+        $factory->create(self::requestWithUnvalidatedHeader($name, $value), []);
+    }
+
+    public static function headerFieldWithNulProvider(): iterable
+    {
+        yield 'name with nul' => ["X-Foo\0", 'bar'];
+        yield 'value with nul' => ['X-Foo', "bar\0baz"];
+    }
+
     public function testAppliesConfiguredCurlShareHandle(): void
     {
         self::skipIfCurlShareIsUnavailable();
@@ -4315,6 +4334,40 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_HTTP_VERSION_1_1, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
     }
 
+    /**
+     * @dataProvider methodWithLineBreakProvider
+     */
+    public function testRejectsMethodWithLineBreak(string $method): void
+    {
+        $factory = new CurlFactory(3);
+        $request = self::requestWithMethod($method);
+
+        try {
+            $factory->create($request, []);
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertSame('HTTP method must not contain a carriage return or line feed.', $e->getMessage());
+        }
+    }
+
+    public static function methodWithLineBreakProvider(): iterable
+    {
+        yield 'crlf' => ["GET /other HTTP/1.1\r\nX-Injected: value\r\nX-Ignored:"];
+        yield 'line feed' => ["GET\n"];
+        yield 'carriage return' => ["GET\r/other"];
+    }
+
+    public function testRejectsMethodWithNulWhenSettingTheCurlOption(): void
+    {
+        $factory = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unable to set cURL option CURLOPT_CUSTOMREQUEST');
+
+        $factory->create(self::requestWithMethod("GE\0T"), []);
+    }
+
     public function testMultiplexWaitSetsPipewaitForHttp2Requests()
     {
         if (!CurlVersion::supportsHttp2() || !CurlVersion::supportsMultiplex()) {
@@ -6570,6 +6623,46 @@ class CurlFactoryTest extends TestCase
         } finally {
             self::setCurlVersionInfo($previousVersionInfo);
         }
+    }
+
+    private static function requestWithMethod(string $method): RequestInterface
+    {
+        return new class($method) extends Psr7\Request {
+            /** @var string */
+            private $unvalidatedMethod;
+
+            public function __construct(string $method)
+            {
+                parent::__construct('GET', Server::$url);
+
+                $this->unvalidatedMethod = $method;
+            }
+
+            public function getMethod(): string
+            {
+                return $this->unvalidatedMethod;
+            }
+        };
+    }
+
+    private static function requestWithUnvalidatedHeader(string $name, string $value): RequestInterface
+    {
+        return new class($name, $value) extends Psr7\Request {
+            /** @var array<string, string[]> */
+            private $unvalidatedHeaders;
+
+            public function __construct(string $name, string $value)
+            {
+                parent::__construct('GET', Server::$url);
+
+                $this->unvalidatedHeaders = [$name => [$value]];
+            }
+
+            public function getHeaders(): array
+            {
+                return parent::getHeaders() + $this->unvalidatedHeaders;
+            }
+        };
     }
 
     private static function proxyHeaderOption(): int
