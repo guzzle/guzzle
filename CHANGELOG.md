@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.5.2 - 2026-11-17
+
+### Security
+
+- Exclude URI fragments from stream handler request targets (GHSA-gqx6-m769-3x35)
+
+
 ## 8.5.1 - 2026-11-17
 
 ### Fixed
