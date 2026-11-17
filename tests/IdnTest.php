@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 class IdnTest extends TestCase
 {
     /**
-     * @requires extension idn
+     * @requires function idn_to_ascii
      */
     public function testConvertUri(): void
     {
