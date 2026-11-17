@@ -282,15 +282,18 @@ class CurlMultiHandlerTest extends TestCase
     {
         Server::flush();
 
-        $handler = new CurlMultiHandler(['select_timeout' => 5]);
+        $handler = new CurlMultiHandler();
         $target = $handler(new Request('GET', Server::$url.'guzzle-server/read-timeout'), []);
         $failure = new \RuntimeException('Interrupted.');
 
-        P\Utils::queue()->add(static function () use ($failure): void {
-            throw $failure;
-        });
-
         try {
+            // The queued throw would otherwise precede the first native tick.
+            self::driveUntilActiveTransferCount($handler, 1);
+
+            P\Utils::queue()->add(static function () use ($failure): void {
+                throw $failure;
+            });
+
             try {
                 $target->wait();
                 self::fail('Expected the interrupting throwable.');
