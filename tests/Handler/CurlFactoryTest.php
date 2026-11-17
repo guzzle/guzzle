@@ -5804,6 +5804,21 @@ class CurlFactoryTest extends TestCase
         self::assertEquals('foo', (string) $sent->getBody());
     }
 
+    public function testRemovesContentLengthCaseVariantsFromCustomRequest(): void
+    {
+        $factory = new CurlFactory(3);
+        $request = new class('PUT', Server::$url, ['Content-Length' => '3'], 'foo') extends Psr7\Request {
+            public function getHeaders(): array
+            {
+                return parent::getHeaders() + ['CONTENT-LENGTH' => ['1']];
+            }
+        };
+
+        $factory->create($request, []);
+
+        self::assertNotContains('CONTENT-LENGTH: 1', $_SERVER['_curl'][\CURLOPT_HTTPHEADER]);
+    }
+
     public function testSendsPostWithNoBodyOrDefaultContentType(): void
     {
         Server::flush();
