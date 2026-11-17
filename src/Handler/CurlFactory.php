@@ -2108,6 +2108,11 @@ class CurlFactory implements CurlFactoryInterface
                     throw new RequestException('Request header fields must not contain a NUL byte.', $easy->request);
                 }
 
+                // A field with a line break keeps the exception normalizeCurlHeaderOptions() throws.
+                if (\strpbrk("$name$value", "\r\n") === false && 1 !== \preg_match('/^[a-zA-Z0-9\'`#$%&*+.^_|~!-]+$/D', (string) $name)) {
+                    throw new RequestException('Request header names must be valid HTTP tokens.', $easy->request);
+                }
+
                 if ($value === '') {
                     // cURL requires a special format for empty headers.
                     // See https://github.com/guzzle/guzzle/issues/1882 for more details.

@@ -9,6 +9,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Remove every case variant when the cURL handlers remove a request header
 - Reject third-party URIs whose string form is malformed or names another origin
+- Reject request header names that are not HTTP tokens in the built-in handlers
 
 
 ## 7.16.3 - 2026-11-17

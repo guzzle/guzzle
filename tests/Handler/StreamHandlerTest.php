@@ -145,6 +145,35 @@ class StreamHandlerTest extends TestCase
         yield 'value with nul' => ['X-Foo', "bar\0baz"];
     }
 
+    /**
+     * @dataProvider invalidHeaderNameProvider
+     */
+    public function testDoesNotTransferAnInvalidHeaderNameFromACustomRequest(string $name): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $request = self::requestWithUnvalidatedHeader($name, 'bar');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertSame('Request header names must be valid HTTP tokens.', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public static function invalidHeaderNameProvider(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'colon' => ['Content-Length:'];
+        yield 'colon and value' => ['X-Other: value; X-Rest'];
+        yield 'trailing space' => ['Content-Length '];
+    }
+
     private static function requestWithUnvalidatedHeader(string $name, string $value): RequestInterface
     {
         return new class($name, $value) extends Request {
