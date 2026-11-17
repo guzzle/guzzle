@@ -531,6 +531,46 @@ class CurlFactoryTest extends TestCase
         yield 'value with nul' => ['X-Foo', "bar\0baz"];
     }
 
+    /**
+     * @dataProvider invalidHeaderNameProvider
+     */
+    public function testRejectsAnInvalidHeaderNameFromACustomRequest(string $name): void
+    {
+        $factory = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Request header names must be valid HTTP tokens.');
+
+        $factory->create(self::requestWithUnvalidatedHeader($name, 'bar'), []);
+    }
+
+    public static function invalidHeaderNameProvider(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'colon' => ['Content-Length:'];
+        yield 'colon and value' => ['X-Other: value; X-Rest'];
+        yield 'trailing space' => ['Content-Length '];
+    }
+
+    /**
+     * @dataProvider headerFieldWithLineBreakProvider
+     */
+    public function testRejectsAHeaderFieldWithALineBreakFromACustomRequestAsACurlHeaderEntry(string $name, string $value): void
+    {
+        $factory = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_HTTPHEADER entries must not contain a carriage return or line feed.');
+
+        $factory->create(self::requestWithUnvalidatedHeader($name, $value), []);
+    }
+
+    public static function headerFieldWithLineBreakProvider(): iterable
+    {
+        yield 'name with crlf' => ["X-Foo\r\nX-Injected", 'bar'];
+        yield 'invalid name and value with crlf' => ['X-Other: value; X-Rest', "bar\r\nX-Injected: value"];
+    }
+
     public function testAppliesConfiguredCurlShareHandle(): void
     {
         self::skipIfCurlShareIsUnavailable();
