@@ -125,6 +125,51 @@ class HostValidatorTest extends TestCase
         yield 'overflowing part' => ['0x100000000.'];
     }
 
+    public static function inconsistentForeignUriProvider(): iterable
+    {
+        yield 'host' => ['http://evil.test/', 'http', 'good.test', null];
+        yield 'host that continues' => ['http://good.test.80/', 'http', 'good.test', null];
+        yield 'host after a slash in the userinfo' => ['http://evil.test/x@good.test/', 'http', 'good.test', null];
+        yield 'host after a question mark in the userinfo' => ['http://evil.test?x@good.test/', 'http', 'good.test', null];
+        yield 'host after a hash in the userinfo' => ['http://evil.test#x@good.test/', 'http', 'good.test', null];
+        yield 'host after an at sign in the userinfo' => ['http://x@evil.test:8080@good.test/', 'http', 'good.test', null];
+        yield 'port' => ['http://good.test:8080/', 'http', 'good.test', null];
+        yield 'port that is omitted' => ['http://good.test/', 'http', 'good.test', 8080];
+        yield 'port that is not a number' => ['http://good.test:80x/', 'http', 'good.test', null];
+        yield 'scheme' => ['http://good.test/', 'https', 'good.test', null];
+        yield 'scheme case' => ['HTTPS://good.test/', 'https', 'good.test', null];
+        yield 'no authority' => ['/path', 'http', 'good.test', null];
+    }
+
+    public static function foreignUriWithControlCharactersProvider(): iterable
+    {
+        yield 'crlf' => ["http://example.com/a\r\nX-Injected: value"];
+        yield 'trailing line feed' => ["http://example.com/a\n"];
+        yield 'tab' => ["http://example.com/a\tb"];
+        yield 'nul' => ["http://example.com/a\0b"];
+        yield 'delete' => ["http://example.com/a\x7Fb"];
+    }
+
+    public static function consistentForeignUriProvider(): iterable
+    {
+        yield 'default port' => ['http://example.com/', 'http', 'example.com', null];
+        yield 'default port written in the string' => ['http://example.com:80/', 'http', 'example.com', null];
+        yield 'default port reported by the component' => ['https://example.com/', 'https', 'example.com', 443];
+        yield 'custom port' => ['http://example.com:8080/', 'http', 'example.com', 8080];
+        yield 'empty port' => ['http://example.com:/', 'http', 'example.com', null];
+        yield 'host case' => ['http://EXAMPLE.com/', 'http', 'example.COM', null];
+        yield 'userinfo' => ['http://user:pass@example.com/', 'http', 'example.com', null];
+        yield 'space in userinfo' => ['http://us er:pass@example.com/', 'http', 'example.com', null];
+        yield 'bracket in userinfo' => ['http://[svc]:pass@example.com/', 'http', 'example.com', null];
+        yield 'userinfo and ipv6' => ['http://user:pass@[::1]/', 'http', '[::1]', null];
+        yield 'delimiters after the authority' => ['http://example.com/a@b//c?d=//e@f#g@h', 'http', 'example.com', null];
+        yield 'ipv6' => ['http://[::1]:8080/', 'http', '[::1]', 8080];
+        yield 'raw space and utf-8 after the authority' => ["http://example.com/a b/caf\xC3\xA9", 'http', 'example.com', null];
+        yield 'bytes that are not utf-8' => ["http://us\xE9r@example.com/caf\xE9", 'http', 'example.com', null];
+        yield 'no scheme' => ['//example.com/', '', 'example.com', null];
+        yield 'no host' => ['/path', '', '', null];
+    }
+
     public static function acceptedHostProvider(): iterable
     {
         yield 'dns name' => ['example.com'];
@@ -300,6 +345,28 @@ class HostValidatorTest extends TestCase
     }
 
     /**
+     * @dataProvider inconsistentForeignUriProvider
+     */
+    public function testRejectsAForeignUriWhoseStringFormNamesAnotherOrigin(string $string, string $scheme, string $host, ?int $port): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must have a string form with the scheme, host and port that its components report');
+
+        HostValidator::assertRequestHost($this->requestWithForeignUri($string, $scheme, $host, $port));
+    }
+
+    /**
+     * @dataProvider foreignUriWithControlCharactersProvider
+     */
+    public function testRejectsAForeignUriWhoseStringFormHasControlCharacters(string $string): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must have a string form free of control characters');
+
+        HostValidator::assertRequestHost($this->requestWithForeignUri($string, 'http', 'example.com', null));
+    }
+
+    /**
      * @dataProvider acceptedHostProvider
      */
     public function testAcceptsATransportSafeUriHost(string $host): void
@@ -321,6 +388,18 @@ class HostValidatorTest extends TestCase
 
             self::assertSame($host, $request->getUri()->getHost());
         }
+    }
+
+    /**
+     * @dataProvider consistentForeignUriProvider
+     */
+    public function testAcceptsAForeignUriWhoseStringFormNamesTheSameOrigin(string $string, string $scheme, string $host, ?int $port): void
+    {
+        $request = $this->requestWithForeignUri($string, $scheme, $host, $port);
+
+        HostValidator::assertRequestHost($request);
+
+        self::assertSame($string, (string) $request->getUri());
     }
 
     public function testAcceptsAHostHeaderWithAPort(): void
@@ -387,10 +466,27 @@ class HostValidatorTest extends TestCase
         }
     }
 
+    private function requestWithForeignUri(string $string, string $scheme, string $host, ?int $port): RequestInterface
+    {
+        $uri = $this->createMock(UriInterface::class);
+        $uri->method('getScheme')->willReturn($scheme);
+        $uri->method('getHost')->willReturn($host);
+        $uri->method('getPort')->willReturn($port);
+        $uri->method('__toString')->willReturn($string);
+
+        $request = $this->createMock(RequestInterface::class);
+        $request->method('getUri')->willReturn($uri);
+        $request->method('getHeader')->willReturn([]);
+
+        return $request;
+    }
+
     private function requestWithUriHost(string $host): RequestInterface
     {
         $uri = $this->createMock(UriInterface::class);
+        $uri->method('getScheme')->willReturn('http');
         $uri->method('getHost')->willReturn($host);
+        $uri->method('getPort')->willReturn(1);
         $uri->method('__toString')->willReturn('http://'.$host.':1/');
 
         $request = $this->createMock(RequestInterface::class);
