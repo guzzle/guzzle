@@ -7,6 +7,7 @@ namespace GuzzleHttp\Handler;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\UriInterface;
 
 /**
  * Rejects request hosts that a handler could resolve differently from the host
@@ -26,7 +27,9 @@ final class HostValidator
      * A handler reparses the URI but sends the Host header as given. The URI
      * host must therefore be printable ASCII, free of percent escapes, a valid
      * RFC 3986 host, and not numeric-looking parts followed by trailing dots.
-     * Every Host header value must be printable ASCII.
+     * The string form of the URI must be free of control characters and name
+     * the scheme, host, and port that its components report. Every Host header
+     * value must be printable ASCII.
      *
      * @throws RequestException
      */
@@ -34,7 +37,10 @@ final class HostValidator
         #[\SensitiveParameter]
         RequestInterface $request
     ): void {
-        self::assertUriHost($request->getUri()->getHost(), $request);
+        $uri = $request->getUri();
+
+        self::assertUriHost($uri->getHost(), $request);
+        self::assertUriString($uri, $request);
 
         foreach ($request->getHeader('Host') as $value) {
             self::assertPrintableAscii((string) $value, 'The request Host header "%s" must contain only printable ASCII characters, because an intermediary or an origin server can otherwise read it as an authority that differs from the one the request names. An internationalized host name has an A-label form that this rule accepts.', $request);
@@ -75,6 +81,73 @@ final class HostValidator
         if (\str_ends_with($host, '.') && self::isNumericIpv4Host(\rtrim($host, '.'))) {
             throw new RequestException(\sprintf('The request URI host "%s" must not be written as one to four decimal, octal or hexadecimal parts followed by one or more trailing dots, because a handler can read that spelling as an IPv4 address and connect to that address while the rest of the process reads a name.', self::escape($host)), $request);
         }
+    }
+
+    /**
+     * A handler connects to the string form of the URI, while the rest of the
+     * process reads its components. GuzzleHttp\Psr7\Uri builds an encoded
+     * string form from its components, so only other UriInterface values are
+     * checked.
+     *
+     * @throws RequestException
+     */
+    private static function assertUriString(
+        #[\SensitiveParameter]
+        UriInterface $uri,
+        #[\SensitiveParameter]
+        RequestInterface $request
+    ): void {
+        $host = $uri->getHost();
+
+        if ($host === '' || \get_class($uri) === Psr7\Uri::class) {
+            return;
+        }
+
+        $string = (string) $uri;
+
+        if (\preg_match('/\A[^\x00-\x1F\x7F]*\z/D', $string) !== 1) {
+            throw new RequestException('The request URI must have a string form free of control characters, because a handler writes the string form into the request line and can otherwise send a request line that differs from the one the request names.', $request);
+        }
+
+        if (!self::namesOrigin($string, $uri->getScheme(), $host, $uri->getPort())) {
+            throw new RequestException('The request URI must have a string form with the scheme, host and port that its components report, because a handler connects to the string form and can otherwise connect to an origin that differs from the one the request names.', $request);
+        }
+    }
+
+    /**
+     * Reports whether a URI string starts with the given scheme, host, and
+     * port, written as given apart from host letter case and the default port.
+     */
+    private static function namesOrigin(string $string, string $scheme, string $host, ?int $port): bool
+    {
+        $prefix = ($scheme === '' ? '' : $scheme.':').'//';
+        $start = \strlen($prefix);
+
+        if (\strncmp($string, $prefix, $start) !== 0) {
+            return false;
+        }
+
+        // PHP reads the host after the last "@", older libcurl after the first.
+        $authority = \substr($string, $start, \strcspn($string, '/?#', $start));
+        $at = \strpos($authority, '@');
+        if ($at !== false) {
+            $authority = \substr($authority, $at + 1);
+        }
+
+        if (!Psr7\Utils::caselessEquals(\substr($authority, 0, \strlen($host)), $host)) {
+            return false;
+        }
+
+        $written = \substr($authority, \strlen($host));
+        $default = ['http' => 80, 'https' => 443][$scheme] ?? null;
+
+        if ($written === '' || $written === ':') {
+            return $port === null || $port === $default;
+        }
+
+        return $written[0] === ':'
+            && \strspn($written, '0123456789', 1) === \strlen($written) - 1
+            && (int) \substr($written, 1) === ($port ?? $default);
     }
 
     /**

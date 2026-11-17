@@ -2059,13 +2059,15 @@ when redirects are enabled. URI objects implementing
 > clears HTTP auth, and it drops `Referer` whenever the scheme changes
 > (including an `https` to `http` downgrade) and otherwise sends only the origin
 > on cross-origin redirects — all by reading `getScheme()`, `getHost()`, and
-> `getPort()` from the URI built from the `Location` header. A custom URI that
-> misreports those, or whose getters disagree with the address actually dialed,
-> can make a cross-origin redirect look same-origin and leak credentials to the
-> target (the class of issue behind CVE-2022-31042, CVE-2022-31043,
-> CVE-2022-31090, and CVE-2022-31091), or enable SSRF and protocol allow-list
-> bypass. The default `GuzzleHttp\Psr7\Uri` lower-cases and validates the scheme
-> and host and strips default ports; supply a URI implementation you trust.
+> `getPort()` from the URI built from the `Location` header. The built-in
+> handlers reject a URI whose string form contains control characters or names a
+> different scheme, host, or port than those getters report; a custom handler
+> receives it unchecked. A custom URI that misreports those can still make a
+> cross-origin redirect look same-origin and leak credentials to the target (the
+> class of issue behind CVE-2022-31042, CVE-2022-31043, CVE-2022-31090, and
+> CVE-2022-31091), or enable SSRF and protocol allow-list bypass. The default
+> `GuzzleHttp\Psr7\Uri` lower-cases and validates the scheme and host and strips
+> default ports; supply a URI implementation you trust.
 
 ## sink
 
