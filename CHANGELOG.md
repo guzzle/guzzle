@@ -7,6 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Security
 
+- Exclude URI fragments from stream handler request targets (GHSA-gqx6-m769-3x35)
 - Reject bracketed request URI hosts that are not IP literals (GHSA-hpvq-6rrx-pc47)
 
 ### Changed
