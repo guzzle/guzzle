@@ -1035,7 +1035,7 @@ final class StreamHandler
                     }
                 }
                 try {
-                    $resource = @\fopen((string) $uri, 'r', false, $contextResource);
+                    $resource = @\fopen((string) $uri->withFragment(''), 'r', false, $contextResource);
                 } finally {
                     if ($blankFrom && --self::$fromBlankDepth === 0 && self::$fromToRestore !== false) {
                         \ini_set('from', self::$fromToRestore);
