@@ -140,6 +140,10 @@ class StreamHandler
             throw new \InvalidArgumentException('Passing the "on_trailers" request option to the stream handler is not supported because the stream handler cannot observe trailers.');
         }
 
+        if (\strpbrk($request->getMethod(), "\r\n\0") !== false) {
+            throw new RequestException('HTTP method must not contain a carriage return, line feed or NUL byte.', $request);
+        }
+
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {
