@@ -612,6 +612,25 @@ class CurlFactoryTest extends TestCase
         self::assertSame(['Accept: application/json'], $conf[\CURLOPT_HTTPHEADER]);
     }
 
+    /**
+     * @dataProvider headerFieldWithNulProvider
+     */
+    public function testRejectsAHeaderFieldWithANulByteFromACustomRequest(string $name, string $value): void
+    {
+        $factory = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Request header fields must not contain a NUL byte.');
+
+        $factory->create(self::requestWithUnvalidatedHeader($name, $value), []);
+    }
+
+    public static function headerFieldWithNulProvider(): iterable
+    {
+        yield 'name with nul' => ["X-Foo\0", 'bar'];
+        yield 'value with nul' => ['X-Foo', "bar\0baz"];
+    }
+
     public function testAppliesConfiguredCurlShareHandle(): void
     {
         self::skipIfCurlShareIsUnavailable();
@@ -10605,6 +10624,26 @@ class CurlFactoryTest extends TestCase
                 $new->protocolVersion = $version;
 
                 return $new;
+            }
+        };
+    }
+
+    private static function requestWithUnvalidatedHeader(string $name, string $value): RequestInterface
+    {
+        return new class($name, $value) extends Psr7\Request {
+            /** @var array<string, string[]> */
+            private $unvalidatedHeaders;
+
+            public function __construct(string $name, string $value)
+            {
+                parent::__construct('GET', Server::$url);
+
+                $this->unvalidatedHeaders = [$name => [$value]];
+            }
+
+            public function getHeaders(): array
+            {
+                return parent::getHeaders() + $this->unvalidatedHeaders;
             }
         };
     }

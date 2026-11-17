@@ -251,6 +251,37 @@ class StreamHandlerTest extends TestCase
     }
 
     /**
+     * @dataProvider headerFieldWithLineBreakOrNulProvider
+     */
+    public function testDoesNotTransferAHeaderFieldWithALineBreakOrNulFromACustomRequest(string $name, string $value): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $request = self::requestWithUnvalidatedHeader($name, $value);
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertSame('Request header fields must not contain a carriage return, line feed or NUL byte.', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public static function headerFieldWithLineBreakOrNulProvider(): iterable
+    {
+        yield 'name with crlf' => ["X-Foo\r\nX-Injected", 'bar'];
+        yield 'name with nul' => ["X-Foo\0", 'bar'];
+        yield 'value with crlf' => ['X-Foo', "bar\r\nX-Injected: value"];
+        yield 'value with line feed' => ['X-Foo', "bar\nX-Injected: value"];
+        yield 'value with carriage return' => ['X-Foo', "bar\rX-Injected: value"];
+        yield 'value with nul' => ['X-Foo', "bar\0baz"];
+    }
+
+    /**
      * @dataProvider forceIpResolveIpLiteralProvider
      */
     public function testResolveHostDoesNotResolveIpLiterals(string $host, string $forceIpResolve): void
@@ -6647,6 +6678,26 @@ class StreamHandlerTest extends TestCase
                 $new->protocolVersion = $version;
 
                 return $new;
+            }
+        };
+    }
+
+    private static function requestWithUnvalidatedHeader(string $name, string $value): RequestInterface
+    {
+        return new class($name, $value) extends Request {
+            /** @var array<string, string[]> */
+            private $unvalidatedHeaders;
+
+            public function __construct(string $name, string $value)
+            {
+                parent::__construct('GET', Server::$url);
+
+                $this->unvalidatedHeaders = [$name => [$value]];
+            }
+
+            public function getHeaders(): array
+            {
+                return parent::getHeaders() + $this->unvalidatedHeaders;
             }
         };
     }
