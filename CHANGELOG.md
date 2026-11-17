@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.16.3 - Upcoming
+
+### Security
+
+- Reject bracketed request URI hosts that are not IP literals (GHSA-hpvq-6rrx-pc47)
+
+
 ## 7.16.2 - 2026-11-17
 
 ### Fixed

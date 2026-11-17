@@ -2274,6 +2274,29 @@ class StreamHandlerTest extends TestCase
         self::assertSame([], Server::received());
     }
 
+    public function testDoesNotTransferAForeignUriHostWithBracketsAroundAnIpv4Address(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $uri = $this->createMock(UriInterface::class);
+        $uri->method('getScheme')->willReturn('http');
+        $uri->method('getHost')->willReturn('[127.0.0.1]');
+        $uri->method('__toString')->willReturn('http://[127.0.0.1]:'.Server::$port.'/');
+
+        $handler = new StreamHandler();
+        $request = (new Request('GET', Server::$url))->withUri($uri, true);
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must not contain a URI authority delimiter', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
     private static function captureDeprecation(callable $callback): ?string
     {
         $deprecation = null;

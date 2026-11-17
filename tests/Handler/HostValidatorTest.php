@@ -79,8 +79,29 @@ class HostValidatorTest extends TestCase
         yield 'backslash' => ['evil.test\\x'];
         yield 'bare colon' => ['evil.test:8080'];
         yield 'unclosed bracket' => ['[::1'];
+        yield 'unopened bracket' => ['x::1]'];
         yield 'trailing bracket' => ['[::1]x'];
         yield 'interior brackets' => ['a[b]c'];
+    }
+
+    public static function bracketedNonLiteralHostProvider(): iterable
+    {
+        yield 'port before a second closing bracket' => ['[::1]:8080]'];
+        yield 'doubled closing bracket' => ['[::1]]'];
+        yield 'two bracketed groups' => ['[::1][::2]'];
+        yield 'bracketed ipv4' => ['[127.0.0.1]'];
+        yield 'bracketed shortened numeric' => ['[127.1]'];
+        yield 'bracketed name' => ['[evil.test]'];
+        yield 'bracketed non-address' => ['[not:an:ip]'];
+        yield 'over-long ipv6 group' => ['[::00001]'];
+        yield 'zero padded ipv4 tail' => ['[::ffff:127.000.000.001]'];
+        yield 'empty brackets' => ['[]'];
+        yield 'ipvfuture without a version' => ['[v.ab]'];
+        yield 'ipvfuture with a non-hexadecimal version' => ['[vg.ab]'];
+        yield 'ipvfuture without a dot' => ['[v1ab]'];
+        yield 'ipvfuture without an address' => ['[v1.]'];
+        yield 'text before an ipvfuture literal' => ['[xv1.ab]'];
+        yield 'port after an ipvfuture literal' => ['[v1.ab]:8080]'];
     }
 
     public static function rootDotAddressHostProvider(): iterable
@@ -126,6 +147,8 @@ class HostValidatorTest extends TestCase
         yield 'ipv4' => ['127.0.0.1'];
         yield 'ipv6' => ['[::1]'];
         yield 'noncanonical ipv6' => ['[0:0:0:0:0:0:0:1]'];
+        yield 'ipv4-mapped ipv6' => ['[::ffff:127.0.0.1]'];
+        yield 'ipvfuture' => ['[v1.ab]'];
         yield 'uppercase' => ['EXAMPLE.COM'];
         // Long-standing inet_aton shorthand remains accepted on 7.15.
         yield 'shortened numeric' => ['127.1'];
@@ -245,6 +268,17 @@ class HostValidatorTest extends TestCase
     }
 
     /**
+     * @dataProvider bracketedNonLiteralHostProvider
+     */
+    public function testRejectsABracketedUriHostThatIsNotAnIpLiteral(string $host): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('must not contain a URI authority delimiter');
+
+        HostValidator::assertRequestHost($this->requestWithUriHost($host));
+    }
+
+    /**
      * @dataProvider rootDotAddressHostProvider
      */
     public function testRejectsNumericLookingPartsWithARootDot(string $host): void
@@ -276,6 +310,17 @@ class HostValidatorTest extends TestCase
         HostValidator::assertRequestHost($request);
 
         self::assertSame($uri->getHost(), $request->getUri()->getHost());
+    }
+
+    public function testAcceptsAnUppercaseIpLiteralFromAForeignUriImplementation(): void
+    {
+        foreach (['[2001:DB8::1]', '[V1.AB]'] as $host) {
+            $request = $this->requestWithUriHost($host);
+
+            HostValidator::assertRequestHost($request);
+
+            self::assertSame($host, $request->getUri()->getHost());
+        }
     }
 
     public function testAcceptsAHostHeaderWithAPort(): void

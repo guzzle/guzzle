@@ -83,9 +83,9 @@ final class HostValidator
     /**
      * Rejects a delimiter the transport could treat as the end of the URI host.
      *
-     * This mirrors GuzzleHttp\Psr7\Uri::assertValidHost() and only affects
-     * third-party UriInterface values. Host headers may carry a port and are
-     * sent verbatim.
+     * This mirrors GuzzleHttp\Psr7\Uri::assertValidHost(), but brackets must
+     * enclose an IP literal. Host headers may carry a port and are sent
+     * verbatim.
      *
      * @throws RequestException
      */
@@ -99,7 +99,7 @@ final class HostValidator
         }
 
         if (\strpos($host, '[') !== false || \strpos($host, ']') !== false) {
-            if (\strpos($host, '[') !== 0 || \substr($host, -1) !== ']') {
+            if (!self::isIpLiteral($host)) {
                 throw new RequestException(\sprintf($message, self::escape($host)), $request);
             }
 
@@ -109,6 +109,24 @@ final class HostValidator
         if (\strpos($host, ':') !== false) {
             throw new RequestException(\sprintf($message, self::escape($host)), $request);
         }
+    }
+
+    /**
+     * Reports whether a host is a bracketed IPv6 or IPvFuture literal.
+     */
+    private static function isIpLiteral(string $host): bool
+    {
+        if (\strpos($host, '[') !== 0 || \substr($host, -1) !== ']') {
+            return false;
+        }
+
+        $address = (string) \substr($host, 1, -1);
+
+        if (\filter_var($address, \FILTER_VALIDATE_IP, \FILTER_FLAG_IPV6) !== false) {
+            return true;
+        }
+
+        return \preg_match('/\Av[0-9a-f]+\.[A-Za-z0-9\-._~!$&\'()*+,;=:]+\z/iD', $address) === 1;
     }
 
     /**
