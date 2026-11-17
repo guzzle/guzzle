@@ -116,6 +116,13 @@ $client->request('GET', 'https://example.com');
 The convenience methods such as `$client->get()`, `$client->post()`, and their
 async variants continue to use uppercase standard methods.
 
+#### Request Method Validation
+
+The built-in cURL and stream handlers reject a request whose method is not an
+HTTP token, whichever PSR-7 implementation created the request. Guzzle 7
+handlers reject only a method that contains a carriage return, line feed, or NUL
+byte.
+
 #### Auth Request Option Changes
 
 Digest authentication is no longer implemented with cURL `CURLOPT_HTTPAUTH` and

@@ -207,9 +207,9 @@ class StreamHandlerTest extends TestCase
     }
 
     /**
-     * @dataProvider methodWithLineBreakOrNulProvider
+     * @dataProvider invalidMethodProvider
      */
-    public function testRejectsMethodWithLineBreakOrNul(string $method): void
+    public function testRejectsInvalidMethod(string $method): void
     {
         $handler = new StreamHandler();
         $request = self::requestWithMethod($method);
@@ -220,16 +220,28 @@ class StreamHandlerTest extends TestCase
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertNotInstanceOf(ResponseException::class, $e);
-            self::assertSame('HTTP method must not contain a carriage return, line feed or NUL byte.', $e->getMessage());
+            self::assertSame('HTTP method must be a valid HTTP token.', $e->getMessage());
         }
     }
 
-    public static function methodWithLineBreakOrNulProvider(): iterable
+    public static function invalidMethodProvider(): iterable
     {
+        yield 'empty' => [''];
         yield 'crlf' => ["GET /other HTTP/1.1\r\nX-Injected: value\r\nX-Ignored:"];
         yield 'line feed' => ["GET\n"];
         yield 'carriage return' => ["GET\r/other"];
+        yield 'slash' => ['GET/other'];
+        yield 'space' => ['GET x'];
         yield 'nul' => ["GE\0T"];
+    }
+
+    public function testSendsMethodWithEveryTokenCharacter(): void
+    {
+        $handler = new StreamHandler();
+        $response = $handler(self::requestWithMethod("aZ09!#$%&'*+-.^_`|~"), ['stream' => true])->wait();
+        $opts = \stream_context_get_options($response->getBody()->detach());
+
+        self::assertSame("aZ09!#$%&'*+-.^_`|~", $opts['http']['method']);
     }
 
     /**

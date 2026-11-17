@@ -203,8 +203,8 @@ final class StreamHandler
             throw new RequestException('The stream handler cannot guarantee a multiplexed protocol; required multiplexing needs a cURL handler.', $request);
         }
 
-        if (\strpbrk($request->getMethod(), "\r\n\0") !== false) {
-            throw new RequestException('HTTP method must not contain a carriage return, line feed or NUL byte.', $request);
+        if (1 !== \preg_match('/^[a-zA-Z0-9\'`#$%&*+.^_|~!-]+$/D', $request->getMethod())) {
+            throw new RequestException('HTTP method must be a valid HTTP token.', $request);
         }
 
         $protocolVersion = $request->getProtocolVersion();

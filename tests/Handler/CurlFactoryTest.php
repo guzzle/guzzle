@@ -5280,9 +5280,9 @@ class CurlFactoryTest extends TestCase
     }
 
     /**
-     * @dataProvider methodWithLineBreakProvider
+     * @dataProvider invalidMethodProvider
      */
-    public function testRejectsMethodWithLineBreak(string $method): void
+    public function testRejectsInvalidMethod(string $method): void
     {
         $factory = new CurlFactory(3);
         $request = self::requestWithMethod($method);
@@ -5293,15 +5293,19 @@ class CurlFactoryTest extends TestCase
         } catch (RequestException $e) {
             self::assertSame($request, $e->getRequest());
             self::assertNotInstanceOf(ResponseException::class, $e);
-            self::assertSame('HTTP method must not contain a carriage return or line feed.', $e->getMessage());
+            self::assertSame('HTTP method must be a valid HTTP token.', $e->getMessage());
         }
     }
 
-    public static function methodWithLineBreakProvider(): iterable
+    public static function invalidMethodProvider(): iterable
     {
+        yield 'empty' => [''];
         yield 'crlf' => ["GET /other HTTP/1.1\r\nX-Injected: value\r\nX-Ignored:"];
         yield 'line feed' => ["GET\n"];
         yield 'carriage return' => ["GET\r/other"];
+        yield 'line feed and nul' => ["GE\0T\n"];
+        yield 'slash' => ['GET/other'];
+        yield 'space' => ['GET x'];
     }
 
     public function testRejectsMethodWithNulWhenSettingTheCurlOption(): void
@@ -5312,6 +5316,15 @@ class CurlFactoryTest extends TestCase
         $this->expectExceptionMessage('Unable to set cURL option CURLOPT_CUSTOMREQUEST');
 
         $factory->create(self::requestWithMethod("GE\0T"), []);
+    }
+
+    public function testSendsMethodWithEveryTokenCharacter(): void
+    {
+        $factory = new CurlFactory(3);
+
+        $factory->create(self::requestWithMethod("aZ09!#$%&'*+-.^_`|~"), []);
+
+        self::assertSame("aZ09!#$%&'*+-.^_`|~", $_SERVER['_curl'][\CURLOPT_CUSTOMREQUEST]);
     }
 
     public function testThrowsWhenHttp2IsUnsupported(): void
