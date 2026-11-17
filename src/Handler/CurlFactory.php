@@ -254,6 +254,10 @@ final class CurlFactory implements CurlFactoryInterface
         $this->assertOpen();
         self::validateRequestUriScheme($request);
 
+        if (\strpbrk($request->getMethod(), "\r\n") !== false) {
+            throw new RequestException('HTTP method must not contain a carriage return or line feed.', $request);
+        }
+
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {
@@ -2507,6 +2511,10 @@ final class CurlFactory implements CurlFactoryInterface
 
             foreach ($values as $value) {
                 $value = (string) $value;
+                if (\strpos("$name$value", "\0") !== false) {
+                    throw new RequestException('Request header fields must not contain a NUL byte.', $easy->request);
+                }
+
                 if ($value === '') {
                     // cURL requires a special format for empty headers.
                     // See https://github.com/guzzle/guzzle/issues/1882 for more details.

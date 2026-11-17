@@ -278,6 +278,64 @@ class CurlMultiHandlerTest extends TestCase
         }
     }
 
+    public function testSynchronousWaitInterruptedByThrowableCancelsTheTransfer(): void
+    {
+        Server::flush();
+
+        $handler = new CurlMultiHandler();
+        $target = $handler(new Request('GET', Server::$url.'guzzle-server/read-timeout'), []);
+        $failure = new \RuntimeException('Interrupted.');
+
+        try {
+            self::driveUntilActiveTransferCount($handler, 1);
+
+            P\Utils::queue()->add(static function () use ($failure): void {
+                throw $failure;
+            });
+
+            try {
+                $target->wait();
+                self::fail('Expected the interrupting throwable.');
+            } catch (\RuntimeException $e) {
+                self::assertSame($failure, $e);
+            }
+
+            self::assertTrue(P\State::isRejected($target));
+            self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
+    public function testSynchronousWaitInterruptedByThrowableNeverSendsADelayedRequest(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new CurlMultiHandler();
+        $target = $handler(new Request('GET', Server::$url), ['delay' => 100]);
+
+        P\Utils::queue()->add(static function (): void {
+            throw new \RuntimeException('Interrupted.');
+        });
+
+        try {
+            try {
+                $target->wait();
+                self::fail('Expected the interrupting throwable.');
+            } catch (\RuntimeException $e) {
+            }
+
+            $handler->execute();
+
+            self::assertSame([], Server::received());
+        } finally {
+            $handler->close();
+            Server::flush();
+        }
+    }
+
     public function testDelayedSynchronousWaitIsNotBoundToSiblingSelectTimeout(): void
     {
         Server::flush();

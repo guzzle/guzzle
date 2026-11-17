@@ -321,9 +321,13 @@ final class CurlMultiHandler
                 // Waiting cannot drive native cURL while a callback has the
                 // multi handle busy; fail the wait promptly instead of
                 // self-deadlocking.
-                $stalled = $this->multiExecDepth > 0
-                    ? $this->failNestedWait($id, $waitToken)
-                    : $this->executeUntil($id, $waitToken);
+                try {
+                    $stalled = $this->multiExecDepth > 0
+                        ? $this->failNestedWait($id, $waitToken)
+                        : $this->executeUntil($id, $waitToken);
+                } catch (\Throwable $e) {
+                    throw $this->discardInterruptedRequest($id, $waitToken, $e);
+                }
 
                 // Settling can be queued, and guzzlehttp/promises drains the
                 // queue before deciding a wait function achieved nothing.
@@ -1301,6 +1305,20 @@ final class CurlMultiHandler
         $entry['deferred']->reject($failure);
 
         return $stalled;
+    }
+
+    /**
+     * Cancels a request whose wait threw, since that rejects its promise.
+     */
+    private function discardInterruptedRequest(int $id, object $waitToken, \Throwable $failure): \Throwable
+    {
+        try {
+            $this->cancel($id, $waitToken);
+        } catch (\Throwable $e) {
+            // Preserve the original failure.
+        }
+
+        return $failure;
     }
 
     private function disposeEasyHandle(

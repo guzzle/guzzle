@@ -3,6 +3,15 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.5.1 - 2026-11-17
+
+### Fixed
+
+- Cancel cURL multi transfers whose synchronous wait throws instead of leaving them running
+- Reject CR, LF, and NUL in request header fields in the built-in handlers
+- Reject CR, LF, and NUL in request methods in the built-in handlers
+
+
 ## 8.5.0 - 2026-11-13
 
 ### Added
