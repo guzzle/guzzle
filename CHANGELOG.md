@@ -3,7 +3,7 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
-## 7.16.3 - Upcoming
+## 7.16.3 - 2026-11-17
 
 ### Security
 
