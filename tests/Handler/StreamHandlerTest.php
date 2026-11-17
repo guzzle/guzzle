@@ -1625,6 +1625,22 @@ class StreamHandlerTest extends TestCase
         self::assertSame('DEFAULT', $opts['ssl']['ciphers']);
     }
 
+    public function testExcludesUriFragmentFromFullRequestUri()
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'foo?baz=bar#fragment');
+        $response = $handler($request, [
+            'stream' => true,
+            'stream_context' => [
+                'http' => [
+                    'request_fulluri' => true,
+                ],
+            ],
+        ])->wait();
+        self::assertSame(Server::$url.'foo?baz=bar', $response->getBody()->getMetadata('uri'));
+    }
+
     public function testEnsuresThatStreamContextIsAnArray()
     {
         $this->expectException(\InvalidArgumentException::class);
