@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.5.1 - Upcoming
+
+### Fixed
+
+- Cancel cURL multi transfers whose synchronous wait throws instead of leaving them running
+
+
 ## 8.5.0 - 2026-11-13
 
 ### Added
