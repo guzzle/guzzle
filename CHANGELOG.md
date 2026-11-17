@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.16.2 - Upcoming
+
+### Fixed
+
+- Cancel cURL multi transfers whose synchronous wait throws instead of leaving them running
+
+
 ## 7.16.1 - 2026-10-25
 
 ### Fixed
