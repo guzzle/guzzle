@@ -667,6 +667,11 @@ class StreamHandler
             }
 
             foreach ($value as $val) {
+                $val = (string) $val;
+                if (\strpbrk("$name$val", "\r\n\0") !== false) {
+                    throw new RequestException('Request header fields must not contain a carriage return, line feed or NUL byte.', $request);
+                }
+
                 $headers .= "$name: $val\r\n";
             }
         }
