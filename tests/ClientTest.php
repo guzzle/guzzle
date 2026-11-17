@@ -3240,7 +3240,7 @@ class ClientTest extends TestCase
     }
 
     /**
-     * @requires extension idn
+     * @requires function idn_to_ascii
      */
     public function testIdnIsTranslatedToAsciiWhenConversionIsEnabled(): void
     {
@@ -3280,7 +3280,7 @@ class ClientTest extends TestCase
     }
 
     /**
-     * @requires extension idn
+     * @requires function idn_to_ascii
      */
     public function testExceptionOnInvalidIdn(): void
     {
@@ -3295,7 +3295,7 @@ class ClientTest extends TestCase
     /**
      * @depends testCanUseRelativeUriWithSend
      *
-     * @requires extension idn
+     * @requires function idn_to_ascii
      */
     public function testIdnBaseUri(): void
     {
@@ -3314,7 +3314,7 @@ class ClientTest extends TestCase
     }
 
     /**
-     * @requires extension idn
+     * @requires function idn_to_ascii
      */
     public function testIdnWithRedirect(): void
     {
