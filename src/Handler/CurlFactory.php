@@ -150,6 +150,10 @@ class CurlFactory implements CurlFactoryInterface
             throw new \InvalidArgumentException('on_trailers must be callable');
         }
 
+        if (\strpbrk($request->getMethod(), "\r\n") !== false) {
+            throw new RequestException('HTTP method must not contain a carriage return or line feed.', $request);
+        }
+
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {

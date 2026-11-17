@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Fixed
 
 - Cancel cURL multi transfers whose synchronous wait throws instead of leaving them running
+- Reject CR, LF, and NUL in request methods in the built-in handlers
 
 
 ## 7.16.1 - 2026-10-25
