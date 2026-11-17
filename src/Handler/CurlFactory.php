@@ -2135,8 +2135,6 @@ class CurlFactory implements CurlFactoryInterface
         foreach (\array_keys($options['_headers']) as $key) {
             if (Psr7\Utils::caselessEquals((string) $key, $name)) {
                 unset($options['_headers'][$key]);
-
-                return;
             }
         }
     }
