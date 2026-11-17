@@ -9,6 +9,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Reject bracketed request URI hosts that are not IP literals (GHSA-hpvq-6rrx-pc47)
 
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^2.13.4`
+
 
 ## 7.16.2 - 2026-11-17
 
