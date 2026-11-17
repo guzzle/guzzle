@@ -254,6 +254,10 @@ final class CurlFactory implements CurlFactoryInterface
         $this->assertOpen();
         self::validateRequestUriScheme($request);
 
+        if (\strpbrk($request->getMethod(), "\r\n") !== false) {
+            throw new RequestException('HTTP method must not contain a carriage return or line feed.', $request);
+        }
+
         $protocolVersion = $request->getProtocolVersion();
 
         if ('' === $protocolVersion) {

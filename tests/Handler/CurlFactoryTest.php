@@ -5220,6 +5220,41 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider methodWithLineBreakProvider
+     */
+    public function testRejectsMethodWithLineBreak(string $method): void
+    {
+        $factory = new CurlFactory(3);
+        $request = self::requestWithMethod($method);
+
+        try {
+            $factory->create($request, []);
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertSame('HTTP method must not contain a carriage return or line feed.', $e->getMessage());
+        }
+    }
+
+    public static function methodWithLineBreakProvider(): iterable
+    {
+        yield 'crlf' => ["GET /other HTTP/1.1\r\nX-Injected: value\r\nX-Ignored:"];
+        yield 'line feed' => ["GET\n"];
+        yield 'carriage return' => ["GET\r/other"];
+    }
+
+    public function testRejectsMethodWithNulWhenSettingTheCurlOption(): void
+    {
+        $factory = new CurlFactory(3);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unable to set cURL option CURLOPT_CUSTOMREQUEST');
+
+        $factory->create(self::requestWithMethod("GE\0T"), []);
+    }
+
     public function testThrowsWhenHttp2IsUnsupported(): void
     {
         $previousVersionInfo = self::setCurlVersionInfo([
@@ -10520,6 +10555,26 @@ class CurlFactoryTest extends TestCase
         }, null, CurlFactory::class);
 
         return $readShareHandle($factory);
+    }
+
+    private static function requestWithMethod(string $method): RequestInterface
+    {
+        return new class($method) extends Psr7\Request {
+            /** @var string */
+            private $unvalidatedMethod;
+
+            public function __construct(string $method)
+            {
+                parent::__construct('GET', Server::$url);
+
+                $this->unvalidatedMethod = $method;
+            }
+
+            public function getMethod(): string
+            {
+                return $this->unvalidatedMethod;
+            }
+        };
     }
 
     private static function requestWithProtocolVersion(string $protocolVersion): RequestInterface

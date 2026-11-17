@@ -207,6 +207,32 @@ class StreamHandlerTest extends TestCase
     }
 
     /**
+     * @dataProvider methodWithLineBreakOrNulProvider
+     */
+    public function testRejectsMethodWithLineBreakOrNul(string $method): void
+    {
+        $handler = new StreamHandler();
+        $request = self::requestWithMethod($method);
+
+        try {
+            $handler($request, []);
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertNotInstanceOf(ResponseException::class, $e);
+            self::assertSame('HTTP method must not contain a carriage return, line feed or NUL byte.', $e->getMessage());
+        }
+    }
+
+    public static function methodWithLineBreakOrNulProvider(): iterable
+    {
+        yield 'crlf' => ["GET /other HTTP/1.1\r\nX-Injected: value\r\nX-Ignored:"];
+        yield 'line feed' => ["GET\n"];
+        yield 'carriage return' => ["GET\r/other"];
+        yield 'nul' => ["GE\0T"];
+    }
+
+    /**
      * @dataProvider invalidRequestContentLengthProvider
      *
      * @param string|string[] $contentLength
@@ -6571,6 +6597,26 @@ class StreamHandlerTest extends TestCase
             }
             @\unlink($tmpfname);
         }
+    }
+
+    private static function requestWithMethod(string $method): RequestInterface
+    {
+        return new class($method) extends Request {
+            /** @var string */
+            private $unvalidatedMethod;
+
+            public function __construct(string $method)
+            {
+                parent::__construct('GET', Server::$url);
+
+                $this->unvalidatedMethod = $method;
+            }
+
+            public function getMethod(): string
+            {
+                return $this->unvalidatedMethod;
+            }
+        };
     }
 
     private static function requestWithProtocolVersion(string $protocolVersion): RequestInterface
