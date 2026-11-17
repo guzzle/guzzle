@@ -287,7 +287,6 @@ class CurlMultiHandlerTest extends TestCase
         $failure = new \RuntimeException('Interrupted.');
 
         try {
-            // The queued throw would otherwise precede the first native tick.
             self::driveUntilActiveTransferCount($handler, 1);
 
             P\Utils::queue()->add(static function () use ($failure): void {
