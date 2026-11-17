@@ -3,6 +3,13 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.6.0 - Upcoming
+
+### Changed
+
+- Remove every case variant when the cURL handlers remove a request header
+
+
 ## 8.5.2 - 2026-11-17
 
 ### Security
