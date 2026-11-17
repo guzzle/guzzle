@@ -500,7 +500,7 @@ class StreamHandler
 
         return $this->createResource(
             function () use ($uri, $contextResource, $context, $options, $request) {
-                $resource = @\fopen((string) $uri, 'r', false, $contextResource);
+                $resource = @\fopen((string) $uri->withFragment(''), 'r', false, $contextResource);
 
                 if (false === $resource) {
                     throw new ConnectException(sprintf('Connection refused for URI %s', Psr7\Utils::redactUserInfo($uri)), $request, null, $context);

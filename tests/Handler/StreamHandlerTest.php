@@ -1625,6 +1625,22 @@ class StreamHandlerTest extends TestCase
         self::assertSame('DEFAULT', $opts['ssl']['ciphers']);
     }
 
+    public function testExcludesUriFragmentFromFullRequestUri()
+    {
+        $this->queueRes();
+        $handler = new StreamHandler();
+        $request = new Request('GET', Server::$url.'foo?baz=bar#fragment');
+        $response = $handler($request, [
+            'stream' => true,
+            'stream_context' => [
+                'http' => [
+                    'request_fulluri' => true,
+                ],
+            ],
+        ])->wait();
+        self::assertSame(Server::$url.'foo?baz=bar', $response->getBody()->getMetadata('uri'));
+    }
+
     public function testEnsuresThatStreamContextIsAnArray()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -2260,6 +2276,29 @@ class StreamHandlerTest extends TestCase
         $uri->method('getScheme')->willReturn('http');
         $uri->method('getHost')->willReturn('blocked.example.com@127.0.0.1');
         $uri->method('__toString')->willReturn('http://blocked.example.com@127.0.0.1:'.Server::$port.'/');
+
+        $handler = new StreamHandler();
+        $request = (new Request('GET', Server::$url))->withUri($uri, true);
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('Must throw a RequestException.');
+        } catch (RequestException $e) {
+            self::assertStringContainsString('must not contain a URI authority delimiter', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public function testDoesNotTransferAForeignUriHostWithBracketsAroundAnIpv4Address(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $uri = $this->createMock(UriInterface::class);
+        $uri->method('getScheme')->willReturn('http');
+        $uri->method('getHost')->willReturn('[127.0.0.1]');
+        $uri->method('__toString')->willReturn('http://[127.0.0.1]:'.Server::$port.'/');
 
         $handler = new StreamHandler();
         $request = (new Request('GET', Server::$url))->withUri($uri, true);
