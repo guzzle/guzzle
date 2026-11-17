@@ -282,6 +282,35 @@ class StreamHandlerTest extends TestCase
     }
 
     /**
+     * @dataProvider invalidHeaderNameProvider
+     */
+    public function testDoesNotTransferAnInvalidHeaderNameFromACustomRequest(string $name): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $request = self::requestWithUnvalidatedHeader($name, 'bar');
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertSame('Request header names must be valid HTTP tokens.', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public static function invalidHeaderNameProvider(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'colon' => ['Content-Length:'];
+        yield 'colon and value' => ['X-Other: value; X-Rest'];
+        yield 'trailing space' => ['Content-Length '];
+    }
+
+    /**
      * @dataProvider forceIpResolveIpLiteralProvider
      */
     public function testResolveHostDoesNotResolveIpLiterals(string $host, string $forceIpResolve): void
