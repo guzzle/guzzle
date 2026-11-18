@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 7.16.4 - Upcoming
+
+### Fixed
+
+- Reject hosts longer than 4096 bytes when `idn_conversion` is enabled
+- Fix `idn_conversion` failures escaping as `IntlException` or a PSR-7 exception
+
+
 ## 7.16.3 - 2026-11-17
 
 ### Security
