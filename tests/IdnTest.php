@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace GuzzleHttp\Tests;
 
+use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\HostValidator;
 use GuzzleHttp\Idn;
@@ -20,6 +21,56 @@ class IdnTest extends TestCase
         $uri = Psr7\Utils::uriFor('https://яндекс.рф/images');
         $uri = Idn::convertUri($uri);
         self::assertSame('xn--d1acpjx3f.xn--p1ai', $uri->getHost());
+    }
+
+    /**
+     * @requires extension intl
+     */
+    public function testConvertUriRejectsAHostLongerThan4096Bytes(): void
+    {
+        // The conversion ignores soft hyphens, so only the length differs.
+        $padding = str_repeat("\u{00AD}", 2042);
+        $uri = new Psr7\Uri('http://placeholder.test/');
+
+        self::assertSame('example.test', Idn::convertUri($uri->withHost($padding.'example.test'), \IDNA_DEFAULT)->getHost());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('IDN conversion failed');
+
+        Idn::convertUri($uri->withHost($padding.'examples.test'), \IDNA_DEFAULT);
+    }
+
+    /**
+     * @requires extension intl
+     */
+    public function testConvertUriRejectsAnOverlongLabelWhenIntlThrowsExceptions(): void
+    {
+        // Maps to 1200 characters, more than ICU encodes in one label.
+        $uri = (new Psr7\Uri('http://placeholder.test/'))->withHost(str_repeat("\u{3316}", 200).'.example');
+        $useExceptions = \ini_set('intl.use_exceptions', '1');
+
+        try {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('IDN conversion failed');
+
+            Idn::convertUri($uri, \IDNA_DEFAULT);
+        } finally {
+            \ini_set('intl.use_exceptions', $useExceptions);
+        }
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testConvertUriRejectsAHostThatConvertsToAnInvalidHost(): void
+    {
+        // The fullwidth solidus maps to a solidus.
+        $uri = (new Psr7\Uri('http://placeholder.test/'))->withHost("evil.example\u{FF0F}.good.example");
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('IDN conversion failed');
+
+        Idn::convertUri($uri, \IDNA_DEFAULT);
     }
 
     /**
