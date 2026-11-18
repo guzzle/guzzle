@@ -16,14 +16,14 @@ final class CurlShareHandleState
     use NonSerializableTrait;
 
     /**
-     * @var resource|\CurlShareHandle|\CurlSharePersistentHandle|null
+     * @var \CurlShareHandle|\CurlSharePersistentHandle|null
      */
     public $handle;
 
     public string $mode;
 
     /**
-     * @param resource|\CurlShareHandle|\CurlSharePersistentHandle|null $handle
+     * @param \CurlShareHandle|\CurlSharePersistentHandle|null $handle
      */
     private function __construct(string $mode, $handle)
     {
@@ -144,22 +144,16 @@ final class CurlShareHandleState
         $locks = self::handlerLocks($mode);
         $handle = curl_share_init();
 
-        try {
-            foreach ($locks as $lock) {
-                try {
-                    $success = curl_share_setopt($handle, $shareOption, $lock);
-                } catch (\Throwable $e) {
-                    throw new InvalidArgumentException('Unable to configure cURL share handle: '.$e->getMessage(), 0, $e);
-                }
-
-                if (!$success) {
-                    throw new InvalidArgumentException(\sprintf('Unable to configure cURL share handle with lock data %d.', $lock));
-                }
+        foreach ($locks as $lock) {
+            try {
+                $success = curl_share_setopt($handle, $shareOption, $lock);
+            } catch (\Throwable $e) {
+                throw new InvalidArgumentException('Unable to configure cURL share handle: '.$e->getMessage(), 0, $e);
             }
-        } catch (\Throwable $e) {
-            self::closeHandlerShareHandleOnPhp7($handle);
 
-            throw $e;
+            if (!$success) {
+                throw new InvalidArgumentException(\sprintf('Unable to configure cURL share handle with lock data %d.', $lock));
+            }
         }
 
         return new self($mode, $handle);
@@ -262,15 +256,5 @@ final class CurlShareHandleState
         }
 
         return $value;
-    }
-
-    /**
-     * @param resource|\CurlShareHandle $handle
-     */
-    private static function closeHandlerShareHandleOnPhp7($handle): void
-    {
-        if (\PHP_VERSION_ID < 80000 && \is_resource($handle)) {
-            curl_share_close($handle);
-        }
     }
 }

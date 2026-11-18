@@ -11,12 +11,6 @@ namespace {
         \define('INTL_IDNA_VARIANT_UTS46', 1);
     }
 
-    if (!\class_exists('CurlShareHandle')) {
-        class CurlShareHandle
-        {
-        }
-    }
-
     if (!\class_exists('CurlSharePersistentHandle')) {
         class CurlSharePersistentHandle
         {

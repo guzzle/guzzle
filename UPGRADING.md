@@ -4,17 +4,25 @@ Guzzle Upgrade Guide
 8.0 to 9.0
 ----------
 
-Guzzle 9 is a major release that updates the Guzzle dependency stack.
+Guzzle 9 is a major release that raises the minimum PHP version and updates the
+Guzzle dependency stack.
 
 #### PHP Version and Dependencies
 
-Guzzle 9 requires Guzzle Promises 4.x and Guzzle PSR-7 4.x. If your
+Guzzle 9 requires PHP `^8.0`. Guzzle 8 supported PHP `^7.4 || ^8.0`.
+
+If your application still supports PHP 7.4, continue using Guzzle 8 until your
+minimum PHP version is raised.
+
+Guzzle 9 also requires Guzzle Promises 4.x and Guzzle PSR-7 4.x. If your
 application pins either package directly, update those constraints to allow the
 new major versions.
 
 Read the [Guzzle PSR-7 4.x upgrade guide][psr7-4-upgrade-guide] and the
 [Guzzle Promises 4.x upgrade guide][promises-4-upgrade-guide] as part of every
 Guzzle 9 upgrade.
+
+Guzzle 9 no longer requires `symfony/polyfill-php80`.
 
 [psr7-4-upgrade-guide]: https://github.com/guzzle/psr7/blob/4.0/UPGRADING.md
 [promises-4-upgrade-guide]: https://github.com/guzzle/promises/blob/4.0/UPGRADING.md

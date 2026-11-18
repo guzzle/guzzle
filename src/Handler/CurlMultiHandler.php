@@ -95,7 +95,7 @@ final class CurlMultiHandler
     private bool $multiplexDisabled = false;
 
     /**
-     * @var resource|\CurlMultiHandle|null
+     * @var \CurlMultiHandle|null
      */
     private $multiHandle;
 
@@ -1332,31 +1332,11 @@ final class CurlMultiHandler
         $handle = $easy->handle;
         unset($easy->handle);
 
-        $failure = null;
-
-        try {
-            $this->clearEasyHandleCallbacks($handle);
-        } catch (\Throwable $e) {
-            $failure = $e;
-        }
-
-        try {
-            if (PHP_VERSION_ID < 80000 && \is_resource($handle)) {
-                \curl_close($handle);
-            }
-        } catch (\Throwable $e) {
-            if ($failure === null) {
-                $failure = $e;
-            }
-        }
-
-        if ($failure !== null) {
-            throw $failure;
-        }
+        $this->clearEasyHandleCallbacks($handle);
     }
 
     /**
-     * @param resource|\CurlHandle $handle
+     * @param \CurlHandle $handle
      */
     private function clearEasyHandleCallbacks(
         #[\SensitiveParameter]
@@ -1381,7 +1361,7 @@ final class CurlMultiHandler
     }
 
     /**
-     * @param resource|\CurlHandle $handle
+     * @param \CurlHandle $handle
      */
     private function removeHandleFromMulti(
         int $id,
@@ -1625,7 +1605,7 @@ final class CurlMultiHandler
     }
 
     /**
-     * @return resource|\CurlMultiHandle
+     * @return \CurlMultiHandle
      */
     private function getMultiHandle()
     {

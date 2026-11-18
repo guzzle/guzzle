@@ -10,6 +10,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Adjusted `guzzlehttp/promises` version constraint to `^4.0`
 - Adjusted `guzzlehttp/psr7` version constraint to `^4.0`
 
+### Removed
+
+- Dropped support for PHP 7
+
 
 ## 8.6.0 - Upcoming
 

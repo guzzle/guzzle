@@ -17,6 +17,10 @@ $config = (new PhpCsFixer\Config())
         'phpdoc_summary' => false,
         'phpdoc_to_comment' => false,
         'single_line_throw' => false,
+        'trailing_comma_in_multiline' => [
+            'after_heredoc' => true,
+            'elements' => ['array_destructuring', 'arrays', 'match'],
+        ],
         'void_return' => false,
         'yoda_style' => false,
     ])

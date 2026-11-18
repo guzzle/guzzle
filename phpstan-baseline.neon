@@ -31,196 +31,16 @@ parameters:
 			path: src/Env.php
 
 		-
-			message: '#^Parameter \#1 \$ch of function curl_error expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_getinfo expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_reset expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 8
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \$handle of method GuzzleHttp\\Handler\\CurlFactory\:\:applyCurlOptions\(\) has invalid type CurlHandle\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \$handle of method GuzzleHttp\\Handler\\CurlFactory\:\:clearEasyHandleCallbacks\(\) has invalid type CurlHandle\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Parameter \$handle of method GuzzleHttp\\Handler\\CurlFactory\:\:discardHandle\(\) has invalid type CurlHandle\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlFactory\:\:\$handles has unknown class CurlHandle as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlFactory.php
-
-		-
 			message: '#^Offset ''handle_factory''\|''max_idle_handles''\|''transport_sharing'' on array\{handle_factory\: true, max_idle_handles\: true, transport_sharing\: true\} in isset\(\) always exists and is not nullable\.$#'
 			identifier: isset.offset
 			count: 1
 			path: src/Handler/CurlHandler.php
 
 		-
-			message: '#^Parameter \#1 \$ch of function curl_errno expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlHandler.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_exec expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlHandler.php
-
-		-
-			message: '#^Method GuzzleHttp\\Handler\\CurlMultiHandler\:\:getMultiHandle\(\) has invalid return type CurlMultiHandle\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#1 \$ch of function curl_setopt expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 9
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_add_handle expects resource, CurlMultiHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_close expects resource, CurlMultiHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_exec expects resource, CurlMultiHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_info_read expects resource, CurlMultiHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_remove_handle expects resource, CurlMultiHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#1 \$mh of function curl_multi_select expects resource, CurlMultiHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 3
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#2 \$ch of function curl_multi_add_handle expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \#2 \$ch of function curl_multi_remove_handle expects resource, CurlHandle\|resource given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \$handle of method GuzzleHttp\\Handler\\CurlMultiHandler\:\:clearEasyHandleCallbacks\(\) has invalid type CurlHandle\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Parameter \$handle of method GuzzleHttp\\Handler\\CurlMultiHandler\:\:removeHandleFromMulti\(\) has invalid type CurlHandle\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$multiHandle \(CurlMultiHandle\|resource\|null\) is never assigned CurlMultiHandle so it can be removed from the property type\.$#'
-			identifier: property.unusedType
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\CurlMultiHandler\:\:\$multiHandle has unknown class CurlMultiHandle as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between false and resource will always evaluate to false\.$#'
+			message: '#^Strict comparison using \=\=\= between false and CurlMultiHandle will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Handler/CurlMultiHandler.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\EasyHandle\:\:\$handle has unknown class CurlHandle as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/EasyHandle.php
-
-		-
-			message: '#^Parameter \#1 \$context of function inflate_add expects resource, InflateContext\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/InflateBodyStream.php
-
-		-
-			message: '#^Parameter \#1 \$resource of function inflate_get_read_len expects resource, InflateContext\|resource given\.$#'
-			identifier: argument.type
-			count: 2
-			path: src/Handler/InflateBodyStream.php
-
-		-
-			message: '#^Parameter \#1 \$resource of function inflate_get_status expects resource, InflateContext\|resource given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Handler/InflateBodyStream.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\InflateBodyStream\:\:\$context \(InflateContext\|resource\|null\) is never assigned InflateContext so it can be removed from the property type\.$#'
-			identifier: property.unusedType
-			count: 1
-			path: src/Handler/InflateBodyStream.php
-
-		-
-			message: '#^Property GuzzleHttp\\Handler\\InflateBodyStream\:\:\$context has unknown class InflateContext as its type\.$#'
-			identifier: class.notFound
-			count: 1
-			path: src/Handler/InflateBodyStream.php
 
 		-
 			message: '#^Access to constant Error on an unknown class StreamErrorMode\.$#'
@@ -235,7 +55,7 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Comparison operation "\>\=" between int\<70400, 80599\> and 80600 is always false\.$#'
+			message: '#^Comparison operation "\>\=" between int\<80000, 80599\> and 80600 is always false\.$#'
 			identifier: greaterOrEqual.alwaysFalse
 			count: 1
 			path: src/Handler/StreamHandler.php
@@ -259,7 +79,7 @@ parameters:
 			path: src/Handler/StreamHandler.php
 
 		-
-			message: '#^Comparison operation "\>\=" between int\<70400, 80599\> and 80600 is always false\.$#'
+			message: '#^Comparison operation "\>\=" between int\<80000, 80599\> and 80600 is always false\.$#'
 			identifier: greaterOrEqual.alwaysFalse
 			count: 1
 			path: src/Handler/StreamTlsSessionCache.php
@@ -319,7 +139,7 @@ parameters:
 			path: src/Middleware.php
 
 		-
-			message: '#^Method GuzzleHttp\\Pool\:\:keyedRequestOptions\(\) should return array\{base_uri\?\: Psr\\Http\\Message\\UriInterface\|string, allow_redirects\?\: array\{max\?\: int, strict\?\: bool, referer\?\: bool, protocols\?\: non\-empty\-array\<string\>, on_redirect\?\: callable\(Psr\\Http\\Message\\RequestInterface, Psr\\Http\\Message\\ResponseInterface, Psr\\Http\\Message\\UriInterface\)\: mixed, track_redirects\?\: bool\}\|bool, auth\?\: array\{0\: string, 1\: string, 2\?\: string\|null\}\|string\|false\|null, body\?\: callable\-object\|Iterator\|Psr\\Http\\Message\\StreamInterface\|resource\|string\|Stringable\|null, cert\?\: array\{0\: string, 1\?\: string\|null\}\|string, cert_type\?\: string, connect_timeout\?\: float\|int, cookies\?\: GuzzleHttp\\Cookie\\CookieJarInterface\|false, \.\.\.\} but returns array\{base_uri\?\: Psr\\Http\\Message\\UriInterface\|string, allow_redirects\?\: array\{max\?\: int, strict\?\: bool, referer\?\: bool, protocols\?\: non\-empty\-array\<string\>, on_redirect\?\: \(callable\(Psr\\Http\\Message\\RequestInterface, Psr\\Http\\Message\\ResponseInterface, Psr\\Http\\Message\\UriInterface, int\|string\)\: mixed\)\|\(Closure\(Psr\\Http\\Message\\RequestInterface, Psr\\Http\\Message\\ResponseInterface, Psr\\Http\\Message\\UriInterface\)\: void\), track_redirects\?\: bool\}\|bool, auth\?\: array\{0\: string, 1\: string, 2\?\: string\|null\}\|string\|false\|null, body\?\: callable\-object\|Iterator\|Psr\\Http\\Message\\StreamInterface\|resource\|string\|Stringable\|null, cert\?\: array\{0\: string, 1\?\: string\|null\}\|string, cert_type\?\: string, connect_timeout\?\: float\|int, cookies\?\: GuzzleHttp\\Cookie\\CookieJarInterface\|false, \.\.\.\}\.$#'
+			message: '#^Method GuzzleHttp\\Pool\:\:keyedRequestOptions\(\) should return array\{base_uri\?\: Psr\\Http\\Message\\UriInterface\|string, allow_redirects\?\: array\{max\?\: int, strict\?\: bool, referer\?\: bool, protocols\?\: non\-empty\-array\<string\>, on_redirect\?\: callable\(Psr\\Http\\Message\\RequestInterface, Psr\\Http\\Message\\ResponseInterface, Psr\\Http\\Message\\UriInterface\)\: mixed, track_redirects\?\: bool\}\|bool, auth\?\: array\{0\: string, 1\: string, 2\?\: string\|null\}\|string\|false\|null, body\?\: callable\-object\|Iterator\|resource\|string\|Stringable\|null, cert\?\: array\{0\: string, 1\?\: string\|null\}\|string, cert_type\?\: string, connect_timeout\?\: float\|int, cookies\?\: GuzzleHttp\\Cookie\\CookieJarInterface\|false, \.\.\.\} but returns array\{base_uri\?\: Psr\\Http\\Message\\UriInterface\|string, allow_redirects\?\: array\{max\?\: int, strict\?\: bool, referer\?\: bool, protocols\?\: non\-empty\-array\<string\>, on_redirect\?\: \(callable\(Psr\\Http\\Message\\RequestInterface, Psr\\Http\\Message\\ResponseInterface, Psr\\Http\\Message\\UriInterface, int\|string\)\: mixed\)\|\(Closure\(Psr\\Http\\Message\\RequestInterface, Psr\\Http\\Message\\ResponseInterface, Psr\\Http\\Message\\UriInterface\)\: void\), track_redirects\?\: bool\}\|bool, auth\?\: array\{0\: string, 1\: string, 2\?\: string\|null\}\|string\|false\|null, body\?\: callable\-object\|Iterator\|resource\|string\|Stringable\|null, cert\?\: array\{0\: string, 1\?\: string\|null\}\|string, cert_type\?\: string, connect_timeout\?\: float\|int, cookies\?\: GuzzleHttp\\Cookie\\CookieJarInterface\|false, \.\.\.\}\.$#'
 			identifier: return.type
 			count: 1
 			path: src/Pool.php

@@ -4178,7 +4178,7 @@ class CurlMultiHandlerTest extends TestCase
     }
 
     /**
-     * @return resource|\CurlMultiHandle|null
+     * @return \CurlMultiHandle|null
      */
     private static function readMultiHandle(CurlMultiHandler $handler)
     {
