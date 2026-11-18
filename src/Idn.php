@@ -36,6 +36,29 @@ final class Idn
         throw new InvalidArgumentException('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
     }
 
+    public static function convertUriString(
+        #[\SensitiveParameter]
+        string $uri,
+        int $options
+    ): string {
+        // Replace only the host of an authority or of a leading "host:port".
+        if (\preg_match('~\A(?!(?:[^:/?#]+:)?(?://)?[^/?#]*\\\\)((?:[^:/?#]+:)?//(?:[^/?#]*@)?+|(?:[^/?#]*[@:])?(?=[^/?#@:]*:[0-9]+(?:/|\z)))(?![^/?#@:]*%[89A-Fa-f][0-9A-Fa-f])(?=[^/?#@:]*?[\x80-\xFF])([^/?#@:]*+)(?:[:/?#]|\z)~', $uri, $matches) !== 1) {
+            return $uri;
+        }
+
+        [, $start, $host] = $matches;
+
+        try {
+            $asciiHost = Psr7\Idna::toAscii($host, $options);
+            $converted = $start.$asciiHost.\substr($uri, \strlen($start.$host));
+
+            // The expression is not a parser, so psr7 must find the same host.
+            return (new Psr7\Uri($converted))->getHost() === $asciiHost ? $converted : $uri;
+        } catch (\InvalidArgumentException|\RuntimeException $e) {
+            return $uri;
+        }
+    }
+
     /**
      * @throws InvalidArgumentException
      */

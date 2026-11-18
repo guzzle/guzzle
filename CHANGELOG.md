@@ -15,6 +15,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Redact proxy credentials that libcurl names as the proxy host in cURL errors
 - Decode percent-encoded proxy credentials in the stream handler
 - Allow the raw cURL `CURLOPT_SSL_OPTIONS` option on libcurl 7.83.1 or newer
+- Convert internationalized hosts before parsing URI strings
 
 ### Fixed
 

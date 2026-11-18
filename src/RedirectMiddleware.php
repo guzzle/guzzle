@@ -231,8 +231,8 @@ class RedirectMiddleware
         $scope = new Psr7\ErrorScope(\E_USER_DEPRECATED);
 
         $modify['uri'] = $scope->run(static function () use ($uriFactory, $request, $response, $protocols, $options): UriInterface {
-            $uri = self::redirectUri($uriFactory, $request, $response, $protocols);
             $idnOptions = Idn::normalizeConversionOption($options['idn_conversion'] ?? null);
+            $uri = self::redirectUri($uriFactory, $request, $response, $protocols, $idnOptions);
 
             return $idnOptions === null ? $uri : Idn::convertUri($uri, $idnOptions);
         });
@@ -337,12 +337,13 @@ class RedirectMiddleware
         RequestInterface $request,
         #[\SensitiveParameter]
         ResponseInterface $response,
-        array $protocols
+        array $protocols,
+        ?int $idnOptions
     ): UriInterface {
         $location = $response->getHeaderLine('Location');
 
         try {
-            $locationUri = $uriFactory->createUri($location);
+            $locationUri = $uriFactory->createUri($idnOptions === null ? $location : Idn::convertUriString($location, $idnOptions));
             $resolvedUri = Psr7\UriResolver::resolve(
                 $request->getUri(),
                 $locationUri

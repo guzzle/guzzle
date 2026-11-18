@@ -3255,10 +3255,48 @@ class ClientTest extends TestCase
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
     }
 
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testIdnIsTranslatedToAsciiBeforeTheUriFactoryIsCalled(): void
+    {
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => HandlerStack::create(new MockHandler([
+                new Response(),
+                new Response(),
+                new Response(302, ['Location' => 'https://faß.de/next']),
+                new Response(),
+                new Response(),
+            ])),
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $client->request('GET', 'https://faß.de/', ['idn_conversion' => 0]);
+        $client->request('GET', 'https://faß.de/', ['idn_conversion' => \IDNA_NONTRANSITIONAL_TO_ASCII]);
+        $client->request('GET', 'http://example.com/', ['idn_conversion' => 0]);
+        $client->request('GET', '/images', ['base_uri' => 'https://faß.de', 'idn_conversion' => 0]);
+
+        self::assertSame([
+            'https://fass.de/',
+            'https://xn--fa-hia.de/',
+            'http://example.com/',
+            'https://fass.de/next',
+            '/images',
+            'https://fass.de',
+            'https://fass.de/images',
+        ], $factory->uriCalls());
+    }
+
     public function testIdnStaysTheSameWhenConversionIsDisabled(): void
     {
-        $mockHandler = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mockHandler]);
+        $mockHandler = new MockHandler([
+            new Response(),
+            new Response(302, ['Location' => 'http://www.tést.com/whatever']),
+            new Response(),
+            new Response(),
+        ]);
+        $client = new Client(['handler' => HandlerStack::create($mockHandler)]);
 
         $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => false]);
 
@@ -3266,6 +3304,14 @@ class ClientTest extends TestCase
 
         self::assertSame('https://яндекс.рф/images', (string) $request->getUri());
         self::assertSame('яндекс.рф', (string) $request->getHeaderLine('Host'));
+
+        $client->request('GET', 'http://example.com/', ['idn_conversion' => false]);
+
+        self::assertSame('http://www.tést.com/whatever', (string) $mockHandler->getLastRequest()->getUri());
+
+        $client->request('GET', '/images', ['base_uri' => 'https://яндекс.рф', 'idn_conversion' => false]);
+
+        self::assertSame('https://яндекс.рф/images', (string) $mockHandler->getLastRequest()->getUri());
     }
 
     public function testIdnConversionRejectsInvalidValue(): void

@@ -91,6 +91,27 @@ class RedirectMiddlewareTest extends TestCase
     }
 
     /**
+     * @requires function idn_to_ascii
+     */
+    public function testRedirectConvertsIdnHostReturnedByUriFactory(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://www.tést.com/whatever']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+
+        $stack->resolve()(new Request('GET', 'http://example.com'), [
+            'allow_redirects' => ['max' => 2],
+            'idn_conversion' => true,
+            RequestOptions::URI_FACTORY => new RedirectTestUnvalidatedUriFactory(),
+        ])->wait();
+
+        self::assertSame('www.xn--tst-bma.com', $mock->getLastRequest()->getUri()->getHost());
+    }
+
+    /**
      * @dataProvider nonAsciiHostLocationProvider
      */
     public function testLocationWithNonAsciiHostDoesNotRaiseDeprecations(?UriFactoryInterface $uriFactory): void
