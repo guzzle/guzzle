@@ -1473,7 +1473,7 @@ class CurlMultiHandlerTest extends TestCase
         yield 'proxy auth' => ['CURLOPT_PROXYAUTH', 1];
         yield 'follow location' => ['CURLOPT_FOLLOWLOCATION', true];
         yield 'http header' => ['CURLOPT_HTTPHEADER', ['X-Foo: bar']];
-        yield 'alt svc' => ['CURLOPT_ALTSVC', 'altsvc-cache.txt'];
+        yield 'alt svc' => ['CURLOPT_ALTSVC', ''];
         yield 'alt svc ctrl' => ['CURLOPT_ALTSVC_CTRL', 8];
         yield 'proxy type' => ['CURLOPT_PROXYTYPE', 3];
     }
