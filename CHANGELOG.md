@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 9.0.0 - Upcoming
+
+### Changed
+
+- Adjusted `guzzlehttp/promises` version constraint to `^4.0`
+- Adjusted `guzzlehttp/psr7` version constraint to `^4.0`
+
+
 ## 8.6.0 - Upcoming
 
 ### Changed

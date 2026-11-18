@@ -710,7 +710,7 @@ Running the above example would output something like the following:
     *   Trying 107.21.213.98... * Connected to httpbin.org (107.21.213.98) port 80 (#0)
     > GET /get HTTP/1.1
     Host: httpbin.org
-    User-Agent: GuzzleHttp/8
+    User-Agent: GuzzleHttp/9
 
     < HTTP/1.1 200 OK
     < Access-Control-Allow-Origin: *
@@ -2013,7 +2013,7 @@ response body resources where practical. Request bodies that already implement
 > gzip/deflate decoding, and should stream the resource rather than buffer it
 > entirely into memory. The full contract is described under *Creating Streams*
 > in the
-> [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/3.5/docs/streams-and-decorators.md#creating-streams).
+> [PSR-7 stream documentation](https://github.com/guzzle/psr7/blob/4.0/docs/streams-and-decorators.md#creating-streams).
 > Supply a stream implementation you trust.
 
 ## uri_factory
