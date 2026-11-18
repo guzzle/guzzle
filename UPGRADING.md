@@ -1,6 +1,24 @@
 Guzzle Upgrade Guide
 ====================
 
+8.0 to 9.0
+----------
+
+Guzzle 9 is a major release that updates the Guzzle dependency stack.
+
+#### PHP Version and Dependencies
+
+Guzzle 9 requires Guzzle Promises 4.x and Guzzle PSR-7 4.x. If your
+application pins either package directly, update those constraints to allow the
+new major versions.
+
+Read the [Guzzle PSR-7 4.x upgrade guide][psr7-4-upgrade-guide] and the
+[Guzzle Promises 4.x upgrade guide][promises-4-upgrade-guide] as part of every
+Guzzle 9 upgrade.
+
+[psr7-4-upgrade-guide]: https://github.com/guzzle/psr7/blob/4.0/UPGRADING.md
+[promises-4-upgrade-guide]: https://github.com/guzzle/promises/blob/4.0/UPGRADING.md
+
 7.0 to 8.0
 ----------
 

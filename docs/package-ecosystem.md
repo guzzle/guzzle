@@ -10,8 +10,8 @@ application needs that package's lower-level or specialized behavior.
 | Package | Use it for | Documentation |
 |---------|------------|---------------|
 | `guzzlehttp/guzzle` | Sending synchronous and asynchronous HTTP requests. | [Quick Start](quick-start.md) |
-| `guzzlehttp/psr7` | Creating and manipulating PSR-7 requests, responses, streams, and URIs. | [PSR-7 docs](https://github.com/guzzle/psr7/blob/3.5/docs/psr-7-messages.md) |
-| `guzzlehttp/promises` | Working directly with promises returned by asynchronous operations. | [Promises docs](https://github.com/guzzle/promises/blob/3.1/docs/promise-quick-start.md) |
+| `guzzlehttp/psr7` | Creating and manipulating PSR-7 requests, responses, streams, and URIs. | [PSR-7 docs](https://github.com/guzzle/psr7/blob/4.0/docs/psr-7-messages.md) |
+| `guzzlehttp/promises` | Working directly with promises returned by asynchronous operations. | [Promises docs](https://github.com/guzzle/promises/blob/4.0/docs/promise-quick-start.md) |
 
 Install `guzzlehttp/guzzle` for normal application HTTP work. It already depends
 on `guzzlehttp/psr7` and `guzzlehttp/promises`, so you do not need to install
@@ -40,7 +40,7 @@ models.
 |---------|------------|---------------|
 | `guzzlehttp/uri-template` | Expanding RFC 6570 URI templates. | [URI Template docs](https://github.com/guzzle/uri-template/blob/2.0/docs/uri-template-usage.md) |
 | `guzzlehttp/oauth-subscriber` | Signing Guzzle requests with OAuth 1.0 middleware. | [OAuth Subscriber docs](https://github.com/guzzle/oauth-subscriber/blob/1.0/docs/oauth-1-0-middleware-usage.md) |
-| `guzzlehttp/test-server` | Testing HTTP clients against a local controllable server. | [Test Server docs](https://github.com/guzzle/test-server/blob/1.1/docs/test-server-usage.md) |
+| `guzzlehttp/test-server` | Testing HTTP clients against a local controllable server. | [Test Server docs](https://github.com/guzzle/test-server/blob/2.0/docs/test-server-usage.md) |
 
 Use `guzzlehttp/uri-template` when an API provides URI templates that need to be
 expanded before sending requests. Use `guzzlehttp/oauth-subscriber` only for
