@@ -9,6 +9,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Reject hosts longer than 4096 bytes when `idn_conversion` is enabled
 - Fix `idn_conversion` failures escaping as `IntlException` or a PSR-7 exception
+- Redact proxy credentials in cURL errors when the proxy scheme has a plus sign
 
 ### Changed
 
