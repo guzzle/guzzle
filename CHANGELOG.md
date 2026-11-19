@@ -13,6 +13,8 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Removed
 
 - Dropped support for PHP 7
+- Removed `Utils::defaultUserAgent()` in favor of `ClientInterface::MAJOR_VERSION`
+- Removed `Utils::headersFromLines()`, `Utils::normalizeHeaderKeys()`, `Utils::debugResource()`, and `Utils::normalizeProtocols()`
 
 
 ## 8.6.0 - Upcoming
