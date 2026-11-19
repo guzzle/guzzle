@@ -161,13 +161,8 @@ class HandlerStack
      *
      * @param (callable(callable&THandler): (callable&THandler))|string $remove Middleware to remove by instance or name.
      */
-    public function remove($remove): void
+    public function remove(callable|string $remove): void
     {
-        if (!\is_string($remove) && !\is_callable($remove)) {
-            // TODO: Move this to the parameter definition in 9.0.
-            throw new \TypeError(__METHOD__.'(): Argument #1 ($remove) must be of type callable|string');
-        }
-
         $this->cached = null;
 
         if (\is_string($remove)) {

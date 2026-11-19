@@ -5,7 +5,8 @@ Guzzle Upgrade Guide
 ----------
 
 Guzzle 9 is a major release that raises the minimum PHP version, updates the
-Guzzle dependency stack, and removes deprecated `Utils` methods.
+Guzzle dependency stack, declares more native parameter types, and removes
+deprecated `Utils` methods.
 
 #### PHP Version and Dependencies
 
@@ -28,6 +29,18 @@ uses it.
 
 [psr7-4-upgrade-guide]: https://github.com/guzzle/psr7/blob/4.0/UPGRADING.md
 [promises-4-upgrade-guide]: https://github.com/guzzle/promises/blob/4.0/UPGRADING.md
+
+#### Native Type Declarations
+
+`SetCookie::setExpires()` now declares its parameter as `int|string|null`, and
+`HandlerStack::remove()` declares its parameter as `callable|string`. Guzzle 8
+checked these types itself and threw `TypeError` for anything else. Calls from
+files that declare strict types still throw `TypeError`. Calls from other files
+now have the argument coerced by PHP where it can be: `setExpires(1.5)` is
+treated as `setExpires(1)`, `remove(5)` as `remove('5')`, and `remove(false)` as
+`remove('')`, which removes every middleware that `push()`, `before()`, or
+`after()` added without a name. An object with a `__toString()` method is
+converted to a string.
 
 #### Removed Utils Helper APIs
 

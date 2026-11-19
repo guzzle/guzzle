@@ -317,13 +317,8 @@ class SetCookie
      *
      * @param int|string|null $timestamp Unix timestamp or any English textual datetime description.
      */
-    public function setExpires($timestamp): void
+    public function setExpires(int|string|null $timestamp): void
     {
-        if (!is_int($timestamp) && !is_string($timestamp) && null !== $timestamp) {
-            // TODO: Move this to the parameter definition in 9.0.
-            throw new \TypeError(__METHOD__.'(): Argument #1 ($timestamp) must be of type int|string|null');
-        }
-
         if ($timestamp === null) {
             $this->data['Expires'] = null;
 
