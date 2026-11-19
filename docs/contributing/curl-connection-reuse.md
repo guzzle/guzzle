@@ -47,9 +47,9 @@ of raw cURL option values remain the caller's responsibility.
 defined when the linked libcurl/PHP build supports that option, so code that
 touches an optional option guards with `\defined()`/`\constant()`. This is safe
 by construction: PHP's `curl_setopt()` never forwards an *unknown* option
-integer to libcurl (PHP 8 throws `ValueError`; PHP 7 silently no-ops), and a
-constant is registered under the same `#if LIBCURL_VERSION_NUM` guard as its
-setopt handler, so an undefined constant can never become a live channel.
+integer to libcurl (it throws `ValueError`), and a constant is registered under
+the same `#if LIBCURL_VERSION_NUM` guard as its setopt handler, so an undefined
+constant can never become a live channel.
 
 ## 2. Why reuse is both good and dangerous
 

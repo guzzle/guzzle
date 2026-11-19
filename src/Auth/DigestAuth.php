@@ -117,9 +117,6 @@ final class DigestAuth
 
         if ($challenge->userhash) {
             $headerUsername = \hash($hash, $username.':'.$challenge->realm);
-            if ($headerUsername === false) {
-                return null;
-            }
         } else {
             $headerUsername = $username;
         }
@@ -455,9 +452,7 @@ final class DigestAuth
             return null;
         }
 
-        $token = \substr($header, $start, $offset - $start);
-
-        return $token === false ? null : $token;
+        return \substr($header, $start, $offset - $start);
     }
 
     private static function isTokenChar(string $char): bool

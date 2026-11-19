@@ -69,22 +69,10 @@ class CurlFactoryTest extends TestCase
 
         $result = $f->create($request, ['sink' => $stream]);
 
-        try {
-            self::assertInstanceOf(EasyHandle::class, $result);
-
-            if (\PHP_VERSION_ID >= 80000) {
-                self::assertInstanceOf(\CurlHandle::class, $result->handle);
-            } else {
-                self::assertIsResource($result->handle);
-            }
-
-            self::assertIsArray($result->headers);
-            self::assertSame($stream, $result->sink);
-        } finally {
-            if (PHP_VERSION_ID < 80000) {
-                \curl_close($result->handle);
-            }
-        }
+        self::assertInstanceOf(EasyHandle::class, $result);
+        self::assertInstanceOf(\CurlHandle::class, $result->handle);
+        self::assertIsArray($result->headers);
+        self::assertSame($stream, $result->sink);
 
         self::assertSame('PUT', $_SERVER['_curl'][\CURLOPT_CUSTOMREQUEST]);
         self::assertSame(
@@ -257,18 +245,12 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3);
         $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
 
-        try {
-            $factory->close();
+        $factory->close();
 
-            $this->expectException(\BadMethodCallException::class);
-            $this->expectExceptionMessage('Cannot use the cURL factory after it has been closed.');
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Cannot use the cURL factory after it has been closed.');
 
-            $factory->release($easy);
-        } finally {
-            if (isset($easy->handle) && \PHP_VERSION_ID < 80000) {
-                \curl_close($easy->handle);
-            }
-        }
+        $factory->release($easy);
     }
 
     public function testSendsHeadRequests(): void
@@ -680,16 +662,9 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
-        $easy = $factory->create(new Psr7\Request('GET', Server::$url), []);
+        $factory->create(new Psr7\Request('GET', Server::$url), []);
 
-        try {
-            self::assertSame($shareHandle, $_SERVER['_curl'][\CURLOPT_SHARE]);
-        } finally {
-            if (PHP_VERSION_ID < 80000) {
-                \curl_close($easy->handle);
-                \curl_share_close($shareHandle);
-            }
-        }
+        self::assertSame($shareHandle, $_SERVER['_curl'][\CURLOPT_SHARE]);
     }
 
     /**
@@ -705,21 +680,14 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($requestShareHandle);
         $factory = new CurlFactory(3, $shareMode, $shareHandle);
 
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('CURLOPT_SHARE');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_SHARE');
 
-            $factory->create(new Psr7\Request('GET', Server::$url), [
-                'curl' => [
-                    \CURLOPT_SHARE => $requestShareHandle,
-                ],
-            ]);
-        } finally {
-            if (PHP_VERSION_ID < 80000) {
-                \curl_share_close($shareHandle);
-                \curl_share_close($requestShareHandle);
-            }
-        }
+        $factory->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [
+                \CURLOPT_SHARE => $requestShareHandle,
+            ],
+        ]);
     }
 
     public static function enabledShareModeProvider(): iterable
@@ -745,16 +713,10 @@ class CurlFactoryTest extends TestCase
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
 
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('cannot be provided');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('cannot be provided');
 
-            new CurlFactory(3, TransportSharing::NONE, $shareHandle);
-        } finally {
-            if (PHP_VERSION_ID < 80000) {
-                \curl_share_close($shareHandle);
-            }
-        }
+        new CurlFactory(3, TransportSharing::NONE, $shareHandle);
     }
 
     public function testRejectsInvalidShareHandle(): void
@@ -807,18 +769,14 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('CURLOPT_FRESH_CONNECT');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_FRESH_CONNECT');
 
-            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
-                'curl' => [
-                    \CURLOPT_FRESH_CONNECT => true,
-                ],
-            ]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+            'curl' => [
+                \CURLOPT_FRESH_CONNECT => true,
+            ],
+        ]);
     }
 
     public function testPersistentRequireRejectsForbidReuse(): void
@@ -829,18 +787,14 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('CURLOPT_FORBID_REUSE');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_FORBID_REUSE');
 
-            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
-                'curl' => [
-                    \CURLOPT_FORBID_REUSE => true,
-                ],
-            ]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+            'curl' => [
+                \CURLOPT_FORBID_REUSE => true,
+            ],
+        ]);
     }
 
     public function testPersistentRequireAllowsExplicitReuseOptionsSetToFalse(): void
@@ -862,7 +816,6 @@ class CurlFactoryTest extends TestCase
             self::assertFalse($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
         } finally {
             $factory->release($easy);
-            self::closeShareHandleOnPhp7($shareHandle);
         }
     }
 
@@ -875,19 +828,15 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('fresh proxy tunnel connection');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('fresh proxy tunnel connection');
 
-            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
-                'proxy' => 'http://proxy.example.com:8080',
-                'curl' => [
-                    $proxyHeaderOption => ['Proxy-Authorization: Basic abc'],
-                ],
-            ]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                $proxyHeaderOption => ['Proxy-Authorization: Basic abc'],
+            ],
+        ]);
     }
 
     public function testPersistentRequireRejectsStringableProxyAuthorizationHeaderThatRequiresFreshProxyTunnelConnection(): void
@@ -899,24 +848,20 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
-        try {
-            $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('fresh proxy tunnel connection');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('fresh proxy tunnel connection');
 
-            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
-                'proxy' => 'http://proxy.example.com:8080',
-                'curl' => [
-                    $proxyHeaderOption => [new class {
-                        public function __toString(): string
-                        {
-                            return 'Proxy-Authorization: Basic abc';
-                        }
-                    }],
-                ],
-            ]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'http://proxy.example.com:8080',
+            'curl' => [
+                $proxyHeaderOption => [new class {
+                    public function __toString(): string
+                    {
+                        return 'Proxy-Authorization: Basic abc';
+                    }
+                }],
+            ],
+        ]);
     }
 
     /**
@@ -930,14 +875,10 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('fresh proxy tunnel connection');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('fresh proxy tunnel connection');
 
-            self::createOnFactory($factory, $version, 'https://example.com', $options);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::createOnFactory($factory, $version, 'https://example.com', $options);
     }
 
     public function testPersistentRequireAllowsParsedProxyCredentialsAtProxyCredentialFloor(): void
@@ -948,15 +889,11 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
-        try {
-            $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
-                'proxy' => 'http://username:password@proxy.example.com:8080',
-            ]);
+        $easy = self::createOnFactory($factory, '8.20.0', 'https://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+        ]);
 
-            self::assertInstanceOf(EasyHandle::class, $easy);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::assertInstanceOf(EasyHandle::class, $easy);
     }
 
     public function testPersistentPreferForcesFreshAnonymousProxyTunnelsUnderOpaqueShares(): void
@@ -967,16 +904,12 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_PREFER, $shareHandle);
 
-        try {
-            self::createOnFactory($factory, '8.21.0', 'https://example.com', [
-                'proxy' => 'http://proxy.example.com:8080',
-            ]);
+        self::createOnFactory($factory, '8.21.0', 'https://example.com', [
+            'proxy' => 'http://proxy.example.com:8080',
+        ]);
 
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
     }
 
     public function testPersistentRequireRejectsAnonymousProxyTunnelsUnderOpaqueShares(): void
@@ -987,16 +920,12 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('fresh proxy tunnel connection');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('fresh proxy tunnel connection');
 
-            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
-                'proxy' => 'http://proxy.example.com:8080',
-            ]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        $factory->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => 'http://proxy.example.com:8080',
+        ]);
     }
 
     public function testPersistentShareStateIsTreatedAsOpaqueByTheFactory(): void
@@ -1134,21 +1063,15 @@ class CurlFactoryTest extends TestCase
         $shareHandle = \curl_share_init();
         self::assertNotFalse($shareHandle);
 
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('CURLOPT_SHARE');
-            $this->expectExceptionMessage('transport_sharing');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('CURLOPT_SHARE');
+        $this->expectExceptionMessage('transport_sharing');
 
-            (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
-                'curl' => [
-                    \CURLOPT_SHARE => $shareHandle,
-                ],
-            ]);
-        } finally {
-            if (PHP_VERSION_ID < 80000) {
-                \curl_share_close($shareHandle);
-            }
-        }
+        (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [
+                \CURLOPT_SHARE => $shareHandle,
+            ],
+        ]);
     }
 
     /**
@@ -1160,18 +1083,12 @@ class CurlFactoryTest extends TestCase
     {
         unset($_SERVER['_curl']);
 
-        $easy = (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+        (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
             'transport_sharing' => $transportSharing,
         ]);
 
-        try {
-            if (\defined('CURLOPT_SHARE')) {
-                self::assertArrayNotHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
-            }
-        } finally {
-            if (PHP_VERSION_ID < 80000) {
-                \curl_close($easy->handle);
-            }
+        if (\defined('CURLOPT_SHARE')) {
+            self::assertArrayNotHasKey(\CURLOPT_SHARE, $_SERVER['_curl']);
         }
     }
 
@@ -2781,23 +2698,19 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
-        try {
-            $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('fresh proxy tunnel connection');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('fresh proxy tunnel connection');
 
-            // The HTTPS target tunnels through the http:// proxy (requiring
-            // libcurl 7.54); the managed header is configured in
-            // CURLOPT_PROXYHEADER before the configured-share
-            // fresh-connection logic observes it and rejects the reuse.
-            self::createRequestOnFactory(
-                $factory,
-                '7.54.0',
-                new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
-                ['proxy' => 'http://proxy.example.com:8080']
-            );
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        // The HTTPS target tunnels through the http:// proxy (requiring
+        // libcurl 7.54); the managed header is configured in
+        // CURLOPT_PROXYHEADER before the configured-share
+        // fresh-connection logic observes it and rejects the reuse.
+        self::createRequestOnFactory(
+            $factory,
+            '7.54.0',
+            new Psr7\Request('GET', 'https://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+            ['proxy' => 'http://proxy.example.com:8080']
+        );
     }
 
     public function testSupportedProxyAuthorizationWithoutTunnelIsAcceptedUnderPersistentRequire(): void
@@ -2810,25 +2723,21 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::PERSISTENT_REQUIRE, $shareHandle);
 
-        try {
-            // Supported separation + a NON-tunnel (plain http) target: the header
-            // is configured in CURLOPT_PROXYHEADER and the tunnel-gated
-            // fresh-connection logic never runs, so PERSISTENT_REQUIRE must
-            // ACCEPT the request.
-            $easy = self::createRequestOnFactory(
-                $factory,
-                '7.37.0',
-                new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
-                ['proxy' => 'http://proxy.example.com:8080']
-            );
+        // Supported separation + a NON-tunnel (plain http) target: the header
+        // is configured in CURLOPT_PROXYHEADER and the tunnel-gated
+        // fresh-connection logic never runs, so PERSISTENT_REQUIRE must
+        // ACCEPT the request.
+        $easy = self::createRequestOnFactory(
+            $factory,
+            '7.37.0',
+            new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
+            ['proxy' => 'http://proxy.example.com:8080']
+        );
 
-            self::assertNull($easy->proxyTunnelSignature);
-            self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][$proxyHeaderOption]);
-            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::assertNull($easy->proxyTunnelSignature);
+        self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][$proxyHeaderOption]);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
     public static function unsupportedProxyAuthorizationRouteProvider(): array
@@ -3170,17 +3079,13 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
-        try {
-            $easy = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
-                'proxy' => 'http://username:password@proxy.example.com:8080',
-            ]);
+        $easy = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://username:password@proxy.example.com:8080',
+        ]);
 
-            self::assertNull($easy->proxyTunnelSignature);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::assertNull($easy->proxyTunnelSignature);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
     }
 
     public function testShareHandleUsesBlanketForceFreshForAuthenticatedSocksProxyOnAffectedCurlVersion(): void
@@ -3191,17 +3096,13 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
-        try {
-            $easy = self::createOnFactory($factory, '7.68.0', 'http://example.com', [
-                'proxy' => 'socks5://username:password@proxy.example.com:1080',
-            ]);
+        $easy = self::createOnFactory($factory, '7.68.0', 'http://example.com', [
+            'proxy' => 'socks5://username:password@proxy.example.com:1080',
+        ]);
 
-            self::assertNull($easy->proxyTunnelSignature);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::assertNull($easy->proxyTunnelSignature);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
     }
 
     public function testShareHandleUsesBlanketForceFreshForAnonymousSocksProxyOnAffectedCurlVersion(): void
@@ -3212,21 +3113,17 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
-        try {
-            $easy = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
-                'proxy' => 'socks5://proxy.example.com:1080',
-                'curl' => [
-                    \CURLOPT_FRESH_CONNECT => false,
-                    \CURLOPT_FORBID_REUSE => false,
-                ],
-            ]);
+        $easy = self::createOnFactory($factory, '7.68.0', 'https://example.com', [
+            'proxy' => 'socks5://proxy.example.com:1080',
+            'curl' => [
+                \CURLOPT_FRESH_CONNECT => false,
+                \CURLOPT_FORBID_REUSE => false,
+            ],
+        ]);
 
-            self::assertNull($easy->proxyTunnelSignature);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::assertNull($easy->proxyTunnelSignature);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
     }
 
     public function testShareHandleSkipsBlanketForceFreshForSocksProxyOnFixedCurlVersion(): void
@@ -3237,17 +3134,13 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
-        try {
-            $easy = self::createOnFactory($factory, '7.69.0', 'https://example.com', [
-                'proxy' => 'socks5://username:password@proxy.example.com:1080',
-            ]);
+        $easy = self::createOnFactory($factory, '7.69.0', 'https://example.com', [
+            'proxy' => 'socks5://username:password@proxy.example.com:1080',
+        ]);
 
-            self::assertNull($easy->proxyTunnelSignature);
-            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::assertNull($easy->proxyTunnelSignature);
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
     public static function opaqueShareAnonymousProxyTunnelProvider(): iterable
@@ -3286,18 +3179,14 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
-        try {
-            $options['curl'] = ($options['curl'] ?? []) + [
-                \CURLOPT_FRESH_CONNECT => false,
-                \CURLOPT_FORBID_REUSE => false,
-            ];
-            self::createOnFactory($factory, $version, $uri, $options);
+        $options['curl'] = ($options['curl'] ?? []) + [
+            \CURLOPT_FRESH_CONNECT => false,
+            \CURLOPT_FORBID_REUSE => false,
+        ];
+        self::createOnFactory($factory, $version, $uri, $options);
 
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
-            self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FRESH_CONNECT]);
+        self::assertTrue($_SERVER['_curl'][\CURLOPT_FORBID_REUSE]);
     }
 
     public static function opaqueShareUntouchedRouteProvider(): iterable
@@ -3327,14 +3216,10 @@ class CurlFactoryTest extends TestCase
         self::assertNotFalse($shareHandle);
         $factory = new CurlFactory(3, TransportSharing::HANDLER_PREFER, $shareHandle);
 
-        try {
-            self::createOnFactory($factory, $version, $uri, $options);
+        self::createOnFactory($factory, $version, $uri, $options);
 
-            self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
-            self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
-        } finally {
-            self::closeShareHandleOnPhp7($shareHandle);
-        }
+        self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
+        self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
     }
 
     public static function handlerShareModeProvider(): iterable
@@ -4071,13 +3956,7 @@ class CurlFactoryTest extends TestCase
         $f = new CurlFactory(3);
         $easy = $f->create(new Psr7\Request('GET', 'http://example.com'), ['cert' => [__FILE__]]);
 
-        try {
-            self::assertInstanceOf(EasyHandle::class, $easy);
-        } finally {
-            if (\PHP_VERSION_ID < 80000) {
-                \curl_close($easy->handle);
-            }
-        }
+        self::assertInstanceOf(EasyHandle::class, $easy);
     }
 
     public function testAddsCertType(): void
@@ -10731,16 +10610,6 @@ class CurlFactoryTest extends TestCase
             || !\defined('CURLOPT_SHARE')
         ) {
             self::markTestSkipped('cURL share handles are unavailable.');
-        }
-    }
-
-    /**
-     * @param resource|\CurlShareHandle $shareHandle
-     */
-    private static function closeShareHandleOnPhp7($shareHandle): void
-    {
-        if (PHP_VERSION_ID < 80000 && \is_resource($shareHandle)) {
-            \curl_share_close($shareHandle);
         }
     }
 

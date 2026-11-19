@@ -34,7 +34,7 @@ final class InflateBodyStream implements StreamInterface
 
     private bool $deflate;
 
-    /** @var \InflateContext|resource|null */
+    /** @var \InflateContext|null */
     private $context;
 
     private string $header = '';

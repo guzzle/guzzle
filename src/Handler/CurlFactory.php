@@ -150,7 +150,7 @@ final class CurlFactory implements CurlFactoryInterface
     private const CONNECT_TIMEOUT_DISABLED_MS = 2147483647;
 
     /**
-     * @var resource[]|\CurlHandle[]
+     * @var \CurlHandle[]
      */
     private array $handles = [];
 
@@ -173,7 +173,7 @@ final class CurlFactory implements CurlFactoryInterface
     private bool $closed = false;
 
     /**
-     * @var resource|\CurlShareHandle|\CurlSharePersistentHandle|null
+     * @var \CurlShareHandle|\CurlSharePersistentHandle|null
      */
     private $shareHandle;
 
@@ -186,8 +186,8 @@ final class CurlFactory implements CurlFactoryInterface
     private bool $opaqueShareConnectionCache = false;
 
     /**
-     * @param int                                                                            $maxHandles  Maximum number of idle handles.
-     * @param resource|\CurlShareHandle|\CurlSharePersistentHandle|CurlShareHandleState|null $shareHandle
+     * @param int                                                                   $maxHandles  Maximum number of idle handles.
+     * @param \CurlShareHandle|\CurlSharePersistentHandle|CurlShareHandleState|null $shareHandle
      */
     public function __construct(int $maxHandles, string $shareMode = TransportSharing::NONE, $shareHandle = null)
     {
@@ -222,7 +222,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         if ($shareHandle !== null && !self::isCurlShareHandle($shareHandle)) {
-            throw new InvalidArgumentException('A cURL share handle must be an instance of CurlShareHandle, CurlSharePersistentHandle, or a curl_share resource.');
+            throw new InvalidArgumentException('A cURL share handle must be an instance of CurlShareHandle or CurlSharePersistentHandle.');
         }
 
         $this->shareHandle = $shareHandle;
@@ -233,10 +233,6 @@ final class CurlFactory implements CurlFactoryInterface
      */
     private static function isCurlShareHandle($value): bool
     {
-        if (\PHP_VERSION_ID < 80000) {
-            return \is_resource($value) && \get_resource_type($value) === 'curl_share';
-        }
-
         if ($value instanceof \CurlShareHandle) {
             return true;
         }
@@ -382,9 +378,6 @@ final class CurlFactory implements CurlFactoryInterface
         try {
             $this->applyCurlOptions($handle, $conf);
         } catch (\Throwable $e) {
-            if (PHP_VERSION_ID < 80000 && \is_resource($handle)) {
-                \curl_close($handle);
-            }
             unset($easy->handle);
 
             throw $e;
@@ -394,7 +387,7 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @param resource|\CurlHandle     $handle
+     * @param \CurlHandle              $handle
      * @param array<int|string, mixed> $conf
      */
     private function applyCurlOptions(
@@ -978,37 +971,17 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @param resource|\CurlHandle $handle
+     * @param \CurlHandle $handle
      */
     private function discardHandle(
         #[\SensitiveParameter]
         $handle
     ): void {
-        $failure = null;
-
-        try {
-            $this->clearEasyHandleCallbacks($handle);
-        } catch (\Throwable $e) {
-            $failure = $e;
-        }
-
-        try {
-            if (PHP_VERSION_ID < 80000 && \is_resource($handle)) {
-                \curl_close($handle);
-            }
-        } catch (\Throwable $e) {
-            if ($failure === null) {
-                $failure = $e;
-            }
-        }
-
-        if ($failure !== null) {
-            throw $failure;
-        }
+        $this->clearEasyHandleCallbacks($handle);
     }
 
     /**
-     * @param resource|\CurlHandle $handle
+     * @param \CurlHandle $handle
      */
     private function clearEasyHandleCallbacks(
         #[\SensitiveParameter]

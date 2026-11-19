@@ -28,7 +28,6 @@ class CurlShareHandleStateTest extends TestCase
         unset(
             $_SERVER['_curl_share'],
             $_SERVER['_curl_share_init_count'],
-            $_SERVER['_curl_share_close_count'],
             $_SERVER['_curl_share_init_persistent_count'],
             $_SERVER['_curl_share_persistent_options'],
             $_SERVER['curl_share_setopt_fail'],
@@ -43,7 +42,6 @@ class CurlShareHandleStateTest extends TestCase
             $_SERVER['curl_test'],
             $_SERVER['_curl_share'],
             $_SERVER['_curl_share_init_count'],
-            $_SERVER['_curl_share_close_count'],
             $_SERVER['_curl_share_init_persistent_count'],
             $_SERVER['_curl_share_persistent_options'],
             $_SERVER['curl_share_setopt_fail'],

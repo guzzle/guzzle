@@ -7,7 +7,7 @@ RUN set -xe \
     && composer require guzzlehttp/guzzle
 
 
-FROM php:7.4
+FROM php:8.0
 
 WORKDIR /guzzle
 

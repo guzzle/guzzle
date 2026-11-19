@@ -22,7 +22,7 @@ namespace GuzzleHttp\Test {
 namespace GuzzleHttp\Handler {
     function curl_capture_id($handle): int
     {
-        return \is_object($handle) ? \spl_object_id($handle) : (int) $handle;
+        return \spl_object_id($handle);
     }
 
     function curl_setopt($handle, int $option, $value): bool
@@ -114,15 +114,6 @@ namespace GuzzleHttp\Handler {
         }
 
         return \curl_share_setopt($handle, $option, $value);
-    }
-
-    function curl_share_close($handle): void
-    {
-        if (!empty($_SERVER['curl_test'])) {
-            $_SERVER['_curl_share_close_count'] = ($_SERVER['_curl_share_close_count'] ?? 0) + 1;
-        }
-
-        \curl_share_close($handle);
     }
 
     if (\function_exists('curl_share_init_persistent')) {

@@ -27,7 +27,7 @@ final class EasyHandle
     use NonSerializableTrait;
 
     /**
-     * @var resource|\CurlHandle cURL resource
+     * @var \CurlHandle cURL handle
      */
     public $handle;
 
