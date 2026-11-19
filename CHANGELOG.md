@@ -7,7 +7,6 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Adjusted `guzzlehttp/psr7` version constraint to `^3.5`
 - Remove every case variant when the cURL handlers remove a request header
 - Reject third-party URIs whose string form is malformed or names another origin
 - Reject request header names that are not HTTP tokens in the built-in handlers
@@ -20,6 +19,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 - Reject hosts longer than 4096 bytes when `idn_conversion` is enabled
 - Fix `idn_conversion` failures escaping as `IntlException` or a PSR-7 exception
+
+### Changed
+
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.5.1`
 
 
 ## 8.5.2 - 2026-11-17
