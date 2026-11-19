@@ -523,8 +523,9 @@ $client->request('GET', '/foo', ['crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2
 
 > [!NOTE]
 > This setting must be set to one of the `STREAM_CRYPTO_METHOD_TLS*_CLIENT`
-> constants. It controls the minimum TLS protocol version. cURL 7.52.0 or higher
-> is required to use TLS 1.3 with the cURL handler.
+> constants. It controls the minimum TLS protocol version. The PHP cURL
+> extension must be built against cURL 7.52.0 or higher to use TLS 1.3 with the
+> cURL handler.
 
 ## crypto_method_max
 
@@ -668,16 +669,15 @@ it is sent to whichever proxy libcurl selects for the request. Raw
 `CURLOPT_PROXYHEADER` remains allow-listed and caller-controlled, and is always
 paired with header separation.
 
-In Guzzle 8, every first-class field requires libcurl 7.37.0 or newer built with
+In Guzzle 8, every first-class field requires a PHP cURL extension built with
 proxy header separation support (with the `CURLOPT_PROXYHEADER`,
-`CURLOPT_HEADEROPT`, and `CURLHEADER_SEPARATE` constants available). On older
-libcurl the request is rejected up front with a `RequestException` regardless
-of the predicted route. Guzzle 7.14.2 and newer instead omit first-class values
-on known direct, bypassed, and SOCKS routes, requiring separation only when the
-final configuration may use an HTTP or HTTPS proxy. Guzzle 8 also rejects a raw
-`CURLOPT_PROXYHEADER` list there. Prefer proxy URI userinfo for portable Basic
-proxy authentication, or the native cURL proxy credential options for
-cURL-specific authentication.
+`CURLOPT_HEADEROPT`, and `CURLHEADER_SEPARATE` constants available). Without it
+the request is rejected up front with a `RequestException` regardless of the
+predicted route. Guzzle 7.14.2 and newer instead omit first-class values on
+known direct, bypassed, and SOCKS routes, requiring separation only when the
+final configuration may use an HTTP or HTTPS proxy. Prefer proxy URI userinfo
+for portable Basic proxy authentication, or the native cURL proxy credential
+options for cURL-specific authentication.
 
 A proxy CONNECT tunnel carrying a non-empty `Proxy-Authorization` credential
 requires a fresh connection, because libcurl cannot key connection reuse on that
@@ -1647,11 +1647,11 @@ its transport phase.
 The cURL handlers also reject, with an `InvalidArgumentException`, a proxy URL
 that some libcurl releases silently skip or misread: one whose username or
 password contains a percent-encoded control character (`%00` through `%1F`),
-such as the `%0A` left by a secret that ends with a newline, one with more than
-one `@`, and one whose host is `.`. Write an `@` in the credentials as `%40`,
-and pass credentials that really contain a control character, percent-encoded in
-the form `username:password`, as the raw `CURLOPT_PROXYUSERPWD` cURL option
-through the [`curl`](#curl) request option.
+such as the `%0A` left by a secret that ends with a newline, and one with more
+than one `@`. Write an `@` in the credentials as `%40`, and pass credentials
+that really contain a control character, percent-encoded in the form
+`username:password`, as the raw `CURLOPT_PROXYUSERPWD` cURL option through the
+[`curl`](#curl) request option.
 
 ### Proxy environment variables
 

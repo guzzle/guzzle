@@ -1716,10 +1716,7 @@ class CurlFactoryTest extends TestCase
     public static function unsupportedHttpsProxyCurlVersionProvider(): array
     {
         return [
-            ['7.34.0'],
-            ['7.50.0'],
-            ['7.51.0'],
-            ['7.52.0'],
+            ['7.52.1'],
             ['7.53.1'],
             ['7.61.0'],
         ];
@@ -1760,7 +1757,7 @@ class CurlFactoryTest extends TestCase
      */
     public function testRejectsHttpsProxyFormsWhenLibcurlLacksSupport($proxy): void
     {
-        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.52.1', 'features' => self::curlSslFeature()]);
 
         try {
             $this->expectException(RequestException::class);
@@ -1792,7 +1789,7 @@ class CurlFactoryTest extends TestCase
         $this->expectExceptionMessage('HTTPS proxies are not supported by the installed libcurl');
 
         self::withProxyEnvironment($env, static function (): void {
-            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.52.1', 'features' => self::curlSslFeature()]);
 
             try {
                 $f = new CurlFactory(3);
@@ -1807,9 +1804,7 @@ class CurlFactoryTest extends TestCase
     {
         return [
             ['http://proxy.example.com:3128'],
-            ['http://proxy.example.com.:3128'],
             ['127.0.0.1:8125'],
-            ['http://.:secret@proxy.example.com:3128'],
             ['socks5://proxy.example.com:1080'],
         ];
     }
@@ -1819,7 +1814,7 @@ class CurlFactoryTest extends TestCase
      */
     public function testDoesNotRejectNonHttpsProxiesOnOldLibcurl(string $proxy): void
     {
-        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.52.1', 'features' => self::curlSslFeature()]);
 
         try {
             $f = new CurlFactory(3);
@@ -1915,7 +1910,7 @@ class CurlFactoryTest extends TestCase
 
     public function testDoesNotRejectBypassedHttpsProxyOnOldLibcurl(): void
     {
-        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.52.1', 'features' => self::curlSslFeature()]);
 
         try {
             $f = new CurlFactory(3);
@@ -1939,7 +1934,7 @@ class CurlFactoryTest extends TestCase
             'https_proxy' => 'https://proxy.example.com:3128',
             'NO_PROXY' => 'example.com',
         ], static function (): void {
-            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.50.0', 'features' => self::curlSslFeature()]);
+            $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.52.1', 'features' => self::curlSslFeature()]);
 
             try {
                 $f = new CurlFactory(3);
@@ -2020,9 +2015,6 @@ class CurlFactoryTest extends TestCase
         return [
             ['http://exa mple.com:3128'],          // space in host
             ['http://user:se@other.example:8080@proxy.example.com:3128'], // another host after the first at sign
-            ['http://.'],                          // dot host
-            ['http://user:secret@.:3128'],         // dot host with a port
-            ['http://./'],                         // dot host with a slash
             ['http://127.0.0.1:99999999'],         // port out of range
             ['127.0.0.1:99999999'],                // scheme-less, port out of range
             ["\u{00A0}https://proxy.example.com:3128"], // leading junk before the scheme
@@ -2652,7 +2644,7 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3);
         self::createRequestOnFactory(
             $factory,
-            '7.37.0',
+            '7.52.1',
             new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
             ['proxy' => 'http://proxy.example.com:8080']
         );
@@ -2684,7 +2676,7 @@ class CurlFactoryTest extends TestCase
             $factory = new CurlFactory(3);
             self::createRequestOnFactory(
                 $factory,
-                '7.37.0',
+                '7.52.1',
                 new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
                 $options
             );
@@ -2731,7 +2723,7 @@ class CurlFactoryTest extends TestCase
         $proxyHeaderOption = self::proxyHeaderOption();
 
         $factory = new CurlFactory(3);
-        self::createOnFactory($factory, '7.37.0', 'http://example.com', [
+        self::createOnFactory($factory, '7.52.1', 'http://example.com', [
             'proxy' => 'http://proxy.example.com:8080',
             'curl' => [
                 $proxyHeaderOption => ['X-Proxy-Header: value'],
@@ -2770,7 +2762,7 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3);
         self::createRequestOnFactory(
             $factory,
-            '7.37.0',
+            '7.52.1',
             new Psr7\Request('GET', 'http://example.com', [
                 'Proxy-Authorization' => ['Basic dXNlcjpvbmU=', 'Basic dXNlcjp0d28='],
             ]),
@@ -2799,7 +2791,7 @@ class CurlFactoryTest extends TestCase
         $factory = new CurlFactory(3);
         self::createRequestOnFactory(
             $factory,
-            '7.37.0',
+            '7.52.1',
             new Psr7\Request('GET', 'http://example.com', [
                 'Proxy-Authorization' => ['Basic dXNlcjpvbmU=', '', 'Basic dXNlcjp0d28='],
             ]),
@@ -2828,7 +2820,7 @@ class CurlFactoryTest extends TestCase
             $factory = new CurlFactory(3);
             self::createRequestOnFactory(
                 $factory,
-                '7.37.0',
+                '7.52.1',
                 new Psr7\Request('GET', 'http://example.com'),
                 [
                     'proxy' => '',
@@ -2886,7 +2878,7 @@ class CurlFactoryTest extends TestCase
         // ACCEPT the request.
         $easy = self::createRequestOnFactory(
             $factory,
-            '7.37.0',
+            '7.52.1',
             new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
             ['proxy' => 'http://proxy.example.com:8080']
         );
@@ -2895,62 +2887,6 @@ class CurlFactoryTest extends TestCase
         self::assertContains('Proxy-Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=', $_SERVER['_curl'][$proxyHeaderOption]);
         self::assertArrayNotHasKey(\CURLOPT_FRESH_CONNECT, $_SERVER['_curl']);
         self::assertArrayNotHasKey(\CURLOPT_FORBID_REUSE, $_SERVER['_curl']);
-    }
-
-    public static function unsupportedProxyAuthorizationRouteProvider(): array
-    {
-        return [
-            'direct' => [[], ['proxy' => '']],
-            'http proxy' => [[], ['proxy' => 'http://proxy.example.com:8080']],
-            'socks proxy' => [[], ['proxy' => 'socks5://proxy.example.com:1080']],
-            'managed no bypass' => [[], ['proxy' => ['http' => 'http://proxy.example.com:8080', 'no' => ['example.com']]]],
-            'environment NO_PROXY bypass' => [['http_proxy' => 'http://proxy.example.com:8080', 'NO_PROXY' => 'example.com'], []],
-        ];
-    }
-
-    /**
-     * @dataProvider unsupportedProxyAuthorizationRouteProvider
-     */
-    public function testRejectsManagedProxyAuthorizationWithoutSeparationSupport(array $env, array $options): void
-    {
-        // Legacy libcurl cannot separate proxy headers, so a request carrying
-        // a non-empty Proxy-Authorization credential is rejected up front on
-        // every predicted route, matching the other build- and
-        // version-specific capability checks.
-        self::withProxyEnvironment($env, function () use ($options): void {
-            $this->expectException(RequestException::class);
-            $this->expectExceptionMessage('Proxy headers require libcurl 7.37.0 or newer built with proxy header separation support.');
-
-            self::createRequestOnFactory(
-                new CurlFactory(3),
-                '7.36.0',
-                new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
-                $options
-            );
-        });
-    }
-
-    public function testRejectsRawOnlyProxyHeaderOptionWithoutSeparationSupport(): void
-    {
-        $proxyHeaderOption = self::proxyHeaderOption();
-
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Proxy headers require libcurl 7.37.0 or newer built with proxy header separation support.');
-
-        // Unlike the 7.x branches, 8.0 also fails closed for a caller's
-        // raw-only CURLOPT_PROXYHEADER on legacy libcurl: a proxy-only header
-        // list cannot be represented safely without separation support.
-        self::createRequestOnFactory(
-            new CurlFactory(3),
-            '7.36.0',
-            new Psr7\Request('GET', 'http://example.com'),
-            [
-                'proxy' => 'http://proxy.example.com:8080',
-                'curl' => [
-                    $proxyHeaderOption => ['X-Proxy-Header: value'],
-                ],
-            ]
-        );
     }
 
     public function testRawHeaderOptIsRejected(): void
@@ -3033,19 +2969,6 @@ class CurlFactoryTest extends TestCase
         self::assertSame($unauthenticated, $easy->proxyTunnelSignature);
     }
 
-    public function testRejectsEmptyPsrProxyAuthorizationHeaderWithoutSeparationSupport(): void
-    {
-        $this->expectException(RequestException::class);
-        $this->expectExceptionMessage('Proxy headers require libcurl 7.37.0 or newer built with proxy header separation support.');
-
-        self::createRequestOnFactory(
-            new CurlFactory(3),
-            '7.36.0',
-            new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => '']),
-            ['proxy' => '']
-        );
-    }
-
     public function testNonArrayProxyHeaderThrowsWhenManagedHeaderWouldAppend(): void
     {
         self::requireProxyHeaderSeparationConstants();
@@ -3059,7 +2982,7 @@ class CurlFactoryTest extends TestCase
         // rejected.
         self::createRequestOnFactory(
             new CurlFactory(3),
-            '7.37.0',
+            '7.52.1',
             new Psr7\Request('GET', 'http://example.com', ['Proxy-Authorization' => 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=']),
             [
                 'proxy' => 'http://proxy.example.com:8080',
@@ -3094,7 +3017,7 @@ class CurlFactoryTest extends TestCase
         // they are appended to CURLOPT_PROXYHEADER.
         self::createRequestOnFactory(
             new CurlFactory(3),
-            '7.37.0',
+            '7.52.1',
             $request,
             ['proxy' => 'http://proxy.example.com:8080']
         );
@@ -3623,17 +3546,9 @@ class CurlFactoryTest extends TestCase
         self::assertSame('hi', (string) $response->getBody());
     }
 
-    private static function skipIfProxyHeaderSeparationIsUnsupported(): void
-    {
-        self::requireProxyHeaderSeparationConstants();
-        if (!CurlVersion::supportsProxyHeaderSeparation()) {
-            self::markTestSkipped('The runtime libcurl does not support proxy header separation.');
-        }
-    }
-
     public function testDirectCurlRequestDoesNotSendProxyAuthorizationToOrigin(): void
     {
-        self::skipIfProxyHeaderSeparationIsUnsupported();
+        self::requireProxyHeaderSeparationConstants();
 
         Server::flush();
         Server::enqueue([new Psr7\Response(200)]);
@@ -3649,7 +3564,7 @@ class CurlFactoryTest extends TestCase
 
     public function testProxyAuthorizationIsSentToPlainHttpProxyOnTheWire(): void
     {
-        self::skipIfProxyHeaderSeparationIsUnsupported();
+        self::requireProxyHeaderSeparationConstants();
 
         Server::flush();
         Server::enqueue([new Psr7\Response(200)]);
@@ -3668,7 +3583,7 @@ class CurlFactoryTest extends TestCase
 
     public function testEmptyProxyAuthorizationSuppressesProxyUrlCredentialsOnTheWire(): void
     {
-        self::skipIfProxyHeaderSeparationIsUnsupported();
+        self::requireProxyHeaderSeparationConstants();
 
         Server::flush();
         Server::enqueue([new Psr7\Response(200)]);
@@ -3687,7 +3602,7 @@ class CurlFactoryTest extends TestCase
 
     public function testClientDefaultProxyAuthorizationHeaderIsNotSentToOrigin(): void
     {
-        self::skipIfProxyHeaderSeparationIsUnsupported();
+        self::requireProxyHeaderSeparationConstants();
         $proxyHeaderOption = self::proxyHeaderOption();
 
         self::withProxyEnvironment([], static function () use ($proxyHeaderOption): void {
@@ -3710,7 +3625,7 @@ class CurlFactoryTest extends TestCase
 
     public function testRedirectFromProxyToDirectRouteDoesNotDiscloseProxyAuthorization(): void
     {
-        self::skipIfProxyHeaderSeparationIsUnsupported();
+        self::requireProxyHeaderSeparationConstants();
         $proxyHeaderOption = self::proxyHeaderOption();
 
         self::withProxyEnvironment([], static function () use ($proxyHeaderOption): void {
@@ -3818,32 +3733,6 @@ class CurlFactoryTest extends TestCase
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', Server::$url), ['crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]);
         self::assertEquals(\CURL_SSLVERSION_TLSv1_3, $_SERVER['_curl'][\CURLOPT_SSLVERSION]);
-    }
-
-    public function testCryptoMethodTls13ThrowsRequestExceptionOnUnsupportedCurl(): void
-    {
-        if (!\defined('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT')) {
-            self::markTestSkipped('STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT is not available.');
-        }
-
-        // TLS 1.3 missing from the linked libcurl is build-specific (a newer
-        // build runs the same request), so it is a RequestException.
-        $previousVersionInfo = self::setCurlVersionInfo([
-            'version' => '7.50.0',
-            'features' => self::curlSslFeature(),
-        ]);
-
-        try {
-            $factory = new CurlFactory(3);
-            $factory->create(new Psr7\Request('GET', 'https://example.com'), [
-                'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT,
-            ]);
-            self::fail('Expected a RequestException for unsupported TLS 1.3.');
-        } catch (RequestException $e) {
-            self::assertStringContainsString('TLS 1.3 not supported by your version of cURL', $e->getMessage());
-        } finally {
-            self::setCurlVersionInfo($previousVersionInfo);
-        }
     }
 
     public function testAddsCryptoMethodMaxTls12WithDefaultHttpsMinimum(): void

@@ -356,10 +356,6 @@ final class CurlFactory implements CurlFactoryInterface
 
         $conf[\CURLOPT_HEADERFUNCTION] = $this->createHeaderFn($easy);
         if ($this->shareHandle !== null) {
-            if (!\defined('CURLOPT_SHARE')) {
-                throw new RequestException('The configured cURL share handle requires CURLOPT_SHARE, but it is not available in the installed PHP cURL extension.', $easy->request);
-            }
-
             $conf[(int) \constant('CURLOPT_SHARE')] = $this->shareHandle;
         }
 
@@ -594,14 +590,6 @@ final class CurlFactory implements CurlFactoryInterface
 
         // libcurl before 7.65.0 reads the proxy host after the first '@'.
         if (\substr_count($selectedProxy, '@') > 1) {
-            throw new InvalidArgumentException('Invalid proxy URL.');
-        }
-
-        $authority = \explode('://', $selectedProxy, 2)[1] ?? $selectedProxy;
-        $host = \explode('@', $authority, 2)[1] ?? $authority;
-
-        // libcurl 7.47.0-7.51.0 skips a proxy with a host of '.'.
-        if (\preg_match('#^\.(?:[:/]|$)#D', $host) !== 0) {
             throw new InvalidArgumentException('Invalid proxy URL.');
         }
 
@@ -1987,7 +1975,7 @@ final class CurlFactory implements CurlFactoryInterface
     ): void {
         if ($managedHeaders !== [] || self::hasCurlProxyHeaderOption($conf)) {
             if (!CurlVersion::supportsProxyHeaderSeparation()) {
-                throw new RequestException('Proxy headers require libcurl 7.37.0 or newer built with proxy header separation support.', $request);
+                throw new RequestException('Proxy headers require a PHP cURL extension built with proxy header separation support.', $request);
             }
 
             if ($managedHeaders !== []) {
@@ -1997,10 +1985,10 @@ final class CurlFactory implements CurlFactoryInterface
             $conf[(int) \constant('CURLOPT_HEADEROPT')] = (int) \constant('CURLHEADER_SEPARATE');
         }
 
-        // Keep the conservative CONNECT header-list separation for effective
-        // HTTP(S) proxy tunnels without a proxy header: on libcurl
-        // 7.37.0-7.42.0 the default is CURLHEADER_UNIFIED. This broad route
-        // approximation never decides managed credential routing.
+        // Keep the CONNECT header-list separation explicit for effective
+        // HTTP(S) proxy tunnels without a proxy header rather than relying on
+        // libcurl's default. This broad route approximation never decides
+        // managed credential routing.
         $proxy = self::getEffectiveProxy($conf);
         if (
             CurlVersion::supportsProxyHeaderSeparation()

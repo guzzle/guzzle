@@ -1651,7 +1651,6 @@ class ClientTest extends TestCase
             || !\function_exists('curl_share_setopt')
             || !\function_exists('curl_exec')
             || !CurlVersion::supportsCurlHandler()
-            || !CurlVersion::supportsHandlerSharing()
         ) {
             self::markTestSkipped('Default cURL handler with share handles is unavailable.');
         }

@@ -119,8 +119,9 @@ final class RequestOptions
      * requests to TLS 1.2 or newer.
      *
      * This setting must be set to one of the
-     * ``STREAM_CRYPTO_METHOD_TLS*_CLIENT`` constants. cURL 7.52.0 or higher
-     * is required to use TLS 1.3 with the cURL handler.
+     * ``STREAM_CRYPTO_METHOD_TLS*_CLIENT`` constants. The PHP cURL extension
+     * must be built against cURL 7.52.0 or higher to use TLS 1.3 with the cURL
+     * handler.
      */
     public const CRYPTO_METHOD = 'crypto_method';
 

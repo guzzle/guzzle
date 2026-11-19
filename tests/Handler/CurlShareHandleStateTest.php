@@ -97,32 +97,6 @@ class CurlShareHandleStateTest extends TestCase
         self::assertHandlerShareWasCreated();
     }
 
-    public function testHandlerPreferFallsBackToNoSharingBelowHandlerSharingFloor(): void
-    {
-        self::skipIfCurlShareIsUnavailable();
-        self::setVersionInfo([
-            'version' => '7.34.0',
-            'features' => self::curlSslFeature(),
-        ]);
-
-        self::assertNull(CurlShareHandleState::fromOption(TransportSharing::HANDLER_PREFER));
-        self::assertArrayNotHasKey('_curl_share_init_count', $_SERVER);
-    }
-
-    public function testHandlerRequireRejectsBelowHandlerSharingFloor(): void
-    {
-        self::skipIfCurlShareIsUnavailable();
-        self::setVersionInfo([
-            'version' => '7.34.0',
-            'features' => self::curlSslFeature(),
-        ]);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('libcurl 7.35.0');
-
-        CurlShareHandleState::fromOption(TransportSharing::HANDLER_REQUIRE);
-    }
-
     public function testHandlerPreferCreatesDnsOnlyShareHandleBelowSslSessionFloor(): void
     {
         self::skipIfCurlShareIsUnavailable();
