@@ -9,9 +9,6 @@ use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\CurlShareHandleState;
 use GuzzleHttp\Handler\CurlVersion;
-use GuzzleHttp\Handler\DebugResource;
-use GuzzleHttp\Handler\HeaderProcessor;
-use GuzzleHttp\Handler\Protocols;
 use GuzzleHttp\Handler\Proxy;
 use GuzzleHttp\Handler\StreamHandler;
 use GuzzleHttp\Handler\StreamTlsSessionCache;
@@ -28,49 +25,6 @@ final class Utils
 
     private function __construct()
     {
-    }
-
-    /**
-     * Parses an array of header lines into an associative array of headers.
-     *
-     * @param iterable $lines Header lines array of strings in the following
-     *                        format: "Name: Value"
-     *
-     * @deprecated Utils::headersFromLines() will be removed in
-     *             guzzlehttp/guzzle:9.0.
-     */
-    public static function headersFromLines(iterable $lines): array
-    {
-        \trigger_deprecation(
-            'guzzlehttp/guzzle',
-            '8.5',
-            '%s() is deprecated and will be removed in 9.0.',
-            __METHOD__
-        );
-
-        return HeaderProcessor::headersFromLines($lines);
-    }
-
-    /**
-     * Returns a debug stream based on the provided variable.
-     *
-     * @param mixed $value Optional value
-     *
-     * @return resource
-     *
-     * @deprecated Utils::debugResource() will be removed in
-     *             guzzlehttp/guzzle:9.0.
-     */
-    public static function debugResource($value = null)
-    {
-        \trigger_deprecation(
-            'guzzlehttp/guzzle',
-            '8.5',
-            '%s() is deprecated and will be removed in 9.0.',
-            __METHOD__
-        );
-
-        return DebugResource::from($value);
     }
 
     /**
@@ -301,66 +255,5 @@ final class Utils
         return $handler
             ? Proxy::wrapStreaming($handler, $streamHandler)
             : $streamHandler;
-    }
-
-    /**
-     * Get the default User-Agent string to use with Guzzle.
-     *
-     * @deprecated Utils::defaultUserAgent() will be removed in
-     *             guzzlehttp/guzzle:9.0. Use ClientInterface::MAJOR_VERSION
-     *             to build the string instead.
-     */
-    public static function defaultUserAgent(): string
-    {
-        \trigger_deprecation(
-            'guzzlehttp/guzzle',
-            '8.5',
-            '%s() is deprecated and will be removed in 9.0. Use %s::MAJOR_VERSION to build the string instead.',
-            __METHOD__,
-            ClientInterface::class
-        );
-
-        return sprintf('GuzzleHttp/%d', ClientInterface::MAJOR_VERSION);
-    }
-
-    /**
-     * Creates an associative array of lowercase header names to the actual
-     * header casing.
-     *
-     * @deprecated Utils::normalizeHeaderKeys() will be removed in
-     *             guzzlehttp/guzzle:9.0.
-     */
-    public static function normalizeHeaderKeys(array $headers): array
-    {
-        \trigger_deprecation(
-            'guzzlehttp/guzzle',
-            '8.5',
-            '%s() is deprecated and will be removed in 9.0.',
-            __METHOD__
-        );
-
-        return HeaderProcessor::normalizeHeaderKeys($headers);
-    }
-
-    /**
-     * @param mixed $protocols
-     *
-     * @return string[]
-     *
-     * @throws InvalidArgumentException
-     *
-     * @deprecated Utils::normalizeProtocols() will be removed in
-     *             guzzlehttp/guzzle:9.0.
-     */
-    public static function normalizeProtocols($protocols): array
-    {
-        \trigger_deprecation(
-            'guzzlehttp/guzzle',
-            '8.5',
-            '%s() is deprecated and will be removed in 9.0.',
-            __METHOD__
-        );
-
-        return Protocols::normalize($protocols);
     }
 }
