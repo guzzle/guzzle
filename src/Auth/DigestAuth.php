@@ -323,10 +323,7 @@ final class DigestAuth
         return ['name' => $name] + $mapped;
     }
 
-    /**
-     * @return string|false|null
-     */
-    private static function selectQop(?string $qop)
+    private static function selectQop(?string $qop): string|false|null
     {
         if ($qop === null) {
             return null;

@@ -17,10 +17,8 @@ final class Timeout
 
     /**
      * Converts a request timeout option to integer milliseconds.
-     *
-     * @param mixed $value
      */
-    public static function toMilliseconds($value, string $option): int
+    public static function toMilliseconds(mixed $value, string $option): int
     {
         if (!\is_int($value) && !\is_float($value) && (!\is_string($value) || !\is_numeric($value))) {
             throw new InvalidArgumentException($option.' must be a number of seconds');

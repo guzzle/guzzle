@@ -16,13 +16,11 @@ final class Protocols
     }
 
     /**
-     * @param mixed $protocols
-     *
      * @return string[]
      *
      * @throws InvalidArgumentException
      */
-    public static function normalize($protocols): array
+    public static function normalize(mixed $protocols): array
     {
         if (!\is_array($protocols) || $protocols === []) {
             throw new InvalidArgumentException('protocols must be a non-empty array of "http" and/or "https"');

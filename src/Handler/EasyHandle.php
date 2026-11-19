@@ -230,10 +230,7 @@ final class EasyHandle
         }
     }
 
-    /**
-     * @param mixed $factory
-     */
-    private static function requireResponseFactory($factory): ResponseFactoryInterface
+    private static function requireResponseFactory(mixed $factory): ResponseFactoryInterface
     {
         if (!$factory instanceof ResponseFactoryInterface) {
             throw new InvalidArgumentException(\sprintf(

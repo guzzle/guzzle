@@ -549,8 +549,6 @@ final class AuthMiddleware
     }
 
     /**
-     * @param mixed $reason
-     *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
     private function handleDigestRejection(
@@ -559,7 +557,7 @@ final class AuthMiddleware
         #[\SensitiveParameter]
         array $options,
         #[\SensitiveParameter]
-        $reason,
+        mixed $reason,
         bool $preemptive
     ): PromiseInterface {
         if ($this->reuseChallenges && $reason instanceof ResponseException) {
@@ -763,15 +761,13 @@ final class AuthMiddleware
     }
 
     /**
-     * @param mixed $reason
-     *
      * @return PromiseInterface<ResponseInterface, mixed>
      */
     private static function restoreOriginalSinkOnRejection(
         #[\SensitiveParameter]
         array $options,
         #[\SensitiveParameter]
-        $reason
+        mixed $reason
     ): PromiseInterface {
         if (!$reason instanceof ResponseException || !\array_key_exists('__guzzle_auth_original_sink', $options)) {
             /** @var PromiseInterface<ResponseInterface, mixed> */
@@ -789,10 +785,7 @@ final class AuthMiddleware
         }
     }
 
-    /**
-     * @param mixed $sink
-     */
-    private static function streamForOriginalSink($sink): StreamInterface
+    private static function streamForOriginalSink(mixed $sink): StreamInterface
     {
         if (\is_string($sink)) {
             return new LazyOpenStream($sink, 'w+');
@@ -825,10 +818,7 @@ final class AuthMiddleware
         ]);
     }
 
-    /**
-     * @param mixed $factory
-     */
-    private static function requireStreamFactory($factory): StreamFactoryInterface
+    private static function requireStreamFactory(mixed $factory): StreamFactoryInterface
     {
         if (!$factory instanceof StreamFactoryInterface) {
             throw new InvalidArgumentException(\sprintf(

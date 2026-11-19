@@ -576,10 +576,7 @@ final class ProxyOptions
         return \substr($target['value'], -\strlen($suffix)) === $suffix;
     }
 
-    /**
-     * @return string|false
-     */
-    private static function packIpAddress(string $ip)
+    private static function packIpAddress(string $ip): string|false
     {
         if (\filter_var($ip, \FILTER_VALIDATE_IP)) {
             return \inet_pton($ip);
@@ -588,10 +585,7 @@ final class ProxyOptions
         return false;
     }
 
-    /**
-     * @return string|false
-     */
-    private static function packHostAddress(string $host)
+    private static function packHostAddress(string $host): string|false
     {
         $packed = self::packIpAddress($host);
         if ($packed !== false) {

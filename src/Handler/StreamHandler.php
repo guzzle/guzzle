@@ -624,10 +624,7 @@ final class StreamHandler
         ]);
     }
 
-    /**
-     * @param mixed $factory
-     */
-    private static function requireStreamFactory($factory): StreamFactoryInterface
+    private static function requireStreamFactory(mixed $factory): StreamFactoryInterface
     {
         if (!$factory instanceof StreamFactoryInterface) {
             throw new InvalidArgumentException(\sprintf(
@@ -640,10 +637,7 @@ final class StreamHandler
         return $factory;
     }
 
-    /**
-     * @param mixed $factory
-     */
-    private static function requireResponseFactory($factory): ResponseFactoryInterface
+    private static function requireResponseFactory(mixed $factory): ResponseFactoryInterface
     {
         if (!$factory instanceof ResponseFactoryInterface) {
             throw new InvalidArgumentException(\sprintf(
@@ -1690,7 +1684,7 @@ final class StreamHandler
     private static function normalizeTlsFileOption(
         string $option,
         #[\SensitiveParameter]
-        $value
+        mixed $value
     ): array {
         $passphrase = null;
 
@@ -1735,7 +1729,7 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private static function assertStreamTlsType(string $option, $value): void
+    private static function assertStreamTlsType(string $option, mixed $value): void
     {
         if (!\is_string($value) || $value === '') {
             throw new InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
@@ -1755,7 +1749,7 @@ final class StreamHandler
         #[\SensitiveParameter]
         array &$context,
         #[\SensitiveParameter]
-        $value
+        mixed $value
     ): void {
         $proxy = ProxyEnv::resolveProxySelection($request->getUri(), $value);
         $proxyUri = $proxy->getProxy();
@@ -1869,7 +1863,7 @@ final class StreamHandler
     private function applyCryptoMethodOption(
         #[\SensitiveParameter]
         array &$context,
-        $value
+        mixed $value
     ): void {
         $context['ssl']['min_proto_version'] = TlsVersion::streamProtocolVersion('crypto_method', $value);
     }
@@ -1880,7 +1874,7 @@ final class StreamHandler
     private function applyCryptoMethodMaxOption(
         #[\SensitiveParameter]
         array &$context,
-        $value
+        mixed $value
     ): void {
         $context['ssl']['max_proto_version'] = TlsVersion::streamProtocolVersion('crypto_method_max', $value);
     }
@@ -1909,7 +1903,7 @@ final class StreamHandler
     private function applyVerifyOption(
         #[\SensitiveParameter]
         array &$context,
-        $value
+        mixed $value
     ): void {
         if ($value === false) {
             $context['ssl']['verify_peer'] = false;
@@ -1939,7 +1933,7 @@ final class StreamHandler
         #[\SensitiveParameter]
         array &$context,
         #[\SensitiveParameter]
-        $value
+        mixed $value
     ): void {
         [$value, $passphrase] = self::normalizeTlsFileOption('cert', $value);
 
@@ -1954,7 +1948,7 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applyCertTypeOption($value): void
+    private function applyCertTypeOption(mixed $value): void
     {
         self::assertStreamTlsType('cert_type', $value);
     }
@@ -1966,7 +1960,7 @@ final class StreamHandler
         #[\SensitiveParameter]
         array &$context,
         #[\SensitiveParameter]
-        $value
+        mixed $value
     ): void {
         [$value, $passphrase] = self::normalizeTlsFileOption('ssl_key', $value);
 
@@ -1981,7 +1975,7 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applySslKeyTypeOption($value): void
+    private function applySslKeyTypeOption(mixed $value): void
     {
         self::assertStreamTlsType('ssl_key_type', $value);
     }
@@ -1989,7 +1983,7 @@ final class StreamHandler
     /**
      * @param mixed $value as passed via Request transfer options.
      */
-    private function applyProgressOption($value, array &$params): void
+    private function applyProgressOption(mixed $value, array &$params): void
     {
         if (!\is_callable($value)) {
             throw new InvalidArgumentException('progress client option must be callable');
@@ -2018,7 +2012,7 @@ final class StreamHandler
     private function applyDebugOption(
         #[\SensitiveParameter]
         RequestInterface $request,
-        $value,
+        mixed $value,
         array &$params
     ): void {
         if ($value === false) {
