@@ -7,7 +7,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
-- Adjusted `guzzlehttp/psr7` version constraint to `^3.5`
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.5.1`
 - Remove every case variant when the cURL handlers remove a request header
 - Reject third-party URIs whose string form is malformed or names another origin
 - Reject request header names that are not HTTP tokens in the built-in handlers
