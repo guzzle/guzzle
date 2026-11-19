@@ -13,9 +13,7 @@ use Psr\Http\Message\RequestInterface;
  */
 final class CurlVersion
 {
-    private const MIN_VERSION = '7.34.0';
-
-    private const TLS_13_VERSION = '7.52.0';
+    private const MIN_VERSION = '7.52.1';
 
     // CURLOPT_PIPEWAIT exists since libcurl 7.43.0, and multi handles have
     // multiplexed by default since 7.62.0 - but a 7.65.0-7.65.1 regression
@@ -65,8 +63,6 @@ final class CurlVersion
 
     private const PROTOCOLS_STR_VERSION = '7.85.0';
 
-    private const HANDLER_SHARING_VERSION = '7.35.0';
-
     private const SSL_SESSION_SHARING_VERSION = '8.6.0';
 
     private const CONNECTION_SHARING_VERSION = '8.12.0';
@@ -105,8 +101,6 @@ final class CurlVersion
     // by type, host, and port only.
     private const SOCKS_PROXY_CREDENTIAL_REUSE_VERSION = '7.69.0';
 
-    private const PROXY_HEADER_SEPARATION_VERSION = '7.37.0';
-
     // CURLOPT_SUPPRESS_CONNECT_HEADERS arrived in curl 7.54.0; proxy CONNECT
     // tunneling is gated on it so the proxy's interim reply can never surface
     // as a phantom response on any build that can tunnel.
@@ -136,11 +130,7 @@ final class CurlVersion
 
     public static function supportsTls13(): bool
     {
-        $version = self::get();
-
-        return \defined('CURL_SSLVERSION_TLSv1_3')
-            && null !== $version
-            && version_compare($version, self::TLS_13_VERSION, '>=');
+        return \defined('CURL_SSLVERSION_TLSv1_3');
     }
 
     public static function supportsMultiplex(): bool
@@ -217,24 +207,6 @@ final class CurlVersion
             && null !== $versionInfo
             && version_compare($versionInfo['version'], self::HTTPS_PROXY_VERSION, '>=')
             && 0 !== (\CURL_VERSION_HTTPS_PROXY & $versionInfo['features']);
-    }
-
-    public static function supportsHandlerSharing(): bool
-    {
-        $version = self::get();
-
-        return null !== $version
-            && version_compare($version, self::HANDLER_SHARING_VERSION, '>=');
-    }
-
-    public static function ensureHandlerSharingSupported(): void
-    {
-        if (!self::supportsHandlerSharing()) {
-            throw new InvalidArgumentException(\sprintf(
-                'The "transport_sharing" option requires libcurl %s or higher for cURL share handles.',
-                self::HANDLER_SHARING_VERSION
-            ));
-        }
     }
 
     public static function supportsSslSessionSharing(): bool
@@ -327,11 +299,7 @@ final class CurlVersion
 
     public static function supportsProxyHeaderSeparation(): bool
     {
-        $version = self::get();
-
-        return null !== $version
-            && version_compare($version, self::PROXY_HEADER_SEPARATION_VERSION, '>=')
-            && \defined('CURLOPT_PROXYHEADER')
+        return \defined('CURLOPT_PROXYHEADER')
             && \defined('CURLOPT_HEADEROPT')
             && \defined('CURLHEADER_SEPARATE');
     }
@@ -373,10 +341,7 @@ final class CurlVersion
         }
 
         if (!\defined('CURL_SSLVERSION_TLSv1_2')) {
-            throw new ConnectException(\sprintf(
-                'The PHP cURL extension must be built against cURL %s or higher to use the cURL handler.',
-                self::MIN_VERSION
-            ), $request);
+            throw new ConnectException('The PHP cURL extension must expose CURL_SSLVERSION_TLSv1_2 to use the cURL handler.', $request);
         }
 
         if (!\defined('CURLMOPT_MAX_HOST_CONNECTIONS') || !\defined('CURLMOPT_MAX_TOTAL_CONNECTIONS')) {

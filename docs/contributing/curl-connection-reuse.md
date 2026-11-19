@@ -42,8 +42,8 @@ conflicting raw option throws; on 7.x it is deprecated (and 8.0 will reject it).
 This gate is about option-key availability and known conflicts only. Unless
 Guzzle documents a specific mitigation, the meaning, safety, and runtime effects
 of raw cURL option values remain the caller's responsibility. Some allow-listed
-options also carry a libcurl floor of their own, such as `CURLOPT_PROXYHEADER`
-(§5) and `CURLOPT_SSL_OPTIONS` (§8).
+options also carry a libcurl floor of their own, such as `CURLOPT_SSL_OPTIONS`
+(§8).
 
 **PHP detail — the `\defined()` guard.** A `CURLOPT_*` constant is only
 defined when the linked libcurl/PHP build supports that option, so code that
@@ -94,28 +94,27 @@ What a share handle can share, and the libcurl floor Guzzle requires for each
 
 | Shared state | `CURL_LOCK_DATA_*` | Floor | Constant |
 |---|---|---|---|
-| Share handles usable at all | — | 7.35.0 | `HANDLER_SHARING_VERSION` |
-| DNS cache | `DNS` | 7.35.0 | (with handler sharing) |
+| DNS cache | `DNS` | 7.52.1 | `MIN_VERSION` |
 | TLS session cache | `SSL_SESSION` | 8.6.0 | `SSL_SESSION_SHARING_VERSION` |
 | Connection cache | `CONNECT` | 8.12.0 | `CONNECTION_SHARING_VERSION` |
 
 The connection cache is shared only on 8.0 and only from 8.12.0; **7.x never
-shares the connection cache.** The DNS/handler and TLS-session floors are each
-the version at which that share class became safe (§7). The connection-cache
-floor is set differently. **8.12.0** is the lowest libcurl that meets two
-conditions. First, it fixes every connection-reuse and TLS-session-reuse defect
-reachable by a *default* `https://` request, meaning default verification with
-no client certificate and no proxy authentication; the binding fix is
-CVE-2024-0853, released in 8.6.0. Second, its session-cache rewrite in curl PR
-#16245 lets the co-shared `SSL_SESSION` lock resume sessions across easy
-handles, where before 8.12.0 the share is accepted but sessions stay largely
-handle-local. Proxy-credential reuse fixes that would otherwise argue for 8.20.0
-do not hold this floor up, because Guzzle sections proxy credentials
-independently under `PROXY_CREDENTIAL_REUSE_VERSION` (§8). Direct mTLS
-client-certificate reuse stays incomplete below 8.21.0 under CVE-2026-8932, a
-documented caveat for client-cert users rather than a floor-mover for the
-majority. The absolute hard floor is 7.83.1, from CVE-2022-27782, below which a
-shared connection cache must never be used.
+shares the connection cache.** The TLS-session floor is the version at which
+that share class became safe (§7). The connection-cache floor is set
+differently. **8.12.0** is the lowest libcurl that meets two conditions. First,
+it fixes every connection-reuse and TLS-session-reuse defect reachable by a
+*default* `https://` request, meaning default verification with no client
+certificate and no proxy authentication; the binding fix is CVE-2024-0853,
+released in 8.6.0. Second, its session-cache rewrite in curl PR #16245 lets the
+co-shared `SSL_SESSION` lock resume sessions across easy handles, where before
+8.12.0 the share is accepted but sessions stay largely handle-local.
+Proxy-credential reuse fixes that would otherwise argue for 8.20.0 do not hold
+this floor up, because Guzzle sections proxy credentials independently under
+`PROXY_CREDENTIAL_REUSE_VERSION` (§8). Direct mTLS client-certificate reuse
+stays incomplete below 8.21.0 under CVE-2026-8932, a documented caveat for
+client-cert users rather than a floor-mover for the majority. The absolute hard
+floor is 7.83.1, from CVE-2022-27782, below which a shared connection cache must
+never be used.
 
 ## 4. The proxy-tunnel credential hazard (why `proxyTunnelSignature` exists)
 
@@ -221,13 +220,12 @@ over-sectioning is safe and under-sectioning is not. A non-empty literal
 `Proxy-Authorization: <value>` header is never something libcurl can key
 connection reuse on, even on versions that key parsed proxy credentials
 (8.20.0+), so a tunnel carrying one always sections; its signature is hashed,
-never the delegated owner. On libcurl older than 7.37.0 (or a build missing the
-proxy-header constants) no proxy-only list can be represented safely, so a
-request carrying any first-class value or a raw `CURLOPT_PROXYHEADER` list is
-rejected up front with a `RequestException`, whatever the predicted route. That
-all-route rejection is specific to 8.0. Guzzle 7.14.2 and newer instead omit
-first-class values on known direct, bypassed, and SOCKS routes, rejecting them
-only when the route may use an HTTP(S) proxy.
+never the delegated owner. On a build missing the proxy-header constants no
+proxy-only list can be represented safely, so a request carrying any first-class
+value is rejected up front with a `RequestException`, whatever the predicted
+route. That all-route rejection is specific to 8.0. Guzzle 7.14.2 and newer
+instead omit first-class values on known direct, bypassed, and SOCKS routes,
+rejecting them only when the route may use an HTTP(S) proxy.
 
 Proxy TLS credential coverage stays tunnel-only and private: it is
 reflection-tested hardening for CONNECT tunnels, not public non-tunneled

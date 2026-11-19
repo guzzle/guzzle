@@ -5,9 +5,10 @@ Guzzle Upgrade Guide
 ----------
 
 Guzzle 9 is a major release that raises the minimum PHP version, updates the
-Guzzle dependency stack, converts internationalized host names with Guzzle
-PSR-7, declares more native parameter types, rejects URIs that start with a host
-and port, and removes deprecated `Utils` methods.
+Guzzle dependency stack, raises the minimum libcurl version, converts
+internationalized host names with Guzzle PSR-7, declares more native parameter
+types, rejects URIs that start with a host and port, and removes deprecated
+`Utils` methods.
 
 #### PHP Version and Dependencies
 
@@ -55,6 +56,17 @@ The callbacks of a request that needed more than one transfer also run later in
 the promise task queue than in Guzzle 8, so they can run after the callbacks of
 another request that completed at the same time, including the `fulfilled` and
 `rejected` callbacks of a `Pool`.
+
+#### cURL Minimum Version
+
+Guzzle 9 requires libcurl 7.52.1 or higher with SSL/TLS support when using the
+built-in cURL handlers. Guzzle 8 required libcurl 7.34.0. If this requirement is
+not met, the default handler stack will not select cURL automatically, and
+manually configured cURL handlers reject requests.
+
+The cURL handlers no longer reject a proxy URL whose host is `.` with an
+`InvalidArgumentException`; the transfer fails with a `ConnectException`
+instead.
 
 #### IDN Conversion
 
