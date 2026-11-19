@@ -295,10 +295,6 @@ class CurlMultiHandler
 
         $multiHandle = \curl_multi_init();
 
-        if (false === $multiHandle) {
-            throw new \RuntimeException('Can not initialize curl multi handle.');
-        }
-
         try {
             foreach ($this->options as $option => $value) {
                 if (true === @curl_multi_setopt($multiHandle, $option, $value)) {
