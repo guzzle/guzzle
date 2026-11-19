@@ -37,12 +37,6 @@ parameters:
 			path: src/Handler/CurlHandler.php
 
 		-
-			message: '#^Strict comparison using \=\=\= between false and CurlMultiHandle will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: src/Handler/CurlMultiHandler.php
-
-		-
 			message: '#^Access to constant Error on an unknown class StreamErrorMode\.$#'
 			identifier: class.notFound
 			count: 1
