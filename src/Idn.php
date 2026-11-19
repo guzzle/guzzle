@@ -16,10 +16,7 @@ final class Idn
     {
     }
 
-    /**
-     * @param mixed $value
-     */
-    public static function normalizeConversionOption($value): ?int
+    public static function normalizeConversionOption(mixed $value): ?int
     {
         if ($value === null || $value === false) {
             return null;
@@ -78,10 +75,7 @@ final class Idn
         return $uri;
     }
 
-    /**
-     * @return string|false
-     */
-    private static function idnToAsci(string $domain, int $options, ?array &$info = [])
+    private static function idnToAsci(string $domain, int $options, ?array &$info = []): string|false
     {
         if (\function_exists('idn_to_ascii') && \defined('INTL_IDNA_VARIANT_UTS46')) {
             // ICU can take quadratic time, and no valid name needs more bytes.

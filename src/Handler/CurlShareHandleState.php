@@ -22,19 +22,13 @@ final class CurlShareHandleState
 
     public string $mode;
 
-    /**
-     * @param \CurlShareHandle|\CurlSharePersistentHandle|null $handle
-     */
-    private function __construct(string $mode, $handle)
+    private function __construct(string $mode, \CurlShareHandle|\CurlSharePersistentHandle|null $handle)
     {
         $this->mode = $mode;
         $this->handle = $handle;
     }
 
-    /**
-     * @param mixed $sharing
-     */
-    public static function fromOption($sharing): ?self
+    public static function fromOption(mixed $sharing): ?self
     {
         if ($sharing instanceof self) {
             return $sharing;
@@ -60,10 +54,7 @@ final class CurlShareHandleState
         return self::createPersistentShare($mode);
     }
 
-    /**
-     * @param mixed $sharing
-     */
-    public static function normalizeMode($sharing, string $option): string
+    public static function normalizeMode(mixed $sharing, string $option): string
     {
         if ($sharing instanceof self) {
             return $sharing->mode;

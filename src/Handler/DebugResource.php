@@ -22,7 +22,7 @@ final class DebugResource
      *
      * @return resource
      */
-    public static function from($value = null)
+    public static function from(mixed $value = null)
     {
         if (\is_resource($value)) {
             return $value;

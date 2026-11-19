@@ -228,10 +228,7 @@ final class CurlFactory implements CurlFactoryInterface
         $this->shareHandle = $shareHandle;
     }
 
-    /**
-     * @param mixed $value
-     */
-    private static function isCurlShareHandle($value): bool
+    private static function isCurlShareHandle(mixed $value): bool
     {
         if ($value instanceof \CurlShareHandle) {
             return true;
@@ -387,12 +384,11 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
-     * @param \CurlHandle              $handle
      * @param array<int|string, mixed> $conf
      */
     private function applyCurlOptions(
         #[\SensitiveParameter]
-        $handle,
+        \CurlHandle $handle,
         #[\SensitiveParameter]
         array $conf
     ): void {
@@ -595,10 +591,7 @@ final class CurlFactory implements CurlFactoryInterface
         }
     }
 
-    /**
-     * @param int|string $option
-     */
-    private static function formatCurlOption($option): string
+    private static function formatCurlOption(int|string $option): string
     {
         if (!\is_int($option)) {
             return \sprintf('"%s"', Psr7\DiagnosticValue::escape((string) $option));
@@ -970,22 +963,16 @@ final class CurlFactory implements CurlFactoryInterface
         }
     }
 
-    /**
-     * @param \CurlHandle $handle
-     */
     private function discardHandle(
         #[\SensitiveParameter]
-        $handle
+        \CurlHandle $handle
     ): void {
         $this->clearEasyHandleCallbacks($handle);
     }
 
-    /**
-     * @param \CurlHandle $handle
-     */
     private function clearEasyHandleCallbacks(
         #[\SensitiveParameter]
-        $handle
+        \CurlHandle $handle
     ): void {
         curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
         curl_setopt($handle, \CURLOPT_READFUNCTION, null);
@@ -1819,10 +1806,7 @@ final class CurlFactory implements CurlFactoryInterface
         return \hash('sha256', \serialize(['socks', $proxy, $credentialState]));
     }
 
-    /**
-     * @param mixed $proxyType
-     */
-    private static function isSocksProxyType($proxyType): bool
+    private static function isSocksProxyType(mixed $proxyType): bool
     {
         if (!\is_int($proxyType)) {
             return false;
@@ -2246,10 +2230,7 @@ final class CurlFactory implements CurlFactoryInterface
         return $mask;
     }
 
-    /**
-     * @param mixed $type
-     */
-    private static function normalizeTlsFileType(string $option, $type): string
+    private static function normalizeTlsFileType(string $option, mixed $type): string
     {
         if (!\is_string($type) || $type === '') {
             throw new InvalidArgumentException(\sprintf('%s must be a non-empty string', $option));
@@ -2538,10 +2519,7 @@ final class CurlFactory implements CurlFactoryInterface
         ]);
     }
 
-    /**
-     * @param mixed $factory
-     */
-    private static function requireStreamFactory($factory): StreamFactoryInterface
+    private static function requireStreamFactory(mixed $factory): StreamFactoryInterface
     {
         if (!$factory instanceof StreamFactoryInterface) {
             throw new InvalidArgumentException(\sprintf(

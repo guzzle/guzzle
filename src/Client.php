@@ -734,10 +734,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $host !== $request->getHeaderLine('Host');
     }
 
-    /**
-     * @param mixed $factory
-     */
-    private static function requireRequestFactory($factory): RequestFactoryInterface
+    private static function requireRequestFactory(mixed $factory): RequestFactoryInterface
     {
         if (!$factory instanceof RequestFactoryInterface) {
             throw new InvalidArgumentException(\sprintf(
@@ -750,10 +747,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $factory;
     }
 
-    /**
-     * @param mixed $factory
-     */
-    private static function requireResponseFactory($factory): ResponseFactoryInterface
+    private static function requireResponseFactory(mixed $factory): ResponseFactoryInterface
     {
         if (!$factory instanceof ResponseFactoryInterface) {
             throw new InvalidArgumentException(\sprintf(
@@ -766,10 +760,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $factory;
     }
 
-    /**
-     * @param mixed $factory
-     */
-    private static function requireUriFactory($factory): UriFactoryInterface
+    private static function requireUriFactory(mixed $factory): UriFactoryInterface
     {
         if (!$factory instanceof UriFactoryInterface) {
             throw new InvalidArgumentException(\sprintf(
@@ -782,10 +773,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $factory;
     }
 
-    /**
-     * @param mixed $factory
-     */
-    private static function requireStreamFactory($factory): StreamFactoryInterface
+    private static function requireStreamFactory(mixed $factory): StreamFactoryInterface
     {
         if (!$factory instanceof StreamFactoryInterface) {
             throw new InvalidArgumentException(\sprintf(
@@ -798,10 +786,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $factory;
     }
 
-    /**
-     * @param mixed $uri
-     */
-    private static function createUri($uri, UriFactoryInterface $uriFactory): UriInterface
+    private static function createUri(mixed $uri, UriFactoryInterface $uriFactory): UriInterface
     {
         if ($uri instanceof UriInterface) {
             return $uri;
@@ -814,10 +799,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         throw new InvalidArgumentException(\sprintf('URI must be a string or %s', UriInterface::class));
     }
 
-    /**
-     * @param mixed $body
-     */
-    private static function createBodyStream($body, StreamFactoryInterface $streamFactory): StreamInterface
+    private static function createBodyStream(mixed $body, StreamFactoryInterface $streamFactory): StreamInterface
     {
         if ($body instanceof StreamInterface) {
             return $body;
@@ -1078,10 +1060,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    /**
-     * @param mixed $value
-     */
-    private static function assertFormParamTypes($value): void
+    private static function assertFormParamTypes(mixed $value): void
     {
         if (!\is_array($value)) {
             self::invalidRequestOptionType('form_params', 'array<array-key, string|int|float|bool|null|array>', $value);
@@ -1129,12 +1108,9 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    /**
-     * @param mixed $headers
-     */
     private static function assertHeaderOptionTypes(
         #[\SensitiveParameter]
-        $headers
+        mixed $headers
     ): void {
         if (!\is_array($headers)) {
             self::invalidRequestOptionType('headers', 'array<array-key, string|non-empty-array<array-key, string>>|null', $headers);
@@ -1160,10 +1136,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    /**
-     * @param mixed $multipart
-     */
-    private static function assertMultipartOptionTypes($multipart): void
+    private static function assertMultipartOptionTypes(mixed $multipart): void
     {
         if (!\is_array($multipart)) {
             self::invalidRequestOptionType('multipart', 'array<array-key, array{name: string|int, contents: mixed, headers?: array<array-key, string>, filename?: string}>', $multipart);
@@ -1481,14 +1454,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
     }
 
-    /**
-     * @param mixed $value
-     */
     private static function invalidRequestOptionType(
         string $option,
         string $expected,
         #[\SensitiveParameter]
-        $value
+        mixed $value
     ): void {
         throw new InvalidArgumentException(\sprintf(
             'Passing %s to request option "%s" is invalid; expected %s.',
@@ -1648,10 +1618,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $request;
     }
 
-    /**
-     * @param string|int|float $version
-     */
-    private static function normalizeProtocolVersion($version): string
+    private static function normalizeProtocolVersion(string|int|float $version): string
     {
         $version = \is_float($version) ? \number_format($version, 1, '.', '') : (string) $version;
 

@@ -489,10 +489,7 @@ final class StreamTlsSessionCache
         ];
     }
 
-    /**
-     * @param mixed $value
-     */
-    private static function isCanonicalScalar($value): bool
+    private static function isCanonicalScalar(mixed $value): bool
     {
         return $value === null
             || \is_bool($value)
@@ -501,10 +498,7 @@ final class StreamTlsSessionCache
             || \is_string($value);
     }
 
-    /**
-     * @param mixed $value
-     */
-    private static function isPeerFingerprint($value): bool
+    private static function isPeerFingerprint(mixed $value): bool
     {
         if (\is_string($value)) {
             return true;
@@ -524,11 +518,9 @@ final class StreamTlsSessionCache
     }
 
     /**
-     * @param mixed $value
-     *
      * @return array{0: string, 1: mixed}
      */
-    private static function canonicalScalar($value): array
+    private static function canonicalScalar(mixed $value): array
     {
         if ($value === null) {
             return ['null', null];
@@ -554,11 +546,9 @@ final class StreamTlsSessionCache
     }
 
     /**
-     * @param mixed $value
-     *
      * @return array{0: string, 1: mixed}
      */
-    private static function canonicalPeerFingerprint($value): array
+    private static function canonicalPeerFingerprint(mixed $value): array
     {
         if (!self::isPeerFingerprint($value)) {
             throw new InvalidArgumentException(self::INVALID_PEER_FINGERPRINT_REASON);

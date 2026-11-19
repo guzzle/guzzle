@@ -13,10 +13,7 @@ final class TransferByteCounter
     {
     }
 
-    /**
-     * @param mixed $value
-     */
-    public static function progressValueToInt($value): int
+    public static function progressValueToInt(mixed $value): int
     {
         if (\is_int($value)) {
             if ($value < 0) {

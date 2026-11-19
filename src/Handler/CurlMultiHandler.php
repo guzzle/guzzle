@@ -541,10 +541,7 @@ final class CurlMultiHandler
         }
     }
 
-    /**
-     * @param int|string $option
-     */
-    private static function formatCurlMultiOption($option): string
+    private static function formatCurlMultiOption(int|string $option): string
     {
         if (!\is_int($option)) {
             return \sprintf('"%s"', Psr7\DiagnosticValue::escape((string) $option));
@@ -1335,12 +1332,9 @@ final class CurlMultiHandler
         $this->clearEasyHandleCallbacks($handle);
     }
 
-    /**
-     * @param \CurlHandle $handle
-     */
     private function clearEasyHandleCallbacks(
         #[\SensitiveParameter]
-        $handle
+        \CurlHandle $handle
     ): void {
         curl_setopt($handle, \CURLOPT_HEADERFUNCTION, null);
         curl_setopt($handle, \CURLOPT_READFUNCTION, null);
@@ -1360,13 +1354,10 @@ final class CurlMultiHandler
         }
     }
 
-    /**
-     * @param \CurlHandle $handle
-     */
     private function removeHandleFromMulti(
         int $id,
         #[\SensitiveParameter]
-        $handle
+        \CurlHandle $handle
     ): void {
         // Removing a still-running transfer performs a final progress update
         // that can run a user progress callback, so removal is guarded like
@@ -1604,10 +1595,7 @@ final class CurlMultiHandler
         return (int) \min(\PHP_INT_MAX, $this->secondsToNext() * 1000000);
     }
 
-    /**
-     * @return \CurlMultiHandle
-     */
-    private function getMultiHandle()
+    private function getMultiHandle(): \CurlMultiHandle
     {
         if ($this->multiHandle !== null) {
             return $this->multiHandle;

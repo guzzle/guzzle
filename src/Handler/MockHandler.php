@@ -261,7 +261,7 @@ final class MockHandler implements \Countable
         #[\SensitiveParameter]
         ?ResponseInterface $response = null,
         #[\SensitiveParameter]
-        $reason = null
+        mixed $reason = null
     ): void {
         if (isset($options['on_stats'])) {
             $transferTime = $options['transfer_time'] ?? 0.0;

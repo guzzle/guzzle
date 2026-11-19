@@ -30,13 +30,11 @@ final class ProxyEnv
      * The environment no_proxy list is tokenized the way libcurl tokenizes
      * it and matched here with the same rules as the proxy option's "no"
      * list, so behavior does not depend on the installed libcurl's matcher.
-     *
-     * @param mixed $proxyOption
      */
     public static function resolveProxySelection(
         UriInterface $uri,
         #[\SensitiveParameter]
-        $proxyOption
+        mixed $proxyOption
     ): ProxySelection {
         $selection = ProxyOptions::resolve($uri, $proxyOption);
 
