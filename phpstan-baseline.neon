@@ -7,18 +7,6 @@ parameters:
 			path: src/Client.php
 
 		-
-			message: '#^Result of && is always false\.$#'
-			identifier: booleanAnd.alwaysFalse
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between null and null will always evaluate to false\.$#'
-			identifier: notIdentical.alwaysFalse
-			count: 1
-			path: src/Cookie/SetCookie.php
-
-		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 1
@@ -105,12 +93,6 @@ parameters:
 		-
 			message: '#^Call to function is_callable\(\) with callable\(callable&THandler\)\: \(callable&THandler\) will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 2
-			path: src/HandlerStack.php
-
-		-
-			message: '#^Result of && is always false\.$#'
-			identifier: booleanAnd.alwaysFalse
 			count: 1
 			path: src/HandlerStack.php
 
