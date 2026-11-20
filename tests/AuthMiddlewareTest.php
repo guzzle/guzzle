@@ -13,6 +13,9 @@ use GuzzleHttp\Exception\ResponseTimeoutException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise\Promise;
+use GuzzleHttp\Promise\State;
+use GuzzleHttp\Promise\Utils;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -125,6 +128,30 @@ class AuthMiddlewareTest extends TestCase
         self::assertFalse($requests[0]->hasHeader('Authorization'));
         self::assertStringContainsString('Digest ', $requests[1]->getHeaderLine('Authorization'));
         self::assertStringContainsString('response="6629fae49393a05397450978507c4ef1"', $requests[1]->getHeaderLine('Authorization'));
+    }
+
+    public function testCancellingRequestPromiseCancelsDigestRetryInFlight(): void
+    {
+        $cancelled = false;
+        $retry = new Promise(null, static function () use (&$cancelled): void {
+            $cancelled = true;
+        });
+        $mock = new MockHandler([
+            new Response(401, [
+                'WWW-Authenticate' => 'Digest realm="testrealm@host.com", nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093", qop="auth"',
+            ]),
+            $retry,
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $promise = $client->getAsync('http://example.com/dir/index.html', [
+            'auth' => ['Mufasa', 'Circle Of Life', 'digest'],
+        ]);
+        Utils::queue()->run();
+        $promise->cancel();
+
+        self::assertTrue($cancelled);
+        self::assertTrue(State::isRejected($promise));
     }
 
     public function testDigestAuthIntOnlyChallengeDoesNotRetry(): void

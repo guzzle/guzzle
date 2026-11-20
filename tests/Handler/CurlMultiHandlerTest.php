@@ -1573,6 +1573,15 @@ class CurlMultiHandlerTest extends TestCase
         $a(new Request('GET', 'http://localhost:123'), [])->wait();
     }
 
+    public function testFailedTransferPromiseReportsRejectedState(): void
+    {
+        $a = new CurlMultiHandler();
+        $promise = $a(new Request('GET', 'http://localhost:123'), []);
+        $promise->wait(false);
+
+        self::assertTrue(P\State::isRejected($promise));
+    }
+
     public function testCanSetSelectTimeout(): void
     {
         $a = new CurlMultiHandler(['select_timeout' => 2]);
