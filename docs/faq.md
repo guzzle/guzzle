@@ -162,14 +162,14 @@ per-proxy or per-credential socket limit.
 
 At the limit, libcurl queues transfers waiting for a connection slot. On libcurl
 8.8.0 and newer, transfers queued behind a cap keep consuming the request
-`timeout`; older libcurl does not run timeout checks on queued transfers, so a
-queued transfer can overstay its `timeout` until a connection slot frees (curl
-issue #13276). On libcurl 8.16.0 through 8.19.x, queued transfers resume one at
-a time in an order that can starve some transfers under sustained load (fixed in
-8.20.0). A transfer that must open a fresh connection, such as a proxied
-transfer Guzzle isolates for credential safety, does not bypass the caps: it can
-evict an eligible idle connection, and otherwise it stays pending until the
-applicable per-host or total cap frees.
+`timeout` and `connect_timeout`; older libcurl does not run timeout checks on
+queued transfers, so a queued transfer can overstay its `timeout` until a
+connection slot frees (curl issue #13276). On libcurl 8.16.0 through 8.19.x,
+queued transfers resume one at a time in an order that can starve some transfers
+under sustained load (fixed in 8.20.0). A transfer that must open a fresh
+connection, such as a proxied transfer Guzzle isolates for credential safety,
+does not bypass the caps: it can evict an eligible idle connection, and
+otherwise it stays pending until the applicable per-host or total cap frees.
 
 Low caps combined with aggressive timeouts and large request bursts can
 therefore time out, or wait longer than expected, before a connection becomes
