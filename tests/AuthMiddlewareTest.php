@@ -7,6 +7,7 @@ namespace GuzzleHttp\Tests;
 use GuzzleHttp\AuthMiddleware;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Exception\ResponseException;
 use GuzzleHttp\Exception\ResponseTimeoutException;
@@ -607,6 +608,21 @@ class AuthMiddlewareTest extends TestCase
         ]);
 
         self::assertSame(302, $response->getStatusCode());
+    }
+
+    public function testDigestProbeConnectExceptionPassesThrough(): void
+    {
+        $exception = new ConnectException('connection failed', new Request('GET', 'http://example.com'));
+        $mock = new MockHandler([$exception]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        try {
+            $client->get('http://example.com', ['auth' => ['a', 'b', 'digest']]);
+
+            self::fail('Expected ConnectException.');
+        } catch (ConnectException $e) {
+            self::assertSame($exception, $e);
+        }
     }
 
     public function testDigestProbeOmitsBodyThroughDefaultStack(): void
