@@ -11,6 +11,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject third-party URIs whose string form is malformed or names another origin
 - Reject request header names that are not HTTP tokens in the built-in handlers
 - Redact proxy credentials that libcurl cuts off in cURL errors
+- Decode percent-encoded proxy credentials in the stream handler
 - Remove deprecation for the raw cURL `CURLOPT_SSL_OPTIONS` option on libcurl 7.83.1 or newer
 
 
