@@ -1179,6 +1179,7 @@ class CurlFactory implements CurlFactoryInterface
         // raw control bytes to '_', which could make the replacement miss.
         $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
         $remainder = \substr($proxyForParsing, \strpos($proxyForParsing, '://') + 3);
+        $error = self::redactTruncatedProxyUserInfo($error, \substr($remainder, 0, (int) \strrpos($remainder, '@')));
 
         if (\parse_url($proxyForParsing) === false) {
             // Raw '/', '?', or '#' separators may sit inside the credentials
@@ -1224,6 +1225,22 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         return \str_replace($rawUserInfo.'@', $redactedUserInfo.'@', $error);
+    }
+
+    private static function redactTruncatedProxyUserInfo(string $error, string $userInfo): string
+    {
+        // libcurl cuts errors at 255 bytes, which can drop the userinfo's "@".
+        if (\strlen($error) !== 255 || \strpos($error, $userInfo.'@') !== false) {
+            return $error;
+        }
+
+        for ($length = \min(\strlen($userInfo), 255); $length > 0; --$length) {
+            if (\substr_compare($error, $userInfo, -$length, $length) === 0) {
+                return \substr($error, 0, -$length).'***';
+            }
+        }
+
+        return $error;
     }
 
     /**

@@ -1786,6 +1786,24 @@ class CurlFactoryTest extends TestCase
         self::assertSame('Failed to connect via http://user:***@proxy.example.com:8125', $redacted);
     }
 
+    /**
+     * @dataProvider proxyCredentialsCutOffByCurlProvider
+     */
+    public function testRedactsProxyCredentialsCutOffByCurl(string $proxy, string $expected): void
+    {
+        $redacted = self::redactProxyUserInfo(\substr("Unsupported proxy syntax in '".$proxy."'", 0, 255), $proxy);
+
+        self::assertSame("Unsupported proxy syntax in '".$expected, $redacted);
+    }
+
+    public static function proxyCredentialsCutOffByCurlProvider(): iterable
+    {
+        yield 'inside a password with an at sign' => ['http://user:x@'.\str_repeat('s', 300).'@proxy.example.com:99999', 'http://***'];
+        yield 'after a password that ends like the user name' => ['http://user:'.\str_repeat('s', 210).'user@proxy.example.com:8125', 'http://***'];
+        yield 'after the userinfo when it ends like it begins' => ['http://user:x@'.\str_repeat('s', 205).'user:x@proxy.example.com:8125', 'http://user:***@'];
+        yield 'without a scheme' => ['user:'.\str_repeat('s', 300).'@proxy.example.com:8125', '***'];
+    }
+
     public function testRedactsUnparsableProxyCredentialsIndependentlyOfCurlErrorText(): void
     {
         $proxy = 'http://user:secret@127.0.0.1:99999999';
