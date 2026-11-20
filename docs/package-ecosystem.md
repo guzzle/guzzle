@@ -25,8 +25,8 @@ promise composition outside of Guzzle's HTTP client APIs.
 
 | Package | Use it for | Documentation |
 |---------|------------|---------------|
-| `guzzlehttp/command` | Building command-based SDK-style clients with named operations and results. | [Command docs](https://github.com/guzzle/command/blob/2.0/docs/service-clients.md) |
-| `guzzlehttp/guzzle-services` | Building service-description-driven clients on top of Guzzle Command. | [Guzzle Services docs](https://github.com/guzzle/guzzle-services/blob/2.0/docs/service-descriptions.md) |
+| `guzzlehttp/command` | Building command-based SDK-style clients with named operations and results. | [Command docs](https://github.com/guzzle/command/blob/3.0/docs/service-clients.md) |
+| `guzzlehttp/guzzle-services` | Building service-description-driven clients on top of Guzzle Command. | [Guzzle Services docs](https://github.com/guzzle/guzzle-services/blob/3.0/docs/service-descriptions.md) |
 
 Use `guzzlehttp/command` when you want a higher-level client API where
 application code calls operations rather than manually building HTTP requests.
@@ -38,8 +38,8 @@ models.
 
 | Package | Use it for | Documentation |
 |---------|------------|---------------|
-| `guzzlehttp/uri-template` | Expanding RFC 6570 URI templates. | [URI Template docs](https://github.com/guzzle/uri-template/blob/2.0/docs/uri-template-usage.md) |
-| `guzzlehttp/oauth-subscriber` | Signing Guzzle requests with OAuth 1.0 middleware. | [OAuth Subscriber docs](https://github.com/guzzle/oauth-subscriber/blob/1.0/docs/oauth-1-0-middleware-usage.md) |
+| `guzzlehttp/uri-template` | Expanding RFC 6570 URI templates. | [URI Template docs](https://github.com/guzzle/uri-template/blob/3.0/docs/uri-template-usage.md) |
+| `guzzlehttp/oauth-subscriber` | Signing Guzzle requests with OAuth 1.0 middleware. | [OAuth Subscriber docs](https://github.com/guzzle/oauth-subscriber/blob/2.0/docs/oauth-1-0-middleware-usage.md) |
 | `guzzlehttp/test-server` | Testing HTTP clients against a local controllable server. | [Test Server docs](https://github.com/guzzle/test-server/blob/2.0/docs/test-server-usage.md) |
 
 Use `guzzlehttp/uri-template` when an API provides URI templates that need to be
