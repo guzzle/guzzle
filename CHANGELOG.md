@@ -15,6 +15,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Decode percent-encoded proxy credentials in the stream handler
 - Remove deprecation for the raw cURL `CURLOPT_SSL_OPTIONS` option on libcurl 7.83.1 or newer
 
+### Fixed
+
+- Stop cURL multi handler waits looping forever after its destructor has run
+
 
 ## 7.16.4 - 2026-11-20
 

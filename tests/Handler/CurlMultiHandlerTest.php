@@ -1947,6 +1947,40 @@ class CurlMultiHandlerTest extends TestCase
         self::assertFalse($hasMultiHandle($handler));
     }
 
+    /**
+     * @dataProvider transferDroppedByDestructorProvider
+     */
+    public function testWaitAfterDestructorRejectsWithAnAttributableError(array $options): void
+    {
+        $handler = new CurlMultiHandler();
+        $request = new Request('GET', Server::$url);
+        $promise = $handler($request, $options);
+
+        $handles = self::readMultiProperty($handler, 'handles');
+        self::assertCount(1, $handles);
+        $id = (int) \key($handles);
+
+        $handler->__destruct();
+
+        // Checked first because waiting on a tracked transfer may never return.
+        self::assertSame([], self::readMultiProperty($handler, 'handles'));
+        self::assertSame([], self::readMultiProperty($handler, 'delays'));
+
+        try {
+            $promise->wait();
+            self::fail('Expected waiting on the dropped transfer to reject.');
+        } catch (RequestException $e) {
+            self::assertSame(\sprintf('Waiting on cURL multi handler transfer %d cannot make progress (its entry was removed without settling).', $id), $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+        }
+    }
+
+    public static function transferDroppedByDestructorProvider(): iterable
+    {
+        yield 'attached' => [[]];
+        yield 'delayed' => [['delay' => 10000]];
+    }
+
     public function testCanCancel()
     {
         Server::flush();
