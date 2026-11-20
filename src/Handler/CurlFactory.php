@@ -1210,10 +1210,14 @@ class CurlFactory implements CurlFactoryInterface
 
         try {
             $proxyUri = new Uri($proxyForParsing);
-            $redactedUserInfo = Psr7\Utils::redactUserInfo($proxyUri)->getUserInfo();
 
-            if ($redactedUserInfo === $proxyUri->getUserInfo()) {
-                return $error;
+            // psr7 finds no userinfo behind a scheme with a plus sign.
+            if ($proxyUri->getUserInfo() !== '') {
+                $redactedUserInfo = Psr7\Utils::redactUserInfo($proxyUri)->getUserInfo();
+
+                if ($redactedUserInfo === $proxyUri->getUserInfo()) {
+                    return $error;
+                }
             }
         } catch (\InvalidArgumentException $e) {
             // Unparseable as a URI: fall back to redacting the whole userinfo.
