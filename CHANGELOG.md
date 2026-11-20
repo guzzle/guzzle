@@ -15,7 +15,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Remove deprecation for the raw cURL `CURLOPT_SSL_OPTIONS` option on libcurl 7.83.1 or newer
 
 
-## 7.16.4 - Upcoming
+## 7.16.4 - 2026-11-20
 
 ### Fixed
 
