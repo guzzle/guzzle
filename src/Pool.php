@@ -289,7 +289,7 @@ class Pool implements PromisorInterface
         if (!isset($options[$name])) {
             $options[$name] = static function (
                 #[\SensitiveParameter]
-                $v,
+                mixed $v,
                 $k
             ) use (&$results): void {
                 $results[$k] = $v;
@@ -298,7 +298,7 @@ class Pool implements PromisorInterface
             $currentFn = $options[$name];
             $options[$name] = static function (
                 #[\SensitiveParameter]
-                $v,
+                mixed $v,
                 $k
             ) use (&$results, $currentFn): void {
                 $currentFn($v, $k);

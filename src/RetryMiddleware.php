@@ -102,7 +102,7 @@ class RetryMiddleware
     {
         return function (
             #[\SensitiveParameter]
-            $reason
+            mixed $reason
         ) use ($req, $options): PromiseInterface {
             if (!($this->decider)(
                 $options['retries'],

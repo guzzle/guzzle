@@ -152,7 +152,7 @@ final class Middleware
                     },
                     static function (
                         #[\SensitiveParameter]
-                        $reason
+                        mixed $reason
                     ) use ($request, &$container, $options): PromiseInterface {
                         $container[] = [
                             'request' => $request,
@@ -274,7 +274,7 @@ final class Middleware
                      */
                     static function (
                         #[\SensitiveParameter]
-                        $reason
+                        mixed $reason
                     ) use ($logger, $request, $formatter): PromiseInterface {
                         $response = $reason instanceof ResponseException ? $reason->getResponse() : null;
                         $message = $formatter->format($request, $response, P\Create::exceptionFor($reason));
