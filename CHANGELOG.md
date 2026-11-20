@@ -16,6 +16,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Decode percent-encoded proxy credentials in the stream handler
 - Allow the raw cURL `CURLOPT_SSL_OPTIONS` option on libcurl 7.83.1 or newer
 
+### Fixed
+
+- Reject cURL multi handler waits with `HandlerClosedException` after its destructor has run
+
 
 ## 8.5.3 - 2026-11-20
 
