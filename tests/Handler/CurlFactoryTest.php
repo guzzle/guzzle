@@ -1553,6 +1553,139 @@ class CurlFactoryTest extends TestCase
         $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
     }
 
+    public static function proxyWithMissingOrAmbiguousHostProvider(): iterable
+    {
+        yield 'credentials only' => [['proxy' => 'http://user:secret@']];
+        yield 'credentials only, scheme-less' => [['proxy' => 'user:secret@']];
+        yield 'credentials and a slash' => [['proxy' => 'http://user:secret@/']];
+        yield 'slash only' => [['proxy' => 'http:///']];
+        yield 'port only' => [['proxy' => 'http://:3128']];
+        yield 'port only, scheme-less' => [['proxy' => ':3128']];
+        yield 'dot host' => [['proxy' => 'http://.']];
+        yield 'dot host with a port' => [['proxy' => 'http://user:secret@.:3128']];
+        yield 'dot host with a slash' => [['proxy' => 'http://./']];
+        yield 'empty brackets' => [['proxy' => 'socks5://user:secret@[]:1080']];
+        yield 'dot host in brackets' => [['proxy' => 'http://[.]:3128']];
+        yield 'open bracket' => [['proxy' => 'http://[']];
+        yield 'no host after the first at sign' => [['proxy' => 'http://user:se@:cret@proxy.example.com:3128']];
+        yield 'another host after the first at sign' => [['proxy' => 'http://user:p@other.example:8080@proxy.example.com:3128']];
+        yield 'raw proxy' => [['curl' => [\CURLOPT_PROXY => 'http://user:secret@']]];
+
+        if (\defined('CURLOPT_PRE_PROXY')) {
+            yield 'raw pre-proxy' => [['curl' => [(int) \constant('CURLOPT_PRE_PROXY') => 'socks5://user:secret@']]];
+        }
+    }
+
+    /**
+     * @dataProvider proxyWithMissingOrAmbiguousHostProvider
+     */
+    public function testRejectsProxiesWithMissingOrAmbiguousHost(array $options): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('The proxy URL is malformed.');
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), $options);
+    }
+
+    public function testRejectsProxyWithEmptyUsernameOnAffectedCurlVersion(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Proxy URLs with an empty username are not supported by the installed libcurl; libcurl 7.31.0 or newer is required.');
+
+        self::createOnFactory(new CurlFactory(3), '7.30.0', 'https://example.com', [
+            'proxy' => 'http://:secret@proxy.example.com:3128',
+        ]);
+    }
+
+    public function testAllowsProxyWithEmptyUsernameOnFixedCurlVersion(): void
+    {
+        self::createOnFactory(new CurlFactory(3), '7.31.0', 'https://example.com', [
+            'proxy' => 'http://:secret@proxy.example.com:3128',
+        ]);
+
+        self::assertSame('http://:secret@proxy.example.com:3128', $_SERVER['_curl'][\CURLOPT_PROXY]);
+    }
+
+    public function testAllowsProxyWithUsernameOnAffectedCurlVersion(): void
+    {
+        self::createOnFactory(new CurlFactory(3), '7.30.0', 'https://example.com', [
+            'proxy' => 'http://user:secret@proxy.example.com:3128',
+        ]);
+
+        self::assertSame('http://user:secret@proxy.example.com:3128', $_SERVER['_curl'][\CURLOPT_PROXY]);
+    }
+
+    public static function undecodableProxyCredentialsProvider(): iterable
+    {
+        yield 'password' => [['proxy' => 'http://user:secret%0A@proxy.example.com:3128']];
+        yield 'username' => [['proxy' => 'socks5://user%00:secret@proxy.example.com:1080']];
+        yield 'lowercase hex, scheme-less' => [['proxy' => 'user:secret%1f@proxy.example.com:3128']];
+        yield 'proxy array' => [['proxy' => ['https' => 'http://user:secret%0A@proxy.example.com:3128']]];
+        yield 'raw proxy' => [['curl' => [\CURLOPT_PROXY => 'http://user:secret%0A@proxy.example.com:3128']]];
+
+        if (\defined('CURLOPT_PRE_PROXY')) {
+            yield 'raw pre-proxy' => [['curl' => [(int) \constant('CURLOPT_PRE_PROXY') => 'socks5://user:secret%0A@proxy.example.com:1080']]];
+        }
+    }
+
+    /**
+     * @dataProvider undecodableProxyCredentialsProvider
+     */
+    public function testRejectsProxyCredentialsWithEncodedControlCharacters(array $options): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Proxy credentials must not contain percent-encoded control characters.');
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), $options);
+    }
+
+    public function testRejectsEnvironmentProxyCredentialsWithEncodedControlCharacters(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Proxy credentials must not contain percent-encoded control characters.');
+
+        self::withProxyEnvironment(['https_proxy' => 'http://user:secret%0A@proxy.example.com:3128'], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+        });
+    }
+
+    public static function decodableProxyCredentialsProvider(): iterable
+    {
+        yield 'space' => ['http://user:sec%20ret@proxy.example.com:3128'];
+        yield 'delete' => ['http://user:secret%7F@proxy.example.com:3128'];
+        yield 'incomplete escape' => ['http://user:secret%1@proxy.example.com:3128'];
+        yield 'encoded percent sign' => ['http://user:secret%250A@proxy.example.com:3128'];
+        yield 'zone identifier' => ['http://user:secret@[fe80::1%10]:3128'];
+    }
+
+    /**
+     * @dataProvider decodableProxyCredentialsProvider
+     */
+    public function testAllowsOtherPercentEncodedProxyCredentials(string $proxy): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+
+        self::assertSame($proxy, $_SERVER['_curl'][\CURLOPT_PROXY]);
+    }
+
+    public function testDoesNotRejectBypassedProxyCredentialsWithEncodedControlCharacters(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => [
+                'https' => 'http://user:secret%0A@proxy.example.com:3128',
+                'no' => ['example.com'],
+            ],
+        ]);
+
+        self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertNoProxyOption('*');
+    }
+
     public static function rejectedHttpsProxyEnvironmentProvider(): array
     {
         return [
@@ -1587,7 +1720,11 @@ class CurlFactoryTest extends TestCase
     {
         return [
             ['http://proxy.example.com:3128'],
+            ['http://proxy.example.com.:3128'],
+            ['http://proxy.example.com:3128/'],
+            ['http:///proxy.example.com:3128'],
             ['127.0.0.1:8125'],
+            ['http://user:secret@[::1]:3128'],
             ['socks5://proxy.example.com:1080'],
             [''],
         ];
@@ -3108,6 +3245,25 @@ class CurlFactoryTest extends TestCase
 
         $factory->release($second);
         self::assertCount(1, self::readIdleHandles($factory));
+    }
+
+    public function testRejectedProxyDoesNotPurgeIdleHandles(): void
+    {
+        $factory = new CurlFactory(3);
+
+        $first = self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+            'proxy' => 'http://user1:pass1@proxy.example.com:8080',
+        ]);
+        $factory->release($first);
+
+        try {
+            self::createOnFactory($factory, '8.19.0', 'https://example.com', [
+                'proxy' => 'http://user2:pass2%0A@proxy.example.com:8080',
+            ]);
+            self::fail('Expected RequestException');
+        } catch (RequestException $e) {
+            self::assertCount(1, self::readIdleHandles($factory));
+        }
     }
 
     public function testReleaseDropsHandleFromSupersededOwner(): void

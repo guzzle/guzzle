@@ -216,6 +216,23 @@ class CurlVersionTest extends TestCase
         }
     }
 
+    public function testSupportsProxyEmptyUsernameUsesMinimumVersion(): void
+    {
+        $previous = self::setCurlVersionInfo(['version' => '7.30.0', 'features' => 0]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsProxyEmptyUsername());
+
+            self::setCurlVersionInfo(['version' => '7.31.0', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsProxyEmptyUsername());
+
+            self::setCurlVersionInfo(false);
+            self::assertFalse(CurlVersion::supportsProxyEmptyUsername());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
     public function testSupportsTransportSharingUsesSharingFloors(): void
     {
         if (!\defined('CURL_VERSION_SSL')) {
