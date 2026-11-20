@@ -344,6 +344,24 @@ class CurlVersionTest extends TestCase
         self::assertTrue(CurlVersion::supportsConnectionSharing());
     }
 
+    public function testSupportsSslOptionsReuseMatchingUsesMinimumVersion(): void
+    {
+        self::setVersionInfo([
+            'version' => '7.83.0',
+            'features' => 0,
+        ]);
+        self::assertFalse(CurlVersion::supportsSslOptionsReuseMatching());
+
+        self::setVersionInfo([
+            'version' => '7.83.1',
+            'features' => 0,
+        ]);
+        self::assertTrue(CurlVersion::supportsSslOptionsReuseMatching());
+
+        self::setVersionInfo(false);
+        self::assertFalse(CurlVersion::supportsSslOptionsReuseMatching());
+    }
+
     public function testSupportsProxyCredentialAwareConnectionReuseUsesSafeVersion(): void
     {
         self::requiresCurlSslFeature();
