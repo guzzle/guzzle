@@ -435,6 +435,7 @@ an option depending on the runtime. The allow-list is limited to the following
 - `CURLOPT_RESOLVE`
 - `CURLOPT_SSL_CIPHER_LIST`
 - `CURLOPT_SSL_EC_CURVES`
+- `CURLOPT_SSL_OPTIONS`
 - `CURLOPT_TCP_FASTOPEN`
 - `CURLOPT_TCP_KEEPALIVE`
 - `CURLOPT_TCP_KEEPIDLE`
@@ -452,6 +453,15 @@ $client->request('GET', '/', [
     ],
 ]);
 ```
+
+`CURLOPT_SSL_OPTIONS` is deprecated only on libcurl older than 7.83.1, the first
+release that compares SSL options when deciding whether a connection or a TLS
+session can be reused (CVE-2022-27782). On libcurl 7.87.0 to 8.17.0 built with
+OpenSSL, `CURLSSLOPT_NO_PARTIALCHAIN` is not applied reliably (CVE-2025-14819),
+so rely on it only with libcurl 8.18.0 or newer. Where libcurl's TLS backend
+supports it, `CURLSSLOPT_NATIVE_CA` makes libcurl trust the operating system's
+certificate store, usually in addition to the CA file or directory configured by
+the `verify` request option.
 
 ## debug
 

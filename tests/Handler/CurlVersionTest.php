@@ -260,6 +260,23 @@ class CurlVersionTest extends TestCase
         }
     }
 
+    public function testSupportsSslOptionsReuseMatchingUsesMinimumVersion(): void
+    {
+        $previous = self::setCurlVersionInfo(['version' => '7.83.0', 'features' => 0]);
+
+        try {
+            self::assertFalse(CurlVersion::supportsSslOptionsReuseMatching());
+
+            self::setCurlVersionInfo(['version' => '7.83.1', 'features' => 0]);
+            self::assertTrue(CurlVersion::supportsSslOptionsReuseMatching());
+
+            self::setCurlVersionInfo(false);
+            self::assertFalse(CurlVersion::supportsSslOptionsReuseMatching());
+        } finally {
+            self::setCurlVersionInfo($previous);
+        }
+    }
+
     public function testSupportsProxyCredentialAwareConnectionReuseUsesSafeVersion(): void
     {
         $previous = self::setCurlVersionInfo(['version' => '8.19.0', 'features' => 0]);
