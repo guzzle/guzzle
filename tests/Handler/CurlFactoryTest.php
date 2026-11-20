@@ -1858,6 +1858,28 @@ class CurlFactoryTest extends TestCase
         yield 'without a scheme' => ['user:'.\str_repeat('s', 300).'@proxy.example.com:8125', '***'];
     }
 
+    /**
+     * @dataProvider proxyCredentialsNamedAsHostByCurlProvider
+     */
+    public function testRedactsProxyCredentialsNamedAsHostByCurl(string $proxy, string $error, string $expected): void
+    {
+        self::assertSame($expected, self::redactProxyUserInfo($error, $proxy));
+    }
+
+    public static function proxyCredentialsNamedAsHostByCurlProvider(): iterable
+    {
+        yield 'after the first at sign' => ['http://user:se@pro@proxy.example.com:8125', 'Could not resolve proxy: pro@proxy.example.com', 'Could not resolve proxy: ***@proxy.example.com'];
+        yield 'after the first of three at signs' => ['http://user:s@cr@et@proxy.example.com:8125', 'Could not resolve proxy: cr@et@proxy.example.com', 'Could not resolve proxy: ***@proxy.example.com'];
+        yield 'with a separator after the first at sign' => ['http://user:p@ss/word@proxy.example.com:8125', 'Could not resolve proxy: ss/word@proxy.example.com', 'Could not resolve proxy: ***@proxy.example.com'];
+        yield 'before a path with an at sign' => ['http://user:se@cret@proxy.example.com:8125/health@check', 'Could not resolve proxy: cret@proxy.example.com', 'Could not resolve proxy: ***@proxy.example.com'];
+        yield 'percent-encoded' => ['http://user:se@cr%2565t@proxy.example.com:8125', 'Could not resolve proxy: cr%2565t@proxy.example.com', 'Could not resolve proxy: ***@proxy.example.com'];
+        yield 'percent-decoded' => ['http://user:se@cr%2565t@proxy.example.com:8125', 'Could not resolve proxy: cr%65t@proxy.example.com', 'Could not resolve proxy: ***@proxy.example.com'];
+        yield 'percent-decoded twice' => ['http://user:se@cr%2565t@proxy.example.com:8125', 'Could not resolve proxy: cret@proxy.example.com', 'Could not resolve proxy: ***@proxy.example.com'];
+        yield 'not in an error that has the whole proxy' => ['user:se@cret@proxy.example.com:8125', "Unsupported proxy syntax in 'user:se@cret@proxy.example.com:8125'", "Unsupported proxy syntax in 'user:***@proxy.example.com:8125'"];
+        yield 'not in an error that has another URL' => ['http://user:se@cret@proxy.example.com:8125', 'Failed for http://user:se%40cret@example.com/', 'Failed for http://user:se%40cret@example.com/'];
+        yield 'not without anything after the at sign' => ['http://user:secret@@proxy.example.com:8125', 'Could not resolve proxy: @proxy.example.com', 'Could not resolve proxy: @proxy.example.com'];
+    }
+
     public function testRedactsUnparsableProxyCredentialsIndependentlyOfCurlErrorText(): void
     {
         $proxy = 'http://user:secret@127.0.0.1:99999999';

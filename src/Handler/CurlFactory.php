@@ -1195,7 +1195,9 @@ class CurlFactory implements CurlFactoryInterface
         // raw control bytes to '_', which could make the replacement miss.
         $proxyForParsing = \strpos($proxy, '://') === false ? 'http://'.$proxy : $proxy;
         $remainder = \substr($proxyForParsing, \strpos($proxyForParsing, '://') + 3);
-        $error = self::redactTruncatedProxyUserInfo($error, \substr($remainder, 0, (int) \strrpos($remainder, '@')));
+        $userInfo = \substr($remainder, 0, (int) \strrpos($remainder, '@'));
+        $error = self::redactTruncatedProxyUserInfo($error, $userInfo);
+        $error = self::redactProxyUserInfoNamedAsHost($error, $userInfo);
 
         if (\parse_url($proxyForParsing) === false) {
             // Raw '/', '?', or '#' separators may sit inside the credentials
@@ -1220,6 +1222,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         $rawUserInfo = \substr($authority, 0, $atPosition);
+        $error = self::redactProxyUserInfoNamedAsHost($error, $rawUserInfo);
 
         // Redact with the same policy Psr7\Utils::redactUserInfo() applies to
         // request URIs, so the bundled psr7 version governs the redacted form.
@@ -1257,6 +1260,22 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         return $error;
+    }
+
+    private static function redactProxyUserInfoNamedAsHost(string $error, string $userInfo): string
+    {
+        // Older libcurl takes what follows the first "@" for the proxy host.
+        $head = (string) \strstr($userInfo, '@', true);
+        $rest = \ltrim((string) \strstr($userInfo, '@'), '@');
+
+        if ($rest === '' || \strpos($error, '://') !== false || \strpos($error, $head.'@') !== false) {
+            return $error;
+        }
+
+        // libcurl 7.80.0 to 7.83.0 percent-decodes the host twice.
+        $decoded = \rawurldecode($rest);
+
+        return \str_replace([$rest.'@', $decoded.'@', \rawurldecode($decoded).'@'], '***@', $error);
     }
 
     /**
