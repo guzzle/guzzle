@@ -12,6 +12,7 @@ use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise as P;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
@@ -854,6 +855,42 @@ class RedirectMiddlewareTest extends TestCase
         self::assertCount(2, $optionsSeen);
         self::assertSame(1, $optionsSeen[0]['delay']);
         self::assertArrayNotHasKey('delay', $optionsSeen[1]);
+    }
+
+    public function testRequestPromiseStaysPendingWhileRedirectIsInFlight(): void
+    {
+        $stack = new HandlerStack(new MockHandler([
+            new Response(302, ['Location' => 'http://test.com']),
+            new P\Promise(),
+        ]));
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+
+        $promise = $handler(new Request('GET', 'http://example.com'), ['allow_redirects' => true]);
+        P\Utils::queue()->run();
+
+        self::assertTrue(P\State::isPending($promise));
+    }
+
+    public function testCancellingRequestPromiseCancelsRedirectInFlight(): void
+    {
+        $cancelled = false;
+        $redirect = new P\Promise(null, static function () use (&$cancelled): void {
+            $cancelled = true;
+        });
+        $stack = new HandlerStack(new MockHandler([
+            new Response(302, ['Location' => 'http://test.com']),
+            $redirect,
+        ]));
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+
+        $promise = $handler(new Request('GET', 'http://example.com'), ['allow_redirects' => true]);
+        P\Utils::queue()->run();
+        $promise->cancel();
+
+        self::assertTrue($cancelled);
+        self::assertTrue(P\State::isRejected($promise));
     }
 
     public function testRemoveCurlAuthorizationOptionsOnRedirectCrossHost(): void

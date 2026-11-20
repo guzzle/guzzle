@@ -8,7 +8,10 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise\State;
+use GuzzleHttp\Promise\Utils;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
@@ -158,6 +161,29 @@ class RetryMiddlewareTest extends TestCase
         self::assertSame(1, $calls[1][0]);
         self::assertInstanceOf(Response::class, $calls[1][2]);
         self::assertNull($calls[1][3]);
+    }
+
+    public function testCancellingRequestPromiseCancelsRetryInFlight(): void
+    {
+        $cancelled = false;
+        $retry = new Promise(null, static function () use (&$cancelled): void {
+            $cancelled = true;
+        });
+        $decider = static function (int $retries): bool {
+            return 0 === $retries;
+        };
+        $delay = static function (): int {
+            return 0;
+        };
+        $m = Middleware::retry($decider, $delay);
+        $h = new MockHandler([new Response(503), $retry]);
+        $c = new Client(['handler' => $m($h)]);
+        $p = $c->sendAsync(new Request('GET', 'http://test.com'), []);
+        Utils::queue()->run();
+        $p->cancel();
+
+        self::assertTrue($cancelled);
+        self::assertTrue(State::isRejected($p));
     }
 
     public function testUsesDefaultExponentialDelay(): void

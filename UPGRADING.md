@@ -30,6 +30,31 @@ uses it.
 [psr7-4-upgrade-guide]: https://github.com/guzzle/psr7/blob/4.0/UPGRADING.md
 [promises-4-upgrade-guide]: https://github.com/guzzle/promises/blob/4.0/UPGRADING.md
 
+#### Promise State Adoption
+
+Guzzle Promises 4.x keeps a promise pending while it adopts the state of a
+promise it was resolved with. Guzzle resolves a request promise that way
+whenever a middleware answers a response or a failed transfer with a new
+transfer, as the redirect, retry, and Digest authentication middleware do.
+
+Cancelling a request promise while such a transfer is in flight now cancels that
+transfer and rejects the promise with a `CancellationException`. Guzzle 8 left
+the transfer running, and ignored the cancellation altogether when the promise
+was the one the middleware had resolved, as it is for a redirected request with
+`http_errors` disabled: that promise went on to fulfill with the final response.
+
+In the same case `getState()` now reports `pending` until the final response
+arrives, where Guzzle 8 reported `fulfilled` as soon as the redirect response
+was received. `getState()` also now reports `rejected` for a failed transfer
+whose promise comes straight from `CurlMultiHandler`, as it does when both
+`http_errors` and `allow_redirects` are disabled; Guzzle 8 reported `fulfilled`
+for it, although waiting on it threw.
+
+The callbacks of a request that needed more than one transfer also run later in
+the promise task queue than in Guzzle 8, so they can run after the callbacks of
+another request that completed at the same time, including the `fulfilled` and
+`rejected` callbacks of a `Pool`.
+
 #### Native Type Declarations
 
 `SetCookie::setExpires()` now declares its parameter as `int|string|null`, and
