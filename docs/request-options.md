@@ -609,6 +609,7 @@ defined by the installed PHP cURL extension:
 - `CURLOPT_RESOLVE`
 - `CURLOPT_SSL_CIPHER_LIST`
 - `CURLOPT_SSL_EC_CURVES`
+- `CURLOPT_SSL_OPTIONS`
 - `CURLOPT_TCP_FASTOPEN`
 - `CURLOPT_TCP_KEEPALIVE`
 - `CURLOPT_TCP_KEEPIDLE`
@@ -636,6 +637,16 @@ refused, or after a reused connection turns out to be dead. When PHP exposes
 at most three native replays; a non-seekable body or a fourth replay fails
 the transfer. The body stream can therefore be read and transmitted more than
 once even though `on_stats` fires only once for the native transfer.
+
+`CURLOPT_SSL_OPTIONS` requires libcurl 7.83.1 or newer, the first release that
+compares SSL options when deciding whether a connection or a TLS session can be
+reused (CVE-2022-27782); on older libcurl the request is rejected up front with
+a `RequestException`. On libcurl 7.87.0 to 8.17.0 built with OpenSSL,
+`CURLSSLOPT_NO_PARTIALCHAIN` is not applied reliably (CVE-2025-14819), so rely
+on it only with libcurl 8.18.0 or newer. Where libcurl's TLS backend supports
+it, `CURLSSLOPT_NATIVE_CA` makes libcurl trust the operating system's
+certificate store, usually in addition to the CA file or directory configured by
+the `verify` request option.
 
 `CURLOPT_HEADEROPT` is intentionally absent from the allow-list above. Guzzle
 sets it internally to `CURLHEADER_SEPARATE` whenever it configures
