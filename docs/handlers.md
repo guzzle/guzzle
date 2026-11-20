@@ -181,8 +181,9 @@ handler and handler stack for future requests.
 
 If `CurlMultiHandler::close()` is called while transfers are pending, those
 promises are rejected with `GuzzleHttp\Exception\HandlerClosedException`.
-Destructors perform best-effort cleanup and do not reject pending promises.
-Explicit `close()` calls may throw if native cleanup fails.
+Destructors perform best-effort cleanup and do not reject pending promises;
+waiting on one afterwards rejects it with the same exception. Explicit
+`close()` calls may throw if native cleanup fails.
 
 `Client` and `HandlerStack` do not expose `close()`. Keep a reference to the
 cURL handler if your application needs deterministic cleanup. Closing a cURL
