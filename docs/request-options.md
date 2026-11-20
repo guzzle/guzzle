@@ -1594,11 +1594,12 @@ $client->request('GET', '/', [
 
 > [!NOTE]
 > You can provide proxy URLs that contain a scheme, username, and password. For
-> example, `"http://username:password@192.168.16.1:10"`. A scheme-less value
-> such as `"127.0.0.1:8125"` is treated as an HTTP proxy. Both built-in handlers
-> validate the proxy URL up front and reject a malformed one (an invalid host,
-> an out-of-range port, or leading junk before the scheme) with an
-> `InvalidArgumentException`.
+> example, `"http://username:password@192.168.16.1:10"`. The username and
+> password are percent-decoded, so reserved characters and percent signs in them
+> must be percent-encoded. A scheme-less value such as `"127.0.0.1:8125"` is
+> treated as an HTTP proxy. Both built-in handlers validate the proxy URL up
+> front and reject a malformed one (an invalid host, an out-of-range port, or
+> leading junk before the scheme) with an `InvalidArgumentException`.
 
 ### Handler support
 
