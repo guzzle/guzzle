@@ -211,7 +211,7 @@ final class AuthMiddleware
                 },
                 function (
                     #[\SensitiveParameter]
-                    $reason
+                    mixed $reason
                 ) use ($request, $preemptiveOptions) {
                     return $this->handleDigestRejection($request, $preemptiveOptions, $reason, true);
                 }
@@ -238,7 +238,7 @@ final class AuthMiddleware
             },
             function (
                 #[\SensitiveParameter]
-                $reason
+                mixed $reason
             ) use ($request, $probeOptions) {
                 return $this->handleDigestRejection($request, $probeOptions, $reason, false);
             }
@@ -454,7 +454,7 @@ final class AuthMiddleware
             },
             function (
                 #[\SensitiveParameter]
-                $reason
+                mixed $reason
             ) use ($retryRequest, $downstreamOptions) {
                 return $this->handleDigestRejection($retryRequest, $downstreamOptions, $reason, false);
             }

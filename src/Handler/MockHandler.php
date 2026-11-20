@@ -135,7 +135,7 @@ final class MockHandler implements \Countable
             $response = $response->then(
                 static function (
                     #[\SensitiveParameter]
-                    $value
+                    mixed $value
                 ) use ($onHeaders, $request, &$onHeadersResponse) {
                     if (!$value instanceof ResponseInterface) {
                         return $value;
@@ -158,7 +158,7 @@ final class MockHandler implements \Countable
         $promise = $response->then(
             function (
                 #[\SensitiveParameter]
-                $value
+                mixed $value
             ) use ($request, $options): ?ResponseInterface {
                 /** @var ResponseInterface|null $value */
                 $this->invokeStats($request, $options, $value);
@@ -183,7 +183,7 @@ final class MockHandler implements \Countable
             },
             function (
                 #[\SensitiveParameter]
-                $reason
+                mixed $reason
             ) use ($request, $options, &$onHeadersResponse): PromiseInterface {
                 $this->invokeStats($request, $options, $onHeadersResponse, $reason);
                 if ($this->onRejected) {
