@@ -337,6 +337,14 @@ class CurlMultiHandler
                 unset($this->_mh);
             }
         }
+
+        // Nothing can drive these transfers once the multi handle is gone.
+        $this->handles = [];
+        $this->delays = [];
+        $this->deferredAdds = [];
+        $this->activeProxyTunnelSignatures = [];
+        $this->activeProxyTunnelHandles = [];
+        $this->active = 0;
     }
 
     public function __invoke(RequestInterface $request, array $options): PromiseInterface
