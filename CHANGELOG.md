@@ -12,6 +12,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
+- Adjusted `guzzlehttp/promises` version constraint to `^2.6.1`
 - Adjusted `guzzlehttp/psr7` version constraint to `^2.13.5`
 
 
