@@ -460,10 +460,12 @@ and is used when an explicitly closed `CurlMultiHandler` rejects transfers that
 are still pending, including delayed transfers. Existing Guzzle 7.x code should
 not normally see this exception just by upgrading. Guzzle 7.x did not have this
 exception or a public cURL handler `close()` method, and destructor cleanup did
-not reject pending promises. If you add deterministic cleanup with
-`CurlMultiHandler::close()`, wait for or cancel outstanding transfers first, or
-handle `HandlerClosedException` or `TransferException` for pending promises you
-may still observe.
+not reject pending promises. Waiting on such a promise afterwards rejects it
+with `RequestException` in Guzzle 7.x and with `HandlerClosedException` in
+Guzzle 8. If you add deterministic cleanup with `CurlMultiHandler::close()`,
+wait for or cancel outstanding transfers first, or handle
+`HandlerClosedException` or `TransferException` for pending promises you may
+still observe.
 
 When updating catch blocks for Guzzle 8.0, catch the more specific no-response
 and response-aware failures before `RequestException`:

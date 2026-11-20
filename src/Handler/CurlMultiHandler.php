@@ -318,6 +318,11 @@ final class CurlMultiHandler
         /** @var Promise<ResponseInterface, mixed> $promise */
         $promise = new Promise(
             function () use ($id, $waitToken, $easy, &$promise): void {
+                if ($this->closed) {
+                    // A destructor closes without rejecting what it drops.
+                    throw new HandlerClosedException('The cURL multi handler was closed before the transfer completed.', $easy->request);
+                }
+
                 // Waiting cannot drive native cURL while a callback has the
                 // multi handle busy; fail the wait promptly instead of
                 // self-deadlocking.

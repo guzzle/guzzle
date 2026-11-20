@@ -2099,6 +2099,19 @@ class CurlMultiHandlerTest extends TestCase
         self::assertTrue(P\State::isPending($promise));
     }
 
+    public function testWaitAfterDestructorRejectsPendingPromise(): void
+    {
+        $handler = new CurlMultiHandler();
+        $promise = $handler(new Request('GET', Server::$url), ['delay' => 10000]);
+
+        $handler->__destruct();
+
+        $this->expectException(HandlerClosedException::class);
+        $this->expectExceptionMessage('The cURL multi handler was closed before the transfer completed.');
+
+        $promise->wait();
+    }
+
     public function testClosePreventsReuse(): void
     {
         $handler = new CurlMultiHandler();
