@@ -91,6 +91,48 @@ class RedirectMiddlewareTest extends TestCase
         ])->wait();
     }
 
+    /**
+     * @dataProvider nonAsciiHostLocationProvider
+     */
+    public function testLocationWithNonAsciiHostDoesNotRaiseDeprecations(?UriFactoryInterface $uriFactory): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://www.tést.com/whatever']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+
+        $deprecations = [];
+        \set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
+            $deprecations[] = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $handler(new Request('GET', 'http://example.com'), [
+                'allow_redirects' => ['max' => 2],
+                RequestOptions::URI_FACTORY => $uriFactory,
+            ])->wait();
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertSame('www.tést.com', $mock->getLastRequest()->getUri()->getHost());
+        self::assertSame([], $deprecations);
+    }
+
+    /**
+     * @return iterable<string, array{0: UriFactoryInterface|null}>
+     */
+    public static function nonAsciiHostLocationProvider(): iterable
+    {
+        yield 'default URI factory' => [null];
+        yield 'URI factory of another implementation' => [new RedirectTestUnvalidatedUriFactory()];
+    }
+
     public function testRedirectsWithRelativeUri(): void
     {
         $mock = new MockHandler([
@@ -1509,6 +1551,14 @@ final class RedirectTestUriFactory implements UriFactoryInterface
     public function uriCalls(): array
     {
         return $this->uriCalls;
+    }
+}
+
+final class RedirectTestUnvalidatedUriFactory implements UriFactoryInterface
+{
+    public function createUri(string $uri = ''): UriInterface
+    {
+        return new UnvalidatedUri('http', 'www.tést.com', null, '/whatever');
     }
 }
 
