@@ -85,6 +85,11 @@ final class CurlVersion
     // always passed (curl #22265).
     public const SHARED_POOL_CONNECTION_CAP_VERSION = '8.22.0';
 
+    // curl 7.83.1 started comparing CURLOPT_SSL_OPTIONS when matching
+    // connections and TLS sessions for reuse (CVE-2022-27782); older libcurl
+    // can reuse either across requests with different SSL options.
+    private const SSL_OPTIONS_REUSE_MATCH_VERSION = '7.83.1';
+
     // curl 7.83.1 added proxy TLS-SRP to the connection-reuse match
     // (CVE-2022-27782); the proxy client certificate was matched from 7.52.0,
     // so proxy TLS credentials are trusted from 7.83.1 onwards.
@@ -286,6 +291,14 @@ final class CurlVersion
         // opaque share safeguards fail closed.
         return null === $version
             || version_compare($version, self::SHARE_CONNECTION_CACHE_VERSION, '>=');
+    }
+
+    public static function supportsSslOptionsReuseMatching(): bool
+    {
+        $version = self::get();
+
+        return null !== $version
+            && version_compare($version, self::SSL_OPTIONS_REUSE_MATCH_VERSION, '>=');
     }
 
     public static function supportsProxyTlsCredentialAwareConnectionReuse(): bool

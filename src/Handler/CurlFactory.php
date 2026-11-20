@@ -331,6 +331,7 @@ final class CurlFactory implements CurlFactoryInterface
             self::assertRequiredMultiplexAuthSupported($conf);
         }
 
+        self::assertSslOptionsSupported($request, $conf);
         self::applyProxyConnectHeaderSuppression($request, $conf);
         self::normalizeCurlHeaderOptions($conf);
         self::applyProxyAuthorizationHeaderHandling($request, $conf, $managedProxyAuthorization);
@@ -603,6 +604,22 @@ final class CurlFactory implements CurlFactoryInterface
     }
 
     /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function assertSslOptionsSupported(
+        #[\SensitiveParameter]
+        RequestInterface $request,
+        #[\SensitiveParameter]
+        array $conf
+    ): void {
+        // Rejected rather than isolated on a fresh connection: below 7.83.1
+        // libcurl's TLS session cache ignores SSL options as well.
+        if (\array_key_exists(\CURLOPT_SSL_OPTIONS, $conf) && !CurlVersion::supportsSslOptionsReuseMatching()) {
+            throw new RequestException('The CURLOPT_SSL_OPTIONS cURL option requires libcurl 7.83.1 or newer.', $request);
+        }
+    }
+
+    /**
      * @param int|string $option
      */
     private static function formatCurlOption($option): string
@@ -836,6 +853,7 @@ final class CurlFactory implements CurlFactoryInterface
         self::addSupportedCurlOption($options, 'CURLOPT_RESOLVE');
         self::addSupportedCurlOption($options, 'CURLOPT_SSL_CIPHER_LIST');
         self::addSupportedCurlOption($options, 'CURLOPT_SSL_EC_CURVES');
+        self::addSupportedCurlOption($options, 'CURLOPT_SSL_OPTIONS');
         self::addSupportedCurlOption($options, 'CURLOPT_TCP_FASTOPEN');
         self::addSupportedCurlOption($options, 'CURLOPT_TCP_KEEPALIVE');
         self::addSupportedCurlOption($options, 'CURLOPT_TCP_KEEPIDLE');

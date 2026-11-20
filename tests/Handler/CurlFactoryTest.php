@@ -458,6 +458,34 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testAllowsSslOptionsCurlOptionOnFixedCurlVersion(): void
+    {
+        $factory = new CurlFactory(1);
+        $easy = self::createOnFactory($factory, '7.83.1', Server::$url, [
+            'curl' => [
+                \CURLOPT_SSL_OPTIONS => \CURLSSLOPT_ALLOW_BEAST,
+            ],
+        ]);
+
+        try {
+            self::assertSame(\CURLSSLOPT_ALLOW_BEAST, $_SERVER['_curl'][\CURLOPT_SSL_OPTIONS]);
+        } finally {
+            $factory->release($easy);
+        }
+    }
+
+    public function testRejectsSslOptionsCurlOptionOnAffectedCurlVersion(): void
+    {
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('The CURLOPT_SSL_OPTIONS cURL option requires libcurl 7.83.1 or newer.');
+
+        self::createOnFactory(new CurlFactory(1), '7.83.0', Server::$url, [
+            'curl' => [
+                \CURLOPT_SSL_OPTIONS => \CURLSSLOPT_ALLOW_BEAST,
+            ],
+        ]);
+    }
+
     public function testRejectsCurlProxyHeaderEntriesContainingNewlines(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
@@ -795,6 +823,25 @@ class CurlFactoryTest extends TestCase
         (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
             'curl' => [
                 $option => true,
+            ],
+        ]);
+    }
+
+    public function testRejectsProxySslOptionsCurlOption(): void
+    {
+        if (!\defined('CURLOPT_PROXY_SSL_OPTIONS')) {
+            self::markTestSkipped('CURLOPT_PROXY_SSL_OPTIONS is not available.');
+        }
+
+        $option = (int) \constant('CURLOPT_PROXY_SSL_OPTIONS');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage((string) $option);
+        $this->expectExceptionMessage('outside the built-in cURL handlers\' allow-list');
+
+        (new CurlFactory(3))->create(new Psr7\Request('GET', Server::$url), [
+            'curl' => [
+                $option => \CURLSSLOPT_ALLOW_BEAST,
             ],
         ]);
     }

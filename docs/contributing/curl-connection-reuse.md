@@ -41,7 +41,9 @@ conflict with Guzzle-managed behavior are rejected. On 8.0 a non-allow-listed or
 conflicting raw option throws; on 7.x it is deprecated (and 8.0 will reject it).
 This gate is about option-key availability and known conflicts only. Unless
 Guzzle documents a specific mitigation, the meaning, safety, and runtime effects
-of raw cURL option values remain the caller's responsibility.
+of raw cURL option values remain the caller's responsibility. Some allow-listed
+options also carry a libcurl floor of their own, such as `CURLOPT_PROXYHEADER`
+(§5) and `CURLOPT_SSL_OPTIONS` (§8).
 
 **PHP detail — the `\defined()` guard.** A `CURLOPT_*` constant is only
 defined when the linked libcurl/PHP build supports that option, so code that
@@ -68,7 +70,8 @@ that several decisions below depend on:
 
 - **`ssl_primary_config` (compared for reuse):** client certificate and cert
   blob, CA info, TLS version, cipher lists, pinned key, TLS-SRP credentials,
-  verify flags, issuer cert.
+  verify flags, issuer cert, and, from 7.83.1, the `CURLOPT_SSL_OPTIONS`
+  bitmask.
 - **`ssl_config_data` (not compared):** the private key, key blob, key
   passphrase, and the cert/key *encoding* (PEM/DER/…).
 
@@ -495,6 +498,30 @@ configured share handle, which persistent sharing always uses, it instead forces
 a fresh tunnel with `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE`, or
 rejects the request under `PERSISTENT_REQUIRE`.
 
+`SSL_OPTIONS_REUSE_MATCH_VERSION = 7.83.1`. `CURLOPT_SSL_OPTIONS` is an
+allow-listed raw option, and libcurl added its bitmask to `ssl_primary_config`
+only in 7.83.1 (CVE-2022-27782). Below that, neither the connection matcher nor
+the TLS session cache compares it, so a transfer can ride a connection or resume
+a session set up under different SSL options, for example one verified without
+revocation checks or against the operating system's CA store. On 8.0 the option
+is therefore rejected below 7.83.1 with a `RequestException` (releases before
+8.6 reject it on every libcurl version), and on 7.x it is deprecated there but
+still passed through. The check uses the libcurl version number, so a
+distribution build that backported the 7.83.1 fix to an older release is still
+rejected. Rejecting is deliberate: forcing a fresh connection would leave the
+session cache gap open, and concurrent multiplexed transfers would need
+sectioning of their own. At or above the floor the option is passed through,
+with one known and accepted residual: the OpenSSL CA store cache of libcurl
+7.87.0 to 8.17.0 (CVE-2025-14819) is keyed on the CA file alone, so when libcurl
+has no CA directory, the `CURLSSLOPT_NO_PARTIALCHAIN` setting of the handshake
+that fills the cache applies to later handshakes with the same CA file on the
+same multi handle (each pooled `CurlHandler` easy handle keeps an internal one).
+The filling handshake can be an HTTPS proxy's, whose SSL options Guzzle does not
+expose, so the origin handshake of the same request can inherit it. Guzzle
+documents this and does not section it; `CURLSSLOPT_NATIVE_CA` transfers bypass
+that cache, and libcurl 8.18.0 fixed it. `CURLOPT_PROXY_SSL_OPTIONS` stays off
+the allow-list.
+
 ## 9. How the tests enforce this
 
 `tests/Handler/CurlFactoryTest.php` covers the signature by channel and the
@@ -524,6 +551,10 @@ same for the share-handle force-fresh path: it asserts
 `requiresFreshConnectionForAuthenticatedProxy` forces a fresh tunnel for a proxy
 TLS credential below 7.83.1 and not at or above it.
 
+`testRejectsSslOptionsCurlOptionOnAffectedCurlVersion` and
+`testAllowsSslOptionsCurlOptionOnFixedCurlVersion` pin the SSL options floor:
+the raw option is rejected below 7.83.1 and applied to the handle from there.
+
 ## 10. Hard rules (summary)
 
 - Never compute a `null` signature for a credential-bearing proxy tunnel.
@@ -546,6 +577,11 @@ TLS credential below 7.83.1 and not at or above it.
   a tunnel.
 - Share the TLS session cache only from 8.6.0 and the connection cache only from
   8.12.0 (see §3 for why 8.12.0, not 8.20.0).
+- Reject raw `CURLOPT_SSL_OPTIONS` below 7.83.1 rather than isolating it:
+  neither connection matching nor the TLS session cache compares SSL options
+  there. From 7.83.1 it is passed through; the OpenSSL CA store cache of libcurl
+  7.87.0 to 8.17.0 (CVE-2025-14819) is an accepted residual, documented, not
+  sectioned.
 - Under a configured share handle, force a fresh tunnel for a proxy TLS
   credential (client cert / TLS-SRP) below 7.83.1, mirroring the signature path;
   the 7.83.1 gate keeps it below the version where `PERSISTENT_REQUIRE` would
@@ -566,12 +602,13 @@ TLS credential below 7.83.1 and not at or above it.
 
 **curl** — CVE-2026-3784 (proxy `CONNECT` credential reuse), CVE-2016-5420
 (origin client-cert reuse), CVE-2022-27782 (TLS / TLS-SRP config not compared on
-reuse), CVE-2024-0853 (client cert / OCSP on session reuse),
-CVE-2026-6253/6429/7168 (proxy-credential leaks on reuse, fixed 8.20.0),
-CVE-2026-8932 (incomplete mTLS private-key matching on reuse, fixed 8.21.0),
-and curl issue #4835 (SOCKS proxy credentials not compared on connection reuse,
-fixed 7.69.0); the 8.12.0 connection-cache floor also draws on curl's 8.12.0
-session-cache rewrite
+reuse), CVE-2024-0853 (client cert / OCSP on session reuse), CVE-2025-14819
+(partial-chain setting not part of the OpenSSL CA store cache key, fixed
+8.18.0), CVE-2026-6253/6429/7168 (proxy-credential leaks on reuse, fixed
+8.20.0), CVE-2026-8932 (incomplete mTLS private-key matching on reuse, fixed
+8.21.0), and curl issue #4835 (SOCKS proxy credentials not compared on
+connection reuse, fixed 7.69.0); the 8.12.0 connection-cache floor also draws on
+curl's 8.12.0 session-cache rewrite
 ([curl PR #16245](https://github.com/curl/curl/pull/16245)). Source of record:
 `lib/url.c` (`proxy_info_matches`, the connection matcher, `tunnel_proxy`) and
 `lib/vtls/` (`ssl_primary_config` vs `ssl_config_data`, the session cache and
