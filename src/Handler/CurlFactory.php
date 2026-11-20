@@ -1508,7 +1508,9 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         $authority = \strpos($proxy, '://') === false ? $proxy : \substr($proxy, \strpos($proxy, '://') + 3);
-        $error = self::redactTruncatedProxyUserInfo($error, \substr($authority, 0, (int) \strrpos($authority, '@')));
+        $userInfo = \substr($authority, 0, (int) \strrpos($authority, '@'));
+        $error = self::redactTruncatedProxyUserInfo($error, $userInfo);
+        $error = self::redactProxyUserInfoNamedAsHost($error, $userInfo);
 
         return Psr7\UriRedactor::redactUserInfoInString($error, $proxy);
     }
@@ -1527,6 +1529,22 @@ final class CurlFactory implements CurlFactoryInterface
         }
 
         return $error;
+    }
+
+    private static function redactProxyUserInfoNamedAsHost(string $error, string $userInfo): string
+    {
+        // Older libcurl takes what follows the first "@" for the proxy host.
+        $head = (string) \strstr($userInfo, '@', true);
+        $rest = \ltrim((string) \strstr($userInfo, '@'), '@');
+
+        if ($rest === '' || \strpos($error, '://') !== false || \strpos($error, $head.'@') !== false) {
+            return $error;
+        }
+
+        // libcurl 7.80.0 to 7.83.0 percent-decodes the host twice.
+        $decoded = \rawurldecode($rest);
+
+        return \str_replace([$rest.'@', $decoded.'@', \rawurldecode($decoded).'@'], '***@', $error);
     }
 
     /**

@@ -27,6 +27,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject request header names that are not HTTP tokens in the built-in handlers
 - Reject request methods that are not HTTP tokens in the built-in handlers
 - Redact proxy credentials that libcurl cuts off in cURL errors
+- Redact proxy credentials that libcurl names as the proxy host in cURL errors
 - Decode percent-encoded proxy credentials in the stream handler
 - Allow the raw cURL `CURLOPT_SSL_OPTIONS` option on libcurl 7.83.1 or newer
 
