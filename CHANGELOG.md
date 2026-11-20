@@ -36,6 +36,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject cURL multi handler waits with `HandlerClosedException` after its destructor has run
 
 
+## 8.5.4 - 2026-11-20
+
+### Security
+
+- Reject proxy credentials with percent-encoded control characters in the cURL handlers (GHSA-q8h8-pjjq-cq2h)
+- Reject malformed proxy URLs that older libcurl silently skips or misreads (GHSA-q8h8-pjjq-cq2h)
+
+
 ## 8.5.3 - 2026-11-20
 
 ### Fixed

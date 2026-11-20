@@ -1807,7 +1807,9 @@ class CurlFactoryTest extends TestCase
     {
         return [
             ['http://proxy.example.com:3128'],
+            ['http://proxy.example.com.:3128'],
             ['127.0.0.1:8125'],
+            ['http://.:secret@proxy.example.com:3128'],
             ['socks5://proxy.example.com:1080'],
         ];
     }
@@ -2017,6 +2019,10 @@ class CurlFactoryTest extends TestCase
     {
         return [
             ['http://exa mple.com:3128'],          // space in host
+            ['http://user:se@other.example:8080@proxy.example.com:3128'], // another host after the first at sign
+            ['http://.'],                          // dot host
+            ['http://user:secret@.:3128'],         // dot host with a port
+            ['http://./'],                         // dot host with a slash
             ['http://127.0.0.1:99999999'],         // port out of range
             ['127.0.0.1:99999999'],                // scheme-less, port out of range
             ["\u{00A0}https://proxy.example.com:3128"], // leading junk before the scheme
@@ -2035,6 +2041,72 @@ class CurlFactoryTest extends TestCase
 
         $f = new CurlFactory(3);
         $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+    }
+
+    public static function undecodableProxyCredentialsProvider(): iterable
+    {
+        yield 'password' => ['http://user:secret%0A@proxy.example.com:3128'];
+        yield 'username' => ['socks5://user%00:secret@proxy.example.com:1080'];
+        yield 'lowercase hex, scheme-less' => ['user:secret%1f@proxy.example.com:3128'];
+        yield 'proxy array' => [['https' => 'http://user:secret%0A@proxy.example.com:3128']];
+    }
+
+    /**
+     * @dataProvider undecodableProxyCredentialsProvider
+     *
+     * @param string|array $proxy
+     */
+    public function testRejectsProxyCredentialsWithEncodedControlCharacters($proxy): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Proxy credentials must not contain percent-encoded control characters.');
+
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+    }
+
+    public function testRejectsEnvironmentProxyCredentialsWithEncodedControlCharacters(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Proxy credentials must not contain percent-encoded control characters.');
+
+        self::withProxyEnvironment(['https_proxy' => 'http://user:secret%0A@proxy.example.com:3128'], static function (): void {
+            $f = new CurlFactory(3);
+            $f->create(new Psr7\Request('GET', 'https://example.com'), []);
+        });
+    }
+
+    public static function decodableProxyCredentialsProvider(): iterable
+    {
+        yield 'space' => ['http://user:sec%20ret@proxy.example.com:3128'];
+        yield 'delete' => ['http://user:secret%7F@proxy.example.com:3128'];
+        yield 'incomplete escape' => ['http://user:secret%1@proxy.example.com:3128'];
+        yield 'encoded percent sign' => ['http://user:secret%250A@proxy.example.com:3128'];
+    }
+
+    /**
+     * @dataProvider decodableProxyCredentialsProvider
+     */
+    public function testAllowsOtherPercentEncodedProxyCredentials(string $proxy): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), ['proxy' => $proxy]);
+
+        self::assertSame($proxy, $_SERVER['_curl'][\CURLOPT_PROXY]);
+    }
+
+    public function testDoesNotRejectBypassedProxyCredentialsWithEncodedControlCharacters(): void
+    {
+        $f = new CurlFactory(3);
+        $f->create(new Psr7\Request('GET', 'https://example.com'), [
+            'proxy' => [
+                'https' => 'http://user:secret%0A@proxy.example.com:3128',
+                'no' => ['example.com'],
+            ],
+        ]);
+
+        self::assertSame('', $_SERVER['_curl'][\CURLOPT_PROXY]);
+        self::assertSame('*', $_SERVER['_curl'][\CURLOPT_NOPROXY]);
     }
 
     public function testAcceptsSchemeLessProxyWithCredentials(): void
