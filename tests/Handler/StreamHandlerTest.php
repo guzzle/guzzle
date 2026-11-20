@@ -6860,6 +6860,22 @@ class StreamHandlerTest extends TestCase
                 'HTTP://user:pass@proxy.example.com:8125',
                 ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user:pass')],
             ],
+            'percent-encoded credentials' => [
+                'http://user%40example.org:p%40ss@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user@example.org:p@ss')],
+            ],
+            'percent-encoded colon in username only' => [
+                'http://user%3Aname@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user:name:')],
+            ],
+            'percent-encoded slash and percent sign decoded once' => [
+                'http://user:a%2Fb%2525@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user:a/b%25')],
+            ],
+            'percent-encoded space and literal plus sign' => [
+                'http://user:a%20b+c@proxy.example.com:8125',
+                ['proxy' => 'tcp://proxy.example.com:8125', 'auth' => 'Basic '.\base64_encode('user:a b+c')],
+            ],
             'raw transport unchanged' => [
                 'ssl://proxy.example.com:8125',
                 ['proxy' => 'ssl://proxy.example.com:8125', 'auth' => null],
