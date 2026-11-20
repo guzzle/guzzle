@@ -1045,8 +1045,9 @@ class StreamHandler
 
         if (\is_array($parsed) && isset($parsed['scheme']) && Psr7\Utils::caselessEquals($parsed['scheme'], 'http')) {
             if (isset($parsed['host'], $parsed['port'])) {
-                $user = $parsed['user'] ?? '';
-                $pass = $parsed['pass'] ?? '';
+                // Each part is percent-decoded on its own, to match libcurl.
+                $user = \rawurldecode($parsed['user'] ?? '');
+                $pass = \rawurldecode($parsed['pass'] ?? '');
                 $auth = ($user !== '' || $pass !== '') ? 'Basic '.\base64_encode("{$user}:{$pass}") : null;
 
                 return [
