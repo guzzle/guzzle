@@ -1632,6 +1632,15 @@ Connection established` reply is suppressed on these tunnels, so `on_headers`
 observes only origin responses and a tunneled transfer failure is classified by
 its transport phase.
 
+The cURL handlers also reject, with an `InvalidArgumentException`, a proxy URL
+that some libcurl releases silently skip or misread: one whose username or
+password contains a percent-encoded control character (`%00` through `%1F`),
+such as the `%0A` left by a secret that ends with a newline, one with more than
+one `@`, and one whose host is `.`. Write an `@` in the credentials as `%40`,
+and pass credentials that really contain a control character, percent-encoded in
+the form `username:password`, as the raw `CURLOPT_PROXYUSERPWD` cURL option
+through the [`curl`](#curl) request option.
+
 ### Proxy environment variables
 
 The built-in handlers resolve proxies from the environment themselves: the cURL
