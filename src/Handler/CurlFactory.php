@@ -230,6 +230,7 @@ class CurlFactory implements CurlFactoryInterface
         }
 
         self::assertFinalProxyOptionTypes($conf, $requiredMultiplex && 'https' !== $request->getUri()->getScheme());
+        self::assertFinalProxiesSupported($request, $conf);
         self::isolatePreProxyOnAffectedCurl($conf);
         self::normalizeStringableProxyCredentialOptions($conf);
 
@@ -1343,6 +1344,46 @@ class CurlFactory implements CurlFactoryInterface
                 }
 
                 throw new \InvalidArgumentException($name.' must be a string.');
+            }
+        }
+    }
+
+    /**
+     * @param array<int|string, mixed> $conf
+     */
+    private static function assertFinalProxiesSupported(RequestInterface $request, array $conf): void
+    {
+        $proxies = [$conf[\CURLOPT_PROXY] ?? null];
+        if (\defined('CURLOPT_PRE_PROXY')) {
+            $proxies[] = $conf[(int) \constant('CURLOPT_PRE_PROXY')] ?? null;
+        }
+
+        foreach ($proxies as $proxy) {
+            if (!\is_string($proxy) || $proxy === '') {
+                continue;
+            }
+
+            // libcurl 7.76.0-8.17.0 skips a proxy with undecodable credentials.
+            if (\preg_match('/%[01][0-9A-Fa-f]/', \substr($proxy, 0, (int) \strrpos($proxy, '@'))) !== 0) {
+                throw new RequestException('Proxy credentials must not contain percent-encoded control characters.', $request);
+            }
+
+            $remainder = \explode('://', $proxy, 2)[1] ?? $proxy;
+            $host = \explode('@', $remainder, 2)[1] ?? $remainder;
+
+            // libcurl before 7.65.0 uses the host after the first '@', or no proxy.
+            if ($host === '' || $host === '/' || $host === '[' || \strpos($host, ':') === 0 || \strpos($host, '[]') === 0 || \strpos($host, '@') !== false) {
+                throw new RequestException('The proxy URL is malformed.', $request);
+            }
+
+            // libcurl 7.47.0-7.51.0 skips a proxy with a host of '.'.
+            if (\preg_match('#^\[?\.(?:[:/\]]|$)#D', $host) !== 0) {
+                throw new RequestException('The proxy URL is malformed.', $request);
+            }
+
+            // libcurl before 7.31.0 skips a proxy with an empty username.
+            if (\strpos($remainder, ':') === 0 && !CurlVersion::supportsProxyEmptyUsername()) {
+                throw new RequestException('Proxy URLs with an empty username are not supported by the installed libcurl; libcurl 7.31.0 or newer is required.', $request);
             }
         }
     }

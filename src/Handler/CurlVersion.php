@@ -47,6 +47,10 @@ final class CurlVersion
     // plaintext HTTP proxy, and 7.50.2 through 7.51 reject it at connect time.
     private const HTTPS_PROXY_VERSION = '7.52.0';
 
+    // curl 7.31.0 started to strip proxy userinfo that has an empty username;
+    // older libcurl leaves it in place, finds no host, and skips the proxy.
+    private const PROXY_EMPTY_USERNAME_VERSION = '7.31.0';
+
     private const HANDLER_SHARING_VERSION = '7.35.0';
 
     private const SSL_SESSION_SHARING_VERSION = '8.6.0';
@@ -189,6 +193,14 @@ final class CurlVersion
         return $versionInfo !== null
             && \version_compare($versionInfo['version'], self::HTTPS_PROXY_VERSION, '>=')
             && 0 !== ($httpsProxyFeature & $versionInfo['features']);
+    }
+
+    public static function supportsProxyEmptyUsername(): bool
+    {
+        $version = self::getVersion();
+
+        return $version !== null
+            && \version_compare($version, self::PROXY_EMPTY_USERNAME_VERSION, '>=');
     }
 
     public static function supportsNtlm(): bool

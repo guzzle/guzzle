@@ -20,6 +20,14 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Stop cURL multi handler waits looping forever after its destructor has run
 
 
+## 7.16.5 - 2026-11-20
+
+### Security
+
+- Reject proxy credentials with percent-encoded control characters in the cURL handlers (GHSA-q8h8-pjjq-cq2h)
+- Reject malformed proxy URLs that older libcurl silently skips or misreads (GHSA-q8h8-pjjq-cq2h)
+
+
 ## 7.16.4 - 2026-11-20
 
 ### Fixed
