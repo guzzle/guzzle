@@ -1726,6 +1726,16 @@ class CurlFactoryTest extends TestCase
         self::assertSame('Failed to connect via http://user:***@proxy.example.com:8125', $redacted);
     }
 
+    public function testRedactsProxyCredentialsWhenProxySchemeContainsPlusSign(): void
+    {
+        $proxy = 'foo+bar://user:secret@proxy.example.com:8125';
+
+        $redacted = self::redactProxyUserInfo('Failed to connect via '.$proxy, $proxy);
+
+        self::assertStringNotContainsString('secret', $redacted);
+        self::assertSame('Failed to connect via foo+bar://***@proxy.example.com:8125', $redacted);
+    }
+
     public function testRedactsProxyCredentialsContainingRawControlBytes(): void
     {
         $proxy = "http://user:se\x01cr\x7Fet@proxy.example.com:8125";
