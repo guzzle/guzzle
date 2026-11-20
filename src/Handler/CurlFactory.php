@@ -1489,7 +1489,26 @@ final class CurlFactory implements CurlFactoryInterface
             return $error;
         }
 
+        $authority = \strpos($proxy, '://') === false ? $proxy : \substr($proxy, \strpos($proxy, '://') + 3);
+        $error = self::redactTruncatedProxyUserInfo($error, \substr($authority, 0, (int) \strrpos($authority, '@')));
+
         return Psr7\UriRedactor::redactUserInfoInString($error, $proxy);
+    }
+
+    private static function redactTruncatedProxyUserInfo(string $error, string $userInfo): string
+    {
+        // libcurl cuts errors at 255 bytes, which can drop the userinfo's "@".
+        if (\strlen($error) !== 255 || \strpos($error, $userInfo.'@') !== false) {
+            return $error;
+        }
+
+        for ($length = \min(\strlen($userInfo), 255); $length > 0; --$length) {
+            if (\substr_compare($error, $userInfo, -$length, $length) === 0) {
+                return \substr($error, 0, -$length).'***';
+            }
+        }
+
+        return $error;
     }
 
     /**

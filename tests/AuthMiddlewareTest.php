@@ -1322,6 +1322,45 @@ class AuthMiddlewareTest extends TestCase
         }
     }
 
+    public function testDigestRestoresOriginalSinkOnRetryResponseException(): void
+    {
+        $sink = \tempnam(\sys_get_temp_dir(), 'guzzle-auth-sink');
+        self::assertIsString($sink);
+
+        try {
+            $mock = new MockHandler([
+                new Response(401, ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth"'], 'challenge'),
+                static function (RequestInterface $request): ResponseException {
+                    return new ResponseException(
+                        'response failed',
+                        $request,
+                        new Response(500, [], 'failed')
+                    );
+                },
+            ]);
+            $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+            try {
+                $client->get('http://example.com', [
+                    'auth' => ['a', 'b', 'digest'],
+                    'sink' => $sink,
+                ]);
+
+                self::fail('Expected ResponseException.');
+            } catch (ResponseException $e) {
+                self::assertSame('response failed', $e->getMessage());
+                self::assertStringStartsWith('Digest ', $e->getRequest()->getHeaderLine('Authorization'));
+                self::assertSame(500, $e->getResponse()->getStatusCode());
+                self::assertSame('failed', \file_get_contents($sink));
+                self::assertSame('failed', (string) $e->getResponse()->getBody());
+            }
+        } finally {
+            if (\file_exists($sink)) {
+                \unlink($sink);
+            }
+        }
+    }
+
     public function testCookiesFromDigestChallengeAreSentOnRetry(): void
     {
         $mock = new MockHandler([
