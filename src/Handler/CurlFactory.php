@@ -1112,7 +1112,20 @@ class CurlFactory implements CurlFactoryInterface
 
         // Redact the native error before it reaches any exception so the
         // handler context matches the sanitized exception message.
-        $ctx['error'] = self::sanitizeCurlError((string) ($ctx['error'] ?? ''), $uri, $easy->effectiveProxy);
+        $native = (string) ($ctx['error'] ?? '');
+        $sanitized = self::sanitizeCurlError($native, $uri, $easy->effectiveProxy);
+        $preProxy = \defined('CURLOPT_PRE_PROXY') ? ($easy->options['curl'][(int) \constant('CURLOPT_PRE_PROXY')] ?? null) : null;
+        $preProxied = self::redactProxyUserInfo($native, \is_string($preProxy) ? $preProxy : null);
+
+        if ($sanitized === $native) {
+            $sanitized = $preProxied;
+        } elseif ($preProxied !== $native && $preProxied !== $sanitized) {
+            // Either pass can spoil the other's match: past their first
+            // difference nothing is kept.
+            $sanitized = \substr($sanitized, 0, \strspn($sanitized ^ $preProxied, "\0")).'***';
+        }
+
+        $ctx['error'] = $sanitized;
 
         if ($easy->createResponseException) {
             return P\Create::rejectionFor(
