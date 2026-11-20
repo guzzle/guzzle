@@ -596,6 +596,24 @@ final class CurlFactory implements CurlFactoryInterface
             throw new InvalidArgumentException(\sprintf('The "%s" proxy scheme is not supported by the cURL handler.', Psr7\DiagnosticValue::escape($scheme)));
         }
 
+        // libcurl 7.76.0-8.17.0 skips a proxy with undecodable credentials.
+        if (\preg_match('/%[01][0-9A-Fa-f]/', \substr($selectedProxy, 0, (int) \strrpos($selectedProxy, '@'))) !== 0) {
+            throw new InvalidArgumentException('Proxy credentials must not contain percent-encoded control characters.');
+        }
+
+        // libcurl before 7.65.0 reads the proxy host after the first '@'.
+        if (\substr_count($selectedProxy, '@') > 1) {
+            throw new InvalidArgumentException('Invalid proxy URL.');
+        }
+
+        $authority = \explode('://', $selectedProxy, 2)[1] ?? $selectedProxy;
+        $host = \explode('@', $authority, 2)[1] ?? $authority;
+
+        // libcurl 7.47.0-7.51.0 skips a proxy with a host of '.'.
+        if (\preg_match('#^\.(?:[:/]|$)#D', $host) !== 0) {
+            throw new InvalidArgumentException('Invalid proxy URL.');
+        }
+
         if ($scheme === 'https' && !CurlVersion::supportsHttpsProxy()) {
             throw new RequestException('HTTPS proxies are not supported by the installed libcurl; libcurl 7.54.0 or newer built with HTTPS-proxy support is required.', $request);
         }
