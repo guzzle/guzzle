@@ -13,6 +13,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Redact proxy credentials that libcurl cuts off in cURL errors
 - Redact raw `CURLOPT_PRE_PROXY` credentials in cURL errors
 - Redact proxy credentials that libcurl names as the proxy host in cURL errors
+- Redact proxy passwords that begin with a raw `/`, `?` or `#` in cURL errors
 - Decode percent-encoded proxy credentials in the stream handler
 - Remove deprecation for the raw cURL `CURLOPT_SSL_OPTIONS` option on libcurl 7.83.1 or newer
 
