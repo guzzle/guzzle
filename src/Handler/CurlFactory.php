@@ -734,6 +734,21 @@ class CurlFactory implements CurlFactoryInterface
             );
         }
 
+        if (
+            \defined('CURLOPT_SSL_OPTIONS')
+            && \array_key_exists((int) \constant('CURLOPT_SSL_OPTIONS'), $options['curl'])
+            && !CurlVersion::supportsSslOptionsReuseMatching()
+        ) {
+            \trigger_deprecation(
+                'guzzlehttp/guzzle',
+                '7.12',
+                \sprintf(
+                    'Passing %s in the "curl" request option on libcurl older than 7.83.1 is deprecated; guzzlehttp/guzzle 8.0 will reject this configuration.',
+                    self::formatCurlOption((int) \constant('CURLOPT_SSL_OPTIONS'))
+                )
+            );
+        }
+
         $supportedOptions = self::supportedCurlOptions();
         $conflictingOptions = self::conflictingCurlOptions();
 
@@ -908,6 +923,7 @@ class CurlFactory implements CurlFactoryInterface
         self::addSupportedCurlOption($options, 'CURLOPT_RESOLVE');
         self::addSupportedCurlOption($options, 'CURLOPT_SSL_CIPHER_LIST');
         self::addSupportedCurlOption($options, 'CURLOPT_SSL_EC_CURVES');
+        self::addSupportedCurlOption($options, 'CURLOPT_SSL_OPTIONS');
         self::addSupportedCurlOption($options, 'CURLOPT_TCP_FASTOPEN');
         self::addSupportedCurlOption($options, 'CURLOPT_TCP_KEEPALIVE');
         self::addSupportedCurlOption($options, 'CURLOPT_TCP_KEEPIDLE');

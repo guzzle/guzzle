@@ -358,6 +358,60 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testDeprecatesRawSslOptionsOnAffectedCurlVersion(): void
+    {
+        $deprecation = null;
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.83.0', 'features' => 0]);
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
+            $deprecation = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $factory = new CurlFactory(3);
+            $easy = $factory->create(
+                new Psr7\Request('GET', Server::$url),
+                ['curl' => [\CURLOPT_SSL_OPTIONS => \CURLSSLOPT_ALLOW_BEAST]]
+            );
+            $factory->release($easy);
+        } finally {
+            \restore_error_handler();
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+
+        self::assertNotNull($deprecation, 'Expected a deprecation for raw CURLOPT_SSL_OPTIONS on libcurl older than 7.83.1.');
+        self::assertStringContainsString('CURLOPT_SSL_OPTIONS', $deprecation);
+        self::assertStringContainsString('on libcurl older than 7.83.1 is deprecated', $deprecation);
+        self::assertStringContainsString('guzzlehttp/guzzle 8.0 will reject this configuration', $deprecation);
+        self::assertSame(\CURLSSLOPT_ALLOW_BEAST, $_SERVER['_curl'][\CURLOPT_SSL_OPTIONS]);
+    }
+
+    public function testDoesNotDeprecateRawSslOptionsOnFixedCurlVersion(): void
+    {
+        $deprecation = null;
+        $previousVersionInfo = self::setCurlVersionInfo(['version' => '7.83.1', 'features' => 0]);
+        \set_error_handler(static function (int $severity, string $message) use (&$deprecation): bool {
+            $deprecation = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $factory = new CurlFactory(3);
+            $easy = $factory->create(
+                new Psr7\Request('GET', Server::$url),
+                ['curl' => [\CURLOPT_SSL_OPTIONS => \CURLSSLOPT_ALLOW_BEAST]]
+            );
+            $factory->release($easy);
+        } finally {
+            \restore_error_handler();
+            self::setCurlVersionInfo($previousVersionInfo);
+        }
+
+        self::assertNull($deprecation);
+    }
+
     public function testRejectsCurlProxyHeaderEntriesContainingNewlines(): void
     {
         $proxyHeaderOption = self::proxyHeaderOption();
