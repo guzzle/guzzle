@@ -1841,8 +1841,9 @@ final class StreamHandler
         $parsed = \parse_url(\strpos($url, '://') === false ? 'http://'.$url : $url);
         if (\is_array($parsed) && isset($parsed['host'])) {
             $port = $parsed['port'] ?? 1080;
-            $user = $parsed['user'] ?? '';
-            $pass = $parsed['pass'] ?? '';
+            // Each part is percent-decoded on its own, to match libcurl.
+            $user = \rawurldecode($parsed['user'] ?? '');
+            $pass = \rawurldecode($parsed['pass'] ?? '');
             $auth = ($user !== '' || $pass !== '') ? 'Basic '.\base64_encode("{$user}:{$pass}") : null;
 
             return [
