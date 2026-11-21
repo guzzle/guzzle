@@ -3,6 +3,14 @@
 Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version.
 
 
+## 8.5.5 - Upcoming
+
+### Security
+
+- Reject hosts that `idn_conversion` converts to an invalid host (GHSA-2g6w-c7gx-fxj8)
+- Reject invalid hosts before parsing a URI string again (GHSA-2g6w-c7gx-fxj8)
+
+
 ## 8.5.4 - 2026-11-20
 
 ### Security
