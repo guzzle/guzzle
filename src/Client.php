@@ -558,6 +558,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         $uri = self::createUri($uri, $uriFactory);
         $builtUri = $this->buildUri($uri, $options);
         if ($uriIsString && $builtUri !== $uri) {
+            // The string form of an invalid host can name another host or port.
+            if (!Psr7\Rfc3986::isValidHost($builtUri->getHost())) {
+                throw new InvalidArgumentException(\sprintf('Invalid host: %s', DiagnosticValue::escape($builtUri->getHost())));
+            }
+
             $builtUri = self::createUri((string) $builtUri, $uriFactory);
         }
 

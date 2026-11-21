@@ -76,6 +76,30 @@ class IdnTest extends TestCase
     /**
      * @requires function idn_to_ascii
      */
+    public function testConvertUriRejectsAnInvalidHostThatAnotherUriImplementationAccepts(): void
+    {
+        // Fullwidth forms map to URI delimiters.
+        $hosts = [
+            "good.example\u{FF20}evil.example",
+            "evil.example\u{FF0F}.good.example",
+            "evil.example\u{FF1F}.good.example",
+            "evil.example\u{FF03}.good.example",
+            "good.example\u{FF1A}8080",
+        ];
+
+        foreach ($hosts as $host) {
+            try {
+                Idn::convertUri(new UnvalidatedUri('http', $host), \IDNA_DEFAULT);
+                self::fail('An exception was not thrown');
+            } catch (InvalidArgumentException $e) {
+                self::assertSame('IDN conversion failed', $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
     public function testConversionCanProduceANoncanonicalNumericHost(): void
     {
         $mappings = [
