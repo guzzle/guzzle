@@ -89,6 +89,16 @@ A string `base_uri` given to the client constructor is now converted there when
 converted URI. An `idn_conversion` request option no longer overrides that, so
 set the option on the client.
 
+With `idn_conversion` disabled, which is the default, Guzzle PSR-7 4.x rejects a
+URI string whose host has non-ASCII data when the default `uri_factory` parses
+it, with a `GuzzleHttp\Psr7\Exception\MalformedUriException`. In Guzzle 8, the
+request was created and the built-in handlers rejected it. A client with such a
+string `base_uri` can therefore no longer be created without the option, and a
+redirect to such a host fails with `GuzzleHttp\Exception\BadResponseException`.
+A custom `uri_factory` is given the string as written, so one that creates
+Guzzle PSR-7 URIs rejects such a host even with the option enabled. A `proxy`
+URL with such a host is rejected as well, so write its host as A-labels.
+
 #### Native Type Declarations
 
 `SetCookie::setExpires()` now declares its parameter as `int|string|null`, and
