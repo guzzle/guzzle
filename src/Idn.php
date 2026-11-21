@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GuzzleHttp;
 
 use GuzzleHttp\Exception\InvalidArgumentException;
+use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -31,6 +32,24 @@ final class Idn
         }
 
         throw new InvalidArgumentException('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
+    }
+
+    public static function createUri(
+        UriFactoryInterface $uriFactory,
+        #[\SensitiveParameter]
+        string $uri,
+        ?int $options
+    ): UriInterface {
+        // psr7 would also convert a percent-encoded host, which convertUri() leaves alone.
+        if ($options !== null && $uriFactory instanceof Psr7\HttpFactory && \preg_match('~\A(?:[^:/?#]+:)?(?://)?(?:[^/?#]*@)?+[^/?#]*%[89A-Fa-f][0-9A-Fa-f]~', $uri) === 0) {
+            try {
+                return Psr7\Idna::uriFor($uri, $options);
+            } catch (\InvalidArgumentException|\RuntimeException $e) {
+                // convertUri() converts some hosts that psr7 refuses.
+            }
+        }
+
+        return $uriFactory->createUri($uri);
     }
 
     /**

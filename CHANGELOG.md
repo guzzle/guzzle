@@ -22,6 +22,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 
 ### Changed
 
+- Adjusted `guzzlehttp/promises` version constraint to `^3.2`
 - Remove every case variant when the cURL handlers remove a request header
 - Reject third-party URIs whose string form is malformed or names another origin
 - Reject request header names that are not HTTP tokens in the built-in handlers
@@ -30,6 +31,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Redact proxy credentials that libcurl names as the proxy host in cURL errors
 - Decode percent-encoded proxy credentials in the stream handler
 - Allow the raw cURL `CURLOPT_SSL_OPTIONS` option on libcurl 7.83.1 or newer
+- Convert internationalized hosts while parsing URI strings
 
 ### Fixed
 
