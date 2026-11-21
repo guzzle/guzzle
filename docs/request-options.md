@@ -1014,11 +1014,11 @@ Constant
 `GuzzleHttp\RequestOptions::IDN_CONVERSION`
 
 ```php
-$client->request('GET', 'https://яндекс.рф');
+$client->request('GET', 'https://яндекс.рф', ['idn_conversion' => true]);
 // яндекс.рф is translated to xn--d1acpjx3f.xn--p1ai before passing it to the handler
 
 $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' => false]);
-// The domain part (яндекс.рф) stays unmodified
+// The domain part (яндекс.рф) stays unmodified, so the built-in handlers reject the request
 ```
 
 Enables/disables IDN support, can also be used for precise control by combining

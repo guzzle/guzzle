@@ -75,6 +75,26 @@ class IdnTest extends TestCase
 
     /**
      * @requires function idn_to_ascii
+     *
+     * @dataProvider uriStringProvider
+     */
+    public function testCreateUri(string $uri, string $expected): void
+    {
+        self::assertSame($expected, (string) Idn::createUri(new Psr7\HttpFactory(), $uri, \IDNA_DEFAULT));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function uriStringProvider(): iterable
+    {
+        yield 'raw host between percent-encoded data' => ['https://%C3%BC@яндекс.рф/%D0%BF', 'https://%C3%BC@xn--d1acpjx3f.xn--p1ai/%D0%BF'];
+        yield 'percent-encoded host' => ['https://%D1%8F.%D1%80%D1%84/images', 'https://%D1%8F.%D1%80%D1%84/images'];
+        yield 'lower-case percent-encoded host' => ['https://b%c3%bccher.example/', 'https://b%C3%BCcher.example/'];
+    }
+
+    /**
+     * @requires function idn_to_ascii
      */
     public function testConversionCanProduceANoncanonicalNumericHost(): void
     {
