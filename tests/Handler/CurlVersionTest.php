@@ -35,41 +35,22 @@ class CurlVersionTest extends TestCase
         self::requiresConnectionCapConstants();
 
         self::setVersionInfo([
-            'version' => '7.33.0',
+            'version' => '7.52.0',
             'features' => self::curlSslFeature(),
         ]);
         self::assertFalse(CurlVersion::supportsCurlHandler());
 
         self::setVersionInfo([
-            'version' => '7.34.0',
+            'version' => '7.52.1',
             'features' => 0,
         ]);
         self::assertFalse(CurlVersion::supportsCurlHandler());
 
         self::setVersionInfo([
-            'version' => '7.34.0',
+            'version' => '7.52.1',
             'features' => self::curlSslFeature(),
         ]);
         self::assertTrue(CurlVersion::supportsCurlHandler());
-    }
-
-    public function testSupportsTls13UsesRuntimeVersion(): void
-    {
-        if (!\defined('CURL_SSLVERSION_TLSv1_3')) {
-            self::markTestSkipped('CURL_SSLVERSION_TLSv1_3 is not available.');
-        }
-
-        self::setVersionInfo([
-            'version' => '7.51.0',
-            'features' => 0,
-        ]);
-        self::assertFalse(CurlVersion::supportsTls13());
-
-        self::setVersionInfo([
-            'version' => '7.52.0',
-            'features' => 0,
-        ]);
-        self::assertTrue(CurlVersion::supportsTls13());
     }
 
     public function testSupportsMultiplexUsesRuntimeVersion(): void
@@ -288,18 +269,9 @@ class CurlVersionTest extends TestCase
         self::requiresCurlSslFeature();
 
         self::setVersionInfo([
-            'version' => '7.34.0',
+            'version' => '7.52.1',
             'features' => self::curlSslFeature(),
         ]);
-        self::assertFalse(CurlVersion::supportsHandlerSharing());
-        self::assertFalse(CurlVersion::supportsSslSessionSharing());
-        self::assertFalse(CurlVersion::supportsConnectionSharing());
-
-        self::setVersionInfo([
-            'version' => '7.35.0',
-            'features' => self::curlSslFeature(),
-        ]);
-        self::assertTrue(CurlVersion::supportsHandlerSharing());
         self::assertFalse(CurlVersion::supportsSslSessionSharing());
         self::assertFalse(CurlVersion::supportsConnectionSharing());
 
@@ -307,7 +279,6 @@ class CurlVersionTest extends TestCase
             'version' => '8.6.0',
             'features' => 0,
         ]);
-        self::assertTrue(CurlVersion::supportsHandlerSharing());
         self::assertFalse(CurlVersion::supportsSslSessionSharing());
         self::assertFalse(CurlVersion::supportsConnectionSharing());
 
@@ -315,7 +286,6 @@ class CurlVersionTest extends TestCase
             'version' => '8.6.0',
             'features' => self::curlSslFeature(),
         ]);
-        self::assertTrue(CurlVersion::supportsHandlerSharing());
         self::assertTrue(CurlVersion::supportsSslSessionSharing());
         self::assertFalse(CurlVersion::supportsConnectionSharing());
 
@@ -323,7 +293,6 @@ class CurlVersionTest extends TestCase
             'version' => '8.11.0',
             'features' => self::curlSslFeature(),
         ]);
-        self::assertTrue(CurlVersion::supportsHandlerSharing());
         self::assertTrue(CurlVersion::supportsSslSessionSharing());
         self::assertFalse(CurlVersion::supportsConnectionSharing());
 
@@ -331,7 +300,6 @@ class CurlVersionTest extends TestCase
             'version' => '8.12.0',
             'features' => self::curlSslFeature(),
         ]);
-        self::assertTrue(CurlVersion::supportsHandlerSharing());
         self::assertTrue(CurlVersion::supportsSslSessionSharing());
         self::assertTrue(CurlVersion::supportsConnectionSharing());
 
@@ -339,7 +307,6 @@ class CurlVersionTest extends TestCase
             'version' => '8.20.0',
             'features' => self::curlSslFeature(),
         ]);
-        self::assertTrue(CurlVersion::supportsHandlerSharing());
         self::assertTrue(CurlVersion::supportsSslSessionSharing());
         self::assertTrue(CurlVersion::supportsConnectionSharing());
     }
@@ -405,57 +372,17 @@ class CurlVersionTest extends TestCase
         self::assertFalse(CurlVersion::supportsSharedPoolConnectionCaps());
     }
 
-    public function testSupportsProxyHeaderSeparationIsFalseBelowMinimumVersion(): void
+    public function testEnsureSupportedRejectsCurlBelowMinimumVersion(): void
     {
         self::setVersionInfo([
-            'version' => '7.36.0',
-            'features' => 0,
+            'version' => '7.52.0',
+            'features' => self::curlSslFeature(),
         ]);
 
-        self::assertFalse(CurlVersion::supportsProxyHeaderSeparation());
-    }
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('cURL 7.52.1 or higher is required by the cURL handler; 7.52.0 is installed.');
 
-    public function testSupportsProxyHeaderSeparationIsTrueAtMinimumVersion(): void
-    {
-        self::requiresProxyHeaderSeparationConstants();
-
-        self::setVersionInfo([
-            'version' => '7.37.0',
-            'features' => 0,
-        ]);
-
-        self::assertTrue(CurlVersion::supportsProxyHeaderSeparation());
-    }
-
-    public function testSupportsProxyHeaderSeparationIsTrueAboveMinimumVersion(): void
-    {
-        self::requiresProxyHeaderSeparationConstants();
-
-        self::setVersionInfo([
-            'version' => '7.42.0',
-            'features' => 0,
-        ]);
-
-        self::assertTrue(CurlVersion::supportsProxyHeaderSeparation());
-    }
-
-    public function testSupportsProxyHeaderSeparationIsTrueAtPatchVersion(): void
-    {
-        self::requiresProxyHeaderSeparationConstants();
-
-        self::setVersionInfo([
-            'version' => '7.42.1',
-            'features' => 0,
-        ]);
-
-        self::assertTrue(CurlVersion::supportsProxyHeaderSeparation());
-    }
-
-    public function testSupportsProxyHeaderSeparationIsFalseWhenVersionInfoIsUnavailable(): void
-    {
-        self::setVersionInfo(false);
-
-        self::assertFalse(CurlVersion::supportsProxyHeaderSeparation());
+        CurlVersion::ensureSupported(new Request('GET', 'http://example.com'));
     }
 
     public function testEnsureSupportedRejectsCurlWithoutSslSupport(): void
@@ -465,7 +392,7 @@ class CurlVersionTest extends TestCase
         }
 
         self::setVersionInfo([
-            'version' => '7.34.0',
+            'version' => '7.52.1',
             'features' => 0,
         ]);
 
@@ -542,15 +469,6 @@ class CurlVersionTest extends TestCase
     {
         if (!\defined('CURLOPT_PROTOCOLS_STR')) {
             self::markTestSkipped('CURLOPT_PROTOCOLS_STR is not available.');
-        }
-    }
-
-    private static function requiresProxyHeaderSeparationConstants(): void
-    {
-        foreach (['CURLOPT_PROXYHEADER', 'CURLOPT_HEADEROPT', 'CURLHEADER_SEPARATE'] as $constant) {
-            if (!\defined($constant)) {
-                self::markTestSkipped($constant.' is not available.');
-            }
         }
     }
 
