@@ -84,11 +84,15 @@ final class Idn
                 throw new InvalidArgumentException($errorMessage);
             }
             if ($uri->getHost() !== $asciiHost) {
+                // The conversion can map a character to a URI delimiter.
+                if (!Psr7\Rfc3986::isValidHost($asciiHost)) {
+                    throw new InvalidArgumentException('IDN conversion failed');
+                }
+
                 // Replace URI only if the ASCII version is different
                 try {
                     $uri = $uri->withHost($asciiHost);
                 } catch (\InvalidArgumentException $e) {
-                    // The conversion can map a character to a URI delimiter.
                     throw new InvalidArgumentException('IDN conversion failed', 0, $e);
                 }
             }

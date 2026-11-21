@@ -1296,6 +1296,27 @@ class ClientTest extends TestCase
         self::assertSame(['http://example.com/base/'], $factory->uriCalls());
     }
 
+    public function testRejectsAnInvalidHostBeforeParsingAUriStringAgain(): void
+    {
+        $factory = new class implements UriFactoryInterface {
+            public function createUri(string $uri = ''): UriInterface
+            {
+                return $uri === '//127.0.0.1:6379:80/x'
+                    ? new UnvalidatedUri('', '127.0.0.1:6379', 80, '/x')
+                    : new UnvalidatedUri('http', '127.0.0.1', 6379, '/x');
+            }
+        };
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid host: 127.0.0.1:6379');
+
+        $client->request('GET', '//127.0.0.1:6379:80/x');
+    }
+
     public function testPerRequestStreamFactoryOverridesClientStreamFactory(): void
     {
         $mock = new MockHandler([new Response()]);
