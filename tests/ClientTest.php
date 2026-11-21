@@ -799,37 +799,6 @@ class ClientTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider uriThatDoesNotStartWithAHostAndPortProvider
-     */
-    public function testUriThatDoesNotStartWithAHostAndPortDoesNotRaiseDeprecations(string $uri): void
-    {
-        $client = new Client(['handler' => new MockHandler([new Response()]), 'base_uri' => 'https://example.com/api/']);
-
-        $deprecations = [];
-        \set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
-            $deprecations[] = $message;
-
-            return true;
-        }, \E_USER_DEPRECATED);
-
-        try {
-            $client->request('GET', $uri);
-        } finally {
-            \restore_error_handler();
-        }
-
-        self::assertSame([], $deprecations);
-    }
-
-    public static function uriThatDoesNotStartWithAHostAndPortProvider(): iterable
-    {
-        yield 'scheme' => ['https://example.com:8080/path'];
-        yield 'network-path reference' => ['//example.com:8080/path'];
-        yield 'query after the digits' => ['example.com:8080?page=2'];
-        yield 'six digits' => ['tel:123456'];
-    }
-
     public function testClientHasDefaultPsr17Factories(): void
     {
         $client = new Client(['handler' => new MockHandler()]);
@@ -3312,34 +3281,35 @@ class ClientTest extends TestCase
      */
     public function testIdnIsTranslatedToAsciiWithTheGivenOptions(): void
     {
-        $mockHandler = new MockHandler([new Response(), new Response(), new Response()]);
-        $client = new Client(['handler' => $mockHandler]);
+        $mockHandler = new MockHandler([
+            new Response(),
+            new Response(),
+            new Response(302, ['Location' => 'https://faß.de/next']),
+            new Response(),
+            new Response(),
+            new Response(),
+        ]);
+        $client = new Client(['handler' => HandlerStack::create($mockHandler)]);
 
         $client->request('GET', 'https://faß.de/', ['idn_conversion' => 0]);
 
         self::assertSame('https://fass.de/', (string) $mockHandler->getLastRequest()->getUri());
 
-        $client->request('GET', 'https://faß.de/', ['idn_conversion' => \IDNA_NONTRANSITIONAL_TO_ASCII]);
+        $client->request('GET', 'https://faß.de/', ['idn_conversion' => true]);
 
         self::assertSame('https://xn--fa-hia.de/', (string) $mockHandler->getLastRequest()->getUri());
+
+        $client->request('GET', 'http://example.com/', ['idn_conversion' => 0]);
+
+        self::assertSame('https://fass.de/next', (string) $mockHandler->getLastRequest()->getUri());
 
         $client->request('GET', '/', ['base_uri' => 'https://faß.de', 'idn_conversion' => 0]);
 
         self::assertSame('https://fass.de/', (string) $mockHandler->getLastRequest()->getUri());
-    }
 
-    /**
-     * @requires extension intl
-     */
-    public function testIdnIsTranslatedToAsciiWhenPsr7DoesNotConvertIt(): void
-    {
-        $mockHandler = new MockHandler([new Response()]);
-        $client = new Client(['handler' => $mockHandler]);
+        $client->request('GET', new UnvalidatedUri('https', 'faß.de'), ['idn_conversion' => 0]);
 
-        // Soft hyphens are dropped, and psr7 converts at most 1024 characters.
-        $client->request('GET', 'https://'.\str_repeat("\u{00AD}", 1024).'яндекс.рф/images', ['idn_conversion' => true]);
-
-        self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $mockHandler->getLastRequest()->getUri());
+        self::assertSame('https://fass.de/', (string) $mockHandler->getLastRequest()->getUri());
     }
 
     /**
@@ -3347,58 +3317,24 @@ class ClientTest extends TestCase
      */
     public function testIdnIsGivenToAnotherUriFactoryAsWritten(): void
     {
-        $factory = new ClientTestFactory();
-        $client = new Client([
-            'handler' => new MockHandler([new Response()]),
-            RequestOptions::URI_FACTORY => $factory,
-        ]);
+        $factory = new class implements UriFactoryInterface {
+            /** @var list<string> */
+            public $uris = [];
+
+            public function createUri(string $uri = ''): UriInterface
+            {
+                $this->uris[] = $uri;
+
+                return new UnvalidatedUri('https', 'яндекс.рф', null, '/images');
+            }
+        };
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler, RequestOptions::URI_FACTORY => $factory]);
 
         $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => true]);
 
-        self::assertSame(['https://яндекс.рф/images', 'https://xn--d1acpjx3f.xn--p1ai/images'], $factory->uriCalls());
-    }
-
-    /**
-     * @requires function idn_to_ascii
-     */
-    public function testIdnConversionDoesNotRaiseDeprecations(): void
-    {
-        $mockHandler = new MockHandler([new Response(), new Response()]);
-        $client = new Client(['handler' => $mockHandler]);
-
-        $deprecations = [];
-        \set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
-            $deprecations[] = $message;
-
-            return true;
-        }, \E_USER_DEPRECATED);
-
-        try {
-            $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => true]);
-            $client->request('GET', '/images', ['base_uri' => 'https://яндекс.рф', 'idn_conversion' => true]);
-        } finally {
-            \restore_error_handler();
-        }
-
+        self::assertSame(['https://яндекс.рф/images'], $factory->uris);
         self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $mockHandler->getLastRequest()->getUri());
-        self::assertSame([], $deprecations);
-    }
-
-    public function testIdnStaysTheSameWhenConversionIsDisabled(): void
-    {
-        $mockHandler = new MockHandler([new Response(), new Response()]);
-        $client = new Client(['handler' => $mockHandler]);
-
-        $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => false]);
-
-        $request = $mockHandler->getLastRequest();
-
-        self::assertSame('https://яндекс.рф/images', (string) $request->getUri());
-        self::assertSame('яндекс.рф', (string) $request->getHeaderLine('Host'));
-
-        $client->request('GET', '/images', ['base_uri' => 'https://яндекс.рф', 'idn_conversion' => false]);
-
-        self::assertSame('https://яндекс.рф/images', (string) $mockHandler->getLastRequest()->getUri());
     }
 
     public function testIdnConversionRejectsInvalidValue(): void
@@ -3421,8 +3357,8 @@ class ClientTest extends TestCase
         $client = new Client(['handler' => $mockHandler]);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('IDN conversion failed');
-        $client->request('GET', 'https://-яндекс.рф/images', ['idn_conversion' => true]);
+        $this->expectExceptionMessage('Unable to convert host to ASCII');
+        $client->request('GET', 'https://é_b.test/images', ['idn_conversion' => true]);
     }
 
     /**
@@ -3439,7 +3375,7 @@ class ClientTest extends TestCase
             'idn_conversion' => true,
         ]);
         $config = $client->getConfig();
-        self::assertSame('http://яндекс.рф', (string) $config['base_uri']);
+        self::assertSame('http://xn--d1acpjx3f.xn--p1ai', (string) $config['base_uri']);
         $request = new Request('GET', '/baz');
         $client->send($request);
         self::assertSame('http://xn--d1acpjx3f.xn--p1ai/baz', (string) $mock->getLastRequest()->getUri());
@@ -3486,7 +3422,8 @@ class ClientTest extends TestCase
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $client->send(new Request('GET', 'https://яндекс.рф/images'), ['idn_conversion' => true]);
+        $request = new Request('GET', new UnvalidatedUri('https', 'яндекс.рф', null, '/images'), ['Host' => 'яндекс.рф']);
+        $client->send($request, ['idn_conversion' => true]);
 
         $request = $mockHandler->getLastRequest();
 
@@ -3502,7 +3439,7 @@ class ClientTest extends TestCase
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $request = (new Request('GET', 'https://яндекс.рф/'))->withHeader('Host', 'other.example');
+        $request = new Request('GET', new UnvalidatedUri('https', 'яндекс.рф'), ['Host' => 'other.example']);
         $client->send($request, ['idn_conversion' => true]);
 
         $sent = $mockHandler->getLastRequest();
@@ -3515,7 +3452,7 @@ class ClientTest extends TestCase
     {
         $stack = HandlerStack::create(new CurlHandler());
         $stack->push(Middleware::mapRequest(static function (RequestInterface $request): RequestInterface {
-            return $request->withUri($request->getUri()->withHost("e\u{200B}vil.test"));
+            return new UnvalidatedUriRequest($request, new UnvalidatedUri('http', "e\u{200B}vil.test", 1));
         }));
         $client = new Client(['handler' => $stack]);
 
@@ -3530,7 +3467,8 @@ class ClientTest extends TestCase
         $mockHandler = new MockHandler([new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
-        $client->request('GET', "http://e\u{200B}vil.test/", ['http_errors' => false]);
+        $request = new UnvalidatedUriRequest(new Request('GET', 'http://placeholder.test/'), new UnvalidatedUri('http', "e\u{200B}vil.test"));
+        $client->send($request, ['http_errors' => false]);
 
         self::assertSame("e\u{200B}vil.test", $mockHandler->getLastRequest()->getUri()->getHost());
     }

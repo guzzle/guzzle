@@ -6919,7 +6919,10 @@ class StreamHandlerTest extends TestCase
         $handler = new StreamHandler();
 
         try {
-            $handler(new Request('GET', "http://local\u{200B}host:1/"), [])->wait();
+            $handler(new UnvalidatedUriRequest(
+                new Request('GET', 'http://localhost:1/'),
+                new UnvalidatedUri('http', "local\u{200B}host", 1)
+            ), [])->wait();
             self::fail('An exception was not thrown');
         } catch (RequestException $e) {
             self::assertNotInstanceOf(NetworkExceptionInterface::class, $e);
@@ -6976,7 +6979,10 @@ class StreamHandlerTest extends TestCase
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage("The scheme 'file' is not supported.");
 
-        $handler(new Request('GET', "file://e\u{200B}vil.test/x"), [])->wait();
+        $handler(new UnvalidatedUriRequest(
+            new Request('GET', 'file://placeholder.test/x'),
+            new UnvalidatedUri('file', "e\u{200B}vil.test", null, '/x')
+        ), [])->wait();
     }
 
     public function testRejectsAMissingHostBeforeANoncanonicalHostHeader(): void

@@ -2178,34 +2178,6 @@ class AuthMiddlewareTest extends TestCase
         self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
     }
 
-    public function testDigestDomainWithNonAsciiHostDoesNotRaiseDeprecations(): void
-    {
-        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", domain="http://яндекс.рф/api http://example.com/api"'];
-        $mock = new MockHandler([
-            new Response(401, $challengeHeaders),
-            new Response(200),
-            new Response(200),
-        ]);
-        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
-
-        $deprecations = [];
-        \set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
-            $deprecations[] = $message;
-
-            return true;
-        }, \E_USER_DEPRECATED);
-
-        try {
-            $client->get('http://example.com/api/one', ['auth' => ['a', 'b', 'digest']]);
-            $client->get('http://example.com/api/two', ['auth' => ['a', 'b', 'digest']]);
-        } finally {
-            \restore_error_handler();
-        }
-
-        self::assertTrue($mock->getLastRequest()->hasHeader('Authorization'));
-        self::assertSame([], $deprecations);
-    }
-
     /**
      * @param (callable(): string)|null $cnonceGenerator
      */

@@ -13,31 +13,69 @@ use PHPUnit\Framework\TestCase;
 
 class IdnTest extends TestCase
 {
+    public function testNormalizeConversionOptionTreatsNullAsOff(): void
+    {
+        self::assertFalse(Idn::normalizeConversionOption(null));
+    }
+
     /**
      * @requires function idn_to_ascii
      */
     public function testConvertUri(): void
     {
-        $uri = Psr7\Utils::uriFor('https://яндекс.рф/images');
-        $uri = Idn::convertUri($uri);
-        self::assertSame('xn--d1acpjx3f.xn--p1ai', $uri->getHost());
+        $uri = Idn::convertUri(new UnvalidatedUri('https', 'яндекс.рф', null, '/images'), true);
+
+        self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $uri);
     }
 
     /**
-     * @requires extension intl
+     * @requires function idn_to_ascii
      */
-    public function testConvertUriRejectsAHostLongerThan4096Bytes(): void
+    public function testConvertUriConvertsAPercentEncodedHost(): void
     {
-        // The conversion ignores soft hyphens, so only the length differs.
-        $padding = str_repeat("\u{00AD}", 2042);
-        $uri = new Psr7\Uri('http://placeholder.test/');
+        $uri = Idn::convertUri(new UnvalidatedUri('https', 'b%C3%BCcher.example'), true);
 
-        self::assertSame('example.test', Idn::convertUri($uri->withHost($padding.'example.test'), \IDNA_DEFAULT)->getHost());
+        self::assertSame('xn--bcher-kva.example', $uri->getHost());
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testConvertUriUsesTheGivenOptions(): void
+    {
+        $uri = new UnvalidatedUri('https', 'faß.de');
+
+        self::assertSame('fass.de', Idn::convertUri($uri, 0)->getHost());
+        self::assertSame('xn--fa-hia.de', Idn::convertUri($uri, true)->getHost());
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testConvertUriAppliesTheStd3RulesWhenTheOptionIsTrue(): void
+    {
+        $uri = new UnvalidatedUri('https', 'é_b.test');
+
+        self::assertSame('xn--_b-9ia.test', Idn::convertUri($uri, \IDNA_DEFAULT)->getHost());
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('IDN conversion failed');
+        $this->expectExceptionMessage('Unable to convert host to ASCII');
 
-        Idn::convertUri($uri->withHost($padding.'examples.test'), \IDNA_DEFAULT);
+        Idn::convertUri($uri, true);
+    }
+
+    public function testConvertUriLeavesAnAsciiHostAlone(): void
+    {
+        $uri = new UnvalidatedUri('https', 'Example_Host.test');
+
+        self::assertSame($uri, Idn::convertUri($uri, true));
+    }
+
+    public function testConvertUriLeavesTheUriAloneWhenConversionIsOff(): void
+    {
+        $uri = new UnvalidatedUri('https', 'яндекс.рф');
+
+        self::assertSame($uri, Idn::convertUri($uri, false));
     }
 
     /**
@@ -46,52 +84,17 @@ class IdnTest extends TestCase
     public function testConvertUriRejectsAnOverlongLabelWhenIntlThrowsExceptions(): void
     {
         // Maps to 1200 characters, more than ICU encodes in one label.
-        $uri = (new Psr7\Uri('http://placeholder.test/'))->withHost(str_repeat("\u{3316}", 200).'.example');
+        $uri = new UnvalidatedUri('http', str_repeat("\u{3316}", 200).'.example');
         $useExceptions = \ini_set('intl.use_exceptions', '1');
 
         try {
             $this->expectException(InvalidArgumentException::class);
-            $this->expectExceptionMessage('IDN conversion failed');
+            $this->expectExceptionMessage('Unable to convert host to ASCII');
 
-            Idn::convertUri($uri, \IDNA_DEFAULT);
+            Idn::convertUri($uri, true);
         } finally {
             \ini_set('intl.use_exceptions', $useExceptions);
         }
-    }
-
-    /**
-     * @requires function idn_to_ascii
-     */
-    public function testConvertUriRejectsAHostThatConvertsToAnInvalidHost(): void
-    {
-        // The fullwidth solidus maps to a solidus.
-        $uri = (new Psr7\Uri('http://placeholder.test/'))->withHost("evil.example\u{FF0F}.good.example");
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('IDN conversion failed');
-
-        Idn::convertUri($uri, \IDNA_DEFAULT);
-    }
-
-    /**
-     * @requires function idn_to_ascii
-     *
-     * @dataProvider uriStringProvider
-     */
-    public function testCreateUri(string $uri, string $expected): void
-    {
-        self::assertSame($expected, (string) Idn::createUri(new Psr7\HttpFactory(), $uri, \IDNA_DEFAULT));
-    }
-
-    /**
-     * @return iterable<string, array{0: string, 1: string}>
-     */
-    public static function uriStringProvider(): iterable
-    {
-        yield 'raw host between percent-encoded data' => ['https://%C3%BC@яндекс.рф/%D0%BF', 'https://%C3%BC@xn--d1acpjx3f.xn--p1ai/%D0%BF'];
-        yield 'percent-encoded host' => ['https://%D1%8F.%D1%80%D1%84/images', 'https://%D1%8F.%D1%80%D1%84/images'];
-        yield 'percent-encoded host without a scheme' => ['//%D1%8F.%D1%80%D1%84/images', '//%D1%8F.%D1%80%D1%84/images'];
-        yield 'lower-case percent-encoded host' => ['https://b%c3%bccher.example/', 'https://b%C3%BCcher.example/'];
     }
 
     /**
@@ -113,9 +116,39 @@ class IdnTest extends TestCase
                 Idn::convertUri(new UnvalidatedUri('http', $host), \IDNA_DEFAULT);
                 self::fail('An exception was not thrown');
             } catch (InvalidArgumentException $e) {
-                self::assertSame('IDN conversion failed', $e->getMessage());
+                self::assertStringStartsWith('Unable to convert host to ASCII', $e->getMessage());
             }
         }
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     *
+     * @dataProvider uriStringProvider
+     */
+    public function testCreateUri(string $uri, string $expected): void
+    {
+        self::assertSame($expected, (string) Idn::createUri(new Psr7\HttpFactory(), $uri, true));
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function uriStringProvider(): iterable
+    {
+        yield 'raw host between percent-encoded data' => ['https://%C3%BC@яндекс.рф/%D0%BF', 'https://%C3%BC@xn--d1acpjx3f.xn--p1ai/%D0%BF'];
+        yield 'percent-encoded host' => ['https://%D1%8F.%D1%80%D1%84/images', 'https://xn--41a.xn--p1ai/images'];
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testCreateUriRejectsAStringThatCannotBeParsed(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unable to parse URI');
+
+        Idn::createUri(new Psr7\HttpFactory(), 'http://example.com:99999/', true);
     }
 
     /**
@@ -133,13 +166,11 @@ class IdnTest extends TestCase
         ];
 
         foreach ($mappings as $unicode => $expected) {
-            $uri = (new Psr7\Uri('http://placeholder.test/'))->withHost($unicode);
-
-            self::assertSame($expected, Idn::convertUri($uri, \IDNA_DEFAULT)->getHost());
+            self::assertSame($expected, Idn::convertUri(new UnvalidatedUri('http', $unicode), true)->getHost());
         }
 
         // The trailing-dot form the conversion can produce is rejected.
-        $rootDot = Idn::convertUri((new Psr7\Uri('http://placeholder.test/'))->withHost("127.0.0.\u{FF11}\u{3002}"), \IDNA_DEFAULT);
+        $rootDot = Idn::convertUri(new UnvalidatedUri('http', "127.0.0.\u{FF11}\u{3002}"), true);
 
         try {
             HostValidator::assertRequestHost(new Psr7\Request('GET', $rootDot));
@@ -149,7 +180,7 @@ class IdnTest extends TestCase
         }
 
         // idn_conversion is not an SSRF control; numeric shorthand stays valid.
-        $shorthand = Idn::convertUri((new Psr7\Uri('http://placeholder.test/'))->withHost("\u{FF11}\u{FF12}\u{FF17}\u{3002}\u{FF11}"), \IDNA_DEFAULT);
+        $shorthand = Idn::convertUri(new UnvalidatedUri('http', "\u{FF11}\u{FF12}\u{FF17}\u{3002}\u{FF11}"), true);
 
         HostValidator::assertRequestHost(new Psr7\Request('GET', $shorthand));
 

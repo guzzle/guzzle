@@ -211,8 +211,8 @@ final class RequestOptions
     /**
      * idn_conversion: (bool|int|null, default=false) A combination of IDNA_*
      * constants for PHP's idn_to_ascii() function. Set to false or null to
-     * disable IDN support, or true to use the default configuration
-     * (IDNA_DEFAULT constant).
+     * disable IDN support, or true to use UTS #46 non-transitional processing
+     * with the STD3 ASCII rules and the bidi and joiner checks.
      */
     public const IDN_CONVERSION = 'idn_conversion';
 

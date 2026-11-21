@@ -10,6 +10,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Adjusted `guzzlehttp/promises` version constraint to `^4.0`
 - Adjusted `guzzlehttp/psr7` version constraint to `^4.0`
 - Added native parameter types to `SetCookie::setExpires()` and `HandlerStack::remove()`
+- Changed `idn_conversion` to convert hosts with `GuzzleHttp\Psr7\Idna`
 
 ### Removed
 
