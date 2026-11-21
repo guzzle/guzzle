@@ -43,6 +43,13 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject cURL multi handler waits with `HandlerClosedException` after its destructor has run
 
 
+## 8.5.6 - Upcoming
+
+### Fixed
+
+- Wrap redirect URIs that `guzzlehttp/psr7` rejects in `BadResponseException`
+
+
 ## 8.5.5 - 2026-11-21
 
 ### Security
