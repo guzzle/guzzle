@@ -794,6 +794,14 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (\is_string($uri)) {
+            if (\preg_match('%\A[^:/?#]++:[0-9]{1,5}+(?:/|\z)%', $uri) === 1) {
+                \trigger_deprecation(
+                    'guzzlehttp/guzzle',
+                    '8.6',
+                    'Passing a URI that starts with a host and port, such as "example.com:8080", is deprecated and will be rejected in 9.0. Start it with a scheme or with "//".'
+                );
+            }
+
             return Idn::createUri($uriFactory, $uri, $idnOptions);
         }
 

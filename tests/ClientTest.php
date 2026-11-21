@@ -799,6 +799,37 @@ class ClientTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider uriThatDoesNotStartWithAHostAndPortProvider
+     */
+    public function testUriThatDoesNotStartWithAHostAndPortDoesNotRaiseDeprecations(string $uri): void
+    {
+        $client = new Client(['handler' => new MockHandler([new Response()]), 'base_uri' => 'https://example.com/api/']);
+
+        $deprecations = [];
+        \set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
+            $deprecations[] = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $client->request('GET', $uri);
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertSame([], $deprecations);
+    }
+
+    public static function uriThatDoesNotStartWithAHostAndPortProvider(): iterable
+    {
+        yield 'scheme' => ['https://example.com:8080/path'];
+        yield 'network-path reference' => ['//example.com:8080/path'];
+        yield 'query after the digits' => ['example.com:8080?page=2'];
+        yield 'six digits' => ['tel:123456'];
+    }
+
     public function testClientHasDefaultPsr17Factories(): void
     {
         $client = new Client(['handler' => new MockHandler()]);
