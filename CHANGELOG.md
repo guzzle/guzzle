@@ -18,6 +18,10 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Allow the raw cURL `CURLOPT_SSL_OPTIONS` option on libcurl 7.83.1 or newer
 - Convert internationalized hosts while parsing URI strings
 
+### Deprecated
+
+- Deprecated request URIs and `base_uri` values that start with a host and port
+
 ### Fixed
 
 - Reject cURL multi handler waits with `HandlerClosedException` after its destructor has run
