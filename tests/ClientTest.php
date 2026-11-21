@@ -3255,9 +3255,68 @@ class ClientTest extends TestCase
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $request->getHeaderLine('Host'));
     }
 
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testIdnIsTranslatedToAsciiWithTheGivenOptions(): void
+    {
+        $mockHandler = new MockHandler([new Response(), new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $client->request('GET', 'https://faß.de/', ['idn_conversion' => 0]);
+
+        self::assertSame('https://fass.de/', (string) $mockHandler->getLastRequest()->getUri());
+
+        $client->request('GET', 'https://faß.de/', ['idn_conversion' => \IDNA_NONTRANSITIONAL_TO_ASCII]);
+
+        self::assertSame('https://xn--fa-hia.de/', (string) $mockHandler->getLastRequest()->getUri());
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testIdnIsGivenToAnotherUriFactoryAsWritten(): void
+    {
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => true]);
+
+        self::assertSame(['https://яндекс.рф/images', 'https://xn--d1acpjx3f.xn--p1ai/images'], $factory->uriCalls());
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testIdnConversionDoesNotRaiseDeprecations(): void
+    {
+        $mockHandler = new MockHandler([new Response(), new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $deprecations = [];
+        \set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
+            $deprecations[] = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => true]);
+            $client->request('GET', '/images', ['base_uri' => 'https://яндекс.рф', 'idn_conversion' => true]);
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $mockHandler->getLastRequest()->getUri());
+        self::assertSame([], $deprecations);
+    }
+
     public function testIdnStaysTheSameWhenConversionIsDisabled(): void
     {
-        $mockHandler = new MockHandler([new Response()]);
+        $mockHandler = new MockHandler([new Response(), new Response()]);
         $client = new Client(['handler' => $mockHandler]);
 
         $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => false]);
@@ -3266,6 +3325,10 @@ class ClientTest extends TestCase
 
         self::assertSame('https://яндекс.рф/images', (string) $request->getUri());
         self::assertSame('яндекс.рф', (string) $request->getHeaderLine('Host'));
+
+        $client->request('GET', '/images', ['base_uri' => 'https://яндекс.рф', 'idn_conversion' => false]);
+
+        self::assertSame('https://яндекс.рф/images', (string) $mockHandler->getLastRequest()->getUri());
     }
 
     public function testIdnConversionRejectsInvalidValue(): void
