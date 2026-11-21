@@ -2139,18 +2139,20 @@ class CurlFactoryTest extends TestCase
     /**
      * @dataProvider proxyParseableAtProvider
      */
-    public function testLeavesCurlErrorsUntouchedForParseableProxiesWithAtPastTheAuthority(string $proxy): void
+    public function testRedactsCurlErrorsForParseableProxiesWithAtPastTheAuthority(string $proxy, string $expected): void
     {
-        $error = "Failed to connect via '".$proxy."'";
+        $redacted = self::redactProxyUserInfo("Failed to connect via '".$proxy."'", $proxy);
 
-        self::assertSame($error, self::redactProxyUserInfo($error, $proxy));
+        self::assertSame("Failed to connect via '".$expected."'", $redacted);
     }
 
     public static function proxyParseableAtProvider(): iterable
     {
-        yield 'at sign in path' => ['http://proxy.example.com:8125/health@check'];
-        yield 'at sign in query' => ['http://proxy.example.com:8125?q=user@example.com'];
-        yield 'at sign in fragment' => ['http://proxy.example.com:8125#frag@ment'];
+        yield 'at sign in path' => ['http://proxy.example.com:8125/health@check', 'http://proxy.example.com:8125/***@check'];
+        yield 'at sign in query' => ['http://proxy.example.com:8125?q=user@example.com', 'http://proxy.example.com:8125?***@example.com'];
+        yield 'at sign in fragment' => ['http://proxy.example.com:8125#frag@ment', 'http://proxy.example.com:8125#***@ment'];
+        yield 'password that begins with a slash' => ["http://user:/se@cret\n@proxy.example.com:8125", 'http://user:/***@proxy.example.com:8125'];
+        yield 'empty userinfo' => ['http://@proxy.example.com:8125', 'http://@proxy.example.com:8125'];
     }
 
     public function testLeavesCurlErrorsUntouchedForProxiesWithoutCredentials(): void
@@ -2158,6 +2160,13 @@ class CurlFactoryTest extends TestCase
         $error = 'Failed to connect to proxy.example.com:8125';
 
         self::assertSame($error, self::redactProxyUserInfo($error, 'http://proxy.example.com:8125'));
+    }
+
+    public function testLeavesCurlErrorsUntouchedThatDoNotRepeatTheProxy(): void
+    {
+        $error = 'Failed to connect to example.com/health@check';
+
+        self::assertSame($error, self::redactProxyUserInfo($error, 'http://proxy.example.com:8125/health@check'));
     }
 
     /**

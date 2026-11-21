@@ -1230,9 +1230,16 @@ class CurlFactory implements CurlFactoryInterface
         $atPosition = \strrpos($authority, '@');
 
         if ($atPosition === false || $atPosition === 0) {
-            // A parseable proxy URL with '@' only past its authority, or with
-            // an empty userinfo, carries no credentials to redact.
-            return $error;
+            // Credentials with a raw '/', '?', or '#' reach past the apparent
+            // authority, and libcurl repeats a proxy that it rejects.
+            $atPosition = (int) \strrpos($remainder, '@');
+            $kept = \strlen($authority) + 1;
+
+            if ($atPosition < $kept) {
+                return $error;
+            }
+
+            return \str_replace(\substr($remainder, 0, $atPosition).'@', \substr($remainder, 0, $kept).'***@', $error);
         }
 
         $rawUserInfo = \substr($authority, 0, $atPosition);
