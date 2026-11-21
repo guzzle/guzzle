@@ -782,6 +782,81 @@ class ClientTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider hostAndPortUriProvider
+     */
+    public function testRejectsUriThatStartsWithHostAndPort(string $uri): void
+    {
+        $client = new Client(['handler' => new MockHandler([new Response()])]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('To name a host and a port, a URI must start with a scheme, such as "http://", or with "//".');
+
+        $client->get($uri);
+    }
+
+    public static function hostAndPortUriProvider(): iterable
+    {
+        yield 'host name' => ['example.com:8080/path'];
+        yield 'address' => ['127.0.0.1:65535'];
+    }
+
+    public function testRejectsUriThatStartsWithHostAndPortWithoutCallingUriFactory(): void
+    {
+        $factory = new ClientTestFactory();
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        try {
+            $client->get('example.com:8080/path');
+            self::fail('Expected InvalidArgumentException was not thrown');
+        } catch (InvalidArgumentException $e) {
+            self::assertSame([], $factory->uriCalls());
+        }
+    }
+
+    public function testRejectsBaseUriThatStartsWithHostAndPort(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('To name a host and a port, a URI must start with a scheme, such as "http://", or with "//".');
+
+        new Client(['handler' => new MockHandler(), 'base_uri' => 'example.com:8080']);
+    }
+
+    public function testRejectsBaseUriRequestOptionThatStartsWithHostAndPort(): void
+    {
+        $client = new Client(['handler' => new MockHandler([new Response()])]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('To name a host and a port, a URI must start with a scheme, such as "http://", or with "//".');
+
+        $client->get('path', ['base_uri' => 'example.com:8080']);
+    }
+
+    /**
+     * @dataProvider uriThatDoesNotStartWithHostAndPortProvider
+     */
+    public function testAcceptsUriThatDoesNotStartWithHostAndPort(string $uri): void
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler, 'base_uri' => 'https://example.com/api/']);
+
+        $client->get($uri);
+
+        self::assertCount(0, $mockHandler);
+    }
+
+    public static function uriThatDoesNotStartWithHostAndPortProvider(): iterable
+    {
+        yield 'scheme' => ['https://example.com:8080/path'];
+        yield 'network-path reference' => ['//example.com:8080/path'];
+        yield 'colon in the query' => ['search?at=12:30'];
+        yield 'query after the digits' => ['example.com:8080?page=2'];
+        yield 'six digits' => ['tel:123456'];
+    }
+
     public function testCanUseRelativeUriWithSend(): void
     {
         $mock = new MockHandler([new Response()]);
