@@ -274,9 +274,13 @@ class RedirectMiddleware
             $modify['remove_headers'][] = 'Cookie';
         }
 
-        return $scope->run(static function () use ($request, $modify): RequestInterface {
-            return Psr7\Utils::modifyRequest($request, $modify);
-        });
+        try {
+            return $scope->run(static function () use ($request, $modify): RequestInterface {
+                return Psr7\Utils::modifyRequest($request, $modify);
+            });
+        } catch (\InvalidArgumentException $e) {
+            throw new BadResponseException(\sprintf('Redirect URI, %s, is invalid.', Psr7\UriRedactor::redactUriStringForMessage($response->getHeaderLine('Location'))), $request, $response, $e);
+        }
     }
 
     private static function isRedirectStatusCode(int $statusCode): bool
