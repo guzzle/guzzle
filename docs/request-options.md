@@ -1021,11 +1021,20 @@ $res = $client->request('GET', 'https://яндекс.рф', ['idn_conversion' =>
 // The domain part (яндекс.рф) stays unmodified, so the built-in handlers reject the request
 ```
 
-Enables/disables IDN support, can also be used for precise control by combining
+Enables/disables IDN support. `true` converts hosts with
+[`GuzzleHttp\Psr7\Idna`](https://github.com/guzzle/psr7/blob/4.0/docs/uri-helpers.md),
+using UTS #46 non-transitional processing with the STD3 ASCII rules and the bidi
+and joiner checks. An integer replaces those options with a combination of
 `IDNA_*` constants (except `IDNA_ERROR_*`), see the `$options` parameter in the
 [idn_to_ascii()](https://www.php.net/manual/en/function.idn-to-ascii.php)
-documentation for more details. Pass `false` or `null` to disable IDN
-conversion.
+documentation; without `IDNA_NONTRANSITIONAL_TO_ASCII`, processing is
+transitional. `false` or `null` disables conversion. Only a host with non-ASCII
+data, raw or percent-encoded, is converted. Enabling it requires the intl
+extension or `symfony/polyfill-intl-idn`.
+
+Conversion maps characters, so a host in fullwidth digits can become an IPv4
+address. Apply any destination policy to the request that is sent, in a
+middleware or in `on_redirect`, not to the string that was passed in.
 
 ## json
 

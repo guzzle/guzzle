@@ -629,10 +629,7 @@ final class AuthMiddleware
         }
 
         try {
-            // A server must not be able to raise the psr7 host deprecation.
-            $uri = (new Psr7\ErrorScope(\E_USER_DEPRECATED))->run(static function () use ($space): Psr7\Uri {
-                return new Psr7\Uri($space);
-            });
+            $uri = new Psr7\Uri($space);
         } catch (\InvalidArgumentException $e) {
             return null;
         }

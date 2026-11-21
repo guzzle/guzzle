@@ -5,8 +5,9 @@ Guzzle Upgrade Guide
 ----------
 
 Guzzle 9 is a major release that raises the minimum PHP version, updates the
-Guzzle dependency stack, declares more native parameter types, and removes
-deprecated `Utils` methods.
+Guzzle dependency stack, converts internationalized host names with Guzzle
+PSR-7, declares more native parameter types, and removes deprecated `Utils`
+methods.
 
 #### PHP Version and Dependencies
 
@@ -54,6 +55,39 @@ The callbacks of a request that needed more than one transfer also run later in
 the promise task queue than in Guzzle 8, so they can run after the callbacks of
 another request that completed at the same time, including the `fulfilled` and
 `rejected` callbacks of a `Pool`.
+
+#### IDN Conversion
+
+The `idn_conversion` request option now converts hosts with
+`GuzzleHttp\Psr7\Idna`. `true` selects UTS #46 non-transitional processing with
+the STD3 ASCII rules and the bidi and joiner checks on every installation.
+Guzzle 8 used `IDNA_DEFAULT`, whose value depends on the ICU version, so
+`faß.de` became `fass.de` on some installations and `xn--fa-hia.de` on others.
+The added checks reject some hosts that Guzzle 8 converted, such as `é_b.test`.
+Pass `\IDNA_DEFAULT` to keep the Guzzle 8 options.
+
+Only a host with non-ASCII data is converted. That now includes a host written
+as percent-encoded UTF-8, which Guzzle 8 never converted and the built-in
+handlers refused, so check where a request may go on the URI of the request that
+is sent, in a middleware or in `on_redirect`, and not on the string that was
+passed in. An ASCII host is no longer passed to `idn_to_ascii()`, which rejected
+a leading hyphen or an invalid `xn--` label, for example, and lowercased the
+host of a URI object from another PSR-7 implementation.
+
+A host that cannot be converted still fails with
+`GuzzleHttp\Exception\InvalidArgumentException`, now with a message that begins
+"Unable to convert host to ASCII" instead of "IDN conversion failed", and the
+length limit is 1024 decoded characters instead of 4096 bytes. That exception
+also replaces `GuzzleHttp\Psr7\Exception\MalformedUriException` for a URI string
+that the default `uri_factory` cannot parse while the option is enabled, and the
+`\Error` for enabling the option without the intl extension or
+`symfony/polyfill-intl-idn`. A redirect to a host that cannot be converted now
+fails with `GuzzleHttp\Exception\BadResponseException` instead.
+
+A string `base_uri` given to the client constructor is now converted there when
+`idn_conversion` is set on the client, and `getConfig('base_uri')` returns the
+converted URI. An `idn_conversion` request option no longer overrides that, so
+set the option on the client.
 
 #### Native Type Declarations
 

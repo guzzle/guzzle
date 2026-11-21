@@ -17,103 +17,60 @@ final class Idn
     {
     }
 
-    public static function normalizeConversionOption(mixed $value): ?int
+    public static function normalizeConversionOption(mixed $value): int|bool
     {
-        if ($value === null || $value === false) {
-            return null;
+        if ($value === null) {
+            return false;
         }
 
-        if ($value === true) {
-            return \IDNA_DEFAULT;
+        if (!\is_bool($value) && !\is_int($value)) {
+            throw new InvalidArgumentException('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
         }
 
-        if (\is_int($value)) {
-            return $value;
+        if ($value !== false && (!\function_exists('idn_to_ascii') || !\defined('INTL_IDNA_VARIANT_UTS46'))) {
+            throw new InvalidArgumentException('idn_conversion requires the intl extension');
         }
 
-        throw new InvalidArgumentException('idn_conversion must be true, false, null, or an integer IDNA_* bitmask');
+        return $value;
     }
 
+    /**
+     * @throws \InvalidArgumentException
+     */
     public static function createUri(
         UriFactoryInterface $uriFactory,
         #[\SensitiveParameter]
         string $uri,
-        ?int $options
+        int|bool $options
     ): UriInterface {
-        // psr7 would also convert a percent-encoded host, which convertUri() leaves alone.
-        if ($options !== null && $uriFactory instanceof Psr7\HttpFactory && \preg_match('~\A(?:[^:/?#]+:)?(?://)?(?:[^/?#]*@)?+[^/?#]*%[89A-Fa-f][0-9A-Fa-f]~', $uri) === 0) {
-            try {
-                return Psr7\Idna::uriFor($uri, $options);
-            } catch (\InvalidArgumentException|\RuntimeException $e) {
-                // convertUri() converts some hosts that psr7 refuses.
-            }
+        if ($options === false || !$uriFactory instanceof Psr7\HttpFactory) {
+            return self::convertUri($uriFactory->createUri($uri), $options);
         }
 
-        return $uriFactory->createUri($uri);
+        try {
+            return Psr7\Idna::uriFor($uri, $options === true ? null : $options);
+        } catch (\InvalidArgumentException $e) {
+            throw new InvalidArgumentException($e->getMessage(), 0, $e);
+        }
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function convertUri(UriInterface $uri, int $options = 0): UriInterface
+    public static function convertUri(UriInterface $uri, int|bool $options): UriInterface
     {
-        if ($uri->getHost()) {
-            $asciiHost = self::idnToAsci($uri->getHost(), $options, $info);
-            if ($asciiHost === false) {
-                $errorBitSet = $info['errors'] ?? 0;
-
-                $errorConstants = array_filter(array_keys(get_defined_constants()), static function (string $name): bool {
-                    return substr($name, 0, 11) === 'IDNA_ERROR_';
-                });
-
-                $errors = [];
-                foreach ($errorConstants as $errorConstant) {
-                    if ($errorBitSet & constant($errorConstant)) {
-                        $errors[] = $errorConstant;
-                    }
-                }
-
-                $errorMessage = 'IDN conversion failed';
-                if ($errors) {
-                    $errorMessage .= ' (errors: '.implode(', ', $errors).')';
-                }
-
-                throw new InvalidArgumentException($errorMessage);
-            }
-            if ($uri->getHost() !== $asciiHost) {
-                // The conversion can map a character to a URI delimiter.
-                if (!Psr7\Rfc3986::isValidHost($asciiHost)) {
-                    throw new InvalidArgumentException('IDN conversion failed');
-                }
-
-                // Replace URI only if the ASCII version is different
-                try {
-                    $uri = $uri->withHost($asciiHost);
-                } catch (\InvalidArgumentException $e) {
-                    throw new InvalidArgumentException('IDN conversion failed', 0, $e);
-                }
-            }
+        if ($options === false) {
+            return $uri;
         }
 
-        return $uri;
-    }
+        $host = $uri->getHost();
 
-    private static function idnToAsci(string $domain, int $options, ?array &$info = []): string|false
-    {
-        if (\function_exists('idn_to_ascii') && \defined('INTL_IDNA_VARIANT_UTS46')) {
-            // ICU can take quadratic time, and no valid name needs more bytes.
-            if (\strlen($domain) > 4096) {
-                return false;
-            }
+        try {
+            $asciiHost = Psr7\Idna::toAscii($host, $options === true ? null : $options);
 
-            try {
-                return \idn_to_ascii($domain, $options, \INTL_IDNA_VARIANT_UTS46, $info);
-            } catch (\IntlException $e) {
-                // With intl.use_exceptions, a label too long to encode throws.
-                return false;
-            }
+            return $asciiHost === $host ? $uri : $uri->withHost($asciiHost);
+        } catch (\InvalidArgumentException $e) {
+            throw new InvalidArgumentException($e->getMessage(), 0, $e);
         }
-
-        throw new \Error('ext-idn or symfony/polyfill-intl-idn not loaded or too old');
     }
 }

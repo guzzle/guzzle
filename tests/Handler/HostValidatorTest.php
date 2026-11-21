@@ -190,12 +190,10 @@ class HostValidatorTest extends TestCase
      */
     public function testRejectsANonPrintableAsciiUriHost(string $host): void
     {
-        $request = new Request('GET', (new Uri('http://placeholder.test/'))->withHost($host));
-
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('must contain only printable ASCII characters');
 
-        HostValidator::assertRequestHost($request);
+        HostValidator::assertRequestHost($this->foreignHostRequest($host));
     }
 
     /**
@@ -216,12 +214,10 @@ class HostValidatorTest extends TestCase
      */
     public function testRejectsAPercentEncodedUriHost(string $host): void
     {
-        $request = new Request('GET', (new Uri('http://placeholder.test/'))->withHost($host));
-
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('must not contain a percent escape');
 
-        HostValidator::assertRequestHost($request);
+        HostValidator::assertRequestHost($this->foreignHostRequest($host));
     }
 
     /**
@@ -372,7 +368,7 @@ class HostValidatorTest extends TestCase
 
     public function testExceptionCarriesTheRequest(): void
     {
-        $request = new Request('GET', (new Uri('http://placeholder.test/'))->withHost("e\u{200B}vil.test"));
+        $request = $this->foreignHostRequest("e\u{200B}vil.test");
 
         try {
             HostValidator::assertRequestHost($request);

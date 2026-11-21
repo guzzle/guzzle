@@ -237,7 +237,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
 
         // Convert the base_uri to a UriInterface using the configured URI factory.
         if (isset($config['base_uri'])) {
-            $config['base_uri'] = self::createUri($config['base_uri'], $uriFactory);
+            $config['base_uri'] = self::createUri($config['base_uri'], $uriFactory, Idn::normalizeConversionOption($config['idn_conversion'] ?? null));
         }
 
         $this->configureDefaults($config);
@@ -705,9 +705,7 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
             $uri = Psr7\UriResolver::resolve(self::createUri($config['base_uri'], $uriFactory, $idnOptions), $uri);
         }
 
-        if ($idnOptions !== null) {
-            $uri = Idn::convertUri($uri, $idnOptions);
-        }
+        $uri = Idn::convertUri($uri, $idnOptions);
 
         if ($uri->getScheme() === '' && $uri->getHost() !== '') {
             $uri = $uri->withScheme('http');
@@ -792,21 +790,13 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         return $factory;
     }
 
-    private static function createUri(mixed $uri, UriFactoryInterface $uriFactory, ?int $idnOptions = null): UriInterface
+    private static function createUri(mixed $uri, UriFactoryInterface $uriFactory, int|bool $idnOptions = false): UriInterface
     {
         if ($uri instanceof UriInterface) {
             return $uri;
         }
 
         if (\is_string($uri)) {
-            if (\preg_match('%\A[^:/?#]++:[0-9]{1,5}+(?:/|\z)%', $uri) === 1) {
-                \trigger_deprecation(
-                    'guzzlehttp/guzzle',
-                    '8.6',
-                    'Passing a URI that starts with a host and port, such as "example.com:8080", is deprecated and will be rejected in 9.0. Start it with a scheme or with "//".'
-                );
-            }
-
             return Idn::createUri($uriFactory, $uri, $idnOptions);
         }
 

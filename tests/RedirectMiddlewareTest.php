@@ -91,48 +91,6 @@ class RedirectMiddlewareTest extends TestCase
         ])->wait();
     }
 
-    /**
-     * @dataProvider nonAsciiHostLocationProvider
-     */
-    public function testLocationWithNonAsciiHostDoesNotRaiseDeprecations(?UriFactoryInterface $uriFactory): void
-    {
-        $mock = new MockHandler([
-            new Response(302, ['Location' => 'http://www.tést.com/whatever']),
-            new Response(200),
-        ]);
-        $stack = new HandlerStack($mock);
-        $stack->push(Middleware::redirect());
-        $handler = $stack->resolve();
-
-        $deprecations = [];
-        \set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
-            $deprecations[] = $message;
-
-            return true;
-        }, \E_USER_DEPRECATED);
-
-        try {
-            $handler(new Request('GET', 'http://example.com'), [
-                'allow_redirects' => ['max' => 2],
-                RequestOptions::URI_FACTORY => $uriFactory,
-            ])->wait();
-        } finally {
-            \restore_error_handler();
-        }
-
-        self::assertSame('www.tést.com', $mock->getLastRequest()->getUri()->getHost());
-        self::assertSame([], $deprecations);
-    }
-
-    /**
-     * @return iterable<string, array{0: UriFactoryInterface|null}>
-     */
-    public static function nonAsciiHostLocationProvider(): iterable
-    {
-        yield 'default URI factory' => [null];
-        yield 'URI factory of another implementation' => [new RedirectTestUnvalidatedUriFactory()];
-    }
-
     public function testRedirectsWithRelativeUri(): void
     {
         $mock = new MockHandler([
@@ -149,6 +107,26 @@ class RedirectMiddlewareTest extends TestCase
         $response = $promise->wait();
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('http://example.com/foo', (string) $mock->getLastRequest()->getUri());
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testRedirectsWithRelativeUriConvertTheIdnHostOfTheRequest(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => '/foo']),
+            new Response(200),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', new UnvalidatedUri('http', 'яндекс.рф'), ['Host' => 'яндекс.рф']);
+        $handler($request, [
+            'allow_redirects' => ['max' => 2],
+            'idn_conversion' => true,
+        ])->wait();
+        self::assertSame('http://xn--d1acpjx3f.xn--p1ai/foo', (string) $mock->getLastRequest()->getUri());
     }
 
     public function testAbsoluteRedirectUsesConfiguredUriFactory(): void
@@ -638,6 +616,32 @@ class RedirectMiddlewareTest extends TestCase
             self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
             self::assertSame("Factory could not create \xFF URI.", $e->getPrevious()->getMessage());
             self::assertSame('Redirect URI, http://test.com/\\x9Bfoo, is invalid.', $e->getMessage());
+        }
+    }
+
+    /**
+     * @requires function idn_to_ascii
+     */
+    public function testWrapsIdnConversionFailuresForRedirects(): void
+    {
+        $mock = new MockHandler([
+            new Response(302, ['Location' => 'http://-яндекс.рф/']),
+        ]);
+        $stack = new HandlerStack($mock);
+        $stack->push(Middleware::redirect());
+        $handler = $stack->resolve();
+        $request = new Request('GET', 'http://example.com');
+
+        try {
+            $handler($request, [
+                'allow_redirects' => ['max' => 2],
+                'idn_conversion' => true,
+            ])->wait();
+            self::fail('Expected BadResponseException.');
+        } catch (BadResponseException $e) {
+            self::assertSame(302, $e->getResponse()->getStatusCode());
+            self::assertInstanceOf(InvalidArgumentException::class, $e->getPrevious());
+            self::assertSame('Redirect URI, http://-яндекс.рф/, is invalid.', $e->getMessage());
         }
     }
 
@@ -1551,14 +1555,6 @@ final class RedirectTestUriFactory implements UriFactoryInterface
     public function uriCalls(): array
     {
         return $this->uriCalls;
-    }
-}
-
-final class RedirectTestUnvalidatedUriFactory implements UriFactoryInterface
-{
-    public function createUri(string $uri = ''): UriInterface
-    {
-        return new UnvalidatedUri('http', 'www.tést.com', null, '/whatever');
     }
 }
 

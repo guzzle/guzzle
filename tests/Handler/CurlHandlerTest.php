@@ -603,10 +603,13 @@ class CurlHandlerTest extends TestCase
         Server::flush();
         Server::enqueue([new Response(200)]);
         $handler = $this->getHandler();
-        $host = "\u{FF11}\u{FF12}\u{FF17}\u{3002}\u{FF10}\u{3002}\u{FF10}\u{3002}\u{FF11}";
+        $request = new UnvalidatedUriRequest(
+            new Request('GET', Server::$url),
+            new UnvalidatedUri('http', "\u{FF11}\u{FF12}\u{FF17}\u{3002}\u{FF10}\u{3002}\u{FF10}\u{3002}\u{FF11}", Server::$port)
+        );
 
         try {
-            $handler(new Request('GET', 'http://'.$host.':'.Server::$port.'/'), [])->wait();
+            $handler($request, [])->wait();
             self::fail('An exception was not thrown');
         } catch (RequestException $e) {
             self::assertStringContainsString('must contain only printable ASCII characters', $e->getMessage());
@@ -702,7 +705,10 @@ class CurlHandlerTest extends TestCase
         $this->expectException(RequestException::class);
         $this->expectExceptionMessage('must contain only printable ASCII characters');
 
-        $handler(new Request('GET', "file://e\u{200B}vil.test/x"), []);
+        $handler(new UnvalidatedUriRequest(
+            new Request('GET', 'file://placeholder.test/x'),
+            new UnvalidatedUri('file', "e\u{200B}vil.test", null, '/x')
+        ), []);
     }
 
     public function testStillTransfersANoncanonicalNumericHost(): void
