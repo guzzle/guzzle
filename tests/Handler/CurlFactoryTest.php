@@ -1915,6 +1915,78 @@ class CurlFactoryTest extends TestCase
         }
     }
 
+    public function testRedactsPreProxyCredentialsInCurlErrorMessages(): void
+    {
+        if (!\defined('CURLOPT_PRE_PROXY')) {
+            self::markTestSkipped('CURLOPT_PRE_PROXY is not available.');
+        }
+
+        $handler = new Handler\CurlHandler();
+
+        try {
+            $handler(new Psr7\Request('GET', Server::$url), [
+                'proxy' => 'http://127.0.0.1:1',
+                'curl' => [(int) \constant('CURLOPT_PRE_PROXY') => 'foo://user:secret@127.0.0.1:1'],
+            ])->wait();
+            self::fail('Expected a transfer exception');
+        } catch (\GuzzleHttp\Exception\TransferException $e) {
+            self::assertStringNotContainsString('secret', $e->getMessage());
+            if (\strpos($e->getMessage(), 'foo://') !== false) {
+                self::assertStringContainsString('foo://user:***@127.0.0.1:1', $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * @dataProvider preProxyBesideProxyCredentialsProvider
+     */
+    public function testRedactsPreProxyCredentialsBesideProxyCredentials(string $proxy, string $preProxy, string $error, string $expected): void
+    {
+        if (!\defined('CURLOPT_PRE_PROXY')) {
+            self::markTestSkipped('CURLOPT_PRE_PROXY is not available.');
+        }
+
+        $factory = new CurlFactory(1);
+        $easy = $factory->create(new Psr7\Request('GET', Server::$url), [
+            'proxy' => $proxy,
+            'curl' => [(int) \constant('CURLOPT_PRE_PROXY') => $preProxy],
+        ]);
+        $easy->errno = \CURLE_COULDNT_CONNECT;
+
+        $reason = self::rejectionReason($easy, ['errno' => $easy->errno, 'error' => $error]);
+
+        self::assertSame($expected, $reason->getHandlerContext()['error']);
+        self::assertStringContainsString('cURL error 7: '.$expected.' (see', $reason->getMessage());
+    }
+
+    public static function preProxyBesideProxyCredentialsProvider(): iterable
+    {
+        yield 'the same credentials' => [
+            'http://user:secret@127.0.0.1:1',
+            'foo://user:secret@127.0.0.1:1',
+            "Unsupported proxy scheme for 'foo://user:secret@127.0.0.1:1'",
+            "Unsupported proxy scheme for 'foo://user:***@127.0.0.1:1'",
+        ];
+        yield 'a password that ends with the proxy credentials' => [
+            'http://user:secret@127.0.0.1:1',
+            'foo://alice:prefixuser:secret@127.0.0.1:1',
+            "Unsupported proxy scheme for 'foo://alice:prefixuser:secret@127.0.0.1:1'",
+            "Unsupported proxy scheme for 'foo://alice:***",
+        ];
+        yield 'a password cut off at a byte the proxy user starts with' => [
+            'http://alice:one@127.0.0.1:1',
+            'foo://bob:'.\str_repeat('a', 300).'@127.0.0.1:1',
+            \substr("Unsupported proxy scheme for 'foo://bob:".\str_repeat('a', 300), 0, 255),
+            "Unsupported proxy scheme for 'foo://***",
+        ];
+        yield 'a proxy password that ends with the pre-proxy credentials' => [
+            'foo://alice:prefixuser:secret@127.0.0.1:1',
+            'socks5://user:secret@127.0.0.1:1',
+            "Unsupported proxy scheme for 'foo://alice:prefixuser:secret@127.0.0.1:1'",
+            "Unsupported proxy scheme for 'foo://alice:***",
+        ];
+    }
+
     public function testRedactsProxyCredentialsWhenProxyDefeatsUrlParsing(): void
     {
         $handler = new Handler\CurlHandler();
