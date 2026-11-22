@@ -3431,6 +3431,17 @@ class ClientTest extends TestCase
         self::assertSame('https://xn--d1acpjx3f.xn--p1ai/images', (string) $mockHandler->getLastRequest()->getUri());
     }
 
+    public function testIdnIsRejectedWhenConversionIsDisabled(): void
+    {
+        $mockHandler = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mockHandler]);
+
+        $this->expectException(Psr7\Exception\MalformedUriException::class);
+        $this->expectExceptionMessage('Invalid host: яндекс.рф');
+
+        $client->request('GET', 'https://яндекс.рф/images', ['idn_conversion' => false]);
+    }
+
     public function testIdnConversionRejectsInvalidValue(): void
     {
         $mockHandler = new MockHandler([new Response()]);
@@ -3474,6 +3485,14 @@ class ClientTest extends TestCase
         $client->send($request);
         self::assertSame('http://xn--d1acpjx3f.xn--p1ai/baz', (string) $mock->getLastRequest()->getUri());
         self::assertSame('xn--d1acpjx3f.xn--p1ai', (string) $mock->getLastRequest()->getHeaderLine('Host'));
+    }
+
+    public function testIdnBaseUriIsRejectedWhenConversionIsDisabled(): void
+    {
+        $this->expectException(Psr7\Exception\MalformedUriException::class);
+        $this->expectExceptionMessage('Invalid host: яндекс.рф');
+
+        new Client(['handler' => new MockHandler(), 'base_uri' => 'http://яндекс.рф']);
     }
 
     /**

@@ -2178,6 +2178,22 @@ class AuthMiddlewareTest extends TestCase
         self::assertStringContainsString('nc=00000002', $requests[2]->getHeaderLine('Authorization'));
     }
 
+    public function testDigestDomainIgnoresUriThatPsr7Rejects(): void
+    {
+        $challengeHeaders = ['WWW-Authenticate' => 'Digest realm="test", nonce="abc", qop="auth", domain="http://яндекс.рф/api http://example.com/api"'];
+        $mock = new MockHandler([
+            new Response(401, $challengeHeaders),
+            new Response(200),
+            new Response(200),
+        ]);
+        $client = new Client(['handler' => self::handlerWithAuth($mock)]);
+
+        $client->get('http://example.com/api/one', ['auth' => ['a', 'b', 'digest']]);
+        $client->get('http://example.com/api/two', ['auth' => ['a', 'b', 'digest']]);
+
+        self::assertTrue($mock->getLastRequest()->hasHeader('Authorization'));
+    }
+
     /**
      * @param (callable(): string)|null $cnonceGenerator
      */
