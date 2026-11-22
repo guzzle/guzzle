@@ -41,6 +41,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Deprecated
 
 - Deprecated request URIs and `base_uri` values that start with a host and port
+- Deprecated `proxy` URLs whose host has non-ASCII data
 
 ### Fixed
 

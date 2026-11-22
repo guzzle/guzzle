@@ -105,8 +105,10 @@ final class ProxyOptions
      * delegated to Psr7\Rfc3986, where a zero port is accepted and left for the
      * transport to handle as it did before.
      */
-    private static function isValidProxyAuthority(string $authority): bool
-    {
+    private static function isValidProxyAuthority(
+        #[\SensitiveParameter]
+        string $authority
+    ): bool {
         // A single trailing slash is tolerated; once removed, a proxy authority
         // ([userinfo@]host[:port]) cannot contain a path, query, or fragment
         // delimiter anywhere — including one before a later '@'.
@@ -156,6 +158,14 @@ final class ProxyOptions
 
         if ($host === '' || !Rfc3986::isValidHost($host)) {
             return false;
+        }
+
+        if (\preg_match('/[\x80-\xFF]|%[89A-Fa-f][0-9A-Fa-f]/', $host) === 1) {
+            \trigger_deprecation(
+                'guzzlehttp/guzzle',
+                '8.6',
+                'Passing a proxy URL whose host has non-ASCII data, raw or percent-encoded, is deprecated and will be rejected in 9.0. Write the host as A-labels.'
+            );
         }
 
         return $port === null || Rfc3986::isValidPort($port);
