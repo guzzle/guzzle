@@ -797,6 +797,11 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
         }
 
         if (\is_string($uri)) {
+            // A URI factory may read "name:digits" as a host and a port.
+            if (\preg_match('%\A[^:/?#]++:[0-9]{1,5}+(?:/|\z)%', $uri) !== 0) {
+                throw new InvalidArgumentException('To name a host and a port, a URI must start with a scheme, such as "http://", or with "//".');
+            }
+
             return Idn::createUri($uriFactory, $uri, $idnOptions);
         }
 

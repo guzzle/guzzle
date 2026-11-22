@@ -6,8 +6,8 @@ Guzzle Upgrade Guide
 
 Guzzle 9 is a major release that raises the minimum PHP version, updates the
 Guzzle dependency stack, converts internationalized host names with Guzzle
-PSR-7, declares more native parameter types, and removes deprecated `Utils`
-methods.
+PSR-7, declares more native parameter types, rejects URIs that start with a host
+and port, and removes deprecated `Utils` methods.
 
 #### PHP Version and Dependencies
 
@@ -100,6 +100,29 @@ treated as `setExpires(1)`, `remove(5)` as `remove('5')`, and `remove(false)` as
 `remove('')`, which removes every middleware that `push()`, `before()`, or
 `after()` added without a name. An object with a `__toString()` method is
 converted to a string.
+
+#### URIs That Start With a Host and Port
+
+A request URI or `base_uri` string that starts with a name, a colon, and one to
+five digits, followed by a slash or the end of the string, such as
+`example.com:8080/path`, is now rejected with an `InvalidArgumentException`.
+Guzzle 8 read such a string as a host and a port, so under a `base_uri` it
+replaced the host of the request. Start the URI with a scheme or with two
+slashes instead.
+
+```php
+// 8.x, no longer accepted in 9.0
+$client->get('example.com:8080/path');
+$client = new Client(['base_uri' => 'example.com:8080']);
+
+// 9.0
+$client->get('http://example.com:8080/path');
+$client = new Client(['base_uri' => 'http://example.com:8080']);
+```
+
+Guzzle PSR-7 4.x rejects such a string as well, so with the default
+`uri_factory` a redirect to a `Location` of that form is no longer followed and
+fails with a `BadResponseException`.
 
 #### Removed Utils Helper APIs
 

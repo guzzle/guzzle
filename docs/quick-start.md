@@ -53,14 +53,10 @@ Don't feel like reading RFC 3986? Here are some quick examples on how a
 | `http://foo.com/foo/` | `bar`            | `http://foo.com/foo/bar` |
 | `http://foo.com/foo/` | `/bar`           | `http://foo.com/bar`     |
 | `http://foo.com`      | `http://baz.com` | `http://baz.com`         |
-| `http://foo.com/foo/` | `baz.com:81/bar` | `http://baz.com:81/bar`  |
 | `http://foo.com/?bar` | `bar`            | `http://foo.com/bar`     |
 
-A URI that starts with a name, a colon, and a port number, such as
-`baz.com:81/bar`, is read as a host and a port, so it replaces the host of the
-`base_uri`. This form is deprecated and will be rejected in Guzzle 9.0. Encode a
-path segment that comes from untrusted input with `rawurlencode()` to keep the
-request on the base host.
+Encode a path segment that comes from untrusted input with `rawurlencode()` to
+keep the request on the base host.
 
 `handler`
 (callable) Function that transfers HTTP requests over the wire. The function is
