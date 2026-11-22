@@ -8,6 +8,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 ### Changed
 
 - Adjusted `guzzlehttp/promises` version constraint to `^3.2`
+- Adjusted `guzzlehttp/psr7` version constraint to `^3.6`
 - Remove every case variant when the cURL handlers remove a request header
 - Reject third-party URIs whose string form is malformed or names another origin
 - Reject request header names that are not HTTP tokens in the built-in handlers
@@ -27,7 +28,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject cURL multi handler waits with `HandlerClosedException` after its destructor has run
 
 
-## 8.5.6 - Upcoming
+## 8.5.6 - 2026-11-21
 
 ### Fixed
 
