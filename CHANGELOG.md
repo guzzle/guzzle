@@ -23,7 +23,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Removed `Utils::headersFromLines()`, `Utils::normalizeHeaderKeys()`, `Utils::debugResource()`, and `Utils::normalizeProtocols()`
 
 
-## 8.6.0 - Upcoming
+## 8.6.0 - 2026-11-22
 
 ### Changed
 
