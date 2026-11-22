@@ -139,6 +139,15 @@ reads a host in it although it has no scheme and does not start with two
 slashes, as `parse_url()` does for `items/tenant:42`. Pass an absolute URI
 instead.
 
+#### Requests With URIs That Guzzle PSR-7 Rejects
+
+A `GuzzleHttp\Psr7\Request` whose resolved URI Guzzle PSR-7 rejects, as it does
+for an invalid host in a URI object from another PSR-7 implementation, now
+fails with a `GuzzleHttp\Exception\RequestException`: `sendAsync()` returns a
+rejected promise, and `send()` and `sendRequest()` throw it. Where Guzzle PSR-7
+3.x rejected the URI as well, Guzzle 8 threw its `\InvalidArgumentException`
+from all three, which also stopped a `Pool`; it is now the previous exception.
+
 #### Removed Utils Helper APIs
 
 The deprecated `Utils::defaultUserAgent()`, `Utils::headersFromLines()`,
