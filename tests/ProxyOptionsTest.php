@@ -385,6 +385,35 @@ class ProxyOptionsTest extends TestCase
         self::assertSame($expected, ProxyOptions::proxyScheme($proxy));
     }
 
+    public static function asciiProxyHostProvider(): array
+    {
+        return [
+            'percent-encoded ASCII in the host' => ['http://proxy%2Dexample.com:8080'],
+            'non-ASCII credentials' => ["http://us\u{e9}r:p%C3%A4ss@proxy.example.com:8080"],
+        ];
+    }
+
+    /**
+     * @dataProvider asciiProxyHostProvider
+     */
+    public function testProxyWithAsciiHostDoesNotRaiseDeprecations(string $proxy): void
+    {
+        $deprecations = [];
+        \set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
+            $deprecations[] = $message;
+
+            return true;
+        }, \E_USER_DEPRECATED);
+
+        try {
+            ProxyOptions::proxyScheme($proxy);
+        } finally {
+            \restore_error_handler();
+        }
+
+        self::assertSame([], $deprecations);
+    }
+
     public static function malformedProxyProvider(): array
     {
         return [
