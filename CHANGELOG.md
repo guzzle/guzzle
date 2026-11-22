@@ -15,6 +15,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Reject hosts that a `uri_factory` reads from relative paths
 - Reject `proxy` URLs whose host has non-ASCII data
 - Wrap URIs of request objects that `guzzlehttp/psr7` rejects in `RequestException`
+- Raised the built-in cURL handler floor to libcurl 7.52.1
 
 ### Removed
 

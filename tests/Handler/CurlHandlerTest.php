@@ -540,7 +540,6 @@ class CurlHandlerTest extends TestCase
             || !\function_exists('curl_share_setopt')
             || !\defined('CURLOPT_SHARE')
             || !CurlVersion::supportsCurlHandler()
-            || !CurlVersion::supportsHandlerSharing()
         ) {
             self::markTestSkipped('cURL share handles are unavailable.');
         }

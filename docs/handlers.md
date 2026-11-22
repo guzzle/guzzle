@@ -253,11 +253,10 @@ configured, or if the selected handler does not support sharing, Guzzle
 continues without sharing.
 
 Guzzle only enables cURL transport sharing for libcurl versions that support the
-requested shared state safely. Handler-lifetime cURL sharing requires libcurl
-7.35.0 or newer. SSL session cache sharing requires libcurl 8.6.0 or newer and
-libcurl SSL support. On older libcurl versions that still meet the
-handler-lifetime sharing floor, `TransportSharing::HANDLER_PREFER` shares DNS
-cache state without sharing SSL session cache state.
+requested shared state safely. SSL session cache sharing requires libcurl 8.6.0
+or newer and libcurl SSL support. On libcurl older than 8.6.0,
+`TransportSharing::HANDLER_PREFER` shares DNS cache state without sharing SSL
+session cache state.
 
 `TransportSharing::HANDLER_REQUIRE` requires handler-lifetime transport
 sharing. Guzzle fails when it cannot select a cURL handler with cURL share

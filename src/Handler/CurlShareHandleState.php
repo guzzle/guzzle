@@ -105,8 +105,7 @@ final class CurlShareHandleState
      */
     public static function supportsHandlerRequireShare(): bool
     {
-        return CurlVersion::supportsHandlerSharing()
-            && CurlVersion::supportsSslSessionSharing()
+        return CurlVersion::supportsSslSessionSharing()
             && \function_exists('curl_share_init')
             && \function_exists('curl_share_setopt')
             && \defined('CURLOPT_SHARE')
@@ -203,8 +202,6 @@ final class CurlShareHandleState
      */
     private static function handlerLocks(string $mode): array
     {
-        CurlVersion::ensureHandlerSharingSupported();
-
         if ($mode === TransportSharing::HANDLER_REQUIRE) {
             CurlVersion::ensureSslSessionSharingSupported();
         }

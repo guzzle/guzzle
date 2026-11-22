@@ -191,13 +191,6 @@ final class CurlMultiHandler
         }
         $this->multiplexDisabled = null !== $handlerMultiplex;
 
-        if ($this->multiplexDisabled && !\defined('CURLMOPT_PIPELINING')) {
-            // ext-curl only defines the constant when built against libcurl
-            // 7.16 or newer headers, and such builds compile out the matching
-            // curl_multi_setopt() case, so the guarantee cannot be applied.
-            throw new InvalidArgumentException('The "multiplex" CurlMultiHandler option requires CURLMOPT_PIPELINING, but it is not available in the installed PHP cURL extension.');
-        }
-
         CurlShareHandleState::assertNoRequiredSharingCustomFactoryConflict($options, 'CurlMultiHandler');
         $transportSharing = $options['transport_sharing'] ?? null;
         $sharingMode = CurlShareHandleState::normalizeMode($transportSharing, 'transport_sharing');
@@ -217,7 +210,7 @@ final class CurlMultiHandler
 
         if ($this->multiplexDisabled) {
             // CURLPIPE_NOTHING; the constant itself needs libcurl 7.43
-            // headers, newer than the oldest supported runtimes.
+            // headers, which PHP is not required to be built against.
             $this->options[\CURLMOPT_PIPELINING] = 0;
         }
 
