@@ -185,6 +185,28 @@ class ClientTest extends TestCase
         self::assertCount(1, $mock);
     }
 
+    public function testSendAsyncWrapsHostsRejectedByPsr7(): void
+    {
+        $mock = new MockHandler([new Response()]);
+        $client = new Client(['handler' => $mock]);
+        $request = new Request('GET', new UnvalidatedUri('http', 'bad host.example'), ['Host' => 'bad host.example']);
+
+        $promise = $client->sendAsync($request);
+
+        self::assertTrue(State::isRejected($promise));
+
+        try {
+            $promise->wait();
+            self::fail('Expected request exception.');
+        } catch (RequestException $e) {
+            self::assertSame($request, $e->getRequest());
+            self::assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+            self::assertSame('Invalid host: bad host.example', $e->getMessage());
+        }
+
+        self::assertCount(1, $mock);
+    }
+
     public function testClientHasOptions(): void
     {
         $client = new Client([

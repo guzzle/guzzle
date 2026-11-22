@@ -331,11 +331,16 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
     ): PromiseInterface {
         // Merge the base URI into the request URI if needed.
         $options = $this->prepareDefaults($options);
+        $uri = $this->buildUri($request->getUri(), $options);
 
-        return $this->transfer(
-            $request->withUri($this->buildUri($request->getUri(), $options), self::shouldPreserveHost($request)),
-            $options
-        );
+        try {
+            $request = $request->withUri($uri, self::shouldPreserveHost($request));
+        } catch (\InvalidArgumentException $e) {
+            /** @var PromiseInterface<ResponseInterface, mixed> */
+            return P\Create::rejectionFor(new RequestException($e->getMessage(), $request, 0, $e));
+        }
+
+        return $this->transfer($request, $options);
     }
 
     /**
