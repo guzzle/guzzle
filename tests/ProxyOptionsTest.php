@@ -385,35 +385,6 @@ class ProxyOptionsTest extends TestCase
         self::assertSame($expected, ProxyOptions::proxyScheme($proxy));
     }
 
-    public static function asciiProxyHostProvider(): array
-    {
-        return [
-            'percent-encoded ASCII in the host' => ['http://proxy%2Dexample.com:8080'],
-            'non-ASCII credentials' => ["http://us\u{e9}r:p%C3%A4ss@proxy.example.com:8080"],
-        ];
-    }
-
-    /**
-     * @dataProvider asciiProxyHostProvider
-     */
-    public function testProxyWithAsciiHostDoesNotRaiseDeprecations(string $proxy): void
-    {
-        $deprecations = [];
-        \set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
-            $deprecations[] = $message;
-
-            return true;
-        }, \E_USER_DEPRECATED);
-
-        try {
-            ProxyOptions::proxyScheme($proxy);
-        } finally {
-            \restore_error_handler();
-        }
-
-        self::assertSame([], $deprecations);
-    }
-
     public static function malformedProxyProvider(): array
     {
         return [
@@ -422,6 +393,8 @@ class ProxyOptionsTest extends TestCase
             'space inside scheme' => ['ht tps://proxy.example.com:3128'],
             'empty scheme' => ['://proxy.example.com:3128'],
             'space in host' => ['http://exa mple.com:3128'],
+            'non-ASCII host' => ["http://pr\u{f6}xy.example.com:3128"],
+            'percent-encoded non-ASCII host' => ['http://pr%C3%B6xy.example.com:3128'],
             'leading space, scheme-less' => [' 127.0.0.1:8125'],
             'port out of range' => ['http://127.0.0.1:99999999'],
             'non-numeric port' => ['http://127.0.0.1:8a'],

@@ -13,6 +13,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Changed `idn_conversion` to convert hosts with `GuzzleHttp\Psr7\Idna`
 - Reject request URIs and `base_uri` values that start with a host and port
 - Reject hosts that a `uri_factory` reads from relative paths
+- Reject `proxy` URLs whose host has non-ASCII data
 - Wrap URIs of request objects that `guzzlehttp/psr7` rejects in `RequestException`
 
 ### Removed
