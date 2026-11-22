@@ -124,6 +124,11 @@ Guzzle PSR-7 4.x rejects such a string as well, so with the default
 `uri_factory` a redirect to a `Location` of that form is no longer followed and
 fails with a `BadResponseException`.
 
+A request URI or `base_uri` string is also rejected when a custom `uri_factory`
+reads a host in it although it has no scheme and does not start with two
+slashes, as `parse_url()` does for `items/tenant:42`. Pass an absolute URI
+instead.
+
 #### Removed Utils Helper APIs
 
 The deprecated `Utils::defaultUserAgent()`, `Utils::headersFromLines()`,

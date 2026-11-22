@@ -802,7 +802,13 @@ class Client implements ClientInterface, \Psr\Http\Client\ClientInterface
                 throw new InvalidArgumentException('To name a host and a port, a URI must start with a scheme, such as "http://", or with "//".');
             }
 
-            return Idn::createUri($uriFactory, $uri, $idnOptions);
+            $created = Idn::createUri($uriFactory, $uri, $idnOptions);
+
+            if ($created->getScheme() === '' && $created->getAuthority() !== '' && !\str_starts_with($uri, '//')) {
+                throw new InvalidArgumentException('The URI factory returned a host for a URI that has no scheme and does not start with "//".');
+            }
+
+            return $created;
         }
 
         throw new InvalidArgumentException(\sprintf('URI must be a string or %s', UriInterface::class));

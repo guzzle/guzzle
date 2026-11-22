@@ -2083,7 +2083,9 @@ when redirects are enabled. URI objects implementing
 > [!WARNING]
 > Guzzle only checks that the value implements
 > `Psr\Http\Message\UriFactoryInterface`; it does not validate the URIs it
-> returns. When following redirects Guzzle strips credentials by comparing the
+> returns, except that it rejects a request URI or `base_uri` string in which
+> the factory reads a host although the string has no scheme and does not start
+> with `//`. When following redirects Guzzle strips credentials by comparing the
 > origin (scheme, host, port) of the current and redirect-target URIs: on a
 > cross-origin redirect it removes the `Authorization` and `Cookie` headers and
 > clears HTTP auth, and it drops `Referer` whenever the scheme changes

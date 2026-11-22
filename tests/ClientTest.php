@@ -857,6 +857,25 @@ class ClientTest extends TestCase
         yield 'six digits' => ['tel:123456'];
     }
 
+    public function testRejectsHostThatUriFactoryReadsFromRelativePath(): void
+    {
+        $factory = new class implements UriFactoryInterface {
+            public function createUri(string $uri = ''): UriInterface
+            {
+                return new Uri('//'.$uri);
+            }
+        };
+        $client = new Client([
+            'handler' => new MockHandler([new Response()]),
+            RequestOptions::URI_FACTORY => $factory,
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The URI factory returned a host for a URI that has no scheme and does not start with "//".');
+
+        $client->get('items/tenant:42');
+    }
+
     public function testCanUseRelativeUriWithSend(): void
     {
         $mock = new MockHandler([new Response()]);
