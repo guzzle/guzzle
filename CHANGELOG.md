@@ -11,6 +11,7 @@ Please refer to [UPGRADING](UPGRADING.md) guide for upgrading to a major version
 - Adjusted `guzzlehttp/psr7` version constraint to `^4.0`
 - Added native parameter types to `SetCookie::setExpires()` and `HandlerStack::remove()`
 - Changed `idn_conversion` to convert hosts with `GuzzleHttp\Psr7\Idna`
+- Reject requests with more than one Host header value
 - Reject request URIs and `base_uri` values that start with a host and port
 - Reject hosts that a `uri_factory` reads from relative paths
 - Reject `proxy` URLs whose host has non-ASCII data

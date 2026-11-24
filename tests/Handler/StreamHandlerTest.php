@@ -6951,6 +6951,26 @@ class StreamHandlerTest extends TestCase
         $handler($request, [])->wait();
     }
 
+    public function testRejectsMultipleHostHeaderValuesBeforeOpeningAStream(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $request = (new Request('GET', Server::$url))
+            ->withHeader('Host', ['first.test', 'second.test']);
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertSame('The request must contain at most one Host header value.', $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
     public function testDoesNotTransferAForeignUriHostWithAnAuthorityDelimiter(): void
     {
         Server::flush();

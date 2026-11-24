@@ -139,6 +139,14 @@ reads a host in it although it has no scheme and does not start with two
 slashes, as `parse_url()` does for `items/tenant:42`. Pass an absolute URI
 instead.
 
+#### Multiple Host Header Values
+
+A request with more than one `Host` header value now fails with a
+`GuzzleHttp\Exception\RequestException` before the handler connects. Guzzle 8
+accepted these requests: the stream handler wrote each value as a separate
+`Host` field, while the cURL handlers could send only the first value. Set a
+single `Host` header value instead.
+
 #### Requests With URIs That Guzzle PSR-7 Rejects
 
 A `GuzzleHttp\Psr7\Request` whose resolved URI Guzzle PSR-7 rejects, as it does

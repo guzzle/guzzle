@@ -28,8 +28,9 @@ final class HostValidator
      * host must therefore be printable ASCII, free of percent escapes, a valid
      * RFC 3986 host, and not numeric-looking parts followed by trailing dots.
      * The string form of the URI must be free of control characters and name
-     * the scheme, host, and port that its components report. Every Host header
-     * value must be printable ASCII.
+     * the scheme, host, and port that its components report. The request must
+     * have at most one Host header value, and every value must be printable
+     * ASCII.
      *
      * @throws RequestException
      */
@@ -42,7 +43,12 @@ final class HostValidator
         self::assertUriHost($uri->getHost(), $request);
         self::assertUriString($uri, $request);
 
-        foreach ($request->getHeader('Host') as $value) {
+        $hostValues = $request->getHeader('Host');
+        if (\count($hostValues) > 1) {
+            throw new RequestException('The request must contain at most one Host header value.', $request);
+        }
+
+        foreach ($hostValues as $value) {
             self::assertPrintableAscii((string) $value, 'The request Host header "%s" must contain only printable ASCII characters, because an intermediary or an origin server can otherwise read it as an authority that differs from the one the request names. An internationalized host name has an A-label form that this rule accepts.', $request);
         }
     }

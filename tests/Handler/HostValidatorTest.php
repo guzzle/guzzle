@@ -335,15 +335,19 @@ class HostValidatorTest extends TestCase
         self::assertSame('other.example', $request->getHeaderLine('Host'));
     }
 
-    public function testAcceptsMultipleAsciiHostHeaderValues(): void
+    public function testRejectsMultipleHostHeaderValues(): void
     {
         $request = (new Request('GET', 'http://example.com/'))
             ->withHeader('Host', 'a.example')
             ->withAddedHeader('Host', 'b.example');
 
-        HostValidator::assertRequestHost($request);
-
-        self::assertSame(['a.example', 'b.example'], $request->getHeader('Host'));
+        try {
+            HostValidator::assertRequestHost($request);
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertSame('The request must contain at most one Host header value.', $e->getMessage());
+            self::assertSame($request, $e->getRequest());
+        }
     }
 
     public function testAcceptsAnEmptyUriHost(): void
