@@ -660,6 +660,27 @@ class CurlFactoryTest extends TestCase
     }
 
     /**
+     * @dataProvider headerValueWithControlCharacterProvider
+     */
+    public function testRejectsAHeaderValueWithAControlCharacterFromACustomRequest(string $value): void
+    {
+        $factory = new CurlFactory(3);
+
+        $this->expectException(RequestException::class);
+        $this->expectExceptionMessage('Request header values must not contain a control character other than tab.');
+
+        $factory->create(self::requestWithUnvalidatedHeader('X-Foo', $value), []);
+    }
+
+    public static function headerValueWithControlCharacterProvider(): iterable
+    {
+        yield 'vertical tab' => ["a\x0Bb"];
+        yield 'form feed' => ["a\x0Cb"];
+        yield 'unit separator' => ["a\x1Fb"];
+        yield 'delete' => ["a\x7Fb"];
+    }
+
+    /**
      * @dataProvider invalidHeaderNameProvider
      */
     public function testRejectsAnInvalidHeaderNameFromACustomRequest(string $name): void

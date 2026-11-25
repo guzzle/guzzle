@@ -294,6 +294,46 @@ class StreamHandlerTest extends TestCase
     }
 
     /**
+     * @dataProvider headerValueWithControlCharacterProvider
+     */
+    public function testDoesNotTransferAHeaderValueWithAControlCharacterFromACustomRequest(string $value): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $request = self::requestWithUnvalidatedHeader('X-Foo', $value);
+
+        try {
+            $handler($request, [])->wait();
+            self::fail('An exception was not thrown');
+        } catch (RequestException $e) {
+            self::assertSame('Request header values must not contain a control character other than tab.', $e->getMessage());
+        }
+
+        self::assertSame([], Server::received());
+    }
+
+    public static function headerValueWithControlCharacterProvider(): iterable
+    {
+        yield 'vertical tab' => ["a\x0Bb"];
+        yield 'form feed' => ["a\x0Cb"];
+        yield 'unit separator' => ["a\x1Fb"];
+        yield 'delete' => ["a\x7Fb"];
+    }
+
+    public function testTransfersAHeaderValueWithATabFromACustomRequest(): void
+    {
+        Server::flush();
+        Server::enqueue([new Response(200)]);
+
+        $handler = new StreamHandler();
+        $handler(self::requestWithUnvalidatedHeader('X-Foo', "a\tb"), [])->wait();
+
+        self::assertSame("a\tb", Server::received()[0]->getHeaderLine('X-Foo'));
+    }
+
+    /**
      * @dataProvider invalidHeaderNameProvider
      */
     public function testDoesNotTransferAnInvalidHeaderNameFromACustomRequest(string $name): void

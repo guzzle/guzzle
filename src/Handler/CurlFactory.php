@@ -2589,6 +2589,12 @@ final class CurlFactory implements CurlFactoryInterface
                     throw new RequestException('Request header fields must not contain a NUL byte.', $easy->request);
                 }
 
+                // Line breaks are left out here so they keep the exception
+                // normalizeCurlHeaderOptions() throws for them.
+                if (1 === \preg_match('/[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value)) {
+                    throw new RequestException('Request header values must not contain a control character other than tab.', $easy->request);
+                }
+
                 // A field with a line break keeps the exception normalizeCurlHeaderOptions() throws.
                 if (\strpbrk("$name$value", "\r\n") === false && 1 !== \preg_match('/^[a-zA-Z0-9\'`#$%&*+.^_|~!-]+$/D', (string) $name)) {
                     throw new RequestException('Request header names must be valid HTTP tokens.', $easy->request);

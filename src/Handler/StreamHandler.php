@@ -1439,6 +1439,10 @@ final class StreamHandler
                     throw new RequestException('Request header fields must not contain a carriage return, line feed or NUL byte.', $request);
                 }
 
+                if (1 === \preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $val)) {
+                    throw new RequestException('Request header values must not contain a control character other than tab.', $request);
+                }
+
                 if (1 !== \preg_match('/^[a-zA-Z0-9\'`#$%&*+.^_|~!-]+$/D', (string) $name)) {
                     throw new RequestException('Request header names must be valid HTTP tokens.', $request);
                 }
