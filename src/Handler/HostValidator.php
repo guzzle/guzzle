@@ -42,7 +42,13 @@ final class HostValidator
         self::assertUriHost($uri->getHost(), $request);
         self::assertUriString($uri, $request);
 
-        foreach ($request->getHeader('Host') as $value) {
+        $hostValues = $request->getHeader('Host');
+
+        if (\count($hostValues) > 1) {
+            throw new RequestException('The request must not contain more than one Host header value, because the stream handler sends every value while the cURL handlers send only the first, and an origin server can otherwise read a different authority than the one the request names.', $request);
+        }
+
+        foreach ($hostValues as $value) {
             self::assertPrintableAscii((string) $value, 'The request Host header "%s" must contain only printable ASCII characters, because an intermediary or an origin server can otherwise read it as an authority that differs from the one the request names. An internationalized host name has an A-label form that this rule accepts.', $request);
         }
     }
